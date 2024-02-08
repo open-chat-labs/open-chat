@@ -22,6 +22,8 @@ members = [
     "backend/canisters/escrow/api",
     "backend/canisters/escrow/c2c_client",
     "backend/canisters/escrow/impl",
+    "backend/canisters/event_relay/api",
+    "backend/canisters/event_relay/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -140,6 +142,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/translation_tool",
 ]
 resolver = "2"
 

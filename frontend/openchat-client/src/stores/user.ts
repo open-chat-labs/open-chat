@@ -129,11 +129,7 @@ export const platformModerator = derived(
 );
 
 export const platformOperator = derived(currentUser, ($currentUser) => {
-    if (process.env.NODE_ENV === "production") {
-        return $currentUser.isPlatformOperator;
-    } else {
-        return true;
-    }
+    return $currentUser.isPlatformOperator;
 });
 
 function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {

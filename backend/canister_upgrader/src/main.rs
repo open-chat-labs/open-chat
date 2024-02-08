@@ -15,6 +15,7 @@ async fn main() {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }
         CanisterName::Escrow => upgrade_escrow_canister(identity, opts.url, opts.escrow, opts.version).await,
+        CanisterName::EventRelay => upgrade_event_relay_canister(identity, opts.url, opts.event_relay, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
@@ -97,6 +98,9 @@ struct Opts {
 
     #[arg(long)]
     escrow: CanisterId,
+
+    #[arg(long)]
+    event_relay: CanisterId,
 
     #[arg(long)]
     canister_to_upgrade: CanisterName,
