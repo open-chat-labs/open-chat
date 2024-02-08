@@ -154,13 +154,17 @@ aws-sdk-dynamodb = "0.35.0"
 aws-types = "0.57.1"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.10.2"
+candid = "0.10.3"
 canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
 dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "84f5ffb8aa638e4ed43d0392ad4e119963fad3df" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "84f5ffb8aa638e4ed43d0392ad4e119963fad3df" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "84f5ffb8aa638e4ed43d0392ad4e119963fad3df" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "84f5ffb8aa638e4ed43d0392ad4e119963fad3df" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"

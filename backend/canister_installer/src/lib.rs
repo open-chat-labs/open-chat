@@ -123,6 +123,7 @@ async fn install_service_canisters_impl(
     let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
+        event_relay_canister_id: canister_ids.event_relay,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -224,6 +225,7 @@ async fn install_service_canisters_impl(
     let event_relay_canister_wasm = get_canister_wasm(CanisterName::EventRelay, version);
     let event_relay_init_args = event_relay_canister::init::Args {
         push_events_whitelist: vec![canister_ids.user_index, canister_ids.online_users],
+        event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,

@@ -1,6 +1,7 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
+use event_sink_client::Event;
 use ic_cdk_macros::update;
 use online_users_canister::mark_as_online::{Response::*, *};
 use types::{CanisterId, UserId};
@@ -36,7 +37,15 @@ fn try_get_user_id_locally(state: &RuntimeState) -> Result<UserId, (Principal, C
 }
 
 fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
-    state.data.last_online_dates.mark_online(user_id, state.env.now());
+    let now = state.env.now();
+    state.data.last_online_dates.mark_online(user_id, now);
     state.data.mark_as_online_count += 1;
+    state.data.event_sink_client.push_event(Event {
+        name: "user_online".to_string(),
+        timestamp: now,
+        user: Some(user_id.to_string()),
+        source: Some(state.env.canister_id().to_string()),
+        payload: Vec::new(),
+    });
     Success
 }
