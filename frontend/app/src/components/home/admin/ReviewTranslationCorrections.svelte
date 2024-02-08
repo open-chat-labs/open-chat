@@ -9,11 +9,12 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import type {
-        CandidateTranslations,
-        OpenChat,
-        RejectReason,
-        TranslationCorrection,
+    import Refresh from "svelte-material-icons/Refresh.svelte";
+    import {
+        type CandidateTranslations,
+        type OpenChat,
+        type RejectReason,
+        type TranslationCorrection,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -22,18 +23,22 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: userStore = client.userStore;
-
     let corrections: TranslationCorrection[] = [];
     let verifying: TranslationCorrection | undefined = undefined;
-
     let verifications: Record<string, string> = {};
+    let chatBalance = 0n;
+    let refreshing = false;
+
+    $: userStore = client.userStore;
+    $: formattedBalance = client.formatTokens(chatBalance, 8);
 
     onMount(async () => {
         client.getProposedTranslationCorrections().then(async (res) => {
             corrections = flattenCorrections(res);
             await loadRequiredLocales(corrections);
         });
+
+        refreshBalance();
     });
 
     // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
@@ -46,6 +51,14 @@
         }, new Set<string>());
         await Promise.all([...locales].map((l) => locale.set(l)));
         await locale.set(currentLocale);
+    }
+
+    function refreshBalance() {
+        refreshing = true;
+        client
+            .refreshTranslationsBalance()
+            .then((val) => (chatBalance = val))
+            .finally(() => (refreshing = false));
     }
 
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
@@ -128,6 +141,13 @@
     }
 </script>
 
+<div class="balance">
+    <div>CHAT balance</div>
+    <div class="amount">{formattedBalance}</div>
+    <div class="refresh" class:refreshing on:click={refreshBalance}>
+        <Refresh size={"1em"} color={"var(--icon-txt)"} />
+    </div>
+</div>
 <div class="translation-corrections">
     <table class="data">
         <thead>
@@ -229,7 +249,33 @@
 
 <style lang="scss">
     .translation-corrections {
-        padding: $sp4;
+        padding: $sp3 $sp4 $sp4 $sp4;
+    }
+
+    .balance {
+        display: flex;
+        justify-content: flex-end;
+        margin-right: $sp4;
+        gap: 6px;
+
+        .amount {
+            @include font(bold, normal, fs-100, 22);
+        }
+
+        .refresh {
+            @include font-size(fs-140);
+            height: $sp5;
+            width: $sp5;
+            cursor: pointer;
+            @include mobile() {
+                height: 21.59px;
+                width: 21.59px;
+            }
+
+            &.refreshing {
+                @include spin();
+            }
+        }
     }
 
     tbody {
@@ -287,9 +333,5 @@
         &.proposed_at {
             width: 150px;
         }
-    }
-
-    .suggestion {
-        margin-bottom: $sp3;
     }
 </style>
