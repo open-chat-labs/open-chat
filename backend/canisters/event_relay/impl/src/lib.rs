@@ -1,11 +1,13 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
 use event_sink_client_cdk_runtime::CdkRuntime;
 use event_sink_utils::EventDeduper;
 use serde::{Deserialize, Serialize};
 use sha256::sha256_string;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -38,6 +40,9 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let event_sink_client_info = self.data.events_sink_client.info();
+        let event_sink_canister_id = event_sink_client_info.event_sink_canister_id;
+
         Metrics {
             memory_used: utils::memory::used(),
             now: self.env.now(),
@@ -45,7 +50,9 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
+            event_sink_client_info,
             canister_ids: CanisterIds {
+                event_sink: event_sink_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -55,7 +62,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub push_events_whitelist: HashSet<Principal>,
-    pub events_sink_client: event_sink_client::Client<CdkRuntime>,
+    pub events_sink_client: EventSinkClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
     pub salt: [u8; 32],
@@ -72,7 +79,9 @@ impl Data {
     ) -> Data {
         Data {
             push_events_whitelist,
-            events_sink_client: event_sink_client::ClientBuilder::new(events_sink_canister_id, CdkRuntime::default()).build(),
+            events_sink_client: EventSinkClientBuilder::new(events_sink_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_secs(60))
+                .build(),
             event_deduper: EventDeduper::default(),
             cycles_dispenser_canister_id,
             salt: [0; 32],
@@ -103,10 +112,12 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub push_events_whitelist: Vec<Principal>,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
+    pub event_sink: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
