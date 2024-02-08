@@ -12,6 +12,10 @@
     "ic": "s4yi7-yiaaa-aaaar-qacpq-cai",
     "ic_test": "tspqt-xaaaa-aaaal-qcnna-cai"
   },
+  "event_relay": {
+    "ic": "6ofpc-2aaaa-aaaaf-biibq-cai",
+    "ic_test": "6jejw-xyaaa-aaaaf-biiba-cai"
+  },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"

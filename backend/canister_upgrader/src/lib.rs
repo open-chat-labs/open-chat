@@ -254,6 +254,25 @@ pub async fn upgrade_escrow_canister(
     println!("Escrow canister upgraded");
 }
 
+pub async fn upgrade_event_relay_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    event_relay_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        event_relay_canister_id,
+        version,
+        event_relay_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::EventRelay,
+    )
+    .await;
+
+    println!("Event relay canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: Box<dyn Identity>,
     url: String,

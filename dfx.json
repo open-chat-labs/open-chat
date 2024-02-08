@@ -115,6 +115,12 @@
       "wasm": "wasms/translations.wasm.gz",
       "build": "./scripts/generate-wasm.sh translations"
     },
+    "event_relay": {
+      "type": "custom",
+      "candid": "backend/canisters/event_relay/api/can.did",
+      "wasm": "wasms/event_relay.wasm.gz",
+      "build": "./scripts/generate-wasm.sh event_relay"
+    },
     "website": {
       "source": [
         "frontend/app/build",
