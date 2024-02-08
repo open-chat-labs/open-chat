@@ -115,7 +115,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     }
 }
 
-fn default_channels_valid(default_channels: &Vec<String>) -> bool {
+fn default_channels_valid(default_channels: &[String]) -> bool {
     if default_channels.is_empty()
         || default_channels
             .iter()

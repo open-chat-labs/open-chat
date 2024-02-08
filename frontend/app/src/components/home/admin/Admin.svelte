@@ -81,7 +81,7 @@
         gap: $sp5;
         border-bottom: 1px solid var(--bd);
         cursor: pointer;
-        margin: 0 $sp4 $sp5 $sp4;
+        margin: 0 $sp4 $sp4 $sp4;
 
         @include mobile() {
             gap: $sp4;
