@@ -6,15 +6,15 @@
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
-    import {
-        type CandidateTranslations,
-        type OpenChat,
-        type RejectReason,
-        type TranslationCorrection,
+    import type {
+        CandidateTranslations,
+        OpenChat,
+        RejectReason,
+        TranslationCorrection,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
