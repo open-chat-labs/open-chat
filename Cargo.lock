@@ -6670,7 +6670,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "translation_merger"
+name = "translation_tool"
 version = "0.1.0"
 dependencies = [
  "candid",

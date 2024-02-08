@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pass in the dfx identity name
-# eg './merge-latest-translations.sh openchat'
+# eg './mark-latest-translations-deployed.sh openchat'
 
 IDENTITY=${1:-default}
 
@@ -13,7 +13,7 @@ TRANSLATIONS_CANISTER_ID=$(dfx canister --network ic id translations)
 
 cargo run \
   --manifest-path backend/translation_tool/Cargo.toml -- \
-  --action merge \
+  --action mark-deployed \
   --translations-canister-id $TRANSLATIONS_CANISTER_ID \
   --url https://ic0.app/ \
   --controller $IDENTITY \

@@ -1,5 +1,4 @@
 use canister_agent_utils::{build_ic_agent, get_dfx_identity};
-use clap::Parser;
 use itertools::Itertools;
 use serde_json::{Map, Value};
 use std::{
@@ -10,36 +9,24 @@ use std::{
 use translations_canister::pending_deployment::{Response, SuccessResponse, Translation};
 use types::{CanisterId, Empty, TimestampMillis};
 
-#[derive(Parser, Debug)]
-pub struct Config {
-    /// The id of the Translations canister
-    #[arg(long)]
-    translations_canister_id: CanisterId,
+use crate::Config;
 
-    /// IC URL
-    #[arg(long)]
-    url: String,
+pub async fn run(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let mut translations = read_translations_from_files(&config.directory).await?;
 
-    /// The DFX identity of controller
-    #[arg(long)]
-    controller: String,
+    let corrections =
+        read_latest_translation_corrections(&config.url, &config.controller, &config.translations_canister_id).await?;
 
-    /// The path to the translation files
-    #[arg(long)]
-    directory: String,
-}
-
-pub async fn merge(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let path = config.directory.clone();
-    let mut translations = read_translations_from_files(&path).await?;
-
-    let corrections = read_latest_translation_corrections(config).await?;
+    let any_corrections = !corrections.translations.is_empty();
 
     merge_translations(&mut translations, corrections.translations)?;
 
-    write_translation_files(&path, translations).await?;
+    write_translation_files(&config.directory, translations).await?;
 
-    write_latest_approval(&path, corrections.latest_approval).await?;
+    // Don't overwrite the latest approval timestamp if there are no corrections
+    if any_corrections {
+        write_latest_approval(&config.directory, corrections.latest_approval).await?;
+    }
 
     Ok(())
 }
@@ -104,11 +91,15 @@ async fn read_translations_from_file(path: &str) -> Result<HashMap<String, Strin
     Ok(translations)
 }
 
-async fn read_latest_translation_corrections(config: Config) -> Result<SuccessResponse, Box<dyn Error + Send + Sync>> {
-    let identity = get_dfx_identity(&config.controller);
-    let agent = build_ic_agent(config.url, identity).await;
+async fn read_latest_translation_corrections(
+    url: &str,
+    controller: &str,
+    translations_canister_id: &CanisterId,
+) -> Result<SuccessResponse, Box<dyn Error + Send + Sync>> {
+    let identity = get_dfx_identity(controller);
+    let agent = build_ic_agent(url.to_string(), identity).await;
 
-    translations_canister_client::pending_deployment(&agent, &config.translations_canister_id, &Empty {})
+    translations_canister_client::pending_deployment(&agent, translations_canister_id, &Empty {})
         .await
         .map(|response| match response {
             Response::Success(result) => Ok(result),
