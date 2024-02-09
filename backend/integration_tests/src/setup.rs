@@ -121,6 +121,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         escrow_canister_id,
+        event_relay_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,

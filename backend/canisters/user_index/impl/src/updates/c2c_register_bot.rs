@@ -60,5 +60,15 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
+    state.track_event(
+        "user_registered",
+        now,
+        Some(user_id),
+        crate::UserRegisteredEventPayload {
+            referred: false,
+            is_bot: true,
+        },
+    );
+
     Success
 }

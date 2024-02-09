@@ -69,6 +69,7 @@ async fn install_service_canisters_impl(
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         escrow_canister_id: canister_ids.escrow,
+        event_relay_canister_id: canister_ids.event_relay,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
