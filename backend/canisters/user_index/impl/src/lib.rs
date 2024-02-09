@@ -395,7 +395,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
-            event_sink_client: EventSinkClient::null(),
+            event_sink_client: EventSinkClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
