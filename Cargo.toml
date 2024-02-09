@@ -158,24 +158,24 @@ candid = "0.10.3"
 canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
-dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }
+dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
-event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
-event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
-event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "598a846ae880e6bb691809bae1c0839180381883" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "598a846ae880e6bb691809bae1c0839180381883" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "598a846ae880e6bb691809bae1c0839180381883" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "598a846ae880e6bb691809bae1c0839180381883" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
-ic-agent = "0.32.0"
+ic-agent = "0.33.0"
 ic-cdk = "=0.12.0"
 ic-cdk-macros = "0.8.4"
 ic-cdk-timers = "0.6.0"
 ic-ledger-types = "0.9.0"
 ic-stable-structures = "0.6.2"
-ic-transport-types = "0.32.0"
-ic-utils = "0.32.0"
+ic-transport-types = "0.33.0"
+ic-utils = "0.33.0"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.21.1"
 itertools = "0.11.0"
