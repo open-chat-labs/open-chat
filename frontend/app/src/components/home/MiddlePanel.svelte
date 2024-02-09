@@ -5,27 +5,52 @@
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import {
+        chatIdentifiersEqual,
+        type ChatIdentifier,
+        type MultiUserChat,
+        type OpenChat,
+    } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore } from "../../stores/layout";
     import Loading from "../Loading.svelte";
+    import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
 
     export let joining: MultiUserChat | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
+    let middlePanel: HTMLElement;
+
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
+
+    $: {
+        alignVideoCall($activeVideoCall, $selectedChatId);
+    }
+
+    function alignVideoCall(call: ActiveVideoCall | undefined, chatId: ChatIdentifier | undefined) {
+        if (call && chatIdentifiersEqual(call.chatId, chatId)) {
+            activeVideoCall.alignTo(middlePanel.getBoundingClientRect());
+        }
+    }
+
+    function resize() {
+        alignVideoCall($activeVideoCall, $selectedChatId);
+    }
 </script>
 
+<svelte:window on:resize={resize} on:orientationchange={resize} />
+
 <section
+    bind:this={middlePanel}
     class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $pathParams.kind === "explore_groups_route"}
@@ -59,6 +84,7 @@
                 chat={$selectedChatStore}
                 events={$eventsStore}
                 filteredProposals={$filteredProposalsStore}
+                on:startVideoCall
                 on:successfulImport
                 on:clearSelection
                 on:leaveGroup

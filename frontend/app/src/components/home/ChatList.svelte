@@ -39,6 +39,7 @@
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -200,6 +201,7 @@
     }
 </script>
 
+<!-- svelte-ignore missing-declaration -->
 {#if user}
     {#if $chatListScope.kind === "favourite"}
         <FavouriteChatsHeader />
@@ -333,6 +335,7 @@
             {/if}
         {/if}
     </div>
+    <ActiveCallSummary />
     <NotificationsBar />
     {#if showPreview}
         <PreviewWrapper let:joiningCommunity let:joinCommunity>

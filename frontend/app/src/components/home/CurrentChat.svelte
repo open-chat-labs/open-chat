@@ -38,7 +38,6 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Room from "./video/Room.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -66,7 +65,6 @@
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         undefined;
-    let showVideoRoom = false;
 
     $: user = client.user;
     $: suspendedUser = client.suspendedUser;
@@ -267,11 +265,6 @@
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
-
-    function startVideoCall() {
-        console.log("Let's see if we can start a video call for this chat");
-        showVideoRoom = true;
-    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -340,7 +333,7 @@
             on:showGroupMembers
             on:leaveGroup
             on:upgrade
-            on:startVideoCall={startVideoCall}
+            on:startVideoCall
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             on:convertGroupToCommunity
@@ -350,66 +343,61 @@
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
-    {#if showVideoRoom}
-        <Room {chat} on:leftMeeting={() => (showVideoRoom = false)} />
-    {:else}
-        <CurrentChatMessages
-            bind:this={currentChatMessages}
-            on:replyPrivatelyTo
-            on:replyTo={replyTo}
-            on:chatWith
-            on:upgrade
-            on:forward
-            on:retrySend
-            on:removePreview={onRemovePreview}
+    <CurrentChatMessages
+        bind:this={currentChatMessages}
+        on:replyPrivatelyTo
+        on:replyTo={replyTo}
+        on:chatWith
+        on:upgrade
+        on:forward
+        on:retrySend
+        on:removePreview={onRemovePreview}
+        {chat}
+        {events}
+        {filteredProposals}
+        {canPin}
+        {canBlockUsers}
+        {canDelete}
+        {canReplyInThread}
+        {canSendAny}
+        {canReact}
+        {canInvite}
+        {readonly}
+        {firstUnreadMention}
+        footer={showFooter}
+        {unreadMessages} />
+    {#if showFooter}
+        <Footer
             {chat}
-            {events}
-            {filteredProposals}
-            {canPin}
-            {canBlockUsers}
-            {canDelete}
-            {canReplyInThread}
-            {canSendAny}
-            {canReact}
-            {canInvite}
-            {readonly}
-            {firstUnreadMention}
-            footer={showFooter}
-            {unreadMessages} />
-        {#if showFooter}
-            <Footer
-                {chat}
-                attachment={$currentChatAttachment}
-                editingEvent={$currentChatEditingEvent}
-                replyingTo={$currentChatReplyingTo}
-                textContent={$currentChatTextContent}
-                user={$user}
-                mode={"message"}
-                {joining}
-                {preview}
-                {blocked}
-                on:joinGroup
-                on:upgrade
-                on:cancelReply={() =>
-                    draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-                on:clearAttachment={() =>
-                    draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-                on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
-                on:setTextContent={setTextContent}
-                on:startTyping={() => client.startTyping(chat, $user.userId)}
-                on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-                on:fileSelected={fileSelected}
-                on:audioCaptured={fileSelected}
-                on:sendMessage={sendMessage}
-                on:createTestMessages={createTestMessages}
-                on:attachGif={attachGif}
-                on:makeMeme={makeMeme}
-                on:tokenTransfer={tokenTransfer}
-                on:createPrizeMessage={createPrizeMessage}
-                on:createP2PSwapMessage={createP2PSwapMessage}
-                on:searchChat={searchChat}
-                on:createPoll={createPoll} />
-        {/if}
+            attachment={$currentChatAttachment}
+            editingEvent={$currentChatEditingEvent}
+            replyingTo={$currentChatReplyingTo}
+            textContent={$currentChatTextContent}
+            user={$user}
+            mode={"message"}
+            {joining}
+            {preview}
+            {blocked}
+            on:joinGroup
+            on:upgrade
+            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+            on:clearAttachment={() =>
+                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
+            on:setTextContent={setTextContent}
+            on:startTyping={() => client.startTyping(chat, $user.userId)}
+            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
+            on:fileSelected={fileSelected}
+            on:audioCaptured={fileSelected}
+            on:sendMessage={sendMessage}
+            on:createTestMessages={createTestMessages}
+            on:attachGif={attachGif}
+            on:makeMeme={makeMeme}
+            on:tokenTransfer={tokenTransfer}
+            on:createPrizeMessage={createPrizeMessage}
+            on:createP2PSwapMessage={createP2PSwapMessage}
+            on:searchChat={searchChat}
+            on:createPoll={createPoll} />
     {/if}
 </div>
 

@@ -5623,7 +5623,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    private getDailyAccessJWT(chatId: ChatIdentifier): Promise<string | undefined> {
+    private getDailyAccessJWT(chatId: ChatIdentifier): Promise<string> {
         // TODO - this should be an OC service that checks that the user is allowed to create/join a video call in this
         // chat or not and returns a JWT if they are
         return fetch(`${this.config.videoBridgeUrl}/room/access_jwt`, {
@@ -5636,10 +5636,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 username: this._liveState.user.username,
                 chatId,
             }),
-        }).then((res) => (res.ok ? res.text() : undefined));
+        }).then((res) => {
+            if (res.ok) {
+                return res.text();
+            } else {
+                throw new Error(`Unable to get access jwt: ${res.status}, ${res.statusText}`);
+            }
+        });
     }
 
-    private getRoomAccessToken(authToken: string): Promise<string | undefined> {
+    private getRoomAccessToken(authToken: string): Promise<string> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
@@ -5655,18 +5661,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 return res.text();
             }
             if (res.status === 401) {
-                console.warn(
-                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.",
-                );
+                const msg =
+                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
+                console.error(msg);
+                throw new Error(msg);
             }
-            return undefined;
+            throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
         });
     }
 
-    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<string | undefined> {
+    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<string> {
         return this.getDailyAccessJWT(chatId).then((token) => {
             console.log("Token: ", token);
-            return token ? this.getRoomAccessToken(token) : undefined;
+            return this.getRoomAccessToken(token);
         });
     }
 

@@ -214,7 +214,7 @@
     }
 
     function startVideoCall() {
-        dispatch("startVideoCall");
+        dispatch("startVideoCall", selectedChatSummary);
     }
 </script>
 
