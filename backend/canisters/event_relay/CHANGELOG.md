@@ -8,3 +8,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Forward anonymised events on to the `event_sink` canister ([#5337](https://github.com/open-chat-labs/open-chat/pull/5337))
+- Initial commit ([#5334](https://github.com/open-chat-labs/open-chat/pull/5334))
