@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::{mutate_state, RuntimeState, ONE_MB};
+use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -114,6 +114,17 @@ fn process_new_user(
         }),
         Some(local_user_index_canister_id),
     );
+
+    state.track_event(
+        "user_registered",
+        now,
+        Some(user_id),
+        UserRegisteredEventPayload {
+            referred: referred_by.is_some(),
+            is_bot: false,
+        },
+    );
+
     if let Some(original_username) = original_username {
         state.push_event_to_local_user_index(
             user_id,

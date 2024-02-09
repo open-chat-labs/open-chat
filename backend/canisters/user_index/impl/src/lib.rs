@@ -7,6 +7,8 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder};
+use event_sink_client_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
@@ -20,6 +22,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId,
@@ -148,6 +151,18 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    pub fn track_event<T: Serialize>(&mut self, name: &str, timestamp: TimestampMillis, user: Option<UserId>, payload: T) {
+        let payload_json = serde_json::to_vec(&payload).unwrap();
+
+        self.data.event_sink_client.push_event(event_sink_client::Event {
+            name: name.to_string(),
+            timestamp,
+            user: user.map(|u| u.to_string()),
+            source: Some(self.env.canister_id().to_text()),
+            payload: payload_json,
+        });
+    }
+
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
@@ -220,13 +235,12 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "translations_canister_id")]
     pub translations_canister_id: CanisterId,
+    #[serde(default = "event_sink_client")]
+    pub event_sink_client: EventSinkClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(default)]
     pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
-    #[serde(default)]
     pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -247,12 +261,14 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
-    #[serde(default)]
     pub legacy_principals_synced: bool,
 }
 
-fn translations_canister_id() -> CanisterId {
-    Principal::from_text("lxq5i-mqaaa-aaaaf-bih7q-cai").unwrap()
+fn event_sink_client() -> EventSinkClient<CdkRuntime> {
+    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
+    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+        .with_flush_delay(Duration::from_secs(60))
+        .build()
 }
 
 impl Data {
@@ -268,6 +284,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
@@ -289,6 +306,9 @@ impl Data {
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
+            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_secs(60))
+                .build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -375,6 +395,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
+            event_sink_client: EventSinkClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -457,6 +478,12 @@ pub struct DiamondMembershipPaymentMetrics {
 pub struct NnsNeuron {
     pub neuron_id: u64,
     pub subaccount: Subaccount,
+}
+
+#[derive(Serialize)]
+struct UserRegisteredEventPayload {
+    referred: bool,
+    is_bot: bool,
 }
 
 #[derive(Serialize, Debug)]

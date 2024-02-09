@@ -1,6 +1,7 @@
 use crate::{Milliseconds, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct DiamondMembershipDetails {
@@ -143,5 +144,16 @@ impl TryFrom<DiamondMembershipSubscription> for DiamondMembershipPlanDuration {
             DiamondMembershipSubscription::ThreeMonths => Ok(DiamondMembershipPlanDuration::ThreeMonths),
             DiamondMembershipSubscription::OneYear => Ok(DiamondMembershipPlanDuration::OneYear),
         }
+    }
+}
+
+impl Display for DiamondMembershipPlanDuration {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            DiamondMembershipPlanDuration::OneMonth => "1 month",
+            DiamondMembershipPlanDuration::ThreeMonths => "3 months",
+            DiamondMembershipPlanDuration::OneYear => "1 year",
+            DiamondMembershipPlanDuration::Lifetime => "Lifetime",
+        })
     }
 }
