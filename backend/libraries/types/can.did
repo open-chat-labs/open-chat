@@ -1481,8 +1481,9 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
-    issuer : text;
-    credential : text;
+    issuer_origin : text;
+    credential_type : text;
+    credential_arguments:  opt blob;
 };
 
 type SnsNeuronGate = record {

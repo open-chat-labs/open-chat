@@ -9,16 +9,18 @@ export enum ToastType {
 export type Toast = {
     resourceKey: ResourceKey;
     type: ToastType;
+    err?: unknown;
 };
 
 const { subscribe, update } = writable<Toast | undefined>(undefined);
 
 export const toastStore = {
     subscribe,
-    showFailureToast: (resourceKey: ResourceKey): void => {
+    showFailureToast: (resourceKey: ResourceKey, err?: unknown): void => {
         return update(() => ({
             resourceKey,
             type: ToastType.Failure,
+            err,
         }));
     },
     showSuccessToast: (resourceKey: ResourceKey): void => {

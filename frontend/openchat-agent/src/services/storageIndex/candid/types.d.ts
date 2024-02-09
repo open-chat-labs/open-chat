@@ -1489,8 +1489,9 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential' : string,
-  'issuer' : string,
+  'credential_arguments' : [] | [Uint8Array | number[]],
+  'issuer_origin' : string,
+  'credential_type' : string,
 }
 export type Version = number;
 export interface VersionedRules {

@@ -1,0 +1,20 @@
+[package]
+name = "translation_tool"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_agent_utils = { path = "../libraries/canister_agent_utils" }
+clap = { workspace = true, features = ["derive"] }
+ic-agent = { workspace = true }
+ic-utils = { workspace = true }
+itertools = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] }
+tokio = { workspace = true, features = ["full"] }
+translations_canister = { path = "../canisters/translations/api" }
+translations_canister_client = { path = "../canisters/translations/client" }
+types = { path = "../libraries/types" }

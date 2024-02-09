@@ -8,6 +8,7 @@
     import { getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import CredentialGateSummary from "./CredentialGateSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -16,25 +17,7 @@
 </script>
 
 {#if gate.kind === "credential_gate"}
-    <div class="detail">
-        <div>
-            <Translatable resourceKey={i18nKey("access.credential")} />
-        </div>
-        <div class="params">
-            <div>
-                <Translatable
-                    resourceKey={i18nKey("access.credentialParamIssuer", {
-                        issuer: gate.issuerOrigin,
-                    })} />
-            </div>
-            <div>
-                <Translatable
-                    resourceKey={i18nKey("access.credentialParamCredential", {
-                        credential: gate.credentialId,
-                    })} />
-            </div>
-        </div>
-    </div>
+    <CredentialGateSummary {gate} />
 {:else if gate.kind === "payment_gate" && tokenDetails !== undefined}
     <div class="detail">
         <div>

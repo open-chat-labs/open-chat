@@ -81,6 +81,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
+    let event_relay_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -90,6 +91,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
     let escrow_canister_wasm = wasms::ESCROW.clone();
+    let event_relay_canister_wasm = wasms::EVENT_RELAY.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
@@ -119,6 +121,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         escrow_canister_id,
+        event_relay_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
@@ -203,6 +206,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
+        event_relay_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
@@ -310,6 +314,21 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         test_mode: true,
     };
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
+
+    let event_relay_init_args = event_relay_canister::init::Args {
+        push_events_whitelist: vec![],
+        event_sink_canister_id: Principal::anonymous(),
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        event_relay_canister_id,
+        event_relay_canister_wasm,
+        event_relay_init_args,
+    );
 
     client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
@@ -426,10 +445,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
         escrow: escrow_canister_id,
+        translations: translations_canister_id,
+        event_relay: event_relay_canister_id,
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
-        translations: translations_canister_id,
     }
 }
 

@@ -44,6 +44,7 @@ MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
+EVENT_RELAY_CANISTER_ID=$(dfx canister --network $NETWORK id event_relay)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml -- \
@@ -65,6 +66,8 @@ cargo run \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
   --escrow $ESCROW_CANISTER_ID \
+  --translations $TRANSLATIONS_CANISTER_ID \
+  --event-relay $EVENT_RELAY_CANISTER_ID \
   --nns-root $NNS_ROOT_CANISTER_ID \
   --nns-governance $NNS_GOVERNANCE_CANISTER_ID \
   --nns-internet-identity $NNS_INTERNET_IDENTITY_CANISTER_ID \
@@ -72,5 +75,4 @@ cargo run \
   --nns-cmc $NNS_CMC_CANISTER_ID \
   --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
   --nns-index $NNS_INDEX_CANISTER_ID \
-  --translations $TRANSLATIONS_CANISTER_ID 
 

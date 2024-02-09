@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import MenuIcon from "../../MenuIcon.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
@@ -22,18 +23,43 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: userStore = client.userStore;
-
     let corrections: TranslationCorrection[] = [];
     let verifying: TranslationCorrection | undefined = undefined;
-
     let verifications: Record<string, string> = {};
+    let chatBalance = 0n;
+    let refreshing = false;
 
-    onMount(() => {
-        client.getProposedTranslationCorrections().then((res) => {
+    $: userStore = client.userStore;
+    $: formattedBalance = client.formatTokens(chatBalance, 8);
+
+    onMount(async () => {
+        client.getProposedTranslationCorrections().then(async (res) => {
             corrections = flattenCorrections(res);
+            await loadRequiredLocales(corrections);
         });
+
+        refreshBalance();
     });
+
+    // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
+    // and trigger the loading of the current translations for each of those locales.
+    async function loadRequiredLocales(corrections: TranslationCorrection[]): Promise<void> {
+        const currentLocale = $locale;
+        const locales = corrections.reduce((all, c) => {
+            all.add(c.locale);
+            return all;
+        }, new Set<string>());
+        await Promise.all([...locales].map((l) => locale.set(l)));
+        await locale.set(currentLocale);
+    }
+
+    function refreshBalance() {
+        refreshing = true;
+        client
+            .refreshTranslationsBalance()
+            .then((val) => (chatBalance = val))
+            .finally(() => (refreshing = false));
+    }
 
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
         return corrections.flatMap((group) =>
@@ -115,6 +141,13 @@
     }
 </script>
 
+<div class="balance">
+    <div>CHAT balance</div>
+    <div class="amount">{formattedBalance}</div>
+    <div class="refresh" class:refreshing on:click={refreshBalance}>
+        <Refresh size={"1em"} color={"var(--icon-txt)"} />
+    </div>
+</div>
 <div class="translation-corrections">
     <table class="data">
         <thead>
@@ -134,7 +167,7 @@
                 <tr>
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
-                    <td class="english">{$_(correction.key, { locale: "en" })}</td>
+                    <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
                     <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
                         {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
@@ -216,7 +249,33 @@
 
 <style lang="scss">
     .translation-corrections {
-        padding: $sp4;
+        padding: $sp3 $sp4 $sp4 $sp4;
+    }
+
+    .balance {
+        display: flex;
+        justify-content: flex-end;
+        margin-right: $sp4;
+        gap: 6px;
+
+        .amount {
+            @include font(bold, normal, fs-100, 22);
+        }
+
+        .refresh {
+            @include font-size(fs-140);
+            height: $sp5;
+            width: $sp5;
+            cursor: pointer;
+            @include mobile() {
+                height: 21.59px;
+                width: 21.59px;
+            }
+
+            &.refreshing {
+                @include spin();
+            }
+        }
     }
 
     tbody {
@@ -274,9 +333,5 @@
         &.proposed_at {
             width: 150px;
         }
-    }
-
-    .suggestion {
-        margin-bottom: $sp3;
     }
 </style>

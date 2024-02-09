@@ -22,6 +22,8 @@ members = [
     "backend/canisters/escrow/api",
     "backend/canisters/escrow/c2c_client",
     "backend/canisters/escrow/impl",
+    "backend/canisters/event_relay/api",
+    "backend/canisters/event_relay/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -140,6 +142,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/translation_tool",
 ]
 resolver = "2"
 
@@ -151,13 +154,17 @@ aws-sdk-dynamodb = "0.35.0"
 aws-types = "0.57.1"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.10.2"
+candid = "0.10.3"
 canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
 dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "e8e4a547f767ef568ddf978c6cc421a1ef05485e" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
