@@ -176,8 +176,8 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
-        let event_sink_client_into = self.data.event_sink_client.info();
-        let event_relay_canister_id = event_sink_client_into.event_sink_canister_id;
+        let event_sink_client_info = self.data.event_sink_client.info();
+        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
