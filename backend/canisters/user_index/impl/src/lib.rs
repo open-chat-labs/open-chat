@@ -7,7 +7,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder};
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
 use event_sink_client_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
@@ -176,6 +176,9 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let event_sink_client_into = self.data.event_sink_client.info();
+        let event_relay_canister_id = event_sink_client_into.event_sink_canister_id;
+
         Metrics {
             memory_used: utils::memory::used(),
             now: self.env.now(),
@@ -202,6 +205,7 @@ impl RuntimeState {
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
+            event_sink_client_info,
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -211,6 +215,7 @@ impl RuntimeState {
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
                 translations: self.data.translations_canister_id,
+                event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
@@ -448,6 +453,7 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
     pub pending_modclub_submissions: usize,
     pub reporting_metrics: ReportingMetrics,
@@ -495,6 +501,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,
-    pub internet_identity: CanisterId,
     pub translations: CanisterId,
+    pub event_relay: CanisterId,
+    pub internet_identity: CanisterId,
 }
