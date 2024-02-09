@@ -5623,12 +5623,20 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    private getDailyAccessJWT(chatId: string): Promise<string | undefined> {
+    private getDailyAccessJWT(chatId: ChatIdentifier): Promise<string | undefined> {
         // TODO - this should be an OC service that checks that the user is allowed to create/join a video call in this
         // chat or not and returns a JWT if they are
-        return fetch(
-            `${this.config.videoBridgeUrl}/room/access_jwt/${this._liveState.user.userId}/${this._liveState.user.username}/${chatId}`,
-        ).then((res) => (res.ok ? res.text() : undefined));
+        return fetch(`${this.config.videoBridgeUrl}/room/access_jwt`, {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+            },
+            body: JSON.stringify({
+                userId: this._liveState.user.userId,
+                username: this._liveState.user.username,
+                chatId,
+            }),
+        }).then((res) => (res.ok ? res.text() : undefined));
     }
 
     private getRoomAccessToken(authToken: string): Promise<string | undefined> {
@@ -5655,8 +5663,9 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getVideoChatAccessToken(chatId: string): Promise<string | undefined> {
+    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<string | undefined> {
         return this.getDailyAccessJWT(chatId).then((token) => {
+            console.log("Token: ", token);
             return token ? this.getRoomAccessToken(token) : undefined;
         });
     }

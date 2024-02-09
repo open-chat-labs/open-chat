@@ -1,7 +1,7 @@
 <script lang="ts">
     import daily from "@daily-co/daily-js";
     import type { DailyCall, DailyThemeConfig } from "@daily-co/daily-js";
-    import { type ChatSummary, type OpenChat } from "openchat-client";
+    import { type ChatIdentifier, type ChatSummary, type OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
@@ -43,14 +43,21 @@
         };
     }
 
+    function chatIdToRoomId(chatId: ChatIdentifier): string {
+        switch (chatId.kind) {
+            case "channel":
+                return `channel_${chatId.communityId}_${chatId.channelId}`;
+            case "direct_chat":
+                return `direct_${chatId.userId}`;
+            case "group_chat":
+                return `group_${chatId.groupId}`;
+        }
+    }
+
     onMount(async () => {
-        if (chat.kind !== "group_chat") return;
-
-        const chatId = chat.id.groupId;
-
         // first we need to get an access jwt from the oc backend
-        const token = await client.getVideoChatAccessToken(chatId);
-        console.log("Token: ", token);
+        const token = await client.getVideoChatAccessToken(chat.id);
+        const roomId = chatIdToRoomId(chat.id);
 
         callframe = daily.createFrame(container, {
             token,
@@ -59,7 +66,7 @@
                 width: "100%",
                 height: "100%",
             },
-            url: `https://openchat.daily.co/${chatId}`,
+            url: `https://openchat.daily.co/${roomId}`,
             userName: $user.username,
             theme: getThemeConfig($currentTheme),
         });
