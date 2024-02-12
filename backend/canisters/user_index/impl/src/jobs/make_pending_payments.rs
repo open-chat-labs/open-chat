@@ -8,7 +8,7 @@ use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::{error, info};
 use types::{Cryptocurrency, MessageContent, TextContent};
 use utils::consts::SNS_ROOT_CANISTER_ID;
 
@@ -27,7 +27,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    trace!("'make_pending_payments' job running");
+    info!("'make_pending_payments' job running");
     TIMER_ID.set(None);
 
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
