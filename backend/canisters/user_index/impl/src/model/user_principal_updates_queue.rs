@@ -45,4 +45,8 @@ impl UserPrincipalUpdatesQueue {
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
+
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
 }
