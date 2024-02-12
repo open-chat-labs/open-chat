@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1046-local_user_index)] - 2024-02-05
 
+### Added
+
+- VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
+
 ### Changed
 
 - Handle `DiamondMembershipPaymentReceived` events from non-local users ([#5322](https://github.com/open-chat-labs/open-chat/pull/5322))

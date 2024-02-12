@@ -270,6 +270,7 @@ impl Channel {
             events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
             membership,
+            video_call_in_progress: chat.video_call_in_progress.value.clone(),
         })
     }
 
@@ -351,6 +352,7 @@ impl Channel {
             events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
             membership,
+            video_call_in_progress: updates.video_call_in_progress,
         })
     }
 

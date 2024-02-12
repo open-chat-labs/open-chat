@@ -25,6 +25,7 @@ pub struct DirectChatSummary {
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
+    pub video_call_in_progress: Option<VideoCall>,
 }
 
 impl DirectChatSummary {
@@ -68,6 +69,8 @@ pub struct GroupChatSummary {
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
+    #[serde(default)]
+    pub video_call_in_progress: Option<VideoCall>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -86,6 +89,7 @@ pub struct DirectChatSummaryUpdates {
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -146,6 +150,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
+    pub video_call_in_progress: Option<VideoCall>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -219,6 +224,7 @@ impl GroupCanisterGroupChatSummary {
             gate: updates.gate.apply_to(self.gate),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
+            video_call_in_progress: updates.video_call_in_progress.apply_to(self.video_call_in_progress),
         }
     }
 }
@@ -253,6 +259,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
     pub membership: Option<GroupMembershipUpdates>,
+    pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -391,4 +398,9 @@ pub struct UpdatedRules {
     pub text: String,
     pub enabled: bool,
     pub new_version: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCall {
+    pub message_index: MessageIndex,
 }

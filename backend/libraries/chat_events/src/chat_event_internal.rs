@@ -274,6 +274,7 @@ impl MessageInternal {
             }
             MessageContentInternal::ReportedMessage(_) => {}
             MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swaps),
+            MessageContentInternal::VideoCall(_) => incr(&mut metrics.video_calls),
             MessageContentInternal::Custom(_) => {
                 incr(&mut metrics.custom_type_messages);
             }
@@ -533,6 +534,8 @@ pub struct ChatMetricsInternal {
     pub message_reminders: u64,
     #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
     pub p2p_swaps: u64,
+    #[serde(rename = "vc", default, skip_serializing_if = "is_default")]
+    pub video_calls: u64,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u64,
     #[serde(rename = "la")]
