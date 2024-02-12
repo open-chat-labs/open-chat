@@ -133,6 +133,7 @@ type DirectChatSummary = record {
     archived : bool;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
+    video_call_in_progress : opt VideoCall;
 };
 
 type DirectChatSummaryUpdates = record {
@@ -150,6 +151,7 @@ type DirectChatSummaryUpdates = record {
     archived : opt bool;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type DirectMessageNotification = record {
@@ -283,6 +285,7 @@ type GroupChatSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupCanisterGroupChatSummary = record {
@@ -317,6 +320,7 @@ type GroupCanisterGroupChatSummary = record {
     gate : opt AccessGate;
     rules_accepted : bool;
     membership : opt GroupMembership;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -348,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -407,6 +412,7 @@ type CommunityCanisterChannelSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     membership : opt GroupMembership;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupMembership = record {
@@ -469,6 +475,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     membership : opt GroupMembershipUpdates;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type GroupMembershipUpdates = record {
@@ -790,6 +797,7 @@ type MessageContentInitial = variant {
     GovernanceProposal : ProposalContent;
     Prize : PrizeContentInitial;
     P2PSwap : P2PSwapContentInitial;
+    VideoCall : VideoCallContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     Custom : CustomMessageContent;
@@ -811,6 +819,7 @@ type MessageContent = variant {
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     P2PSwap : P2PSwapContent;
+    VideoCall : VideoCallContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -1235,6 +1244,7 @@ type MessagePermissions = record {
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
     p2p_swap : opt PermissionRole;
+    video_call : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
@@ -1268,7 +1278,7 @@ type OptionalMessagePermissions = record {
     giphy : PermissionRoleUpdate;
     prize : PermissionRoleUpdate;
     p2p_swap : PermissionRoleUpdate;
-    p2p_trade : PermissionRoleUpdate;
+    video_call : PermissionRoleUpdate;
     custom_updated : vec CustomPermission;
     custom_deleted : vec text;
 };
@@ -1483,7 +1493,7 @@ type GroupGateUpdated = record {
 type VerifiedCredentialGate = record {
     issuer_origin : text;
     credential_type : text;
-    credential_arguments:  opt blob;
+    credential_arguments : opt blob;
 };
 
 type SnsNeuronGate = record {
@@ -1614,6 +1624,20 @@ type P2PSwapCompleted = record {
     token1_txn_out : nat64;
 };
 
+type VideoCallContentInitial = record {
+    initiator : UserId;
+};
+
+type VideoCallContent = record {
+    ended : opt TimestampMillis;
+    participants : vec CallParticipant;
+};
+
+type CallParticipant = record {
+    user_id : UserId;
+    joined : TimestampMillis;
+};
+
 type EmptyArgs = record {};
 
 type CommunityMatch = record {
@@ -1716,4 +1740,14 @@ type SwapStatusErrorExpired = record {
 
 type SwapStatusErrorCancelled = record {
     token0_txn_out : opt nat64;
+};
+
+type VideoCall = record {
+    message_index : MessageIndex;
+};
+
+type VideoCallUpdates = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : VideoCall;
 };
