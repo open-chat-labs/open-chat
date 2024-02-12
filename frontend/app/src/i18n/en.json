@@ -1241,6 +1241,9 @@
     "youreBlocked": "Sorry - you have been blocked from this group",
     "videoCall": {
         "switchCall": "You are already in a video call. Would you like to switch to this one?",
-        "callFailed": "Sorry, we were unable to start the video call"
+        "callFailed": "Sorry, we were unable to start the video call",
+        "toggleMic": "Toggle your microphone",
+        "toggleCam": "Toggle your camera",
+        "disconnect": "Disconnect from the call"
     }
 }

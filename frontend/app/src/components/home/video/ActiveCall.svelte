@@ -5,7 +5,7 @@
         type ChatSummary,
         OpenChat,
     } from "openchat-client";
-    import { activeVideoCall } from "../../../stores/video";
+    import { activeVideoCall, camera, microphone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import type { DailyThemeConfig } from "@daily-co/daily-js";
@@ -33,7 +33,7 @@
                 return;
             }
 
-            activeVideoCall.join(chat.id);
+            activeVideoCall.joining(chat.id);
 
             // first we need tojoin access jwt from the oc backend
             const token = await client.getVideoChatAccessToken(chat.id);
@@ -49,13 +49,20 @@
                 theme: getThemeConfig($currentTheme),
             });
 
-            activeVideoCall.setCall(chat.id, call);
-
             call.on("left-meeting", async () => {
                 activeVideoCall.endCall();
             });
 
+            call.on("participant-updated", (ev) => {
+                if (ev?.participant.local) {
+                    microphone.set(ev?.participant.tracks.audio.state !== "off");
+                    camera.set(ev?.participant.tracks.video.state !== "off");
+                }
+            });
+
             await call.join();
+
+            activeVideoCall.setCall(chat.id, call);
         } catch (err) {
             toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
             activeVideoCall.endCall();

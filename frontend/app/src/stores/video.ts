@@ -8,16 +8,22 @@ import { type ChatIdentifier } from "openchat-client";
 import { get, writable } from "svelte/store";
 
 export type ActiveVideoCall = {
+    status: "joining" | "joined";
     chatId: ChatIdentifier;
     call?: DailyCall;
 };
 
 const store = writable<ActiveVideoCall | undefined>(undefined);
 
+export const microphone = writable<boolean>(false);
+export const camera = writable<boolean>(false);
+export const sharing = writable<boolean>(false);
+
 export const activeVideoCall = {
     subscribe: store.subscribe,
     setCall: (chatId: ChatIdentifier, call: DailyCall) => {
         return store.set({
+            status: "joined",
             chatId,
             call,
         });
@@ -27,6 +33,9 @@ export const activeVideoCall = {
             if (current !== undefined && current.call) {
                 current.call.destroy();
             }
+            microphone.set(false);
+            camera.set(false);
+            sharing.set(false);
             return undefined;
         });
     },
@@ -50,8 +59,9 @@ export const activeVideoCall = {
             return current;
         });
     },
-    join: (chatId: ChatIdentifier) => {
+    joining: (chatId: ChatIdentifier) => {
         return store.set({
+            status: "joining",
             chatId,
         });
     },
