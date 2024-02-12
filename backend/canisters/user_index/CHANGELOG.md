@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Push backdated `user_registered` events for existing users ([#5345](https://github.com/open-chat-labs/open-chat/pull/5345))
+
+### Changed
+
+- Log `info` level message rather than `trace` when jobs start / stop ([#5348](https://github.com/open-chat-labs/open-chat/pull/5348))
+- Add more details of background jobs to metrics ([#5349](https://github.com/open-chat-labs/open-chat/pull/5349))
+
+## [[2.0.1054](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1054-user_index)] - 2024-02-09
+
+### Added
+
+- Track `user_registered` and `diamond_membership_payment` events ([#5342](https://github.com/open-chat-labs/open-chat/pull/5342))
+- Expose `EventSinkClientInfo` in metrics ([#5344](https://github.com/open-chat-labs/open-chat/pull/5344))
+
 ## [[2.0.1047](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1047-user_index)] - 2024-02-05
 
 ### Added

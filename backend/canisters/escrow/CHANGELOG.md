@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1050](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1050-escrow)] - 2024-02-08
+
+### Changed
+
+- Another attempt to refund SNEED from failed p2p swaps ([#5339](https://github.com/open-chat-labs/open-chat/pull/5339))
+
+## [[2.0.1049](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1049-escrow)] - 2024-02-08
+
 ### Changed
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))

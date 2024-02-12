@@ -25,10 +25,6 @@ impl Swaps {
         self.map.get_mut(&id)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Swap> {
-        self.map.values()
-    }
-
     pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
         let mut metrics = SwapMetrics {
             total: self.map.len() as u32,

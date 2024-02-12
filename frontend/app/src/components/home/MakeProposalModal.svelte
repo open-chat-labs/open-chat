@@ -425,6 +425,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenInfoUrl}
+                                countdown
                                 placeholder={i18nKey("https://token.com/info")} />
                         </section>
                         <section>
@@ -434,6 +435,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenHowToBuyUrl}
+                                countdown
                                 placeholder={i18nKey("https://token.com/how-to-buy")} />
                         </section>
                         <section>
@@ -445,6 +447,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenTransactionUrlFormat}
+                                countdown
                                 placeholder={i18nKey(
                                     `https://token.com/transactions/{transaction_index}`,
                                 )} />
@@ -457,6 +460,7 @@
                                 minlength={0}
                                 maxlength={10000}
                                 bind:value={addTokenLogo}
+                                countdown
                                 placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
                     </div>

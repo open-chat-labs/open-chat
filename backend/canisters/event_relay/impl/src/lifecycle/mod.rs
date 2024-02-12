@@ -32,7 +32,12 @@ fn reseed_rng() {
         let seed = get_random_seed().await;
         mutate_state(|state| {
             state.data.rng_seed = seed;
-            state.env = Box::new(CanisterEnv::new(seed))
+            state.env = Box::new(CanisterEnv::new(seed));
+
+            // We only want to set the salt once
+            if state.data.salt == [0; 32] {
+                state.data.salt = seed;
+            }
         });
         trace!("Successfully reseeded rng");
     }
