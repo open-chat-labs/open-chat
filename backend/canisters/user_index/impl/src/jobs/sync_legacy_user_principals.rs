@@ -3,7 +3,7 @@ use candid::Principal;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::info;
 use types::CanisterId;
 
 const BATCH_SIZE: usize = 1000;
@@ -35,7 +35,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
 }
 
 fn run() {
-    trace!("'sync_legacy_user_principals' job running");
+    info!("'sync_legacy_user_principals' job running");
     TIMER_ID.set(None);
 
     if let Some((canister_id, principals)) = mutate_state(next_batch) {
