@@ -3,7 +3,7 @@ use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::info;
 use types::{BuildVersion, CanisterId};
 use utils::canister::{install, FailedUpgrade};
 
@@ -20,7 +20,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'upgrade_canisters' job started");
+        info!("'upgrade_canisters' job started");
         true
     } else {
         false
@@ -34,7 +34,7 @@ fn run() {
         GetNextResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.take() {
                 ic_cdk_timers::clear_timer(timer_id);
-                trace!("'upgrade_canisters' job stopped");
+                info!("'upgrade_canisters' job stopped");
             }
         }
     }

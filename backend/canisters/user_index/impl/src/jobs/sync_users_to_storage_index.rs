@@ -3,7 +3,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
-use tracing::trace;
+use tracing::info;
 use types::CanisterId;
 
 thread_local! {
@@ -33,7 +33,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
 }
 
 fn run() {
-    trace!("'sync_users_to_storage_index' job running");
+    info!("'sync_users_to_storage_index' job running");
     TIMER_ID.set(None);
 
     if let Some((canister_id, users)) = mutate_state(next_batch) {
