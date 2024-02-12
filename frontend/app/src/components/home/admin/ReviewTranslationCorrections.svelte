@@ -20,6 +20,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
 
@@ -49,7 +50,9 @@
             all.add(c.locale);
             return all;
         }, new Set<string>());
-        await Promise.all([...locales].map((l) => locale.set(l)));
+        for (const l in locales) {
+            await locale.set(l);
+        }
         await locale.set(currentLocale);
     }
 
@@ -148,7 +151,7 @@
         <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>
 </div>
-<div class="translation-corrections">
+<div use:menuCloser class="translation-corrections">
     <table class="data">
         <thead>
             <tr>
@@ -249,7 +252,10 @@
 
 <style lang="scss">
     .translation-corrections {
-        padding: $sp3 $sp4 $sp4 $sp4;
+        margin-top: $sp3;
+        padding: 0 $sp4 $sp4 $sp4;
+        flex: auto;
+        @include nice-scrollbar();
     }
 
     .balance {
@@ -278,8 +284,10 @@
         }
     }
 
-    tbody {
-        position: relative;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px; // this will scroll horizontally on mobile
     }
 
     thead {
@@ -288,10 +296,8 @@
         z-index: 1;
     }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 600px; // this will scroll horizontally on mobile
+    tbody {
+        position: relative;
     }
 
     tr {

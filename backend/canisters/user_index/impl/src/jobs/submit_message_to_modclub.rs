@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::{error, info};
 use types::CanisterId;
 
 thread_local! {
@@ -21,7 +21,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    trace!("'submit_message_to_modclub' job running");
+    info!("'submit_message_to_modclub' job running");
     TIMER_ID.set(None);
 
     let (pending_submission, modclub_canister_id) = mutate_state(|state| {
@@ -50,7 +50,7 @@ async fn process_submission(modclub_canister_id: CanisterId, pending_submission:
 }
 
 async fn submit_message(modclub_canister_id: CanisterId, pending_submission: &PendingModclubSubmission) -> bool {
-    trace!("'submit_message_to_modclub' submit_message");
+    info!("'submit_message_to_modclub' submit_message");
 
     let args = (
         pending_submission.report_index.to_string(),

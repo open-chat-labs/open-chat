@@ -7,6 +7,7 @@ cd $SCRIPT_DIR/..
 WASM_SRC=${1:-build}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
+POCKET_IC_SERVER_VERSION="3.0.0"
 
 if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then
@@ -29,7 +30,7 @@ fi
 
 cd backend/integration_tests
 echo "PocketIC download starting"
-curl -sO https://download.dfinity.systems/ic/a7862784e8da4a97a1d608fd5b3db365de41a2d7/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
+curl -Ls https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-x86_64-${PLATFORM}.gz -o pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz
 chmod +x pocket-ic
 echo "PocketIC download completed"

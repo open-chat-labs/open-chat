@@ -201,7 +201,7 @@
 
         labelObserver = new IntersectionObserver((_entries: IntersectionObserverEntry[]) => {
             const labels = [
-                ...document.querySelectorAll(".date-label[data-timestamp]:not(.floating)"),
+                ...messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ?? [],
             ];
             if (!reverseScroll) {
                 labels.reverse();

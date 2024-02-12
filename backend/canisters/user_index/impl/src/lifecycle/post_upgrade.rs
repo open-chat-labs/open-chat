@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{mutate_state, Data, UserRegisteredEventPayload};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -35,6 +35,25 @@ fn post_upgrade(args: Args) {
                 .extend(state.data.users.iter().map(|u| u.principal));
 
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+        }
+
+        let source = Some(state.env.canister_id().to_text());
+
+        // Push an event for each user who registered before the previous upgrade
+        for user in state.data.users.iter().filter(|u| u.date_created < 1707486762394) {
+            let payload = serde_json::to_vec(&UserRegisteredEventPayload {
+                referred: user.referred_by.is_some(),
+                is_bot: user.is_bot,
+            })
+            .unwrap();
+
+            state.data.event_sink_client.push_event(event_sink_client::Event {
+                name: "user_registered".to_string(),
+                timestamp: user.date_created,
+                user: Some(user.user_id.to_string()),
+                source: source.clone(),
+                payload,
+            });
         }
     });
 }

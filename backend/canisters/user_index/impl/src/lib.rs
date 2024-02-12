@@ -206,6 +206,12 @@ impl RuntimeState {
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_sink_client_info,
+            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
+            pending_payments: self.data.pending_payments_queue.len(),
+            pending_user_principal_updates: self.data.user_principal_updates_queue.len(),
+            pending_legacy_principals_to_sync: self.data.legacy_principals_sync_queue.len(),
+            pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
+            reporting_metrics: self.data.reported_messages.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -218,8 +224,6 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
-            reporting_metrics: self.data.reported_messages.metrics(),
         }
     }
 }
@@ -241,7 +245,6 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
@@ -267,13 +270,6 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
     pub legacy_principals_synced: bool,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
-    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
-        .with_flush_delay(Duration::from_secs(60))
-        .build()
 }
 
 impl Data {
@@ -454,9 +450,13 @@ pub struct Metrics {
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_sink_client_info: EventSinkClientInfo,
-    pub canister_ids: CanisterIds,
     pub pending_modclub_submissions: usize,
+    pub pending_payments: usize,
+    pub pending_user_principal_updates: usize,
+    pub pending_legacy_principals_to_sync: usize,
+    pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug, Default)]
