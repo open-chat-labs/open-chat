@@ -182,7 +182,7 @@ itertools = "0.11.0"
 lazy_static = "1.4.0"
 num-traits = "0.2.17"
 openssl = "0.10.60"
-pocket-ic = "2.0.1"
+pocket-ic = "2.1.0"
 proc-macro2 = "1.0.69"
 pulldown-cmark = { version = "0.9.3", default-features = false }
 quote = "1.0.33"
@@ -221,4 +221,3 @@ debug = false
 
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "1833cb37ecfd6154cc9cc55b5de76329114e8c5f" }
-pocket-ic = { git = "https://github.com/dfinity/ic", rev = "a7862784e8da4a97a1d608fd5b3db365de41a2d7" }

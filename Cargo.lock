@@ -4740,8 +4740,9 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "pocket-ic"
-version = "2.0.1"
-source = "git+https://github.com/dfinity/ic?rev=a7862784e8da4a97a1d608fd5b3db365de41a2d7#a7862784e8da4a97a1d608fd5b3db365de41a2d7"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a233a32929c365d3ff97c98afdaad197faaf7e2778e1a5635ec3f5bdbca374da"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
@@ -5204,11 +5205,13 @@ dependencies = [
  "http-body",
  "hyper",
  "hyper-rustls",
+ "hyper-tls",
  "ipnet",
  "js-sys",
  "log",
  "mime",
  "mime_guess",
+ "native-tls",
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
@@ -5220,6 +5223,7 @@ dependencies = [
  "sync_wrapper",
  "system-configuration",
  "tokio",
+ "tokio-native-tls",
  "tokio-rustls",
  "tokio-util",
  "tower-service",
