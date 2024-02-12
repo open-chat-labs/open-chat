@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::info;
 use types::UserId;
 
 const MAX_CANISTERS_TO_NOTIFY_PER_HEARTBEAT: u32 = 5;
@@ -23,7 +23,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    trace!("'notify_user_principal_migrations' job running");
+    info!("'notify_user_principal_migrations' job running");
     TIMER_ID.set(None);
 
     let next_batch = mutate_state(next_batch);
