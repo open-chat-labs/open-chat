@@ -210,7 +210,7 @@ fn send_message_impl(
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
     } else {
-        args.content.clone().try_into().unwrap()
+        MessageContentInternal::from_initial(args.content.clone(), now).unwrap()
     };
 
     let push_message_args = PushMessageArgs {
@@ -327,7 +327,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         sender: recipient,
                         thread_root_message_index: None,
                         message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                        content: message.content.try_into().unwrap(),
+                        content: MessageContentInternal::from_initial(message.content, now).unwrap(),
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,

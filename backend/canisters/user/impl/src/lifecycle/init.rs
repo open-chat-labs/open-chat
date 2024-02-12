@@ -1,9 +1,9 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
+use chat_events::MessageContentInternal;
 use ic_cdk_macros::init;
 use tracing::info;
-use types::MessageContentInitial;
 use user_canister::init::Args;
 use utils::env::Environment;
 
@@ -13,6 +13,7 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
     let env = init_env([0; 32]);
+    let now = env.now();
 
     let data = Data::new(
         args.owner,
@@ -24,15 +25,14 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.username,
         args.test_mode,
-        env.now(),
+        now,
     );
 
     init_state(env, data, args.wasm_version);
 
     mutate_state(|state| {
         for message in args.openchat_bot_messages {
-            let initial_content: MessageContentInitial = message.into();
-            openchat_bot::send_message(initial_content.try_into().unwrap(), true, state);
+            openchat_bot::send_message(MessageContentInternal::from_initial(message, now).unwrap(), true, state);
         }
     });
 

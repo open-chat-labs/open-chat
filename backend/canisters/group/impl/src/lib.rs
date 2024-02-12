@@ -22,11 +22,11 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use types::SNS_FEE_SHARE_PERCENT;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
     Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    SNS_FEE_SHARE_PERCENT,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -216,6 +216,7 @@ impl RuntimeState {
             gate: chat.gate.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
+            video_call_in_progress: chat.video_call_in_progress.value.clone(),
         }
     }
 

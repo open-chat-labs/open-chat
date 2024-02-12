@@ -30,6 +30,7 @@ pub(crate) fn c2c_edit_message_impl(args: Args, caller_user_id: UserId, state: &
             now,
         };
 
+        // TODO: This should just take/edit text
         match chat.events.edit_message(edit_message_args) {
             EditMessageResult::Success => Success,
             EditMessageResult::NotAuthorized => MessageNotFound,

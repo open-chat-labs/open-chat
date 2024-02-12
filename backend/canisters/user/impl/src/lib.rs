@@ -21,7 +21,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, UserId, VideoCall,
 };
 use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -191,6 +191,8 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
+    #[serde(default)]
+    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
     pub rng_seed: [u8; 32],
 }
 
@@ -241,6 +243,7 @@ impl Data {
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: CanisterEventSyncQueue::default(),
+            video_call_in_progress: Timestamped::default(),
             rng_seed: [0; 32],
         }
     }

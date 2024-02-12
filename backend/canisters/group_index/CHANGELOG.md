@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1025](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1025-group_index)] - 2024-01-25
 
+### Added
+
+- VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
+
 ### Changed
 
 - Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))

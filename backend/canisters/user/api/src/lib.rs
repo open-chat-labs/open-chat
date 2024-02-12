@@ -95,6 +95,7 @@ pub enum Event {
     StorageUpgraded(Box<StorageUpgraded>),
     ReferredUserRegistered(Box<ReferredUserRegistered>),
     UserSuspended(Box<UserSuspended>),
+    // TODO: This should take MessageContentInitial
     OpenChatBotMessage(Box<MessageContent>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),

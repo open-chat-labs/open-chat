@@ -171,7 +171,7 @@ impl ChatEvents {
                         let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                             != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
 
-                        message.content = args.content.try_into().unwrap();
+                        message.content = MessageContentInternal::from_initial(args.content, args.now).unwrap();
                         message.last_updated = Some(args.now);
 
                         if edited {
