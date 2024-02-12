@@ -15,7 +15,7 @@ jobs:
       - name: Wait for wasms to be built
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
-          ref: master
+          ref: $GITHUB_SHA
           check-name: "Push canister wasms"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download canister wasms
