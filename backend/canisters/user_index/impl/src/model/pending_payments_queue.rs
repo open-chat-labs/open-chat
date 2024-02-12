@@ -20,6 +20,10 @@ impl PendingPaymentsQueue {
     pub fn is_empty(&self) -> bool {
         self.pending_payments.is_empty()
     }
+
+    pub fn len(&self) -> usize {
+        self.pending_payments.len()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
