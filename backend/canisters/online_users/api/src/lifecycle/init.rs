@@ -6,6 +6,7 @@ use types::{BuildVersion, CanisterId};
 pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub event_relay_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

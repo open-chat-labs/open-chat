@@ -360,14 +360,15 @@ import type {
     Level,
     VersionedRules,
     DiamondMembershipStatus,
-    TranslationCorrections,
-    TranslationCorrection,
     Success,
     Failure,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     CommunityDetailsResponse,
     GroupChatDetailsResponse,
+    CandidateTranslations,
+    ProposeResponse,
+    RejectReason,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -406,6 +407,7 @@ import {
     isPaymentGate,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
+    LEDGER_CANISTER_CHAT,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1185,8 +1187,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return verifyCredential(
             this.config.internetIdentityUrl,
             this._identity!.getPrincipal().toString(),
-            gate.issuerOrigin,
-            gate.credentialId,
+            gate.credential.issuerOrigin,
+            gate.credential.credentialType,
+            gate.credential.credentialArguments,
+            this.config.iiDerivationOrigin,
         );
     }
 
@@ -4273,6 +4277,15 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => 0n);
     }
 
+    refreshTranslationsBalance(): Promise<bigint> {
+        return this.sendRequest({
+            kind: "refreshAccountBalance",
+            ledger: LEDGER_CANISTER_CHAT,
+            principal: this.config.translationsCanister,
+        })
+        .catch(() => 0n);
+    }
+
     async getAccountTransactions(
         ledgerIndex: string,
         fromId?: bigint,
@@ -5567,50 +5580,57 @@ export class OpenChat extends OpenChatAgentWorker {
         return community.localUserIndex;
     }
 
-    setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
-        const correction = {
+    // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
+    // This is just so that we have the option to look at it in the UI to check for layout problems
+    previewTranslationCorrection(key: string, value: string): void {
+        applyTranslationCorrection("en-GB", key, value);
+    }
+
+    proposeTranslationCorrection(
+        locale: string,
+        key: string,
+        value: string,
+    ): Promise<ProposeResponse> {
+        return this.sendRequest({
+            kind: "proposeTranslation",
             locale,
             key,
             value,
-            proposedBy: this._liveState.user.userId,
-            proposedAt: Date.now(),
-            approved: false,
-        };
-        return this.sendRequest({
-            kind: "setTranslationCorrection",
-            correction,
         })
-            .then((success) => {
-                if (success) {
-                    applyTranslationCorrection(correction);
+            .then((res) => {
+                if (res === "success") {
+                    applyTranslationCorrection(locale, key, value);
                 }
-                return success;
+                return res;
             })
+            .catch(() => "failure");
+    }
+
+    getProposedTranslationCorrections(): Promise<CandidateTranslations[]> {
+        return this.sendRequest({
+            kind: "getProposedTranslations",
+        })
+            .then((res) => (res.kind === "success" ? res.proposed : []))
+            .catch(() => []);
+    }
+
+    rejectTranslationCorrection(id: bigint, reason: RejectReason): Promise<boolean> {
+        return this.sendRequest({
+            kind: "rejectTranslation",
+            id,
+            reason,
+        })
+            .then((res) => res === "success")
             .catch(() => false);
     }
 
-    getTranslationCorrections(): Promise<TranslationCorrections> {
+    approveTranslationCorrection(id: bigint): Promise<boolean> {
         return this.sendRequest({
-            kind: "getTranslationCorrections",
-        });
-    }
-
-    rejectTranslationCorrection(
-        correction: TranslationCorrection,
-    ): Promise<TranslationCorrections> {
-        return this.sendRequest({
-            kind: "rejectTranslationCorrection",
-            correction,
-        });
-    }
-
-    approveTranslationCorrection(
-        correction: TranslationCorrection,
-    ): Promise<TranslationCorrections> {
-        return this.sendRequest({
-            kind: "approveTranslationCorrection",
-            correction,
-        });
+            kind: "approveTranslation",
+            id,
+        })
+            .then((res) => res === "success")
+            .catch(() => false);
     }
 
     // **** Communities Stuff

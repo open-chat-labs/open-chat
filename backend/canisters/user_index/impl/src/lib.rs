@@ -7,6 +7,8 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
+use event_sink_client_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
@@ -20,6 +22,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId,
@@ -148,6 +151,18 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    pub fn track_event<T: Serialize>(&mut self, name: &str, timestamp: TimestampMillis, user: Option<UserId>, payload: T) {
+        let payload_json = serde_json::to_vec(&payload).unwrap();
+
+        self.data.event_sink_client.push_event(event_sink_client::Event {
+            name: name.to_string(),
+            timestamp,
+            user: user.map(|u| u.to_string()),
+            source: Some(self.env.canister_id().to_text()),
+            payload: payload_json,
+        });
+    }
+
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
@@ -161,6 +176,9 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let event_sink_client_info = self.data.event_sink_client.info();
+        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
+
         Metrics {
             memory_used: utils::memory::used(),
             now: self.env.now(),
@@ -187,6 +205,13 @@ impl RuntimeState {
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
+            event_sink_client_info,
+            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
+            pending_payments: self.data.pending_payments_queue.len(),
+            pending_user_principal_updates: self.data.user_principal_updates_queue.len(),
+            pending_legacy_principals_to_sync: self.data.legacy_principals_sync_queue.len(),
+            pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
+            reporting_metrics: self.data.reported_messages.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -196,10 +221,9 @@ impl RuntimeState {
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
                 translations: self.data.translations_canister_id,
+                event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
-            reporting_metrics: self.data.reported_messages.metrics(),
         }
     }
 }
@@ -220,13 +244,11 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "translations_canister_id")]
     pub translations_canister_id: CanisterId,
+    pub event_sink_client: EventSinkClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(default)]
     pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
-    #[serde(default)]
     pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -247,12 +269,7 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
-    #[serde(default)]
     pub legacy_principals_synced: bool,
-}
-
-fn translations_canister_id() -> CanisterId {
-    Principal::from_text("lxq5i-mqaaa-aaaaf-bih7q-cai").unwrap()
 }
 
 impl Data {
@@ -268,6 +285,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
@@ -289,6 +307,9 @@ impl Data {
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
+            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_secs(60))
+                .build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -375,6 +396,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
+            event_sink_client: EventSinkClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -427,9 +449,14 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
-    pub canister_ids: CanisterIds,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub pending_modclub_submissions: usize,
+    pub pending_payments: usize,
+    pub pending_user_principal_updates: usize,
+    pub pending_legacy_principals_to_sync: usize,
+    pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -459,6 +486,12 @@ pub struct NnsNeuron {
     pub subaccount: Subaccount,
 }
 
+#[derive(Serialize)]
+struct UserRegisteredEventPayload {
+    referred: bool,
+    is_bot: bool,
+}
+
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub group_index: CanisterId,
@@ -468,6 +501,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,
-    pub internet_identity: CanisterId,
     pub translations: CanisterId,
+    pub event_relay: CanisterId,
+    pub internet_identity: CanisterId,
 }

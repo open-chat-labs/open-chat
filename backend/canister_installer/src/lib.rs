@@ -36,6 +36,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
         set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
         set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -68,6 +69,7 @@ async fn install_service_canisters_impl(
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         escrow_canister_id: canister_ids.escrow,
+        event_relay_canister_id: canister_ids.event_relay,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
@@ -122,6 +124,7 @@ async fn install_service_canisters_impl(
     let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
+        event_relay_canister_id: canister_ids.event_relay,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -220,6 +223,15 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let event_relay_canister_wasm = get_canister_wasm(CanisterName::EventRelay, version);
+    let event_relay_init_args = event_relay_canister::init::Args {
+        push_events_whitelist: vec![canister_ids.user_index, canister_ids.online_users],
+        event_sink_canister_id: Principal::anonymous(),
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -288,7 +300,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join3(
+    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -306,6 +318,12 @@ async fn install_service_canisters_impl(
             &canister_ids.translations,
             &translations_canister_wasm.module,
             translations_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.event_relay,
+            &event_relay_canister_wasm.module,
+            event_relay_init_args,
         ),
     )
     .await;

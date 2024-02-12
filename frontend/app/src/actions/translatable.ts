@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { _, locale, dictionary } from "svelte-i18n";
+import { locale, dictionary } from "svelte-i18n";
 import { editmode, editingLabel, type ResourceKey } from "../i18n/i18n";
 import { derived, get } from "svelte/store";
 import { currentTheme } from "../theme/themes";
@@ -59,10 +59,17 @@ type Param = {
 
 export function translatable(node: HTMLElement, param: Param) {
     if (param.key === undefined) return;
-    const resourceKey = param.key;
+    let resourceKey = param.key;
     const position = param.position ?? "relative";
     const top = param.top ?? 4;
     const right = param.right;
+
+    // this will be called if the parameter changes on this node
+    const update = (param: Param) => {
+        if (param.key !== undefined) {
+            resourceKey = param.key;
+        }
+    };
 
     const editable = derived(
         [locale, dictionary, editmode],
@@ -97,9 +104,10 @@ export function translatable(node: HTMLElement, param: Param) {
         }
     });
 
+    const destroy = unsub;
+
     return {
-        destroy() {
-            unsub();
-        },
+        destroy,
+        update,
     };
 }

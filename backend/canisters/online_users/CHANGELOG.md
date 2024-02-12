@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1053-online_users)] - 2024-02-09
+
+### Added
+
+- Push `user_online` events to the `event_relay` canister ([#5337](https://github.com/open-chat-labs/open-chat/pull/5337))
+
 ### Changed
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))

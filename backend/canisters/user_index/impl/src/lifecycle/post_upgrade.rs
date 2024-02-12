@@ -1,10 +1,9 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{mutate_state, Data, UserRegisteredEventPayload};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use local_user_index_canister::Event;
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
@@ -38,20 +37,23 @@ fn post_upgrade(args: Args) {
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
 
-        // Post release - remove this
-        let now = state.env.now();
-        for user in state.data.users.iter() {
-            if let Some(expires_at) = user.diamond_membership_details.expires_at() {
-                if expires_at > now {
-                    for local_user_index_canister_id in state.data.local_index_map.canisters() {
-                        state.data.user_index_event_sync_queue.push(
-                            *local_user_index_canister_id,
-                            Event::DiamondMembershipExpiryDate(user.user_id, expires_at),
-                        );
-                    }
-                }
-            }
+        let source = Some(state.env.canister_id().to_text());
+
+        // Push an event for each user who registered before the previous upgrade
+        for user in state.data.users.iter().filter(|u| u.date_created < 1707486762394) {
+            let payload = serde_json::to_vec(&UserRegisteredEventPayload {
+                referred: user.referred_by.is_some(),
+                is_bot: user.is_bot,
+            })
+            .unwrap();
+
+            state.data.event_sink_client.push_event(event_sink_client::Event {
+                name: "user_registered".to_string(),
+                timestamp: user.date_created,
+                user: Some(user.user_id.to_string()),
+                source: source.clone(),
+                payload,
+            });
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
     });
 }

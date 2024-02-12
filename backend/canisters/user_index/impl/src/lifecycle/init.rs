@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.cycles_dispenser_canister_id,
         args.storage_index_canister_id,
         args.escrow_canister_id,
+        args.event_relay_canister_id,
         args.nns_governance_canister_id,
         args.internet_identity_canister_id,
         args.translations_canister_id,

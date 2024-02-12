@@ -22,6 +22,8 @@ members = [
     "backend/canisters/escrow/api",
     "backend/canisters/escrow/c2c_client",
     "backend/canisters/escrow/impl",
+    "backend/canisters/event_relay/api",
+    "backend/canisters/event_relay/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -140,6 +142,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/translation_tool",
 ]
 resolver = "2"
 
@@ -151,24 +154,28 @@ aws-sdk-dynamodb = "0.35.0"
 aws-types = "0.57.1"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.10.2"
+candid = "0.10.3"
 canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
-dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }
+dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
-ic-agent = "0.32.0"
+ic-agent = "0.33.0"
 ic-cdk = "=0.12.0"
 ic-cdk-macros = "0.8.4"
 ic-cdk-timers = "0.6.0"
 ic-ledger-types = "0.9.0"
 ic-stable-structures = "0.6.2"
-ic-transport-types = "0.32.0"
-ic-utils = "0.32.0"
+ic-transport-types = "0.33.0"
+ic-utils = "0.33.0"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.21.1"
 itertools = "0.11.0"

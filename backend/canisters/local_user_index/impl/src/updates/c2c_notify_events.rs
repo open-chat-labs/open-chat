@@ -14,12 +14,6 @@ use user_canister::{
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
-}
-
-#[update_msgpack(guard = "caller_is_user_index_canister")]
-#[trace]
 fn c2c_notify_user_index_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
 }
@@ -160,12 +154,6 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .data
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
-        }
-        Event::DiamondMembershipExpiryDate(user_id, expires_at) => {
-            state
-                .data
-                .global_users
-                .set_diamond_membership_expiry_date(user_id, expires_at);
         }
     }
 }

@@ -1,0 +1,34 @@
+[package]
+name = "event_relay_canister_impl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_logger = { path = "../../../libraries/canister_logger" }
+canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+event_relay_canister = { path = "../api" }
+event_sink_canister = { workspace = true }
+event_sink_client = { workspace = true }
+event_sink_client_cdk_runtime = { workspace = true }
+event_sink_utils = { workspace = true }
+http_request = { path = "../../../libraries/http_request" }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+serializer = { path = "../../../libraries/serializer" }
+sha256 = { path = "../../../libraries/sha256" }
+stable_memory = { path = "../../../libraries/stable_memory" }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

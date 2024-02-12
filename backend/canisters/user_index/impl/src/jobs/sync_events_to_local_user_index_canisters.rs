@@ -3,7 +3,7 @@ use ic_cdk_timers::TimerId;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::info;
 use types::CanisterId;
 
 thread_local! {
@@ -33,7 +33,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
 }
 
 fn run() {
-    trace!("'sync_events_to_local_user_index_canisters' job running");
+    info!("'sync_events_to_local_user_index_canisters' job running");
     TIMER_ID.set(None);
 
     if let Some(batch) = mutate_state(next_batch) {

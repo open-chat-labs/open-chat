@@ -38,6 +38,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_relay
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \

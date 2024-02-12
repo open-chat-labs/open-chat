@@ -13,11 +13,15 @@ export type NoGate = { kind: "no_gate" };
 
 export type NftGate = { kind: "nft_gate" };
 
-// TODO - this might end up being more complex e.g. a credential might not simply be a string it might be more complex like e.g. age > 18
+export type Credential = {
+    issuerOrigin: string;
+    credentialType: string;
+    credentialArguments?: Record<string, string | number>;
+};
+
 export type CredentialGate = {
     kind: "credential_gate";
-    issuerOrigin: string;
-    credentialId: string;
+    credential: Credential;
 };
 
 export type NeuronGate = {
