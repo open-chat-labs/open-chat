@@ -410,6 +410,8 @@
     }
 
     .operator {
+        flex: auto;
+        @include nice-scrollbar();
         padding: $sp4;
         max-width: 600px;
     }
