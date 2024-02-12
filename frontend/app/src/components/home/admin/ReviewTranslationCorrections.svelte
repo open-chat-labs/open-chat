@@ -20,6 +20,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
 
@@ -150,7 +151,7 @@
         <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>
 </div>
-<div class="translation-corrections">
+<div use:menuCloser class="translation-corrections">
     <table class="data">
         <thead>
             <tr>
