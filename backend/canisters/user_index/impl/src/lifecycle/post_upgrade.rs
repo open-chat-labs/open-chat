@@ -5,6 +5,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
@@ -36,7 +37,13 @@ fn post_upgrade(args: Args) {
 
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
+    });
 
+    ic_cdk_timers::set_timer(Duration::ZERO, push_user_registered_events);
+}
+
+fn push_user_registered_events() {
+    mutate_state(|state| {
         let source = Some(state.env.canister_id().to_text());
 
         // Push an event for each user who registered before the previous upgrade
