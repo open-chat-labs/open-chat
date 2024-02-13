@@ -225,6 +225,7 @@ impl MessageContentInitial {
         is_direct_chat: bool,
         sender_is_bot: bool,
         forwarding: bool,
+        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
@@ -261,6 +262,9 @@ impl MessageContentInitial {
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_) => {
                 return Err(ContentValidationError::Unauthorized);
+            }
+            MessageContentInitial::VideoCall(_) if !is_caller_video_call_operator => {
+                return Err(ContentValidationError::Unauthorized)
             }
             _ => {}
         };

@@ -157,9 +157,13 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     }
 
     let now = state.env.now();
-
+    let is_caller_video_call_operator = state.is_caller_video_call_operator();
     let my_user_id: UserId = state.env.canister_id().into();
-    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
+
+    if let Err(error) = args
+        .content
+        .validate_for_new_message(true, false, args.forwarding, is_caller_video_call_operator, now)
+    {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),

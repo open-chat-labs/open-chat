@@ -532,11 +532,14 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+        if let Err(error) =
+            content.validate_for_new_message(false, sender_is_bot, forwarding, is_caller_video_call_operator, now)
+        {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
