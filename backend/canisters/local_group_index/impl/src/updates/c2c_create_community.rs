@@ -92,6 +92,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
+        video_call_operators: state.data.video_call_operators.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };

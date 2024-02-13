@@ -159,6 +159,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         openchat_bot_messages,
+        video_call_operators: state.data.video_call_operators.clone(),
         test_mode: state.data.test_mode,
     };
 

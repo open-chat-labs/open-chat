@@ -58,6 +58,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
+                video_call_operators: state.data.video_call_operators.clone(),
                 test_mode: state.data.test_mode,
             },
         })

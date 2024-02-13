@@ -1,4 +1,5 @@
 use crate::model::local_community_map::LocalCommunityMap;
+use candid::Principal;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
@@ -123,7 +124,14 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    pub video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 impl Data {
@@ -138,6 +146,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -165,6 +174,7 @@ impl Data {
             max_concurrent_community_upgrades: 10,
             community_upgrade_concurrency: 2,
             rng_seed: [0; 32],
+            video_call_operators,
         }
     }
 }

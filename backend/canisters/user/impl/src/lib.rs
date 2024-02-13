@@ -93,6 +93,11 @@ impl RuntimeState {
         self.data.communities.exists(&caller.into())
     }
 
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
+    }
+
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
         let args = c2c_push_notification::Args {
             recipients: vec![recipient],
@@ -191,9 +196,16 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    video_call_operators: Vec<Principal>,
     #[serde(default)]
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
     pub rng_seed: [u8; 32],
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 impl Data {
@@ -206,6 +218,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
         username: String,
         test_mode: bool,
         now: TimestampMillis,
@@ -243,6 +256,7 @@ impl Data {
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: CanisterEventSyncQueue::default(),
+            video_call_operators,
             video_call_in_progress: Timestamped::default(),
             rng_seed: [0; 32],
         }

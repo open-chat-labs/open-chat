@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.proposals_bot_canister_id,
         args.escrow_canister_id,
+        args.video_call_operators,
         args.username,
         args.test_mode,
         now,
