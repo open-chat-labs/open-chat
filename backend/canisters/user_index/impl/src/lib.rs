@@ -154,7 +154,7 @@ impl RuntimeState {
     pub fn track_event<T: Serialize>(&mut self, name: &str, timestamp: TimestampMillis, user: Option<UserId>, payload: T) {
         let payload_json = serde_json::to_vec(&payload).unwrap();
 
-        self.data.event_sink_client.push_event(event_sink_client::Event {
+        self.data.event_sink_client.push(event_sink_client::Event {
             name: name.to_string(),
             timestamp,
             user: user.map(|u| u.to_string()),

@@ -18,7 +18,7 @@ fn push_events_impl(args: Args, state: &mut RuntimeState) {
         if state.data.event_deduper.try_push(event.idempotency_key, now) {
             let user = event.user.map(|u| state.data.obfuscate_user(u));
 
-            state.data.events_sink_client.push_event(Event {
+            state.data.events_sink_client.push(Event {
                 name: event.name,
                 timestamp: event.timestamp,
                 user,

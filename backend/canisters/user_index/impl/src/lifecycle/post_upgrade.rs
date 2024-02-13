@@ -54,7 +54,7 @@ fn push_user_registered_events() {
             })
             .unwrap();
 
-            state.data.event_sink_client.push_event(event_sink_client::Event {
+            state.data.event_sink_client.push(event_sink_client::Event {
                 name: "user_registered".to_string(),
                 timestamp: user.date_created,
                 user: Some(user.user_id.to_string()),
