@@ -36,6 +36,7 @@ pub mod delete_direct_chat;
 pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;
+pub mod end_video_call;
 pub mod leave_community;
 pub mod leave_group;
 pub mod manage_favourite_chats;

@@ -152,4 +152,13 @@ impl DirectChat {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
+
+    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if self.events.end_video_call(message_index, now) {
+            self.video_call_in_progress = Timestamped::new(None, now);
+            true
+        } else {
+            false
+        }
+    }
 }

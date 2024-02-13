@@ -592,6 +592,16 @@ type EnableInviteCodeResponse = variant {
     CommunityFrozen;
 };
 
+type EndVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_index : MessageIndex;
+};
+
+type EndVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+};
+
 type ImportGroupArgs = record {
     group_id : ChatId;
 };
@@ -1021,6 +1031,7 @@ service : {
     disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);

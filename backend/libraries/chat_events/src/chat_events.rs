@@ -1435,6 +1435,20 @@ impl ChatEvents {
         &self.main
     }
 
+    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if let Some(video_call) = self
+            .main
+            .get_event_mut(message_index.into(), EventIndex::default())
+            .and_then(|e| e.event.as_message_mut())
+            .and_then(|m| if let MessageContentInternal::VideoCall(c) = &mut m.content { Some(c) } else { None })
+        {
+            video_call.ended = Some(now);
+            true
+        } else {
+            false
+        }
+    }
+
     fn events_list(
         &self,
         min_visible_event_index: EventIndex,

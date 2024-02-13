@@ -54,6 +54,7 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+    // TODO: Remove serde(default)
     #[serde(default)]
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
@@ -1619,6 +1620,15 @@ impl GroupChatCore {
                     member.unfollowed_threads.retain(|&m| m != thread_root_message_index);
                 }
             }
+        }
+    }
+
+    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if self.events.end_video_call(message_index, now) {
+            self.video_call_in_progress = Timestamped::new(None, now);
+            true
+        } else {
+            false
         }
     }
 

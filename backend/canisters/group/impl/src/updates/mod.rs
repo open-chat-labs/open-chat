@@ -24,6 +24,7 @@ pub mod delete_messages;
 pub mod disable_invite_code;
 pub mod edit_message;
 pub mod enable_invite_code;
+pub mod end_video_call;
 pub mod follow_thread;
 pub mod pin_message;
 pub mod register_poll_vote;
