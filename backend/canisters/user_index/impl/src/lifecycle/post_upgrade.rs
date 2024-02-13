@@ -46,8 +46,7 @@ fn push_user_registered_events() {
     mutate_state(|state| {
         let source = Some(state.env.canister_id().to_text());
 
-        // Push an event for each user who registered before the previous upgrade
-        for user in state.data.users.iter().filter(|u| u.date_created < 1707486762394) {
+        for user in state.data.users.iter() {
             let payload = serde_json::to_vec(&UserRegisteredEventPayload {
                 referred: user.referred_by.is_some(),
                 is_bot: user.is_bot,

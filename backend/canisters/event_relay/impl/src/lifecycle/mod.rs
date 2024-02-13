@@ -11,9 +11,10 @@ mod post_upgrade;
 mod pre_upgrade;
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
-    if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
-    }
+    // Post release - remove this
+    // if rng_seed == [0; 32] {
+    ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
+    // }
     Box::new(CanisterEnv::new(rng_seed))
 }
 
