@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1058-event_relay)] - 2024-02-13
+
 ### Fixed
 
 - One time job to set the `salt` so that events are anonymised ([#5366](https://github.com/open-chat-labs/open-chat/pull/5366))
