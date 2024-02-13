@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Use `set_timer` rather than `set_timer_interval` ([#5369](https://github.com/open-chat-labs/open-chat/pull/5369))
+
+## [[2.0.1059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1059-user_index)] - 2024-02-13
+
+### Fixed
+
 - Push all `user_registered` events again now that they are being anonymised ([#5366](https://github.com/open-chat-labs/open-chat/pull/5366))
 
 ## [[2.0.1056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1056-user_index)] - 2024-02-13
