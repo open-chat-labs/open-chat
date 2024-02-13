@@ -149,9 +149,9 @@ resolver = "2"
 [workspace.dependencies]
 async-channel = "2.1.0"
 async-trait = "0.1.74"
-aws-config = "0.57.1"
-aws-sdk-dynamodb = "0.35.0"
-aws-types = "0.57.1"
+aws-config = "1.1.5"
+aws-sdk-dynamodb = "1.14.0"
+aws-types = "1.1.5"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.3"
@@ -161,15 +161,15 @@ clap = "4.4.8"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
-event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
-event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
-event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "57ddf07c793c5fc78d72a98e0440d55a4e36ab6c" }
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "dd239bb029827db8039034d7504c815d13130d58" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "dd239bb029827db8039034d7504c815d13130d58" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "dd239bb029827db8039034d7504c815d13130d58" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "dd239bb029827db8039034d7504c815d13130d58" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
 ic-agent = "0.33.0"
-ic-cdk = "=0.12.0"
+ic-cdk = "0.12.0"
 ic-cdk-macros = "0.8.4"
 ic-cdk-timers = "0.6.0"
 ic-ledger-types = "0.9.0"
@@ -178,18 +178,18 @@ ic-transport-types = "0.33.0"
 ic-utils = "0.33.0"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.21.1"
-itertools = "0.11.0"
+itertools = "0.12.1"
 lazy_static = "1.4.0"
 num-traits = "0.2.17"
 openssl = "0.10.60"
 pocket-ic = "2.1.0"
 proc-macro2 = "1.0.69"
-pulldown-cmark = { version = "0.9.3", default-features = false }
+pulldown-cmark = { version = "0.10.0", default-features = false, features = ["html"] }
 quote = "1.0.33"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
-range-set = "0.0.10"
+range-set = "0.0.11"
 regex-lite = "0.1.5"
 rmp-serde = "1.1.2"
 serde = "1.0.192"
