@@ -4282,8 +4282,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "refreshAccountBalance",
             ledger: LEDGER_CANISTER_CHAT,
             principal: this.config.translationsCanister,
-        })
-        .catch(() => 0n);
+        }).catch(() => 0n);
     }
 
     async getAccountTransactions(
@@ -5655,7 +5654,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private getRoomAccessToken(authToken: string): Promise<string> {
+    private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
@@ -5668,7 +5667,7 @@ export class OpenChat extends OpenChatAgentWorker {
             headers: headers,
         }).then((res) => {
             if (res.ok) {
-                return res.text();
+                return res.json();
             }
             if (res.status === 401) {
                 const msg =
@@ -5680,7 +5679,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<string> {
+    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<{ token: string; roomName: string }> {
         return this.getDailyAccessJWT(chatId).then((token) => {
             console.log("Token: ", token);
             return this.getRoomAccessToken(token);

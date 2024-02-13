@@ -38,7 +38,15 @@
 
     function alignVideoCall(call: ActiveVideoCall | undefined, chatId: ChatIdentifier | undefined) {
         if (call && chatIdentifiersEqual(call.chatId, chatId)) {
-            activeVideoCall.alignTo(middlePanel.getBoundingClientRect());
+            const callContainer = document.getElementById("video-call-container");
+            const rect = middlePanel.getBoundingClientRect();
+            if (callContainer) {
+                callContainer.style.setProperty("left", `${rect.left}px`);
+                callContainer.style.setProperty("width", `${rect.width}px`);
+                callContainer.style.setProperty("top", `${rect.top}px`);
+                callContainer.style.setProperty("height", `${rect.height}px`);
+            }
+            // activeVideoCall.alignTo(middlePanel.getBoundingClientRect());
         }
     }
 

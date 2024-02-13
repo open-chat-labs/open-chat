@@ -1,11 +1,6 @@
 <script lang="ts">
-    import {
-        chatIdentifiersEqual,
-        type ChatIdentifier,
-        type ChatSummary,
-        OpenChat,
-    } from "openchat-client";
-    import { activeVideoCall, camera, microphone } from "../../../stores/video";
+    import { chatIdentifiersEqual, type ChatSummary, OpenChat } from "openchat-client";
+    import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import type { DailyThemeConfig } from "@daily-co/daily-js";
@@ -14,12 +9,13 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
+    import SectionHeader from "../../SectionHeader.svelte";
 
     const client = getContext<OpenChat>("client");
 
     $: selectedChatId = client.selectedChatId;
     $: user = client.user;
-    let container: HTMLDivElement;
+    let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
 
     $: {
@@ -36,15 +32,15 @@
             activeVideoCall.joining(chat.id);
 
             // first we need tojoin access jwt from the oc backend
-            const token = await client.getVideoChatAccessToken(chat.id);
-            const roomId = chatIdToRoomId(chat.id);
-            const call = daily.createFrame(container, {
+            const { token, roomName } = await client.getVideoChatAccessToken(chat.id);
+            const call = daily.createFrame(iframeContainer, {
                 token,
                 showLeaveButton: true,
                 iframeStyle: {
-                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
                 },
-                url: `https://openchat.daily.co/${roomId}`,
+                url: `https://openchat.daily.co/${roomName}`,
                 userName: $user.username,
                 theme: getThemeConfig($currentTheme),
             });
@@ -57,6 +53,7 @@
                 if (ev?.participant.local) {
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
+                    sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                 }
             });
 
@@ -87,17 +84,6 @@
         };
     }
 
-    function chatIdToRoomId(chatId: ChatIdentifier): string {
-        switch (chatId.kind) {
-            case "channel":
-                return `channel_${chatId.communityId}_${chatId.channelId}`;
-            case "direct_chat":
-                return `direct_${chatId.userId}`;
-            case "group_chat":
-                return `group_${chatId.groupId}`;
-        }
-    }
-
     function switchCall(confirmed: boolean): Promise<void> {
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
@@ -115,13 +101,21 @@
 {/if}
 
 <div
+    id="video-call-container"
+    class="video-call-container"
     class:visible={$activeVideoCall &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}
-    bind:this={container}
-    class="video-call-container">
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
+    <SectionHeader shadow flush>
+        <h2>Could/should this just be the regular chat header?</h2>
+    </SectionHeader>
+    <div class="iframe-container" bind:this={iframeContainer}></div>
 </div>
 
 <style lang="scss">
+    :global(.video-call-container .section-header) {
+        background-color: var(--bg);
+    }
+
     .video-call-container {
         position: absolute;
         display: none;
@@ -131,5 +125,9 @@
         &.visible {
             display: flex;
         }
+    }
+
+    .iframe-container {
+        height: 100%;
     }
 </style>

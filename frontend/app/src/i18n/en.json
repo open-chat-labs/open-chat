@@ -1244,6 +1244,7 @@
         "callFailed": "Sorry, we were unable to start the video call",
         "toggleMic": "Toggle your microphone",
         "toggleCam": "Toggle your camera",
+        "toggleShare": "Toggle desktop sharing",
         "disconnect": "Disconnect from the call"
     }
 }
