@@ -35,6 +35,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
+    let is_caller_video_call_operator = state.is_caller_video_call_operator();
+
     if let Some(member) = state.data.get_member(caller) {
         let user_id = member.user_id;
         let sender_is_bot = member.is_bot;
@@ -52,6 +54,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
+            is_caller_video_call_operator,
             now,
         );
         process_send_message_result(

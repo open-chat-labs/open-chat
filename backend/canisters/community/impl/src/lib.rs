@@ -80,6 +80,11 @@ impl RuntimeState {
         self.env.caller() == self.data.escrow_canister_id
     }
 
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             let args = c2c_push_notification::Args {
@@ -294,11 +299,18 @@ struct Data {
     #[serde(skip, default = "init_instruction_counts_log")]
     instruction_counts_log: InstructionCountsLog,
     next_event_expiry: Option<TimestampMillis>,
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    video_call_operators: Vec<Principal>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
     rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 impl Data {
@@ -325,6 +337,7 @@ impl Data {
         default_channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
+        video_call_operators: Vec<Principal>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
@@ -368,6 +381,7 @@ impl Data {
             rng_seed: [0; 32],
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
+            video_call_operators,
         }
     }
 

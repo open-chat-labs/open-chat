@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
@@ -122,17 +122,17 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .is_some()
     {
         vec![
-            MessageContent::Text(TextContent {
+            MessageContentInitial::Text(TextContent {
                 text: "Welcome to OpenChat!!".to_string(),
             }),
-            MessageContent::Text(TextContent {
+            MessageContentInitial::Text(TextContent {
                 text: format!("Wait a moment {}, your SATS are coming below 👇", args.username),
             }),
         ]
     } else {
         welcome_messages()
             .into_iter()
-            .map(|t| MessageContent::Text(TextContent { text: t }))
+            .map(|t| MessageContentInitial::Text(TextContent { text: t }))
             .collect()
     };
 
@@ -159,6 +159,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         openchat_bot_messages,
+        video_call_operators: state.data.video_call_operators.clone(),
         test_mode: state.data.test_mode,
     };
 

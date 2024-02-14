@@ -7,12 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Push backdated `diamond_membership_payment` events ([#5372](https://github.com/open-chat-labs/open-chat/pull/5372))
+
+### Changed
+
+- Revert job start / stop messages back to `trace` level ([#5370](https://github.com/open-chat-labs/open-chat/pull/5370))
+- Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+
+### Fixed
+
+- Use `set_timer` rather than `set_timer_interval` ([#5369](https://github.com/open-chat-labs/open-chat/pull/5369))
+
+## [[2.0.1059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1059-user_index)] - 2024-02-13
+
+### Fixed
+
+- Push all `user_registered` events again now that they are being anonymised ([#5366](https://github.com/open-chat-labs/open-chat/pull/5366))
+
+## [[2.0.1056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1056-user_index)] - 2024-02-13
+
+### Added
+
 - Push backdated `user_registered` events for existing users ([#5345](https://github.com/open-chat-labs/open-chat/pull/5345))
 
 ### Changed
 
 - Log `info` level message rather than `trace` when jobs start / stop ([#5348](https://github.com/open-chat-labs/open-chat/pull/5348))
 - Add more details of background jobs to metrics ([#5349](https://github.com/open-chat-labs/open-chat/pull/5349))
+
+### Fixed
+
+- Don't invoke `ic0::call_new()` while in init mode ([#5358](https://github.com/open-chat-labs/open-chat/pull/5358))
 
 ## [[2.0.1054](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1054-user_index)] - 2024-02-09
 

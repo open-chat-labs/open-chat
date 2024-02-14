@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates, GroupPermissions,
-    GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -29,6 +29,7 @@ pub struct CommunityCanisterChannelSummary {
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub membership: Option<GroupMembership>,
+    pub video_call_in_progress: Option<VideoCall>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -53,6 +54,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<GroupMembershipUpdates>,
+    pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

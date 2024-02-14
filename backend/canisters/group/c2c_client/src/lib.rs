@@ -34,3 +34,4 @@ generate_c2c_call!(delete_messages);
 
 generate_candid_c2c_call!(change_role);
 generate_candid_c2c_call!(send_message_v2);
+generate_candid_c2c_call!(update_group_v2);

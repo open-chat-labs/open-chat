@@ -36,6 +36,7 @@ fn init(args: Args) {
         args.test_mode,
         args.permissions_v2,
         args.gate,
+        args.video_call_operators,
     );
 
     init_state(env, data, args.wasm_version);

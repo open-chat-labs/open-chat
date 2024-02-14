@@ -22,6 +22,9 @@ async fn install_service_canisters_impl(
     test_mode: bool,
 ) {
     let controllers = vec![principal];
+    let video_call_operators =
+        vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()];
+
     futures::future::join_all(vec![
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
@@ -73,6 +76,7 @@ async fn install_service_canisters_impl(
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
+        video_call_operators: video_call_operators.clone(),
         wasm_version: version,
         test_mode,
     };
@@ -87,6 +91,7 @@ async fn install_service_canisters_impl(
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         escrow_canister_id: canister_ids.escrow,
+        video_call_operators: video_call_operators.clone(),
         wasm_version: version,
         test_mode,
     };

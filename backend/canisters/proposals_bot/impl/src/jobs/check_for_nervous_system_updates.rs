@@ -74,6 +74,10 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
                 default: GroupPermissionRole::Admins,
                 ..Default::default()
             },
+            thread_permissions: Some(MessagePermissions {
+                default: GroupPermissionRole::Members,
+                ..Default::default()
+            }),
             ..Default::default()
         }),
         events_ttl: None,

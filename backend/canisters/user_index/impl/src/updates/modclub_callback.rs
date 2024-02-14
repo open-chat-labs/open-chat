@@ -12,7 +12,7 @@ use candid::Encode;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
-use tracing::{error, info};
+use tracing::error;
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 use user_index_canister::modclub_callback::*;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -20,7 +20,6 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 #[update(guard = "caller_is_modclub")]
 #[trace]
 fn modclub_callback(args: Args) {
-    info!(?args, "Modclub callback");
     ic_cdk::spawn(handle_modclub_callback(args))
 }
 

@@ -95,6 +95,7 @@ pub enum Event {
     StorageUpgraded(Box<StorageUpgraded>),
     ReferredUserRegistered(Box<ReferredUserRegistered>),
     UserSuspended(Box<UserSuspended>),
+    // TODO: This should take MessageContentInitial
     OpenChatBotMessage(Box<MessageContent>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
@@ -175,12 +176,18 @@ pub enum UserCanisterEvent {
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
+    JoinVideoCall(Box<JoinVideoCall>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapStatusChange {
     pub message_id: MessageId,
     pub status: P2PSwapStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct JoinVideoCall {
+    pub message_index: MessageIndex,
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {

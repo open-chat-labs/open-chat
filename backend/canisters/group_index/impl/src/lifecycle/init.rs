@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.cycles_dispenser_canister_id,
         args.proposals_bot_user_id,
         args.escrow_canister_id,
+        args.video_call_operators,
         args.test_mode,
     );
 

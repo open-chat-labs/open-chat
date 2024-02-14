@@ -86,7 +86,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, true, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, true, false, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -101,7 +101,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: message.content.try_into().unwrap(),
+                    content: MessageContentInternal::from_initial(message.content, now).unwrap(),
                     replies_to: None,
                     forwarding: false,
                     correlation_id: 0,
