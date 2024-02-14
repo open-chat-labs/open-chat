@@ -16,6 +16,6 @@ fn end_video_call(args: Args) -> Response {
 fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     match state.data.chat.events.end_video_call(args.message_index, state.env.now()) {
         EndVideoCallResult::Success => Success,
-        EndVideoCallResult::MessageNotFound | EndVideoCallResult::CallNotInProgress => MessageNotFound,
+        EndVideoCallResult::MessageNotFound | EndVideoCallResult::AlreadyEnded => MessageNotFound,
     }
 }

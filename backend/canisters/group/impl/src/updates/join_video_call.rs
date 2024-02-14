@@ -39,7 +39,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
                 }
                 JoinVideoCallResult::AlreadyJoined => Success,
                 JoinVideoCallResult::MessageNotFound => MessageNotFound,
-                JoinVideoCallResult::CallNotInProgress => CallNotInProgress,
+                JoinVideoCallResult::AlreadyEnded => AlreadyEnded,
             }
         } else {
             UserNotInGroup

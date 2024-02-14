@@ -12,7 +12,7 @@ pub struct Args {
 pub enum Response {
     Success,
     MessageNotFound,
-    CallNotInProgress,
+    AlreadyEnded,
     UserSuspended,
     UserBlocked,
     ChatNotFound,

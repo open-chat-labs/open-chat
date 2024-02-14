@@ -1461,7 +1461,7 @@ impl ChatEvents {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return EndVideoCallResult::Success;
                 } else {
-                    return EndVideoCallResult::CallNotInProgress;
+                    return EndVideoCallResult::AlreadyEnded;
                 }
             }
         }
@@ -1489,7 +1489,7 @@ impl ChatEvents {
 
                     return JoinVideoCallResult::Success;
                 } else {
-                    return JoinVideoCallResult::CallNotInProgress;
+                    return JoinVideoCallResult::AlreadyEnded;
                 }
             }
         }
@@ -1808,11 +1808,11 @@ pub enum JoinVideoCallResult {
     Success,
     MessageNotFound,
     AlreadyJoined,
-    CallNotInProgress,
+    AlreadyEnded,
 }
 
 pub enum EndVideoCallResult {
     Success,
     MessageNotFound,
-    CallNotInProgress,
+    AlreadyEnded,
 }

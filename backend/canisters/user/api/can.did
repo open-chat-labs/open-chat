@@ -251,7 +251,7 @@ type JoinVideoCallArgs = record {
 type JoinVideoCallResponse = variant {
     Success;
     MessageNotFound;
-    CallNotInProgress;
+    AlreadyEnded;
     UserSuspended;
     UserBlocked;
     ChatNotFound;
