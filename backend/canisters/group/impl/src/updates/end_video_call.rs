@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -15,7 +16,10 @@ fn end_video_call(args: Args) -> Response {
 
 fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     match state.data.chat.events.end_video_call(args.message_index, state.env.now()) {
-        EndVideoCallResult::Success => Success,
+        EndVideoCallResult::Success => {
+            handle_activity_notification(state);
+            Success
+        }
         EndVideoCallResult::MessageNotFound | EndVideoCallResult::AlreadyEnded => MessageNotFound,
     }
 }
