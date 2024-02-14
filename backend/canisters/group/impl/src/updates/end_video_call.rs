@@ -20,6 +20,7 @@ fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             handle_activity_notification(state);
             Success
         }
-        EndVideoCallResult::MessageNotFound | EndVideoCallResult::AlreadyEnded => MessageNotFound,
+        EndVideoCallResult::AlreadyEnded => AlreadyEnded,
+        EndVideoCallResult::MessageNotFound => MessageNotFound,
     }
 }

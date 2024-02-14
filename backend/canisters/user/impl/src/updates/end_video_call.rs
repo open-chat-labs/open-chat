@@ -15,11 +15,12 @@ fn end_video_call(args: Args) -> Response {
 
 fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let result = chat.events.end_video_call(args.message_index, state.env.now());
-        if matches!(result, EndVideoCallResult::Success) {
-            return Success;
+        match chat.events.end_video_call(args.message_index, state.env.now()) {
+            EndVideoCallResult::Success => Success,
+            EndVideoCallResult::MessageNotFound => MessageNotFound,
+            EndVideoCallResult::AlreadyEnded => AlreadyEnded,
         }
+    } else {
+        MessageNotFound
     }
-
-    MessageNotFound
 }

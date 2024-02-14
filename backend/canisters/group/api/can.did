@@ -55,6 +55,7 @@ type EndVideoCallArgs = record {
 type EndVideoCallResponse = variant {
     Success;
     MessageNotFound;
+    AlreadyEnded;
 };
 
 type JoinVideoCallArgs = record {
