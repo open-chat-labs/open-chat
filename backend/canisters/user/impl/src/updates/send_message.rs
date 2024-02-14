@@ -1,5 +1,5 @@
 use crate::crypto::process_transaction_without_caller_check;
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_owner_or_video_call_operator;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
 };
@@ -23,7 +23,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner_or_video_call_operator")]
 #[trace]
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();

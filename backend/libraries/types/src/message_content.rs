@@ -269,6 +269,10 @@ impl MessageContentInitial {
             _ => {}
         };
 
+        if is_caller_video_call_operator && !matches!(self, MessageContentInitial::VideoCall(_)) {
+            return Err(ContentValidationError::Unauthorized);
+        }
+
         let is_empty = match self {
             MessageContentInitial::Text(t) => t.text.is_empty(),
             MessageContentInitial::Image(i) => i.blob_reference.is_none(),

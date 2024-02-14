@@ -1,7 +1,7 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
+use chat_events::JoinVideoCallResult;
 use community_canister::join_video_call::{Response::*, *};
-use group_chat_core::JoinVideoCallResult;
 use ic_cdk_macros::update;
 
 #[update]
@@ -28,15 +28,22 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        match channel.chat.join_video_call(user_id, args.message_index, now) {
-            JoinVideoCallResult::Success => {
-                handle_activity_notification(state);
-                Success
+        if let Some(min_visible_event_index) = channel.chat.min_visible_event_index(Some(user_id)) {
+            match channel
+                .chat
+                .events
+                .join_video_call(user_id, args.message_index, min_visible_event_index, now)
+            {
+                JoinVideoCallResult::Success => {
+                    handle_activity_notification(state);
+                    Success
+                }
+                JoinVideoCallResult::MessageNotFound => MessageNotFound,
+                JoinVideoCallResult::CallNotInProgress => CallNotInProgress,
+                JoinVideoCallResult::AlreadyJoined => Success,
             }
-            JoinVideoCallResult::MessageNotFound => MessageNotFound,
-            JoinVideoCallResult::CallNotInProgress => CallNotInProgress,
-            JoinVideoCallResult::UserNotInGroup => UserNotInChannel,
-            JoinVideoCallResult::AlreadyJoined => Success,
+        } else {
+            UserNotInChannel
         }
     } else {
         ChannelNotFound

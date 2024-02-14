@@ -19,7 +19,7 @@ use types::{
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted,
     P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
     RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VoteOperation,
+    UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -35,6 +35,9 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
+    // TODO: Remove serde(default)
+    #[serde(default)]
+    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
 
 impl ChatEvents {
@@ -49,6 +52,7 @@ impl ChatEvents {
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
+            video_call_in_progress: Timestamped::default(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -73,6 +77,7 @@ impl ChatEvents {
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
+            video_call_in_progress: Timestamped::default(),
         };
 
         events.push_event(
@@ -101,6 +106,8 @@ impl ChatEvents {
         } else {
             &mut self.main
         };
+
+        let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
         let message_index = events_list.next_message_index();
         let message_internal = MessageInternal {
@@ -146,6 +153,14 @@ impl ChatEvents {
                 true,
                 args.now,
             );
+        }
+
+        if is_video_call {
+            if let Some(vc) = &self.video_call_in_progress.value {
+                self.end_video_call(vc.message_index, args.now);
+            }
+
+            self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
         }
 
         EventWrapper {
@@ -1442,6 +1457,7 @@ impl ChatEvents {
                 if video_call.ended.is_none() {
                     video_call.ended = Some(now);
                     message.last_updated = Some(now);
+                    self.video_call_in_progress = Timestamped::new(None, now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return EndVideoCallResult::Success;
                 } else {

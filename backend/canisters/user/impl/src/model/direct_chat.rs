@@ -1,10 +1,10 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, EndVideoCallResult, Reader};
+use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
     DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
-    Timestamped, UserId, VideoCall,
+    Timestamped, UserId,
 };
 use user_canister::c2c_send_messages_v2::SendMessageArgs;
 
@@ -20,8 +20,6 @@ pub struct DirectChat {
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
     pub unconfirmed: Vec<SendMessageArgs>,
-    #[serde(default)]
-    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
 
 impl DirectChat {
@@ -37,7 +35,6 @@ impl DirectChat {
             archived: Timestamped::new(false, now),
             is_bot,
             unconfirmed: Vec::new(),
-            video_call_in_progress: Timestamped::default(),
         }
     }
 
@@ -103,7 +100,7 @@ impl DirectChat {
             archived: self.archived.value,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            video_call_in_progress: self.video_call_in_progress.value.clone(),
+            video_call_in_progress: self.events.video_call_in_progress.value.clone(),
         }
     }
 
@@ -146,23 +143,11 @@ impl DirectChat {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
             video_call_in_progress: self
+                .events
                 .video_call_in_progress
                 .if_set_after(updates_since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-        }
-    }
-
-    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        use EndVideoCallResult::*;
-
-        match self.events.end_video_call(message_index, now) {
-            Success => {
-                self.video_call_in_progress = Timestamped::new(None, now);
-                true
-            }
-            CallNotInProgress => true,
-            MessageNotFound => false,
         }
     }
 }
