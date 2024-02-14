@@ -29,6 +29,7 @@ fn init(args: Args) {
         args.nns_governance_canister_id,
         args.internet_identity_canister_id,
         args.translations_canister_id,
+        args.video_call_operators,
         args.test_mode,
     );
 

@@ -24,6 +24,7 @@ pub struct Args {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub gate: Option<AccessGate>,
+    pub video_call_operators: Vec<Principal>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

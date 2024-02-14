@@ -32,6 +32,8 @@ fn main() {
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
+    generate_candid_method!(user, end_video_call, update);
+    generate_candid_method!(user, join_video_call, update);
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, manage_favourite_chats, update);

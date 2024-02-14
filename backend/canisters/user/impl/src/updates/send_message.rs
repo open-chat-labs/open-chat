@@ -1,5 +1,5 @@
 use crate::crypto::process_transaction_without_caller_check;
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_owner_or_video_call_operator;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
 };
@@ -23,7 +23,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner_or_video_call_operator")]
 #[trace]
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
@@ -157,9 +157,13 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     }
 
     let now = state.env.now();
-
+    let is_caller_video_call_operator = state.is_caller_video_call_operator();
     let my_user_id: UserId = state.env.canister_id().into();
-    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
+
+    if let Err(error) = args
+        .content
+        .validate_for_new_message(true, false, args.forwarding, is_caller_video_call_operator, now)
+    {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),

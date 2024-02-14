@@ -270,6 +270,13 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
     pub legacy_principals_synced: bool,
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    pub video_call_operators: Vec<Principal>,
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 impl Data {
@@ -289,6 +296,7 @@ impl Data {
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -334,6 +342,7 @@ impl Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
+            video_call_operators,
         };
 
         // Register the ProposalsBot
@@ -421,6 +430,7 @@ impl Default for Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
+            video_call_operators: Vec::default(),
         }
     }
 }

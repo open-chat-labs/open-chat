@@ -19,7 +19,8 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let caller = state.env.caller();
     let is_valid = state.data.get_member(caller).is_some()
-        || state.data.get_invitation(caller).is_some() && method_name == "decline_invitation";
+        || state.data.get_invitation(caller).is_some() && method_name == "decline_invitation"
+        || (method_name == "send_message" && state.is_caller_video_call_operator());
 
     if is_valid {
         ic_cdk::api::call::accept_message();

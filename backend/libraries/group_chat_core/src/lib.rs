@@ -54,8 +54,6 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
-    #[serde(default)]
-    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -97,7 +95,6 @@ impl GroupChatCore {
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
-            video_call_in_progress: Timestamped::default(),
         }
     }
 
@@ -217,6 +214,7 @@ impl GroupChatCore {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
+                .events
                 .video_call_in_progress
                 .if_set_after(since)
                 .cloned()
@@ -532,11 +530,14 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+        if let Err(error) =
+            content.validate_for_new_message(false, sender_is_bot, forwarding, is_caller_video_call_operator, now)
+        {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),

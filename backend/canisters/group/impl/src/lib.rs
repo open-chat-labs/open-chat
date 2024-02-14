@@ -82,6 +82,11 @@ impl RuntimeState {
         self.env.caller() == self.data.escrow_canister_id
     }
 
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
+    }
+
     pub fn is_caller_community_being_imported_into(&self) -> bool {
         if let Some(community_id) = self
             .data
@@ -216,7 +221,7 @@ impl RuntimeState {
             gate: chat.gate.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
-            video_call_in_progress: chat.video_call_in_progress.value.clone(),
+            video_call_in_progress: chat.events.video_call_in_progress.value.clone(),
         }
     }
 
@@ -431,6 +436,13 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    video_call_operators: Vec<Principal>,
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -462,6 +474,7 @@ impl Data {
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
+        video_call_operators: Vec<Principal>,
     ) -> Data {
         let chat = GroupChatCore::new(
             creator_user_id,
@@ -504,6 +517,7 @@ impl Data {
             rng_seed: [0; 32],
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
+            video_call_operators,
         }
     }
 

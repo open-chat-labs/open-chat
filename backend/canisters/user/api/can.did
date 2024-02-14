@@ -233,6 +233,31 @@ type CancelP2PSwapResponse = variant {
     ChatNotFound;
 };
 
+type EndVideoCallArgs = record {
+    user_id : UserId;
+    message_index : MessageIndex;
+};
+
+type EndVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+};
+
+type JoinVideoCallArgs = record {
+    user_id : UserId;
+    message_index : MessageIndex;
+};
+
+type JoinVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    UserSuspended;
+    UserBlocked;
+    ChatNotFound;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -1042,6 +1067,8 @@ service : {
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

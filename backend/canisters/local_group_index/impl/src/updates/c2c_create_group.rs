@@ -91,6 +91,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         escrow_canister_id: state.data.escrow_canister_id,
         avatar: args.avatar,
         gate: args.gate,
+        video_call_operators: state.data.video_call_operators.clone(),
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

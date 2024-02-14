@@ -28,6 +28,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.internet_identity_canister_id,
         canister_pool_target_size,
+        args.video_call_operators,
         args.test_mode,
     );
 

@@ -592,6 +592,17 @@ type EnableInviteCodeResponse = variant {
     CommunityFrozen;
 };
 
+type EndVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_index : MessageIndex;
+};
+
+type EndVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+};
+
 type ImportGroupArgs = record {
     group_id : ChatId;
 };
@@ -611,6 +622,22 @@ type ImportGroupResponse = variant {
     GroupImportingToAnotherCommunity;
     GroupFrozen;
     InternalError : text;
+};
+
+type JoinVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_index : MessageIndex;
+};
+
+type JoinVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
 };
 
 type LeaveChannelArgs = record {
@@ -1021,7 +1048,9 @@ service : {
     disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
+    join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
