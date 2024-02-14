@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Revert job start / stop messages back to `trace` level ([#5370](https://github.com/open-chat-labs/open-chat/pull/5370))
+- Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
 
 ### Fixed
 
