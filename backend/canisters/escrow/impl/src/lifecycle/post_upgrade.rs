@@ -1,15 +1,16 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::{mutate_state, Data};
+use crate::Data;
 use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use escrow_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
-use types::UserId;
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -28,27 +29,45 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| {
-        let now = state.env.now();
-        if let Some(swap) = state.data.swaps.get_mut(107) {
-            state.data.pending_payments_queue.push(PendingPayment {
-                user_id: UserId::from(Principal::from_text("vfhvn-qyaaa-aaaaf-adoxa-cai").unwrap()),
-                timestamp: now,
-                token_info: swap.token1.clone(),
-                amount: swap.amount1 - swap.token1.fee,
-                swap_id: swap.id,
-                reason: PendingPaymentReason::Refund,
-            });
-        }
-        if let Some(swap) = state.data.swaps.get_mut(148) {
-            state.data.pending_payments_queue.push(PendingPayment {
-                user_id: UserId::from(Principal::from_text("mzhg4-fqaaa-aaaar-ay7iq-cai").unwrap()),
-                timestamp: now,
-                token_info: swap.token1.clone(),
-                amount: swap.amount1 - swap.token1.fee,
-                swap_id: swap.id,
-                reason: PendingPaymentReason::Refund,
-            });
-        }
-    });
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(refund_sneed()));
+}
+
+async fn refund_sneed() {
+    let sneed_ledger = CanisterId::from_text("r7cp6-6aaaa-aaaag-qco5q-cai").unwrap();
+
+    let _ = icrc_ledger_canister_c2c_client::icrc1_transfer(
+        sneed_ledger,
+        &TransferArg {
+            from_subaccount: Some(
+                hex::decode("c37c2e0eeb36394cca8cc735c34ce577885180e76b489918fab97f7ca37de73c")
+                    .unwrap()
+                    .try_into()
+                    .unwrap(),
+            ),
+            to: Principal::from_text("vfhvn-qyaaa-aaaaf-adoxa-cai").unwrap().into(),
+            fee: None,
+            created_at_time: None,
+            memo: None,
+            amount: (10_000_000_000u64 - 100_000_000).into(),
+        },
+    )
+    .await;
+
+    let _ = icrc_ledger_canister_c2c_client::icrc1_transfer(
+        sneed_ledger,
+        &TransferArg {
+            from_subaccount: Some(
+                hex::decode("52f2f597bd96647b71742ad6b1763c90e80b092ba25ea2e909167d9cffc37963")
+                    .unwrap()
+                    .try_into()
+                    .unwrap(),
+            ),
+            to: Principal::from_text("mzhg4-fqaaa-aaaar-ay7iq-cai").unwrap().into(),
+            fee: None,
+            created_at_time: None,
+            memo: None,
+            amount: (250_000_000_000u64 - 100_000_000).into(),
+        },
+    )
+    .await;
 }
