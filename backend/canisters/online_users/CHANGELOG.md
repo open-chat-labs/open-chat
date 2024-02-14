@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1060](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1060-online_users)] - 2024-02-13
+
+### Fixed
+
+- Bump `EventSinkClient` ([#5368](https://github.com/open-chat-labs/open-chat/pull/5368))
+
 ## [[2.0.1053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1053-online_users)] - 2024-02-09
 
 ### Added
