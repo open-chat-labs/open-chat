@@ -1986,6 +1986,7 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "escrow_canister",
+ "hex",
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
