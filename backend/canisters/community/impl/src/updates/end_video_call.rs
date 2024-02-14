@@ -19,7 +19,7 @@ fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         match channel.chat.events.end_video_call(args.message_index, state.env.now()) {
             EndVideoCallResult::Success => {
                 handle_activity_notification(state);
-                return Success;
+                Success
             }
             EndVideoCallResult::MessageNotFound => MessageNotFound,
             EndVideoCallResult::AlreadyEnded => AlreadyEnded,
