@@ -43,6 +43,7 @@ fn main() {
     generate_candid_method!(community, end_video_call, update);
     generate_candid_method!(community, follow_thread, update);
     generate_candid_method!(community, import_group, update);
+    generate_candid_method!(community, join_video_call, update);
     generate_candid_method!(community, leave_channel, update);
     generate_candid_method!(community, pin_message, update);
     generate_candid_method!(community, register_poll_vote, update);

@@ -1,10 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, MessageIndex};
+use types::{MessageIndex, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub channel_id: ChannelId,
+    pub user_id: UserId,
     pub message_index: MessageIndex,
 }
 
@@ -13,9 +13,7 @@ pub enum Response {
     Success,
     MessageNotFound,
     CallNotInProgress,
-    CommunityFrozen,
-    UserNotInCommunity,
     UserSuspended,
-    ChannelNotFound,
-    UserNotInChannel,
+    UserBlocked,
+    ChatNotFound,
 }

@@ -31,6 +31,7 @@ pub mod enable_invite_code;
 pub mod end_video_call;
 pub mod follow_thread;
 pub mod import_group;
+pub mod join_video_call;
 pub mod leave_channel;
 pub mod pin_message;
 pub mod register_poll_vote;

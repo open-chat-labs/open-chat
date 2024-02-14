@@ -32,6 +32,7 @@ fn main() {
     generate_candid_method!(group, end_video_call, update);
     generate_candid_method!(group, enable_invite_code, update);
     generate_candid_method!(group, follow_thread, update);
+    generate_candid_method!(group, join_video_call, update);
     generate_candid_method!(group, pin_message_v2, update);
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);

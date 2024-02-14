@@ -8,7 +8,7 @@ use crate::updates::c2c_undelete_messages::c2c_undelete_messages_impl;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::UserId;
+use types::{EventIndex, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::UserCanisterEvent;
 
@@ -64,6 +64,12 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::P2PSwapStatusChange(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.events.set_p2p_swap_status(None, c.message_id, c.status, state.env.now());
+            }
+        }
+        UserCanisterEvent::JoinVideoCall(c) => {
+            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+                chat.events
+                    .join_video_call(caller_user_id, c.message_index, EventIndex::default(), state.env.now());
             }
         }
     }

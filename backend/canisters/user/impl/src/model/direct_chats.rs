@@ -1,9 +1,9 @@
 use crate::model::direct_chat::DirectChat;
-use chat_events::{ChatInternal, ChatMetricsInternal, PushMessageArgs};
+use chat_events::{ChatInternal, ChatMetricsInternal, MessageContentInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timestamped, UserId, VideoCall};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -71,6 +71,7 @@ impl DirectChats {
     ) -> EventWrapper<Message> {
         let chat_id = ChatId::from(their_user_id);
         let now = args.now;
+        let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),
@@ -78,6 +79,15 @@ impl DirectChats {
         };
 
         let message_event = chat.events.push_message(args);
+
+        if is_video_call {
+            chat.video_call_in_progress = Timestamped::new(
+                Some(VideoCall {
+                    message_index: message_event.event.message_index,
+                }),
+                now,
+            );
+        }
 
         chat.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 

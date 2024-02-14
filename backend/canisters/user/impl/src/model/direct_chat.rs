@@ -1,5 +1,5 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, Reader};
+use chat_events::{ChatEvents, EndVideoCallResult, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
@@ -154,11 +154,15 @@ impl DirectChat {
     }
 
     pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if self.events.end_video_call(message_index, now) {
-            self.video_call_in_progress = Timestamped::new(None, now);
-            true
-        } else {
-            false
+        use EndVideoCallResult::*;
+
+        match self.events.end_video_call(message_index, now) {
+            Success => {
+                self.video_call_in_progress = Timestamped::new(None, now);
+                true
+            }
+            CallNotInProgress => true,
+            MessageNotFound => false,
         }
     }
 }

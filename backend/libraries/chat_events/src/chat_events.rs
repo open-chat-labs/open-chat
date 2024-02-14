@@ -13,12 +13,13 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
-    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
-    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -1435,18 +1436,49 @@ impl ChatEvents {
         &self.main
     }
 
-    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if let Some(video_call) = self
-            .main
-            .get_event_mut(message_index.into(), EventIndex::default())
-            .and_then(|e| e.event.as_message_mut())
-            .and_then(|m| if let MessageContentInternal::VideoCall(c) = &mut m.content { Some(c) } else { None })
-        {
-            video_call.ended = Some(now);
-            true
-        } else {
-            false
+    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> EndVideoCallResult {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into()) {
+            if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
+                if video_call.ended.is_none() {
+                    video_call.ended = Some(now);
+                    message.last_updated = Some(now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return EndVideoCallResult::Success;
+                } else {
+                    return EndVideoCallResult::CallNotInProgress;
+                }
+            }
         }
+
+        EndVideoCallResult::MessageNotFound
+    }
+
+    pub fn join_video_call(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> JoinVideoCallResult {
+        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_index.into()) {
+            if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
+                if video_call.ended.is_none() {
+                    if video_call.participants.iter().any(|p| p.user_id == user_id) {
+                        return JoinVideoCallResult::AlreadyJoined;
+                    }
+
+                    video_call.participants.push(CallParticipant { user_id, joined: now });
+                    message.last_updated = Some(now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+
+                    return JoinVideoCallResult::Success;
+                } else {
+                    return JoinVideoCallResult::CallNotInProgress;
+                }
+            }
+        }
+
+        JoinVideoCallResult::MessageNotFound
     }
 
     fn events_list(
@@ -1754,4 +1786,17 @@ impl From<MessageId> for EventKey {
     fn from(value: MessageId) -> Self {
         EventKey::MessageId(value)
     }
+}
+
+pub enum JoinVideoCallResult {
+    Success,
+    MessageNotFound,
+    AlreadyJoined,
+    CallNotInProgress,
+}
+
+pub enum EndVideoCallResult {
+    Success,
+    MessageNotFound,
+    CallNotInProgress,
 }

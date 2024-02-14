@@ -1,6 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, EndVideoCallResult, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs,
+    UndeleteMessageResult,
 };
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -597,6 +598,7 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
+            is_video_call,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -639,6 +641,10 @@ impl GroupChatCore {
 
         let message_event = self.events.push_message(push_message_args);
         let message_index = message_event.event.message_index;
+
+        if is_video_call {
+            self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), now);
+        }
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
@@ -710,11 +716,14 @@ impl GroupChatCore {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
+                is_video_call: false,
             });
         }
 
+        let mut is_video_call = false;
         if let MessageContentInternal::VideoCall(vc) = content {
             sender = vc.participants[0].user_id;
+            is_video_call = true;
         }
 
         match self.members.get_mut(&sender) {
@@ -748,6 +757,7 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            is_video_call,
         })
     }
 
@@ -1624,11 +1634,38 @@ impl GroupChatCore {
     }
 
     pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if self.events.end_video_call(message_index, now) {
-            self.video_call_in_progress = Timestamped::new(None, now);
-            true
+        use EndVideoCallResult::*;
+
+        match self.events.end_video_call(message_index, now) {
+            Success => {
+                self.video_call_in_progress = Timestamped::new(None, now);
+                true
+            }
+            CallNotInProgress => true,
+            MessageNotFound => false,
+        }
+    }
+
+    pub fn join_video_call(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> JoinVideoCallResult {
+        use JoinVideoCallResult::*;
+
+        if let Some(min_visible_event_index) = self.min_visible_event_index(Some(user_id)) {
+            match self
+                .events
+                .join_video_call(user_id, message_index, min_visible_event_index, now)
+            {
+                chat_events::JoinVideoCallResult::Success => Success,
+                chat_events::JoinVideoCallResult::AlreadyJoined => AlreadyJoined,
+                chat_events::JoinVideoCallResult::MessageNotFound => MessageNotFound,
+                chat_events::JoinVideoCallResult::CallNotInProgress => CallNotInProgress,
+            }
         } else {
-            false
+            UserNotInGroup
         }
     }
 
@@ -2067,4 +2104,13 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
+    is_video_call: bool,
+}
+
+pub enum JoinVideoCallResult {
+    Success,
+    MessageNotFound,
+    CallNotInProgress,
+    AlreadyJoined,
+    UserNotInGroup,
 }
