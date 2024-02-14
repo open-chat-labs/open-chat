@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Another attempt at refunding the failed SNEED transfers ([#5375](https://github.com/open-chat-labs/open-chat/pull/5375))
+
+## [[2.0.1062](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1062-escrow)] - 2024-02-14
+
+### Changed
+
 - Refund 2 more failed SNEED p2p swaps ([#5359](https://github.com/open-chat-labs/open-chat/pull/5359))
 
 ## [[2.0.1050](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1050-escrow)] - 2024-02-08
