@@ -46,7 +46,6 @@
                 callContainer.style.setProperty("top", `${rect.top}px`);
                 callContainer.style.setProperty("height", `${rect.height}px`);
             }
-            // activeVideoCall.alignTo(middlePanel.getBoundingClientRect());
         }
     }
 

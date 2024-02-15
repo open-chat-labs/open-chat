@@ -39,18 +39,6 @@ export const activeVideoCall = {
             return undefined;
         });
     },
-    alignTo: (rect: DOMRect) => {
-        const active = get(store);
-        if (active && active.call) {
-            const frame = active.call.iframe();
-            if (frame) {
-                frame.style.setProperty("left", `${rect.left}px`);
-                frame.style.setProperty("width", `${rect.width}px`);
-                frame.style.setProperty("top", `${rect.top}px`);
-                frame.style.setProperty("height", `${rect.height}px`);
-            }
-        }
-    },
     changeTheme: (theme: DailyThemeConfig) => {
         return store.update((current) => {
             if (current !== undefined && current.call !== undefined) {
