@@ -29,31 +29,33 @@
     let verifications: Record<string, string> = {};
     let chatBalance = 0n;
     let refreshing = false;
+    let processing = new Set<bigint>();
 
     $: userStore = client.userStore;
     $: formattedBalance = client.formatTokens(chatBalance, 8);
 
     onMount(async () => {
-        client.getProposedTranslationCorrections().then(async (res) => {
-            corrections = flattenCorrections(res);
-            await loadRequiredLocales(corrections);
+        await client.getProposedTranslationCorrections().then(async (res) => {
+            corrections = await loadRequiredLocales(flattenCorrections(res));
         });
-
         refreshBalance();
     });
 
     // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
     // and trigger the loading of the current translations for each of those locales.
-    async function loadRequiredLocales(corrections: TranslationCorrection[]): Promise<void> {
+    async function loadRequiredLocales(
+        corrections: TranslationCorrection[],
+    ): Promise<TranslationCorrection[]> {
         const currentLocale = $locale;
         const locales = corrections.reduce((all, c) => {
             all.add(c.locale);
             return all;
         }, new Set<string>());
-        for (const l in locales) {
-            await locale.set(l);
-        }
+        await [...locales].reduce((p, l) => {
+            return p.then(() => locale.set(l));
+        }, Promise.resolve());
         await locale.set(currentLocale);
+        return corrections;
     }
 
     function refreshBalance() {
@@ -65,16 +67,18 @@
     }
 
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
-        return corrections.flatMap((group) =>
-            group.candidates.map((correction) => ({
-                id: correction.id,
-                locale: group.locale,
-                key: group.key,
-                value: correction.value,
-                proposedBy: correction.proposedBy,
-                proposedAt: correction.proposedAt,
-            })),
-        );
+        return corrections
+            .flatMap((group) =>
+                group.candidates.map((correction) => ({
+                    id: correction.id,
+                    locale: group.locale,
+                    key: group.key,
+                    value: correction.value,
+                    proposedBy: correction.proposedBy,
+                    proposedAt: correction.proposedAt,
+                })),
+            )
+            .sort((a, b) => a.key.localeCompare(b.key));
     }
 
     function removeCorrection(id: bigint) {
@@ -82,27 +86,43 @@
     }
 
     function approveCorrection({ id }: TranslationCorrection) {
-        client.approveTranslationCorrection(id).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to approve this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .approveTranslationCorrection(id)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to approve this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
-        client.rejectTranslationCorrection(id, reason).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to reject this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .rejectTranslationCorrection(id, reason)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to reject this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function previewCorrection(correction: TranslationCorrection) {
@@ -186,9 +206,13 @@
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
                             <span slot="icon">
-                                <HoverIcon>
-                                    <Hamburger size={$iconSize} color={"var(--txt)"} />
-                                </HoverIcon>
+                                {#if processing.has(correction.id)}
+                                    <div class="busy"></div>
+                                {:else}
+                                    <HoverIcon>
+                                        <Hamburger size={$iconSize} color={"var(--txt)"} />
+                                    </HoverIcon>
+                                {/if}
                             </span>
                             <span slot="menu">
                                 <Menu>
@@ -302,13 +326,7 @@
 
     tr {
         border-bottom: 1px solid var(--bd);
-
-        &.pending {
-            background-color: #e91e63;
-        }
-        &.approved {
-            background-color: #66bb6a;
-        }
+        height: 56px;
     }
 
     td,
@@ -339,5 +357,9 @@
         &.proposed_at {
             width: 150px;
         }
+    }
+
+    .busy {
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 </style>
