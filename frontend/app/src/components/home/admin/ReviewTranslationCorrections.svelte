@@ -45,13 +45,15 @@
     async function loadRequiredLocales(
         corrections: TranslationCorrection[],
     ): Promise<TranslationCorrection[]> {
+        const currentLocale = $locale;
         const locales = corrections.reduce((all, c) => {
             all.add(c.locale);
             return all;
-        }, new Set<string>($locale));
+        }, new Set<string>());
         await [...locales].reduce((p, l) => {
             return p.then(() => locale.set(l));
         }, Promise.resolve());
+        await locale.set(currentLocale);
         return corrections;
     }
 
