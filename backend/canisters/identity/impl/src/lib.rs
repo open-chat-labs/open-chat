@@ -1,16 +1,20 @@
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
+use canister_sig_util::signature_map::{SignatureMap, LABEL_SIG};
 use canister_sig_util::CanisterSigPublicKey;
 use canister_state_macros::canister_state;
+use ic_cdk::api::set_certified_data;
+use identity_canister::Delegation;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
-use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use std::collections::{HashMap, HashSet};
+use types::{BuildVersion, CanisterId, Cycles, Hash, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
+mod hash;
 mod lifecycle;
 mod memory;
 mod model;
@@ -39,11 +43,14 @@ impl RuntimeState {
     }
 
     pub fn get_principal(&self, index: u32) -> Principal {
-        let canister_id = self.env.canister_id();
-        let salt = self.data.salt.get();
-        let seed = calculate_seed(index, salt);
-        let public_key = CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der();
+        let seed = self.data.calculate_seed(index);
+        let public_key = self.der_encode_canister_sig_key(seed);
         Principal::self_authenticating(public_key)
+    }
+
+    pub fn der_encode_canister_sig_key(&self, seed: [u8; 32]) -> Vec<u8> {
+        let canister_id = self.env.canister_id();
+        CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -69,6 +76,8 @@ struct Data {
     cycles_dispenser_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
+    #[serde(skip)]
+    signature_map: SignatureMap,
     #[serde(default)]
     salt: Salt,
     rng_seed: [u8; 32],
@@ -88,24 +97,41 @@ impl Data {
             cycles_dispenser_canister_id,
             user_principals: UserPrincipals::default(),
             legacy_principals: HashSet::default(),
+            signature_map: SignatureMap::default(),
             salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }
     }
+
+    pub fn calculate_seed(&self, index: u32) -> [u8; 32] {
+        let salt = self.salt.get();
+
+        let mut bytes: Vec<u8> = vec![];
+        bytes.push(salt.len() as u8);
+        bytes.extend_from_slice(&salt);
+
+        let index_str = index.to_string();
+        let index_bytes = index_str.bytes();
+        bytes.push(index_bytes.len() as u8);
+        bytes.extend(index_bytes);
+
+        sha256(&bytes)
+    }
+
+    pub fn update_root_hash(&mut self) {
+        let prefixed_root_hash = ic_certification::labeled_hash(LABEL_SIG, &self.signature_map.root_hash());
+        set_certified_data(&prefixed_root_hash[..]);
+    }
 }
 
-fn calculate_seed(index: u32, salt: [u8; 32]) -> [u8; 32] {
-    let mut bytes: Vec<u8> = vec![];
-    bytes.push(salt.len() as u8);
-    bytes.extend_from_slice(&salt);
-
-    let index_str = index.to_string();
-    let index_bytes = index_str.bytes();
-    bytes.push(index_bytes.len() as u8);
-    bytes.extend(index_bytes);
-
-    sha256(&bytes)
+fn delegation_signature_msg_hash(d: &Delegation) -> Hash {
+    use hash::Value;
+    let mut m = HashMap::new();
+    m.insert("pubkey", Value::Bytes(d.pubkey.as_slice()));
+    m.insert("expiration", Value::U64(d.expiration));
+    let map_hash = hash::hash_of_map(m);
+    hash::hash_with_domain(b"ic-request-auth-delegation", &map_hash)
 }
 
 #[derive(Serialize, Debug)]

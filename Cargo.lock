@@ -3314,6 +3314,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -3343,11 +3344,14 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "ic-cdk-timers",
+ "ic-certification",
  "ic-stable-structures",
  "identity_canister",
  "rand",
  "serde",
+ "serde_bytes",
  "serializer",
+ "sha2 0.10.8",
  "sha256",
  "stable_memory",
  "tracing",
