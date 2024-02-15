@@ -60,14 +60,12 @@ pub mod happy_path {
         }
     }
 
-    pub fn migrate_legacy_principal(env: &mut PocketIc, user: &User, identity_canister_id: CanisterId) -> Principal {
+    pub fn migrate_legacy_principal(env: &mut PocketIc, sender: Principal, identity_canister_id: CanisterId) -> Principal {
         let response = super::migrate_legacy_principal(
             env,
-            user.principal,
+            sender,
             identity_canister_id,
-            &identity_canister::migrate_legacy_principal::Args {
-                public_key: user.public_key.clone(),
-            },
+            &identity_canister::migrate_legacy_principal::Args {},
         );
 
         match response {

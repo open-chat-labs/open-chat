@@ -12,7 +12,7 @@ fn delegation_signed_successfully() {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::identity::happy_path::migrate_legacy_principal(env, &user, canister_ids.identity);
+    client::identity::happy_path::migrate_legacy_principal(env, user.principal, canister_ids.identity);
 
     let prepare_result = client::identity::happy_path::prepare_delegation(env, &user, canister_ids.identity);
 
@@ -74,7 +74,7 @@ fn migrate_principal_updates_principal_in_all_canisters() {
         None,
     );
 
-    let new_principal = client::identity::happy_path::migrate_legacy_principal(env, &user, canister_ids.identity);
+    let new_principal = client::identity::happy_path::migrate_legacy_principal(env, user.principal, canister_ids.identity);
 
     user.principal = new_principal;
 
