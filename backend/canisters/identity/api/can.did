@@ -26,6 +26,15 @@ type SignedDelegation = record {
     signature : blob;
 };
 
+type MigrateLegacyPrincipalResponse = variant {
+    Success : record {
+        new_principal : principal;
+    };
+    AlreadyMigrated;
+    NotFound;
+    InternalError : text;
+};
+
 type PrepareDelegationArgs = record {
     session_key : PublicKey;
     max_time_to_live : opt Nanoseconds;
@@ -42,5 +51,6 @@ type PrepareDelegationResponse = variant {
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
-    prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse) query;
+    migrate_legacy_principal : (record {}) -> (MigrateLegacyPrincipalResponse);
+    prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
 }

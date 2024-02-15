@@ -52,6 +52,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     openStorageIndexCanister: this.config.openStorageIndexCanister,
                     groupIndexCanister: this.config.groupIndexCanister,
                     notificationsCanister: this.config.notificationsCanister,
+                    identityCanister: this.config.identityCanister,
                     onlineCanister: this.config.onlineCanister,
                     userIndexCanister: this.config.userIndexCanister,
                     translationsCanister: this.config.translationsCanister,

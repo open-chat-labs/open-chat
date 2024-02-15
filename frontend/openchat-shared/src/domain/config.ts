@@ -4,6 +4,7 @@ export type AgentConfig = {
     openStorageIndexCanister: string;
     groupIndexCanister: string;
     notificationsCanister: string;
+    identityCanister: string;
     onlineCanister: string;
     userIndexCanister: string;
     translationsCanister: string;

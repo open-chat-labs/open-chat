@@ -2,7 +2,6 @@ import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError, offline } from "openchat-shared";
-import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
@@ -16,7 +15,7 @@ export abstract class CandidService {
     protected createServiceClient<T>(
         factory: IDL.InterfaceFactory,
         canisterId: string,
-        config: AgentConfig,
+        config: { icUrl: string },
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
