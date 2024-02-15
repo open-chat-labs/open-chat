@@ -172,8 +172,7 @@
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
                     <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
-                    <td class="current"
-                        >{$_(correction.key, { locale: correction.locale })} - {correction.locale}</td>
+                    <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
                         {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
                             {verifying.value}
