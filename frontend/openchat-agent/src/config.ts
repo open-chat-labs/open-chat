@@ -10,6 +10,7 @@ export type AgentConfig = {
     userIndexCanister: string;
     translationsCanister: string;
     registryCanister: string;
+    identityCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
     userGeekApiKey: string;
