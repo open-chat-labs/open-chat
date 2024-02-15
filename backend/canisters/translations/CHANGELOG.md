@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Start job to make pending payments each time a payment is added ([#5379](https://github.com/open-chat-labs/open-chat/pull/5379))
+
 ## [[2.0.1045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1045-storage_index)] - 2024-02-05
 
 ### Added

@@ -33,6 +33,7 @@ async fn approve(args: Args) -> Response {
                     amount: 100_000_000, // 1 CHAT
                     reason: PendingPaymentReason::Approval,
                 });
+                crate::jobs::make_pending_payments::start_job_if_required(state);
             }
             Success
         }
