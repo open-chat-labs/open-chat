@@ -368,6 +368,7 @@ export function lightTheme(): Theme {
         },
 
         daily: {
+            header: primary,
             accent: pinkAccent,
             accentText: txt,
             background: "#3796E3",

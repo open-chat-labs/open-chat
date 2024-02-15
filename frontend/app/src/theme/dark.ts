@@ -361,6 +361,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
         },
         daily: {
+            header: backgroundBlack,
             accent: "#ff2e2e",
             accentText: textBlack,
             background: backgroundBlack,

@@ -41,10 +41,17 @@
             const callContainer = document.getElementById("video-call-container");
             const rect = middlePanel.getBoundingClientRect();
             if (callContainer) {
-                callContainer.style.setProperty("left", `${rect.left}px`);
-                callContainer.style.setProperty("width", `${rect.width}px`);
-                callContainer.style.setProperty("top", `${rect.top}px`);
-                callContainer.style.setProperty("height", `${rect.height}px`);
+                if (call.fullscreen) {
+                    callContainer.style.setProperty("left", `0px`);
+                    callContainer.style.setProperty("width", `${window.innerWidth}px`);
+                    callContainer.style.setProperty("top", `0px`);
+                    callContainer.style.setProperty("height", `${window.innerHeight}px`);
+                } else {
+                    callContainer.style.setProperty("left", `${rect.left}px`);
+                    callContainer.style.setProperty("width", `${rect.width}px`);
+                    callContainer.style.setProperty("top", `${rect.top}px`);
+                    callContainer.style.setProperty("height", `${rect.height}px`);
+                }
             }
         }
     }

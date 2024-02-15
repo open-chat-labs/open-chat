@@ -5,12 +5,13 @@
 
 import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
     call?: DailyCall;
+    fullscreen: boolean;
 };
 
 const store = writable<ActiveVideoCall | undefined>(undefined);
@@ -26,6 +27,17 @@ export const activeVideoCall = {
             status: "joined",
             chatId,
             call,
+            fullscreen: false,
+        });
+    },
+    fullscreen: (fullscreen: boolean) => {
+        return store.update((current) => {
+            return current === undefined
+                ? undefined
+                : {
+                      ...current,
+                      fullscreen,
+                  };
         });
     },
     endCall: () => {
@@ -51,6 +63,7 @@ export const activeVideoCall = {
         return store.set({
             status: "joining",
             chatId,
+            fullscreen: false,
         });
     },
 };
