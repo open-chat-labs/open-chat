@@ -297,10 +297,10 @@ fn process_error_v2(transfer_error: icrc1::transfer::TransferError) -> Response 
 }
 
 #[derive(Serialize)]
-struct PayForDiamondMembershipEventPayload {
-    token: String,
-    amount: u64,
-    duration: String,
-    recurring: bool,
-    manual_payment: bool,
+pub(crate) struct PayForDiamondMembershipEventPayload {
+    pub token: String,
+    pub amount: u64,
+    pub duration: String,
+    pub recurring: bool,
+    pub manual_payment: bool,
 }

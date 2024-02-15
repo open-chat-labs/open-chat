@@ -104,6 +104,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             gate: updates.gate,
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
+            video_call_in_progress: updates.video_call_in_progress,
         },
     })
 }

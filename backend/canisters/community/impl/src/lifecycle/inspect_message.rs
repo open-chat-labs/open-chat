@@ -20,7 +20,8 @@ fn accept_if_valid(state: &RuntimeState) {
     let caller = state.env.caller();
     let is_valid = state.data.members.get(caller).is_some()
         // `lookup_user_id` will return true if they are invited to the community
-        || (state.data.members.lookup_user_id(caller).is_some() && method_name == "decline_invitation");
+        || (state.data.members.lookup_user_id(caller).is_some() && method_name == "decline_invitation")
+        || (method_name == "send_message" && state.is_caller_video_call_operator());
 
     if is_valid {
         ic_cdk::api::call::accept_message();

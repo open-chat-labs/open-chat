@@ -48,6 +48,29 @@ type EditMessageResponse = variant {
     ChatFrozen;
 };
 
+type EndVideoCallArgs = record {
+    message_index : MessageIndex;
+};
+
+type EndVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+};
+
+type JoinVideoCallArgs = record {
+    message_index : MessageIndex;
+};
+
+type JoinVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    GroupFrozen;
+    UserNotInGroup;
+    UserSuspended;
+};
+
 type DeleteMessagesArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_ids : vec MessageId;
@@ -669,6 +692,10 @@ service : {
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
     unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
+    join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
+
+    // Video call operator only
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
 
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

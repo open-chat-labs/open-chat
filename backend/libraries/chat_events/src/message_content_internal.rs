@@ -5,12 +5,12 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
     CompletedCryptoTransaction, CryptoContent, CryptoTransaction, CustomContent, FileContent, GiphyContent, GiphyImageVariant,
     ImageContent, MessageContent, MessageContentInitial, MessageIndex, MessageReminderContent, MessageReminderCreatedContent,
     MessageReport, P2PSwapContent, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent,
     PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, TextContent,
-    ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoContent, VoteOperation,
+    ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoCallContent, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -47,6 +47,8 @@ pub enum MessageContentInternal {
     ReportedMessage(ReportedMessageInternal),
     #[serde(rename = "p2p")]
     P2PSwap(P2PSwapContent),
+    #[serde(rename = "vc")]
+    VideoCall(VideoCallContent),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
 }
@@ -90,6 +92,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
             MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.clone()),
+            MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.clone()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
     }
@@ -112,6 +115,7 @@ impl MessageContentInternal {
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_) => None,
         }
     }
@@ -155,33 +159,37 @@ impl MessageContentInternal {
             | MessageContentInternal::MessageReminder(_)
             | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::P2PSwap(_)
+            | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_) => {}
         }
 
         references
     }
-}
 
-impl TryFrom<MessageContentInitial> for MessageContentInternal {
-    type Error = ();
-
-    fn try_from(value: MessageContentInitial) -> Result<Self, ()> {
+    pub fn from_initial(value: MessageContentInitial, now: TimestampMillis) -> Option<MessageContentInternal> {
         match value {
-            MessageContentInitial::Text(t) => Ok(MessageContentInternal::Text(t.into())),
-            MessageContentInitial::Image(i) => Ok(MessageContentInternal::Image(i.into())),
-            MessageContentInitial::Video(v) => Ok(MessageContentInternal::Video(v.into())),
-            MessageContentInitial::Audio(a) => Ok(MessageContentInternal::Audio(a.into())),
-            MessageContentInitial::File(f) => Ok(MessageContentInternal::File(f.into())),
-            MessageContentInitial::Poll(p) => Ok(MessageContentInternal::Poll(p.into())),
-            MessageContentInitial::Deleted(d) => Ok(MessageContentInternal::Deleted(d.into())),
-            MessageContentInitial::Giphy(g) => Ok(MessageContentInternal::Giphy(g.into())),
-            MessageContentInitial::GovernanceProposal(p) => Ok(MessageContentInternal::GovernanceProposal(p.into())),
-            MessageContentInitial::MessageReminderCreated(r) => Ok(MessageContentInternal::MessageReminderCreated(r.into())),
-            MessageContentInitial::MessageReminder(r) => Ok(MessageContentInternal::MessageReminder(r.into())),
-            MessageContentInitial::Custom(c) => Ok(MessageContentInternal::Custom(c.into())),
+            MessageContentInitial::Text(t) => Some(MessageContentInternal::Text(t.into())),
+            MessageContentInitial::Image(i) => Some(MessageContentInternal::Image(i.into())),
+            MessageContentInitial::Video(v) => Some(MessageContentInternal::Video(v.into())),
+            MessageContentInitial::Audio(a) => Some(MessageContentInternal::Audio(a.into())),
+            MessageContentInitial::File(f) => Some(MessageContentInternal::File(f.into())),
+            MessageContentInitial::Poll(p) => Some(MessageContentInternal::Poll(p.into())),
+            MessageContentInitial::Deleted(d) => Some(MessageContentInternal::Deleted(d.into())),
+            MessageContentInitial::Giphy(g) => Some(MessageContentInternal::Giphy(g.into())),
+            MessageContentInitial::GovernanceProposal(p) => Some(MessageContentInternal::GovernanceProposal(p.into())),
+            MessageContentInitial::MessageReminderCreated(r) => Some(MessageContentInternal::MessageReminderCreated(r.into())),
+            MessageContentInitial::MessageReminder(r) => Some(MessageContentInternal::MessageReminder(r.into())),
+            MessageContentInitial::Custom(c) => Some(MessageContentInternal::Custom(c.into())),
+            MessageContentInitial::VideoCall(c) => Some(MessageContentInternal::VideoCall(VideoCallContent {
+                ended: None,
+                participants: vec![CallParticipant {
+                    user_id: c.initiator,
+                    joined: now,
+                }],
+            })),
             MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
                 // These should be created via `new_with_transfer`
-                Err(())
+                None
             }
         }
     }
@@ -251,7 +259,9 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Custom(c) => {
                 document.add_field(c.kind.clone(), 1.0, false);
             }
-            MessageContentInternal::ReportedMessage(_) | MessageContentInternal::Deleted(_) => {}
+            MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::Deleted(_)
+            | MessageContentInternal::VideoCall(_) => {}
         }
 
         document

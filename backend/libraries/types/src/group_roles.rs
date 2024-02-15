@@ -39,6 +39,8 @@ pub struct MessagePermissions {
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
     pub p2p_swap: Option<GroupPermissionRole>,
+    #[serde(default)]
+    pub video_call: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
 
@@ -75,7 +77,8 @@ pub struct OptionalMessagePermissions {
     pub giphy: OptionUpdate<GroupPermissionRole>,
     pub prize: OptionUpdate<GroupPermissionRole>,
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    pub p2p_trade: OptionUpdate<GroupPermissionRole>,
+    #[serde(default)]
+    pub video_call: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
 }
@@ -112,6 +115,7 @@ impl Default for MessagePermissions {
             giphy: None,
             prize: None,
             p2p_swap: None,
+            video_call: None,
             custom: Vec::new(),
         }
     }

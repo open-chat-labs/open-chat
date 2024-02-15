@@ -16,7 +16,7 @@ use types::{
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
     PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -213,6 +213,12 @@ impl GroupChatCore {
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             rules_changed: self.rules.version_last_updated > since,
+            video_call_in_progress: self
+                .events
+                .video_call_in_progress
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
 
@@ -524,11 +530,14 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+        if let Err(error) =
+            content.validate_for_new_message(false, sender_is_bot, forwarding, is_caller_video_call_operator, now)
+        {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -546,7 +555,7 @@ impl GroupChatCore {
             };
         }
 
-        if let Ok(content_internal) = content.try_into() {
+        if let Some(content_internal) = MessageContentInternal::from_initial(content, now) {
             self.send_message(
                 sender,
                 thread_root_message_index,
@@ -684,7 +693,7 @@ impl GroupChatCore {
 
     fn prepare_send_message(
         &mut self,
-        sender: UserId,
+        mut sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
@@ -699,6 +708,10 @@ impl GroupChatCore {
                 mentions_disabled: true,
                 everyone_mentioned: false,
             });
+        }
+
+        if let MessageContentInternal::VideoCall(vc) = content {
+            sender = vc.participants[0].user_id;
         }
 
         match self.members.get_mut(&sender) {
@@ -1679,6 +1692,7 @@ impl GroupChatCore {
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
             p2p_swap: new.p2p_swap.apply_to(old.p2p_swap),
+            video_call: new.video_call.apply_to(old.video_call),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }
@@ -1960,6 +1974,7 @@ pub struct SummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
+    pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

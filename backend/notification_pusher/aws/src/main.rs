@@ -1,3 +1,4 @@
+use aws_config::BehaviorVersion;
 use candid::Principal;
 use dynamodb_index_store::DynamoDbIndexStore;
 use notification_pusher_core::ic_agent::IcAgent;
@@ -20,7 +21,7 @@ async fn main() -> Result<(), Error> {
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
 
-    let aws_config = aws_config::load_from_env().await;
+    let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
     let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "push_notification_stream_indexes".to_string());
 
     info!("DynamoDbClient created");

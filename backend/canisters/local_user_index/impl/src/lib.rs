@@ -1,6 +1,7 @@
 use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::timer_job_types::TimerJob;
+use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::GlobalUser;
@@ -215,6 +216,13 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
     pub rng_seed: [u8; 32],
+    // TODO: Remove serde default
+    #[serde(default = "video_call_operators")]
+    pub video_call_operators: Vec<Principal>,
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
 }
 
 #[derive(Serialize, Deserialize)]
@@ -236,6 +244,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
+        video_call_operators: Vec<Principal>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -264,6 +273,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
             rng_seed: [0; 32],
+            video_call_operators,
         }
     }
 }

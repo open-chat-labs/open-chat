@@ -1,10 +1,10 @@
+use crate::model::salt::Salt;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
 use event_sink_client_cdk_runtime::CdkRuntime;
 use event_sink_utils::EventDeduper;
 use serde::{Deserialize, Serialize};
-use sha256::sha256_string;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -65,7 +65,7 @@ struct Data {
     pub events_sink_client: EventSinkClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub salt: [u8; 32],
+    pub salt: Salt,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -84,23 +84,10 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             cycles_dispenser_canister_id,
-            salt: [0; 32],
+            salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }
-    }
-
-    pub fn obfuscate_user(&self, user: String) -> String {
-        // We only want to obfuscate userId principals, so if the string is not a principal we return it as is
-        if Principal::from_text(&user).is_err() {
-            return user;
-        }
-
-        // Generates a 32 character string from the input value + the salt
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(user.as_bytes());
-        bytes.extend_from_slice(&self.salt);
-        sha256_string(&bytes).split_off(32)
     }
 }
 

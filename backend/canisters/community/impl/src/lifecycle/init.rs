@@ -43,6 +43,7 @@ fn init(args: Args) {
         default_channels,
         args.default_channel_rules,
         args.mark_active_duration,
+        args.video_call_operators,
         args.test_mode,
         env.now(),
     );

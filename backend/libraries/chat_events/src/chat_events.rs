@@ -13,12 +13,13 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
-    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
-    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -34,6 +35,9 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
+    // TODO: Remove serde(default)
+    #[serde(default)]
+    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
 
 impl ChatEvents {
@@ -48,6 +52,7 @@ impl ChatEvents {
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
+            video_call_in_progress: Timestamped::default(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -72,6 +77,7 @@ impl ChatEvents {
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
+            video_call_in_progress: Timestamped::default(),
         };
 
         events.push_event(
@@ -100,6 +106,8 @@ impl ChatEvents {
         } else {
             &mut self.main
         };
+
+        let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
         let message_index = events_list.next_message_index();
         let message_internal = MessageInternal {
@@ -147,6 +155,14 @@ impl ChatEvents {
             );
         }
 
+        if is_video_call {
+            if let Some(vc) = &self.video_call_in_progress.value {
+                self.end_video_call(vc.message_index, args.now);
+            }
+
+            self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
+        }
+
         EventWrapper {
             index: push_event_result.index,
             timestamp: args.now,
@@ -171,7 +187,7 @@ impl ChatEvents {
                         let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                             != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
 
-                        message.content = args.content.try_into().unwrap();
+                        message.content = MessageContentInternal::from_initial(args.content, args.now).unwrap();
                         message.last_updated = Some(args.now);
 
                         if edited {
@@ -1435,6 +1451,52 @@ impl ChatEvents {
         &self.main
     }
 
+    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> EndVideoCallResult {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into()) {
+            if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
+                if video_call.ended.is_none() {
+                    video_call.ended = Some(now);
+                    message.last_updated = Some(now);
+                    self.video_call_in_progress = Timestamped::new(None, now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return EndVideoCallResult::Success;
+                } else {
+                    return EndVideoCallResult::AlreadyEnded;
+                }
+            }
+        }
+
+        EndVideoCallResult::MessageNotFound
+    }
+
+    pub fn join_video_call(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> JoinVideoCallResult {
+        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_index.into()) {
+            if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
+                if video_call.ended.is_none() {
+                    if video_call.participants.iter().any(|p| p.user_id == user_id) {
+                        return JoinVideoCallResult::AlreadyJoined;
+                    }
+
+                    video_call.participants.push(CallParticipant { user_id, joined: now });
+                    message.last_updated = Some(now);
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+
+                    return JoinVideoCallResult::Success;
+                } else {
+                    return JoinVideoCallResult::AlreadyEnded;
+                }
+            }
+        }
+
+        JoinVideoCallResult::MessageNotFound
+    }
+
     fn events_list(
         &self,
         min_visible_event_index: EventIndex,
@@ -1740,4 +1802,17 @@ impl From<MessageId> for EventKey {
     fn from(value: MessageId) -> Self {
         EventKey::MessageId(value)
     }
+}
+
+pub enum JoinVideoCallResult {
+    Success,
+    MessageNotFound,
+    AlreadyJoined,
+    AlreadyEnded,
+}
+
+pub enum EndVideoCallResult {
+    Success,
+    MessageNotFound,
+    AlreadyEnded,
 }

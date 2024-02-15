@@ -100,6 +100,7 @@ impl DirectChat {
             archived: self.archived.value,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
+            video_call_in_progress: self.events.video_call_in_progress.value.clone(),
         }
     }
 
@@ -141,6 +142,12 @@ impl DirectChat {
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
+            video_call_in_progress: self
+                .events
+                .video_call_in_progress
+                .if_set_after(updates_since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
 }

@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{BuildVersion, CanisterId, MessageContent};
+use types::{BuildVersion, CanisterId, MessageContentInitial};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,6 +13,8 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
-    pub openchat_bot_messages: Vec<MessageContent>,
+    // TODO: Changed to MessageContentInitial but means local_user_index needs to be deployed and immediately afterwards the user canisters
+    pub openchat_bot_messages: Vec<MessageContentInitial>,
+    pub video_call_operators: Vec<Principal>,
     pub test_mode: bool,
 }

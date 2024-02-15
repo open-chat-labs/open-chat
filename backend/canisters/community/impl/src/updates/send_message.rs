@@ -40,6 +40,7 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
+    let is_caller_video_call_operator = state.is_caller_video_call_operator();
 
     if let Err(response) = run_preliminary_checks(caller, args.community_rules_accepted, now, &mut state.data) {
         return response;
@@ -65,6 +66,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
+            is_caller_video_call_operator,
             now,
         );
 
