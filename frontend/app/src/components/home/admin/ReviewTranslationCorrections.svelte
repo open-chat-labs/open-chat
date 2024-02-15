@@ -34,26 +34,25 @@
     $: formattedBalance = client.formatTokens(chatBalance, 8);
 
     onMount(async () => {
-        client.getProposedTranslationCorrections().then(async (res) => {
-            corrections = flattenCorrections(res);
-            await loadRequiredLocales(corrections);
+        await client.getProposedTranslationCorrections().then(async (res) => {
+            corrections = await loadRequiredLocales(flattenCorrections(res));
         });
-
         refreshBalance();
     });
 
     // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
     // and trigger the loading of the current translations for each of those locales.
-    async function loadRequiredLocales(corrections: TranslationCorrection[]): Promise<void> {
-        const currentLocale = $locale;
+    async function loadRequiredLocales(
+        corrections: TranslationCorrection[],
+    ): Promise<TranslationCorrection[]> {
         const locales = corrections.reduce((all, c) => {
             all.add(c.locale);
             return all;
-        }, new Set<string>());
-        for (const l in locales) {
-            await locale.set(l);
-        }
-        await locale.set(currentLocale);
+        }, new Set<string>($locale));
+        await [...locales].reduce((p, l) => {
+            return p.then(() => locale.set(l));
+        }, Promise.resolve());
+        return corrections;
     }
 
     function refreshBalance() {
@@ -65,16 +64,18 @@
     }
 
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
-        return corrections.flatMap((group) =>
-            group.candidates.map((correction) => ({
-                id: correction.id,
-                locale: group.locale,
-                key: group.key,
-                value: correction.value,
-                proposedBy: correction.proposedBy,
-                proposedAt: correction.proposedAt,
-            })),
-        );
+        return corrections
+            .flatMap((group) =>
+                group.candidates.map((correction) => ({
+                    id: correction.id,
+                    locale: group.locale,
+                    key: group.key,
+                    value: correction.value,
+                    proposedBy: correction.proposedBy,
+                    proposedAt: correction.proposedAt,
+                })),
+            )
+            .sort((a, b) => a.key.localeCompare(b.key));
     }
 
     function removeCorrection(id: bigint) {
@@ -171,7 +172,8 @@
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
                     <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
-                    <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
+                    <td class="current"
+                        >{$_(correction.key, { locale: correction.locale })} - {correction.locale}</td>
                     <td class="proposed">
                         {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
                             {verifying.value}

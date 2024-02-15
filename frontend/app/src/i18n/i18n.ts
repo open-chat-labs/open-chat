@@ -77,7 +77,10 @@ register("en", () => import("./en.json"));
 register("cn", () => import("./cn.json"));
 register("de", () => import("./de.json"));
 register("es", () => import("./es.json"));
-register("fr", () => import("./fr.json"));
+register("fr", () => {
+    console.log("Is this even running?");
+    return import("./fr.json");
+});
 register("it", () => import("./it.json"));
 register("jp", () => import("./jp.json"));
 register("ru", () => import("./ru.json"));
