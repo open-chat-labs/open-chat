@@ -29,6 +29,7 @@
     let verifications: Record<string, string> = {};
     let chatBalance = 0n;
     let refreshing = false;
+    let processing = new Set<bigint>();
 
     $: userStore = client.userStore;
     $: formattedBalance = client.formatTokens(chatBalance, 8);
@@ -85,27 +86,43 @@
     }
 
     function approveCorrection({ id }: TranslationCorrection) {
-        client.approveTranslationCorrection(id).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to approve this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .approveTranslationCorrection(id)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to approve this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
-        client.rejectTranslationCorrection(id, reason).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to reject this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .rejectTranslationCorrection(id, reason)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to reject this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function previewCorrection(correction: TranslationCorrection) {
@@ -189,9 +206,13 @@
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
                             <span slot="icon">
-                                <HoverIcon>
-                                    <Hamburger size={$iconSize} color={"var(--txt)"} />
-                                </HoverIcon>
+                                {#if processing.has(correction.id)}
+                                    <div class="busy"></div>
+                                {:else}
+                                    <HoverIcon>
+                                        <Hamburger size={$iconSize} color={"var(--txt)"} />
+                                    </HoverIcon>
+                                {/if}
                             </span>
                             <span slot="menu">
                                 <Menu>
@@ -305,13 +326,7 @@
 
     tr {
         border-bottom: 1px solid var(--bd);
-
-        &.pending {
-            background-color: #e91e63;
-        }
-        &.approved {
-            background-color: #66bb6a;
-        }
+        height: 56px;
     }
 
     td,
@@ -342,5 +357,9 @@
         &.proposed_at {
             width: 150px;
         }
+    }
+
+    .busy {
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 </style>
