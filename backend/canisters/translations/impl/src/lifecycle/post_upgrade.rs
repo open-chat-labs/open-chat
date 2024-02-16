@@ -45,7 +45,7 @@ async fn retry_failed_payments() {
         {
             state.data.pending_payments_queue.push(PendingPayment {
                 recipient_account: translation.proposed.who.into(),
-                timestamp: now - index,
+                timestamp: now - index as u64,
                 currency: Cryptocurrency::CHAT,
                 amount: 100_000_000, // 1 CHAT
                 reason: PendingPaymentReason::Approval,
