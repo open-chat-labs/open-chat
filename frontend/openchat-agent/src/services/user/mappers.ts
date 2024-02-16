@@ -758,6 +758,7 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
+        videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 
@@ -865,6 +866,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         eventsTTL: undefined,
         eventsTtlLastUpdated: BigInt(0),
         metrics: chatMetrics(candid.metrics),
+        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
         membership: {
             ...nullMembership(),
             role: "owner",

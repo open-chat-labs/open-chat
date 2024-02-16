@@ -212,6 +212,10 @@ function mergeChannelUpdates(
                 channel.eventsTtlLastUpdated,
                 c?.eventsTtlLastUpdated ?? BigInt(0),
             ),
+            videoCallInProgress: applyOptionUpdate(
+                channel.videoCallInProgress,
+                c?.videoCallInProgress,
+            ),
             membership: {
                 ...channel.membership,
                 mentions:

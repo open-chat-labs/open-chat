@@ -176,6 +176,7 @@ export function mergeDirectChatUpdates(
                 c.eventsTtlLastUpdated ?? BigInt(0),
                 u.eventsTtlLastUpdated ?? BigInt(0),
             ),
+            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, u.videoCallInProgress),
             membership: {
                 ...c.membership,
                 readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
@@ -269,6 +270,7 @@ export function mergeGroupChatUpdates(
                 rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
             localUserIndex: c.localUserIndex,
+            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),
         };
     });
 }
@@ -323,6 +325,7 @@ export function mergeGroupChats(
                 rulesAccepted: g.rulesAccepted,
             },
             localUserIndex: g.localUserIndex,
+            videoCallInProgress: g.videoCallInProgress,
         };
     });
 }

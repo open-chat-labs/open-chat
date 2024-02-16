@@ -149,6 +149,9 @@ import {
     P2PSwapStatus,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    VideoCallContent,
+    VideoCallContentInitial,
+    CallParticipant
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -300,6 +303,9 @@ export {
     P2PSwapStatus as ApiP2PSwapStatus,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
     CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
+    VideoCallContent as ApiVideoCallContent,
+    VideoCallContentInitial as ApiVideoCallContentInitial,
+    CallParticipant as ApiCallParticipant
 };
 
 export const idlFactory: IDL.InterfaceFactory;

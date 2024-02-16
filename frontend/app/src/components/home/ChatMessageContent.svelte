@@ -3,6 +3,7 @@
 <script lang="ts">
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import VideoContent from "./VideoContent.svelte";
+    import VideoCallContent from "./VideoCallContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import AudioContent from "./AudioContent.svelte";
@@ -51,6 +52,8 @@
     <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
+{:else if content.kind === "video_call_content"}
+    <VideoCallContent {content} />
 {:else if content.kind === "audio_content"}
     <AudioContent {edited} {content} />
 {:else if content.kind === "file_content"}

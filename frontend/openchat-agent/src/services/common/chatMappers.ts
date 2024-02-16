@@ -72,6 +72,7 @@ import type {
     ApiP2PSwapStatus,
     ApiCancelP2PSwapResponse as ApiUserCancelP2PSwapResponse,
     ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
+    ApiVideoCallContent,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -169,6 +170,7 @@ import type {
     TokenInfo,
     CancelP2PSwapResponse,
     GroupInviteCodeChange,
+    VideoCallContent,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -565,6 +567,9 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("P2PSwap" in candid) {
         return p2pSwapContent(candid.P2PSwap);
     }
+    if ("VideoCall" in candid) {
+        return videoCallContent(candid.VideoCall);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -641,6 +646,17 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         token: token(candid.token),
         endDate: candid.end_date,
         caption: optional(candid.caption, identity),
+    };
+}
+
+function videoCallContent(candid: ApiVideoCallContent): VideoCallContent {
+    return {
+        kind: "video_call_content",
+        ended: optional(candid.ended, identity),
+        participants: candid.participants.map((p) => ({
+            userId: p.user_id.toString(),
+            joined: p.joined,
+        })),
     };
 }
 
@@ -1252,6 +1268,7 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
+        video_call: apiOptional(apiPermissionRole, permissions.videoCall),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1426,6 +1443,14 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
                 },
             };
 
+        case "video_call_content_initial":
+            return {
+                VideoCall: {
+                    initiator: Principal.fromText(domain.intiator),
+                },
+            };
+
+        case "video_call_content":
         case "deleted_content":
         case "blocked_content":
         case "prize_content":
@@ -1968,6 +1993,7 @@ export function communityChannelSummary(
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
+        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,

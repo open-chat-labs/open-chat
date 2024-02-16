@@ -63,7 +63,25 @@ export type MessageContent =
     | MessageReminderContent
     | ReportedMessageContent
     | UserReferralCard
-    | MemeFighterContent;
+    | MemeFighterContent
+    | VideoCallContent
+    | VideoCallContentInitial;
+
+export type VideoCallContentInitial = {
+    kind: "video_call_content_initial";
+    intiator: string;
+};
+
+export type VideoCallParticipant = {
+    userId: string;
+    joined: bigint;
+};
+
+export type VideoCallContent = {
+    kind: "video_call_content";
+    participants: VideoCallParticipant[];
+    ended?: bigint;
+};
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
@@ -1176,6 +1194,7 @@ export type DirectChatSummaryUpdates = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
+    videoCallInProgress: OptionUpdate<number>;
 };
 
 export type GroupSubtypeUpdate =
@@ -1270,6 +1289,7 @@ type ChatSummaryCommon = HasMembershipRole & {
     membership: ChatMembership;
     eventsTTL: bigint | undefined;
     eventsTtlLastUpdated: bigint;
+    videoCallInProgress?: number;
 };
 
 export type ChannelSummary = DataContent &
@@ -1378,6 +1398,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
+        videoCallInProgress?: number;
     };
 
 export type UpdatedEvent = {
@@ -1413,6 +1434,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     rulesAccepted: boolean | undefined;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
+    videoCallInProgress: OptionUpdate<number>;
 };
 
 export type GroupCanisterThreadDetails = {
