@@ -225,7 +225,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            oc_public_key: self.data.key_pair.public_key_pem.clone(),
+            oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
         }
     }
 }
@@ -276,7 +276,7 @@ struct Data {
     #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
     #[serde(default)]
-    pub key_pair: P256KeyPair,
+    pub oc_key_pair: P256KeyPair,
 }
 
 fn video_call_operators() -> Vec<Principal> {
@@ -347,7 +347,7 @@ impl Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
             video_call_operators,
-            key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::default(),
         };
 
         // Register the ProposalsBot
@@ -436,7 +436,7 @@ impl Default for Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
             video_call_operators: Vec::default(),
-            key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::default(),
         }
     }
 }

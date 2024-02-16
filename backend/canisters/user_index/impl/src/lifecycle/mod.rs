@@ -1,5 +1,4 @@
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
-use p256_key_pair::P256KeyPair;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
@@ -36,7 +35,7 @@ fn reseed_rng() {
         mutate_state(|state| {
             state.data.rng_seed = seed;
             state.env = Box::new(CanisterEnv::new(seed));
-            state.data.key_pair = P256KeyPair::generate(&mut state.env.rng());
+            state.data.oc_key_pair.initialize(&mut state.env.rng());
         });
         trace!("Successfully reseeded rng");
     }
