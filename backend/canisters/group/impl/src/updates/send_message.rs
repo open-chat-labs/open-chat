@@ -131,14 +131,12 @@ fn validate_caller(state: &RuntimeState) -> Option<Caller> {
             is_bot: true,
             is_video_call_operator: true,
         })
-    } else if let Some(member) = state.data.get_member(caller) {
-        Some(Caller {
-            user_id: member.user_id,
-            is_bot: member.is_bot,
+    } else {
+        state.data.get_member(caller).map(|m| Caller {
+            user_id: m.user_id,
+            is_bot: m.is_bot,
             is_video_call_operator: false,
         })
-    } else {
-        None
     }
 }
 
