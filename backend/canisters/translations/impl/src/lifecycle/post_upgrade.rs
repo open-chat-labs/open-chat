@@ -33,15 +33,15 @@ fn post_upgrade(args: Args) {
 }
 
 async fn retry_failed_payments() {
-    let cutoff = 1708072097452u64;
-
     mutate_state(|state| {
         let now = state.env.now();
 
-        for translation in state.data.translations.iter().filter(|t| {
-            matches!(&t.status,
-            TranslationStatus::Approved(a) if a.attribution.when <= cutoff)
-        }) {
+        for translation in state
+            .data
+            .translations
+            .iter()
+            .filter(|t| matches!(&t.status, TranslationStatus::Approved(_)))
+        {
             state.data.pending_payments_queue.push(PendingPayment {
                 recipient_account: translation.proposed.who.into(),
                 timestamp: now,
