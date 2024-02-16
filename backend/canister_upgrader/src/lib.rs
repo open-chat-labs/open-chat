@@ -99,7 +99,7 @@ pub async fn upgrade_translations_canister(
     )
     .await;
 
-    println!("Identity canister upgraded");
+    println!("Translations canister upgraded");
 }
 
 pub async fn upgrade_online_users_canister(
