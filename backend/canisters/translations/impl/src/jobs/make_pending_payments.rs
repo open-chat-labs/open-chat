@@ -6,6 +6,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use utils::consts::MEMO_TRANSLATION_PAYMENT;
+use utils::time::NANOS_PER_MILLISECOND;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -53,7 +54,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
         from_subaccount: None,
         to: pending_payment.recipient_account,
         fee: None,
-        created_at_time: Some(pending_payment.timestamp),
+        created_at_time: Some(pending_payment.timestamp * NANOS_PER_MILLISECOND),
         memo: Some(MEMO_TRANSLATION_PAYMENT.to_vec().into()),
         amount: pending_payment.amount.into(),
     };
