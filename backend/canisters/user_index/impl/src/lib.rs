@@ -19,6 +19,7 @@ use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
+use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -224,6 +225,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            public_key: self.data.key_pair.public_key_pem.clone(),
         }
     }
 }
@@ -273,6 +275,8 @@ struct Data {
     // TODO: Remove serde default
     #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub key_pair: P256KeyPair,
 }
 
 fn video_call_operators() -> Vec<Principal> {
@@ -343,6 +347,7 @@ impl Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
             video_call_operators,
+            key_pair: P256KeyPair::default(),
         };
 
         // Register the ProposalsBot
@@ -431,6 +436,7 @@ impl Default for Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             legacy_principals_synced: false,
             video_call_operators: Vec::default(),
+            key_pair: P256KeyPair::default(),
         }
     }
 }
@@ -467,6 +473,7 @@ pub struct Metrics {
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
     pub canister_ids: CanisterIds,
+    pub public_key: String,
 }
 
 #[derive(Serialize, Debug, Default)]

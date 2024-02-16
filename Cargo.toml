@@ -129,8 +129,10 @@ members = [
     "backend/libraries/icpswap_client",
     "backend/libraries/index_store",
     "backend/libraries/instruction_counts_log",
+    "backend/libraries/jwt",
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
+    "backend/libraries/p256_key_pair",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/serializer",
@@ -185,7 +187,9 @@ num-traits = "0.2.17"
 openssl = "0.10.60"
 pocket-ic = "2.1.0"
 proc-macro2 = "1.0.69"
-pulldown-cmark = { version = "0.10.0", default-features = false, features = ["html"] }
+pulldown-cmark = { version = "0.10.0", default-features = false, features = [
+    "html",
+] }
 quote = "1.0.33"
 rand = "0.8.5"
 rand_chacha = "0.3.1"

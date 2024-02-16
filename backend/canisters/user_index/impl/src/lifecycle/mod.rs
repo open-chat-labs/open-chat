@@ -1,4 +1,5 @@
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
+use p256_key_pair::P256KeyPair;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
@@ -20,7 +21,11 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     let now = env.now();
-    let state = RuntimeState::new(env, data);
+    let mut state = RuntimeState::new(env, data);
+
+    if !state.data.key_pair.is_initialised() {
+        state.data.key_pair = P256KeyPair::generate(&mut state.env.rng());
+    }
 
     crate::jobs::start(&state);
     crate::init_state(state);
