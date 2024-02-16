@@ -225,7 +225,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            public_key: self.data.key_pair.public_key_pem.clone(),
+            oc_public_key: self.data.key_pair.public_key_pem.clone(),
         }
     }
 }
@@ -473,7 +473,7 @@ pub struct Metrics {
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
     pub canister_ids: CanisterIds,
-    pub public_key: String,
+    pub oc_public_key: String,
 }
 
 #[derive(Serialize, Debug, Default)]
