@@ -52,7 +52,7 @@
   "addedBy": "{changedBy} が {changed} を {level} に追加しました",
   "admin": "管理者",
   "advanced": "高度な情報",
-  "alsoCanisterId": "キャニスター ID も",
+  "alsoCanisterId": "キャニスター ID",
   "andNMore": "、および{n} more",
   "appearance": "言語、テーマ",
   "apply": "申し込み",
@@ -1023,7 +1023,7 @@
     "title": "テーマ"
   },
   "thisIsPrivateGroupWithN": "これは非公開{level}です。メンバーは{number}人です。",
-  "thisIsPublicGroupWithN": "これは、{level} 人のメンバーがいる公開 {number} です",
+  "thisIsPublicGroupWithN": "これは{number}人のメンバーがいる公開{level}です",
   "thread": {
     "lastMessage": "（最後のメッセージ{date}）",
     "menu": "スレッドで返信",
@@ -1178,7 +1178,7 @@
     "extendShort": "拡張する",
     "extendTo": " にまで及びます",
     "feature": "特徴",
-    "features": "特徴",
+    "features": "メンバーシップの特徴",
     "featuresTitle": "ダイヤモンドにアップグレード",
     "forDisplayName": "表示名を設定するようにアップグレードする",
     "free": "無料",

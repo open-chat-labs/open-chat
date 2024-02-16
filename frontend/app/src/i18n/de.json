@@ -1092,7 +1092,7 @@
     "makeDeposit": "Bitte tätigen Sie eine Einzahlung auf das obige Konto und aktualisieren Sie Ihr Guthaben.",
     "max": "max",
     "message": "Nachricht",
-    "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
+    "messagePlaceholder": "Füge eine optionale Nachricht hinzu",
     "pendingSent": "{sender} sendet {amount} {token} an {receiver}",
     "pendingSentByYou": "Sie senden {amount} {token} an {receiver}",
     "receiver": "Empfänger",

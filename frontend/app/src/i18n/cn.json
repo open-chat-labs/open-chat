@@ -626,7 +626,7 @@
     "removeMembers": "删除/阻止成员",
     "replyInThread": "在线程中回复",
     "sendMessages": "发送信息",
-    "thread": "线程数",
+    "thread": "线程",
     "threadPermissions": {
       "audio": "在线程中发送音频消息",
       "crypto": "在线程中发送加密消息",
@@ -752,7 +752,7 @@
     "enableAll": "全部启用",
     "filter": "过滤提案",
     "groupIndexAction": "集团指数行动",
-    "makeProposal": "提出建议",
+    "makeProposal": "提案",
     "maker": {
       "amount": "数量",
       "amountRules": "至少 1 个 {token} 令牌",
@@ -1200,7 +1200,7 @@
     "mediaMessages": "媒体讯息",
     "membership": "会员资料",
     "message": "告诉我有关钻石会员的信息",
-    "nftProfile": "NFT头像",
+    "nftProfile": "NFT用作简介头像",
     "notifications": "通知",
     "oneMonth": "一个月",
     "oneYear": "一年",
