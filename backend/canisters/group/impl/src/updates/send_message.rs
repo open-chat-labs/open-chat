@@ -34,17 +34,17 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         return ChatFrozen;
     }
 
-    let caller = state.env.caller();
-    let is_caller_video_call_operator = state.is_caller_video_call_operator();
-
-    if let Some(member) = state.data.get_member(caller) {
-        let user_id = member.user_id;
-        let sender_is_bot = member.is_bot;
+    if let Some(Caller {
+        user_id,
+        is_bot,
+        is_video_call_operator,
+    }) = validate_caller(state)
+    {
         let now = state.env.now();
 
         let result = state.data.chat.validate_and_send_message(
             user_id,
-            sender_is_bot,
+            is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -54,7 +54,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
-            is_caller_video_call_operator,
+            is_video_call_operator,
             now,
         );
         process_send_message_result(
@@ -77,16 +77,18 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         return ChatFrozen;
     }
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
+    if let Some(Caller {
+        user_id,
+        is_bot,
+        is_video_call_operator: _,
+    }) = validate_caller(state)
+    {
         // Bots can't call this c2c endpoint since it skips the validation
-        if member.is_bot && member.user_id != state.data.proposals_bot_user_id {
+        if is_bot && user_id != state.data.proposals_bot_user_id {
             return NotAuthorized;
         }
-        let user_id = member.user_id;
 
         let now = state.env.now();
-
         let result = state.data.chat.send_message(
             user_id,
             args.thread_root_message_index,
@@ -112,6 +114,29 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         )
     } else {
         CallerNotInGroup
+    }
+}
+
+struct Caller {
+    user_id: UserId,
+    is_bot: bool,
+    is_video_call_operator: bool,
+}
+
+fn validate_caller(state: &RuntimeState) -> Option<Caller> {
+    let caller = state.env.caller();
+    if state.is_caller_video_call_operator() {
+        Some(Caller {
+            user_id: caller.into(),
+            is_bot: true,
+            is_video_call_operator: true,
+        })
+    } else {
+        state.data.get_member(caller).map(|m| Caller {
+            user_id: m.user_id,
+            is_bot: m.is_bot,
+            is_video_call_operator: false,
+        })
     }
 }
 
