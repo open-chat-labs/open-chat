@@ -1,0 +1,12 @@
+[package]
+name = "p256_key_pair"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+p256 = { version = "0.13.2", features = ["pem", "ecdsa", "pkcs8"] }
+rand = { workspace = true }
+serde = { workspace = true }

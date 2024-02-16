@@ -12,7 +12,7 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
-    let env = init_env([0; 32]);
+    let env = init_env([0; 32], false);
 
     let data = Data::new(
         args.governance_principals,
