@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1067-translations)] - 2024-02-16
+
 ### Fixed
 
 - Specify `created_at_time` in nanoseconds rather than milliseconds ([#5391](https://github.com/open-chat-labs/open-chat/pull/5391))
