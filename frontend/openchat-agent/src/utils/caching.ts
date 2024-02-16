@@ -372,18 +372,18 @@ export async function getCachedEventsWindow(
         expiredMessageRanges: [],
         latestEventIndex: undefined,
     };
-    const missing = new Set<number>();
+    const combinedMissing = new Set<number>();
     for (const [events, expiredEventRanges, missing] of await Promise.all(promises)) {
         events.forEach((e) => results.events.push(e));
         expiredEventRanges.forEach((r) => results.expiredEventRanges.push(r));
-        missing.forEach((m) => missing.add(m));
+        missing.forEach((m) => combinedMissing.add(m));
     }
 
-    if (missing.size === 0) {
+    if (combinedMissing.size === 0) {
         console.debug("CACHE: hit: ", results.events.length, Date.now() - start);
     }
 
-    return [results, missing];
+    return [results, combinedMissing];
 }
 
 export async function getCachedEventByIndex(
