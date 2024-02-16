@@ -983,7 +983,7 @@
     "cryptoTransfers": "Krypto-Nachrichten",
     "deletedMessages": "Gelöschte Nachrichten",
     "fileMessages": "Dateianhänge",
-    "giphyMessages": "Giphy-Nachrichten\n",
+    "giphyMessages": "Giphy-Nachrichten",
     "groupStats": "{level} Statistiken",
     "icpTransfers": "ICP-Übertragungen",
     "imageMessages": "Bildnachrichten",
@@ -995,7 +995,7 @@
     "reportedMessagesInfo": "Von Ihnen gesendete Nachrichten, die von anderen gelöscht oder gemeldet wurden. Dies kann als Hinweis darauf verwendet werden, dass Sie keinen positiven Beitrag zur Gemeinschaft leisten.",
     "textMessages": "Textnachrichten",
     "userStats": "Benutzerstatistiken",
-    "videoMessages": "Videonachricht "
+    "videoMessages": "Videonachricht"
   },
   "stopRecording": "Höre auf, aufzunehmen",
   "storage": "Speicher",
