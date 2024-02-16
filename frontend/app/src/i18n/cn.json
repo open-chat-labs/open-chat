@@ -203,7 +203,7 @@
     "usersInvited": "用户已被邀请加入您的社区",
     "visibility": "能见度"
   },
-  "communityDisplayNameRules": "只在这个社区内",
+  "communityDisplayNameRules": "只在被选择的社区内",
   "communityTheme": "社区主题",
   "confirmLeaveGroup": "你真的想离开这个{level}吗？",
   "confirmMakeGroupPrivate": "您确定要将此 {level} 设为私有吗？目前此操作无法撤消！",
@@ -1016,7 +1016,7 @@
   "theInternetComputer": "互联网计算机",
   "theme": {
     "dark": "深色的",
-    "light": "浅色的",
+    "light": "光明",
     "preferredDarkTheme": "首选深色主题",
     "preferredLightTheme": "首选浅色主题",
     "system": "系统默认",
