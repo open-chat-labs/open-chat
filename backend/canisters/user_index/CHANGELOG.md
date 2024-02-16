@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+- Generate and store an OpenChat public/private key pair ([#5383](https://github.com/open-chat-labs/open-chat/pull/5383))
 
 ## [[2.0.1061](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1061-user_index)] - 2024-02-14
 
