@@ -8,6 +8,16 @@ pub struct Args {
     pub value: String,
 }
 
+impl Args {
+    pub fn trimmed(&self) -> Args {
+        Args {
+            locale: self.locale.trim().to_string(),
+            key: self.key.trim().to_string(),
+            value: self.value.trim().to_string(),
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64),
