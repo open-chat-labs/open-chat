@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Use slightly different timestamps to avoid duplicates ([#5392](https://github.com/open-chat-labs/open-chat/pull/5392))
+
+## [[2.0.1067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1067-translations)] - 2024-02-16
+
+### Fixed
+
 - Specify `created_at_time` in nanoseconds rather than milliseconds ([#5391](https://github.com/open-chat-labs/open-chat/pull/5391))
 
 ## [[2.0.1066](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1066-translations)] - 2024-02-16
