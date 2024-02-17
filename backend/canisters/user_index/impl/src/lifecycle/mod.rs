@@ -11,8 +11,8 @@ mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
-fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
-    if rng_seed == [0; 32] {
+fn init_env(rng_seed: [u8; 32], is_key_pair_initialised: bool) -> Box<CanisterEnv> {
+    if rng_seed == [0; 32] || !is_key_pair_initialised {
         ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
     }
     Box::new(CanisterEnv::new(rng_seed))
@@ -34,7 +34,8 @@ fn reseed_rng() {
         let seed = get_random_seed().await;
         mutate_state(|state| {
             state.data.rng_seed = seed;
-            state.env = Box::new(CanisterEnv::new(seed))
+            state.env = Box::new(CanisterEnv::new(seed));
+            state.data.oc_key_pair.initialize(&mut state.env.rng());
         });
         trace!("Successfully reseeded rng");
     }

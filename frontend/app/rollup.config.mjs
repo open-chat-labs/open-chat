@@ -46,6 +46,7 @@ if (dfxNetwork) {
         process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
+        process.env.IDENTITY_CANISTER = canisters.identity[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
@@ -56,6 +57,7 @@ if (dfxNetwork) {
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
+        console.log("IdentityCanisterId: ", process.env.IDENTITY_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
@@ -240,6 +242,7 @@ export default {
             "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
                 process.env.NOTIFICATIONS_CANISTER,
             ),
+            "process.env.IDENTITY_CANISTER": JSON.stringify(process.env.IDENTITY_CANISTER),
             "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.PROPOSALS_BOT_CANISTER,

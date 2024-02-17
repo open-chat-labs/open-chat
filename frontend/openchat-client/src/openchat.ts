@@ -464,7 +464,6 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 
-const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
@@ -758,28 +757,23 @@ export class OpenChat extends OpenChatAgentWorker {
         this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
 
-        if (user.canisterUpgradeStatus === "in_progress") {
-            this.identityState.set({ kind: "upgrading_user" });
-            window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
-        } else {
-            this.sendRequest({ kind: "createUserClient", userId: user.userId });
-            startMessagesReadTracker(this);
-            this.startOnlinePoller();
-            startSwCheckPoller();
-            this.startSession(id).then(() => this.logout());
-            this.startChatsPoller();
-            this.startUserUpdatePoller();
-            initNotificationStores();
-            this.sendRequest({ kind: "getUserStorageLimits" })
-                .then(storageStore.set)
-                .catch((err) => {
-                    console.warn("Unable to retrieve user storage limits", err);
-                });
-            if (!this._liveState.anonUser) {
-                this.identityState.set({ kind: "logged_in" });
-                this.initWebRtc();
-                this.dispatchEvent(new UserLoggedIn(user.userId));
-            }
+        this.sendRequest({ kind: "createUserClient", userId: user.userId });
+        startMessagesReadTracker(this);
+        this.startOnlinePoller();
+        startSwCheckPoller();
+        this.startSession(id).then(() => this.logout());
+        this.startChatsPoller();
+        this.startUserUpdatePoller();
+        initNotificationStores();
+        this.sendRequest({ kind: "getUserStorageLimits" })
+            .then(storageStore.set)
+            .catch((err) => {
+                console.warn("Unable to retrieve user storage limits", err);
+            });
+        if (!this._liveState.anonUser) {
+            this.identityState.set({ kind: "logged_in" });
+            this.initWebRtc();
+            this.dispatchEvent(new UserLoggedIn(user.userId));
         }
     }
 

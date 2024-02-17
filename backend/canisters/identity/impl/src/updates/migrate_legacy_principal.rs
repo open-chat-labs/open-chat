@@ -7,12 +7,12 @@ use types::CanisterId;
 
 #[update]
 #[trace]
-async fn migrate_legacy_principal(args: Args) -> Response {
+async fn migrate_legacy_principal(_args: Args) -> Response {
     let PrepareResult {
         caller,
         new_principal,
         user_index_canister_id,
-    } = match mutate_state(|state| prepare(args, state)) {
+    } = match mutate_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -40,9 +40,8 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
-    validate_public_key(caller, &args.public_key);
 
     if state.data.legacy_principals.contains(&caller) {
         let new_principal = if let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) {
@@ -64,9 +63,4 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
     } else {
         Err(NotFound)
     }
-}
-
-fn validate_public_key(caller: Principal, public_key: &[u8]) {
-    let expected_caller = Principal::self_authenticating(public_key);
-    assert_eq!(caller, expected_caller);
 }

@@ -47,6 +47,7 @@
             openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
+            identityCanister: process.env.IDENTITY_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
             translationsCanister: process.env.TRANSLATIONS_CANISTER!,

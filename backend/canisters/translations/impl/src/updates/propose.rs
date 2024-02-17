@@ -7,6 +7,8 @@ use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 #[update]
 #[trace]
 async fn propose(args: Args) -> Response {
+    let args = args.trimmed();
+
     if args.locale.len() < 2 {
         return InvalidArgs("locale too short".to_string());
     }

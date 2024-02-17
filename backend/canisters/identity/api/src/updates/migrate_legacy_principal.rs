@@ -1,10 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use types::Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub public_key: Vec<u8>,
-}
+pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

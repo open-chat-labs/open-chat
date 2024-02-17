@@ -4,8 +4,7 @@ use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob,
 };
-use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
-use candid::Principal;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
@@ -38,25 +37,23 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 }
 
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-    let now = state.env.now();
-    let is_caller_video_call_operator = state.is_caller_video_call_operator();
-
-    if let Err(response) = run_preliminary_checks(caller, args.community_rules_accepted, now, &mut state.data) {
-        return response;
-    }
-
-    let member = state.data.members.get(caller).unwrap();
+    let Caller {
+        user_id,
+        is_bot,
+        is_video_call_operator,
+        display_name,
+    } = match validate_caller(args.community_rules_accepted, state) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let user_id = member.user_id;
-        let sender_is_bot = member.is_bot;
-
+        let now = state.env.now();
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.validate_and_send_message(
             user_id,
-            sender_is_bot,
+            is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -66,16 +63,15 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
-            is_caller_video_call_operator,
+            is_video_call_operator,
             now,
         );
 
-        let display_name = member.display_name().value.clone().or(args.sender_display_name);
         process_send_message_result(
             result,
             user_id,
             args.sender_name,
-            display_name,
+            display_name.or(args.sender_display_name),
             channel.id,
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
@@ -91,23 +87,23 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
-    let caller = state.env.caller();
-    let now = state.env.now();
-
-    if let Err(response) = run_preliminary_checks(caller, args.community_rules_accepted, now, &mut state.data) {
-        return response;
-    }
-
-    let member = state.data.members.get(caller).unwrap();
+    let Caller {
+        user_id,
+        is_bot,
+        is_video_call_operator: _,
+        display_name,
+    } = match validate_caller(args.community_rules_accepted, state) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
     // Bots can't call this c2c endpoint since it skips the validation
-    if member.is_bot && member.user_id != state.data.proposals_bot_user_id {
+    if is_bot && user_id != state.data.proposals_bot_user_id {
         return NotAuthorized;
     }
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let user_id = member.user_id;
-
+        let now = state.env.now();
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.send_message(
@@ -124,12 +120,11 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             now,
         );
 
-        let display_name = member.display_name().value.clone().or(args.sender_display_name);
         process_send_message_result(
             result,
             user_id,
             args.sender_name,
-            display_name,
+            display_name.or(args.sender_display_name),
             channel.id,
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
@@ -144,37 +139,53 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     }
 }
 
-fn run_preliminary_checks(
-    caller: Principal,
-    community_rules_accepted: Option<Version>,
-    now: TimestampMillis,
-    data: &mut Data,
-) -> Result<(), Response> {
-    if data.is_frozen() {
+struct Caller {
+    user_id: UserId,
+    is_bot: bool,
+    is_video_call_operator: bool,
+    display_name: Option<String>,
+}
+
+fn validate_caller(community_rules_accepted: Option<Version>, state: &mut RuntimeState) -> Result<Caller, Response> {
+    if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
 
-    match data.members.get_mut(caller) {
-        Some(m) => {
-            if m.suspended.value {
-                return Err(UserSuspended);
-            }
+    let caller = state.env.caller();
+    if state.is_caller_video_call_operator() {
+        Ok(Caller {
+            user_id: caller.into(),
+            is_bot: true,
+            is_video_call_operator: true,
+            display_name: None,
+        })
+    } else if let Some(member) = state.data.members.get_mut(caller) {
+        if member.suspended.value {
+            Err(UserSuspended)
+        } else {
             if let Some(version) = community_rules_accepted {
-                m.accept_rules(version, now);
+                member.accept_rules(version, state.env.now());
             }
-            if data.rules.enabled
-                && !m.is_bot
-                && m.rules_accepted
+            if state.data.rules.enabled
+                && !member.is_bot
+                && member
+                    .rules_accepted
                     .as_ref()
-                    .map_or(true, |accepted| accepted.value < data.rules.text.version)
+                    .map_or(true, |accepted| accepted.value < state.data.rules.text.version)
             {
                 return Err(CommunityRulesNotAccepted);
             }
-        }
-        None => return Err(UserNotInCommunity),
-    };
 
-    Ok(())
+            Ok(Caller {
+                user_id: member.user_id,
+                is_bot: member.is_bot,
+                is_video_call_operator: false,
+                display_name: member.display_name().value.clone(),
+            })
+        }
+    } else {
+        Err(UserNotInCommunity)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
