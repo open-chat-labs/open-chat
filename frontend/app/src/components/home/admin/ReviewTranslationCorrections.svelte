@@ -26,7 +26,7 @@
 
     let corrections: TranslationCorrection[] = [];
     let verifying: TranslationCorrection | undefined = undefined;
-    let verifications: Record<string, string> = {};
+    let verifications: Record<number, string> = {};
     let chatBalance = 0n;
     let refreshing = false;
     let processing = new Set<bigint>();
@@ -138,7 +138,7 @@
     }
 
     function getEnglish(correction: TranslationCorrection) {
-        const key = `${correction.locale}_${correction.key}`;
+        const key = Number(correction.id);
         if (verifications[key]) {
             return Promise.resolve(verifications[key]);
         }
@@ -193,7 +193,7 @@
                     <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
                     <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
-                        {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
+                        {#if verifying !== undefined && verifying.id === correction.id}
                             {verifying.value}
                         {:else}
                             {correction.value}
@@ -223,7 +223,7 @@
                                             slot="icon" />
                                         <span slot="text">Preview</span>
                                     </MenuItem>
-                                    {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
+                                    {#if verifying !== undefined && verifying.id === correction.id}
                                         <MenuItem on:click={() => (verifying = undefined)}>
                                             <Translate
                                                 size={$iconSize}
