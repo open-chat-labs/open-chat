@@ -4,11 +4,13 @@
     import UnreadCount from "../UnreadCount.svelte";
     import type { ResourceKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import VideoCallIcon from "../video/VideoCallIcon.svelte";
 
     export let label: ResourceKey;
     export let selected: boolean = false;
     export let separator: boolean = false;
     export let unread = emptyUnreadCounts();
+    export let video = { muted: 0, unmuted: 0 };
     export let disabled = false;
 </script>
 
@@ -16,6 +18,7 @@
     <div class="icon" title={$_(label.key, label.params)}>
         <slot />
         <UnreadCount {unread} />
+        <VideoCallIcon {video} />
     </div>
     <div class="label"><Translatable resourceKey={label} /></div>
     <div class="menu"><slot name="menu" /></div>

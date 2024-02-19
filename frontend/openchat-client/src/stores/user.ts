@@ -7,6 +7,9 @@ import {
     ANON_AVATAR_URL,
     type CreatedUser,
     anonymousUser,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    OPENCHAT_VIDEO_CALL_USERNAME,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
@@ -15,6 +18,18 @@ export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
+
+export const videoCallBotUser: UserSummary = {
+    kind: "bot",
+    userId: OPENCHAT_VIDEO_CALL_USER_ID,
+    username: OPENCHAT_VIDEO_CALL_USERNAME,
+    displayName: undefined,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    diamondStatus: "inactive",
+};
+
 export const openChatBotUser: UserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,

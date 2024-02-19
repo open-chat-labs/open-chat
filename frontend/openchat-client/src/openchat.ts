@@ -186,6 +186,7 @@ import {
     suspendedUser,
     platformModerator,
     platformOperator,
+    videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -408,6 +409,7 @@ import {
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
+    OPENCHAT_VIDEO_CALL_USER_ID,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -445,6 +447,10 @@ import {
     unreadCommunityChannelCounts,
     globalUnreadCount,
     mergeCombinedUnreadCounts,
+    groupVideoCallCounts,
+    directVideoCallCounts,
+    favouritesVideoCallCounts,
+    communityChannelVideoCallCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -512,6 +518,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+            [OPENCHAT_VIDEO_CALL_USER_ID]: videoCallBotUser,
             [ANON_USER_ID]: anonymousUserSummary,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
@@ -1660,6 +1667,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     isOpenChatBot(userId: string): boolean {
         return userId === OPENCHAT_BOT_USER_ID;
+    }
+
+    isVideoCallBot(userId: string): boolean {
+        return userId === OPENCHAT_VIDEO_CALL_USER_ID;
     }
 
     isChatReadOnly(chatId: ChatIdentifier): boolean {
@@ -6177,9 +6188,13 @@ export class OpenChat extends OpenChatAgentWorker {
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
     unreadGroupCounts = unreadGroupCounts;
+    groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;
+    directVideoCallCounts = directVideoCallCounts;
+    favouritesVideoCallCounts = favouritesVideoCallCounts;
     unreadFavouriteCounts = unreadFavouriteCounts;
     unreadCommunityChannelCounts = unreadCommunityChannelCounts;
+    communityChannelVideoCallCounts = communityChannelVideoCallCounts;
     globalUnreadCount = globalUnreadCount;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
     moderationFlags = moderationFlags;

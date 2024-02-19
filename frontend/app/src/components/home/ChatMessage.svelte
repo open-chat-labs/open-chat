@@ -566,6 +566,7 @@
                     {/if}
 
                     {#if debug}
+                        <pre>Sender: {msg.sender}</pre>
                         <pre>EventIdx: {eventIndex}</pre>
                         <pre>MsgIdx: {msg.messageIndex}</pre>
                         <pre>MsgId: {msg.messageId}</pre>

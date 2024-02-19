@@ -43,6 +43,7 @@
     import Diamond from "../icons/Diamond.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -70,6 +71,10 @@
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const muted = chatSummary.membership.notificationsMuted;
+        const video = chatSummary.videoCallInProgress
+            ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
+            : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
@@ -86,6 +91,7 @@
                     ),
                     fav,
                     eventsTTL: undefined,
+                    video,
                 };
             default:
                 return {
@@ -101,6 +107,7 @@
                     ),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
+                    video,
                 };
         }
     }
@@ -345,6 +352,7 @@
                     <CameraTimer size={"1em"} color={"#fff"} />
                 </div>
             {/if}
+            <VideoCallIcon video={chat.video} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
@@ -687,6 +695,16 @@
 
     .expires {
         @include disappearing();
+    }
+
+    .video-call {
+        height: calc(1em + 4px);
+        width: calc(1em + 4px);
+        border-radius: 50%;
+        position: absolute;
+        bottom: -2px;
+        left: 2px;
+        background-image: url("/assets/video_call.svg");
     }
 
     .details {
