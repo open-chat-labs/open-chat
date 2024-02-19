@@ -110,7 +110,11 @@
                 isTokenLogoValid(addOrUpdateTokenLogo))
         || (selectedProposalType === "update_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
-                (addOrUpdateTokenHowToBuyUrl.length > 0 || addOrUpdateTokenTransactionUrlFormat.length > 0 || isTokenLogoValid(addOrUpdateTokenLogo))
+                (
+                    addOrUpdateTokenHowToBuyUrl.length > 0 ||
+                    addOrUpdateTokenTransactionUrlFormat.length > 0 ||
+                    isTokenLogoValid(addOrUpdateTokenLogo)
+                )
             ));
     $: canSubmit =
         step === 2 ||
