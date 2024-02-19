@@ -5,9 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.1046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1046-local_user_index)] - 2024-02-05
-
 ### Added
+
+- Add `access_token` endpoint + sync secret key ([#5398](https://github.com/open-chat-labs/open-chat/pull/5398))
+
+## [[2.0.1046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1046-local_user_index)] - 2024-02-05
 
 - VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
 
