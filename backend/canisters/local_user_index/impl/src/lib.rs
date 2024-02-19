@@ -185,6 +185,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
             },
+            oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
         }
     }
 }
@@ -219,6 +220,8 @@ struct Data {
     // TODO: Remove serde default
     #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub oc_secret_key_der: Option<Vec<u8>>,
 }
 
 fn video_call_operators() -> Vec<Principal> {
@@ -245,6 +248,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
+        oc_secret_key_der: Option<Vec<u8>>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -274,6 +278,7 @@ impl Data {
             btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
             rng_seed: [0; 32],
             video_call_operators,
+            oc_secret_key_der,
         }
     }
 }
@@ -299,6 +304,7 @@ pub struct Metrics {
     pub user_events_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub canister_ids: CanisterIds,
+    pub oc_secret_key_initialized: bool,
 }
 
 #[derive(Serialize, Debug)]

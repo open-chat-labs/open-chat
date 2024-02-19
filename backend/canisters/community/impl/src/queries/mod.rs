@@ -1,6 +1,7 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
+mod c2c_can_access_channel;
 mod channel_summary;
 mod channel_summary_updates;
 mod deleted_message;

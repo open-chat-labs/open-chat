@@ -29,6 +29,7 @@ fn init(args: Args) {
         args.internet_identity_canister_id,
         canister_pool_target_size,
         args.video_call_operators,
+        args.oc_secret_key_der,
         args.test_mode,
     );
 

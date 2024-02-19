@@ -1,3 +1,4 @@
+pub mod c2c_can_access_group;
 pub mod c2c_events;
 pub mod c2c_events_by_index;
 pub mod c2c_events_internal;

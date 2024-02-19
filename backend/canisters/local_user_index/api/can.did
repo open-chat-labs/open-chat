@@ -1,31 +1,42 @@
 import "../../../libraries/types/can.did";
 
+type AccessTokenArgs = record {
+    token_type : AccessTokenType;
+    chat : Chat;
+};
+
+type AccessTokenResponse = variant {
+    Success : text;
+    NotAuthorized;
+    InternalError : text;
+};
+
 type ChatEventsArgs = record {
     requests : vec ChatEventsArgsInner;
 };
 
 type EventsContext = variant {
     Direct : UserId;
-    Group : record { ChatId; opt MessageIndex; };
-    Channel : record { CommunityId; ChannelId; opt MessageIndex};
+    Group : record { ChatId; opt MessageIndex };
+    Channel : record { CommunityId; ChannelId; opt MessageIndex };
 };
 
 type ChatEventsArgsInner = record {
     context : EventsContext;
-    args: variant {
+    args : variant {
         Page : record {
-            start_index: EventIndex;
-            ascending: bool;
-            max_messages: nat32;
-            max_events: nat32;
+            start_index : EventIndex;
+            ascending : bool;
+            max_messages : nat32;
+            max_events : nat32;
         };
         ByIndex : record {
-            events: vec EventIndex;
+            events : vec EventIndex;
         };
         Window : record {
-            mid_point: MessageIndex;
-            max_messages: nat32;
-            max_events: nat32;
+            mid_point : MessageIndex;
+            max_messages : nat32;
+            max_events : nat32;
         };
     };
     latest_known_update : opt TimestampMillis;
@@ -33,8 +44,8 @@ type ChatEventsArgsInner = record {
 
 type ChatEventsResponse = variant {
     Success : record {
-        responses: vec ChatEventsResponseInner;
-        timestamp: TimestampMillis;
+        responses : vec ChatEventsResponseInner;
+        timestamp : TimestampMillis;
     };
 };
 
@@ -229,6 +240,7 @@ type ReportMessageResponse = variant {
 };
 
 service : {
+    access_token : (AccessTokenArgs) -> (AccessTokenResponse) query;
     chat_events : (ChatEventsArgs) -> (ChatEventsResponse) query;
     group_and_community_summary_updates : (GroupAndCommunitySummaryUpdatesArgs) -> (GroupAndCommunitySummaryUpdatesResponse) query;
 

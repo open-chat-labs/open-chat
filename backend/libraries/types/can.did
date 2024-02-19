@@ -1751,3 +1751,8 @@ type VideoCallUpdates = variant {
     SetToNone;
     SetToSome : VideoCall;
 };
+
+type AccessTokenType = variant {
+    StartVideoCall;
+    JoinVideoCall : MessageIndex;
+};

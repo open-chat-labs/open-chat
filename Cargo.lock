@@ -3793,6 +3793,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "itertools",
+ "jwt",
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
