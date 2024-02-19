@@ -24,7 +24,7 @@
     import Markdown from "./Markdown.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import { createAddTokenPayload } from "../../utils/sns";
+    import { createAddTokenPayload, createUpdateTokenPayload } from "../../utils/sns";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
@@ -56,7 +56,8 @@
         | "motion"
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
-        | "add_token" = "motion";
+        | "add_token"
+        | "update_token" = "motion";
     let message: ResourceKey | undefined = undefined;
     let error = true;
     let summaryContainerHeight = 0;
@@ -86,11 +87,11 @@
     $: recipientOwnerValid = isPrincipalValid(recipientOwner);
     $: recipientSubaccountValid =
         recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
-    $: addTokenLedgerCanisterId = "";
-    $: addTokenHowToBuyUrl = "";
-    $: addTokenInfoUrl = "";
-    $: addTokenTransactionUrlFormat = "";
-    $: addTokenLogo = "";
+    $: addOrUpdateTokenLedgerCanisterId = "";
+    $: addOrUpdateTokenHowToBuyUrl = "";
+    $: addOrUpdateTokenInfoUrl = "";
+    $: addOrUpdateTokenTransactionUrlFormat = "";
+    $: addOrUpdateTokenLogo = "";
     $: valid =
         !insufficientFunds &&
         titleValid &&
@@ -103,10 +104,14 @@
                 recipientOwnerValid &&
                 recipientSubaccountValid) ||
             (selectedProposalType === "add_token" &&
-                isPrincipalValid(addTokenLedgerCanisterId) &&
-                addTokenHowToBuyUrl.length > 0 &&
-                addTokenTransactionUrlFormat.length > 0 &&
-                isTokenLogoValid(addTokenLogo)));
+                isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
+                addOrUpdateTokenHowToBuyUrl.length > 0 &&
+                addOrUpdateTokenTransactionUrlFormat.length > 0 &&
+                isTokenLogoValid(addOrUpdateTokenLogo))
+        || (selectedProposalType === "update_token" &&
+                isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
+                (addOrUpdateTokenHowToBuyUrl.length > 0 || addOrUpdateTokenTransactionUrlFormat.length > 0 || isTokenLogoValid(addOrUpdateTokenLogo))
+            ));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -187,11 +192,26 @@
                     kind: "execute_generic_nervous_system_function",
                     functionId: BigInt(7000),
                     payload: createAddTokenPayload(
-                        addTokenLedgerCanisterId,
-                        addTokenInfoUrl,
-                        addTokenHowToBuyUrl,
-                        addTokenTransactionUrlFormat,
-                        addTokenLogo,
+                        addOrUpdateTokenLedgerCanisterId,
+                        addOrUpdateTokenInfoUrl,
+                        addOrUpdateTokenHowToBuyUrl,
+                        addOrUpdateTokenTransactionUrlFormat,
+                        addOrUpdateTokenLogo,
+                    ),
+                };
+            }
+            case "update_token": {
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(7001),
+                    payload: createUpdateTokenPayload(
+                        addOrUpdateTokenLedgerCanisterId,
+                        undefined,
+                        undefined,
+                        addOrUpdateTokenInfoUrl,
+                        addOrUpdateTokenHowToBuyUrl,
+                        addOrUpdateTokenTransactionUrlFormat,
+                        addOrUpdateTokenLogo,
                     ),
                 };
             }
@@ -271,6 +291,7 @@
                             >Upgrade SNS to next version</option>
                         {#if symbol === "CHAT"}
                             <option value={"add_token"}>Add token</option>
+                            <option value={"update_token"}>Update token</option>
                         {/if}
                     </Select>
                 </section>
@@ -403,50 +424,54 @@
                                 })} />
                         </section>
                     </div>
-                {:else if selectedProposalType === "add_token"}
+                {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token" }
                     <div>
                         <section>
                             <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
                             <Input
                                 autofocus
                                 disabled={busy}
-                                invalid={addTokenLedgerCanisterId.length > 0 &&
-                                    !isPrincipalValid(addTokenLedgerCanisterId)}
-                                bind:value={addTokenLedgerCanisterId}
+                                invalid={addOrUpdateTokenLedgerCanisterId.length > 0 &&
+                                    !isPrincipalValid(addOrUpdateTokenLedgerCanisterId)}
+                                bind:value={addOrUpdateTokenLedgerCanisterId}
                                 minlength={CANISTER_ID_LENGTH}
                                 maxlength={CANISTER_ID_LENGTH}
                                 countdown
                                 placeholder={i18nKey("2ouva-viaaa-aaaaq-aaamq-cai")} />
                         </section>
                         <section>
-                            <Legend label={i18nKey("proposal.maker.tokenInfoUrl")} required />
+                            <Legend
+                                label={i18nKey("proposal.maker.tokenInfoUrl")}
+                                required={selectedProposalType === "add_token"} />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
-                                bind:value={addTokenInfoUrl}
+                                bind:value={addOrUpdateTokenInfoUrl}
                                 countdown
                                 placeholder={i18nKey("https://token.com/info")} />
                         </section>
                         <section>
-                            <Legend label={i18nKey("proposal.maker.howToBuyUrl")} required />
+                            <Legend
+                                label={i18nKey("proposal.maker.howToBuyUrl")}
+                                required={selectedProposalType === "add_token"} />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
-                                bind:value={addTokenHowToBuyUrl}
+                                bind:value={addOrUpdateTokenHowToBuyUrl}
                                 countdown
                                 placeholder={i18nKey("https://token.com/how-to-buy")} />
                         </section>
                         <section>
                             <Legend
                                 label={i18nKey("proposal.maker.transactionUrlFormat")}
-                                required />
+                                required={selectedProposalType === "add_token"} />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
-                                bind:value={addTokenTransactionUrlFormat}
+                                bind:value={addOrUpdateTokenTransactionUrlFormat}
                                 countdown
                                 placeholder={i18nKey(
                                     `https://token.com/transactions/{transaction_index}`,
@@ -456,10 +481,10 @@
                             <Legend label={i18nKey("proposal.maker.tokenLogo")} />
                             <Input
                                 disabled={busy}
-                                invalid={!isTokenLogoValid(addTokenLogo)}
+                                invalid={!isTokenLogoValid(addOrUpdateTokenLogo)}
                                 minlength={0}
                                 maxlength={10000}
-                                bind:value={addTokenLogo}
+                                bind:value={addOrUpdateTokenLogo}
                                 countdown
                                 placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
