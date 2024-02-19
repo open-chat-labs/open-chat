@@ -14,19 +14,14 @@ async fn access_token(args: Args) -> Response {
         None => return NotAuthorized,
     };
 
-    let start_call = match args.token_type {
-        AccessTokenType::StartVideoCall => true,
-        AccessTokenType::JoinVideoCall(_) => false,
-    };
-
-    if !is_diamond && start_call {
-        return NotAuthorized;
-    }
+    let start_call = matches!(args.token_type, AccessTokenType::StartVideoCall);
 
     match args.chat {
         Chat::Direct(chat_id) => {
             let other_user: CanisterId = chat_id.into();
-            if !read_state(|state| state.data.global_users.get_by_user_id(&other_user.into()).is_some()) {
+            if (!is_diamond && start_call)
+                || !read_state(|state| state.data.global_users.get_by_user_id(&other_user.into()).is_some())
+            {
                 return NotAuthorized;
             }
         }
@@ -73,9 +68,9 @@ async fn check_group_access(
     is_diamond: bool,
     access_type: AccessTokenType,
 ) -> Result<(), Response> {
-    match group_canister_c2c_client::c2c_can_access_group(
+    match group_canister_c2c_client::c2c_can_issue_access_token(
         chat_id.into(),
-        &group_canister::c2c_can_access_group::Args {
+        &group_canister::c2c_can_issue_access_token::Args {
             user_id,
             is_diamond,
             access_type,
@@ -84,7 +79,7 @@ async fn check_group_access(
     .await
     {
         Ok(response) => match response {
-            group_canister::c2c_can_access_group::Response::Yes => Ok(()),
+            group_canister::c2c_can_issue_access_token::Response::Yes => Ok(()),
             _ => Err(NotAuthorized),
         },
         Err(err) => Err(InternalError(format!("{err:?}"))),
@@ -98,9 +93,9 @@ async fn check_channel_access(
     is_diamond: bool,
     access_type: AccessTokenType,
 ) -> Result<(), Response> {
-    match community_canister_c2c_client::c2c_can_access_channel(
+    match community_canister_c2c_client::c2c_can_issue_access_token_for_channel(
         communty_id.into(),
-        &community_canister::c2c_can_access_channel::Args {
+        &community_canister::c2c_can_issue_access_token_for_channel::Args {
             user_id,
             is_diamond,
             access_type,
@@ -110,7 +105,7 @@ async fn check_channel_access(
     .await
     {
         Ok(response) => match response {
-            community_canister::c2c_can_access_channel::Response::Yes => Ok(()),
+            community_canister::c2c_can_issue_access_token_for_channel::Response::Yes => Ok(()),
             _ => Err(NotAuthorized),
         },
         Err(err) => Err(InternalError(format!("{err:?}"))),

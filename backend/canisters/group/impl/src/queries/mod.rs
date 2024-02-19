@@ -1,7 +1,7 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
-mod c2c_can_access_group;
+mod c2c_can_issue_access_token;
 mod c2c_events_internal;
 mod c2c_name_and_members;
 mod deleted_message;
