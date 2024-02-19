@@ -54,7 +54,7 @@ async fn notify(canister_id: CanisterId, args: UpdateUserPrincipalArgs) {
     mutate_state(|state| match response {
         Ok(_) => state.data.user_principal_updates_queue.mark_success(args.user_id),
         // If the canister no longer exists, treat it as success
-        Err(error) if error.0 == RejectionCode::DestinationInvalid => {
+        Err((code, _)) if code == RejectionCode::DestinationInvalid => {
             state.data.user_principal_updates_queue.mark_success(args.user_id)
         }
         Err(_) => {
