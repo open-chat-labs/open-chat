@@ -41,7 +41,7 @@
     $: totalFees = fromDetails.transferFee * BigInt(2);
     $: remainingBalance =
         fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
-    $: minAmount = fromDetails.transferFee * BigInt(100);
+    $: minAmount = fromDetails.transferFee * BigInt(10);
     $: valid = error === undefined && fromAmountValid && toAmountValid;
     $: isDiamond = client.isDiamond;
 

@@ -35,16 +35,18 @@ fn post_upgrade(args: Args) {
 async fn retry_failed_payments() {
     mutate_state(|state| {
         let now = state.env.now();
+        let cutoff = 1708105641867; // Timestamp of the previous upgrade
 
-        for translation in state
+        for (index, translation) in state
             .data
             .translations
             .iter()
-            .filter(|t| matches!(&t.status, TranslationStatus::Approved(_)))
+            .filter(|t| matches!(&t.status, TranslationStatus::Approved(a) if a.attribution.when <= cutoff))
+            .enumerate()
         {
             state.data.pending_payments_queue.push(PendingPayment {
                 recipient_account: translation.proposed.who.into(),
-                timestamp: now,
+                timestamp: now - index as u64,
                 currency: Cryptocurrency::CHAT,
                 amount: 100_000_000, // 1 CHAT
                 reason: PendingPaymentReason::Approval,
