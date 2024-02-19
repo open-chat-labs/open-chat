@@ -113,7 +113,7 @@
                 (
                     addOrUpdateTokenHowToBuyUrl.length > 0 ||
                     addOrUpdateTokenTransactionUrlFormat.length > 0 ||
-                    isTokenLogoValid(addOrUpdateTokenLogo)
+                    (addOrUpdateTokenLogo.length > 0 && isTokenLogoValid(addOrUpdateTokenLogo))
                 )
             ));
     $: canSubmit =
