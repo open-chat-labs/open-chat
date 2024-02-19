@@ -1,5 +1,5 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { DerEncodedPublicKey, Identity, SignIdentity } from "@dfinity/agent";
+import type { DerEncodedPublicKey, SignIdentity } from "@dfinity/agent";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import type { CheckAuthPrincipalResponse, MigrateLegacyPrincipalResponse } from "openchat-shared";
 
@@ -22,14 +22,14 @@ export class IdentityAgent {
         return this._identityClient.migrateLegacyPrincipal();
     }
 
-    async getOpenChatIdentity(): Promise<Identity | undefined> {
-        const prepareDelegationResponse = await this._identityClient.prepareDelegation();
+    async getOpenChatIdentity(sessionKey: Uint8Array): Promise<DelegationIdentity | undefined> {
+        const prepareDelegationResponse = await this._identityClient.prepareDelegation(sessionKey);
         if (prepareDelegationResponse.kind === "not_found") {
             return undefined;
         }
 
         const getDelegationResponse = await this._identityClient.getDelegation(
-            prepareDelegationResponse.userKey,
+            sessionKey,
             prepareDelegationResponse.expiration,
         );
 
