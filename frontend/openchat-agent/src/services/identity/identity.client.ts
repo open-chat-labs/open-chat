@@ -1,4 +1,4 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
@@ -45,9 +45,9 @@ export class IdentityClient extends CandidService {
         );
     }
 
-    prepareDelegation(): Promise<PrepareDelegationResponse> {
+    prepareDelegation(sessionKey: Uint8Array): Promise<PrepareDelegationResponse> {
         const args = {
-            session_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
+            session_key: sessionKey,
             max_time_to_live: [] as [] | [bigint],
         };
         return this.handleResponse(
