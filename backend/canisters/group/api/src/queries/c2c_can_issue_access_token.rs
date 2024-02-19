@@ -1,4 +1,3 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{AccessTokenType, UserId};
 
@@ -9,8 +8,4 @@ pub struct Args {
     pub access_type: AccessTokenType,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Yes,
-    No,
-}
+pub type Response = bool;

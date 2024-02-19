@@ -1,4 +1,3 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{AccessTokenType, ChannelId, UserId};
 
@@ -10,9 +9,4 @@ pub struct Args {
     pub access_type: AccessTokenType,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Yes,
-    No,
-    ChannelNotFound,
-}
+pub type Response = bool;

@@ -78,10 +78,8 @@ async fn check_group_access(
     )
     .await
     {
-        Ok(response) => match response {
-            group_canister::c2c_can_issue_access_token::Response::Yes => Ok(()),
-            _ => Err(NotAuthorized),
-        },
+        Ok(response) if response => Ok(()),
+        Ok(_) => Err(NotAuthorized),
         Err(err) => Err(InternalError(format!("{err:?}"))),
     }
 }
@@ -104,10 +102,8 @@ async fn check_channel_access(
     )
     .await
     {
-        Ok(response) => match response {
-            community_canister::c2c_can_issue_access_token_for_channel::Response::Yes => Ok(()),
-            _ => Err(NotAuthorized),
-        },
+        Ok(response) if response => Ok(()),
+        Ok(_) => Err(NotAuthorized),
         Err(err) => Err(InternalError(format!("{err:?}"))),
     }
 }
