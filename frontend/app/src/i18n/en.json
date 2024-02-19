@@ -1245,6 +1245,10 @@
         "toggleMic": "Toggle your microphone",
         "toggleCam": "Toggle your camera",
         "toggleShare": "Toggle desktop sharing",
-        "disconnect": "Disconnect from the call"
+        "disconnect": "Disconnect from the call",
+        "startedBy": "A video call was started by {username}",
+        "join": "Join call",
+        "ended": "Call ended",
+        "leave": "Leave call"
     }
 }
