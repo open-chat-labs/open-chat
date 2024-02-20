@@ -1,18 +1,16 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChannelId;
+use types::{AccessTokenType, Chat};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub channel_id: ChannelId,
+    pub token_type: AccessTokenType,
+    pub chat: Chat,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),
-    CommunityFrozen,
-    UserNotInCommunity,
-    UserSuspended,
-    ChannelNotFound,
-    UserNotInChannel,
+    NotAuthorized,
+    InternalError(String),
 }

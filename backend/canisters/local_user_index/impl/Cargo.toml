@@ -30,6 +30,7 @@ ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
+jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
