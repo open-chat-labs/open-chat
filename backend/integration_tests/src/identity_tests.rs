@@ -2,7 +2,6 @@ use crate::env::ENV;
 use crate::rng::{random_principal, random_string, random_user_principal};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
-use candid::Principal;
 use rand::random;
 use serde_bytes::ByteBuf;
 use std::ops::Deref;
@@ -24,7 +23,7 @@ fn register_via_identity_canister_succeeds() {
         session_key.clone(),
     );
 
-    let delegation = client::identity::happy_path::get_delegation(
+    client::identity::happy_path::get_delegation(
         env,
         auth_principal,
         canister_ids.identity,
@@ -32,14 +31,12 @@ fn register_via_identity_canister_succeeds() {
         create_identity_result.expiration,
     );
 
-    let principal = Principal::self_authenticating(&delegation.delegation.pubkey);
-
     let register_response = client::local_user_index::register_user(
         env,
-        principal,
+        create_identity_result.principal,
         canister_ids.local_user_index,
         &local_user_index_canister::register_user::Args {
-            public_key: delegation.delegation.pubkey,
+            public_key: create_identity_result.user_key,
             username: random_string(),
             referral_code: None,
         },
