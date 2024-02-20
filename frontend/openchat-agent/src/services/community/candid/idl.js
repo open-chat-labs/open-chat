@@ -1020,7 +1020,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EndVideoCallArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'message_index' : MessageIndex,
+    'message_id' : MessageId,
   });
   const EndVideoCallResponse = IDL.Variant({
     'AlreadyEnded' : IDL.Null,

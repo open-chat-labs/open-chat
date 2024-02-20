@@ -1,9 +1,27 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
-  const MessageIndex = IDL.Nat32;
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
+  const Chat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+    'Direct' : ChatId,
+  });
+  const MessageIndex = IDL.Nat32;
+  const AccessTokenType = IDL.Variant({
+    'JoinVideoCall' : MessageIndex,
+    'StartVideoCall' : IDL.Null,
+  });
+  const AccessTokenArgs = IDL.Record({
+    'chat' : Chat,
+    'token_type' : AccessTokenType,
+  });
+  const AccessTokenResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
   const UserId = CanisterId;
   const EventsContext = IDL.Variant({
     'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
@@ -436,11 +454,6 @@ export const idlFactory = ({ IDL }) => {
     'followed_by_me' : IDL.Bool,
   });
   const MessageId = IDL.Nat;
-  const Chat = IDL.Variant({
-    'Group' : ChatId,
-    'Channel' : IDL.Tuple(CommunityId, ChannelId),
-    'Direct' : ChatId,
-  });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
@@ -1145,6 +1158,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'access_token' : IDL.Func(
+        [AccessTokenArgs],
+        [AccessTokenResponse],
+        ['query'],
+      ),
     'chat_events' : IDL.Func([ChatEventsArgs], [ChatEventsResponse], ['query']),
     'group_and_community_summary_updates' : IDL.Func(
         [GroupAndCommunitySummaryUpdatesArgs],

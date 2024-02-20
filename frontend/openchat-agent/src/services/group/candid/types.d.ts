@@ -23,6 +23,8 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+  { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -594,7 +596,7 @@ export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
-export interface EndVideoCallArgs { 'message_index' : MessageIndex }
+export interface EndVideoCallArgs { 'message_id' : MessageId }
 export type EndVideoCallResponse = { 'AlreadyEnded' : null } |
   { 'MessageNotFound' : null } |
   { 'Success' : null };

@@ -22,6 +22,8 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+  { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -675,7 +677,7 @@ export interface EditMessageV2Args {
 export type EmptyArgs = {};
 export interface EndVideoCallArgs {
   'user_id' : UserId,
-  'message_index' : MessageIndex,
+  'message_id' : MessageId,
 }
 export type EndVideoCallResponse = { 'AlreadyEnded' : null } |
   { 'MessageNotFound' : null } |

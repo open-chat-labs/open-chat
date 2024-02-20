@@ -609,7 +609,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
     'UserSuspended' : IDL.Null,
   });
-  const EndVideoCallArgs = IDL.Record({ 'message_index' : MessageIndex });
+  const EndVideoCallArgs = IDL.Record({ 'message_id' : MessageId });
   const EndVideoCallResponse = IDL.Variant({
     'AlreadyEnded' : IDL.Null,
     'MessageNotFound' : IDL.Null,

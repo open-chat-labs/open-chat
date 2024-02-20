@@ -11,6 +11,8 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+  { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,

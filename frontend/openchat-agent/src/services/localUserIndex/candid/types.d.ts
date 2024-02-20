@@ -11,6 +11,15 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export interface AccessTokenArgs {
+  'chat' : Chat,
+  'token_type' : AccessTokenType,
+}
+export type AccessTokenResponse = { 'NotAuthorized' : null } |
+  { 'Success' : string } |
+  { 'InternalError' : string };
+export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+  { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -1667,6 +1676,7 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'access_token' : ActorMethod<[AccessTokenArgs], AccessTokenResponse>,
   'chat_events' : ActorMethod<[ChatEventsArgs], ChatEventsResponse>,
   'group_and_community_summary_updates' : ActorMethod<
     [GroupAndCommunitySummaryUpdatesArgs],

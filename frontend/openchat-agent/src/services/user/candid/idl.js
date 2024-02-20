@@ -753,7 +753,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EndVideoCallArgs = IDL.Record({
     'user_id' : UserId,
-    'message_index' : MessageIndex,
+    'message_id' : MessageId,
   });
   const EndVideoCallResponse = IDL.Variant({
     'AlreadyEnded' : IDL.Null,
