@@ -1,11 +1,13 @@
 import type {
     ApiCheckAuthPrincipalResponse,
+    ApiCreateIdentityResponse,
     ApiGetDelegationResponse,
     ApiMigrateLegacyPrincipalResponse,
     ApiPrepareDelegationResponse,
 } from "./candid/idl";
 import {
     type CheckAuthPrincipalResponse,
+    type CreateIdentityResponse,
     type GetDelegationResponse,
     type MigrateLegacyPrincipalResponse,
     type PrepareDelegationResponse,
@@ -14,6 +16,23 @@ import {
 import { consolidateBytes } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
+
+export function createIdentityResponse(candid: ApiCreateIdentityResponse): CreateIdentityResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            userKey: consolidateBytes(candid.Success.user_key),
+            expiration: candid.Success.expiration,
+        };
+    }
+    if ("AlreadyRegistered" in candid) {
+        return { kind: "already_registered" };
+    }
+    if ("PublicKeyInvalid" in candid) {
+        return { kind: "public_key_invalid" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCreateIdentityResponse type received", candid);
+}
 
 export function checkAuthPrincipalResponse(
     candid: ApiCheckAuthPrincipalResponse,
