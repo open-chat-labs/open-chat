@@ -9,9 +9,8 @@ use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityId, U
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
 async fn access_token(args: Args) -> Response {
-    let (user_id, is_diamond) = match read_state(get_user) {
-        Some(p) => p,
-        None => return NotAuthorized,
+    let Some((user_id, is_diamond)) = read_state(get_user) else {
+        return NotAuthorized;
     };
 
     let start_call = matches!(args.token_type, AccessTokenType::StartVideoCall);
@@ -78,7 +77,7 @@ async fn check_group_access(
     )
     .await
     {
-        Ok(response) if response => Ok(()),
+        Ok(true) => Ok(()),
         Ok(_) => Err(NotAuthorized),
         Err(err) => Err(InternalError(format!("{err:?}"))),
     }
@@ -102,7 +101,7 @@ async fn check_channel_access(
     )
     .await
     {
-        Ok(response) if response => Ok(()),
+        Ok(true) => Ok(()),
         Ok(_) => Err(NotAuthorized),
         Err(err) => Err(InternalError(format!("{err:?}"))),
     }

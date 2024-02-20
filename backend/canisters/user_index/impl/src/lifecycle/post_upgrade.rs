@@ -38,11 +38,6 @@ fn post_upgrade(args: Args) {
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
 
-        for (canister_id, _) in state.data.local_index_map.iter() {
-            state.data.user_index_event_sync_queue.push(
-                *canister_id,
-                Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec()),
-            );
-        }
+        state.push_event_to_all_local_user_indexes(Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec()), None);
     });
 }

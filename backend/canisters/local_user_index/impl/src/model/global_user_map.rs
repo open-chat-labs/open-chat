@@ -72,7 +72,7 @@ impl GlobalUserMap {
     }
 
     pub fn is_diamond_member(&self, user_id: &UserId, now: TimestampMillis) -> bool {
-        self.diamond_membership_expiry_date(user_id).map_or(false, |t| t > now)
+        self.diamond_membership_expiry_date(user_id).is_some_and(|t| t > now)
     }
 
     fn hydrate_user(&self, user_id: UserId, principal: Principal) -> GlobalUser {
