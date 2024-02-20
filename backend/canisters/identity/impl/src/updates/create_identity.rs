@@ -29,7 +29,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     let principal = state.get_principal_from_seed(seed);
     state.data.user_principals.push(index, principal, caller);
 
-    let result = prepare_delegation_inner(seed, args.public_key, args.max_time_to_live, state);
+    let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
     Success(SuccessResult {
         principal,
