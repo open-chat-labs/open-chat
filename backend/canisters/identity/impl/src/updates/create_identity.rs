@@ -18,7 +18,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
         return AlreadyRegistered;
-    };
+    }
 
     if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
         return PublicKeyInvalid(error);
