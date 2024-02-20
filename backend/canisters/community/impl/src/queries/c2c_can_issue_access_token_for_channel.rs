@@ -12,11 +12,14 @@ fn c2c_can_issue_access_token_for_channel(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState) -> bool {
     let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall(_));
-    let is_member = state
+
+    (args.is_diamond || joining) && is_member(args, state)
+}
+
+fn is_member(args: Args, state: &RuntimeState) -> bool {
+    state
         .data
         .channels
         .get(&args.channel_id)
-        .map_or(false, |channel| channel.chat.members.get(&args.user_id).is_some());
-
-    (args.is_diamond || joining) && is_member
+        .is_some_and(|channel| channel.chat.members.get(&args.user_id).is_some())
 }
