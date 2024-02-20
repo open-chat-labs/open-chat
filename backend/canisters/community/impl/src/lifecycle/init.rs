@@ -1,14 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::updates::import_group::commit_group_to_import;
 use crate::{mutate_state, Data};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
 use rand::prelude::StdRng;
 use rand::{Rng, SeedableRng};
 use tracing::info;
-use types::TimestampMillis;
+use types::CanisterId;
 use utils::env::Environment;
 
 #[init]
@@ -17,10 +16,8 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
     let env = init_env([0; 32]);
-    let now = env.now();
 
-    let mut channel_name_rng = generate_channel_name_rng(args.created_by_principal, now);
-
+    let mut channel_name_rng = generate_channel_name_rng(env.canister_id());
     let default_channels = args
         .default_channels
         .into_iter()
@@ -51,7 +48,7 @@ fn init(args: Args) {
         args.mark_active_duration,
         args.video_call_operators,
         args.test_mode,
-        now,
+        env.now(),
     );
 
     init_state(env, data, args.wasm_version);
@@ -72,11 +69,10 @@ fn init(args: Args) {
     }
 }
 
-fn generate_channel_name_rng(principal: Principal, now: TimestampMillis) -> StdRng {
+fn generate_channel_name_rng(canister_id: CanisterId) -> StdRng {
     let mut seed = [0; 32];
-    let principal_bytes = principal.as_slice();
-    seed[0..principal_bytes.len()].copy_from_slice(principal_bytes);
-    seed[24..].copy_from_slice(&now.to_ne_bytes());
+    let canister_id_bytes = canister_id.as_slice();
+    seed[0..canister_id_bytes.len()].copy_from_slice(canister_id_bytes);
 
     StdRng::from_seed(seed)
 }
