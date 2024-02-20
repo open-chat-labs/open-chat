@@ -49,7 +49,7 @@ type EditMessageResponse = variant {
 };
 
 type EndVideoCallArgs = record {
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type EndVideoCallResponse = variant {
