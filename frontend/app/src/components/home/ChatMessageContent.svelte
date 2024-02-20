@@ -53,7 +53,7 @@
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
 {:else if content.kind === "video_call_content"}
-    <VideoCallContent {content} />
+    <VideoCallContent on:startVideoCall {messageIndex} {content} />
 {:else if content.kind === "audio_content"}
     <AudioContent {edited} {content} />
 {:else if content.kind === "file_content"}

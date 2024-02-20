@@ -1,23 +1,42 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { AvatarSize, OpenChat, type VideoCallContent } from "openchat-client";
+    import {
+        AvatarSize,
+        OpenChat,
+        chatIdentifiersEqual,
+        type VideoCallContent,
+    } from "openchat-client";
     import Avatar from "../Avatar.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
+    import { activeVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
+    export let content: VideoCallContent;
+    export let messageIndex: number;
+
+    $: selectedChat = client.selectedChatStore;
     $: communityMembers = client.currentCommunityMembers;
     $: userStore = client.userStore;
     $: initiator = content.participants[0];
     $: displayName = initiator
         ? client.getDisplayNameById(initiator.userId, $communityMembers)
         : $_("unknownUser");
-    $: incall = true;
+    $: incall =
+        $activeVideoCall !== undefined &&
+        $selectedChat !== undefined &&
+        $selectedChat.videoCallInProgress === messageIndex &&
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
 
-    export let content: VideoCallContent;
+    function joinCall() {
+        if (!incall && $selectedChat) {
+            dispatch("startVideoCall", $selectedChat);
+        }
+    }
 </script>
 
 <div class="video-call">
@@ -43,7 +62,7 @@
                 resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
         </Button>
     {:else}
-        <Button fill disabled={content.ended !== undefined}>
+        <Button fill disabled={content.ended !== undefined} on:click={joinCall}>
             <Translatable
                 resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.join")} />
         </Button>

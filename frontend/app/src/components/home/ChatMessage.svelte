@@ -545,6 +545,7 @@
                         on:registerVote={registerVote}
                         on:goToMessageIndex
                         on:upgrade
+                        on:startVideoCall
                         on:expandMessage />
 
                     {#if !inert && !isPrize}

@@ -351,6 +351,7 @@
         on:upgrade
         on:forward
         on:retrySend
+        on:startVideoCall
         on:removePreview={onRemovePreview}
         {chat}
         {events}

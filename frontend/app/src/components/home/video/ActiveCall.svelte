@@ -74,6 +74,7 @@
 
     export async function startVideoCall(chat: ChatSummary) {
         try {
+            // todo - we need to figure out if we are starting the call or joining the call
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = chat;
                 return;
