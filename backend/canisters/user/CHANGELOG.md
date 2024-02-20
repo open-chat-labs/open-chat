@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
 - VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
 - Endpoints to join and end video calls ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
-- End video call by `MessageId` ([#5399](https://github.com/open-chat-labs/open-chat/pull/5399))
+- End video call by `MessageId` ([#5401](https://github.com/open-chat-labs/open-chat/pull/5401))
 
 ## [[2.0.1032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1032-user)] - 2024-01-25
 
