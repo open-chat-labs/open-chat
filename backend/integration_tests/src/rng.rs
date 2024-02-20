@@ -1,6 +1,7 @@
 use crate::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use candid::Principal;
 use rand::{random, RngCore};
+use serde_bytes::ByteBuf;
 use types::MessageId;
 
 pub fn random_principal() -> Principal {
@@ -9,7 +10,7 @@ pub fn random_principal() -> Principal {
     Principal::from_slice(&random_bytes)
 }
 
-pub fn random_user_principal() -> (Principal, Vec<u8>) {
+pub fn random_user_principal() -> (Principal, ByteBuf) {
     let algorithm_bytes = [48u8, 60, 48, 12, 6, 10, 43, 6, 1, 4, 1, 131, 184, 67, 1, 2, 3, 44, 0];
     let random_bytes: [u8; 32] = random();
 
@@ -18,7 +19,7 @@ pub fn random_user_principal() -> (Principal, Vec<u8>) {
     public_key.extend_from_slice(NNS_INTERNET_IDENTITY_CANISTER_ID.as_slice());
     public_key.extend_from_slice(&random_bytes);
 
-    (Principal::self_authenticating(&public_key), public_key)
+    (Principal::self_authenticating(&public_key), ByteBuf::from(public_key))
 }
 
 pub fn random_string() -> String {
