@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow video call operator to send to all communities ([#5390](https://github.com/open-chat-labs/open-chat/pull/5390))
 - End video call by `MessageId` ([#5401](https://github.com/open-chat-labs/open-chat/pull/5401))
 
+### Fixed
+
+- Add randomness to default channel Ids ([#5405](https://github.com/open-chat-labs/open-chat/pull/5405))
+
 ## [[2.0.1021](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1021-community)] - 2024-01-24
 
 ### Changed
