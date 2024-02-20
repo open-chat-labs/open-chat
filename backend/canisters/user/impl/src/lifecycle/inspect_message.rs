@@ -15,7 +15,9 @@ fn accept_if_valid(state: &RuntimeState) {
         return;
     }
 
-    if state.is_caller_owner() || (method_name == "send_message" && state.is_caller_video_call_operator()) {
+    if state.is_caller_owner()
+        || ((method_name == "send_message" || method_name == "end_video_call") && state.is_caller_video_call_operator())
+    {
         ic_cdk::api::call::accept_message();
     }
 }
