@@ -42,8 +42,12 @@ impl RuntimeState {
         self.data.user_index_canister_id == caller
     }
 
-    pub fn get_principal(&self, index: u32) -> Principal {
+    pub fn get_principal_from_index(&self, index: u32) -> Principal {
         let seed = self.data.calculate_seed(index);
+        self.get_principal_from_seed(seed)
+    }
+
+    pub fn get_principal_from_seed(&self, seed: [u8; 32]) -> Principal {
         let public_key = self.der_encode_canister_sig_key(seed);
         Principal::self_authenticating(public_key)
     }
@@ -74,6 +78,8 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    internet_identity_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
     #[serde(skip)]
@@ -84,17 +90,23 @@ struct Data {
     test_mode: bool,
 }
 
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            internet_identity_canister_id,
             user_principals: UserPrincipals::default(),
             legacy_principals: HashSet::default(),
             signature_map: SignatureMap::default(),

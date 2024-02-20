@@ -1,9 +1,54 @@
 use crate::env::ENV;
-use crate::rng::{random_principal, random_string};
+use crate::rng::{random_principal, random_string, random_user_principal};
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{client, env, TestEnv};
+use candid::Principal;
+use rand::random;
 use std::ops::Deref;
 use types::Empty;
+
+#[test]
+fn register_via_identity_canister_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (auth_principal, public_key) = random_user_principal();
+    let session_key: [u8; 32] = random();
+
+    let create_identity_result = client::identity::happy_path::create_identity(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        public_key,
+        session_key.to_vec(),
+    );
+
+    let delegation = client::identity::happy_path::get_delegation(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        session_key.to_vec(),
+        create_identity_result.expiration,
+    );
+
+    let principal = Principal::self_authenticating(&delegation.delegation.pubkey);
+
+    let register_response = client::local_user_index::register_user(
+        env,
+        principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::register_user::Args {
+            public_key: delegation.delegation.pubkey,
+            username: random_string(),
+            referral_code: None,
+        },
+    );
+
+    assert!(matches!(
+        register_response,
+        local_user_index_canister::register_user::Response::Success(_)
+    ));
+}
 
 #[test]
 fn delegation_signed_successfully() {
@@ -12,11 +57,19 @@ fn delegation_signed_successfully() {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
+    let session_key: [u8; 32] = random();
     client::identity::happy_path::migrate_legacy_principal(env, user.principal, canister_ids.identity);
 
-    let prepare_result = client::identity::happy_path::prepare_delegation(env, &user, canister_ids.identity);
+    let prepare_result =
+        client::identity::happy_path::prepare_delegation(env, user.principal, canister_ids.identity, session_key.to_vec());
 
-    client::identity::happy_path::get_delegation(env, &user, canister_ids.identity, prepare_result.expiration);
+    client::identity::happy_path::get_delegation(
+        env,
+        user.principal,
+        canister_ids.identity,
+        user.public_key,
+        prepare_result.expiration,
+    );
 }
 
 #[test]

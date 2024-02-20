@@ -48,7 +48,7 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
             user.principal
         } else {
             let index = state.data.user_principals.next_index();
-            let principal = state.get_principal(index);
+            let principal = state.get_principal_from_index(index);
             state.data.user_principals.push(index, principal, caller);
             principal
         };

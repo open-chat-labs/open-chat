@@ -26,6 +26,22 @@ type SignedDelegation = record {
     signature : blob;
 };
 
+type CreateIdentityArgs = record {
+    public_key : PublicKey;
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+};
+
+type CreateIdentityResponse = variant {
+    Success : record {
+        "principal" : principal;
+        user_key : PublicKey;
+        expiration : TimestampNanoseconds;
+    };
+    AlreadyRegistered;
+    PublicKeyInvalid : text;
+};
+
 type MigrateLegacyPrincipalResponse = variant {
     Success : record {
         new_principal : principal;
@@ -51,6 +67,7 @@ type PrepareDelegationResponse = variant {
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     migrate_legacy_principal : (record {}) -> (MigrateLegacyPrincipalResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
 }
