@@ -1,9 +1,10 @@
 use crate::env::ENV;
 use crate::rng::{random_principal, random_string, random_user_principal};
 use crate::utils::tick_many;
-use crate::{client, env, TestEnv};
+use crate::{client, TestEnv};
 use candid::Principal;
 use rand::random;
+use serde_bytes::ByteBuf;
 use std::ops::Deref;
 use types::Empty;
 
@@ -13,21 +14,21 @@ fn register_via_identity_canister_succeeds() {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let (auth_principal, public_key) = random_user_principal();
-    let session_key: [u8; 32] = random();
+    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
 
     let create_identity_result = client::identity::happy_path::create_identity(
         env,
         auth_principal,
         canister_ids.identity,
-        public_key,
-        session_key.to_vec(),
+        public_key.clone(),
+        session_key.clone(),
     );
 
     let delegation = client::identity::happy_path::get_delegation(
         env,
         auth_principal,
         canister_ids.identity,
-        session_key.to_vec(),
+        session_key,
         create_identity_result.expiration,
     );
 
@@ -57,17 +58,17 @@ fn delegation_signed_successfully() {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    let session_key: [u8; 32] = random();
     client::identity::happy_path::migrate_legacy_principal(env, user.principal, canister_ids.identity);
 
+    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
     let prepare_result =
-        client::identity::happy_path::prepare_delegation(env, user.principal, canister_ids.identity, session_key.to_vec());
+        client::identity::happy_path::prepare_delegation(env, user.principal, canister_ids.identity, session_key.clone());
 
     client::identity::happy_path::get_delegation(
         env,
         user.principal,
         canister_ids.identity,
-        user.public_key,
+        session_key,
         prepare_result.expiration,
     );
 }
