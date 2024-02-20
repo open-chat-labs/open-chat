@@ -186,6 +186,7 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3121,6 +3122,19 @@ export class OpenChatAgent extends EventTarget {
             );
         } else {
             return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+        }
+    }
+
+    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).joinVideoCall(
+                chatId.channelId,
+                messageIndex,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageIndex);
+        } else {
+            return this.userClient.joinVideoCall(chatId.userId, messageIndex);
         }
     }
 }

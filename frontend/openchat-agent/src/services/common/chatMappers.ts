@@ -73,6 +73,7 @@ import type {
     ApiCancelP2PSwapResponse as ApiUserCancelP2PSwapResponse,
     ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
     ApiVideoCallContent,
+    ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -171,6 +172,7 @@ import type {
     CancelP2PSwapResponse,
     GroupInviteCodeChange,
     VideoCallContent,
+    JoinVideoCallResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -219,6 +221,7 @@ import type {
     ApiClaimPrizeResponse as ApiClaimGroupPrizeResponse,
     ApiAcceptP2PSwapResponse as ApiGroupAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiGroupCancelP2PSwapResponse,
+    ApiJoinVideoCallResponse as ApiJoinGroupVideoCallResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -255,6 +258,7 @@ import type {
     ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
     ApiAcceptP2PSwapResponse as ApiCommunityAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
+    ApiJoinVideoCallResponse as ApiJoinChannelVideoCallResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -2789,4 +2793,20 @@ export function cancelP2PSwapResponse(
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
 
     throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
+}
+
+export function joinVideoCallResponse(
+    candid:
+        | ApiJoinDirectVideoCallResponse
+        | ApiJoinGroupVideoCallResponse
+        | ApiJoinChannelVideoCallResponse,
+): JoinVideoCallResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyEnded" in candid) {
+        return "ended";
+    }
+    console.warn("JoinVideoCall failed with ", candid);
+    return "failure";
 }

@@ -73,6 +73,7 @@ import type {
     PendingCryptocurrencyTransfer,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -139,6 +140,7 @@ import {
     apiToken,
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
+    joinVideoCallResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -1256,6 +1258,16 @@ export class UserClient extends CandidService {
                 message_id: messageId,
             }),
             cancelP2PSwapResponse,
+        );
+    }
+
+    joinVideoCall(userId: string, messageIndex: number): Promise<JoinVideoCallResponse> {
+        return this.handleResponse(
+            this.userService.join_video_call({
+                user_id: Principal.fromText(userId),
+                message_index: messageIndex,
+            }),
+            joinVideoCallResponse,
         );
     }
 }

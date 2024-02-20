@@ -370,6 +370,7 @@ import type {
     CandidateTranslations,
     ProposeResponse,
     RejectReason,
+    JoinVideoCallResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5073,6 +5074,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
                 return { kind: "internal_error", text: err.toString() };
             });
+    }
+
+    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+        return this.sendRequest({
+            kind: "joinVideoCall",
+            chatId,
+            messageIndex,
+        });
     }
 
     private overwriteUserInStore(

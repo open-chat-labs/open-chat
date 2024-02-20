@@ -1490,6 +1490,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "joinVideoCall":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.joinVideoCall(payload.chatId, payload.messageIndex),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

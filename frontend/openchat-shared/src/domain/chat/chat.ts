@@ -2127,3 +2127,5 @@ export type CancelP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error"; text: string };
+
+export type JoinVideoCallResponse = "success" | "failure" | "ended";

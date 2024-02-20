@@ -64,6 +64,7 @@ import type {
     TipMessageResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -325,7 +326,14 @@ export type WorkerRequest =
     | RejectTranslation
     | MarkTranslationsDeployed
     | GetProposedTranslations
-    | GetTranslationsPendingDeployment;
+    | GetTranslationsPendingDeployment
+    | JoinVideoCall;
+
+type JoinVideoCall = {
+    kind: "joinVideoCall";
+    chatId: ChatIdentifier;
+    messageIndex: number;
+};
 
 type ProposeTranslation = {
     kind: "proposeTranslation";
@@ -1222,7 +1230,8 @@ export type WorkerResponseInner =
     | RejectResponse
     | MarkDeployedResponse
     | ProposedResponse
-    | PendingDeploymentResponse;
+    | PendingDeploymentResponse
+    | JoinVideoCallResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1825,4 +1834,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? AcceptP2PSwapResponse
     : T extends CancelP2PSwap
     ? CancelP2PSwapResponse
+    : T extends JoinVideoCall
+    ? JoinVideoCallResponse
     : never;

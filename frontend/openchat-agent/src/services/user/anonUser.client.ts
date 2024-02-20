@@ -1,4 +1,4 @@
-import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { CancelP2PSwapResponse, JoinVideoCallResponse } from "openchat-shared";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
     InitialStateResponse,
@@ -404,6 +404,10 @@ export class AnonUserClient {
     }
 
     cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    joinVideoCall(_userId: string, _messageIndex: number): Promise<JoinVideoCallResponse> {
         throw new AnonymousOperationError();
     }
 }

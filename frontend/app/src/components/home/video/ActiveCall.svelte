@@ -110,6 +110,10 @@
             await call.join();
 
             activeVideoCall.setCall(chat.id, call);
+
+            if (chat.videoCallInProgress !== undefined) {
+                await client.joinVideoCall(chat.id, chat.videoCallInProgress);
+            }
         } catch (err) {
             toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
             activeVideoCall.endCall();
