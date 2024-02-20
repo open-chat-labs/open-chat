@@ -3,6 +3,7 @@ use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+mod access_tokens;
 mod avatar;
 mod bots;
 mod build_version;
@@ -68,6 +69,7 @@ mod user_summary;
 mod version;
 mod versioned;
 
+pub use access_tokens::*;
 pub use avatar::*;
 pub use bots::*;
 pub use build_version::*;

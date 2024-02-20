@@ -19,5 +19,6 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
+    pub oc_secret_key_der: Option<Vec<u8>>,
     pub test_mode: bool,
 }

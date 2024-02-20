@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-jsonwebtoken = "9.2.0"
+ct-codecs = { workspace = true }
+hmac-sha256 = { workspace = true }
+p256 = { workspace = true, features = ["ecdsa", "pkcs8"] }
 serde = { workspace = true }
+serde_json = { workspace = true }
 types = { path = "../types" }

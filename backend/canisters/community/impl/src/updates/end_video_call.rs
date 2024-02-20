@@ -16,7 +16,7 @@ fn end_video_call(args: Args) -> Response {
 
 fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        match channel.chat.events.end_video_call(args.message_index, state.env.now()) {
+        match channel.chat.events.end_video_call(args.message_id.into(), state.env.now()) {
             EndVideoCallResult::Success => {
                 handle_activity_notification(state);
                 Success

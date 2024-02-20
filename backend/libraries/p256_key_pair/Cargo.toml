@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-p256 = { version = "0.13.2", features = ["pem", "ecdsa", "pkcs8"] }
+p256 = { workspace = true, features = ["pem", "ecdsa", "pkcs8"] }
 rand = { workspace = true }
 serde = { workspace = true }

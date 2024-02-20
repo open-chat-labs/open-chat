@@ -31,6 +31,7 @@ pub enum Event {
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
+    SecretKeySet(Vec<u8>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

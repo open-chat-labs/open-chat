@@ -11,12 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Transfer prizes to community during import ([#5317](https://github.com/open-chat-labs/open-chat/pull/5317))
 - VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
 - Endpoints to join and end video calls ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+- Add `c2c_can_access_group` endpoint ([#5398](https://github.com/open-chat-labs/open-chat/pull/5398))
 
 ### Changed
 
 - Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
 - Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
 - Allow video call operator to send to all groups ([#5389](https://github.com/open-chat-labs/open-chat/pull/5389))
+- End video call by `MessageId` ([#5401](https://github.com/open-chat-labs/open-chat/pull/5401))
 
 ## [[2.0.1022](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1022-group)] - 2024-01-24
 

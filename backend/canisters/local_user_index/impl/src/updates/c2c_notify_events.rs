@@ -155,5 +155,8 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
         }
+        Event::SecretKeySet(sk_der) => {
+            state.data.oc_secret_key_der = Some(sk_der);
+        }
     }
 }
