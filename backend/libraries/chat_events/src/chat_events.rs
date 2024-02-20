@@ -157,7 +157,7 @@ impl ChatEvents {
 
         if is_video_call {
             if let Some(vc) = &self.video_call_in_progress.value {
-                self.end_video_call(vc.message_index, args.now);
+                self.end_video_call(vc.message_index.into(), args.now);
             }
 
             self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
@@ -1451,8 +1451,8 @@ impl ChatEvents {
         &self.main
     }
 
-    pub fn end_video_call(&mut self, message_index: MessageIndex, now: TimestampMillis) -> EndVideoCallResult {
-        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into()) {
+    pub fn end_video_call(&mut self, event_key: EventKey, now: TimestampMillis) -> EndVideoCallResult {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, event_key) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                 if video_call.ended.is_none() {
                     video_call.ended = Some(now);

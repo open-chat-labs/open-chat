@@ -594,7 +594,7 @@ type EnableInviteCodeResponse = variant {
 
 type EndVideoCallArgs = record {
     channel_id : ChannelId;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type EndVideoCallResponse = variant {

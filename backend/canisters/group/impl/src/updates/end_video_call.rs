@@ -15,7 +15,7 @@ fn end_video_call(args: Args) -> Response {
 }
 
 fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
-    match state.data.chat.events.end_video_call(args.message_index, state.env.now()) {
+    match state.data.chat.events.end_video_call(args.message_id.into(), state.env.now()) {
         EndVideoCallResult::Success => {
             handle_activity_notification(state);
             Success

@@ -235,7 +235,7 @@ type CancelP2PSwapResponse = variant {
 
 type EndVideoCallArgs = record {
     user_id : UserId;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type EndVideoCallResponse = variant {
