@@ -113,6 +113,7 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        internet_identity_canister_id: canister_ids.nns_internet_identity,
         wasm_version: version,
         test_mode,
     };

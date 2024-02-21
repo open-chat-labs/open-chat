@@ -5,7 +5,22 @@ export const idlFactory = ({ IDL }) => {
     'Legacy' : IDL.Null,
   });
   const PublicKey = IDL.Vec(IDL.Nat8);
+  const Nanoseconds = IDL.Nat64;
+  const CreateIdentityArgs = IDL.Record({
+    'public_key' : PublicKey,
+    'session_key' : PublicKey,
+    'max_time_to_live' : IDL.Opt(Nanoseconds),
+  });
   const TimestampNanoseconds = IDL.Nat64;
+  const CreateIdentityResponse = IDL.Variant({
+    'AlreadyRegistered' : IDL.Null,
+    'Success' : IDL.Record({
+      'principal' : IDL.Principal,
+      'user_key' : PublicKey,
+      'expiration' : TimestampNanoseconds,
+    }),
+    'PublicKeyInvalid' : IDL.Text,
+  });
   const GetDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
     'expiration' : TimestampNanoseconds,
@@ -27,7 +42,6 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'AlreadyMigrated' : IDL.Null,
   });
-  const Nanoseconds = IDL.Nat64;
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
@@ -44,6 +58,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Record({})],
         [CheckAuthPrincipalResponse],
         ['query'],
+      ),
+    'create_identity' : IDL.Func(
+        [CreateIdentityArgs],
+        [CreateIdentityResponse],
+        [],
       ),
     'get_delegation' : IDL.Func(
         [GetDelegationArgs],
