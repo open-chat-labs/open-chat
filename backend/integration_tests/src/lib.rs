@@ -3,6 +3,7 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
+use serde_bytes::ByteBuf;
 use types::{CanisterId, Cycles, UserId};
 
 mod batched_summary_and_event_tests;
@@ -56,7 +57,7 @@ pub struct TestEnv {
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
-    pub public_key: Vec<u8>,
+    pub public_key: ByteBuf,
 }
 
 impl User {

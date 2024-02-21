@@ -60,11 +60,11 @@
         "util": "0.12.5"
     },
     "dependencies": {
-        "@dfinity/agent": "^1.0.0",
-        "@dfinity/auth-client": "^1.0.0",
-        "@dfinity/candid": "^1.0.0",
-        "@dfinity/identity": "^1.0.0",
-        "@dfinity/principal": "^1.0.0",
+        "@dfinity/agent": "^1.0.1",
+        "@dfinity/auth-client": "^1.0.1",
+        "@dfinity/candid": "^1.0.1",
+        "@dfinity/identity": "^1.0.1",
+        "@dfinity/principal": "^1.0.1",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",
         "@sveltejs/svelte-virtual-list": "^3.0.1",

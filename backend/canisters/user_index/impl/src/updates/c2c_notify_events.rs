@@ -31,7 +31,15 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
     let caller: CanisterId = state.env.caller();
 
     match event {
-        Event::UserRegistered(ev) => process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state),
+        Event::UserRegistered(ev) => process_new_user(
+            ev.principal,
+            ev.username,
+            ev.user_id,
+            ev.referred_by,
+            caller,
+            ev.is_from_identity_canister,
+            state,
+        ),
         Event::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
@@ -84,6 +92,7 @@ fn process_new_user(
     user_id: UserId,
     referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
+    is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
@@ -152,7 +161,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
 
-    if state.data.test_mode {
+    if !is_from_identity_canister && state.data.test_mode {
         state.data.legacy_principals_sync_queue.push_back(caller);
         crate::jobs::sync_legacy_user_principals::try_run_now(state);
     }

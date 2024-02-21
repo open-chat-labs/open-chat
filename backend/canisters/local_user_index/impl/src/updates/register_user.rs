@@ -15,8 +15,7 @@ use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use utils::text_validation::{validate_username, UsernameValidationError};
-use x509_parser::prelude::FromDer;
-use x509_parser::x509::SubjectPublicKeyInfo;
+use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 pub const USER_LIMIT: usize = 150_000;
 
@@ -30,6 +29,7 @@ async fn register_user(args: Args) -> Response {
         canister_wasm,
         cycles_to_use,
         referral_code,
+        is_from_identity_canister,
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -49,7 +49,17 @@ async fn register_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
+            mutate_state(|state| {
+                commit(
+                    caller,
+                    user_id,
+                    args.username,
+                    wasm_version,
+                    referral_code,
+                    is_from_identity_canister,
+                    state,
+                )
+            });
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
@@ -70,6 +80,7 @@ struct PrepareOk {
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
     referral_code: Option<ReferralCode>,
+    is_from_identity_canister: bool,
     init_canister_args: InitUserCanisterArgs,
 }
 
@@ -81,14 +92,13 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(
+    let is_from_identity_canister = validate_public_key(
         caller,
         &args.public_key,
         state.data.identity_canister_id,
         state.data.internet_identity_canister_id,
-    ) {
-        return Err(PublicKeyInvalid(error));
-    }
+    )
+    .map_err(PublicKeyInvalid)?;
 
     if state.data.global_users.len() >= USER_LIMIT {
         return Err(UserLimitReached);
@@ -171,6 +181,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         canister_wasm,
         cycles_to_use,
         referral_code,
+        is_from_identity_canister,
         init_canister_args,
     })
 }
@@ -181,6 +192,7 @@ fn commit(
     username: String,
     wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
+    is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
@@ -192,6 +204,7 @@ fn commit(
         user_id,
         username: username.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        is_from_identity_canister,
     })));
 
     match referral_code {
@@ -254,7 +267,7 @@ fn validate_public_key(
     public_key: &[u8],
     identity_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
-) -> Result<(), String> {
+) -> Result<bool, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
@@ -265,7 +278,7 @@ fn validate_public_key(
 
     let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {
-        Ok(())
+        Ok(canister_id == identity_canister_id)
     } else {
         Err("PublicKey does not match caller".to_string())
     }

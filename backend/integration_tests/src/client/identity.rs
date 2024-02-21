@@ -14,7 +14,6 @@ pub mod happy_path {
     use candid::Principal;
     use identity_canister::SignedDelegation;
     use pocket_ic::PocketIc;
-    use serde_bytes::ByteBuf;
     use types::{CanisterId, TimestampMillis};
 
     pub fn prepare_delegation(
@@ -27,7 +26,7 @@ pub mod happy_path {
             user.principal,
             identity_canister_id,
             &identity_canister::prepare_delegation::Args {
-                session_key: ByteBuf::from(user.public_key.clone()),
+                session_key: user.public_key.clone(),
                 max_time_to_live: None,
             },
         );
@@ -49,7 +48,7 @@ pub mod happy_path {
             user.principal,
             identity_canister_id,
             &identity_canister::get_delegation::Args {
-                session_key: ByteBuf::from(user.public_key.clone()),
+                session_key: user.public_key.clone(),
                 expiration,
             },
         );
