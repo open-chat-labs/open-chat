@@ -17,7 +17,7 @@ fn init(args: Args) {
     let mut env = init_env([0; 32]);
 
     let mut channel_name_rng = StdRng::from_seed(env.entropy());
-    
+
     let default_channels = args
         .default_channels
         .into_iter()
