@@ -1498,6 +1498,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getAccessToken":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getAccessToken(
+                        payload.chatId,
+                        payload.accessTokenType,
+                        payload.localUserIndex,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

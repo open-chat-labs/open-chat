@@ -83,7 +83,9 @@
             activeVideoCall.joining(chat.id);
 
             // first we need tojoin access jwt from the oc backend
-            const { token, roomName } = await client.getVideoChatAccessToken(chat.id);
+            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, {
+                kind: "start_video_call",
+            });
             const call = daily.createFrame(iframeContainer, {
                 token,
                 showLeaveButton: true,

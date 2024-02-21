@@ -1,4 +1,5 @@
 import type {
+    AccessTokenType,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
@@ -7,6 +8,8 @@ import type {
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiAccessTokenResponse,
+    ApiAccessTokenType,
     ApiGroupAndCommunitySummaryUpdatesResponse,
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
@@ -22,6 +25,27 @@ import {
 } from "../common/chatMappers";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
 import { communitySummaryUpdates } from "../community/mappers";
+
+export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType {
+    switch (domain.kind) {
+        case "join_video_call":
+            return {
+                JoinVideoCall: domain.messageIndex,
+            };
+        case "start_video_call":
+            return {
+                StartVideoCall: null,
+            };
+    }
+}
+
+export function accessTokenResponse(candid: ApiAccessTokenResponse): string | undefined {
+    if ("Success" in candid) {
+        return candid.Success;
+    }
+    console.warn("Unable to get access token: ", candid);
+    return undefined;
+}
 
 export function groupAndCommunitySummaryUpdates(
     candid: ApiGroupAndCommunitySummaryUpdatesResponse,

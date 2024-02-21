@@ -2,7 +2,9 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
+    AccessTokenType,
     ChannelIdentifier,
+    ChatIdentifier,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
@@ -12,6 +14,8 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
+    accessTokenResponse,
+    apiAccessTokenType,
     groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
@@ -19,7 +23,7 @@ import {
     registerUserResponse,
 } from "./mappers";
 import type { AgentConfig } from "../../config";
-import { joinGroupResponse, apiOptional } from "../common/chatMappers";
+import { joinGroupResponse, apiOptional, apiChatIdentifier } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 
@@ -145,6 +149,20 @@ export class LocalUserIndexClient extends CandidService {
                 user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
             inviteUsersResponse,
+        );
+    }
+
+    getAccessToken(
+        chatId: ChatIdentifier,
+        accessType: AccessTokenType,
+    ): Promise<string | undefined> {
+        return this.handleQueryResponse(
+            () =>
+                this.localUserIndexService.access_token({
+                    chat: apiChatIdentifier(chatId),
+                    token_type: apiAccessTokenType(accessType),
+                }),
+            accessTokenResponse,
         );
     }
 }

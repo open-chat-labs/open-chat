@@ -111,7 +111,12 @@ import type {
     ExploreChannelsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
-import type { CommunityPermissions, MemberRole, OptionalChatPermissions } from "./permission";
+import type {
+    AccessTokenType,
+    CommunityPermissions,
+    MemberRole,
+    OptionalChatPermissions,
+} from "./permission";
 import type { AccessGate, Rules, UpdatedRules } from "./access";
 import type {
     AddMembersToChannelResponse,
@@ -327,7 +332,15 @@ export type WorkerRequest =
     | MarkTranslationsDeployed
     | GetProposedTranslations
     | GetTranslationsPendingDeployment
-    | JoinVideoCall;
+    | JoinVideoCall
+    | GetAccessToken;
+
+type GetAccessToken = {
+    kind: "getAccessToken";
+    chatId: ChatIdentifier;
+    accessTokenType: AccessTokenType;
+    localUserIndex: string;
+};
 
 type JoinVideoCall = {
     kind: "joinVideoCall";
@@ -1836,4 +1849,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CancelP2PSwapResponse
     : T extends JoinVideoCall
     ? JoinVideoCallResponse
+    : T extends GetAccessToken
+    ? string | undefined
     : never;

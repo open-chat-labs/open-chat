@@ -371,6 +371,7 @@ import type {
     ProposeResponse,
     RejectReason,
     JoinVideoCallResponse,
+    AccessTokenType,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5646,28 +5647,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    private getDailyAccessJWT(chatId: ChatIdentifier): Promise<string> {
-        // TODO - this should be an OC service that checks that the user is allowed to create/join a video call in this
-        // chat or not and returns a JWT if they are
-        return fetch(`${this.config.videoBridgeUrl}/room/access_jwt`, {
-            method: "POST",
-            headers: {
-                "Content-type": "application/json",
-            },
-            body: JSON.stringify({
-                userId: this._liveState.user.userId,
-                username: this._liveState.user.username,
-                chatId,
-            }),
-        }).then((res) => {
-            if (res.ok) {
-                return res.text();
-            } else {
-                throw new Error(`Unable to get access jwt: ${res.status}, ${res.statusText}`);
-            }
-        });
-    }
-
     private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
@@ -5693,11 +5672,37 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getVideoChatAccessToken(chatId: ChatIdentifier): Promise<{ token: string; roomName: string }> {
-        return this.getDailyAccessJWT(chatId).then((token) => {
-            console.log("Token: ", token);
-            return this.getRoomAccessToken(token);
-        });
+    private getLocalUserIndex(chat: ChatSummary): string {
+        switch (chat.kind) {
+            case "group_chat":
+                return chat.localUserIndex;
+            default:
+                throw new Error("TODO get hold of localuserindex for channel or direct chat");
+        }
+    }
+
+    getVideoChatAccessToken(
+        chatId: ChatIdentifier,
+        accessTokenType: AccessTokenType,
+    ): Promise<{ token: string; roomName: string }> {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+        return this.sendRequest({
+            kind: "getAccessToken",
+            chatId,
+            accessTokenType,
+            localUserIndex: this.getLocalUserIndex(chat),
+        })
+            .then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                console.log("Token: ", token);
+                return token;
+            })
+            .then((token) => this.getRoomAccessToken(token));
     }
 
     // **** Communities Stuff
