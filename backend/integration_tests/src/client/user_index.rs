@@ -7,6 +7,7 @@ generate_query_call!(current_user);
 generate_query_call!(search);
 generate_query_call!(platform_moderators);
 generate_query_call!(platform_moderators_group);
+generate_query_call!(public_key);
 generate_query_call!(user);
 generate_query_call!(users_v2);
 
@@ -30,7 +31,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, UserId, UserSummary,
+        DiamondMembershipPlanDuration, Empty, UserId, UserSummary,
     };
     use user_index_canister::users_v2::UserGroup;
 
@@ -182,5 +183,14 @@ pub mod happy_path {
             response,
             user_index_canister::add_local_user_index_canister::Response::Success
         ));
+    }
+
+    pub fn public_key(env: &mut PocketIc, sender: Principal, user_index_canister_id: CanisterId) -> String {
+        let response = super::public_key(env, sender, user_index_canister_id, &Empty {});
+
+        match response {
+            user_index_canister::public_key::Response::Success(pk) => pk,
+            response => panic!("'public_key' error: {response:?}"),
+        }
     }
 }

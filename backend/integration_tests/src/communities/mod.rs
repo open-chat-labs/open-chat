@@ -13,3 +13,4 @@ mod send_message_tests;
 mod update_channel_tests;
 mod update_communities_tests;
 mod user_group_tests;
+mod video_call_tests;

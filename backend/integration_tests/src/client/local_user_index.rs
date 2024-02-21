@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
+generate_query_call!(access_token);
 generate_query_call!(chat_events);
 generate_query_call!(group_and_community_summary_updates);
 
@@ -21,7 +22,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
+    use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
 
     pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -229,5 +230,29 @@ pub mod happy_path {
         }
 
         env.tick();
+    }
+
+    pub fn access_token(
+        env: &PocketIc,
+        sender: &User,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        token_type: AccessTokenType,
+    ) -> String {
+        let response = super::access_token(
+            env,
+            sender.principal,
+            local_user_index_canister_id,
+            &local_user_index_canister::access_token::Args {
+                token_type,
+                chat: Chat::Channel(community_id, channel_id),
+            },
+        );
+
+        match response {
+            local_user_index_canister::access_token::Response::Success(token) => token,
+            response => panic!("'access_token' error: {response:?}"),
+        }
     }
 }
