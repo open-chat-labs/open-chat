@@ -184,6 +184,9 @@ ic-utils = "0.33.0"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.21.1"
 itertools = "0.12.1"
+jwt-simple = { version = "0.12.9", default-features = false, features = [
+    "pure-rust",
+] }
 lazy_static = "1.4.0"
 num-traits = "0.2.17"
 openssl = "0.10.60"
