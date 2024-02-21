@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `local_user_index` endpoint ([#5413](https://github.com/open-chat-labs/open-chat/pull/5413))
+- Add `c2c_can_issue_access_token` endpoint ([#5415](https://github.com/open-chat-labs/open-chat/pull/5415))
 
 ### Changed
 
