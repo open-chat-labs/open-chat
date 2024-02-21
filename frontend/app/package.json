@@ -63,7 +63,7 @@
         "@dfinity/agent": "^1.0.0",
         "@dfinity/auth-client": "^1.0.0",
         "@dfinity/candid": "^1.0.0",
-        "@dfinity/identity": "^1.0.0",
+        "@dfinity/identity": "^1.0.1",
         "@dfinity/principal": "^1.0.0",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",

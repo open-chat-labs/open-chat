@@ -19,7 +19,7 @@
         "@dfinity/agent": "^1.0.0",
         "@dfinity/auth-client": "^1.0.0",
         "@dfinity/candid": "^1.0.0",
-        "@dfinity/identity": "^1.0.0",
+        "@dfinity/identity": "^1.0.1",
         "@dfinity/principal": "^1.0.0",
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
