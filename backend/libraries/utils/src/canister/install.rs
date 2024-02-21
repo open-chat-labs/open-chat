@@ -23,7 +23,13 @@ pub struct CanisterToInstall<A: CandidType> {
 
 pub enum WasmToInstall {
     Default(Vec<u8>),
-    Chunked(Vec<Hash>, Hash),
+    Chunked(ChunkedWasmToInstall),
+}
+
+pub struct ChunkedWasmToInstall {
+    pub chunks: Vec<Hash>,
+    pub wasm_hash: Hash,
+    pub store_canister_id: CanisterId,
 }
 
 enum InstallCodeArgs {
@@ -48,16 +54,16 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
             wasm_module,
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
-        WasmToInstall::Chunked(chunks, hash) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {
+        WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {
             mode: match mode {
                 CanisterInstallMode::Install => CanisterInstallModeV2::Install,
                 CanisterInstallMode::Reinstall => CanisterInstallModeV2::Reinstall,
                 CanisterInstallMode::Upgrade => CanisterInstallModeV2::Upgrade(None),
             },
             target_canister: canister_id,
-            store_canister: None,
-            chunk_hashes_list: chunks.into_iter().map(ByteBuf::from).collect(),
-            wasm_module_hash: hash.to_vec(),
+            store_canister: Some(wasm.store_canister_id),
+            chunk_hashes_list: wasm.chunks.into_iter().map(ByteBuf::from).collect(),
+            wasm_module_hash: wasm.wasm_hash.to_vec(),
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
     };

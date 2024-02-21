@@ -5,7 +5,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp, UserId};
-use utils::canister::{install, FailedUpgrade, WasmToInstall};
+use utils::canister::{install, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
 use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<user_canister::post_upgrade::Args>;
@@ -85,7 +85,11 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
         new_wasm: if user_canister_wasm.chunks.is_empty() {
             WasmToInstall::Default(user_canister_wasm.wasm.module.clone())
         } else {
-            WasmToInstall::Chunked(user_canister_wasm.chunks.clone(), user_canister_wasm.wasm_hash)
+            WasmToInstall::Chunked(ChunkedWasmToInstall {
+                chunks: user_canister_wasm.chunks.clone(),
+                wasm_hash: user_canister_wasm.wasm_hash,
+                store_canister_id: state.env.canister_id(),
+            })
         },
         deposit_cycles_if_needed,
         args: user_canister::post_upgrade::Args {
