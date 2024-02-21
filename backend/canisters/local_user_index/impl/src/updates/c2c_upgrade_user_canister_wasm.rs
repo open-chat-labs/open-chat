@@ -2,7 +2,6 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, read_state, Data, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::{ClearChunkStoreArgument, UploadChunkArgument};
 use itertools::Itertools;
 use local_user_index_canister::c2c_upgrade_user_canister_wasm::{Response::*, *};
 use sha256::sha256;
@@ -10,9 +9,7 @@ use std::cmp::Reverse;
 use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, ChunkedCanisterWasm, Hash};
-use utils::canister::should_perform_upgrade;
-
-const ONE_MB: usize = 1024 * 1024;
+use utils::canister::{clear_chunk_store, should_perform_upgrade, upload_wasm_in_chunks};
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
@@ -23,24 +20,10 @@ async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
     };
 
     if args.use_for_new_canisters.unwrap_or(true) {
-        ic_cdk::api::management_canister::main::clear_chunk_store(ClearChunkStoreArgument {
-            canister_id: this_canister_id,
-        })
-        .await
-        .unwrap();
+        clear_chunk_store(this_canister_id).await;
     }
 
-    let mut chunks = Vec::new();
-    for chunk in args.wasm.module.chunks(ONE_MB) {
-        let (chunk_hash,) = ic_cdk::api::management_canister::main::upload_chunk(UploadChunkArgument {
-            canister_id: this_canister_id,
-            chunk: chunk.to_vec(),
-        })
-        .await
-        .unwrap();
-
-        chunks.push(chunk_hash.hash.try_into().unwrap());
-    }
+    let chunks = upload_wasm_in_chunks(&args.wasm.module, this_canister_id).await;
 
     mutate_state(|state| commit(args, chunks, state))
 }

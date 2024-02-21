@@ -32,11 +32,6 @@ pub struct ChunkedWasmToInstall {
     pub store_canister_id: CanisterId,
 }
 
-enum InstallCodeArgs {
-    Default(InstallCodeArgument),
-    Chunked(InstallChunkedCodeArgument),
-}
-
 pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> CallResult<Option<Cycles>> {
     let canister_id = canister_to_install.canister_id;
     let mode = canister_to_install.mode;
@@ -67,11 +62,8 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
     };
-    let mut install_code_response: CallResult<()> = match &install_code_args {
-        InstallCodeArgs::Default(args) => management_canister::main::install_code(args.clone()).await,
-        InstallCodeArgs::Chunked(args) => management_canister::main::install_chunked_code(args.clone()).await,
-    };
 
+    let mut install_code_response = install_code_args.clone().install().await;
     let mut cycles_used = None;
     let mut error = None;
     let mut attempt = 0;
@@ -80,10 +72,7 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
     {
         if canister::deposit_cycles(canister_id, cycles).await.is_ok() {
             cycles_used = Some(cycles_used.unwrap_or_default() + cycles);
-            install_code_response = match &install_code_args {
-                InstallCodeArgs::Default(args) => management_canister::main::install_code(args.clone()).await,
-                InstallCodeArgs::Chunked(args) => management_canister::main::install_chunked_code(args.clone()).await,
-            };
+            install_code_response = install_code_args.clone().install().await;
         } else {
             break;
         }
@@ -139,4 +128,19 @@ fn should_deposit_cycles_and_retry(
         }
     }
     ShouldDepositAndRetry::No
+}
+
+#[derive(Clone)]
+enum InstallCodeArgs {
+    Default(InstallCodeArgument),
+    Chunked(InstallChunkedCodeArgument),
+}
+
+impl InstallCodeArgs {
+    async fn install(self) -> CallResult<()> {
+        match self {
+            InstallCodeArgs::Default(args) => management_canister::main::install_code(args.clone()).await,
+            InstallCodeArgs::Chunked(args) => management_canister::main::install_chunked_code(args.clone()).await,
+        }
+    }
 }
