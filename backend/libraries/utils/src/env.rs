@@ -1,6 +1,8 @@
 use candid::Principal;
 use rand::rngs::StdRng;
-use types::{CanisterId, Cycles, TimestampMillis, TimestampNanos};
+use rand::Rng;
+use sha256::sha256;
+use types::{CanisterId, Cycles, Hash, TimestampMillis, TimestampNanos};
 
 pub mod canister;
 pub mod test;
@@ -14,5 +16,17 @@ pub trait Environment {
 
     fn now(&self) -> TimestampMillis {
         self.now_nanos() / 1_000_000
+    }
+
+    fn entropy(&mut self) -> Hash {
+        let mut bytes = Vec::new();
+
+        bytes.extend(self.rng().gen::<Hash>());
+        bytes.extend(self.canister_id().as_slice());
+        bytes.extend(self.caller().as_slice());
+        bytes.extend(self.now_nanos().to_ne_bytes());
+        bytes.extend(self.cycles_balance().to_ne_bytes());
+
+        sha256(&bytes)
     }
 }

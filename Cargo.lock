@@ -7283,6 +7283,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_bytes",
+ "sha256",
  "sha3",
  "tracing",
  "types",
