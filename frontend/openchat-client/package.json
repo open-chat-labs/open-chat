@@ -17,7 +17,7 @@
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
         "@dfinity/agent": "^1.0.0",
-        "@dfinity/auth-client": "^1.0.0",
+        "@dfinity/auth-client": "^1.0.1",
         "@dfinity/candid": "^1.0.0",
         "@dfinity/identity": "^1.0.0",
         "@dfinity/principal": "^1.0.0",
