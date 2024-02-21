@@ -10,6 +10,7 @@ fn main() {
     generate_candid_method!(user, events_window, query);
     generate_candid_method!(user, hot_group_exclusions, query);
     generate_candid_method!(user, initial_state, query);
+    generate_candid_method!(user, local_user_index, query);
     generate_candid_method!(user, messages_by_message_index, query);
     generate_candid_method!(user, public_profile, query);
     generate_candid_method!(user, search_messages, query);
