@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{jobs, mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -38,6 +38,10 @@ fn post_upgrade(args: Args) {
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
 
-        state.push_event_to_all_local_user_indexes(Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec()), None);
+        let event = Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec());
+        for canister_id in state.data.local_index_map.canisters() {
+            state.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+        }
+        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
     });
 }
