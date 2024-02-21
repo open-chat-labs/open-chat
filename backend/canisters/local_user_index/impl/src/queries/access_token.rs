@@ -1,11 +1,12 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{read_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::query;
 use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
 use rand::prelude::StdRng;
+use rand::Rng;
 use rand::SeedableRng;
 use sha256::sha256;
 use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityId, TimestampMillis, UserId, VideoCallClaims};
@@ -40,7 +41,7 @@ async fn access_token(args: Args) -> Response {
         }
     }
 
-    read_state(|state| build_token(user_id, args, state))
+    mutate_state(|state| build_token(user_id, args, state))
 }
 
 fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
@@ -52,11 +53,11 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
     })
 }
 
-fn build_token(user_id: UserId, args: Args, state: &RuntimeState) -> Response {
+fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
     if let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() {
         let now = state.env.now();
 
-        let mut rng = seed_rng(&state.data.rng_seed, state.env.caller(), now);
+        let mut rng = seed_rng(&state.env.rng().gen(), state.env.caller(), now);
 
         let claims = Claims::new(
             now + 300_000, // Token valid for 5 mins from now
