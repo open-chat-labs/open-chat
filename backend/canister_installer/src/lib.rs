@@ -23,7 +23,7 @@ async fn install_service_canisters_impl(
 ) {
     let controllers = vec![principal];
     let video_call_operators =
-        vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()];
+        vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()];
 
     futures::future::join_all(vec![
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
