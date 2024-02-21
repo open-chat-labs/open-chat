@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `public_key` query endpoint ([#5414](https://github.com/open-chat-labs/open-chat/pull/5414))
+
 ### Changed
 
 - Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))

@@ -10,6 +10,7 @@ pub mod events_window;
 pub mod hot_group_exclusions;
 pub mod http_request;
 pub mod initial_state;
+pub mod local_user_index;
 pub mod messages_by_message_index;
 pub mod public_profile;
 pub mod saved_crypto_accounts;

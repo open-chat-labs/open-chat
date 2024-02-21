@@ -1,14 +1,16 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity, SignIdentity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
     CheckAuthPrincipalResponse,
+    CreateIdentityResponse,
     GetDelegationResponse,
     MigrateLegacyPrincipalResponse,
     PrepareDelegationResponse,
 } from "openchat-shared";
 import {
     checkAuthPrincipalResponse,
+    createIdentityResponse,
     getDelegationResponse,
     migrateLegacyPrincipalResponse,
     prepareDelegationResponse,
@@ -27,6 +29,19 @@ export class IdentityClient extends CandidService {
 
     static create(identity: Identity, identityCanister: string, icUrl: string): IdentityClient {
         return new IdentityClient(identity, identityCanister, icUrl);
+    }
+
+    createIdentity(sessionKey: Uint8Array): Promise<CreateIdentityResponse> {
+        const args = {
+            public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
+            session_key: sessionKey,
+            max_time_to_live: [] as [] | [bigint],
+        };
+        return this.handleResponse(
+            this.service.create_identity(args),
+            createIdentityResponse,
+            args,
+        );
     }
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {

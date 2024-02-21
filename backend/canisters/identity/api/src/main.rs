@@ -4,6 +4,7 @@ fn main() {
     generate_candid_method!(identity, check_auth_principal, query);
     generate_candid_method!(identity, get_delegation, query);
 
+    generate_candid_method!(identity, create_identity, update);
     generate_candid_method!(identity, migrate_legacy_principal, update);
     generate_candid_method!(identity, prepare_delegation, update);
 

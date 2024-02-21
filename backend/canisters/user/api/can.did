@@ -1026,6 +1026,10 @@ type DeletedMessageResponse = variant {
     MessageHardDeleted;
 };
 
+type LocalUserIndexResponse = variant {
+    Success : CanisterId;
+};
+
 service : {
     send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
     edit_message_v2 : (EditMessageV2Args) -> (EditMessageResponse);
@@ -1085,4 +1089,5 @@ service : {
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
     token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
+    local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
 };
