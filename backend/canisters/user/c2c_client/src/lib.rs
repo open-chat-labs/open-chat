@@ -1,6 +1,9 @@
 use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use user_canister::*;
 
+// Queries
+generate_c2c_call!(c2c_can_issue_access_token);
+
 // Updates
 generate_c2c_call!(c2c_accept_p2p_swap);
 generate_c2c_call!(c2c_charge_user_account);

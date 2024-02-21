@@ -9,7 +9,7 @@ use rand::prelude::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
 use sha256::sha256;
-use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityId, TimestampMillis, UserId, VideoCallClaims};
+use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, TimestampMillis, UserId, VideoCallClaims};
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
@@ -18,24 +18,21 @@ async fn access_token(args: Args) -> Response {
         return NotAuthorized;
     };
 
+    let token_type = args.token_type.clone();
+
     match args.chat {
         Chat::Direct(chat_id) => {
-            let other_user: CanisterId = chat_id.into();
-            if (!is_diamond && matches!(args.token_type, AccessTokenType::StartVideoCall))
-                || !read_state(|state| state.data.global_users.get_by_user_id(&other_user.into()).is_some())
-            {
-                return NotAuthorized;
+            if let Err(response) = check_user_access(chat_id, user_id, is_diamond, token_type).await {
+                return response;
             }
         }
         Chat::Group(chat_id) => {
-            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, args.token_type.clone()).await {
+            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, token_type).await {
                 return response;
             }
         }
         Chat::Channel(community_id, channel_id) => {
-            if let Err(response) =
-                check_channel_access(community_id, channel_id, user_id, is_diamond, args.token_type.clone()).await
-            {
+            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, token_type).await {
                 return response;
             }
         }
@@ -121,6 +118,28 @@ async fn check_channel_access(
             is_diamond,
             access_type,
             channel_id,
+        },
+    )
+    .await
+    {
+        Ok(true) => Ok(()),
+        Ok(_) => Err(NotAuthorized),
+        Err(err) => Err(InternalError(format!("{err:?}"))),
+    }
+}
+
+async fn check_user_access(
+    chat_id: ChatId,
+    user_id: UserId,
+    is_diamond: bool,
+    access_type: AccessTokenType,
+) -> Result<(), Response> {
+    match user_canister_c2c_client::c2c_can_issue_access_token(
+        chat_id.into(),
+        &user_canister::c2c_can_issue_access_token::Args {
+            user_id,
+            is_diamond,
+            access_type,
         },
     )
     .await
