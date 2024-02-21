@@ -173,7 +173,7 @@ getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
 ic-agent = "0.33.0"
-ic-cdk = "0.12.0"
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2e39ea5a8fb5ec7e09eb0fc20cfbc536d3ee5398" }
 ic-cdk-macros = "0.8.4"
 ic-cdk-timers = "0.6.0"
 ic-certification = "2.3.0"
