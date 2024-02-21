@@ -5,6 +5,15 @@ export type HasIdentity = {
     id: string;
 };
 
+export type CreateIdentityResponse =
+    | {
+          kind: "success";
+          userKey: Uint8Array;
+          expiration: bigint;
+      }
+    | { kind: "already_registered" }
+    | { kind: "public_key_invalid" };
+
 export type CheckAuthPrincipalResponse =
     | { kind: "success" }
     | { kind: "legacy" }
