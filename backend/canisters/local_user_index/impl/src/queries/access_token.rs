@@ -55,10 +55,11 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
 fn build_token(user_id: UserId, args: Args, state: &RuntimeState) -> Response {
     if let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() {
         let now = state.env.now();
+
         let mut rng = seed_rng(&state.data.rng_seed, state.env.caller(), now);
 
         let claims = Claims::new(
-            state.env.now() + 300_000,
+            now + 300_000, // Token valid for 5 mins from now
             args.token_type.to_string(),
             VideoCallClaims {
                 user_id,
