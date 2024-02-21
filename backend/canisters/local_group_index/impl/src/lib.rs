@@ -4,7 +4,9 @@ use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
+};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -81,8 +83,8 @@ impl RuntimeState {
             community_upgrades_failed: community_upgrades_metrics.failed,
             community_upgrades_pending: community_upgrades_metrics.pending as u64,
             community_upgrades_in_progress: community_upgrades_metrics.in_progress as u64,
-            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.version,
-            community_wasm_version: self.data.community_canister_wasm_for_new_canisters.version,
+            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.wasm.version,
+            community_wasm_version: self.data.community_canister_wasm_for_new_canisters.wasm.version,
             max_concurrent_group_upgrades: self.data.max_concurrent_group_upgrades,
             group_upgrade_concurrency: self.data.group_upgrade_concurrency,
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
@@ -104,10 +106,10 @@ impl RuntimeState {
 struct Data {
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    pub group_canister_wasm_for_new_canisters: CanisterWasm,
-    pub group_canister_wasm_for_upgrades: CanisterWasm,
-    pub community_canister_wasm_for_new_canisters: CanisterWasm,
-    pub community_canister_wasm_for_upgrades: CanisterWasm,
+    pub group_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
+    pub group_canister_wasm_for_upgrades: ChunkedCanisterWasm,
+    pub community_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
+    pub community_canister_wasm_for_upgrades: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -153,10 +155,10 @@ impl Data {
         Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            group_canister_wasm_for_new_canisters: group_canister_wasm.clone(),
-            group_canister_wasm_for_upgrades: group_canister_wasm,
-            community_canister_wasm_for_new_canisters: community_canister_wasm.clone(),
-            community_canister_wasm_for_upgrades: community_canister_wasm,
+            group_canister_wasm_for_new_canisters: group_canister_wasm.clone().into(),
+            group_canister_wasm_for_upgrades: group_canister_wasm.into(),
+            community_canister_wasm_for_new_canisters: community_canister_wasm.clone().into(),
+            community_canister_wasm_for_upgrades: community_canister_wasm.into(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,

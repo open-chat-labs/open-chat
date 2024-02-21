@@ -6,7 +6,7 @@ use group_index_canister::add_local_group_index_canister::{Response::*, *};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
-use utils::canister::{install, CanisterToInstall};
+use utils::canister::{install, CanisterToInstall, WasmToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -17,7 +17,8 @@ async fn add_local_group_index_canister(args: Args) -> Response {
             match install(CanisterToInstall {
                 canister_id: args.canister_id,
                 current_wasm_version: BuildVersion::default(),
-                new_wasm: result.canister_wasm,
+                new_wasm_version: result.canister_wasm.version,
+                new_wasm: WasmToInstall::Default(result.canister_wasm.module),
                 deposit_cycles_if_needed: true,
                 args: result.init_args,
                 mode: CanisterInstallMode::Install,

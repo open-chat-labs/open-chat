@@ -1,4 +1,4 @@
-use crate::{BuildVersion, CanisterId};
+use crate::{BuildVersion, CanisterId, Hash};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
@@ -8,6 +8,24 @@ pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
     pub filter: Option<UpgradesFilter>,
     pub use_for_new_canisters: Option<bool>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[serde(from = "CanisterWasm")]
+pub struct ChunkedCanisterWasm {
+    pub wasm: CanisterWasm,
+    pub chunks: Vec<Hash>,
+    pub wasm_hash: Hash,
+}
+
+impl From<CanisterWasm> for ChunkedCanisterWasm {
+    fn from(value: CanisterWasm) -> Self {
+        ChunkedCanisterWasm {
+            wasm: value,
+            chunks: Vec::new(),
+            wasm_hash: [0; 32],
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
