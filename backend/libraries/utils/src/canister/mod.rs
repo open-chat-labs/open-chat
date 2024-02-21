@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use types::BuildVersion;
 
 mod canisters_requiring_upgrade;
+mod chunk_store;
 mod create;
 mod delete;
 mod deposit_cycles;
@@ -14,6 +15,7 @@ mod stop;
 mod update_settings;
 
 pub use canisters_requiring_upgrade::*;
+pub use chunk_store::*;
 pub use create::*;
 pub use delete::*;
 pub use deposit_cycles::*;

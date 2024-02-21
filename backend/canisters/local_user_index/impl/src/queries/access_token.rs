@@ -1,15 +1,12 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::query;
 use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
-use rand::prelude::StdRng;
-use rand::Rng;
+use rand::rngs::StdRng;
 use rand::SeedableRng;
-use sha256::sha256;
-use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, TimestampMillis, UserId, VideoCallClaims};
+use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, UserId, VideoCallClaims};
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
@@ -51,35 +48,25 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
 }
 
 fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    if let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() {
-        let now = state.env.now();
+    let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() else {
+        return InternalError("OC Secret not set".to_string());
+    };
 
-        let mut rng = seed_rng(&state.env.rng().gen(), state.env.caller(), now);
+    let mut rng = StdRng::from_seed(state.env.entropy());
 
-        let claims = Claims::new(
-            now + 300_000, // Token valid for 5 mins from now
-            args.token_type.to_string(),
-            VideoCallClaims {
-                user_id,
-                chat_id: args.chat.into(),
-            },
-        );
+    let claims = Claims::new(
+        state.env.now() + 300_000, // Token valid for 5 mins from now
+        args.token_type.to_string(),
+        VideoCallClaims {
+            user_id,
+            chat_id: args.chat.into(),
+        },
+    );
 
-        match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
-            Ok(token) => Success(token),
-            Err(err) => InternalError(format!("{err:?}")),
-        }
-    } else {
-        InternalError("OC Secret not set".to_string())
+    match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
+        Ok(token) => Success(token),
+        Err(err) => InternalError(format!("{err:?}")),
     }
-}
-
-fn seed_rng(existing_seed: &[u8; 32], principal: Principal, now: TimestampMillis) -> StdRng {
-    let mut seed = Vec::from(existing_seed);
-    seed.extend(principal.as_slice());
-    seed.extend(now.to_ne_bytes());
-
-    StdRng::from_seed(sha256(&seed))
 }
 
 async fn check_group_access(

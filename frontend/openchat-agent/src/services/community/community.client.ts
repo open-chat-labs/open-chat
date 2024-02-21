@@ -816,18 +816,19 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         chatLastUpdated: bigint,
     ): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
+        const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
+        const fromCache = await getCachedGroupDetails(this.db, cacheKey);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
-                return this.getChannelDetailsUpdates(chatId, fromCache);
+                return this.getChannelDetailsUpdates(chatId, cacheKey, fromCache);
             }
         }
 
         const response = await this.getChannelDetailsFromBackend(chatId);
         if (response !== "failure") {
-            await setCachedGroupDetails(this.db, chatId.channelId, response);
+            await setCachedGroupDetails(this.db, cacheKey, response);
         }
         return response;
     }
@@ -846,11 +847,12 @@ export class CommunityClient extends CandidService {
 
     private async getChannelDetailsUpdates(
         chatId: ChannelIdentifier,
+        cacheKey: string,
         previous: GroupChatDetails,
     ): Promise<GroupChatDetails> {
         const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(this.db, chatId.channelId, response);
+            await setCachedGroupDetails(this.db, cacheKey, response);
         }
         return response;
     }

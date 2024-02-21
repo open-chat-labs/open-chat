@@ -242,8 +242,8 @@ function apiOptionalMessagePermissions(
         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
-        // p2p_trade: apiOptionUpdate(apiPermissionRole, permissions.p2pTrade),
-        video_call: apiOptionUpdate(apiPermissionRole, permissions.videoCall),
+        // p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
+        video_call: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
     };

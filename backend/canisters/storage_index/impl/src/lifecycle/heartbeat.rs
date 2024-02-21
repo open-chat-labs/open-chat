@@ -135,7 +135,7 @@ mod sync_buckets {
 mod upgrade_canisters {
     use super::*;
     use ic_cdk::api::management_canister::main::CanisterInstallMode;
-    use utils::canister::FailedUpgrade;
+    use utils::canister::{FailedUpgrade, WasmToInstall};
 
     type CanisterToUpgrade = utils::canister::CanisterToInstall<storage_bucket_canister::post_upgrade::Args>;
 
@@ -162,7 +162,8 @@ mod upgrade_canisters {
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version: bucket.wasm_version,
-            new_wasm,
+            new_wasm_version: new_wasm.version,
+            new_wasm: WasmToInstall::Default(new_wasm.module),
             args: storage_bucket_canister::post_upgrade::Args { wasm_version },
             deposit_cycles_if_needed: false,
             mode: CanisterInstallMode::Upgrade,
@@ -179,7 +180,7 @@ mod upgrade_canisters {
     async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
         let canister_id = canister_to_upgrade.canister_id;
         let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
+        let to_version = canister_to_upgrade.new_wasm_version;
 
         match utils::canister::install(canister_to_upgrade).await {
             Ok(_) => {
