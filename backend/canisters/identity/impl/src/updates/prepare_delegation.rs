@@ -23,14 +23,21 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let seed = state.data.calculate_seed(user.index);
-    let delta = Nanoseconds::min(
-        args.max_time_to_live.unwrap_or(DEFAULT_EXPIRATION_PERIOD),
-        MAX_EXPIRATION_PERIOD,
-    );
+
+    Success(prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state))
+}
+
+pub(crate) fn prepare_delegation_inner(
+    seed: [u8; 32],
+    session_key: ByteBuf,
+    max_time_to_live: Option<Nanoseconds>,
+    state: &mut RuntimeState,
+) -> SuccessResult {
+    let delta = Nanoseconds::min(max_time_to_live.unwrap_or(DEFAULT_EXPIRATION_PERIOD), MAX_EXPIRATION_PERIOD);
 
     let expiration = state.env.now_nanos().saturating_add(delta);
     let delegation = Delegation {
-        pubkey: args.session_key,
+        pubkey: session_key,
         expiration,
     };
     let msg_hash = delegation_signature_msg_hash(&delegation);
@@ -38,8 +45,8 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.signature_map.add_signature(&seed, msg_hash);
     state.data.update_root_hash();
 
-    Success(SuccessResult {
+    SuccessResult {
         user_key: ByteBuf::from(state.der_encode_canister_sig_key(seed)),
         expiration,
-    })
+    }
 }

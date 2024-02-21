@@ -5,6 +5,20 @@ import type { IDL } from '@dfinity/candid';
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
   { 'Success' : null } |
   { 'Legacy' : null };
+export interface CreateIdentityArgs {
+  'public_key' : PublicKey,
+  'session_key' : PublicKey,
+  'max_time_to_live' : [] | [Nanoseconds],
+}
+export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
+  {
+    'Success' : {
+      'principal' : Principal,
+      'user_key' : PublicKey,
+      'expiration' : TimestampNanoseconds,
+    }
+  } |
+  { 'PublicKeyInvalid' : string };
 export interface GetDelegationArgs {
   'session_key' : PublicKey,
   'expiration' : TimestampNanoseconds,
@@ -32,6 +46,7 @@ export interface SignedDelegation {
 export type TimestampNanoseconds = bigint;
 export interface _SERVICE {
   'check_auth_principal' : ActorMethod<[{}], CheckAuthPrincipalResponse>,
+  'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
   'get_delegation' : ActorMethod<[GetDelegationArgs], GetDelegationResponse>,
   'migrate_legacy_principal' : ActorMethod<
     [{}],

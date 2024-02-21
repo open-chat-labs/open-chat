@@ -1,6 +1,7 @@
 import type { IDL } from "@dfinity/candid";
 import {
     CheckAuthPrincipalResponse,
+    CreateIdentityResponse,
     GetDelegationResponse,
     MigrateLegacyPrincipalResponse,
     PrepareDelegationResponse,
@@ -8,6 +9,7 @@ import {
 } from "./types";
 export {
     CheckAuthPrincipalResponse as ApiCheckAuthPrincipalResponse,
+    CreateIdentityResponse as ApiCreateIdentityResponse,
     GetDelegationResponse as ApiGetDelegationResponse,
     MigrateLegacyPrincipalResponse as ApiMigrateLegacyPrincipalResponse,
     PrepareDelegationResponse as ApiPrepareDelegationResponse,

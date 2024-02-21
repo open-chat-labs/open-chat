@@ -5,6 +5,11 @@ type UserRegistrationCanisterResponse = variant {
     NewRegistrationsClosed;
 };
 
+type PublicKeyResponse = variant {
+    Success : text;
+    NotInitialised;
+};
+
 type SetUsernameArgs = record {
     username : text;
 };
@@ -356,6 +361,7 @@ type AddReferralCodesResponse = variant {
 
 service : {
     user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
+    public_key : (EmptyArgs) -> (PublicKeyResponse) query;
 
     // This is used to set the initial username and subsequently to change it
     set_username : (SetUsernameArgs) -> (SetUsernameResponse);

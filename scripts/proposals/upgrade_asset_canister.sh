@@ -5,10 +5,10 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/../..
 
-TITLE="Upgrade asset canister to DFX version 0.16.0"
-URL="https://github.com/dfinity/sdk/releases/tag/0.16.0"
+TITLE="Upgrade asset canister to DFX version 0.17.0"
+URL="https://github.com/dfinity/sdk/releases/tag/0.17.0"
 CANISTER_NAME=website
-SUMMARY="This proposal upgrades the asset canister wasm to the version included in DFX 0.16.0"
+SUMMARY="This proposal upgrades the asset canister wasm to the version included in DFX 0.17.0"
 FUNCTION_ID=3
 
 # Set env variables based on .env file

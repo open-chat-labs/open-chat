@@ -4,8 +4,10 @@ use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
-use rand::Rng;
+use rand::prelude::StdRng;
+use rand::{Rng, SeedableRng};
 use tracing::info;
+use types::CanisterId;
 use utils::env::Environment;
 
 #[init]
@@ -13,12 +15,13 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let mut env = init_env([0; 32]);
+    let env = init_env([0; 32]);
 
+    let mut channel_name_rng = generate_channel_name_rng(env.canister_id());
     let default_channels = args
         .default_channels
         .into_iter()
-        .map(|name| (env.rng().gen(), name))
+        .map(|name| (channel_name_rng.gen(), name))
         .collect();
 
     let data = Data::new(
@@ -64,4 +67,12 @@ fn init(args: Args) {
             );
         });
     }
+}
+
+fn generate_channel_name_rng(canister_id: CanisterId) -> StdRng {
+    let mut seed = [0; 32];
+    let canister_id_bytes = canister_id.as_slice();
+    seed[0..canister_id_bytes.len()].copy_from_slice(canister_id_bytes);
+
+    StdRng::from_seed(seed)
 }

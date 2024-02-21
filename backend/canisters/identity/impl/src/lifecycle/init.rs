@@ -17,6 +17,7 @@ fn init(args: Args) {
         args.governance_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
+        args.internet_identity_canister_id,
         args.test_mode,
     );
 

@@ -1,10 +1,15 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{read_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::query;
-use jwt::VideoCallClaims;
+use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
-use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityId, UserId};
+use rand::prelude::StdRng;
+use rand::Rng;
+use rand::SeedableRng;
+use sha256::sha256;
+use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, TimestampMillis, UserId, VideoCallClaims};
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
@@ -13,30 +18,27 @@ async fn access_token(args: Args) -> Response {
         return NotAuthorized;
     };
 
-    let start_call = matches!(args.token_type, AccessTokenType::StartVideoCall);
+    let token_type = args.token_type.clone();
 
     match args.chat {
         Chat::Direct(chat_id) => {
-            let other_user: CanisterId = chat_id.into();
-            if (!is_diamond && start_call)
-                || !read_state(|state| state.data.global_users.get_by_user_id(&other_user.into()).is_some())
-            {
-                return NotAuthorized;
+            if let Err(response) = check_user_access(chat_id, user_id, is_diamond, token_type).await {
+                return response;
             }
         }
         Chat::Group(chat_id) => {
-            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, args.token_type).await {
+            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, token_type).await {
                 return response;
             }
         }
         Chat::Channel(community_id, channel_id) => {
-            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, args.token_type).await {
+            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, token_type).await {
                 return response;
             }
         }
     }
 
-    read_state(|state| build_token(user_id, args.chat, start_call, state))
+    mutate_state(|state| build_token(user_id, args, state))
 }
 
 fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
@@ -48,17 +50,36 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
     })
 }
 
-fn build_token(user_id: UserId, chat: Chat, start_call: bool, state: &RuntimeState) -> Response {
+fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
     if let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() {
-        let claims = VideoCallClaims::new(user_id, chat, start_call, state.env.now());
+        let now = state.env.now();
 
-        match jwt::sign_and_encode_token(secret_key_der, claims) {
+        let mut rng = seed_rng(&state.env.rng().gen(), state.env.caller(), now);
+
+        let claims = Claims::new(
+            now + 300_000, // Token valid for 5 mins from now
+            args.token_type.to_string(),
+            VideoCallClaims {
+                user_id,
+                chat_id: args.chat.into(),
+            },
+        );
+
+        match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
             Ok(token) => Success(token),
             Err(err) => InternalError(format!("{err:?}")),
         }
     } else {
         InternalError("OC Secret not set".to_string())
     }
+}
+
+fn seed_rng(existing_seed: &[u8; 32], principal: Principal, now: TimestampMillis) -> StdRng {
+    let mut seed = Vec::from(existing_seed);
+    seed.extend(principal.as_slice());
+    seed.extend(now.to_ne_bytes());
+
+    StdRng::from_seed(sha256(&seed))
 }
 
 async fn check_group_access(
@@ -97,6 +118,28 @@ async fn check_channel_access(
             is_diamond,
             access_type,
             channel_id,
+        },
+    )
+    .await
+    {
+        Ok(true) => Ok(()),
+        Ok(_) => Err(NotAuthorized),
+        Err(err) => Err(InternalError(format!("{err:?}"))),
+    }
+}
+
+async fn check_user_access(
+    chat_id: ChatId,
+    user_id: UserId,
+    is_diamond: bool,
+    access_type: AccessTokenType,
+) -> Result<(), Response> {
+    match user_canister_c2c_client::c2c_can_issue_access_token(
+        chat_id.into(),
+        &user_canister::c2c_can_issue_access_token::Args {
+            user_id,
+            is_diamond,
+            access_type,
         },
     )
     .await

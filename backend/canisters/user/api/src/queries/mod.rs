@@ -1,4 +1,5 @@
 pub mod bio;
+pub mod c2c_can_issue_access_token;
 pub mod contacts;
 pub mod deleted_message;
 pub mod events;
@@ -6,6 +7,7 @@ pub mod events_by_index;
 pub mod events_window;
 pub mod hot_group_exclusions;
 pub mod initial_state;
+pub mod local_user_index;
 pub mod messages_by_message_index;
 pub mod public_profile;
 pub mod saved_crypto_accounts;
