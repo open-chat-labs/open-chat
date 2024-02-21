@@ -34,7 +34,7 @@
 
     function joinCall() {
         if (!incall && $selectedChat) {
-            dispatch("startVideoCall", $selectedChat);
+            dispatch("startVideoCall", { chat: $selectedChat, messageIndex });
         }
     }
 </script>

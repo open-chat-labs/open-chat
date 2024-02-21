@@ -214,7 +214,10 @@
     }
 
     function startVideoCall() {
-        dispatch("startVideoCall", selectedChatSummary);
+        dispatch("startVideoCall", {
+            chat: selectedChatSummary,
+            messageIndex: selectedChatSummary.videoCallInProgress,
+        });
     }
 </script>
 

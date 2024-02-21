@@ -5653,12 +5653,16 @@ export class OpenChat extends OpenChatAgentWorker {
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
+        const username = this._liveState.user.username;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
-        return fetch(`${this.config.videoBridgeUrl}/room/meeting_access_token`, {
-            method: "GET",
-            headers: headers,
-        }).then((res) => {
+        return fetch(
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}`,
+            {
+                method: "GET",
+                headers: headers,
+            },
+        ).then((res) => {
             if (res.ok) {
                 return res.json();
             }
@@ -5676,6 +5680,16 @@ export class OpenChat extends OpenChatAgentWorker {
         switch (chat.kind) {
             case "group_chat":
                 return chat.localUserIndex;
+            case "channel":
+                const community = this._liveState.communities.get({
+                    kind: "community",
+                    communityId: chat.id.communityId,
+                });
+                if (community) {
+                    return community.localUserIndex;
+                } else {
+                    throw new Error(`Unable to get the local user index for channel: ${chat.id}`);
+                }
             default:
                 throw new Error("TODO get hold of localuserindex for channel or direct chat");
         }

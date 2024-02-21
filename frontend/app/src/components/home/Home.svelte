@@ -1048,8 +1048,8 @@
         showProfileCard = undefined;
     }
 
-    function startVideoCall(ev: CustomEvent<ChatSummary>) {
-        videoCallElement?.startVideoCall(ev.detail);
+    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; messageIndex?: number }>) {
+        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.messageIndex);
     }
 
     $: bgHeight = $dimensions.height * 0.9;

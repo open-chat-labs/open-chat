@@ -7,6 +7,7 @@
         OpenChat,
         type ChatIdentifier,
         AvatarSize,
+        type AccessTokenType,
     } from "openchat-client";
     import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
@@ -72,7 +73,7 @@
         }
     }
 
-    export async function startVideoCall(chat: ChatSummary) {
+    export async function startOrJoinVideoCall(chat: ChatSummary, messageIndex?: number) {
         try {
             // todo - we need to figure out if we are starting the call or joining the call
             if ($activeVideoCall !== undefined) {
@@ -82,10 +83,13 @@
 
             activeVideoCall.joining(chat.id);
 
+            const accessType: AccessTokenType =
+                messageIndex === undefined
+                    ? { kind: "start_video_call" }
+                    : { kind: "join_video_call", messageIndex };
+
             // first we need tojoin access jwt from the oc backend
-            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, {
-                kind: "start_video_call",
-            });
+            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
             const call = daily.createFrame(iframeContainer, {
                 token,
                 showLeaveButton: true,
@@ -146,7 +150,7 @@
             activeVideoCall.endCall();
             const chat = confirmSwitchTo;
             confirmSwitchTo = undefined;
-            return startVideoCall(chat);
+            return startOrJoinVideoCall(chat);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();
