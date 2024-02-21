@@ -1177,6 +1177,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const ManageFavouriteChatsArgs = IDL.Record({
     'to_add' : IDL.Vec(Chat),
     'to_remove' : IDL.Vec(Chat),
@@ -1814,6 +1815,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
+    'local_user_index' : IDL.Func(
+        [EmptyArgs],
+        [LocalUserIndexResponse],
+        ['query'],
+      ),
     'manage_favourite_chats' : IDL.Func(
         [ManageFavouriteChatsArgs],
         [ManageFavouriteChatsResponse],

@@ -1191,6 +1191,7 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
+export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface ManageFavouriteChatsArgs {
   'to_add' : Array<Chat>,
   'to_remove' : Array<Chat>,
@@ -2271,6 +2272,7 @@ export interface _SERVICE {
   'join_video_call' : ActorMethod<[JoinVideoCallArgs], JoinVideoCallResponse>,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
+  'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
   'manage_favourite_chats' : ActorMethod<
     [ManageFavouriteChatsArgs],
     ManageFavouriteChatsResponse

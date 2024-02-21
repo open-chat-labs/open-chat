@@ -1363,6 +1363,8 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export type PublicKeyResponse = { 'NotInitialised' : null } |
+  { 'Success' : string };
 export interface PushEventResult {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -1740,6 +1742,7 @@ export interface _SERVICE {
     [PlatformOperatorsArgs],
     PlatformOperatorsResponse
   >,
+  'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
   'referral_leaderboard' : ActorMethod<
     [ReferralLeaderboardArgs],
     ReferralLeaderboardResponse

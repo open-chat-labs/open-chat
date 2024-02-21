@@ -143,6 +143,10 @@ export const idlFactory = ({ IDL }) => {
   const PlatformOperatorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
+  const PublicKeyResponse = IDL.Variant({
+    'NotInitialised' : IDL.Null,
+    'Success' : IDL.Text,
+  });
   const ReferralLeaderboardArgs = IDL.Record({
     'count' : IDL.Nat32,
     'filter' : IDL.Opt(
@@ -377,6 +381,7 @@ export const idlFactory = ({ IDL }) => {
         [PlatformOperatorsResponse],
         ['query'],
       ),
+    'public_key' : IDL.Func([EmptyArgs], [PublicKeyResponse], ['query']),
     'referral_leaderboard' : IDL.Func(
         [ReferralLeaderboardArgs],
         [ReferralLeaderboardResponse],
