@@ -1,7 +1,6 @@
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::Rng;
-use rand::SeedableRng;
 use sha256::sha256;
 use types::{CanisterId, Cycles, TimestampMillis, TimestampNanos};
 
@@ -19,13 +18,14 @@ pub trait Environment {
         self.now_nanos() / 1_000_000
     }
 
-    fn new_rng(&mut self) -> StdRng {
+    fn entropy(&mut self) -> [u8; 32] {
         let mut seed = Vec::new();
 
         seed.extend(self.rng().gen::<[u8; 32]>());
+        seed.extend(self.canister_id().as_slice());
         seed.extend(self.caller().as_slice());
         seed.extend(self.now().to_ne_bytes());
 
-        StdRng::from_seed(sha256(&seed))
+        sha256(&seed)
     }
 }

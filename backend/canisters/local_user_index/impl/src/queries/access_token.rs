@@ -4,6 +4,8 @@ use canister_tracing_macros::trace;
 use ic_cdk::query;
 use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, UserId, VideoCallClaims};
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
@@ -50,7 +52,7 @@ fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Respons
         return InternalError("OC Secret not set".to_string());
     };
 
-    let mut rng = state.env.new_rng();
+    let mut rng = StdRng::from_seed(state.env.entropy());
 
     let claims = Claims::new(
         state.env.now() + 300_000, // Token valid for 5 mins from now
