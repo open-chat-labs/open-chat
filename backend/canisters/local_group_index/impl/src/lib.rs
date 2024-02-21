@@ -133,7 +133,7 @@ struct Data {
 }
 
 fn video_call_operators() -> Vec<Principal> {
-    vec![Principal::from_text("nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae").unwrap()]
+    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 impl Data {
