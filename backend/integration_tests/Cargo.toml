@@ -21,7 +21,6 @@ icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../canisters/identity/api" }
 itertools = { workspace = true }
 jwt = { path = "../libraries/jwt" }
-jwt-simple = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }
 local_user_index_canister = { path = "../canisters/local_user_index/api" }
