@@ -5,7 +5,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp, UserId};
-use utils::canister::{install, FailedUpgrade};
+use utils::canister::{install, FailedUpgrade, WasmToInstall};
 use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<user_canister::post_upgrade::Args>;
@@ -72,7 +72,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let user_canister_wasm = &state.data.user_canister_wasm_for_upgrades;
     let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
-    if current_wasm_version == user_canister_wasm.version && !force {
+    if current_wasm_version == user_canister_wasm.wasm.version && !force {
         return None;
     }
 
@@ -81,10 +81,15 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     Some(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
-        new_wasm: user_canister_wasm.clone(),
+        new_wasm_version: user_canister_wasm.wasm.version,
+        new_wasm: if user_canister_wasm.chunks.is_empty() {
+            WasmToInstall::Default(user_canister_wasm.wasm.module.clone())
+        } else {
+            WasmToInstall::Chunked(user_canister_wasm.chunks.clone(), user_canister_wasm.wasm_hash)
+        },
         deposit_cycles_if_needed,
         args: user_canister::post_upgrade::Args {
-            wasm_version: user_canister_wasm.version,
+            wasm_version: user_canister_wasm.wasm.version,
         },
         mode: CanisterInstallMode::Upgrade,
         stop_start_canister: true,
@@ -100,7 +105,7 @@ async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
 async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     let canister_id = canister_to_upgrade.canister_id;
     let from_version = canister_to_upgrade.current_wasm_version;
-    let to_version = canister_to_upgrade.new_wasm.version;
+    let to_version = canister_to_upgrade.new_wasm_version;
 
     match install(canister_to_upgrade).await {
         Ok(cycles_top_up) => {

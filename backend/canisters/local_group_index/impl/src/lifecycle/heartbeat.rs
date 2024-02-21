@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLE
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId, Cycles, CyclesTopUp};
-use utils::canister::{self, FailedUpgrade};
+use utils::canister::{self, FailedUpgrade, WasmToInstall};
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[heartbeat]
@@ -58,7 +58,8 @@ mod upgrade_groups {
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
-            new_wasm: group_canister_wasm.clone(),
+            new_wasm_version: group_canister_wasm.version,
+            new_wasm: WasmToInstall::Default(group_canister_wasm.module.clone()),
             deposit_cycles_if_needed,
             args: group_canister::post_upgrade::Args {
                 wasm_version: group_canister_wasm.version,
@@ -77,7 +78,7 @@ mod upgrade_groups {
     async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
         let canister_id = canister_to_upgrade.canister_id;
         let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
+        let to_version = canister_to_upgrade.new_wasm_version;
 
         match utils::canister::install(canister_to_upgrade).await {
             Ok(_) => {
@@ -169,7 +170,8 @@ mod upgrade_communities {
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
-            new_wasm: community_canister_wasm.clone(),
+            new_wasm_version: community_canister_wasm.version,
+            new_wasm: WasmToInstall::Default(community_canister_wasm.module.clone()),
             deposit_cycles_if_needed,
             args: community_canister::post_upgrade::Args {
                 wasm_version: community_canister_wasm.version,
@@ -188,7 +190,7 @@ mod upgrade_communities {
     async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
         let canister_id = canister_to_upgrade.canister_id;
         let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
+        let to_version = canister_to_upgrade.new_wasm_version;
 
         match utils::canister::install(canister_to_upgrade).await {
             Ok(_) => {
