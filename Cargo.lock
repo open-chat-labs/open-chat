@@ -3881,6 +3881,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serializer",
+ "sha256",
  "stable_memory",
  "tracing",
  "types",
