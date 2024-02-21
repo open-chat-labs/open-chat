@@ -57,9 +57,8 @@ fn build_token(user_id: UserId, args: Args, state: &RuntimeState) -> Response {
         let now = state.env.now();
         let mut rng = seed_rng(&state.data.rng_seed, state.env.caller(), now);
 
-        let expiry = state.env.now() + 300_000;
         let claims = Claims::new(
-            expiry,
+            state.env.now() + 300_000,
             args.token_type.to_string(),
             VideoCallClaims {
                 user_id,
