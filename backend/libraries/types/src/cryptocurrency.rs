@@ -332,6 +332,7 @@ pub mod nns {
         pub to: CryptoAccount,
         pub memo: Memo,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -346,6 +347,7 @@ pub mod nns {
         pub to: CryptoAccount,
         pub memo: Memo,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }

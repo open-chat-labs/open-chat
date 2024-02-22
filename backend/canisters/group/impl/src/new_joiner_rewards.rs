@@ -1,7 +1,7 @@
 use crate::{mutate_state, NewJoinerRewardStatus, RuntimeState};
 use chat_events::{CryptoContentInternal, MessageContentInternal, PushMessageArgs};
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
-use ledger_utils::{calculate_transaction_hash, default_ledger_account};
+use ledger_utils::default_ledger_account;
 use rand::Rng;
 use tracing::error;
 use types::nns::CryptoAccount;
@@ -27,7 +27,6 @@ pub async fn process_new_joiner_reward(
             timestamp_nanos: now * 1000 * 1000,
         }),
     };
-    let transaction_hash = calculate_transaction_hash(this_canister_id, &transfer_args);
 
     match icp_ledger_canister_c2c_client::transfer(ledger_canister_id, &transfer_args).await {
         Ok(Ok(block_index)) => {
@@ -45,7 +44,7 @@ pub async fn process_new_joiner_reward(
                         to: CryptoAccount::Account(to),
                         memo: Memo(0),
                         created: state.env.now(),
-                        transaction_hash,
+                        transaction_hash: [0; 32],
                         block_index,
                     },
                     state,
