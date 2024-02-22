@@ -11,7 +11,6 @@ pub struct UpgradeCanisterWasmArgs {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
-#[serde(from = "CanisterWasm")]
 pub struct ChunkedCanisterWasm {
     pub wasm: CanisterWasm,
     pub chunks: Vec<Hash>,
