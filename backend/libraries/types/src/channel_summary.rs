@@ -55,6 +55,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<GroupMembershipUpdates>,
+    #[serde(default)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
