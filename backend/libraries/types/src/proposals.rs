@@ -130,19 +130,9 @@ pub struct SnsProposal {
     pub tally: Tally,
     pub deadline: TimestampMillis,
     pub payload_text_rendering: Option<String>,
-    #[serde(default = "three_hundred")]
     pub minimum_yes_proportion_of_total: u32,
-    #[serde(default = "five_thousand")]
     pub minimum_yes_proportion_of_exercised: u32,
     pub last_updated: TimestampMillis,
-}
-
-fn three_hundred() -> u32 {
-    300
-}
-
-fn five_thousand() -> u32 {
-    5000
 }
 
 impl SnsProposal {

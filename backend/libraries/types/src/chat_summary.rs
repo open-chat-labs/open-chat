@@ -25,7 +25,6 @@ pub struct DirectChatSummary {
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[serde(default)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -70,7 +69,6 @@ pub struct GroupChatSummary {
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[serde(default)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -90,7 +88,6 @@ pub struct DirectChatSummaryUpdates {
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[serde(default)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
@@ -152,7 +149,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
-    #[serde(default)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -262,7 +258,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
     pub membership: Option<GroupMembershipUpdates>,
-    #[serde(default)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
