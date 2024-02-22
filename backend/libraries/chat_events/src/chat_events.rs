@@ -35,8 +35,6 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
-    // TODO: Remove serde(default)
-    #[serde(default)]
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
 }
 

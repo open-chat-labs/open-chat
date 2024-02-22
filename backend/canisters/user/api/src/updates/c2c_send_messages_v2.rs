@@ -17,7 +17,6 @@ pub struct SendMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
-    #[serde(default)]
     pub message_filter_failed: Option<u64>,
     #[serde(default)]
     pub correlation_id: u64,

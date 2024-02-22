@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1078](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1078-user)] - 2024-02-22
+
 ### Added
 
 - Add `local_user_index` endpoint ([#5413](https://github.com/open-chat-labs/open-chat/pull/5413))

@@ -182,10 +182,6 @@ impl Translations {
             .collect()
     }
 
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Translation> {
-        self.translations.iter()
-    }
-
     fn collate_decision_summary(translations: Vec<&Translation>) -> DecisionSummary {
         let mut summary = DecisionSummary::default();
 

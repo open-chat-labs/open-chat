@@ -218,15 +218,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
     pub rng_seed: [u8; 32],
-    // TODO: Remove serde default
-    #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
-    #[serde(default)]
     pub oc_secret_key_der: Option<Vec<u8>>,
-}
-
-fn video_call_operators() -> Vec<Principal> {
-    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 #[derive(Serialize, Deserialize)]

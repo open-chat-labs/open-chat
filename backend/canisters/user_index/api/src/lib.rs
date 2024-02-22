@@ -25,7 +25,6 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub username: String,
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub is_from_identity_canister: bool,
 }
 
