@@ -3,7 +3,7 @@ export const MAX_MESSAGES = 100;
 export const MAX_EVENTS = 500;
 export const MAX_MISSING = 30;
 export const OPENCHAT_VIDEO_CALL_USER_ID =
-    "nmufs-fiu7o-cyg5v-ozcjx-b5qsb-y6nsy-viid6-esfxk-s4nzb-yv2u3-jae";
+    "wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe";
 export const OPENCHAT_VIDEO_CALL_USERNAME = "VideoCallBot";
 export const OPENCHAT_VIDEO_CALL_AVATAR_URL = "/assets/video_call.svg";
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
