@@ -22,7 +22,7 @@ then
   if [[ -z $CANISTER_TAG_ID ]]
   then
     # If the canister has not been released yet then download the latest version
-    COMMIT_ID=$(git rev-parse HEAD)
+    COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
   else
     COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
   fi
