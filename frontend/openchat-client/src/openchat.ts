@@ -212,6 +212,7 @@ import {
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
+    spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
@@ -2098,6 +2099,7 @@ export class OpenChat extends OpenChatAgentWorker {
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
     youtubeRegex = youtubeRegex;
+    spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
