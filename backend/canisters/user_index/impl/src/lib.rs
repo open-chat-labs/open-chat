@@ -152,18 +152,6 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
-    pub fn track_event<T: Serialize>(&mut self, name: &str, timestamp: TimestampMillis, user: Option<UserId>, payload: T) {
-        let payload_json = serde_json::to_vec(&payload).unwrap();
-
-        self.data.event_sink_client.push(event_sink_client::Event {
-            name: name.to_string(),
-            timestamp,
-            user: user.map(|u| u.to_string()),
-            source: Some(self.env.canister_id().to_text()),
-            payload: payload_json,
-        });
-    }
-
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
