@@ -40,21 +40,23 @@
     <h4 class="username">
         {displayName}
     </h4>
-    <ChatMessageContent
-        {readonly}
-        messageContext={replyingTo.sourceContext}
-        fill={false}
-        failed={false}
-        {me}
-        intersecting={true}
-        messageId={replyingTo.messageId}
-        messageIndex={replyingTo.messageIndex}
-        senderId={replyingTo.senderId}
-        truncate
-        edited={replyingTo.edited}
-        content={replyingTo.content}
-        myUserId={user.userId}
-        reply />
+    <div class="reply-content">
+        <ChatMessageContent
+            {readonly}
+            messageContext={replyingTo.sourceContext}
+            fill={false}
+            failed={false}
+            {me}
+            intersecting={true}
+            messageId={replyingTo.messageId}
+            messageIndex={replyingTo.messageIndex}
+            senderId={replyingTo.senderId}
+            truncate
+            edited={replyingTo.edited}
+            content={replyingTo.content}
+            myUserId={user.userId}
+            reply />
+    </div>
 </div>
 
 <style lang="scss">
@@ -96,6 +98,10 @@
             content: "";
             display: table;
             clear: both;
+        }
+
+        .reply-content {
+            pointer-events: none;
         }
     }
 

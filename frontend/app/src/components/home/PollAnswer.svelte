@@ -63,6 +63,7 @@
 
     function onClick() {
         if (!longPressed) {
+            console.log("We want to make this not fire at all");
             dispatch("click");
         }
     }
