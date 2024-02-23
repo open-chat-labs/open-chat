@@ -148,6 +148,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
+        event_relay_canister_id,
         video_call_operators: vec![controller],
         wasm_version: BuildVersion::min(),
         test_mode: true,

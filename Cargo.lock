@@ -1280,6 +1280,8 @@ dependencies = [
  "community_canister",
  "escrow_canister",
  "escrow_canister_c2c_client",
+ "event_sink_client",
+ "event_sink_client_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "gated_groups",
@@ -2107,7 +2109,7 @@ dependencies = [
 [[package]]
 name = "event_sink_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
 dependencies = [
  "candid",
  "serde",
@@ -2117,7 +2119,7 @@ dependencies = [
 [[package]]
 name = "event_sink_client"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
 dependencies = [
  "event_sink_canister",
  "ic_principal",
@@ -2128,7 +2130,7 @@ dependencies = [
 [[package]]
 name = "event_sink_client_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
 dependencies = [
  "event_sink_canister",
  "event_sink_client",
@@ -2143,7 +2145,7 @@ dependencies = [
 [[package]]
 name = "event_sink_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
 dependencies = [
  "serde",
 ]
@@ -2483,6 +2485,8 @@ dependencies = [
  "chat_events",
  "escrow_canister",
  "escrow_canister_c2c_client",
+ "event_sink_client",
+ "event_sink_client_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "gated_groups",
@@ -3772,6 +3776,7 @@ name = "local_group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "event_sink_canister",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
@@ -3800,6 +3805,9 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "community_canister",
+ "event_sink_client",
+ "event_sink_client_cdk_runtime",
+ "event_sink_utils",
  "futures",
  "group_canister",
  "http_request",
@@ -3830,6 +3838,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "community_canister",
+ "event_sink_canister",
  "group_canister",
  "ic-ledger-types",
  "serde",
@@ -3863,6 +3872,9 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "event_sink_client",
+ "event_sink_client_cdk_runtime",
+ "event_sink_utils",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -7159,6 +7171,8 @@ dependencies = [
  "community_canister_c2c_client",
  "escrow_canister",
  "escrow_canister_c2c_client",
+ "event_sink_client",
+ "event_sink_client_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "group_canister",

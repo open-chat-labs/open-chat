@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+event_sink_canister = { workspace = true }
 ic-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_bytes = "0.11"

@@ -4,12 +4,16 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder};
+use event_sink_client_cdk_runtime::CdkRuntime;
+use event_sink_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
@@ -22,6 +26,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
+use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
@@ -220,6 +225,17 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
+    #[serde(default = "event_sink_client")]
+    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    #[serde(default)]
+    pub event_deduper: EventDeduper,
+}
+
+fn event_sink_client() -> EventSinkClient<CdkRuntime> {
+    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
+    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+        .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
+        .build()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -239,6 +255,7 @@ impl Data {
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
@@ -273,6 +290,10 @@ impl Data {
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der,
+            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
+                .build(),
+            event_deduper: EventDeduper::default(),
         }
     }
 }

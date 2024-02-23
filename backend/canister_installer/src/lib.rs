@@ -92,6 +92,7 @@ async fn install_service_canisters_impl(
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         escrow_canister_id: canister_ids.escrow,
+        event_relay_canister_id: canister_ids.event_relay,
         video_call_operators: video_call_operators.clone(),
         wasm_version: version,
         test_mode,
