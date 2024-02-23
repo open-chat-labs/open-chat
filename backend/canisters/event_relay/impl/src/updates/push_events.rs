@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use event_relay_canister::push_events::*;
-use event_sink_canister::Event;
+use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use sha256::sha256_string;
 
@@ -24,13 +24,11 @@ fn push_events_impl(args: Args, state: &mut RuntimeState) {
             .filter(|e| state.data.event_deduper.try_push(e.idempotency_key, now))
             .map(|e| {
                 let user = e.user.map(|u| obfuscate_user(u, salt));
-                Event {
-                    name: e.name,
-                    timestamp: e.timestamp,
-                    user,
-                    source: e.source,
-                    payload: e.payload,
-                }
+                EventBuilder::new(e.name, e.timestamp)
+                    .with_maybe_user(user)
+                    .with_maybe_source(e.source)
+                    .with_payload(e.payload)
+                    .build()
             }),
     );
 }
