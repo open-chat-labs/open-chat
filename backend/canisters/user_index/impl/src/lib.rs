@@ -152,18 +152,6 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
-    pub fn track_event<T: Serialize>(&mut self, name: &str, timestamp: TimestampMillis, user: Option<UserId>, payload: T) {
-        let payload_json = serde_json::to_vec(&payload).unwrap();
-
-        self.data.event_sink_client.push(event_sink_client::Event {
-            name: name.to_string(),
-            timestamp,
-            user: user.map(|u| u.to_string()),
-            source: Some(self.env.canister_id().to_text()),
-            payload: payload_json,
-        });
-    }
-
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
@@ -272,15 +260,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
     pub legacy_principals_synced: bool,
-    // TODO: Remove serde default
-    #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
-    #[serde(default)]
     pub oc_key_pair: P256KeyPair,
-}
-
-fn video_call_operators() -> Vec<Principal> {
-    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 impl Data {

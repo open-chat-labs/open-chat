@@ -4,7 +4,6 @@ use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use local_user_index_canister::Event;
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
@@ -37,7 +36,5 @@ fn post_upgrade(args: Args) {
 
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
-
-        state.push_event_to_all_local_user_indexes(Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec()), None);
     });
 }

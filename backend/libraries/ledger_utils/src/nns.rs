@@ -1,4 +1,4 @@
-use crate::{calculate_transaction_hash, default_ledger_account};
+use crate::default_ledger_account;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 
@@ -25,7 +25,6 @@ pub async fn process_transaction(
             timestamp_nanos: transaction.created,
         }),
     };
-    let transaction_hash = calculate_transaction_hash(sender, &transfer_args);
 
     match icp_ledger_canister_c2c_client::transfer(transaction.ledger, &transfer_args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
@@ -37,7 +36,7 @@ pub async fn process_transaction(
             to: types::nns::CryptoAccount::Account(to),
             memo,
             created: transaction.created,
-            transaction_hash,
+            transaction_hash: [0; 32],
             block_index,
         })),
         Ok(Err(transfer_error)) => {
@@ -59,7 +58,7 @@ pub async fn process_transaction(
             to: types::nns::CryptoAccount::Account(to),
             memo,
             created: transaction.created,
-            transaction_hash,
+            transaction_hash: [0; 32],
             error_message: error,
         })
     })

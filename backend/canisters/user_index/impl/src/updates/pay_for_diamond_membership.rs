@@ -4,6 +4,7 @@ use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use candid::Principal;
 use canister_tracing_macros::trace;
+use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
@@ -100,17 +101,18 @@ fn process_charge(
     let recurring = args.recurring && !args.duration.is_lifetime();
     let now = state.env.now();
 
-    state.track_event(
-        "diamond_membership_payment",
-        now,
-        Some(user_id),
-        PayForDiamondMembershipEventPayload {
-            token: args.token.token_symbol().to_string(),
-            amount: args.expected_price_e8s,
-            duration: args.duration.to_string(),
-            recurring: args.recurring,
-            manual_payment,
-        },
+    state.data.event_sink_client.push(
+        EventBuilder::new("diamond_membership_payment", now)
+            .with_user(user_id.to_string())
+            .with_source(state.env.canister_id().to_string())
+            .with_json_payload(&PayForDiamondMembershipEventPayload {
+                token: args.token.token_symbol().to_string(),
+                amount: args.expected_price_e8s,
+                duration: args.duration.to_string(),
+                recurring: args.recurring,
+                manual_payment,
+            })
+            .build(),
     );
 
     if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {

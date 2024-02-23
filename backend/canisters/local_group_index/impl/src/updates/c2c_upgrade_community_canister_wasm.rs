@@ -41,7 +41,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(args: Args, chunks: Vec<Hash>, state: &mut RuntimeState) -> Response {
-    state.data.groups_requiring_upgrade.clear();
+    state.data.communities_requiring_upgrade.clear();
     let version = args.wasm.version;
     let wasm_hash = sha256(&args.wasm.module);
 
@@ -51,9 +51,9 @@ fn commit(args: Args, chunks: Vec<Hash>, state: &mut RuntimeState) -> Response {
         wasm_hash,
     };
     if args.use_for_new_canisters.unwrap_or(true) {
-        state.data.group_canister_wasm_for_new_canisters = chunked_wasm.clone();
+        state.data.community_canister_wasm_for_new_canisters = chunked_wasm.clone();
     }
-    state.data.group_canister_wasm_for_upgrades = chunked_wasm;
+    state.data.community_canister_wasm_for_upgrades = chunked_wasm;
 
     let filter = args.filter.unwrap_or_default();
     let include: HashSet<_> = filter.include.into_iter().collect();

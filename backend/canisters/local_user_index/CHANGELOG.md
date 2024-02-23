@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `c2c_notify_events` ([#5430](https://github.com/open-chat-labs/open-chat/pull/5430))
+
+## [[2.0.1079](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1079-local_user_index)] - 2024-02-22
+
+### Fixed
+
+- Fix chat summary updates ([#5423](https://github.com/open-chat-labs/open-chat/pull/5423))
+
+## [[2.0.1070](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1070-local_user_index)] - 2024-02-22
+
 ### Added
 
 - Add `access_token` endpoint + sync secret key ([#5398](https://github.com/open-chat-labs/open-chat/pull/5398))

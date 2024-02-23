@@ -68,21 +68,23 @@
             {displayName}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent
-                {me}
-                {readonly}
-                messageContext={repliesTo.sourceContext}
-                {intersecting}
-                messageId={repliesTo.messageId}
-                messageIndex={repliesTo.messageIndex}
-                senderId={repliesTo.senderId}
-                edited={repliesTo.edited}
-                fill={false}
-                failed={false}
-                truncate
-                reply
-                myUserId={$currentUser.userId}
-                content={repliesTo.content} />
+            <div class="inert">
+                <ChatMessageContent
+                    {me}
+                    {readonly}
+                    messageContext={repliesTo.sourceContext}
+                    {intersecting}
+                    messageId={repliesTo.messageId}
+                    messageIndex={repliesTo.messageIndex}
+                    senderId={repliesTo.senderId}
+                    edited={repliesTo.edited}
+                    fill={false}
+                    failed={false}
+                    truncate
+                    reply
+                    myUserId={$currentUser.userId}
+                    content={repliesTo.content} />
+            </div>
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>
@@ -110,6 +112,10 @@
         overflow: hidden;
         @include nice-scrollbar();
         max-height: 300px;
+
+        .inert {
+            pointer-events: none;
+        }
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);

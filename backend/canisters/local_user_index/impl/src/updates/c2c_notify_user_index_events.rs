@@ -1,11 +1,10 @@
-use std::cmp::min;
-
 use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notify_events::{Response::*, *};
+use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::Event;
+use std::cmp::min;
 use tracing::info;
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered,
@@ -154,9 +153,6 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .data
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
-        }
-        Event::SecretKeySet(sk_der) => {
-            state.data.oc_secret_key_der = Some(sk_der);
         }
     }
 }

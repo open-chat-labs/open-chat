@@ -69,7 +69,6 @@ pub struct GroupChatSummary {
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[serde(default)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 

@@ -96,8 +96,12 @@ members = [
     "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/nns_governance/api",
     "backend/external_canisters/nns_governance/c2c_client",
+    "backend/external_canisters/sns_archive/api",
+    "backend/external_canisters/sns_archive/c2c_client",
     "backend/external_canisters/sns_governance/api",
     "backend/external_canisters/sns_governance/c2c_client",
+    "backend/external_canisters/sns_ledger/api",
+    "backend/external_canisters/sns_ledger/c2c_client",
     "backend/external_canisters/sns_swap/api",
     "backend/external_canisters/sns_swap/c2c_client",
     "backend/external_canisters/sns_wasm/api",
@@ -164,10 +168,10 @@ ct-codecs = "1.1.1"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "99eb5143db9bc410b39a2859980481a0213b8a0a" }
-event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "99eb5143db9bc410b39a2859980481a0213b8a0a" }
-event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "99eb5143db9bc410b39a2859980481a0213b8a0a" }
-event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "99eb5143db9bc410b39a2859980481a0213b8a0a" }
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "c0cefe7149b9d94963a8c14bb180348b0cfbc8e6" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "c0cefe7149b9d94963a8c14bb180348b0cfbc8e6" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "c0cefe7149b9d94963a8c14bb180348b0cfbc8e6" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "c0cefe7149b9d94963a8c14bb180348b0cfbc8e6" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"

@@ -126,14 +126,8 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
-    // TODO: Remove serde default
-    #[serde(default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
-}
-
-fn video_call_operators() -> Vec<Principal> {
-    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 impl Data {

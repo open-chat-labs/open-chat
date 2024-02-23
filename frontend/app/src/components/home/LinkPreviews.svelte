@@ -2,6 +2,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
+    import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import type { OpenChat } from "openchat-client";
     import GenericPreview from "./GenericPreview.svelte";
     import { reverseScroll } from "../../stores/scrollPos";
@@ -10,7 +11,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { rtlStore } from "../../stores/rtl";
 
-    type Preview = YoutubePreview | TwitterPreview | GenericPreview;
+    type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
     type PreviewBase = {
         url: string;
@@ -25,6 +26,11 @@
     type TwitterPreview = PreviewBase & {
         kind: "twitter";
         tweetId: string;
+    };
+
+    type SpotifyPreview = PreviewBase & {
+        kind: "spotify";
+        regexMatch: RegExpMatchArray;
     };
 
     type GenericPreview = PreviewBase & {
@@ -81,6 +87,15 @@
                 kind: "twitter",
                 url,
                 tweetId: regexMatch[3],
+            };
+        }
+
+        regexMatch = url.match(client.spotifyRegex());
+        if (regexMatch) {
+            return {
+                kind: "spotify",
+                url,
+                regexMatch,
             };
         }
 
@@ -153,6 +168,11 @@
                     {pinned}
                     fill={fill && previews.length === 1}
                     youtubeMatch={preview.regexMatch} />
+            {:else if preview.kind === "spotify"}
+                <SpotifyPreviewComponent
+                    {pinned}
+                    fill={fill && previews.length === 1}
+                    matches={preview.regexMatch} />
             {:else}
                 <GenericPreview
                     url={preview.url}

@@ -74,11 +74,7 @@
             {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                    <RepliesTo
-                        {intersecting}
-                        readonly
-                        {chatId}
-                        repliesTo={msg.repliesTo} />
+                    <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
                 {:else}
                     <UnresolvedReply />
                 {/if}
@@ -164,6 +160,7 @@
         @include font(book, normal, fs-100);
         border-radius: $radius;
         overflow: hidden;
+        pointer-events: none;
 
         .username {
             color: inherit;

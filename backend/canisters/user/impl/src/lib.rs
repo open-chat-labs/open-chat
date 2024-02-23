@@ -196,14 +196,8 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
-    // TODO: Remove serde default
-    #[serde(default = "video_call_operators")]
     video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
-}
-
-fn video_call_operators() -> Vec<Principal> {
-    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 impl Data {

@@ -297,6 +297,8 @@ export const twitterLinkRegex = (): RegExp =>
 export const youtubeRegex = (): RegExp =>
     /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
 
+export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
+
 export function isYoutubeLink(text: string): boolean {
     return matchesLink(text, text.match(youtubeRegex()));
 }

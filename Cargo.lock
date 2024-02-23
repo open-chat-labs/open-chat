@@ -2103,7 +2103,7 @@ dependencies = [
 [[package]]
 name = "event_sink_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=99eb5143db9bc410b39a2859980481a0213b8a0a#99eb5143db9bc410b39a2859980481a0213b8a0a"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
 dependencies = [
  "candid",
  "serde",
@@ -2113,17 +2113,18 @@ dependencies = [
 [[package]]
 name = "event_sink_client"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=99eb5143db9bc410b39a2859980481a0213b8a0a#99eb5143db9bc410b39a2859980481a0213b8a0a"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
 dependencies = [
  "event_sink_canister",
  "ic_principal",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "event_sink_client_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=99eb5143db9bc410b39a2859980481a0213b8a0a#99eb5143db9bc410b39a2859980481a0213b8a0a"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
 dependencies = [
  "event_sink_canister",
  "event_sink_client",
@@ -2138,7 +2139,7 @@ dependencies = [
 [[package]]
 name = "event_sink_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=99eb5143db9bc410b39a2859980481a0213b8a0a#99eb5143db9bc410b39a2859980481a0213b8a0a"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=c0cefe7149b9d94963a8c14bb180348b0cfbc8e6#c0cefe7149b9d94963a8c14bb180348b0cfbc8e6"
 dependencies = [
  "serde",
 ]
@@ -3703,7 +3704,6 @@ dependencies = [
  "serde",
  "serde_cbor",
  "sha2 0.10.8",
- "sha256",
  "test-case",
  "types",
 ]
@@ -6098,6 +6098,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sns_archive_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "canister_time",
+ "icrc-ledger-types",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_archive_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.12.1",
+ "sns_archive_canister",
+ "types",
+]
+
+[[package]]
 name = "sns_governance_canister"
 version = "0.1.0"
 dependencies = [
@@ -6116,6 +6139,29 @@ dependencies = [
  "canister_client",
  "ic-cdk 0.12.1",
  "sns_governance_canister",
+ "types",
+]
+
+[[package]]
+name = "sns_ledger_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "canister_time",
+ "icrc-ledger-types",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_ledger_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.12.1",
+ "sns_ledger_canister",
  "types",
 ]
 

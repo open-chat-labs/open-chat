@@ -28,7 +28,6 @@ impl PendingModclubSubmissionsQueue {
 #[derive(Serialize, Deserialize)]
 pub struct PendingModclubSubmission {
     pub report_index: u64,
-    #[serde(default)]
     pub title: String,
     pub html_report: String,
     pub level: Level,

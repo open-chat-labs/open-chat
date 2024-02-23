@@ -1,11 +1,13 @@
 use crate::env::ENV;
 use crate::rng::random_string;
+use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use local_user_index_canister::chat_events::{EventsArgs, EventsArgsInner, EventsByIndexArgs, EventsContext, EventsResponse};
 use local_user_index_canister::group_and_community_summary_updates::{SummaryUpdatesArgs, SummaryUpdatesResponse};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{CanisterId, ChannelId, ChatEvent, ChatId, CommunityId};
 
 #[test]
@@ -88,11 +90,14 @@ fn get_batched_summaries_succeeds() {
 
     let TestData {
         user1,
+        user2,
         group_id1,
         group_id2,
         community_id,
-        ..
+        channel_id,
     } = init_test_data(env, canister_ids, *controller);
+
+    let start = now_millis(env);
 
     let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
         client::local_user_index::group_and_community_summary_updates(
@@ -126,6 +131,45 @@ fn get_batched_summaries_succeeds() {
     assert_is_summary_with_id(responses.first().unwrap(), group_id1.into(), false);
     assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
     assert_is_summary_with_id(responses.get(2).unwrap(), community_id.into(), true);
+
+    env.advance_time(Duration::from_secs(1));
+
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    client::group::happy_path::send_text_message(env, &user1, group_id1, None, random_string(), None);
+    client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
+
+    let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
+        client::local_user_index::group_and_community_summary_updates(
+            env,
+            user1.principal,
+            canister_ids.local_user_index,
+            &local_user_index_canister::group_and_community_summary_updates::Args {
+                requests: vec![
+                    SummaryUpdatesArgs {
+                        canister_id: group_id1.into(),
+                        is_community: false,
+                        invite_code: None,
+                        updates_since: Some(start + 1),
+                    },
+                    SummaryUpdatesArgs {
+                        canister_id: group_id2.into(),
+                        is_community: false,
+                        invite_code: None,
+                        updates_since: Some(start + 1),
+                    },
+                    SummaryUpdatesArgs {
+                        canister_id: community_id.into(),
+                        is_community: true,
+                        invite_code: None,
+                        updates_since: Some(start + 1),
+                    },
+                ],
+            },
+        );
+
+    assert_is_summary_updates_with_id(responses.first().unwrap(), group_id1.into(), false);
+    assert!(matches!(responses.get(1).unwrap(), SummaryUpdatesResponse::SuccessNoUpdates));
+    assert_is_summary_updates_with_id(responses.get(2).unwrap(), community_id.into(), true);
 }
 
 fn assert_is_message_with_text(response: &EventsResponse, text: &str) {
@@ -145,6 +189,16 @@ fn assert_is_summary_with_id(response: &SummaryUpdatesResponse, canister_id: Can
             assert_eq!(CanisterId::from(c.community_id), canister_id)
         }
         SummaryUpdatesResponse::SuccessGroup(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
+        _ => panic!(),
+    }
+}
+
+fn assert_is_summary_updates_with_id(response: &SummaryUpdatesResponse, canister_id: CanisterId, is_community: bool) {
+    match response {
+        SummaryUpdatesResponse::SuccessCommunityUpdates(c) if is_community => {
+            assert_eq!(CanisterId::from(c.community_id), canister_id)
+        }
+        SummaryUpdatesResponse::SuccessGroupUpdates(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
         _ => panic!(),
     }
 }
