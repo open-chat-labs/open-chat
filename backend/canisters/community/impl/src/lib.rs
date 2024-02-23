@@ -8,6 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
+use event_sink_client_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
@@ -19,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
+use std::time::Duration;
 use types::SNS_FEE_SHARE_PERCENT;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
@@ -27,6 +30,7 @@ use types::{
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
+use utils::time::MINUTE_IN_MS;
 
 mod activity_notifications;
 mod guards;
@@ -248,6 +252,7 @@ impl RuntimeState {
             frozen: self.data.is_frozen(),
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
+            event_sink_client_info: self.data.event_sink_client.info(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -305,6 +310,17 @@ struct Data {
     rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+    #[serde(default = "event_sink_client")]
+    pub event_sink_client: EventSinkClient<CdkRuntime>,
+}
+
+fn event_sink_client() -> EventSinkClient<CdkRuntime> {
+    EventSinkClientBuilder::new(
+        CanisterId::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap(),
+        CdkRuntime::default(),
+    )
+    .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+    .build()
 }
 
 impl Data {
@@ -376,6 +392,9 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
+            event_sink_client: EventSinkClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+                .build(),
         }
     }
 
@@ -474,6 +493,7 @@ pub struct Metrics {
     pub frozen: bool,
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
 }
 

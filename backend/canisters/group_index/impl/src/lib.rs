@@ -105,7 +105,8 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                escrow_canister_id: self.data.escrow_canister_id,
+                escrow: self.data.escrow_canister_id,
+                event_relay: self.data.event_relay_canister_id,
             },
         }
     }
@@ -129,6 +130,8 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "event_relay_canister_id")]
+    pub event_relay_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -138,6 +141,10 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
+}
+
+fn event_relay_canister_id() -> CanisterId {
+    CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap()
 }
 
 impl Data {
@@ -151,6 +158,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         test_mode: bool,
     ) -> Data {
@@ -171,6 +179,7 @@ impl Data {
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            event_relay_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -276,6 +285,7 @@ impl Default for Data {
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
             escrow_canister_id: Principal::anonymous(),
+            event_relay_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
@@ -348,7 +358,8 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub escrow_canister_id: CanisterId,
+    pub escrow: CanisterId,
+    pub event_relay: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

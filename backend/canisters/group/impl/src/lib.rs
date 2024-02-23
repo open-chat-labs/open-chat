@@ -8,6 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::Reader;
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
+use event_sink_client_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
@@ -22,6 +24,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
+use std::time::Duration;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
@@ -31,7 +34,7 @@ use types::{
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
+use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 mod activity_notifications;
 mod guards;
@@ -395,6 +398,7 @@ impl RuntimeState {
                 .as_ref()
                 .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
+            event_sink_client_info: self.data.event_sink_client.info(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -436,7 +440,18 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
-    video_call_operators: Vec<Principal>,
+    pub video_call_operators: Vec<Principal>,
+    #[serde(default = "event_sink_client")]
+    pub event_sink_client: EventSinkClient<CdkRuntime>,
+}
+
+fn event_sink_client() -> EventSinkClient<CdkRuntime> {
+    EventSinkClientBuilder::new(
+        CanisterId::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap(),
+        CdkRuntime::default(),
+    )
+    .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+    .build()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -512,6 +527,9 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
+            event_sink_client: EventSinkClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+                .build(),
         }
     }
 
@@ -647,6 +665,7 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
 }
 
