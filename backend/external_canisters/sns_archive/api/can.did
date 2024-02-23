@@ -1,0 +1,52 @@
+// Copied from https://github.com/dfinity/ic/blob/master/rs/rosetta-api/icrc1/archive/archive.did
+
+type Account = record { owner : principal; subaccount : opt blob };
+
+type Transaction = record {
+  burn : opt Burn;
+  kind : text;
+  mint : opt Mint;
+  approve : opt Approve;
+  timestamp : nat64;
+  transfer : opt Transfer;
+};
+
+type Approve = record {
+  fee : opt nat;
+  from : Account;
+  memo : opt vec nat8;
+  created_at_time : opt nat64;
+  amount : nat;
+  expected_allowance : opt nat;
+  expires_at : opt nat64;
+  spender : Account;
+};
+
+type Burn = record {
+  from : Account;
+  memo : opt vec nat8;
+  created_at_time : opt nat64;
+  amount : nat;
+  spender : opt Account;
+};
+
+type Mint = record {
+  to : Account;
+  memo : opt vec nat8;
+  created_at_time : opt nat64;
+  amount : nat;
+};
+
+type Transfer = record {
+  to : Account;
+  fee : opt nat;
+  from : Account;
+  memo : opt vec nat8;
+  created_at_time : opt nat64;
+  amount : nat;
+  spender : opt Account;
+};
+
+service : {
+    get_transactions : (record { start : nat; length : nat }) -> (record { transactions : vec Transaction }) query;
+}
