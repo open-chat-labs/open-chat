@@ -3,6 +3,7 @@ use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use types::{BuildVersion, CanisterWasm, Cycles};
+use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -234,6 +235,8 @@ async fn install_service_canisters_impl(
         push_events_whitelist: vec![canister_ids.user_index, canister_ids.online_users],
         event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };

@@ -12,6 +12,7 @@ use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::{BuildVersion, CanisterId, CanisterWasm};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -69,6 +70,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         Some("2ouva-viaaa-aaaaq-aaamq-cai"),
         Vec::new(),
     );
+    let chat_governance_canister_id = SNS_GOVERNANCE_CANISTER_ID;
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -322,6 +324,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         push_events_whitelist: vec![],
         event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id,
+        chat_ledger_canister_id,
+        chat_governance_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
