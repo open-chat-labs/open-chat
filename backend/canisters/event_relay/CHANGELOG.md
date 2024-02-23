@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Push events for mint, burn and treasury transactions ([#5435](https://github.com/open-chat-labs/open-chat/pull/5435))
+
 ### Changed
 
 - Update `EventSinkClient` to latest version ([#5431](https://github.com/open-chat-labs/open-chat/pull/5431))
