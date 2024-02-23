@@ -6098,6 +6098,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sns_archive_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "canister_time",
+ "icrc-ledger-types",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_archive_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.12.1",
+ "sns_archive_canister",
+ "types",
+]
+
+[[package]]
 name = "sns_governance_canister"
 version = "0.1.0"
 dependencies = [
@@ -6116,6 +6139,29 @@ dependencies = [
  "canister_client",
  "ic-cdk 0.12.1",
  "sns_governance_canister",
+ "types",
+]
+
+[[package]]
+name = "sns_ledger_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "canister_time",
+ "icrc-ledger-types",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_ledger_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.12.1",
+ "sns_ledger_canister",
  "types",
 ]
 
