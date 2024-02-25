@@ -3,6 +3,11 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
     ChannelIdentifier,
+    ChatEvent,
+    ChatEventsArgs,
+    ChatEventsBatchResponse,
+    ChatEventsResponse,
+    EventsSuccessResult,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
@@ -12,6 +17,8 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
+    chatEventsArgs,
+    chatEventsBatchResponse,
     groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
@@ -22,11 +29,23 @@ import type { AgentConfig } from "../../config";
 import { joinGroupResponse, apiOptional } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
+import {
+    type Database,
+    getCachedEvents,
+    getCachedEventsWindowByMessageIndex,
+    setCachedEvents,
+    setCachePrimerTimestamp,
+} from "../../utils/caching";
 
 export class LocalUserIndexClient extends CandidService {
     private localUserIndexService: LocalUserIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
+    private constructor(
+        identity: Identity,
+        config: AgentConfig,
+        canisterId: string,
+        private db: Database,
+    ) {
         super(identity);
 
         this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(
@@ -40,8 +59,9 @@ export class LocalUserIndexClient extends CandidService {
         identity: Identity,
         config: AgentConfig,
         canisterId: string,
+        db: Database,
     ): LocalUserIndexClient {
-        return new LocalUserIndexClient(identity, config, canisterId);
+        return new LocalUserIndexClient(identity, config, canisterId, db);
     }
 
     groupAndCommunitySummaryUpdates(
@@ -59,6 +79,112 @@ export class LocalUserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.localUserIndexService.group_and_community_summary_updates(args),
             groupAndCommunitySummaryUpdates,
+            args,
+        );
+    }
+
+    async chatEvents(
+        requests: ChatEventsArgs[],
+        cachePrimer = false,
+    ): Promise<ChatEventsResponse[]> {
+        // The responses must be ordered such that the response at index i matches the request at index i
+        const responses = [] as ChatEventsResponse[];
+        const requestsToBackend = [] as ChatEventsArgs[];
+
+        for (let i = 0; i < requests.length; i++) {
+            const request = requests[i];
+            let fromCache: EventsSuccessResult<ChatEvent> | undefined = undefined;
+
+            if (request.args.kind === "page") {
+                const [cached, missing] = await getCachedEvents(
+                    this.db,
+                    request.args.eventIndexRange,
+                    request.context,
+                    request.args.startIndex,
+                    request.args.ascending,
+                    undefined,
+                    undefined,
+                    1,
+                );
+                if (missing.size === 0) {
+                    fromCache = cached;
+                }
+            } else if (request.args.kind === "window") {
+                const [cached, missing] = await getCachedEventsWindowByMessageIndex(
+                    this.db,
+                    request.args.eventIndexRange,
+                    request.context,
+                    request.args.midPoint,
+                    undefined,
+                    undefined,
+                    1,
+                );
+                if (missing.size === 0) {
+                    fromCache = cached;
+                }
+            }
+            if (fromCache !== undefined) {
+                // Insert the response into the index matching the request
+                responses[i] = {
+                    kind: "success",
+                    result: fromCache,
+                };
+                if (cachePrimer && request.latestKnownUpdate !== undefined) {
+                    setCachePrimerTimestamp(
+                        this.db,
+                        request.context.chatId,
+                        request.latestKnownUpdate,
+                    );
+                }
+            } else {
+                requestsToBackend.push(request);
+            }
+        }
+
+        if (requestsToBackend.length > 0) {
+            const batchResponse = await this.getChatEventsFromBackend(requestsToBackend);
+
+            for (let i = 0; i < batchResponse.responses.length; i++) {
+                const request = requestsToBackend[i];
+                const response = batchResponse.responses[i];
+
+                if (response.kind === "success") {
+                    setCachedEvents(
+                        this.db,
+                        request.context.chatId,
+                        response.result,
+                        request.context.threadRootMessageIndex,
+                    );
+                    if (cachePrimer) {
+                        setCachePrimerTimestamp(
+                            this.db,
+                            request.context.chatId,
+                            batchResponse.timestamp,
+                        );
+                    }
+                }
+
+                // Insert the response into the first empty index, this will match the index of the request
+                for (let j = i; j <= responses.length; j++) {
+                    if (responses[j] === undefined) {
+                        responses[j] = response;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return responses;
+    }
+
+    private getChatEventsFromBackend(requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {
+        const args = {
+            requests: requests.map(chatEventsArgs),
+        };
+
+        return this.handleQueryResponse(
+            () => this.localUserIndexService.chat_events(args),
+            (resp) => chatEventsBatchResponse(this.principal, requests, resp),
             args,
         );
     }

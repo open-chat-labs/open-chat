@@ -9,7 +9,6 @@ import {
     removeFailedMessage,
     setCachedChats,
     setCachedMessageIfNotExists,
-    setCachePrimerTimestamp,
     recordFailedMessage,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
@@ -186,6 +185,8 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -349,7 +350,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
-        return LocalUserIndexClient.create(this.identity, this.config, canisterId);
+        return LocalUserIndexClient.create(this.identity, this.config, canisterId, this.db);
     }
 
     private getProvidedGroupInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
@@ -654,6 +655,19 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
         }
+    }
+
+    chatEventsBatch(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+        cachePrimer: boolean,
+    ): Promise<ChatEventsResponse[]> {
+        console.debug("CHAT EVENTS: Getting events batch", {
+            localUserIndex,
+            requests,
+        });
+
+        return this.createLocalUserIndexClient(localUserIndex).chatEvents(requests, cachePrimer);
     }
 
     chatEventsWindow(
@@ -1445,6 +1459,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedChannels: ChannelIdentifier[];
         let favouriteChats: ChatIdentifier[];
         let suspensionChanged = undefined;
+        let userCanisterLocalUserIndex: string;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1471,6 +1486,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
+            userCanisterLocalUserIndex = userResponse.localUserIndex;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1492,6 +1508,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = current.pinnedChannels;
             favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
+            userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1670,6 +1687,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats,
             pinnedChannels,
             favouriteChats,
+            userCanisterLocalUserIndex,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -2878,10 +2896,6 @@ export class OpenChatAgent extends EventTarget {
 
     getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
         return getCachePrimerTimestamps(this.db);
-    }
-
-    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
-        return setCachePrimerTimestamp(this.db, chatIdentifierString, timestamp);
     }
 
     followThread(

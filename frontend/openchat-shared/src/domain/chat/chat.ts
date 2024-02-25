@@ -939,6 +939,7 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    userCanisterLocalUserIndex: string;
 };
 
 export type CurrentChatState = {
@@ -1087,6 +1088,7 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    localUserIndex: string;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -2050,6 +2052,49 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           kind: "not_found";
       }
     | { kind: "error"; error: string };
+
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          ascending: boolean;
+          startIndex: number;
+          eventIndexRange: [number, number];
+      }
+    | {
+          kind: "by_index";
+          events: number[];
+      }
+    | {
+          kind: "window";
+          midPoint: number;
+          eventIndexRange: [number, number];
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string };
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }

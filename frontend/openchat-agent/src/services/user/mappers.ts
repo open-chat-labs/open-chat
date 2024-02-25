@@ -594,6 +594,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
             suspended: result.suspended,
+            localUserIndex: result.local_user_index_canister_id.toString(),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
