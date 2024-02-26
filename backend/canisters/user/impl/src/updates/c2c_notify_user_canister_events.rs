@@ -106,6 +106,7 @@ fn send_messages(args: SendMessagesArgs, sender_user_id: UserId, state: &mut Run
                 now,
             },
             message.message_filter_failed.is_some(),
+            false,
             state,
         );
     }

@@ -146,7 +146,7 @@ pub(crate) fn send_message_with_reply(
         now: state.env.now(),
     };
 
-    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, state)
+    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, true, state)
 }
 
 fn to_gb(bytes: u64) -> String {

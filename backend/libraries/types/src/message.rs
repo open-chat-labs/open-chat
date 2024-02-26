@@ -1,5 +1,6 @@
 use crate::{
-    CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
+    is_default, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary,
+    TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,14 @@ pub struct ReplyContext {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
+}
+
+#[derive(Serialize)]
+pub struct MessageEventPayload {
+    #[serde(rename = "type")]
+    pub message_type: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub sender_is_bot: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]

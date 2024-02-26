@@ -10,14 +10,15 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
+use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    User, UserId, Version,
+    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageEventPayload, MessageIndex,
+    Notification, TimestampMillis, User, UserId, Version,
 };
 
 #[update_candid_and_msgpack]
@@ -72,6 +73,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             user_id,
             args.sender_name,
             display_name.or(args.sender_display_name),
+            is_bot,
             channel.id,
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
@@ -125,6 +127,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             user_id,
             args.sender_name,
             display_name.or(args.sender_display_name),
+            is_bot,
             channel.id,
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
@@ -194,6 +197,7 @@ fn process_send_message_result(
     sender: UserId,
     sender_username: String,
     sender_display_name: Option<String>,
+    sender_is_bot: bool,
     channel_id: ChannelId,
     channel_name: String,
     channel_avatar_id: Option<u128>,
@@ -234,8 +238,9 @@ fn process_send_message_result(
                 .collect();
 
             let content = &result.message_event.event.content;
+            let this_canister_id = state.env.canister_id();
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                community_id: state.env.canister_id().into(),
+                community_id: this_canister_id.into(),
                 channel_id,
                 thread_root_message_index,
                 message_index: result.message_event.event.message_index,
@@ -255,6 +260,17 @@ fn process_send_message_result(
             state.push_notification(users_to_notify, notification);
 
             handle_activity_notification(state);
+
+            state.data.event_sink_client.push(
+                EventBuilder::new("message_sent", now)
+                    .with_user(sender.to_string())
+                    .with_source(this_canister_id.to_string())
+                    .with_json_payload(&MessageEventPayload {
+                        message_type: content.message_type(),
+                        sender_is_bot,
+                    })
+                    .build(),
+            );
 
             Success(SuccessResult {
                 event_index,
