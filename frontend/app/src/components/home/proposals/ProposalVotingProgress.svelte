@@ -11,6 +11,8 @@
     export let rejectPercent: number;
     export let votingEnded: boolean;
     export let deadline: number;
+    export let minYesPercentageOfTotal: number;
+    export let minYesPercentageOfExercised: number;
 
     const client = getContext<OpenChat>("client");
 
@@ -19,10 +21,10 @@
 </script>
 
 <div class="wrapper">
-    <div class="icon" style="{rtl}: calc(3% - 0.5em)">
+    <div class="icon" style="{rtl}: calc({minYesPercentageOfTotal}% - 0.5em)">
         <ChevronDown viewBox="-1 0 24 24" />
     </div>
-    <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
+    <div class="icon solid" style="{rtl}: calc({minYesPercentageOfExercised}% - 0.5em)">
         <svg viewBox="-1 0 24 24">
             <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
         </svg>
@@ -30,8 +32,8 @@
     <div class="progress">
         <div class="adopt" style="width: {adoptPercent}%" />
         <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: 3%" />
-        <div class="vertical-line" style="{rtl}: 50%" />
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%" />
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%" />
     </div>
 
     <div class="remaining">
