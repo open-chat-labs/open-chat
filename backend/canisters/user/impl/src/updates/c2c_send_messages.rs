@@ -2,11 +2,12 @@ use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
+use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
-    UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageEventPayload, MessageId, MessageIndex, Notification,
+    TimestampMillis, UserId,
 };
 use user_canister::C2CReplyContext;
 
@@ -52,6 +53,7 @@ async fn c2c_handle_bot_messages(
                     now,
                 },
                 false,
+                true,
                 state,
             );
         }
@@ -109,6 +111,7 @@ pub(crate) fn handle_message_impl(
     sender: UserId,
     args: HandleMessageArgs,
     mute_notification: bool,
+    push_message_sent_event: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, state);
@@ -156,6 +159,8 @@ pub(crate) fn handle_message_impl(
         if args.is_bot {
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
+
+        let this_canister_id = state.env.canister_id();
         if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
             let content = &message_event.event.content;
             let notification = Notification::DirectMessage(DirectMessageNotification {
@@ -172,9 +177,22 @@ pub(crate) fn handle_message_impl(
                 crypto_transfer: content.notification_crypto_transfer_details(&[]),
             });
 
-            let recipient = state.env.canister_id().into();
+            let recipient = this_canister_id.into();
 
             state.push_notification(recipient, notification);
+        }
+
+        if push_message_sent_event {
+            state.data.event_sink_client.push(
+                EventBuilder::new("message_sent", args.now)
+                    .with_user(sender.to_string())
+                    .with_source(this_canister_id.to_string())
+                    .with_json_payload(&MessageEventPayload {
+                        message_type: message_event.event.content.message_type(),
+                        sender_is_bot: false,
+                    })
+                    .build(),
+            );
         }
     }
 
