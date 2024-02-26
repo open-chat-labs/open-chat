@@ -5,7 +5,7 @@ use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
 use ic_cdk_macros::update;
 use types::EventIndex;
 use user_canister::undelete_messages::{Response::*, *};
-use user_canister::{c2c_undelete_messages, UserCanisterEvent};
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -49,9 +49,8 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
         if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
             state.push_user_canister_event(
                 args.user_id.into(),
-                UserCanisterEvent::UndeleteMessages(Box::new(c2c_undelete_messages::Args {
+                UserCanisterEvent::UndeleteMessages(Box::new(user_canister::DeleteUndeleteMessagesArgs {
                     message_ids: deleted,
-                    correlation_id: args.correlation_id,
                 })),
             );
         }
