@@ -6,11 +6,13 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
+use event_sink_client::EventBuilder;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId,
+    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageEventPayload, MessageIndex, Notification,
+    TimestampMillis, User, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -58,6 +60,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 user_id,
                 args.sender_name,
                 args.sender_display_name,
+                is_bot,
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
@@ -99,6 +102,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
                 user_id,
                 args.sender_name,
                 args.sender_display_name,
+                is_bot,
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
@@ -148,6 +152,7 @@ fn process_send_message_result(
     sender: UserId,
     sender_username: String,
     sender_display_name: Option<String>,
+    sender_is_bot: bool,
     thread_root_message_index: Option<MessageIndex>,
     mentioned: Vec<User>,
     now: TimestampMillis,
@@ -176,8 +181,9 @@ fn process_send_message_result(
             );
 
             let content = &result.message_event.event.content;
+            let this_canister_id = state.env.canister_id();
             let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id: state.env.canister_id().into(),
+                chat_id: this_canister_id.into(),
                 thread_root_message_index,
                 message_index,
                 event_index,
@@ -194,6 +200,17 @@ fn process_send_message_result(
 
             state.push_notification(result.users_to_notify, notification);
             handle_activity_notification(state);
+
+            state.data.event_sink_client.push(
+                EventBuilder::new("message_sent", now)
+                    .with_user(sender.to_string())
+                    .with_source(this_canister_id.to_string())
+                    .with_json_payload(&MessageEventPayload {
+                        message_type: content.message_type(),
+                        sender_is_bot,
+                    })
+                    .build(),
+            );
 
             Success(SuccessResult {
                 event_index,

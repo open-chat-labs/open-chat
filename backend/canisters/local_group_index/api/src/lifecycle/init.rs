@@ -20,6 +20,7 @@ pub struct Args {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    pub event_relay_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
     pub test_mode: bool,
 }

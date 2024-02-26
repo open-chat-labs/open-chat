@@ -6,7 +6,7 @@ use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
 use ic_cdk_macros::update;
 use types::EventIndex;
 use user_canister::delete_messages::{Response::*, *};
-use user_canister::{c2c_delete_messages, UserCanisterEvent};
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -74,9 +74,8 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if !my_messages.is_empty() {
                     state.push_user_canister_event(
                         args.user_id.into(),
-                        UserCanisterEvent::DeleteMessages(Box::new(c2c_delete_messages::Args {
+                        UserCanisterEvent::DeleteMessages(Box::new(user_canister::DeleteUndeleteMessagesArgs {
                             message_ids: my_messages,
-                            correlation_id: 0,
                         })),
                     );
                 }

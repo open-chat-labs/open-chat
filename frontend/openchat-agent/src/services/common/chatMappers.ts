@@ -770,6 +770,8 @@ function proposal(candid: ApiProposal): Proposal {
             created: Number(p.created),
             deadline: Number(p.deadline),
             payloadTextRendering: optional(p.payload_text_rendering, identity),
+            minYesPercentageOfTotal: 3,
+            minYesPercentageOfExercised: 50,
         };
     } else if ("SNS" in candid) {
         const p = candid.SNS;
@@ -793,6 +795,8 @@ function proposal(candid: ApiProposal): Proposal {
             created: Number(p.created),
             deadline: Number(p.deadline),
             payloadTextRendering: optional(p.payload_text_rendering, identity),
+            minYesPercentageOfTotal: p.minimum_yes_proportion_of_total / 100,
+            minYesPercentageOfExercised: p.minimum_yes_proportion_of_exercised / 100,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);

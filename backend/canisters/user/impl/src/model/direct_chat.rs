@@ -6,7 +6,7 @@ use types::{
     DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
     Timestamped, UserId,
 };
-use user_canister::c2c_send_messages_v2::SendMessageArgs;
+use user_canister::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {

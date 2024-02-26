@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::mark_read::{Response::*, *};
-use user_canister::{c2c_mark_read_v2, UserCanisterEvent};
+use user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -43,7 +43,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                         state.push_user_canister_event(
                             chat_messages_read.chat_id.into(),
-                            UserCanisterEvent::MarkMessagesRead(c2c_mark_read_v2::Args {
+                            UserCanisterEvent::MarkMessagesRead(MarkMessagesReadArgs {
                                 read_up_to: read_up_to_of_theirs,
                             }),
                         );

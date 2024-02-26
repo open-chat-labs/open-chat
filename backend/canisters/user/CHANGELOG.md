@@ -5,9 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to push events from User canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
+- Push event each time a message is sent ([#5439](https://github.com/open-chat-labs/open-chat/pull/5439))
+
 ### Changed
 
 - Use ICRC1 for ICP transactions between users ([#5426](https://github.com/open-chat-labs/open-chat/pull/5426))
+
+### Removed
+
+- Remove c2c endpoints that are now handled via events ([#5437](https://github.com/open-chat-labs/open-chat/pull/5437))
 
 ## [[2.0.1078](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1078-user)] - 2024-02-22
 

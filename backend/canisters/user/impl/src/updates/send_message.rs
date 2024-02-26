@@ -9,16 +9,16 @@ use candid::Principal;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
+use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
-    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
-    UserId,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex,
+    P2PSwapLocation, TimestampMillis, UserId,
 };
-use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
-use user_canister::UserCanisterEvent;
+use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
 use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
@@ -209,7 +209,7 @@ fn send_message_impl(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
-    let my_user_id = state.env.canister_id().into();
+    let this_canister_id = state.env.canister_id();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
@@ -220,7 +220,7 @@ fn send_message_impl(
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id,
-        sender: my_user_id,
+        sender: this_canister_id.into(),
         content: content.clone(),
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
@@ -252,6 +252,18 @@ fn send_message_impl(
         &mut state.data.timer_jobs,
     );
 
+    let user_string = this_canister_id.to_string();
+    state.data.event_sink_client.push(
+        EventBuilder::new("message_sent", now)
+            .with_user(user_string.clone())
+            .with_source(user_string)
+            .with_json_payload(&MessageEventPayload {
+                message_type: message_event.event.content.message_type(),
+                sender_is_bot: false,
+            })
+            .build(),
+    );
+
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
             message_id: args.message_id,
@@ -276,7 +288,6 @@ fn send_message_impl(
             }),
             forwarding: args.forwarding,
             message_filter_failed: args.message_filter_failed,
-            correlation_id: args.correlation_id,
         };
 
         let sender_name = state.data.username.value.clone();
@@ -291,7 +302,7 @@ fn send_message_impl(
         } else {
             state.push_user_canister_event(
                 recipient.into(),
-                UserCanisterEvent::SendMessages(Box::new(c2c_send_messages_v2::Args {
+                UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
                     messages: vec![send_message_args],
                     sender_name,
                     sender_display_name,

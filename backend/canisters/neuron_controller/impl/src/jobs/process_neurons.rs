@@ -1,12 +1,13 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
+use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
 use tracing::info;
-use types::Milliseconds;
+use types::{CanisterId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
@@ -95,16 +96,27 @@ async fn run_async() {
 }
 
 async fn spawn_neurons(neuron_ids: Vec<u64>) {
-    let cycles_minting_canister_id = read_state(|state| state.data.cycles_minting_canister_id);
+    let (nns_ledger_canister_id, cycles_minting_canister_id, cycles_dispenser_canister_id) = read_state(|state| {
+        (
+            state.data.nns_ledger_canister_id,
+            state.data.cycles_minting_canister_id,
+            state.data.cycles_dispenser_canister_id,
+        )
+    });
 
-    if let Ok(Ok(modulation)) = cycles_minting_canister_c2c_client::neuron_maturity_modulation(cycles_minting_canister_id).await
-    {
-        // Only spawn when the modulation is at least 102.5%
-        if modulation >= 250 {
-            for neuron_id in neuron_ids {
-                info!(neuron_id, "Spawning neuron from maturity");
-                manage_nns_neuron_impl(neuron_id, Command::Spawn(Spawn::default())).await;
-            }
+    let is_cycles_dispenser_low = is_cycles_dispenser_balance_low(nns_ledger_canister_id, cycles_dispenser_canister_id)
+        .await
+        .unwrap_or(true);
+
+    let is_modulation_high = cycles_minting_canister_c2c_client::neuron_maturity_modulation(cycles_minting_canister_id)
+        .await
+        .map(|response| response.unwrap_or_default() > 250)
+        .unwrap_or_default();
+
+    if is_cycles_dispenser_low || is_modulation_high {
+        for neuron_id in neuron_ids {
+            info!(neuron_id, "Spawning neuron from maturity");
+            manage_nns_neuron_impl(neuron_id, Command::Spawn(Spawn::default())).await;
         }
     }
 }
@@ -113,12 +125,10 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
     let (nns_ledger_canister_id, cycles_dispenser_canister_id) =
         read_state(|state| (state.data.nns_ledger_canister_id, state.data.cycles_dispenser_canister_id));
 
-    // If the CyclesDispenser has less than 1000 ICP, top it up, otherwise send the ICP to the treasury
-    let mut top_up_cycles_dispenser =
-        icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
-            .await
-            .map(|r| r < 1000 * E8S_PER_ICP)
-            .unwrap_or_default();
+    // If the CyclesDispenser has less than 2000 ICP, top it up, otherwise send the ICP to the treasury
+    let mut top_up_cycles_dispenser = is_cycles_dispenser_balance_low(nns_ledger_canister_id, cycles_dispenser_canister_id)
+        .await
+        .unwrap_or(true);
 
     for neuron_id in neuron_ids {
         info!(neuron_id, top_up_cycles_dispenser, "Disbursing neuron");
@@ -146,4 +156,13 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
         )
         .await;
     }
+}
+
+async fn is_cycles_dispenser_balance_low(
+    nns_ledger_canister_id: CanisterId,
+    cycles_dispenser_canister_id: CanisterId,
+) -> CallResult<bool> {
+    icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
+        .await
+        .map(|balance| balance < 2000 * E8S_PER_ICP)
 }
