@@ -1,6 +1,5 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
-use candid::Nat;
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
@@ -165,5 +164,5 @@ async fn is_cycles_dispenser_balance_low(
 ) -> CallResult<bool> {
     icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
         .await
-        .map(|r| r < Nat::from(2000 * E8S_PER_ICP))
+        .map(|balance| balance < 2000 * E8S_PER_ICP)
 }
