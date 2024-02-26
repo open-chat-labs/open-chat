@@ -31,6 +31,7 @@
         $selectedChat !== undefined &&
         $selectedChat.videoCallInProgress === messageIndex &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
+    $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
 
     function joinCall() {
         if (!incall && $selectedChat) {
@@ -62,9 +63,11 @@
                 resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
         </Button>
     {:else}
-        <Button fill disabled={content.ended !== undefined} on:click={joinCall}>
+        <Button fill disabled={endedDate !== undefined} on:click={joinCall}>
             <Translatable
-                resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.join")} />
+                resourceKey={endedDate
+                    ? i18nKey("videoCall.endedAt", { time: client.toShortTimeString(endedDate) })
+                    : i18nKey("videoCall.join")} />
         </Button>
     {/if}
 </div>
