@@ -5,7 +5,7 @@ use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
 use types::EventIndex;
 use user_canister::edit_message_v2::{Response::*, *};
-use user_canister::{c2c_edit_message, UserCanisterEvent};
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -41,10 +41,9 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
                     state.push_user_canister_event(
                         args.user_id.into(),
-                        UserCanisterEvent::EditMessage(Box::new(c2c_edit_message::Args {
+                        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
                             message_id: args.message_id,
                             content: args.content.into(),
-                            correlation_id: args.correlation_id,
                         })),
                     );
                 }

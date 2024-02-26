@@ -6,8 +6,7 @@ use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::c2c_send_messages_v2::C2CReplyContext;
-use user_canister::UserCanisterEvent;
+use user_canister::{C2CReplyContext, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
 
@@ -147,7 +146,7 @@ impl Job for RetrySendingFailedMessagesJob {
         });
 
         if !pending_messages.is_empty() {
-            let args = user_canister::c2c_send_messages_v2::Args {
+            let args = user_canister::SendMessagesArgs {
                 messages: pending_messages,
                 sender_name,
                 sender_display_name,

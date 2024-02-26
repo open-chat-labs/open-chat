@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use types::{BotMessage, MessageContent, MessageId, MessageIndex};
-use user_canister::c2c_send_messages_v2::SendMessageArgs;
+use user_canister::SendMessageArgs;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -8,8 +8,9 @@ pub struct Args {
     pub sender_message_index: MessageIndex,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<user_canister::c2c_send_messages_v2::C2CReplyContext>,
+    pub replies_to: Option<user_canister::C2CReplyContext>,
     pub forwarding: bool,
+    #[serde(default)]
     pub correlation_id: u64,
 }
 
@@ -35,7 +36,7 @@ impl Args {
             content: args.content.hydrate(None),
             replies_to: args.replies_to,
             forwarding: args.forwarding,
-            correlation_id: args.correlation_id,
+            correlation_id: 0,
         }
     }
 }

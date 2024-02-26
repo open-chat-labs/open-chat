@@ -3,8 +3,7 @@ use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIM
 use chat_events::{MessageContentInternal, TextContentInternal};
 use ic_ledger_types::Tokens;
 use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, UserId};
-use user_canister::c2c_send_messages_v2::C2CReplyContext;
-use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
+use user_canister::{C2CReplyContext, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
@@ -142,7 +141,6 @@ pub(crate) fn send_message_with_reply(
         content,
         replies_to,
         forwarding: false,
-        correlation_id: 0,
         is_bot: true,
         sender_avatar_id: None,
         now: state.env.now(),

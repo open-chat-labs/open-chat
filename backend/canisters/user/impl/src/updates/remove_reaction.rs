@@ -5,7 +5,7 @@ use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
 use ic_cdk_macros::update;
 use types::EventIndex;
 use user_canister::remove_reaction::{Response::*, *};
-use user_canister::{c2c_toggle_reaction, UserCanisterEvent};
+use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -37,14 +37,13 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
                     state.push_user_canister_event(
                         args.user_id.into(),
-                        UserCanisterEvent::ToggleReaction(Box::new(c2c_toggle_reaction::Args {
+                        UserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
                             message_id: args.message_id,
                             reaction: args.reaction,
                             added: false,
                             username: "".to_string(),
                             display_name: None,
                             user_avatar_id: None,
-                            correlation_id: 0,
                         })),
                     );
                 }

@@ -1,16 +1,11 @@
-use crate::c2c_delete_messages::Args as DeleteMessagesArgs;
-use crate::c2c_edit_message::Args as EditMessageArgs;
-use crate::c2c_mark_read_v2::Args as MarkMessagesReadArgs;
-use crate::c2c_send_messages_v2::Args as SendMessagesArgs;
-use crate::c2c_tip_message::Args as TipMessageArgs;
-use crate::c2c_toggle_reaction::Args as ToggleReactionArgs;
-use crate::c2c_undelete_messages::Args as UndeleteMessagesArgs;
 use candid::CandidType;
+use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    MessageContent, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
+    EventIndex, MessageContent, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction, SuspensionDuration,
+    TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -170,13 +165,76 @@ pub struct DiamondMembershipPaymentReceived {
 pub enum UserCanisterEvent {
     SendMessages(Box<SendMessagesArgs>),
     EditMessage(Box<EditMessageArgs>),
-    DeleteMessages(Box<DeleteMessagesArgs>),
-    UndeleteMessages(Box<UndeleteMessagesArgs>),
+    DeleteMessages(Box<DeleteUndeleteMessagesArgs>),
+    UndeleteMessages(Box<DeleteUndeleteMessagesArgs>),
     ToggleReaction(Box<ToggleReactionArgs>),
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
     JoinVideoCall(Box<JoinVideoCall>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SendMessagesArgs {
+    pub messages: Vec<SendMessageArgs>,
+    pub sender_name: String,
+    pub sender_display_name: Option<String>,
+    pub sender_avatar_id: Option<u128>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SendMessageArgs {
+    pub message_id: MessageId,
+    pub sender_message_index: MessageIndex,
+    pub content: MessageContentInternal,
+    pub replies_to: Option<C2CReplyContext>,
+    pub forwarding: bool,
+    pub message_filter_failed: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum C2CReplyContext {
+    ThisChat(MessageId),
+    OtherChat(Chat, Option<MessageIndex>, EventIndex),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DeleteUndeleteMessagesArgs {
+    pub message_ids: Vec<MessageId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EditMessageArgs {
+    pub message_id: MessageId,
+    pub content: MessageContent,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ToggleReactionArgs {
+    pub message_id: MessageId,
+    pub reaction: Reaction,
+    pub added: bool,
+    pub username: String,
+    pub display_name: Option<String>,
+    pub user_avatar_id: Option<u128>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct TipMessageArgs {
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub ledger: CanisterId,
+    pub token: Cryptocurrency,
+    pub amount: u128,
+    pub decimals: u8,
+    pub username: String,
+    pub display_name: Option<String>,
+    pub user_avatar_id: Option<u128>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MarkMessagesReadArgs {
+    pub read_up_to: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

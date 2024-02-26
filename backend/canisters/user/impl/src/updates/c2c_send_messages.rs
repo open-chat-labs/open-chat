@@ -1,6 +1,5 @@
 use crate::updates::send_message::register_timer_jobs;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
@@ -9,63 +8,7 @@ use types::{
     CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
     UserId,
 };
-use user_canister::c2c_send_messages_v2::{Response::*, *};
-
-#[update_msgpack]
-#[trace]
-async fn c2c_send_messages_v2(args: Args) -> Response {
-    c2c_send_messages_with_sender_check(args).await
-}
-
-async fn c2c_send_messages_with_sender_check(args: Args) -> Response {
-    run_regular_jobs();
-
-    let sender_user_id = match read_state(get_sender_status) {
-        SenderStatus::Ok(user_id) => user_id,
-        SenderStatus::Blocked => return Blocked,
-        SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !verify_user(local_user_index_canister_id, user_id, false).await {
-                panic!("This request is not from an OpenChat user");
-            }
-            user_id
-        }
-    };
-
-    mutate_state(|state| c2c_send_messages_impl(args, sender_user_id, state))
-}
-pub(crate) fn c2c_send_messages_impl(args: Args, sender_user_id: UserId, state: &mut RuntimeState) -> Response {
-    let now = state.env.now();
-    for message in args.messages {
-        // Messages sent c2c can be retried so the same messageId may be received multiple
-        // times, so here we skip any messages whose messageId already exists.
-        if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
-            if chat.events.contains_message_id(None, message.message_id) {
-                continue;
-            }
-        }
-
-        handle_message_impl(
-            sender_user_id,
-            HandleMessageArgs {
-                message_id: Some(message.message_id),
-                sender_message_index: Some(message.sender_message_index),
-                sender_name: args.sender_name.clone(),
-                sender_display_name: args.sender_display_name.clone(),
-                content: message.content,
-                replies_to: message.replies_to,
-                forwarding: message.forwarding,
-                correlation_id: message.correlation_id,
-                is_bot: false,
-                sender_avatar_id: args.sender_avatar_id,
-                now,
-            },
-            message.message_filter_failed.is_some(),
-            state,
-        );
-    }
-
-    Success
-}
+use user_canister::C2CReplyContext;
 
 #[update]
 #[trace]
@@ -104,7 +47,6 @@ async fn c2c_handle_bot_messages(
                     content: MessageContentInternal::from_initial(message.content, now).unwrap(),
                     replies_to: None,
                     forwarding: false,
-                    correlation_id: 0,
                     is_bot: true,
                     sender_avatar_id: None,
                     now,
@@ -125,7 +67,6 @@ pub(crate) struct HandleMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
-    pub correlation_id: u64,
     pub is_bot: bool,
     pub sender_avatar_id: Option<u128>,
     pub now: TimestampMillis,
@@ -181,7 +122,7 @@ pub(crate) fn handle_message_impl(
         mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
-        correlation_id: args.correlation_id,
+        correlation_id: 0,
         now: args.now,
     };
 
