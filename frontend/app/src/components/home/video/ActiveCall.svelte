@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import {
@@ -22,6 +23,8 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Avatar from "../../Avatar.svelte";
+    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -47,18 +50,23 @@
                     case "direct_chat":
                         const them = $userStore[chat.them.userId];
                         return {
+                            chatId: chat.id,
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
+                            messageIndex: chat.videoCallInProgress,
                         };
                     case "group_chat":
                         return {
+                            chatId: chat.id,
                             name: chat.name,
                             avatarUrl: client.groupAvatarUrl(chat),
                             userId: undefined,
+                            messageIndex: chat.videoCallInProgress,
                         };
                     case "channel":
                         return {
+                            chatId: chat.id,
                             name: `${
                                 $communities.get({
                                     kind: "community",
@@ -67,6 +75,7 @@
                             } > ${chat.name}`,
                             avatarUrl: client.groupAvatarUrl(chat),
                             userId: undefined,
+                            messageIndex: chat.videoCallInProgress,
                         };
                 }
             }
@@ -161,6 +170,18 @@
             activeVideoCall.fullscreen(!$activeVideoCall.fullscreen);
         }
     }
+
+    function openThread() {
+        // TODO - this is not quite right at the moment because it goes wrong
+        // when you toggle on and off
+        if (chat !== undefined && chat.messageIndex !== undefined) {
+            client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
+        }
+    }
+
+    function hangup() {
+        activeVideoCall.endCall();
+    }
 </script>
 
 {#if confirmSwitchTo}
@@ -183,13 +204,21 @@
                         size={AvatarSize.Default} />
                 </div>
                 <h2 class="name">{chat.name}</h2>
-                <HoverIcon on:click={toggleFullscreen}>
-                    {#if $activeVideoCall?.fullscreen}
-                        <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                    {:else}
-                        <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                    {/if}
-                </HoverIcon>
+                <div class="actions">
+                    <HoverIcon title={$_("videoCall.chat")} on:click={openThread}>
+                        <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                        <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    <HoverIcon on:click={toggleFullscreen}>
+                        {#if $activeVideoCall?.fullscreen}
+                            <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                        {:else}
+                            <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                        {/if}
+                    </HoverIcon>
+                </div>
             </div>
         </SectionHeader>
         <div class="iframe-container" bind:this={iframeContainer}></div>
@@ -225,6 +254,12 @@
         .name {
             @include font(book, normal, fs-120);
             @include ellipsis();
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: $sp3;
         }
     }
 </style>

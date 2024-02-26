@@ -1240,6 +1240,7 @@
     "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
     "youreBlocked": "Sorry - you have been blocked from this group",
     "videoCall": {
+        "chat": "Chat",
         "startVideo": "Start video call",
         "joinVideo": "Join video call",
         "leaveVideo": "Leave video call",

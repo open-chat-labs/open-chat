@@ -2320,6 +2320,15 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    openThreadFromMessageIndex(_chatId: ChatIdentifier, messageIndex: number): void {
+        const event = this._liveState.events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
+        ) as EventWrapper<Message> | undefined;
+        if (event !== undefined) {
+            this.openThread(event, event.event.thread === undefined);
+        }
+    }
+
     openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
         this.clearThreadEvents();
         selectedMessageContext.update((context) => {
