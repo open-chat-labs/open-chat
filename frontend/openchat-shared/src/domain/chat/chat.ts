@@ -371,6 +371,8 @@ export interface ProposalCommon {
     summary: string;
     proposer: string;
     payloadTextRendering?: string;
+    minYesPercentageOfTotal: number;
+    minYesPercentageOfExercised: number;
 }
 
 export type ManageNeuronResponse =

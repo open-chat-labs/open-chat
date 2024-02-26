@@ -232,7 +232,10 @@
                     deadline={proposal.deadline}
                     {votingEnded}
                     {adoptPercent}
-                    {rejectPercent} />
+                    {rejectPercent}
+                    minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
+                    minYesPercentageOfExercised={proposal.minYesPercentageOfExercised}
+                />
             </div>
 
             <div slot="reject" class="reject">
