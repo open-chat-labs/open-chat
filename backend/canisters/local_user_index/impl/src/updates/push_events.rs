@@ -18,5 +18,6 @@ fn push_events_impl(args: Args, state: &mut RuntimeState) {
             .into_iter()
             .filter(|e| state.data.event_deduper.try_push(e.idempotency_key, now))
             .map(|e| e.into()),
+        true,
     );
 }

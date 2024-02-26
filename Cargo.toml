@@ -168,10 +168,10 @@ ct-codecs = "1.1.1"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "f04c23f20dd61ca7c57e9d075f5966a74e0a368e" }
-event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "f04c23f20dd61ca7c57e9d075f5966a74e0a368e" }
-event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "f04c23f20dd61ca7c57e9d075f5966a74e0a368e" }
-event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "f04c23f20dd61ca7c57e9d075f5966a74e0a368e" }
+event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "d82656e4b7dc8d1624c6bd1f504fae0594440394" }
+event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "d82656e4b7dc8d1624c6bd1f504fae0594440394" }
+event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "d82656e4b7dc8d1624c6bd1f504fae0594440394" }
+event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "d82656e4b7dc8d1624c6bd1f504fae0594440394" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"

@@ -2109,7 +2109,7 @@ dependencies = [
 [[package]]
 name = "event_sink_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=d82656e4b7dc8d1624c6bd1f504fae0594440394#d82656e4b7dc8d1624c6bd1f504fae0594440394"
 dependencies = [
  "candid",
  "serde",
@@ -2119,7 +2119,7 @@ dependencies = [
 [[package]]
 name = "event_sink_client"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=d82656e4b7dc8d1624c6bd1f504fae0594440394#d82656e4b7dc8d1624c6bd1f504fae0594440394"
 dependencies = [
  "event_sink_canister",
  "ic_principal",
@@ -2130,7 +2130,7 @@ dependencies = [
 [[package]]
 name = "event_sink_client_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=d82656e4b7dc8d1624c6bd1f504fae0594440394#d82656e4b7dc8d1624c6bd1f504fae0594440394"
 dependencies = [
  "event_sink_canister",
  "event_sink_client",
@@ -2145,7 +2145,7 @@ dependencies = [
 [[package]]
 name = "event_sink_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=f04c23f20dd61ca7c57e9d075f5966a74e0a368e#f04c23f20dd61ca7c57e9d075f5966a74e0a368e"
+source = "git+https://github.com/open-chat-labs/event-sink?rev=d82656e4b7dc8d1624c6bd1f504fae0594440394#d82656e4b7dc8d1624c6bd1f504fae0594440394"
 dependencies = [
  "serde",
 ]

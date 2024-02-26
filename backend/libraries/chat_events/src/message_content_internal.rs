@@ -193,6 +193,31 @@ impl MessageContentInternal {
             }
         }
     }
+
+    pub fn message_type(&self) -> String {
+        let message_type = match self {
+            MessageContentInternal::Text(_) => "Text",
+            MessageContentInternal::Image(_) => "Image",
+            MessageContentInternal::Video(_) => "Video",
+            MessageContentInternal::Audio(_) => "Audio",
+            MessageContentInternal::File(_) => "File",
+            MessageContentInternal::Poll(_) => "Poll",
+            MessageContentInternal::Crypto(_) => "Crypto",
+            MessageContentInternal::Deleted(_) => "Deleted",
+            MessageContentInternal::Giphy(_) => "Giphy",
+            MessageContentInternal::GovernanceProposal(_) => "GovernanceProposal",
+            MessageContentInternal::Prize(_) => "Prize",
+            MessageContentInternal::PrizeWinner(_) => "PrizeWinner",
+            MessageContentInternal::MessageReminderCreated(_) => "MessageReminderCreated",
+            MessageContentInternal::MessageReminder(_) => "MessageReminder",
+            MessageContentInternal::ReportedMessage(_) => "ReportedMessage",
+            MessageContentInternal::P2PSwap(_) => "P2PSwap",
+            MessageContentInternal::VideoCall(_) => "VideoCall",
+            MessageContentInternal::Custom(c) => &c.kind,
+        };
+
+        message_type.to_string()
+    }
 }
 
 impl From<&MessageContentInternal> for Document {

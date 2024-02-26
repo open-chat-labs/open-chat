@@ -14,12 +14,12 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
-    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VoteOperation,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
+    Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
+    P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult,
+    Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped,
+    Tips, UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -96,6 +96,13 @@ impl ChatEvents {
         &self,
     ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
         self.last_updated_timestamps.iter()
+    }
+
+    pub fn iter_all_events(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
+        self.main
+            .iter(None, true, EventIndex::default())
+            .chain(self.threads.values().flat_map(|t| t.iter(None, true, EventIndex::default())))
+            .filter_map(|e| if let EventOrExpiredRangeInternal::Event(ev) = e { Some(ev) } else { None })
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
