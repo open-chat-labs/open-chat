@@ -15,7 +15,7 @@
     import { getContext } from "svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
-    import { layoutStore } from "../../stores/layout";
+    import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
 
@@ -33,17 +33,26 @@
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
 
     $: {
-        alignVideoCall($activeVideoCall, $selectedChatId);
+        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
 
-    function alignVideoCall(call: ActiveVideoCall | undefined, chatId: ChatIdentifier | undefined) {
+    function alignVideoCall(
+        call: ActiveVideoCall | undefined,
+        chatId: ChatIdentifier | undefined,
+        layout: Layout,
+        rightPanelWidth: number | undefined,
+    ) {
         if (call && chatIdentifiersEqual(call.chatId, chatId)) {
             const callContainer = document.getElementById("video-call-container");
             const rect = middlePanel.getBoundingClientRect();
             if (callContainer) {
                 if (call.fullscreen) {
+                    let width = window.innerWidth;
+                    if (layout.rightPanel !== "floating" && call.chatOpen) {
+                        width = width - (rightPanelWidth ?? 500);
+                    }
                     callContainer.style.setProperty("left", `0px`);
-                    callContainer.style.setProperty("width", `${window.innerWidth}px`);
+                    callContainer.style.setProperty("width", `${width}px`);
                     callContainer.style.setProperty("top", `0px`);
                     callContainer.style.setProperty("height", `${window.innerHeight}px`);
                 } else {
@@ -57,7 +66,7 @@
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, $selectedChatId);
+        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
 </script>
 

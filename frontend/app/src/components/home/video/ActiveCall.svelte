@@ -25,8 +25,9 @@
     import Avatar from "../../Avatar.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import { filterRightPanelHistory } from "../../../stores/rightPanel";
+    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,6 +38,8 @@
     $: user = client.user;
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.chatOpen ?? false;
+
+    $: console.log("Is the thread open: ", threadOpen);
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
@@ -178,12 +181,16 @@
         }
     }
 
-    function openThread() {
-        // TODO - this is not quite right at the moment because it goes wrong
-        // when you toggle on and off
+    function toggleThread() {
         if (chat !== undefined && chat.messageIndex !== undefined) {
-            activeVideoCall.chatOpen(true);
-            client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
+            console.log("ChatOpen: ", threadOpen);
+            if (threadOpen) {
+                popRightPanelHistory();
+                page.replace(removeQueryStringParam("open"));
+            } else {
+                client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
+            }
+            activeVideoCall.chatOpen(!threadOpen);
         }
     }
 
@@ -213,7 +220,7 @@
                 </div>
                 <h2 class="name">{chat.name}</h2>
                 <div class="actions">
-                    <HoverIcon title={$_("videoCall.chat")} on:click={openThread}>
+                    <HoverIcon title={$_("videoCall.chat")} on:click={toggleThread}>
                         <MessageOutline
                             size={$iconSize}
                             color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
