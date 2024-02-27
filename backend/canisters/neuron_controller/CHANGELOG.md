@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_vote_on_nns_proposal` ([#5444](https://github.com/open-chat-labs/open-chat/pull/5444))
+
+## [[2.0.1080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1080-neuron_controller)] - 2024-02-27
+
 ### Changed
 
 - Always spawn maturity if the CyclesDispenser balance is low ([#5440](https://github.com/open-chat-labs/open-chat/pull/5440))

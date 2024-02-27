@@ -43,6 +43,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_proposals_bot(&self) -> bool {
+        self.env.caller() == self.data.proposals_bot_canister_id
+    }
+
     pub fn prepare_canister_call_via_ecdsa<A: CandidType>(
         &mut self,
         canister_id: CanisterId,
@@ -98,6 +102,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 nns_governance_canister: self.data.nns_governance_canister_id,
                 nns_ledger_canister: self.data.nns_ledger_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_minting_canister: self.data.cycles_minting_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -111,6 +116,8 @@ struct Data {
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_canister_id")]
+    pub proposals_bot_canister_id: CanisterId,
     pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub neurons: Neurons,
@@ -118,11 +125,16 @@ struct Data {
     pub test_mode: bool,
 }
 
+fn proposals_bot_canister_id() -> CanisterId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 impl Data {
     pub fn new(
         governance_principals: Vec<Principal>,
         nns_governance_canister_id: CanisterId,
         nns_ledger_canister_id: CanisterId,
+        proposals_bot_canister_id: CanisterId,
         cycles_minting_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
@@ -132,6 +144,7 @@ impl Data {
             governance_principals,
             nns_governance_canister_id,
             nns_ledger_canister_id,
+            proposals_bot_canister_id,
             cycles_minting_canister_id,
             cycles_dispenser_canister_id,
             neurons: Neurons::default(),
@@ -174,6 +187,7 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub nns_governance_canister: CanisterId,
     pub nns_ledger_canister: CanisterId,
+    pub proposals_bot: CanisterId,
     pub cycles_minting_canister: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
