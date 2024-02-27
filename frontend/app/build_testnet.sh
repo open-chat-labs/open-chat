@@ -9,6 +9,6 @@ export INTERNET_IDENTITY_URL=https://qhbym-qaaaa-aaaaa-aaafq-cai.$DFX_NETWORK.te
 export NFID_URL=https://qhbym-qaaaa-aaaaa-aaafq-cai.$DFX_NETWORK.testnet.dfinity.network/
 export IC_URL=https://$DFX_NETWORK.testnet.dfinity.network/
 export BLOB_URL_PATTERN=https://{canisterId}.raw.$DFX_NETWORK.testnet.dfinity.network/{blobType}/
-export VIDEO_BRIDGE_URL=https://video-bridge.vercel.app
+export VIDEO_BRIDGE_URL=https://d37cwaycp9g5li.cloudfront.net
 
 npx rollup -c

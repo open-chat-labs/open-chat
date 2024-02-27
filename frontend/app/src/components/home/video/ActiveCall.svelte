@@ -25,6 +25,8 @@
     import Avatar from "../../Avatar.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import { filterRightPanelHistory } from "../../../stores/rightPanel";
+    import { removeQueryStringParam } from "../../../utils/urls";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,6 +36,7 @@
     $: userStore = client.userStore;
     $: user = client.user;
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
+    $: threadOpen = $activeVideoCall?.chatOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
@@ -89,6 +92,10 @@
                 confirmSwitchTo = chat;
                 return;
             }
+
+            // close and threads we have open in the right panel
+            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            removeQueryStringParam("open");
 
             activeVideoCall.joining(chat.id);
 
@@ -175,6 +182,7 @@
         // TODO - this is not quite right at the moment because it goes wrong
         // when you toggle on and off
         if (chat !== undefined && chat.messageIndex !== undefined) {
+            activeVideoCall.chatOpen(true);
             client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
         }
     }
@@ -206,7 +214,9 @@
                 <h2 class="name">{chat.name}</h2>
                 <div class="actions">
                     <HoverIcon title={$_("videoCall.chat")} on:click={openThread}>
-                        <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                        <MessageOutline
+                            size={$iconSize}
+                            color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
                     </HoverIcon>
                     <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
                         <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />

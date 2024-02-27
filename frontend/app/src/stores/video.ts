@@ -12,6 +12,7 @@ export type ActiveVideoCall = {
     chatId: ChatIdentifier;
     call?: DailyCall;
     fullscreen: boolean;
+    chatOpen: boolean;
 };
 
 const store = writable<ActiveVideoCall | undefined>(undefined);
@@ -28,6 +29,7 @@ export const activeVideoCall = {
             chatId,
             call,
             fullscreen: false,
+            chatOpen: false,
         });
     },
     fullscreen: (fullscreen: boolean) => {
@@ -37,6 +39,16 @@ export const activeVideoCall = {
                 : {
                       ...current,
                       fullscreen,
+                  };
+        });
+    },
+    chatOpen: (chatOpen: boolean) => {
+        return store.update((current) => {
+            return current === undefined
+                ? undefined
+                : {
+                      ...current,
+                      chatOpen,
                   };
         });
     },
@@ -64,6 +76,7 @@ export const activeVideoCall = {
             status: "joining",
             chatId,
             fullscreen: false,
+            chatOpen: false,
         });
     },
 };
