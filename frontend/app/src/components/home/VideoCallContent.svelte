@@ -34,8 +34,15 @@
     $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
 
     function joinCall() {
+        // TODO this doesn't work from the thread
         if (!incall && $selectedChat) {
             dispatch("startVideoCall", { chat: $selectedChat, messageIndex });
+        }
+    }
+
+    function leaveCall() {
+        if (incall) {
+            activeVideoCall.endCall();
         }
     }
 </script>
@@ -58,7 +65,7 @@
         {/if}
     </div>
     {#if incall}
-        <Button fill disabled={content.ended !== undefined}>
+        <Button fill disabled={content.ended !== undefined} on:click={leaveCall}>
             <Translatable
                 resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
         </Button>

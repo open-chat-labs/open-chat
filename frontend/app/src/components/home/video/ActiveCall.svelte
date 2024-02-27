@@ -28,6 +28,8 @@
     import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
     import page from "page";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Typing from "../../Typing.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -209,15 +211,26 @@
             chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
         <SectionHeader shadow flush>
             <div class="header">
-                <div class="avatar">
-                    <Avatar
-                        url={chat.avatarUrl}
-                        showStatus
-                        userId={chat.userId?.userId}
-                        size={AvatarSize.Default} />
+                <div class="details">
+                    {#if $activeVideoCall?.status === "joining"}
+                        <div class="joining">
+                            <FancyLoader loop />
+                        </div>
+                    {:else}
+                        <div class="avatar">
+                            <Avatar
+                                url={chat.avatarUrl}
+                                showStatus
+                                userId={chat.userId?.userId}
+                                size={AvatarSize.Default} />
+                        </div>
+                    {/if}
+                    <h2 class="name">{chat.name}</h2>
+                    {#if $activeVideoCall?.status === "joining"}
+                        <Typing />
+                    {/if}
                 </div>
-                <h2 class="name">{chat.name}</h2>
-                <div class="actions">
+                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
                     <HoverIcon title={$_("videoCall.chat")} on:click={toggleThread}>
                         <MessageOutline
                             size={$iconSize}
@@ -264,7 +277,19 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: $sp4;
         width: 100%;
+
+        .details {
+            display: flex;
+            align-items: center;
+            gap: $sp4;
+
+            .joining {
+                width: toRem(48);
+                height: toRem(48);
+            }
+        }
 
         .name {
             @include font(book, normal, fs-120);
@@ -275,6 +300,10 @@
             display: flex;
             align-items: center;
             gap: $sp3;
+
+            &.joining {
+                pointer-events: none;
+            }
         }
     }
 </style>

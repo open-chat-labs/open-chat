@@ -318,6 +318,7 @@
                             on:replyTo={replyTo}
                             on:upgrade
                             on:retrySend
+                            on:startVideoCall
                             on:forward />
                     {/each}
                 {/each}

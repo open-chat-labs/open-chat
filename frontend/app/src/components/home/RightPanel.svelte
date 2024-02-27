@@ -449,6 +449,7 @@
                 on:sendMessageWithContent={sendMessageWithContent}
                 on:sendMessageWithAttachment={sendMessageWithAttachment}
                 on:forwardMessage={forwardMessage}
+                on:startVideoCall
                 on:closeThread={closeThread} />
         </AcceptRulesWrapper>
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}

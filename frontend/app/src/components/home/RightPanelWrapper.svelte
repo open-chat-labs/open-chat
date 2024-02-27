@@ -27,6 +27,7 @@
         on:editCommunity
         on:deleteCommunity
         on:newChannel
+        on:startVideoCall
         on:groupCreated />
 {/if}
 
@@ -46,6 +47,7 @@
                 on:editCommunity
                 on:deleteCommunity
                 on:newChannel
+                on:startVideoCall
                 on:groupCreated />
         </div>
     </Overlay>
