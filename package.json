@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@dfinity/agent": "^1.0.0",
-    "@dfinity/candid": "^1.0.0"
-  }
-}
