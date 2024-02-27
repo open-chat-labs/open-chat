@@ -34,6 +34,7 @@
     import { currentTheme } from "../../theme/themes";
     import Resizable from "../Resizable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { activeVideoCall } from "../../stores/video";
 
     const dispatch = createEventDispatcher();
 
@@ -193,6 +194,7 @@
     function closeThread(_ev: CustomEvent<string>) {
         popRightPanelHistory();
         page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
+        activeVideoCall.chatOpen(false);
     }
 
     function findMessage(
@@ -447,6 +449,7 @@
                 on:sendMessageWithContent={sendMessageWithContent}
                 on:sendMessageWithAttachment={sendMessageWithAttachment}
                 on:forwardMessage={forwardMessage}
+                on:startVideoCall
                 on:closeThread={closeThread} />
         </AcceptRulesWrapper>
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}

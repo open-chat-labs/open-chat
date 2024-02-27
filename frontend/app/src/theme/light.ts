@@ -366,5 +366,19 @@ export function lightTheme(): Theme {
                 bd: "#E2E2E2",
             },
         },
+
+        daily: {
+            header: primary,
+            accent: pinkAccent,
+            accentText: txt,
+            background: "#3796E3",
+            backgroundAccent: "#52baf5",
+            baseText: txt,
+            border: "#ffffff30",
+            mainAreaBg: "#3796e3",
+            mainAreaBgAccent: orangeAccent,
+            mainAreaText: txt,
+            supportiveText: "#ffffffaa",
+        },
     };
 }

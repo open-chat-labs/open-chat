@@ -55,6 +55,7 @@
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
+            videoBridgeUrl: process.env.VIDEO_BRIDGE_URL!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,

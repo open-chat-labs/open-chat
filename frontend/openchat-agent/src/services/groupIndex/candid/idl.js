@@ -207,6 +207,14 @@ export const idlFactory = ({ IDL }) => {
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
+  const CallParticipant = IDL.Record({
+    'user_id' : UserId,
+    'joined' : TimestampMillis,
+  });
+  const VideoCallContent = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'ended' : IDL.Opt(TimestampMillis),
+  });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'timestamp' : TimestampMillis,
@@ -536,6 +544,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'VideoCall' : VideoCallContent,
     'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,

@@ -360,5 +360,18 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bd: "#32353F",
             },
         },
+        daily: {
+            header: backgroundBlack,
+            accent: "#ff2e2e",
+            accentText: textBlack,
+            background: backgroundBlack,
+            backgroundAccent: "#292930",
+            baseText: txt,
+            border: borderDark,
+            mainAreaBg: backgroundBlack,
+            mainAreaBgAccent: "#292930",
+            mainAreaText: txt,
+            supportiveText: textBodyDark,
+        },
     };
 }

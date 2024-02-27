@@ -12,7 +12,20 @@ export type CommunityPermissionRole = CommunityRolesType[number];
 
 export type MemberRole = "admin" | "moderator" | "member" | "owner" | "none";
 
-export const messagePermissionsList = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter", "p2pSwap"] as const;
+export const messagePermissionsList = [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "file",
+    "poll",
+    "crypto",
+    "giphy",
+    "prize",
+    "memeFighter",
+    "p2pSwap",
+    "videoCall",
+] as const;
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
@@ -52,6 +65,7 @@ export type MessagePermissions = {
     prize?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
     p2pSwap?: ChatPermissionRole;
+    videoCall?: ChatPermissionRole;
 };
 
 export type OptionalChatPermissions = {
@@ -80,6 +94,7 @@ export type OptionalMessagePermissions = {
     prize: OptionUpdate<ChatPermissionRole>;
     memeFighter: OptionUpdate<ChatPermissionRole>;
     p2pSwap: OptionUpdate<ChatPermissionRole>;
+    videoCall: OptionUpdate<ChatPermissionRole>;
 };
 
 export type CommunityPermissions = {
@@ -113,7 +128,19 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
         prize: undefined,
         memeFighter: undefined,
         p2pSwap: undefined,
+        videoCall: undefined,
     };
 }
 
 export type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
+
+export type AccessTokenType = JoinVideoCall | StartVideoCall;
+
+export type JoinVideoCall = {
+    kind: "join_video_call";
+    messageIndex: number;
+};
+
+export type StartVideoCall = {
+    kind: "start_video_call";
+};

@@ -186,6 +186,7 @@ import {
     suspendedUser,
     platformModerator,
     platformOperator,
+    videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -370,6 +371,8 @@ import type {
     CandidateTranslations,
     ProposeResponse,
     RejectReason,
+    JoinVideoCallResponse,
+    AccessTokenType,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -409,6 +412,7 @@ import {
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
+    OPENCHAT_VIDEO_CALL_USER_ID,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -446,6 +450,10 @@ import {
     unreadCommunityChannelCounts,
     globalUnreadCount,
     mergeCombinedUnreadCounts,
+    groupVideoCallCounts,
+    directVideoCallCounts,
+    favouritesVideoCallCounts,
+    communityChannelVideoCallCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -513,6 +521,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+            [OPENCHAT_VIDEO_CALL_USER_ID]: videoCallBotUser,
             [ANON_USER_ID]: anonymousUserSummary,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
@@ -1663,6 +1672,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return userId === OPENCHAT_BOT_USER_ID;
     }
 
+    isVideoCallBot(userId: string): boolean {
+        return userId === OPENCHAT_VIDEO_CALL_USER_ID;
+    }
+
     isChatReadOnly(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
         return this._liveState.suspendedUser || this.isPreviewing(chatId);
@@ -2304,6 +2317,15 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.getUser(selectedChat.them.userId);
                 }
             }
+        }
+    }
+
+    openThreadFromMessageIndex(_chatId: ChatIdentifier, messageIndex: number): void {
+        const event = this._liveState.events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
+        ) as EventWrapper<Message> | undefined;
+        if (event !== undefined) {
+            this.openThread(event, event.event.thread === undefined);
         }
     }
 
@@ -5066,6 +5088,14 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+        return this.sendRequest({
+            kind: "joinVideoCall",
+            chatId,
+            messageIndex,
+        });
+    }
+
     private overwriteUserInStore(
         userId: string,
         updater: (user: UserSummary) => UserSummary | undefined,
@@ -5628,6 +5658,78 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
+        // This will send the OC access JWT to the daily middleware service which will:
+        // * validate the jwt
+        // * create the room if necessary
+        // * obtain an access token for the user
+        // * return it to the front end
+        const username = this._liveState.user.username;
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+        return fetch(
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}`,
+            {
+                method: "GET",
+                headers: headers,
+            },
+        ).then((res) => {
+            if (res.ok) {
+                return res.json();
+            }
+            if (res.status === 401) {
+                const msg =
+                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
+                console.error(msg);
+                throw new Error(msg);
+            }
+            throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
+        });
+    }
+
+    private getLocalUserIndex(chat: ChatSummary): string {
+        switch (chat.kind) {
+            case "group_chat":
+                return chat.localUserIndex;
+            case "channel":
+                const community = this._liveState.communities.get({
+                    kind: "community",
+                    communityId: chat.id.communityId,
+                });
+                if (community) {
+                    return community.localUserIndex;
+                } else {
+                    throw new Error(`Unable to get the local user index for channel: ${chat.id}`);
+                }
+            default:
+                throw new Error("TODO get hold of localuserindex for channel or direct chat");
+        }
+    }
+
+    getVideoChatAccessToken(
+        chatId: ChatIdentifier,
+        accessTokenType: AccessTokenType,
+    ): Promise<{ token: string; roomName: string }> {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+        return this.sendRequest({
+            kind: "getAccessToken",
+            chatId,
+            accessTokenType,
+            localUserIndex: this.getLocalUserIndex(chat),
+        })
+            .then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                console.log("Token: ", token);
+                return token;
+            })
+            .then((token) => this.getRoomAccessToken(token));
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
@@ -6125,9 +6227,13 @@ export class OpenChat extends OpenChatAgentWorker {
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
     unreadGroupCounts = unreadGroupCounts;
+    groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;
+    directVideoCallCounts = directVideoCallCounts;
+    favouritesVideoCallCounts = favouritesVideoCallCounts;
     unreadFavouriteCounts = unreadFavouriteCounts;
     unreadCommunityChannelCounts = unreadCommunityChannelCounts;
+    communityChannelVideoCallCounts = communityChannelVideoCallCounts;
     globalUnreadCount = globalUnreadCount;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
     moderationFlags = moderationFlags;

@@ -56,6 +56,8 @@ import {
     getContentAsFormattedText,
     getContentAsText,
     messageContextsEqual,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
 } from "openchat-shared";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -1236,7 +1238,9 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
           ? OPENCHAT_BOT_AVATAR_URL
-          : buildIdenticonUrl(userId);
+          : userId === OPENCHAT_VIDEO_CALL_USER_ID
+            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+            : buildIdenticonUrl(userId);
 }
 
 export function buildBlobUrl(

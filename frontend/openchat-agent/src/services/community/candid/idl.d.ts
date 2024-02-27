@@ -76,6 +76,7 @@ import {
     ClaimPrizeResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -153,6 +154,7 @@ export {
     ClaimPrizeResponse as ApiClaimPrizeResponse,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
     CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
+    JoinVideoCallResponse as ApiJoinVideoCallResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

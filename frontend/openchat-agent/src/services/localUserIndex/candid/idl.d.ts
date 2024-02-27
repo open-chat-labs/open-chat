@@ -14,6 +14,8 @@ import {
     CommunityMembership,
     JoinChannelResponse,
     UserGroup,
+    AccessTokenType,
+    AccessTokenResponse
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -29,6 +31,8 @@ export {
     CommunityMembership as ApiCommunityMembership,
     JoinChannelResponse as ApiJoinChannelResponse,
     UserGroup as ApiUserGroup,
+    AccessTokenResponse as ApiAccessTokenResponse,
+    AccessTokenType as ApiAccessTokenType
 };
 
 export const idlFactory: IDL.InterfaceFactory;

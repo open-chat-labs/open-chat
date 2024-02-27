@@ -254,6 +254,7 @@ export default {
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
+            "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),

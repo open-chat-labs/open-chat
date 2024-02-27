@@ -65,6 +65,7 @@ import {
     claimPrizeResponse,
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
+    joinVideoCallResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -130,6 +131,7 @@ import type {
     ClaimPrizeResponse,
     OptionalChatPermissions,
     AcceptP2PSwapResponse,
+    JoinVideoCallResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -1299,6 +1301,16 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
             }),
             cancelP2PSwapResponse,
+        );
+    }
+
+    joinVideoCall(channelId: string, messageIndex: number): Promise<JoinVideoCallResponse> {
+        return this.handleResponse(
+            this.service.join_video_call({
+                message_index: messageIndex,
+                channel_id: BigInt(channelId),
+            }),
+            joinVideoCallResponse,
         );
     }
 }

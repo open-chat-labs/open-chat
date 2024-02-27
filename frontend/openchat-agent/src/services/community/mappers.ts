@@ -460,6 +460,7 @@ export function communityChannelUpdates(
         latestMessage: optional(candid.latest_message, messageEvent),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
+        videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 

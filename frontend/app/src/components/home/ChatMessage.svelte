@@ -545,6 +545,7 @@
                         on:registerVote={registerVote}
                         on:goToMessageIndex
                         on:upgrade
+                        on:startVideoCall
                         on:expandMessage />
 
                     {#if !inert && !isPrize}
@@ -566,6 +567,7 @@
                     {/if}
 
                     {#if debug}
+                        <pre>Sender: {msg.sender}</pre>
                         <pre>EventIdx: {eventIndex}</pre>
                         <pre>MsgIdx: {msg.messageIndex}</pre>
                         <pre>MsgId: {msg.messageId}</pre>

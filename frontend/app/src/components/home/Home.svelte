@@ -30,6 +30,7 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
+        ChatSummary,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -93,6 +94,7 @@
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
+    import ActiveCall from "./video/ActiveCall.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -107,6 +109,7 @@
     let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
     let showProfileCard: ViewProfileConfig | undefined = undefined;
+    let videoCallElement: ActiveCall;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -1045,9 +1048,15 @@
         showProfileCard = undefined;
     }
 
+    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; messageIndex?: number }>) {
+        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.messageIndex);
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
+
+<ActiveCall bind:this={videoCallElement} />
 
 {#if showProfileCard !== undefined}
     <ViewUserProfile
@@ -1095,6 +1104,7 @@
         <MiddlePanel
             {joining}
             bind:currentChatMessages
+            on:startVideoCall={startVideoCall}
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1119,6 +1129,7 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
+        on:startVideoCall={startVideoCall}
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}

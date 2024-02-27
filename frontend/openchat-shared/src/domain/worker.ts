@@ -64,6 +64,7 @@ import type {
     TipMessageResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -110,7 +111,12 @@ import type {
     ExploreChannelsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
-import type { CommunityPermissions, MemberRole, OptionalChatPermissions } from "./permission";
+import type {
+    AccessTokenType,
+    CommunityPermissions,
+    MemberRole,
+    OptionalChatPermissions,
+} from "./permission";
 import type { AccessGate, Rules, UpdatedRules } from "./access";
 import type {
     AddMembersToChannelResponse,
@@ -325,7 +331,22 @@ export type WorkerRequest =
     | RejectTranslation
     | MarkTranslationsDeployed
     | GetProposedTranslations
-    | GetTranslationsPendingDeployment;
+    | GetTranslationsPendingDeployment
+    | JoinVideoCall
+    | GetAccessToken;
+
+type GetAccessToken = {
+    kind: "getAccessToken";
+    chatId: ChatIdentifier;
+    accessTokenType: AccessTokenType;
+    localUserIndex: string;
+};
+
+type JoinVideoCall = {
+    kind: "joinVideoCall";
+    chatId: ChatIdentifier;
+    messageIndex: number;
+};
 
 type ProposeTranslation = {
     kind: "proposeTranslation";
@@ -1222,7 +1243,8 @@ export type WorkerResponseInner =
     | RejectResponse
     | MarkDeployedResponse
     | ProposedResponse
-    | PendingDeploymentResponse;
+    | PendingDeploymentResponse
+    | JoinVideoCallResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1825,4 +1847,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? AcceptP2PSwapResponse
     : T extends CancelP2PSwap
     ? CancelP2PSwapResponse
+    : T extends JoinVideoCall
+    ? JoinVideoCallResponse
+    : T extends GetAccessToken
+    ? string | undefined
     : never;

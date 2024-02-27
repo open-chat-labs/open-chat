@@ -1,9 +1,27 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
-  const MessageIndex = IDL.Nat32;
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
+  const Chat = IDL.Variant({
+    'Group' : ChatId,
+    'Channel' : IDL.Tuple(CommunityId, ChannelId),
+    'Direct' : ChatId,
+  });
+  const MessageIndex = IDL.Nat32;
+  const AccessTokenType = IDL.Variant({
+    'JoinVideoCall' : MessageIndex,
+    'StartVideoCall' : IDL.Null,
+  });
+  const AccessTokenArgs = IDL.Record({
+    'chat' : Chat,
+    'token_type' : AccessTokenType,
+  });
+  const AccessTokenResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
   const UserId = CanisterId;
   const EventsContext = IDL.Variant({
     'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
@@ -71,6 +89,14 @@ export const idlFactory = ({ IDL }) => {
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
     'now_public' : IDL.Bool,
+  });
+  const CallParticipant = IDL.Record({
+    'user_id' : UserId,
+    'joined' : TimestampMillis,
+  });
+  const VideoCallContent = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'ended' : IDL.Opt(TimestampMillis),
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -401,6 +427,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'VideoCall' : VideoCallContent,
     'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -427,11 +454,6 @@ export const idlFactory = ({ IDL }) => {
     'followed_by_me' : IDL.Bool,
   });
   const MessageId = IDL.Nat;
-  const Chat = IDL.Variant({
-    'Group' : ChatId,
-    'Channel' : IDL.Tuple(CommunityId, ChannelId),
-    'Direct' : ChatId,
-  });
   const ReplyContext = IDL.Record({
     'chat_if_other' : IDL.Opt(IDL.Tuple(Chat, IDL.Opt(MessageIndex))),
     'event_index' : EventIndex,
@@ -465,6 +487,7 @@ export const idlFactory = ({ IDL }) => {
   const MessagePermissions = IDL.Record({
     'audio' : IDL.Opt(PermissionRole),
     'video' : IDL.Opt(PermissionRole),
+    'video_call' : IDL.Opt(PermissionRole),
     'custom' : IDL.Vec(CustomPermission),
     'file' : IDL.Opt(PermissionRole),
     'poll' : IDL.Opt(PermissionRole),
@@ -685,6 +708,7 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
+  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
@@ -725,6 +749,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
+    'video_call_in_progress' : IDL.Opt(VideoCall),
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
@@ -786,6 +811,11 @@ export const idlFactory = ({ IDL }) => {
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
+  const VideoCallUpdates = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : VideoCall,
+  });
   const GroupSubtypeUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -827,6 +857,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupCanisterGroupChatSummaryUpdates = IDL.Record({
     'is_public' : IDL.Opt(IDL.Bool),
+    'video_call_in_progress' : VideoCallUpdates,
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
@@ -861,6 +892,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
+    'video_call_in_progress' : VideoCallUpdates,
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
@@ -915,6 +947,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'video_call_in_progress' : IDL.Opt(VideoCall),
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
@@ -1125,6 +1158,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'access_token' : IDL.Func(
+        [AccessTokenArgs],
+        [AccessTokenResponse],
+        ['query'],
+      ),
     'chat_events' : IDL.Func([ChatEventsArgs], [ChatEventsResponse], ['query']),
     'group_and_community_summary_updates' : IDL.Func(
         [GroupAndCommunitySummaryUpdatesArgs],

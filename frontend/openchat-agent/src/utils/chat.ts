@@ -28,6 +28,8 @@ import {
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
@@ -176,6 +178,7 @@ export function mergeDirectChatUpdates(
                 c.eventsTtlLastUpdated ?? BigInt(0),
                 u.eventsTtlLastUpdated ?? BigInt(0),
             ),
+            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, u.videoCallInProgress),
             membership: {
                 ...c.membership,
                 readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
@@ -269,6 +272,7 @@ export function mergeGroupChatUpdates(
                 rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
             localUserIndex: c.localUserIndex,
+            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),
         };
     });
 }
@@ -323,6 +327,7 @@ export function mergeGroupChats(
                 rulesAccepted: g.rulesAccepted,
             },
             localUserIndex: g.localUserIndex,
+            videoCallInProgress: g.videoCallInProgress,
         };
     });
 }
@@ -396,7 +401,9 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
           ? OPENCHAT_BOT_AVATAR_URL
-          : buildIdenticonUrl(userId);
+          : userId === OPENCHAT_VIDEO_CALL_USER_ID
+            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+            : buildIdenticonUrl(userId);
 }
 
 function buildIdenticonUrl(userId: string): string {

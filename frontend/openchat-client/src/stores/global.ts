@@ -56,6 +56,11 @@ export type CombinedUnreadCounts = {
     chats: UnreadCounts;
 };
 
+export type VideoCallCounts = {
+    muted: number;
+    unmuted: number;
+};
+
 export type UnreadCounts = {
     muted: number;
     unmuted: number;
@@ -99,6 +104,23 @@ function mergeUnreadCounts(
         unmuted: muted ? counts.unmuted : counts.unmuted + toAdd,
         muted: muted ? counts.muted + toAdd : counts.muted,
     };
+}
+
+function videoCallsInProgressForChats(chats: (ChatSummary | undefined)[]): VideoCallCounts {
+    return chats.reduce(
+        (counts, chat) => {
+            if (chat === undefined) return counts;
+            if (chat.videoCallInProgress) {
+                if (chat.membership.notificationsMuted) {
+                    counts.muted += 1;
+                } else {
+                    counts.unmuted += 1;
+                }
+            }
+            return counts;
+        },
+        { muted: 0, unmuted: 0 } as VideoCallCounts,
+    );
 }
 
 function combinedUnreadCountForChats(chats: (ChatSummary | undefined)[]): CombinedUnreadCounts {
@@ -170,12 +192,20 @@ export const unreadGroupCounts = derived(
     },
 );
 
+export const groupVideoCallCounts = derived([globalStateStore], ([$global]) => {
+    return videoCallsInProgressForChats($global.groupChats.values());
+});
+
 export const unreadDirectCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         return combinedUnreadCountForChats($global.directChats.values());
     },
 );
+
+export const directVideoCallCounts = derived([globalStateStore], ([$global]) => {
+    return videoCallsInProgressForChats($global.directChats.values());
+});
 
 export function getAllServerChats(global: GlobalState): ChatMap<ChatSummary> {
     const groupChats = global.groupChats.values();
@@ -196,6 +226,19 @@ export const unreadFavouriteCounts = derived(
         return combinedUnreadCountForChats(chats);
     },
 );
+
+export const favouritesVideoCallCounts = derived([globalStateStore], ([$global]) => {
+    const allChats = getAllServerChats($global);
+    const chats = $global.favourites.values().map((id) => allChats.get(id));
+    return videoCallsInProgressForChats(chats);
+});
+
+export const communityChannelVideoCallCounts = derived([globalStateStore], ([$global]) => {
+    return $global.communities.values().reduce((map, community) => {
+        map.set(community.id, videoCallsInProgressForChats(community.channels));
+        return map;
+    }, new CommunityMap<VideoCallCounts>());
+});
 
 export const unreadCommunityChannelCounts = derived(
     [globalStateStore, messagesRead],

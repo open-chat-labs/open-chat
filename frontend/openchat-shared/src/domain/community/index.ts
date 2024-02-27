@@ -221,6 +221,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated: bigint | undefined;
+    videoCallInProgress: OptionUpdate<number>;
 };
 
 export type CommunityMembershipUpdates = {
