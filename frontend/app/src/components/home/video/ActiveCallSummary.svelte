@@ -5,6 +5,7 @@
         type ChatIdentifier,
         OpenChat,
         AvatarSize,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { activeVideoCall, microphone, camera, sharing } from "../../../stores/video";
     import page from "page";
@@ -25,9 +26,13 @@
 
     const client = getContext<OpenChat>("client");
 
+    $: selectedChatId = client.selectedChatId;
     $: chatSummariesStore = client.chatSummariesStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
+    $: show =
+        $activeVideoCall?.chatId !== undefined &&
+        !chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId);
 
     function goToCall() {
         if ($activeVideoCall) {
@@ -98,7 +103,7 @@
     }
 </script>
 
-{#if $activeVideoCall !== undefined && chat !== undefined}
+{#if show && $activeVideoCall !== undefined && chat !== undefined}
     <div class="call">
         {#if $activeVideoCall.status === "joining"}
             <div class="joining">
