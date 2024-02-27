@@ -12,7 +12,7 @@
         type OpenChat,
     } from "openchat-client";
     import { pathParams } from "../../routes";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
@@ -41,6 +41,7 @@
         chatId: ChatIdentifier | undefined,
         layout: Layout,
         rightPanelWidth: number | undefined,
+        attempts: number = 0,
     ) {
         if (call && chatIdentifiersEqual(call.chatId, chatId)) {
             const callContainer = document.getElementById("video-call-container");
@@ -60,6 +61,14 @@
                     callContainer.style.setProperty("width", `${rect.width}px`);
                     callContainer.style.setProperty("top", `${rect.top}px`);
                     callContainer.style.setProperty("height", `${rect.height}px`);
+                    console.log("aligned call to middle panel");
+                }
+            } else {
+                // hack: there is a race condition here and it's possible we don't find the container on the first try
+                if (attempts === 0) {
+                    tick().then(() =>
+                        alignVideoCall(call, chatId, layout, rightPanelWidth, attempts + 1),
+                    );
                 }
             }
         }

@@ -39,8 +39,6 @@
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.chatOpen ?? false;
 
-    $: console.log("Is the thread open: ", threadOpen);
-
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
 
@@ -109,6 +107,7 @@
 
             // first we need tojoin access jwt from the oc backend
             const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
+
             const call = daily.createFrame(iframeContainer, {
                 token,
                 showLeaveButton: true,
@@ -183,7 +182,6 @@
 
     function toggleThread() {
         if (chat !== undefined && chat.messageIndex !== undefined) {
-            console.log("ChatOpen: ", threadOpen);
             if (threadOpen) {
                 popRightPanelHistory();
                 page.replace(removeQueryStringParam("open"));
