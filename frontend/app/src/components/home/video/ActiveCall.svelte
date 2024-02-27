@@ -39,7 +39,7 @@
     $: userStore = client.userStore;
     $: user = client.user;
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
-    $: threadOpen = $activeVideoCall?.chatOpen ?? false;
+    $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
@@ -190,7 +190,7 @@
             } else {
                 client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
             }
-            activeVideoCall.chatOpen(!threadOpen);
+            activeVideoCall.threadOpen(!threadOpen);
         }
     }
 
