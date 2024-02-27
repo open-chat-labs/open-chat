@@ -4117,6 +4117,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "neuron_controller_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.12.1",
+ "neuron_controller_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "neuron_controller_canister_impl"
 version = "0.1.0"
 dependencies = [

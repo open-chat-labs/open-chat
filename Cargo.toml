@@ -45,6 +45,7 @@ members = [
     "backend/canisters/market_maker/client",
     "backend/canisters/market_maker/impl",
     "backend/canisters/neuron_controller/api",
+    "backend/canisters/neuron_controller/c2c_client",
     "backend/canisters/neuron_controller/impl",
     "backend/canisters/notifications/api",
     "backend/canisters/notifications/c2c_client",
