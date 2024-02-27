@@ -119,7 +119,7 @@ async fn run_async() -> Milliseconds {
     mutate_state(|state| {
         state.data.ledger_transaction_processed_up_to = Some(end);
         if !events.is_empty() {
-            state.data.events_sink_client.push_many(events.into_iter());
+            state.data.events_sink_client.push_many(events.into_iter(), true);
         }
     });
     delay

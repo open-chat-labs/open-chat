@@ -30,6 +30,7 @@ fn push_events_impl(args: Args, state: &mut RuntimeState) {
                     .with_payload(e.payload)
                     .build()
             }),
+        true,
     );
 }
 
