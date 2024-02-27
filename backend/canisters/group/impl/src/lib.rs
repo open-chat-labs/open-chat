@@ -446,12 +446,9 @@ struct Data {
 }
 
 fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(
-        CanisterId::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap(),
-        CdkRuntime::default(),
-    )
-    .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-    .build()
+    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
+        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+        .build()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {

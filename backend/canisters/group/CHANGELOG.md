@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement ability to push events from Group canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
 - Push event each time a message is sent ([#5439](https://github.com/open-chat-labs/open-chat/pull/5439))
+- Push backdated message events ([#5441](https://github.com/open-chat-labs/open-chat/pull/5441))
 
 ### Changed
 
