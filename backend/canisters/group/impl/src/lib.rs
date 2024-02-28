@@ -26,10 +26,10 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
-    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
-    SNS_FEE_SHARE_PERCENT,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
+    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -458,6 +458,7 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 #[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
+        chat_id: ChatId,
         is_public: bool,
         name: String,
         description: String,
@@ -483,6 +484,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
     ) -> Data {
         let chat = GroupChatCore::new(
+            MultiUserChat::Group(chat_id),
             creator_user_id,
             is_public,
             name,
@@ -495,7 +497,6 @@ impl Data {
             gate,
             events_ttl,
             proposals_bot_user_id == creator_user_id,
-            true,
             now,
         );
 

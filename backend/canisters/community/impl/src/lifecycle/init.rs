@@ -25,6 +25,7 @@ fn init(args: Args) {
         .collect();
 
     let data = Data::new(
+        env.canister_id().into(),
         args.created_by_principal,
         args.created_by_user_id,
         args.is_public,

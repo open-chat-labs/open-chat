@@ -14,10 +14,10 @@ use types::{
     GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
-    VideoCall,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -55,13 +55,12 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
-    #[serde(default)]
-    is_group: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
     pub fn new(
+        chat: MultiUserChat,
         created_by: UserId,
         is_public: bool,
         name: String,
@@ -74,11 +73,10 @@ impl GroupChatCore {
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         is_bot: bool,
-        is_group: bool,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, is_bot, now);
-        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
+        let events = ChatEvents::new_group_chat(chat, name.clone(), description.clone(), created_by, events_ttl, now);
 
         GroupChatCore {
             is_public: Timestamped::new(is_public, now),
@@ -99,7 +97,6 @@ impl GroupChatCore {
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
-            is_group,
         }
     }
 
@@ -628,8 +625,6 @@ impl GroupChatCore {
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
-        let event_payload = content.message_event_payload(if self.is_group { "group" } else { "channel" }, sender_is_bot);
-
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
@@ -638,11 +633,12 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
+            sender_is_bot,
             correlation_id: 0,
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args);
+        let (message_event, event_payload) = self.events.push_message(push_message_args);
         let message_index = message_event.event.message_index;
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();

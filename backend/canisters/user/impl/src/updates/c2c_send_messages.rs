@@ -18,7 +18,7 @@ async fn c2c_handle_bot_messages(
 ) -> user_canister::c2c_handle_bot_messages::Response {
     let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
 
-    let sender_user_id = match sender_status {
+    let sender = match sender_status {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
@@ -39,8 +39,8 @@ async fn c2c_handle_bot_messages(
         let now = state.env.now();
         for message in args.messages {
             handle_message_impl(
-                sender_user_id,
                 HandleMessageArgs {
+                    sender,
                     message_id: None,
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
@@ -50,10 +50,10 @@ async fn c2c_handle_bot_messages(
                     forwarding: false,
                     is_bot: true,
                     sender_avatar_id: None,
+                    push_message_sent_event: true,
+                    mute_notification: false,
                     now,
                 },
-                false,
-                true,
                 state,
             );
         }
@@ -62,6 +62,7 @@ async fn c2c_handle_bot_messages(
 }
 
 pub(crate) struct HandleMessageArgs {
+    pub sender: UserId,
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
@@ -71,6 +72,8 @@ pub(crate) struct HandleMessageArgs {
     pub forwarding: bool,
     pub is_bot: bool,
     pub sender_avatar_id: Option<u128>,
+    pub push_message_sent_event: bool,
+    pub mute_notification: bool,
     pub now: TimestampMillis,
 }
 
@@ -107,36 +110,31 @@ pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_i
     }
 }
 
-pub(crate) fn handle_message_impl(
-    sender: UserId,
-    args: HandleMessageArgs,
-    mute_notification: bool,
-    push_message_sent_event: bool,
-    state: &mut RuntimeState,
-) -> EventWrapper<Message> {
-    let replies_to = convert_reply_context(args.replies_to, sender, state);
+pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeState) -> EventWrapper<Message> {
+    let chat_id = args.sender.into();
+    let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
-    let event_payload = args.content.message_event_payload("direct", args.is_bot);
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
-        sender,
+        sender: args.sender,
         content: args.content,
         mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
+        sender_is_bot: args.is_bot,
         correlation_id: 0,
         now: args.now,
     };
 
     let message_id = push_message_args.message_id;
 
-    let message_event =
+    let (message_event, event_payload) =
         state
             .data
             .direct_chats
-            .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
+            .push_message(false, args.sender, args.sender_message_index, push_message_args, args.is_bot);
 
     let mut is_next_event_to_expire = false;
     if let Some(expiry) = message_event.expires_at {
@@ -147,7 +145,7 @@ pub(crate) fn handle_message_impl(
     }
 
     register_timer_jobs(
-        sender.into(),
+        chat_id,
         message_id,
         &message_event,
         files,
@@ -156,16 +154,16 @@ pub(crate) fn handle_message_impl(
         &mut state.data.timer_jobs,
     );
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&sender.into()) {
+    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
         if args.is_bot {
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
 
         let this_canister_id = state.env.canister_id();
-        if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
+        if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
             let content = &message_event.event.content;
             let notification = Notification::DirectMessage(DirectMessageNotification {
-                sender,
+                sender: args.sender,
                 thread_root_message_index: None,
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
@@ -183,10 +181,10 @@ pub(crate) fn handle_message_impl(
             state.push_notification(recipient, notification);
         }
 
-        if push_message_sent_event {
+        if args.push_message_sent_event {
             state.data.event_sink_client.push(
                 EventBuilder::new("message_sent", args.now)
-                    .with_user(sender.to_string())
+                    .with_user(args.sender.to_string())
                     .with_source(this_canister_id.to_string())
                     .with_json_payload(&event_payload)
                     .build(),

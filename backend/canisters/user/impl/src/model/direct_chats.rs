@@ -3,7 +3,7 @@ use chat_events::{ChatInternal, ChatMetricsInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{ChatId, EventWrapper, Message, MessageEventPayload, MessageIndex, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -68,7 +68,7 @@ impl DirectChats {
         their_message_index: Option<MessageIndex>,
         args: PushMessageArgs,
         is_bot: bool,
-    ) -> EventWrapper<Message> {
+    ) -> (EventWrapper<Message>, MessageEventPayload) {
         let chat_id = ChatId::from(their_user_id);
         let now = args.now;
 
@@ -77,7 +77,7 @@ impl DirectChats {
             Vacant(e) => e.insert(DirectChat::new(their_user_id, is_bot, None, args.now)),
         };
 
-        let message_event = chat.events.push_message(args);
+        let (message_event, event_payload) = chat.events.push_message(args);
 
         chat.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
@@ -88,7 +88,7 @@ impl DirectChats {
             }
         }
 
-        message_event
+        (message_event, event_payload)
     }
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {

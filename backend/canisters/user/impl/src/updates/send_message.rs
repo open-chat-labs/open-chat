@@ -225,14 +225,16 @@ fn send_message_impl(
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
+        sender_is_bot: false,
         correlation_id: args.correlation_id,
         now,
     };
 
-    let message_event = state
-        .data
-        .direct_chats
-        .push_message(true, recipient, None, push_message_args, user_type.is_bot());
+    let (message_event, event_payload) =
+        state
+            .data
+            .direct_chats
+            .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
     let mut is_next_event_to_expire = false;
     if let Some(expiry) = message_event.expires_at {
@@ -257,7 +259,7 @@ fn send_message_impl(
         EventBuilder::new("message_sent", now)
             .with_user(user_string.clone())
             .with_source(user_string)
-            .with_json_payload(&content.message_event_payload("direct", false))
+            .with_json_payload(&event_payload)
             .build(),
     );
 
@@ -343,6 +345,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
+                        sender_is_bot: false,
                         correlation_id: 0,
                         now,
                     };

@@ -6,9 +6,9 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupMembership,
-    GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
-    MAX_THREADS_IN_SUMMARY,
+    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
+    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
+    Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -27,6 +27,7 @@ pub struct Channel {
 
 impl Channels {
     pub fn new(
+        community_id: CommunityId,
         created_by: UserId,
         default_channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
@@ -38,7 +39,15 @@ impl Channels {
             .map(|(id, name)| {
                 (
                     id,
-                    Channel::default(id, name, created_by, default_channel_rules.clone(), is_community_public, now),
+                    Channel::default(
+                        community_id,
+                        id,
+                        name,
+                        created_by,
+                        default_channel_rules.clone(),
+                        is_community_public,
+                        now,
+                    ),
                 )
             })
             .collect();
@@ -160,6 +169,7 @@ impl Channels {
 
 impl Channel {
     pub fn default(
+        community_id: CommunityId,
         id: ChannelId,
         name: String,
         created_by: UserId,
@@ -175,6 +185,7 @@ impl Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
+                MultiUserChat::Channel(community_id, id),
                 created_by,
                 true,
                 name,
@@ -186,7 +197,6 @@ impl Channel {
                 permissions,
                 None,
                 None,
-                false,
                 false,
                 now,
             ),

@@ -9,7 +9,7 @@ use types::{
     CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
     CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
     GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
-    MessageContentEventPayload, MessageContentInitial, MessageEventPayload, MessageIndex, MessageReminderContent,
+    MessageContentEventPayload, MessageContentInitial, MessageIndex, MessageReminderContent,
     MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapContent,
     P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
     PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
@@ -224,93 +224,86 @@ impl MessageContentInternal {
         message_type.to_string()
     }
 
-    pub fn message_event_payload(&self, source_type: impl Into<String>, sender_is_bot: bool) -> MessageEventPayload {
-        MessageEventPayload {
-            message_type: self.message_type(),
-            source_type: source_type.into(),
-            sender_is_bot,
-            content_specific_payload: match self {
-                MessageContentInternal::Text(c) => MessageContentEventPayload::Text(TextContentEventPayload {
-                    length: c.text.len() as u32,
-                }),
-                MessageContentInternal::Image(c) => MessageContentEventPayload::Image(ImageOrVideoContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    height: c.height,
-                    width: c.width,
-                }),
-                MessageContentInternal::Video(c) => MessageContentEventPayload::Video(ImageOrVideoContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    height: c.height,
-                    width: c.width,
-                }),
-                MessageContentInternal::Audio(c) => MessageContentEventPayload::Audio(ContentWithCaptionEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                }),
-                MessageContentInternal::File(c) => MessageContentEventPayload::File(FileContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    file_size: c.file_size,
-                }),
-                MessageContentInternal::Poll(c) => MessageContentEventPayload::Poll(PollContentEventPayload {
-                    text_length: option_string_length(&c.config.text),
-                    options: c.config.options.len() as u32,
-                    anonymous: c.config.anonymous,
-                    show_votes_before_end_date: c.config.show_votes_before_end_date,
-                    allow_multiple_votes_per_user: c.config.allow_multiple_votes_per_user,
-                    allow_user_to_change_vote: c.config.allow_user_to_change_vote,
-                }),
-                MessageContentInternal::Crypto(c) => MessageContentEventPayload::Crypto(CryptoContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    token: c.transfer.token().token_symbol().to_string(),
-                    amount: c.transfer.units(),
-                }),
-                MessageContentInternal::Giphy(c) => MessageContentEventPayload::Giphy(ContentWithCaptionEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                }),
-                MessageContentInternal::GovernanceProposal(c) => {
-                    MessageContentEventPayload::GovernanceProposal(GovernanceProposalContentEventPayload {
-                        governance_canister_id: c.governance_canister_id.to_string(),
-                    })
-                }
-                MessageContentInternal::Prize(c) => MessageContentEventPayload::Prize(PrizeContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    prizes: (c.prizes_remaining.len() + c.winners.len() + c.reservations.len()) as u32,
-                    token: c.transaction.token().token_symbol().to_string(),
-                    amount: c.transaction.units(),
-                    diamond_only: c.diamond_only,
-                }),
-                MessageContentInternal::PrizeWinner(c) => {
-                    MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
-                        token: c.transaction.token().token_symbol().to_string(),
-                        amount: c.transaction.units(),
-                    })
-                }
-                MessageContentInternal::MessageReminderCreated(c) => {
-                    MessageContentEventPayload::MessageReminderCreated(MessageReminderContentEventPayload {
-                        notes_length: option_string_length(&c.notes),
-                    })
-                }
-                MessageContentInternal::MessageReminder(c) => {
-                    MessageContentEventPayload::MessageReminder(MessageReminderContentEventPayload {
-                        notes_length: option_string_length(&c.notes),
-                    })
-                }
-                MessageContentInternal::ReportedMessage(c) => {
-                    MessageContentEventPayload::ReportedMessage(ReportedMessageContentEventPayload {
-                        reason: c.reports.first().map(|r| r.reason_code).unwrap_or_default(),
-                        notes_length: c.reports.first().map(|r| option_string_length(&r.notes)).unwrap_or_default(),
-                    })
-                }
-                MessageContentInternal::P2PSwap(c) => MessageContentEventPayload::P2PSwap(P2PSwapContentEventPayload {
-                    caption_length: option_string_length(&c.caption),
-                    token0: c.token0.token.token_symbol().to_string(),
-                    token0_amount: c.token0_amount,
-                    token1: c.token1.token.token_symbol().to_string(),
-                    token1_amount: c.token1_amount,
-                }),
-                MessageContentInternal::Deleted(_)
-                | MessageContentInternal::VideoCall(_)
-                | MessageContentInternal::Custom(_) => MessageContentEventPayload::Empty,
-            },
+    pub fn event_payload(&self) -> MessageContentEventPayload {
+        match self {
+            MessageContentInternal::Text(c) => MessageContentEventPayload::Text(TextContentEventPayload {
+                length: c.text.len() as u32,
+            }),
+            MessageContentInternal::Image(c) => MessageContentEventPayload::Image(ImageOrVideoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                height: c.height,
+                width: c.width,
+            }),
+            MessageContentInternal::Video(c) => MessageContentEventPayload::Video(ImageOrVideoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                height: c.height,
+                width: c.width,
+            }),
+            MessageContentInternal::Audio(c) => MessageContentEventPayload::Audio(ContentWithCaptionEventPayload {
+                caption_length: option_string_length(&c.caption),
+            }),
+            MessageContentInternal::File(c) => MessageContentEventPayload::File(FileContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                file_size: c.file_size,
+            }),
+            MessageContentInternal::Poll(c) => MessageContentEventPayload::Poll(PollContentEventPayload {
+                text_length: option_string_length(&c.config.text),
+                options: c.config.options.len() as u32,
+                anonymous: c.config.anonymous,
+                show_votes_before_end_date: c.config.show_votes_before_end_date,
+                allow_multiple_votes_per_user: c.config.allow_multiple_votes_per_user,
+                allow_user_to_change_vote: c.config.allow_user_to_change_vote,
+            }),
+            MessageContentInternal::Crypto(c) => MessageContentEventPayload::Crypto(CryptoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                token: c.transfer.token().token_symbol().to_string(),
+                amount: c.transfer.units(),
+            }),
+            MessageContentInternal::Giphy(c) => MessageContentEventPayload::Giphy(ContentWithCaptionEventPayload {
+                caption_length: option_string_length(&c.caption),
+            }),
+            MessageContentInternal::GovernanceProposal(c) => {
+                MessageContentEventPayload::GovernanceProposal(GovernanceProposalContentEventPayload {
+                    governance_canister_id: c.governance_canister_id.to_string(),
+                })
+            }
+            MessageContentInternal::Prize(c) => MessageContentEventPayload::Prize(PrizeContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                prizes: (c.prizes_remaining.len() + c.winners.len() + c.reservations.len()) as u32,
+                token: c.transaction.token().token_symbol().to_string(),
+                amount: c.transaction.units(),
+                diamond_only: c.diamond_only,
+            }),
+            MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
+                token: c.transaction.token().token_symbol().to_string(),
+                amount: c.transaction.units(),
+            }),
+            MessageContentInternal::MessageReminderCreated(c) => {
+                MessageContentEventPayload::MessageReminderCreated(MessageReminderContentEventPayload {
+                    notes_length: option_string_length(&c.notes),
+                })
+            }
+            MessageContentInternal::MessageReminder(c) => {
+                MessageContentEventPayload::MessageReminder(MessageReminderContentEventPayload {
+                    notes_length: option_string_length(&c.notes),
+                })
+            }
+            MessageContentInternal::ReportedMessage(c) => {
+                MessageContentEventPayload::ReportedMessage(ReportedMessageContentEventPayload {
+                    reason: c.reports.first().map(|r| r.reason_code).unwrap_or_default(),
+                    notes_length: c.reports.first().map(|r| option_string_length(&r.notes)).unwrap_or_default(),
+                })
+            }
+            MessageContentInternal::P2PSwap(c) => MessageContentEventPayload::P2PSwap(P2PSwapContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                token0: c.token0.token.token_symbol().to_string(),
+                token0_amount: c.token0_amount,
+                token1: c.token1.token.token_symbol().to_string(),
+                token1_amount: c.token1_amount,
+            }),
+            MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
+                MessageContentEventPayload::Empty
+            }
         }
     }
 }
