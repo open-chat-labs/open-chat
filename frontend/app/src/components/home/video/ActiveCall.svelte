@@ -163,7 +163,6 @@
                 supportiveText: `${theme.daily.supportiveText}`,
             },
         };
-        console.log("DailyTheme: ", dailyTheme);
         return dailyTheme;
     }
 
