@@ -14,7 +14,7 @@ const NNS_NEURON_ID: u64 = 17682165960669268263; // https://dashboard.internetco
 async fn c2c_vote_on_nns_proposal(args: Args) -> Response {
     let nns_governance_canister_id = read_state(|state| state.data.nns_governance_canister_id);
     let proposal_id = args.proposal_id;
-    let adopt = args.adopt;
+    let vote = args.vote;
 
     match nns_governance_canister_c2c_client::manage_neuron(
         nns_governance_canister_id,
@@ -23,7 +23,7 @@ async fn c2c_vote_on_nns_proposal(args: Args) -> Response {
             neuron_id_or_subaccount: None,
             command: Some(Command::RegisterVote(RegisterVote {
                 proposal: Some(ProposalId { id: proposal_id }),
-                vote: if adopt { 1 } else { 2 },
+                vote: if vote { 1 } else { 2 },
             })),
         },
     )
@@ -31,11 +31,11 @@ async fn c2c_vote_on_nns_proposal(args: Args) -> Response {
     {
         Ok(response) => match response.command {
             Some(manage_neuron_response::Command::RegisterVote(_)) => {
-                info!(proposal_id, adopt, "Voted on NNS proposal");
+                info!(proposal_id, vote, "Voted on NNS proposal");
                 Success
             }
             response => {
-                error!(proposal_id, adopt, ?response, "Failed to vote on NNS proposal");
+                error!(proposal_id, vote, ?response, "Failed to vote on NNS proposal");
                 InternalError(format!("{response:?}"))
             }
         },

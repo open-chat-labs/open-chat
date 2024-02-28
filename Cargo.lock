@@ -5079,6 +5079,8 @@ dependencies = [
  "itertools",
  "ledger_utils",
  "msgpack",
+ "neuron_controller_canister",
+ "neuron_controller_canister_c2c_client",
  "nns_governance_canister",
  "nns_governance_canister_c2c_client",
  "proposals_bot_canister",

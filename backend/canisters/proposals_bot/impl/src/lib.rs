@@ -1,4 +1,5 @@
 use crate::model::nervous_systems::NervousSystems;
+use crate::model::oc_proposals_for_nns_proposals::OCProposalsForNnsProposals;
 use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -59,6 +60,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 registry: self.data.registry_canister_id,
+                neuron_controller: self.data.neuron_controller_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
             },
@@ -75,20 +77,30 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
+    #[serde(default = "neuron_controller_canister_id")]
+    pub neuron_controller_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub oc_proposals_for_nns_proposals: OCProposalsForNnsProposals,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
+fn neuron_controller_canister_id() -> CanisterId {
+    CanisterId::from_text("tktqu-nyaaa-aaaar-qackq-cai").unwrap()
+}
+
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         registry_canister_id: CanisterId,
+        neuron_controller_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         test_mode: bool,
@@ -99,12 +111,14 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             registry_canister_id,
+            neuron_controller_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
             finished_proposals_to_process: VecDeque::new(),
             timer_jobs: TimerJobs::default(),
             registry_synced_up_to: 0,
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            oc_proposals_for_nns_proposals: OCProposalsForNnsProposals::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -150,6 +164,7 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub registry: CanisterId,
+    pub neuron_controller: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
 }

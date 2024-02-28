@@ -230,6 +230,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         group_index_canister_id,
         registry_canister_id,
+        neuron_controller_canister_id: Principal::anonymous(),
         nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,

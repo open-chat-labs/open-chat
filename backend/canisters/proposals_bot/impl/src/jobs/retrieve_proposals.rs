@@ -8,7 +8,8 @@ use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal};
+use types::{CanisterId, Milliseconds, Proposal, ProposalId};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
@@ -110,16 +111,30 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
-            // TODO Remove this!
-            // Temp hack for Dragginz
-            // Dfinity are fixing a bug in their governance canister which is causing it to
-            // return old proposals
-            let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
-            if governance_canister_id == dragginz_governance_canister_id {
-                proposals.retain(|p| p.id() > 36)
-            }
-
             mutate_state(|state| {
+                // TODO Remove this!
+                // Temp hack for Dragginz
+                // Dfinity are fixing a bug in their governance canister which is causing it to
+                // return old proposals
+                let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+                if governance_canister_id == dragginz_governance_canister_id {
+                    proposals.retain(|p| p.id() > 36)
+                } else if governance_canister_id == SNS_GOVERNANCE_CANISTER_ID {
+                    for proposal in proposals.iter() {
+                        if let Some(decision) = proposal.status().decision() {
+                            if let Some(nns_proposal_id) = state.data.oc_proposals_for_nns_proposals.should_vote(&proposal.id())
+                            {
+                                ic_cdk::spawn(vote_on_nns_proposal(
+                                    proposal.id(),
+                                    nns_proposal_id,
+                                    decision,
+                                    state.data.neuron_controller_canister_id,
+                                ));
+                            }
+                        }
+                    }
+                }
+
                 let previous_active_proposals = state.data.nervous_systems.active_proposals(&governance_canister_id);
                 let mut no_longer_active: HashSet<_> = previous_active_proposals.into_iter().collect();
                 for id in proposals.iter().map(|p| p.id()) {
@@ -194,5 +209,28 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .mark_sync_complete(&governance_canister_id, false, now);
             });
         }
+    }
+}
+
+async fn vote_on_nns_proposal(
+    oc_proposal_id: ProposalId,
+    nns_proposal_id: ProposalId,
+    vote: bool,
+    neuron_controller_canister_id: CanisterId,
+) {
+    let args = neuron_controller_canister::c2c_vote_on_nns_proposal::Args {
+        proposal_id: nns_proposal_id,
+        vote,
+    };
+    if neuron_controller_canister_c2c_client::c2c_vote_on_nns_proposal(neuron_controller_canister_id, &args)
+        .await
+        .is_ok()
+    {
+        mutate_state(|state| {
+            state
+                .data
+                .oc_proposals_for_nns_proposals
+                .mark_vote_cast(&oc_proposal_id, vote)
+        });
     }
 }

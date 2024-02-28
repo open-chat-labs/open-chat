@@ -223,6 +223,16 @@ impl TryFrom<i32> for ProposalDecisionStatus {
     }
 }
 
+impl ProposalDecisionStatus {
+    pub fn decision(&self) -> Option<bool> {
+        match self {
+            ProposalDecisionStatus::Unspecified | ProposalDecisionStatus::Open => None,
+            ProposalDecisionStatus::Adopted | ProposalDecisionStatus::Executed => Some(true),
+            ProposalDecisionStatus::Rejected | ProposalDecisionStatus::Failed => Some(false),
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ProposalRewardStatus {

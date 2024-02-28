@@ -19,6 +19,7 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.group_index_canister_id,
         args.registry_canister_id,
+        args.neuron_controller_canister_id,
         args.cycles_dispenser_canister_id,
         args.nns_governance_canister_id,
         args.test_mode,

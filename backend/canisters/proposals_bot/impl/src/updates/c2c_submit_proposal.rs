@@ -5,13 +5,14 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
+use ic_cdk::api::call::CallResult;
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, ExecuteGenericNervousSystemFunction, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds,
-    UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
+    manage_neuron_response, ExecuteGenericNervousSystemFunction, ManageNeuronResponse, Motion, Proposal, Subaccount,
+    TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
 };
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
@@ -84,12 +85,7 @@ fn prepare_proposal(
     proposal.summary = proposal.summary.trim().to_string();
     proposal.url = proposal.url.trim().to_string();
 
-    let chat_url = match chat {
-        MultiUserChat::Group(group_id) => format!("{OC_ROOT_URL}group/{group_id}"),
-        MultiUserChat::Channel(community_id, channel_id) => {
-            format!("{OC_ROOT_URL}community/{community_id}/channel/{channel_id}")
-        }
-    };
+    let chat_url = chat.chat_url();
     let user_url = format!("{OC_ROOT_URL}user/{user_id}");
 
     let suffix = format!("\n\n> Submitted by [@{username}]({user_url}) on [OpenChat]({chat_url})");
@@ -132,29 +128,20 @@ pub(crate) async fn lookup_user_then_submit_proposal(
 
     let proposal = prepare_proposal(proposal, user_id, username, chat);
 
-    submit_proposal(user_id, governance_canister_id, neuron_id, proposal, payment).await
+    submit_user_proposal_and_handle_response(user_id, governance_canister_id, neuron_id, proposal, payment).await
 }
 
-pub(crate) async fn submit_proposal(
+pub(crate) async fn submit_user_proposal_and_handle_response(
     user_id: UserId,
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
     payment: icrc1::CompletedCryptoTransaction,
 ) -> Response {
-    let make_proposal_args = sns_governance_canister::manage_neuron::Args {
-        subaccount: neuron_id.to_vec(),
-        command: Some(Command::MakeProposal(Proposal {
-            title: proposal.title.clone(),
-            summary: proposal.summary.clone(),
-            url: proposal.url.clone(),
-            action: Some(convert_proposal_action(proposal.action.clone())),
-        })),
-    };
-    match sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await {
+    match submit_proposal(governance_canister_id, neuron_id, proposal.clone()).await {
         Ok(response) => {
             if let Some(command) = response.command {
-                return match command {
+                match command {
                     manage_neuron_response::Command::MakeProposal(p) => {
                         let proposal_id = p.proposal_id.unwrap().id;
                         mutate_state(|state| {
@@ -179,10 +166,11 @@ pub(crate) async fn submit_proposal(
                         InternalError(format!("{error:?}"))
                     }
                     _ => unreachable!(),
-                };
+                }
+            } else {
+                error!(%user_id, "Failed to submit proposal, response was empty");
+                InternalError("Empty response from `manage_neuron`".to_string())
             }
-            error!(%user_id, "Failed to submit proposal, response was empty");
-            InternalError("Empty response from `manage_neuron`".to_string())
         }
         Err(error) => {
             mutate_state(|state| {
@@ -200,6 +188,24 @@ pub(crate) async fn submit_proposal(
             Retrying(format!("{error:?}"))
         }
     }
+}
+
+pub(crate) async fn submit_proposal(
+    governance_canister_id: CanisterId,
+    neuron_id: SnsNeuronId,
+    proposal: ProposalToSubmit,
+) -> CallResult<ManageNeuronResponse> {
+    let make_proposal_args = sns_governance_canister::manage_neuron::Args {
+        subaccount: neuron_id.to_vec(),
+        command: Some(Command::MakeProposal(Proposal {
+            title: proposal.title,
+            summary: proposal.summary,
+            url: proposal.url,
+            action: Some(convert_proposal_action(proposal.action)),
+        })),
+    };
+
+    sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await
 }
 
 fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {

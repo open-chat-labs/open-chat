@@ -1,5 +1,7 @@
 use crate::mutate_state;
-use crate::updates::c2c_submit_proposal::{lookup_user_then_submit_proposal, submit_proposal};
+use crate::updates::c2c_submit_proposal::{
+    lookup_user_then_submit_proposal, submit_proposal, submit_user_proposal_and_handle_response,
+};
 use candid::Principal;
 use canister_timer_jobs::Job;
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
@@ -9,12 +11,14 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
-use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserId};
-use utils::time::SECOND_IN_MS;
+use types::{icrc1, CanisterId, MultiUserChat, ProposalId, SnsNeuronId, TimestampMillis, UserId};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     SubmitProposal(SubmitProposalJob),
+    SubmitOCProposalForNnsProposal(SubmitOCProposalForNnsProposalJob),
     LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
     ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
@@ -28,6 +32,14 @@ pub struct SubmitProposalJob {
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
     pub payment: icrc1::CompletedCryptoTransaction,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SubmitOCProposalForNnsProposalJob {
+    pub nns_proposal_id: ProposalId,
+    pub nns_proposal_deadline: TimestampMillis,
+    pub oc_neuron_id: SnsNeuronId,
+    pub proposal: ProposalToSubmit,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -68,6 +80,7 @@ impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::SubmitProposal(job) => job.execute(),
+            TimerJob::SubmitOCProposalForNnsProposal(job) => job.execute(),
             TimerJob::LookupUserThenSubmitProposal(job) => job.execute(),
             TimerJob::ProcessUserRefund(job) => job.execute(),
             TimerJob::TopUpNeuron(job) => job.execute(),
@@ -79,7 +92,7 @@ impl Job for TimerJob {
 impl Job for SubmitProposalJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
-            submit_proposal(
+            submit_user_proposal_and_handle_response(
                 self.user_id,
                 self.governance_canister_id,
                 self.neuron_id,
@@ -87,6 +100,33 @@ impl Job for SubmitProposalJob {
                 self.payment,
             )
             .await;
+        });
+    }
+}
+
+impl Job for SubmitOCProposalForNnsProposalJob {
+    fn execute(self) {
+        ic_cdk::spawn(async move {
+            match submit_proposal(SNS_GOVERNANCE_CANISTER_ID, self.oc_neuron_id, self.proposal.clone())
+                .await
+                .map(|r| r.command)
+            {
+                Ok(Some(manage_neuron_response::Command::MakeProposal(r))) => mutate_state(|state| {
+                    state.data.oc_proposals_for_nns_proposals.push(
+                        r.proposal_id.unwrap().id,
+                        self.nns_proposal_id,
+                        self.nns_proposal_deadline,
+                    );
+                }),
+                Err(_) => mutate_state(|state| {
+                    let now = state.env.now();
+                    state
+                        .data
+                        .timer_jobs
+                        .enqueue_job(TimerJob::SubmitOCProposalForNnsProposal(self), now + MINUTE_IN_MS, now);
+                }),
+                _ => {}
+            }
         });
     }
 }
