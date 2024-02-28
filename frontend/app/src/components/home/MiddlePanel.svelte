@@ -49,7 +49,7 @@
             if (callContainer) {
                 if (call.fullscreen) {
                     let width = window.innerWidth;
-                    if (layout.rightPanel !== "floating" && call.chatOpen) {
+                    if (layout.rightPanel !== "floating" && call.threadOpen) {
                         width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
