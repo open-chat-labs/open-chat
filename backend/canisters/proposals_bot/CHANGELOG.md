@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Submit an SNS proposal for each relevant NNS proposal ([#5446](https://github.com/open-chat-labs/open-chat/pull/5446))
+
 ## [[2.0.1077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1077-proposals_bot)] - 2024-02-22
 
 ### Changed
