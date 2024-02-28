@@ -34,6 +34,7 @@ export function getTheme(base: Theme): Theme {
     base.button.txt = txt;
     base.button.disabled = lighterBrown;
     base.button["disabled-txt"] = hexPercent(darkOrange, 90);
+    base.button["disabled-bd"] = base.bd;
 
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = lightGreen;
