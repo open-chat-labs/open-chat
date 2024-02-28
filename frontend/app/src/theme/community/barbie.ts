@@ -78,6 +78,16 @@ export function getTheme(base: Theme): Theme {
     base.chatSearch.sh = "none";
     base.recommended.bg = pink3;
     base.unread["mute-solid"] = pink3;
+    base.daily.header = pink1;
+    base.daily.accent = barbieBlue;
+    base.daily.accentText = txt;
+    base.daily.background = pink1;
+    base.daily.backgroundAccent = barbieBlue;
+    base.daily.border = "#ffffff30";
+    base.daily.mainAreaBg = pink1;
+    base.daily.mainAreaBgAccent = barbieYellow;
+    base.daily.mainAreaText = txt;
+    base.daily.supportiveText = txtLight;
 
     return base;
 }
