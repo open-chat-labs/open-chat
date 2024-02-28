@@ -1,7 +1,7 @@
 use crate::client::{local_user_index, user_index};
 use crate::env::ENV;
 use crate::rng::random_string;
-use crate::utils::tick_many;
+use crate::utils::{generate_seed, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
@@ -13,7 +13,8 @@ use types::{AccessTokenType, ChannelId, CommunityId, VideoCallClaims};
 
 #[test]
 fn access_token_valid() {
-    let mut wrapper = ENV.deref().get();
+    let seed = generate_seed();
+    let mut wrapper = ENV.deref().get_with_seed(seed);
 
     let TestEnv {
         env,
