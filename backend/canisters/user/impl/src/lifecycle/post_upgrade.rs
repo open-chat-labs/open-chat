@@ -8,7 +8,7 @@ use event_sink_client::EventBuilder;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{MessageEventPayload, UserId};
+use types::UserId;
 use user_canister::post_upgrade::Args;
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
@@ -44,10 +44,7 @@ fn post_upgrade(args: Args) {
                             EventBuilder::new("message_sent", e.timestamp)
                                 .with_user(if is_oc_bot { OPENCHAT_BOT_USERNAME.to_string() } else { user_string.clone() })
                                 .with_source(user_string.clone())
-                                .with_json_payload(&MessageEventPayload {
-                                    message_type: m.content.message_type(),
-                                    sender_is_bot: is_oc_bot,
-                                })
+                                .with_json_payload(&m.content.message_event_payload("direct", is_oc_bot))
                                 .build(),
                         );
                     }

@@ -14,8 +14,8 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
-    EventWrapper, Message, MessageContent, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex,
-    P2PSwapLocation, TimestampMillis, UserId,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -257,10 +257,7 @@ fn send_message_impl(
         EventBuilder::new("message_sent", now)
             .with_user(user_string.clone())
             .with_source(user_string)
-            .with_json_payload(&MessageEventPayload {
-                message_type: message_event.event.content.message_type(),
-                sender_is_bot: false,
-            })
+            .with_json_payload(&content.message_event_payload("direct", false))
             .build(),
     );
 

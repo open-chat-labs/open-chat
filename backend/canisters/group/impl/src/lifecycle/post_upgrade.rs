@@ -10,7 +10,6 @@ use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::MessageEventPayload;
 
 #[post_upgrade]
 #[trace]
@@ -43,10 +42,7 @@ fn post_upgrade(args: Args) {
                     EventBuilder::new("message_sent", e.timestamp)
                         .with_user(if is_proposals_bot { "ProposalsBot".to_string() } else { m.sender.to_string() })
                         .with_source(source_string.clone())
-                        .with_json_payload(&MessageEventPayload {
-                            message_type: m.content.message_type(),
-                            sender_is_bot: is_proposals_bot,
-                        })
+                        .with_json_payload(&m.content.message_event_payload("group", is_proposals_bot))
                         .build(),
                 )
             } else {

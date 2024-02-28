@@ -13,10 +13,11 @@ use types::{
     EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
     GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -54,6 +55,8 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+    #[serde(default)]
+    is_group: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -71,6 +74,7 @@ impl GroupChatCore {
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         is_bot: bool,
+        is_group: bool,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, is_bot, now);
@@ -95,6 +99,7 @@ impl GroupChatCore {
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
+            is_group,
         }
     }
 
@@ -594,6 +599,7 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
+            sender_is_bot,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -621,6 +627,8 @@ impl GroupChatCore {
         let user_being_replied_to = replies_to
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
+
+        let event_payload = content.message_event_payload(if self.is_group { "group" } else { "channel" }, sender_is_bot);
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -688,6 +696,7 @@ impl GroupChatCore {
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
+            event_payload,
         })
     }
 
@@ -707,6 +716,7 @@ impl GroupChatCore {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
+                sender_is_bot: true,
             });
         }
 
@@ -745,6 +755,7 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            sender_is_bot: member.is_bot,
         })
     }
 
@@ -1772,6 +1783,7 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
+    pub event_payload: MessageEventPayload,
 }
 
 pub enum AddRemoveReactionResult {
@@ -2055,4 +2067,5 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
+    sender_is_bot: bool,
 }

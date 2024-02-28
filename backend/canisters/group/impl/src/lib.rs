@@ -495,6 +495,7 @@ impl Data {
             gate,
             events_ttl,
             proposals_bot_user_id == creator_user_id,
+            true,
             now,
         );
 

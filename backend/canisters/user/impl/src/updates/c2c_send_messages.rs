@@ -6,8 +6,8 @@ use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageEventPayload, MessageId, MessageIndex, Notification,
-    TimestampMillis, UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    UserId,
 };
 use user_canister::C2CReplyContext;
 
@@ -116,6 +116,7 @@ pub(crate) fn handle_message_impl(
 ) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, state);
     let files = args.content.blob_references();
+    let event_payload = args.content.message_event_payload("direct", args.is_bot);
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
@@ -187,10 +188,7 @@ pub(crate) fn handle_message_impl(
                 EventBuilder::new("message_sent", args.now)
                     .with_user(sender.to_string())
                     .with_source(this_canister_id.to_string())
-                    .with_json_payload(&MessageEventPayload {
-                        message_type: message_event.event.content.message_type(),
-                        sender_is_bot: false,
-                    })
+                    .with_json_payload(&event_payload)
                     .build(),
             );
         }

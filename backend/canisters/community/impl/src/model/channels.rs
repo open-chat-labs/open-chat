@@ -187,6 +187,7 @@ impl Channel {
                 None,
                 None,
                 false,
+                false,
                 now,
             ),
             date_imported: None,
