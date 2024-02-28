@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use ICRC1 for ICP transactions between users ([#5426](https://github.com/open-chat-labs/open-chat/pull/5426))
+- Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
 
 ### Removed
 
