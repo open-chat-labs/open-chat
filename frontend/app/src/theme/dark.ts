@@ -188,7 +188,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             disabled: textBodyLight,
             spinner: dark60,
             "disabled-txt": txtLow,
-            "disabled-bd": "#999999",
+            "disabled-bd": "transparent",
             rd: "4px",
             sh: "none",
             "hv-sh": "none",
