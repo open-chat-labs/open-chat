@@ -3579,6 +3579,7 @@ dependencies = [
  "ct-codecs",
  "hmac-sha256",
  "p256",
+ "p256_key_pair",
  "rand",
  "serde",
  "serde_json",

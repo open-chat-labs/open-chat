@@ -3,6 +3,7 @@ use crate::TestEnv;
 use lazy_static::lazy_static;
 use std::ops::Deref;
 use std::sync::Mutex;
+use types::Hash;
 
 lazy_static! {
     pub static ref ENV: TestEnvManager = TestEnvManager::default();
@@ -15,11 +16,19 @@ pub struct TestEnvManager {
 
 impl TestEnvManager {
     pub fn get(&self) -> TestEnvWrapper {
+        self.get_internal(None)
+    }
+
+    pub fn get_with_seed(&self, seed: Hash) -> TestEnvWrapper {
+        self.get_internal(Some(seed))
+    }
+
+    fn get_internal(&self, seed: Option<Hash>) -> TestEnvWrapper {
         let mut lock = self.envs.lock().unwrap();
         if let Some(env) = lock.pop() {
             TestEnvWrapper::new(env)
         } else {
-            TestEnvWrapper::new(setup_new_env())
+            TestEnvWrapper::new(setup_new_env(seed))
         }
     }
 }
