@@ -136,7 +136,8 @@ export function getUsersToMakeRtcConnectionsWith(
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId) : [];
+    activeUsers.delete(myUserId);
+    return Array.from(activeUsers);
 }
 
 export function makeRtcConnections(
