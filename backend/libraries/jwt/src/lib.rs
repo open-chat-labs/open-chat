@@ -68,11 +68,10 @@ struct JWTHeader {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
     use super::*;
     use candid::Principal;
     use p256_key_pair::P256KeyPair;
+    use std::time::{SystemTime, UNIX_EPOCH};
     use types::{StringChat, VideoCallClaims};
 
     #[test]
