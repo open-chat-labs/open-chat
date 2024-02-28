@@ -10,10 +10,10 @@ const white = "#ffffff";
 const powderBlue = "rgb(56, 183, 240)";
 // const pink = "#F865B0";
 const yellow = "rgb(248, 255, 131)";
-const red = "rgb(227, 26, 62)";
+const red = "#E31A3E";
 
 export function getTheme(base: Theme): Theme {
-    base.hidden = true;
+    base.hidden = false;
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "signals";
     base.label = "Signals";
@@ -44,6 +44,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.input.sh = "none";
     base.entry.input.bd = black;
     base.panel.bg = "transparent";
+    base.panel.nav.bg = "transparent";
     base.panel.left.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
@@ -89,6 +90,17 @@ export function getTheme(base: Theme): Theme {
     base.members.hv = yellow;
     base.card.rd = "0";
     base.card.sh = `8px 8px 0 ${powderBlue}`;
+
+    base.daily.header = white;
+    base.daily.accent = base.accent;
+    base.daily.accentText = txt;
+    base.daily.background = white;
+    base.daily.backgroundAccent = white;
+    base.daily.border = base.bd;
+    base.daily.mainAreaBg = white;
+    base.daily.mainAreaBgAccent = base.accent;
+    base.daily.mainAreaText = txt;
+    base.daily.supportiveText = "#4e5670";
 
     return base;
 }
