@@ -76,7 +76,7 @@ mod tests {
     use types::{StringChat, VideoCallClaims};
 
     #[test]
-    fn to_from_der_succeeds() {
+    fn sign_and_encode_token_succeeds() {
         let mut rng = rand::thread_rng();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
