@@ -373,11 +373,11 @@ export function lightTheme(): Theme {
             accentText: txt,
             background: "#3796E3",
             backgroundAccent: "#52baf5",
-            baseText: txt,
+            baseText: txtDark,
             border: "#ffffff30",
             mainAreaBg: "#3796e3",
             mainAreaBgAccent: orangeAccent,
-            mainAreaText: txt,
+            mainAreaText: txtDark,
             supportiveText: "#ffffffaa",
         },
     };

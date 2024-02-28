@@ -63,6 +63,16 @@ export function getTheme(base: Theme): Theme {
     base.markdown.fg.color = txt;
     base.markdown.fg.bright = txt;
     base.markdown.fg.muted = txt70;
+    base.daily.header = white;
+    base.daily.accent = base.accent;
+    base.daily.accentText = txt;
+    base.daily.background = white;
+    base.daily.backgroundAccent = white;
+    base.daily.border = base.bd;
+    base.daily.mainAreaBg = white;
+    base.daily.mainAreaBgAccent = base.accent;
+    base.daily.mainAreaText = txt;
+    base.daily.supportiveText = "#4e5670";
 
     return base;
 }

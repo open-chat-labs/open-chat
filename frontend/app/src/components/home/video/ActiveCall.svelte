@@ -149,7 +149,7 @@
     }
 
     function getThemeConfig(theme: Theme): DailyThemeConfig {
-        return {
+        const dailyTheme = {
             colors: {
                 accent: `${theme.daily.accent}`,
                 accentText: `${theme.daily.accentText}`,
@@ -163,6 +163,8 @@
                 supportiveText: `${theme.daily.supportiveText}`,
             },
         };
+        console.log("DailyTheme: ", dailyTheme);
+        return dailyTheme;
     }
 
     function switchCall(confirmed: boolean): Promise<void> {
