@@ -12,7 +12,7 @@
         type OpenChat,
     } from "openchat-client";
     import { pathParams } from "../../routes";
-    import { getContext, tick } from "svelte";
+    import { getContext, onDestroy, tick } from "svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
@@ -33,7 +33,9 @@
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
 
     $: {
-        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        if (middlePanel) {
+            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        }
     }
 
     function alignVideoCall(
@@ -77,6 +79,10 @@
     function resize() {
         alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
+
+    onDestroy(() => {
+        console.log("Middle panel has been destroyed");
+    });
 </script>
 
 <svelte:window on:resize={resize} on:orientationchange={resize} />
