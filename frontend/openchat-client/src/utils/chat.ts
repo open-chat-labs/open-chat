@@ -715,6 +715,10 @@ function reduceJoinedOrLeft(
 }
 
 function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
+    if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
+        return true;
+    }
+
     return (
         (message.content.kind === "deleted_content" ||
             message.content.kind === "blocked_content") &&
