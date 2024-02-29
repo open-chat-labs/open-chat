@@ -11,8 +11,7 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageEventPayload, MessageIndex, Notification,
-    TimestampMillis, User, UserId,
+    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -60,7 +59,6 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 user_id,
                 args.sender_name,
                 args.sender_display_name,
-                is_bot,
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
@@ -102,7 +100,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
                 user_id,
                 args.sender_name,
                 args.sender_display_name,
-                is_bot,
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
@@ -152,7 +149,6 @@ fn process_send_message_result(
     sender: UserId,
     sender_username: String,
     sender_display_name: Option<String>,
-    sender_is_bot: bool,
     thread_root_message_index: Option<MessageIndex>,
     mentioned: Vec<User>,
     now: TimestampMillis,
@@ -205,10 +201,7 @@ fn process_send_message_result(
                 EventBuilder::new("message_sent", now)
                     .with_user(sender.to_string())
                     .with_source(this_canister_id.to_string())
-                    .with_json_payload(&MessageEventPayload {
-                        message_type: content.message_type(),
-                        sender_is_bot,
-                    })
+                    .with_json_payload(&result.event_payload)
                     .build(),
             );
 
