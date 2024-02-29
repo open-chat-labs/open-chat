@@ -1,5 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import { rtlStore } from "../../../stores/rtl";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import {
@@ -17,7 +21,7 @@
     import daily from "@daily-co/daily-js";
     import AreYouSure from "../../AreYouSure.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -32,6 +36,7 @@
     import Typing from "../../Typing.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     $: selectedChatId = client.selectedChatId;
     $: chatSummariesStore = client.chatSummariesStore;
@@ -198,6 +203,10 @@
     function hangup() {
         activeVideoCall.endCall();
     }
+
+    function clearSelection() {
+        dispatch("clearSelection");
+    }
 </script>
 
 {#if confirmSwitchTo}
@@ -209,9 +218,21 @@
         id="video-call-container"
         class="video-call-container"
         class:visible={$activeVideoCall &&
+            !(threadOpen && $mobileWidth) &&
             chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
         <SectionHeader shadow flush>
             <div class="header">
+                {#if $mobileWidth}
+                    <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+                        <HoverIcon>
+                            {#if $rtlStore}
+                                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        </HoverIcon>
+                    </div>
+                {/if}
                 <div class="details">
                     {#if $activeVideoCall?.status === "joining"}
                         <div class="joining">
@@ -240,13 +261,15 @@
                     <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
                         <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
-                    <HoverIcon on:click={toggleFullscreen}>
-                        {#if $activeVideoCall?.fullscreen}
-                            <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                        {:else}
-                            <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                        {/if}
-                    </HoverIcon>
+                    {#if !$mobileWidth}
+                        <HoverIcon on:click={toggleFullscreen}>
+                            {#if $activeVideoCall?.fullscreen}
+                                <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        </HoverIcon>
+                    {/if}
                 </div>
             </div>
         </SectionHeader>
@@ -278,13 +301,14 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: $sp4;
+        gap: $sp3;
         width: 100%;
 
         .details {
             display: flex;
             align-items: center;
             gap: $sp4;
+            flex: auto;
 
             .joining {
                 width: toRem(48);
