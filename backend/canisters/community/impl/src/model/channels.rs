@@ -43,9 +43,9 @@ impl Channels {
                 let channel_id = rng.gen();
                 (
                     channel_id,
-                    Channel::default(
-                        community_id,
+                    Channel::new(
                         channel_id,
+                        community_id,
                         name,
                         created_by,
                         default_channel_rules.clone(),
@@ -174,9 +174,9 @@ impl Channels {
 
 impl Channel {
     #[allow(clippy::too_many_arguments)]
-    pub fn default(
-        community_id: CommunityId,
+    pub fn new(
         id: ChannelId,
+        community_id: CommunityId,
         name: String,
         created_by: UserId,
         channel_rules: Option<Rules>,
