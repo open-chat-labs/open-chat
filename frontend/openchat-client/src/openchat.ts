@@ -3826,6 +3826,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => []);
     }
 
+    lookupChatSummary(chatId: ChatIdentifier): ChatSummary | undefined {
+        return this._liveState.allChats.get(chatId);
+    }
+
     searchUsersForInvite(
         searchTerm: string,
         maxResults: number,

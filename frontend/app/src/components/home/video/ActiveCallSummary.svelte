@@ -27,7 +27,6 @@
     const client = getContext<OpenChat>("client");
 
     $: selectedChatId = client.selectedChatId;
-    $: chatSummariesStore = client.chatSummariesStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
     $: show =
@@ -44,7 +43,7 @@
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
         if (chatId) {
-            const chat = $chatSummariesStore.get(chatId);
+            const chat = client.lookupChatSummary(chatId);
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":

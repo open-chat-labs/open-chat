@@ -28,18 +28,16 @@
     import { iconSize } from "../../../stores/iconSize";
     import Avatar from "../../Avatar.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
+    import { filterRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
-    import page from "page";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
+    import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     $: selectedChatId = client.selectedChatId;
-    $: chatSummariesStore = client.chatSummariesStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
     $: user = client.user;
@@ -55,7 +53,7 @@
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
         if (chatId) {
-            const chat = $chatSummariesStore.get(chatId);
+            const chat = client.lookupChatSummary(chatId);
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
@@ -117,7 +115,9 @@
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                showLeaveButton: true,
+                activeSpeakerMode: false,
+                showLeaveButton: false,
+                showFullscreenButton: false,
                 iframeStyle: {
                     width: "100%",
                     height: "100%",
@@ -188,18 +188,6 @@
         }
     }
 
-    function toggleThread() {
-        if (chat !== undefined && chat.messageIndex !== undefined) {
-            if (threadOpen) {
-                popRightPanelHistory();
-                page.replace(removeQueryStringParam("open"));
-            } else {
-                client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
-            }
-            activeVideoCall.threadOpen(!threadOpen);
-        }
-    }
-
     function hangup() {
         activeVideoCall.endCall();
     }
@@ -207,72 +195,78 @@
     function clearSelection() {
         dispatch("clearSelection");
     }
+
+    export function closeThread() {
+        activeVideoCall.threadOpen(false);
+    }
 </script>
 
 {#if confirmSwitchTo}
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-{#if chat !== undefined}
+{#if $activeVideoCall}
     <div
         id="video-call-container"
         class="video-call-container"
         class:visible={$activeVideoCall &&
             !(threadOpen && $mobileWidth) &&
             chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
-        <SectionHeader shadow flush>
-            <div class="header">
-                {#if $mobileWidth}
-                    <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
-                        <HoverIcon>
-                            {#if $rtlStore}
-                                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                            {:else}
-                                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                            {/if}
-                        </HoverIcon>
+        {#if chat !== undefined}
+            <SectionHeader shadow flush>
+                <div class="header">
+                    {#if $mobileWidth}
+                        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+                            <HoverIcon>
+                                {#if $rtlStore}
+                                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                                {:else}
+                                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                                {/if}
+                            </HoverIcon>
+                        </div>
+                    {/if}
+                    <div class="details">
+                        {#if $activeVideoCall?.status === "joining"}
+                            <div class="joining">
+                                <FancyLoader loop />
+                            </div>
+                        {:else}
+                            <div class="avatar">
+                                <Avatar
+                                    url={chat.avatarUrl}
+                                    showStatus
+                                    userId={chat.userId?.userId}
+                                    size={AvatarSize.Default} />
+                            </div>
+                        {/if}
+                        <h2 class="name">{chat.name}</h2>
+                        {#if $activeVideoCall?.status === "joining"}
+                            <Typing />
+                        {/if}
                     </div>
-                {/if}
-                <div class="details">
-                    {#if $activeVideoCall?.status === "joining"}
-                        <div class="joining">
-                            <FancyLoader loop />
-                        </div>
-                    {:else}
-                        <div class="avatar">
-                            <Avatar
-                                url={chat.avatarUrl}
-                                showStatus
-                                userId={chat.userId?.userId}
-                                size={AvatarSize.Default} />
-                        </div>
-                    {/if}
-                    <h2 class="name">{chat.name}</h2>
-                    {#if $activeVideoCall?.status === "joining"}
-                        <Typing />
-                    {/if}
-                </div>
-                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                    <HoverIcon title={$_("videoCall.chat")} on:click={toggleThread}>
-                        <MessageOutline
-                            size={$iconSize}
-                            color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                    </HoverIcon>
-                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                        <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                    {#if !$mobileWidth}
-                        <HoverIcon on:click={toggleFullscreen}>
-                            {#if $activeVideoCall?.fullscreen}
-                                <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                            {:else}
-                                <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                            {/if}
+                    <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                        {#if chat.chatId && chat.messageIndex !== undefined}
+                            <ActiveCallThreadSummary
+                                chatId={chat.chatId}
+                                messageIndex={chat.messageIndex} />
+                        {/if}
+                        <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                            <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
-                    {/if}
+                        {#if !$mobileWidth}
+                            <HoverIcon on:click={toggleFullscreen}>
+                                {#if $activeVideoCall?.fullscreen}
+                                    <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                                {:else}
+                                    <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                                {/if}
+                            </HoverIcon>
+                        {/if}
+                    </div>
                 </div>
-            </div>
-        </SectionHeader>
+            </SectionHeader>
+        {/if}
         <div class="iframe-container" bind:this={iframeContainer}></div>
     </div>
 {/if}
