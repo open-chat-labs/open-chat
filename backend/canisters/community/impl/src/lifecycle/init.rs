@@ -4,8 +4,7 @@ use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
-use rand::prelude::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
