@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use ICRC1 for ICP transactions between users ([#5426](https://github.com/open-chat-labs/open-chat/pull/5426))
+- Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 
 ## [[2.0.1076](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1076-group)] - 2024-02-22

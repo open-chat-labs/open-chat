@@ -1,14 +1,16 @@
 use chat_events::Reader;
 use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
+use rand::rngs::StdRng;
+use rand::Rng;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupMembership,
-    GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
-    MAX_THREADS_IN_SUMMARY,
+    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
+    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
+    Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -27,18 +29,30 @@ pub struct Channel {
 
 impl Channels {
     pub fn new(
+        community_id: CommunityId,
         created_by: UserId,
-        default_channels: Vec<(ChannelId, String)>,
+        default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
+        rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Channels {
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| {
+            .map(|name| {
+                let channel_id = rng.gen();
                 (
-                    id,
-                    Channel::default(id, name, created_by, default_channel_rules.clone(), is_community_public, now),
+                    channel_id,
+                    Channel::new(
+                        channel_id,
+                        community_id,
+                        name,
+                        created_by,
+                        default_channel_rules.clone(),
+                        is_community_public,
+                        rng.gen(),
+                        now,
+                    ),
                 )
             })
             .collect();
@@ -159,12 +173,15 @@ impl Channels {
 }
 
 impl Channel {
-    pub fn default(
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
         id: ChannelId,
+        community_id: CommunityId,
         name: String,
         created_by: UserId,
         channel_rules: Option<Rules>,
         is_community_public: bool,
+        anonymized_id: u128,
         now: TimestampMillis,
     ) -> Channel {
         let mut permissions = GroupPermissions::default();
@@ -175,6 +192,7 @@ impl Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
+                MultiUserChat::Channel(community_id, id),
                 created_by,
                 true,
                 name,
@@ -187,6 +205,7 @@ impl Channel {
                 None,
                 None,
                 false,
+                anonymized_id,
                 now,
             ),
             date_imported: None,

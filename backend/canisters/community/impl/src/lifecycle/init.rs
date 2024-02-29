@@ -4,7 +4,6 @@ use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
-use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
@@ -15,13 +14,9 @@ fn init(args: Args) {
 
     let mut env = init_env([0; 32]);
 
-    let default_channels = args
-        .default_channels
-        .into_iter()
-        .map(|name| (env.rng().gen(), name))
-        .collect();
-
+    let now = env.now();
     let data = Data::new(
+        env.canister_id().into(),
         args.created_by_principal,
         args.created_by_user_id,
         args.is_public,
@@ -40,12 +35,13 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.escrow_canister_id,
         args.gate,
-        default_channels,
+        args.default_channels,
         args.default_channel_rules,
         args.mark_active_duration,
         args.video_call_operators,
         args.test_mode,
-        env.now(),
+        env.rng(),
+        now,
     );
 
     init_state(env, data, args.wasm_version);
