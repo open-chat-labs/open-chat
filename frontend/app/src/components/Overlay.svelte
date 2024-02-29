@@ -18,6 +18,7 @@
 
     onMount(() => {
         let portal = document.createElement("div");
+        portal.id = "portal-element";
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
