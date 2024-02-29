@@ -478,7 +478,7 @@
     "community": "Gemeinschaft",
     "group": "Gruppe"
   },
-  "light": "hell",
+  "light": "Hell",
   "linkCopiedToClipboard": "Link in die Zwischenablage kopiert",
   "loadGif": "GIF anzeigen",
   "loadImage": "Bild anzeigen",
@@ -995,7 +995,7 @@
     "reportedMessagesInfo": "Von Ihnen gesendete Nachrichten, die von anderen gelöscht oder gemeldet wurden. Dies kann als Hinweis darauf verwendet werden, dass Sie keinen positiven Beitrag zur Gemeinschaft leisten.",
     "textMessages": "Textnachrichten",
     "userStats": "Benutzerstatistiken",
-    "videoMessages": "Videonachricht "
+    "videoMessages": "Videonachricht"
   },
   "stopRecording": "Höre auf, aufzunehmen",
   "storage": "Speicher",
@@ -1016,8 +1016,8 @@
   "tellMeMore": "Mehr Informationen",
   "theInternetComputer": "Der Internet-Computer",
   "theme": {
-    "dark": "Dark",
-    "light": "hell",
+    "dark": "Dunkel",
+    "light": "Hell",
     "preferredDarkTheme": "Bevorzugtes dunkles Thema",
     "preferredLightTheme": "Bevorzugtes Lichtthema",
     "system": "System",

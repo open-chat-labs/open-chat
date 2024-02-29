@@ -499,7 +499,7 @@
   "member": "सदस्य",
   "memberCount": "{count} सदस्य",
   "memberIsTyping": "{username} टाइप कर रहा है",
-  "members": " सदस्य",
+  "members": "सदस्य",
   "membersAreTyping": "{number} सदस्य टाइप कर रहे हैं",
   "membersHeader": "{level} सदस्य",
   "messageBlocked": "संदेश छुपाया गया",
