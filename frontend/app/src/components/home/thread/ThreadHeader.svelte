@@ -71,7 +71,9 @@
 
     function onKeyDown(ev: KeyboardEvent) {
         if (ev.key === "Escape") {
-            close();
+            if (!document.getElementById("portal-element")) {
+                close();
+            }
         }
     }
 </script>
