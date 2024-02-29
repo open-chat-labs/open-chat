@@ -74,6 +74,7 @@ impl Tips {
 }
 
 #[derive(Serialize)]
+#[serde(untagged)]
 pub enum MessageContentEventPayload {
     Text(TextContentEventPayload),
     Image(ImageOrVideoContentEventPayload),
