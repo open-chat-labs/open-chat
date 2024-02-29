@@ -173,6 +173,7 @@ impl Channels {
 }
 
 impl Channel {
+    #[allow(clippy::too_many_arguments)]
     pub fn default(
         community_id: CommunityId,
         id: ChannelId,
