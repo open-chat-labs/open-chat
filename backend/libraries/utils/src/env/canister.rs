@@ -41,8 +41,7 @@ impl Environment for CanisterEnv {
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        let mut seed = [0; 32];
-        seed[..8].copy_from_slice(&time::now_nanos().to_ne_bytes());
-        Self::new(seed)
+        let seed = CanisterEnv::new([0; 32]).entropy();
+        CanisterEnv::new(seed)
     }
 }
