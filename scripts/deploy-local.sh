@@ -55,3 +55,4 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     true \
 
 ./scripts/deploy-test-ledger.sh $IDENTITY
+./scripts/mint-test-tokens.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY

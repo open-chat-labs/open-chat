@@ -12,7 +12,7 @@ use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
 use std::collections::HashMap;
-use types::{AccessGate, ChannelId, TimestampMillis, UserId};
+use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId};
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
@@ -116,6 +116,7 @@ fn create_channel_impl(
             let permissions = args.permissions_v2.unwrap_or_default();
 
             let chat = GroupChatCore::new(
+                MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
                 member.user_id,
                 args.is_public,
                 args.name,
@@ -128,6 +129,7 @@ fn create_channel_impl(
                 args.gate.clone(),
                 args.events_ttl,
                 member.is_bot,
+                state.env.rng().gen(),
                 now,
             );
 
