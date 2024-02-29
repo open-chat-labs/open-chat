@@ -45,7 +45,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 97;
+const CACHE_VERSION = 98;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -113,6 +113,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: CreatedUser;
     };
+
+    localUserIndex: {
+        key: string;
+        value: string;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -171,6 +176,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("currentUser")) {
                 db.deleteObjectStore("currentUser");
             }
+            if (db.objectStoreNames.contains("localUserIndex")) {
+                db.deleteObjectStore("localUserIndex");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             chatEvents.createIndex("expiresAt", "expiresAt");
@@ -183,6 +191,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("failed_thread_messages");
             db.createObjectStore("cachePrimer");
             db.createObjectStore("currentUser");
+            db.createObjectStore("localUserIndex");
         },
     });
 }
@@ -1202,4 +1211,18 @@ export async function setCurrentUserDiamondStatusInCache(
         },
         principal,
     );
+}
+
+export async function getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
+    if (db === undefined) return;
+    return (await db).get("localUserIndex", userId);
+}
+
+export async function cacheLocalUserIndexForUser(
+    userId: string,
+    localUserIndex: string,
+): Promise<string> {
+    if (db === undefined) return localUserIndex;
+    (await db).put("localUserIndex", localUserIndex, userId);
+    return localUserIndex;
 }

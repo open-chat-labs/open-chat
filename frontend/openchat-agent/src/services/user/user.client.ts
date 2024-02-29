@@ -1270,4 +1270,11 @@ export class UserClient extends CandidService {
             joinVideoCallResponse,
         );
     }
+
+    localUserIndex(): Promise<string> {
+        return this.handleQueryResponse(
+            () => this.userService.local_user_index({}),
+            (resp) => resp.Success.toString(),
+        );
+    }
 }
