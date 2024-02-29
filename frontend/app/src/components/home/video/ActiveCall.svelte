@@ -213,7 +213,6 @@
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-<!-- This conditional might be causing a problem -->
 {#if chat !== undefined}
     <div
         id="video-call-container"
