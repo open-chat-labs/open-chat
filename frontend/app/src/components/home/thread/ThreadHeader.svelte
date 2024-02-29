@@ -68,7 +68,15 @@
             typing: someoneTyping !== undefined,
         };
     }
+
+    function onKeyDown(ev: KeyboardEvent) {
+        if (ev.key === "Escape") {
+            close();
+        }
+    }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <SectionHeader gap flush shadow>
     <div class="avatar">
