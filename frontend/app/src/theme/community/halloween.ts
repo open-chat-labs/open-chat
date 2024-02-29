@@ -34,6 +34,7 @@ export function getTheme(base: Theme): Theme {
     base.button.txt = txt;
     base.button.disabled = lighterBrown;
     base.button["disabled-txt"] = hexPercent(darkOrange, 90);
+    base.button["disabled-bd"] = base.bd;
 
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = lightGreen;
@@ -79,6 +80,17 @@ export function getTheme(base: Theme): Theme {
     base.primary = lightGreen;
     base.link.underline = lightGreen;
     base.toast.success.bg = green;
+
+    base.daily.header = darkBrown;
+    base.daily.accent = base.accent;
+    base.daily.accentText = txt;
+    base.daily.background = darkBrown;
+    base.daily.backgroundAccent = orange;
+    base.daily.border = orange;
+    base.daily.mainAreaBg = darkBrown;
+    base.daily.mainAreaBgAccent = base.accent;
+    base.daily.mainAreaText = txt;
+    base.daily.supportiveText = "#4e5670";
 
     return base;
 }

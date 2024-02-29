@@ -4,8 +4,7 @@ use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
-use rand::prelude::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
@@ -16,12 +15,10 @@ fn init(args: Args) {
 
     let mut env = init_env([0; 32]);
 
-    let mut channel_name_rng = StdRng::from_seed(env.entropy());
-
     let default_channels = args
         .default_channels
         .into_iter()
-        .map(|name| (channel_name_rng.gen(), name))
+        .map(|name| (env.rng().gen(), name))
         .collect();
 
     let data = Data::new(

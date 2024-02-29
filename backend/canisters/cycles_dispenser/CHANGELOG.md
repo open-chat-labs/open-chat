@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
 - Split `sns_root` into its own package within `external_canisters` ([#5266](https://github.com/open-chat-labs/open-chat/pull/5266))
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 
 ## [[2.0.1017](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1017-cycles_dispenser)] - 2024-01-19
 

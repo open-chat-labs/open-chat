@@ -39,7 +39,7 @@
     $: userStore = client.userStore;
     $: user = client.user;
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
-    $: threadOpen = $activeVideoCall?.chatOpen ?? false;
+    $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
@@ -149,7 +149,7 @@
     }
 
     function getThemeConfig(theme: Theme): DailyThemeConfig {
-        return {
+        const dailyTheme = {
             colors: {
                 accent: `${theme.daily.accent}`,
                 accentText: `${theme.daily.accentText}`,
@@ -163,6 +163,7 @@
                 supportiveText: `${theme.daily.supportiveText}`,
             },
         };
+        return dailyTheme;
     }
 
     function switchCall(confirmed: boolean): Promise<void> {
@@ -190,7 +191,7 @@
             } else {
                 client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
             }
-            activeVideoCall.chatOpen(!threadOpen);
+            activeVideoCall.threadOpen(!threadOpen);
         }
     }
 
