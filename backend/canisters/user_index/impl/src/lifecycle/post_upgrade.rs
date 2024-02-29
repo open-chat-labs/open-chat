@@ -1,4 +1,4 @@
-use crate::lifecycle::{init_env, init_state};
+use crate::lifecycle::{init_env, init_state, sync_secret_with_local_user_indexes};
 use crate::memory::get_upgrades_memory;
 use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
@@ -35,6 +35,10 @@ fn post_upgrade(args: Args) {
                 .extend(state.data.users.iter().map(|u| u.principal));
 
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+        }
+
+        if state.data.oc_key_pair.is_initialised() {
+            sync_secret_with_local_user_indexes(state);
         }
     });
 }

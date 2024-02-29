@@ -69,6 +69,8 @@
 
 <style lang="scss">
     .eye {
-        transition: x 100ms ease-in-out, y 100ms ease-in-out;
+        transition:
+            x 100ms ease-in-out,
+            y 100ms ease-in-out;
     }
 </style>

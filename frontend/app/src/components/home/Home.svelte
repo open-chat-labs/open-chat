@@ -1056,7 +1056,9 @@
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
-<ActiveCall bind:this={videoCallElement} />
+<ActiveCall
+    on:clearSelection={() => page(routeForScope($chatListScope))}
+    bind:this={videoCallElement} />
 
 {#if showProfileCard !== undefined}
     <ViewUserProfile
