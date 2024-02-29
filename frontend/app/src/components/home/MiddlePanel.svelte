@@ -12,7 +12,7 @@
         type OpenChat,
     } from "openchat-client";
     import { pathParams } from "../../routes";
-    import { getContext, onDestroy, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
@@ -63,7 +63,6 @@
                     callContainer.style.setProperty("width", `${rect.width}px`);
                     callContainer.style.setProperty("top", `${rect.top}px`);
                     callContainer.style.setProperty("height", `${rect.height}px`);
-                    console.log("aligned call to middle panel");
                 }
             } else {
                 // hack: there is a race condition here and it's possible we don't find the container on the first try
@@ -79,10 +78,6 @@
     function resize() {
         alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
-
-    onDestroy(() => {
-        console.log("Middle panel has been destroyed");
-    });
 </script>
 
 <svelte:window on:resize={resize} on:orientationchange={resize} />
