@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement ability to push events from Group & Community canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
 
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+
 ## [[2.0.1074](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1074-local_group_index)] - 2024-02-22
 
 ### Added
