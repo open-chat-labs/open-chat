@@ -1,5 +1,7 @@
 use chat_events::Reader;
 use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
+use rand::rngs::StdRng;
+use rand::Rng;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
@@ -29,23 +31,26 @@ impl Channels {
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
-        default_channels: Vec<(ChannelId, String)>,
+        default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
+        rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Channels {
         let channels = default_channels
             .into_iter()
-            .map(|(id, name)| {
+            .map(|name| {
+                let channel_id = rng.gen();
                 (
-                    id,
+                    channel_id,
                     Channel::default(
                         community_id,
-                        id,
+                        channel_id,
                         name,
                         created_by,
                         default_channel_rules.clone(),
                         is_community_public,
+                        rng.gen(),
                         now,
                     ),
                 )
@@ -175,6 +180,7 @@ impl Channel {
         created_by: UserId,
         channel_rules: Option<Rules>,
         is_community_public: bool,
+        anonymized_id: u128,
         now: TimestampMillis,
     ) -> Channel {
         let mut permissions = GroupPermissions::default();
@@ -198,6 +204,7 @@ impl Channel {
                 None,
                 None,
                 false,
+                anonymized_id,
                 now,
             ),
             date_imported: None,

@@ -3,6 +3,7 @@ use crate::Data;
 use canister_tracing_macros::trace;
 use group_canister::init::Args;
 use ic_cdk_macros::init;
+use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
@@ -11,7 +12,7 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let env = init_env([0; 32]);
+    let mut env = init_env([0; 32]);
 
     let data = Data::new(
         env.canister_id().into(),
@@ -38,6 +39,7 @@ fn init(args: Args) {
         args.permissions_v2,
         args.gate,
         args.video_call_operators,
+        env.rng().gen(),
     );
 
     init_state(env, data, args.wasm_version);

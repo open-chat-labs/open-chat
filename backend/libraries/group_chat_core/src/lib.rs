@@ -73,10 +73,19 @@ impl GroupChatCore {
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         is_bot: bool,
+        anonymized_chat_id: u128,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, is_bot, now);
-        let events = ChatEvents::new_group_chat(chat, name.clone(), description.clone(), created_by, events_ttl, now);
+        let events = ChatEvents::new_group_chat(
+            chat,
+            name.clone(),
+            description.clone(),
+            created_by,
+            events_ttl,
+            anonymized_chat_id,
+            now,
+        );
 
         GroupChatCore {
             is_public: Timestamped::new(is_public, now),

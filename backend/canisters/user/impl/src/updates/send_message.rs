@@ -230,11 +230,16 @@ fn send_message_impl(
         now,
     };
 
-    let (message_event, event_payload) =
+    let chat = if let Some(c) = state.data.direct_chats.get_mut(&recipient.into()) {
+        c
+    } else {
         state
             .data
             .direct_chats
-            .push_message(true, recipient, None, push_message_args, user_type.is_bot());
+            .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
+    };
+
+    let (message_event, event_payload) = chat.push_message(true, push_message_args, None);
 
     let mut is_next_event_to_expire = false;
     if let Some(expiry) = message_event.expires_at {
@@ -272,16 +277,10 @@ fn send_message_impl(
                 if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                     Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
                 } else {
-                    state
-                        .data
-                        .direct_chats
-                        .get(&args.recipient.into())
-                        .and_then(|chat| {
-                            chat.events
-                                .main_events_reader()
-                                .message_internal(r.event_index.into())
-                                .map(|m| m.message_id)
-                        })
+                    chat.events
+                        .main_events_reader()
+                        .message_internal(r.event_index.into())
+                        .map(|m| m.message_id)
                         .map(C2CReplyContext::ThisChat)
                 }
             }),
@@ -335,29 +334,26 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
     match bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
         Ok(bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
-                let now = state.env.now();
-                for message in result.messages {
-                    let push_message_args = PushMessageArgs {
-                        sender: recipient,
-                        thread_root_message_index: None,
-                        message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                        content: MessageContentInternal::from_initial(message.content, now).unwrap(),
-                        mentioned: Vec::new(),
-                        replies_to: None,
-                        forwarded: false,
-                        sender_is_bot: false,
-                        correlation_id: 0,
-                        now,
-                    };
-                    state
-                        .data
-                        .direct_chats
-                        .push_message(false, recipient, None, push_message_args, true);
-                }
-
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-                    // Mark that the bot has read the message we just sent
-                    chat.mark_read_up_to(message_index, false, now);
+                    let now = state.env.now();
+                    for message in result.messages {
+                        let push_message_args = PushMessageArgs {
+                            sender: recipient,
+                            thread_root_message_index: None,
+                            message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
+                            content: MessageContentInternal::from_initial(message.content, now).unwrap(),
+                            mentioned: Vec::new(),
+                            replies_to: None,
+                            forwarded: false,
+                            sender_is_bot: false,
+                            correlation_id: 0,
+                            now,
+                        };
+                        chat.push_message(false, push_message_args, None);
+
+                        // Mark that the bot has read the message we just sent
+                        chat.mark_read_up_to(message_index, false, now);
+                    }
                 }
             });
         }

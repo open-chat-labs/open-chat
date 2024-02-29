@@ -1130,6 +1130,7 @@ name = "chat_events"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "ic-ledger-types",
  "itertools",
  "ledger_utils",

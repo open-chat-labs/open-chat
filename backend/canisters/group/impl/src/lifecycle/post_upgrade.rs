@@ -39,6 +39,8 @@ fn post_upgrade(args: Args) {
         state.data.chat.events.set_chat(Chat::Group(this_canister_id.into()));
 
         let source_string = this_canister_id.to_string();
+        let anonymized_chat_id = state.data.chat.events.anonymized_id();
+
         let events_iter = state.data.chat.events.iter_all_events().filter_map(|(e, is_thread)| {
             if let ChatEventInternal::Message(m) = &e.event {
                 let is_proposals_bot = m.sender == state.data.proposals_bot_user_id;
@@ -49,6 +51,7 @@ fn post_upgrade(args: Args) {
                         .with_json_payload(&MessageEventPayload {
                             message_type: m.content.message_type(),
                             chat_type: "group".to_string(),
+                            chat_id: anonymized_chat_id.clone(),
                             thread: is_thread,
                             sender_is_bot: is_proposals_bot,
                             content_specific_payload: m.content.event_payload(),

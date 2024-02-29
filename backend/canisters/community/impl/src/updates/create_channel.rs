@@ -129,6 +129,7 @@ fn create_channel_impl(
                 args.gate.clone(),
                 args.events_ttl,
                 member.is_bot,
+                state.env.rng().gen(),
                 now,
             );
 

@@ -482,6 +482,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
         video_call_operators: Vec<Principal>,
+        anonymized_chat_id: u128,
     ) -> Data {
         let chat = GroupChatCore::new(
             MultiUserChat::Group(chat_id),
@@ -497,6 +498,7 @@ impl Data {
             gate,
             events_ttl,
             proposals_bot_user_id == creator_user_id,
+            anonymized_chat_id,
             now,
         );
 

@@ -1,10 +1,10 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, Reader};
+use chat_events::{ChatEvents, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
-    Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageEventPayload, MessageId, MessageIndex,
+    Milliseconds, OptionUpdate, TimestampMillis, Timestamped, UserId,
 };
 use user_canister::SendMessageArgs;
 
@@ -23,11 +23,17 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, is_bot: bool, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> DirectChat {
+    pub fn new(
+        them: UserId,
+        is_bot: bool,
+        events_ttl: Option<Milliseconds>,
+        anonymized_chat_id: u128,
+        now: TimestampMillis,
+    ) -> DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(them, events_ttl, now),
+            events: ChatEvents::new_direct_chat(them, events_ttl, anonymized_chat_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
@@ -53,6 +59,27 @@ impl DirectChat {
         .into_iter()
         .max()
         .unwrap()
+    }
+
+    pub fn push_message(
+        &mut self,
+        sent_by_me: bool,
+        args: PushMessageArgs,
+        their_message_index: Option<MessageIndex>,
+    ) -> (EventWrapper<Message>, MessageEventPayload) {
+        let now = args.now;
+        let (message_event, event_payload) = self.events.push_message(args);
+
+        self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
+
+        if !sent_by_me {
+            if let Some(their_message_index) = their_message_index {
+                self.unread_message_index_map
+                    .add(message_event.event.message_index, their_message_index);
+            }
+        }
+
+        (message_event, event_payload)
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {

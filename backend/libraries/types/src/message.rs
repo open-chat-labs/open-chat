@@ -35,6 +35,7 @@ pub struct GroupReplyContext {
 pub struct MessageEventPayload {
     pub message_type: String,
     pub chat_type: String,
+    pub chat_id: String,
     pub thread: bool,
     pub sender_is_bot: bool,
     #[serde(flatten)]

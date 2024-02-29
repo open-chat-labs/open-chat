@@ -49,21 +49,21 @@ fn post_upgrade(args: Args) {
         }
 
         let source_string = this_canister_id.to_string();
-        let events_iter = state
-            .data
-            .channels
-            .iter()
-            .flat_map(|c| c.chat.events.iter_all_events())
-            .filter_map(|(e, is_thread)| {
+        let proposals_bot_user_id = state.data.proposals_bot_user_id;
+        let events_iter = state.data.channels.iter().flat_map(|c| {
+            let anonymized_chat_id = c.chat.events.anonymized_id();
+            let source_string_clone = source_string.clone();
+            c.chat.events.iter_all_events().filter_map(move |(e, is_thread)| {
                 if let ChatEventInternal::Message(m) = &e.event {
-                    let is_proposals_bot = m.sender == state.data.proposals_bot_user_id;
+                    let is_proposals_bot = m.sender == proposals_bot_user_id;
                     Some(
                         EventBuilder::new("message_sent", e.timestamp)
                             .with_user(if is_proposals_bot { "ProposalsBot".to_string() } else { m.sender.to_string() })
-                            .with_source(source_string.clone())
+                            .with_source(source_string_clone.clone())
                             .with_json_payload(&MessageEventPayload {
                                 message_type: m.content.message_type(),
                                 chat_type: "channel".to_string(),
+                                chat_id: anonymized_chat_id.clone(),
                                 thread: is_thread,
                                 sender_is_bot: is_proposals_bot,
                                 content_specific_payload: m.content.event_payload(),
@@ -73,7 +73,8 @@ fn post_upgrade(args: Args) {
                 } else {
                     None
                 }
-            });
+            })
+        });
 
         state.data.event_sink_client.push_many(events_iter, false);
     });

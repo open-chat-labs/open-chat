@@ -37,6 +37,8 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
+    #[serde(default)]
+    anonymized_id: String,
 }
 
 fn default_chat() -> Chat {
@@ -49,7 +51,20 @@ impl ChatEvents {
         self.chat = chat;
     }
 
-    pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
+    pub fn anonymized_id(&self) -> String {
+        self.anonymized_id.clone()
+    }
+
+    pub fn set_anonymized_id(&mut self, id: u128) {
+        self.anonymized_id = hex::encode(id.to_be_bytes());
+    }
+
+    pub fn new_direct_chat(
+        them: UserId,
+        events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
+        now: TimestampMillis,
+    ) -> ChatEvents {
         let mut events = ChatEvents {
             chat: Chat::Direct(them.into()),
             main: ChatEventsList::default(),
@@ -61,6 +76,7 @@ impl ChatEvents {
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
+            anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -74,6 +90,7 @@ impl ChatEvents {
         description: String,
         created_by: UserId,
         events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
@@ -87,6 +104,7 @@ impl ChatEvents {
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
+            anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
         };
 
         events.push_event(
@@ -139,6 +157,7 @@ impl ChatEvents {
                 Chat::Channel(..) => "channel",
             }
             .to_string(),
+            chat_id: self.anonymized_id.clone(),
             thread: args.thread_root_message_index.is_some(),
             sender_is_bot: args.sender_is_bot,
             content_specific_payload: args.content.event_payload(),

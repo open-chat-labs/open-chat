@@ -1,9 +1,9 @@
 use crate::model::direct_chat::DirectChat;
-use chat_events::{ChatInternal, ChatMetricsInternal, PushMessageArgs};
+use chat_events::{ChatInternal, ChatMetricsInternal};
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, EventWrapper, Message, MessageEventPayload, MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{ChatId, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -20,6 +20,20 @@ impl DirectChats {
 
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut DirectChat> {
         self.direct_chats.get_mut(chat_id)
+    }
+
+    pub fn create(
+        &mut self,
+        their_user_id: UserId,
+        is_bot: bool,
+        anonymized_id: u128,
+        now: TimestampMillis,
+    ) -> &mut DirectChat {
+        if let Vacant(e) = self.direct_chats.entry(their_user_id.into()) {
+            e.insert(DirectChat::new(their_user_id, is_bot, None, anonymized_id, now))
+        } else {
+            unreachable!()
+        }
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
@@ -59,36 +73,6 @@ impl DirectChats {
 
     pub fn len(&self) -> usize {
         self.direct_chats.len()
-    }
-
-    pub fn push_message(
-        &mut self,
-        sent_by_me: bool,
-        their_user_id: UserId,
-        their_message_index: Option<MessageIndex>,
-        args: PushMessageArgs,
-        is_bot: bool,
-    ) -> (EventWrapper<Message>, MessageEventPayload) {
-        let chat_id = ChatId::from(their_user_id);
-        let now = args.now;
-
-        let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
-            Occupied(e) => e.into_mut(),
-            Vacant(e) => e.insert(DirectChat::new(their_user_id, is_bot, None, args.now)),
-        };
-
-        let (message_event, event_payload) = chat.events.push_message(args);
-
-        chat.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
-
-        if !sent_by_me {
-            if let Some(their_message_index) = their_message_index {
-                chat.unread_message_index_map
-                    .add(message_event.event.message_index, their_message_index);
-            }
-        }
-
-        (message_event, event_payload)
     }
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
