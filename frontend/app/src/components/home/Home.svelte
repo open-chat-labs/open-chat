@@ -95,8 +95,6 @@
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
     import ActiveCall from "./video/ActiveCall.svelte";
-    import { activeVideoCall } from "../../stores/video";
-    import VideoContent from "./VideoContent.svelte";
 
     type ViewProfileConfig = {
         userId: string;
