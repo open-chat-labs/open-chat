@@ -4,7 +4,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder};
+use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
 use event_sink_client_cdk_runtime::CdkRuntime;
 use event_sink_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
@@ -163,6 +163,9 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let event_sink_client_info = self.data.event_sink_client.info();
+        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
+
         Metrics {
             memory_used: utils::memory::used(),
             now: self.env.now(),
@@ -182,6 +185,7 @@ impl RuntimeState {
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             referral_codes: self.data.referral_codes.metrics(),
+            event_sink_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -190,6 +194,7 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
+                event_relay: event_relay_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
         }
@@ -318,6 +323,7 @@ pub struct Metrics {
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
+    pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
 }
@@ -331,4 +337,5 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
+    pub event_relay: CanisterId,
 }
