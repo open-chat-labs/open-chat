@@ -33,7 +33,9 @@
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
 
     $: {
-        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        if (middlePanel) {
+            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        }
     }
 
     function alignVideoCall(
@@ -49,7 +51,7 @@
             if (callContainer) {
                 if (call.fullscreen) {
                     let width = window.innerWidth;
-                    if (layout.rightPanel !== "floating" && call.chatOpen) {
+                    if (layout.rightPanel !== "floating" && call.threadOpen) {
                         width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
@@ -61,7 +63,6 @@
                     callContainer.style.setProperty("width", `${rect.width}px`);
                     callContainer.style.setProperty("top", `${rect.top}px`);
                     callContainer.style.setProperty("height", `${rect.height}px`);
-                    console.log("aligned call to middle panel");
                 }
             } else {
                 // hack: there is a race condition here and it's possible we don't find the container on the first try

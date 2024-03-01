@@ -194,7 +194,7 @@
     function closeThread(_ev: CustomEvent<string>) {
         popRightPanelHistory();
         page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
-        activeVideoCall.chatOpen(false);
+        activeVideoCall.threadOpen(false);
     }
 
     function findMessage(

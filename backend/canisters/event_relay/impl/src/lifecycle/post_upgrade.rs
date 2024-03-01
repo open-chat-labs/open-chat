@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use event_relay_canister::post_upgrade::Args;
@@ -24,4 +25,17 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    let local_user_indexes = vec!["nq4qv-wqaaa-aaaaf-bhdgq-cai", "aboy3-giaaa-aaaar-aaaaq-cai"];
+    let local_group_indexes = vec!["suaf3-hqaaa-aaaaf-bfyoa-cai", "ainth-qaaaa-aaaar-aaaba-cai"];
+
+    mutate_state(|state| {
+        for principal in local_user_indexes
+            .into_iter()
+            .chain(local_group_indexes.into_iter())
+            .map(|s| Principal::from_text(s).unwrap())
+        {
+            state.data.push_events_whitelist.insert(principal);
+        }
+    });
 }

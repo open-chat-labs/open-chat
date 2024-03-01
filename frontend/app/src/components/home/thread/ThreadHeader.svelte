@@ -68,7 +68,17 @@
             typing: someoneTyping !== undefined,
         };
     }
+
+    function onKeyDown(ev: KeyboardEvent) {
+        if (ev.key === "Escape") {
+            if (!document.getElementById("portal-element")) {
+                close();
+            }
+        }
+    }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <SectionHeader gap flush shadow>
     <div class="avatar">

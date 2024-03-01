@@ -1,5 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import { rtlStore } from "../../../stores/rtl";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import {
@@ -17,29 +21,28 @@
     import daily from "@daily-co/daily-js";
     import AreYouSure from "../../AreYouSure.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Avatar from "../../Avatar.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
+    import { filterRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
-    import page from "page";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
+    import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     $: selectedChatId = client.selectedChatId;
-    $: chatSummariesStore = client.chatSummariesStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
     $: user = client.user;
     $: chat = normaliseChatSummary($activeVideoCall?.chatId);
-    $: threadOpen = $activeVideoCall?.chatOpen ?? false;
+    $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: ChatSummary | undefined = undefined;
@@ -50,7 +53,7 @@
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
         if (chatId) {
-            const chat = $chatSummariesStore.get(chatId);
+            const chat = client.lookupChatSummary(chatId);
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
@@ -112,7 +115,9 @@
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                showLeaveButton: true,
+                activeSpeakerMode: false,
+                showLeaveButton: false,
+                showFullscreenButton: false,
                 iframeStyle: {
                     width: "100%",
                     height: "100%",
@@ -149,7 +154,7 @@
     }
 
     function getThemeConfig(theme: Theme): DailyThemeConfig {
-        return {
+        const dailyTheme = {
             colors: {
                 accent: `${theme.daily.accent}`,
                 accentText: `${theme.daily.accentText}`,
@@ -163,6 +168,7 @@
                 supportiveText: `${theme.daily.supportiveText}`,
             },
         };
+        return dailyTheme;
     }
 
     function switchCall(confirmed: boolean): Promise<void> {
@@ -182,20 +188,16 @@
         }
     }
 
-    function toggleThread() {
-        if (chat !== undefined && chat.messageIndex !== undefined) {
-            if (threadOpen) {
-                popRightPanelHistory();
-                page.replace(removeQueryStringParam("open"));
-            } else {
-                client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
-            }
-            activeVideoCall.chatOpen(!threadOpen);
-        }
-    }
-
     function hangup() {
         activeVideoCall.endCall();
+    }
+
+    function clearSelection() {
+        dispatch("clearSelection");
+    }
+
+    export function closeThread() {
+        activeVideoCall.threadOpen(false);
     }
 </script>
 
@@ -203,52 +205,68 @@
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-{#if chat !== undefined}
+{#if $activeVideoCall}
     <div
         id="video-call-container"
         class="video-call-container"
         class:visible={$activeVideoCall &&
+            !(threadOpen && $mobileWidth) &&
             chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
-        <SectionHeader shadow flush>
-            <div class="header">
-                <div class="details">
-                    {#if $activeVideoCall?.status === "joining"}
-                        <div class="joining">
-                            <FancyLoader loop />
-                        </div>
-                    {:else}
-                        <div class="avatar">
-                            <Avatar
-                                url={chat.avatarUrl}
-                                showStatus
-                                userId={chat.userId?.userId}
-                                size={AvatarSize.Default} />
+        {#if chat !== undefined}
+            <SectionHeader shadow flush>
+                <div class="header">
+                    {#if $mobileWidth}
+                        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+                            <HoverIcon>
+                                {#if $rtlStore}
+                                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                                {:else}
+                                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                                {/if}
+                            </HoverIcon>
                         </div>
                     {/if}
-                    <h2 class="name">{chat.name}</h2>
-                    {#if $activeVideoCall?.status === "joining"}
-                        <Typing />
-                    {/if}
-                </div>
-                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                    <HoverIcon title={$_("videoCall.chat")} on:click={toggleThread}>
-                        <MessageOutline
-                            size={$iconSize}
-                            color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                    </HoverIcon>
-                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                        <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                    <HoverIcon on:click={toggleFullscreen}>
-                        {#if $activeVideoCall?.fullscreen}
-                            <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                    <div class="details">
+                        {#if $activeVideoCall?.status === "joining"}
+                            <div class="joining">
+                                <FancyLoader loop />
+                            </div>
                         {:else}
-                            <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                            <div class="avatar">
+                                <Avatar
+                                    url={chat.avatarUrl}
+                                    showStatus
+                                    userId={chat.userId?.userId}
+                                    size={AvatarSize.Default} />
+                            </div>
                         {/if}
-                    </HoverIcon>
+                        <h2 class="name">{chat.name}</h2>
+                        {#if $activeVideoCall?.status === "joining"}
+                            <Typing />
+                        {/if}
+                    </div>
+                    <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                        {#if chat.chatId && chat.messageIndex !== undefined}
+                            <ActiveCallThreadSummary
+                                chatId={chat.chatId}
+                                messageIndex={chat.messageIndex} />
+                        {/if}
+                        <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                            <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                        {#if !$mobileWidth}
+                            <HoverIcon on:click={toggleFullscreen}>
+                                {#if $activeVideoCall?.fullscreen}
+                                    <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                                {:else}
+                                    <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                                {/if}
+                            </HoverIcon>
+                        {/if}
+                    </div>
                 </div>
-            </div>
-        </SectionHeader>
+            </SectionHeader>
+        {/if}
         <div class="iframe-container" bind:this={iframeContainer}></div>
     </div>
 {/if}
@@ -277,13 +295,14 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: $sp4;
+        gap: $sp3;
         width: 100%;
 
         .details {
             display: flex;
             align-items: center;
             gap: $sp4;
+            flex: auto;
 
             .joining {
                 width: toRem(48);

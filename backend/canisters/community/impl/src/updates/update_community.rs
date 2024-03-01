@@ -53,6 +53,7 @@ async fn update_community(mut args: Args) -> Response {
             || args.description.is_some()
             || args.avatar.has_update()
             || args.banner.has_update()
+            || args.gate.has_update()
             || args.public == Some(true)
             || args.primary_language.is_some())
     {

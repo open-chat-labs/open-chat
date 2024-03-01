@@ -7,16 +7,19 @@ use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT}
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::{PocketIc, PocketIcBuilder};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::{BuildVersion, CanisterId, CanisterWasm};
+use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
-pub fn setup_new_env() -> TestEnv {
+pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
+    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).gen());
+
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
             env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
@@ -44,6 +47,9 @@ pub fn setup_new_env() -> TestEnv {
         .with_sns_subnet()
         .with_application_subnet()
         .build();
+
+    tick_many(&mut env, ticks as usize);
+
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -323,7 +329,12 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
     let event_relay_init_args = event_relay_canister::init::Args {
-        push_events_whitelist: vec![],
+        push_events_whitelist: vec![
+            user_index_canister_id,
+            online_users_canister_id,
+            local_user_index_canister_id,
+            local_group_index_canister_id,
+        ],
         event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id,
         chat_ledger_canister_id,

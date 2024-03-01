@@ -17,17 +17,18 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
-use types::SNS_FEE_SHARE_PERCENT;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
+use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -323,6 +324,7 @@ fn event_sink_client() -> EventSinkClient<CdkRuntime> {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
+        community_id: CommunityId,
         created_by_principal: Principal,
         created_by_user_id: UserId,
         is_public: bool,
@@ -341,14 +343,23 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         gate: Option<AccessGate>,
-        default_channels: Vec<(ChannelId, String)>,
+        default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
         video_call_operators: Vec<Principal>,
         test_mode: bool,
+        rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Data {
-        let channels = Channels::new(created_by_user_id, default_channels, default_channel_rules, is_public, now);
+        let channels = Channels::new(
+            community_id,
+            created_by_user_id,
+            default_channels,
+            default_channel_rules,
+            is_public,
+            rng,
+            now,
+        );
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 

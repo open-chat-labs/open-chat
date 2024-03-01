@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Add `local_user/group_index` canisters to `push_events_whitelist` ([#5459](https://github.com/open-chat-labs/open-chat/pull/5459))
+
+## [[2.0.1081](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1081-event_relay)] - 2024-02-27
+
 ### Added
 
 - Push events for mint, burn and treasury transactions ([#5435](https://github.com/open-chat-labs/open-chat/pull/5435))

@@ -60,19 +60,11 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
-    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
-        .with_flush_delay(Duration::from_secs(60))
-        .build()
 }
 
 impl Data {

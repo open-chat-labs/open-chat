@@ -13,10 +13,11 @@ use types::{
     EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
     GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -59,6 +60,7 @@ pub struct GroupChatCore {
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
     pub fn new(
+        chat: MultiUserChat,
         created_by: UserId,
         is_public: bool,
         name: String,
@@ -71,10 +73,19 @@ impl GroupChatCore {
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         is_bot: bool,
+        anonymized_chat_id: u128,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, is_bot, now);
-        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
+        let events = ChatEvents::new_group_chat(
+            chat,
+            name.clone(),
+            description.clone(),
+            created_by,
+            events_ttl,
+            anonymized_chat_id,
+            now,
+        );
 
         GroupChatCore {
             is_public: Timestamped::new(is_public, now),
@@ -594,6 +605,8 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
+            sender_is_bot,
+            notification_exclusions,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -630,11 +643,12 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
+            sender_is_bot,
             correlation_id: 0,
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args);
+        let (message_event, event_payload) = self.events.push_message(push_message_args);
         let message_index = message_event.event.message_index;
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
@@ -685,9 +699,14 @@ impl GroupChatCore {
             }
         }
 
+        for user_id in notification_exclusions {
+            users_to_notify.remove(&user_id);
+        }
+
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
+            event_payload,
         })
     }
 
@@ -702,16 +721,20 @@ impl GroupChatCore {
     ) -> PrepareSendMessageResult {
         use PrepareSendMessageResult::*;
 
+        let mut notification_exclusions = Vec::new();
         if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
+                sender_is_bot: true,
+                notification_exclusions,
             });
         }
 
         if let MessageContentInternal::VideoCall(vc) = content {
             sender = vc.participants[0].user_id;
+            notification_exclusions.push(sender);
         }
 
         match self.members.get_mut(&sender) {
@@ -745,6 +768,8 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            sender_is_bot: member.is_bot,
+            notification_exclusions,
         })
     }
 
@@ -1772,6 +1797,7 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
+    pub event_payload: MessageEventPayload,
 }
 
 pub enum AddRemoveReactionResult {
@@ -2055,4 +2081,6 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
+    sender_is_bot: bool,
+    notification_exclusions: Vec<UserId>,
 }

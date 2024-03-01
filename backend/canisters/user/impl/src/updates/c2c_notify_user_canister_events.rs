@@ -80,20 +80,20 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
     }
 }
 
-fn send_messages(args: SendMessagesArgs, sender_user_id: UserId, state: &mut RuntimeState) {
+fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
     for message in args.messages {
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
-        if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
+        if let Some(chat) = state.data.direct_chats.get(&sender.into()) {
             if chat.events.contains_message_id(None, message.message_id) {
                 continue;
             }
         }
 
         handle_message_impl(
-            sender_user_id,
             HandleMessageArgs {
+                sender,
                 message_id: Some(message.message_id),
                 sender_message_index: Some(message.sender_message_index),
                 sender_name: args.sender_name.clone(),
@@ -103,10 +103,10 @@ fn send_messages(args: SendMessagesArgs, sender_user_id: UserId, state: &mut Run
                 forwarding: message.forwarding,
                 is_bot: false,
                 sender_avatar_id: args.sender_avatar_id,
+                push_message_sent_event: false,
+                mute_notification: message.message_filter_failed.is_some(),
                 now,
             },
-            message.message_filter_failed.is_some(),
-            false,
             state,
         );
     }

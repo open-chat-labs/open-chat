@@ -235,7 +235,12 @@ async fn install_service_canisters_impl(
 
     let event_relay_canister_wasm = get_canister_wasm(CanisterName::EventRelay, version);
     let event_relay_init_args = event_relay_canister::init::Args {
-        push_events_whitelist: vec![canister_ids.user_index, canister_ids.online_users],
+        push_events_whitelist: vec![
+            canister_ids.user_index,
+            canister_ids.online_users,
+            canister_ids.local_user_index,
+            canister_ids.local_group_index,
+        ],
         event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,

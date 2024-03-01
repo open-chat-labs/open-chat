@@ -1510,6 +1510,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getLocalUserIndexForUser":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getLocalUserIndexForUser(payload.userId),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
