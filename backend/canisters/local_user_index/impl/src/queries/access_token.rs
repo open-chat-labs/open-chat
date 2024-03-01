@@ -61,10 +61,7 @@ fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Respons
         },
     );
 
-    // Salt the RNG with the input args
-    let salt = serde_json::to_string(&args).unwrap().into_bytes();
-
-    let mut rng = StdRng::from_seed(state.env.entropy(Some(&salt)));
+    let mut rng = StdRng::from_seed(state.env.entropy());
 
     match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
         Ok(token) => Success(token),

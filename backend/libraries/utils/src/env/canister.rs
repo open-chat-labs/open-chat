@@ -37,11 +37,15 @@ impl Environment for CanisterEnv {
     fn rng(&mut self) -> &mut StdRng {
         &mut self.rng
     }
+
+    fn arg_data_raw(&self) -> Vec<u8> {
+        ic_cdk::api::call::arg_data_raw()
+    }
 }
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        let seed = CanisterEnv::new([0; 32]).entropy(None);
+        let seed = CanisterEnv::new([0; 32]).entropy();
         CanisterEnv::new(seed)
     }
 }

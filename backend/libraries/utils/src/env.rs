@@ -13,12 +13,13 @@ pub trait Environment {
     fn canister_id(&self) -> CanisterId;
     fn cycles_balance(&self) -> Cycles;
     fn rng(&mut self) -> &mut StdRng;
+    fn arg_data_raw(&self) -> Vec<u8>;
 
     fn now(&self) -> TimestampMillis {
         self.now_nanos() / 1_000_000
     }
 
-    fn entropy(&mut self, salt: Option<&[u8]>) -> Hash {
+    fn entropy(&mut self) -> Hash {
         let mut bytes = Vec::new();
 
         bytes.extend(self.rng().gen::<Hash>());
@@ -26,10 +27,7 @@ pub trait Environment {
         bytes.extend(self.caller().as_slice());
         bytes.extend(self.now_nanos().to_ne_bytes());
         bytes.extend(self.cycles_balance().to_ne_bytes());
-
-        if let Some(salt) = salt {
-            bytes.extend(salt);
-        }
+        bytes.extend(&self.arg_data_raw());
 
         sha256(&bytes)
     }
