@@ -3826,6 +3826,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => []);
     }
 
+    lookupChatSummary(chatId: ChatIdentifier): ChatSummary | undefined {
+        return this._liveState.allChats.get(chatId);
+    }
+
     searchUsersForInvite(
         searchTerm: string,
         maxResults: number,
@@ -5687,22 +5691,25 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private getLocalUserIndex(chat: ChatSummary): string {
+    private getLocalUserIndex(chat: ChatSummary): Promise<string> {
         switch (chat.kind) {
             case "group_chat":
-                return chat.localUserIndex;
+                return Promise.resolve(chat.localUserIndex);
             case "channel":
                 const community = this._liveState.communities.get({
                     kind: "community",
                     communityId: chat.id.communityId,
                 });
                 if (community) {
-                    return community.localUserIndex;
+                    return Promise.resolve(community.localUserIndex);
                 } else {
                     throw new Error(`Unable to get the local user index for channel: ${chat.id}`);
                 }
-            default:
-                throw new Error("TODO get hold of localuserindex for channel or direct chat");
+            case "direct_chat":
+                return this.sendRequest({
+                    kind: "getLocalUserIndexForUser",
+                    userId: chat.them.userId,
+                });
         }
     }
 
@@ -5714,20 +5721,22 @@ export class OpenChat extends OpenChatAgentWorker {
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
-        return this.sendRequest({
-            kind: "getAccessToken",
-            chatId,
-            accessTokenType,
-            localUserIndex: this.getLocalUserIndex(chat),
-        })
-            .then((token) => {
-                if (token === undefined) {
-                    throw new Error("Didn't get an access token");
-                }
-                console.log("Token: ", token);
-                return token;
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId,
+                accessTokenType,
+                localUserIndex,
             })
-            .then((token) => this.getRoomAccessToken(token));
+                .then((token) => {
+                    if (token === undefined) {
+                        throw new Error("Didn't get an access token");
+                    }
+                    console.log("Token: ", token);
+                    return token;
+                })
+                .then((token) => this.getRoomAccessToken(token));
+        });
     }
 
     // **** Communities Stuff

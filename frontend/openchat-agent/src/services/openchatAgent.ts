@@ -11,6 +11,8 @@ import {
     setCachedMessageIfNotExists,
     setCachePrimerTimestamp,
     recordFailedMessage,
+    cacheLocalUserIndexForUser,
+    getLocalUserIndexForUser,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -3162,5 +3164,17 @@ export class OpenChatAgent extends EventTarget {
                     accessTokenType,
                 );
         }
+    }
+
+    async getLocalUserIndexForUser(userId: string): Promise<string> {
+        const localUserIndex = await getLocalUserIndexForUser(userId);
+        if (localUserIndex !== undefined) {
+            return localUserIndex;
+        }
+        return UserClient.create(userId, this.identity, this.config, this.db)
+            .localUserIndex()
+            .then((localUserIndex) => {
+                return cacheLocalUserIndexForUser(userId, localUserIndex);
+            });
     }
 }

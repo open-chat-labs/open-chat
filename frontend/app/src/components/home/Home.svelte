@@ -505,6 +505,7 @@
             return;
         }
         tick().then(() => {
+            videoCallElement?.closeThread();
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }

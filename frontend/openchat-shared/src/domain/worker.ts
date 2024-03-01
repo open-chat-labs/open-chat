@@ -333,7 +333,13 @@ export type WorkerRequest =
     | GetProposedTranslations
     | GetTranslationsPendingDeployment
     | JoinVideoCall
-    | GetAccessToken;
+    | GetAccessToken
+    | GetLocalUserIndexForUser;
+
+type GetLocalUserIndexForUser = {
+    kind: "getLocalUserIndexForUser";
+    userId: string;
+};
 
 type GetAccessToken = {
     kind: "getAccessToken";
@@ -1851,4 +1857,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? JoinVideoCallResponse
     : T extends GetAccessToken
     ? string | undefined
+    : T extends GetLocalUserIndexForUser
+    ? string
     : never;
