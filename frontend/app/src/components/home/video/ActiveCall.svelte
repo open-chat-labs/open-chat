@@ -98,6 +98,8 @@
                 return;
             }
 
+            performance.mark("start");
+
             // close and threads we have open in the right panel
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
@@ -111,6 +113,10 @@
 
             // first we need tojoin access jwt from the oc backend
             const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
+
+            performance.mark("daily_token");
+            performance.measure("get_oc_token", "start", "oc_token");
+            performance.measure("get_daily_token", "oc_token", "daily_token");
 
             const call = daily.createFrame(iframeContainer, {
                 token,
@@ -126,6 +132,8 @@
                 theme: getThemeConfig($currentTheme),
             });
 
+            performance.mark("daily_frame");
+
             call.on("left-meeting", async () => {
                 activeVideoCall.endCall();
             });
@@ -140,7 +148,20 @@
 
             await call.join();
 
+            performance.mark("daily_joined");
+            performance.measure("get_daily_frame", "daily_token", "daily_frame");
+            performance.measure("get_daily_joined", "daily_frame", "daily_joined");
+
             activeVideoCall.setCall(chat.id, call);
+
+            performance.mark("end");
+            performance.measure("total", "start", "end");
+
+            console.log("OCToken: ", performance.getEntriesByName("get_oc_token"));
+            console.log("DailyToken: ", performance.getEntriesByName("get_daily_token"));
+            console.log("DailyFrame: ", performance.getEntriesByName("get_daily_frame"));
+            console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
+            console.log("Total: ", performance.getEntriesByName("total"));
 
             if (chat.videoCallInProgress !== undefined) {
                 await client.joinVideoCall(chat.id, chat.videoCallInProgress);
