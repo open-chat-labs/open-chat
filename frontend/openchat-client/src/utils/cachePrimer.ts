@@ -137,14 +137,7 @@ export class CachePrimer {
         const isProposalsChat =
             chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 
-        if (isProposalsChat) {
-            return (
-                (chat.latestMessage?.timestamp ?? BigInt(0)) > lastUpdated ||
-                chat.lastUpdated > lastUpdated + ONE_HOUR_MS
-            );
-        } else {
-            return chat.lastUpdated > lastUpdated;
-        }
+        return !isProposalsChat && chat.lastUpdated > lastUpdated;
     }
 }
 
