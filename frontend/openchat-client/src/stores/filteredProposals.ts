@@ -1,5 +1,6 @@
 import type { ChatSummary, Proposal } from "openchat-shared";
 import { writable } from "svelte/store";
+import { isProposalsChat } from "../utils/chat";
 
 const storageKeyPrefix = "proposal_filters_";
 
@@ -79,7 +80,7 @@ export class FilteredProposals {
     private toStorage() {
         localStorage.setItem(
             storageKeyPrefix + this._canisterId,
-            JSON.stringify(Array.from(this._filters))
+            JSON.stringify(Array.from(this._filters)),
         );
     }
 }
@@ -113,10 +114,9 @@ export function toggleProposalFilterMessageExpansion(messageId: bigint, expand: 
 }
 
 export function resetFilteredProposalsStore(chat: ChatSummary): void {
-    const filteredProposals =
-        chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals"
-            ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
-            : undefined;
+    const filteredProposals = isProposalsChat(chat)
+        ? FilteredProposals.fromStorage(chat.subtype.governanceCanisterId)
+        : undefined;
 
     filteredProposalsStore.update((_) => filteredProposals);
 }

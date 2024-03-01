@@ -13,6 +13,7 @@ import { userStore } from "../stores/user";
 import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
+import { isProposalsChat } from "./chat";
 
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
@@ -134,10 +135,6 @@ export class CachePrimer {
 
         return chat.lastUpdated > lastUpdated && !isProposalsChat(chat);
     }
-}
-
-function isProposalsChat(chat: ChatSummary): boolean {
-    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
 
 function debug(message: string) {
