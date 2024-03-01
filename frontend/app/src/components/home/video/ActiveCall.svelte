@@ -93,7 +93,6 @@
 
     export async function startOrJoinVideoCall(chat: ChatSummary, messageIndex?: number) {
         try {
-            // todo - we need to figure out if we are starting the call or joining the call
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = chat;
                 return;
@@ -205,71 +204,69 @@
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-{#if $activeVideoCall}
-    <div
-        id="video-call-container"
-        class="video-call-container"
-        class:visible={$activeVideoCall &&
-            !(threadOpen && $mobileWidth) &&
-            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
-        {#if chat !== undefined}
-            <SectionHeader shadow flush>
-                <div class="header">
-                    {#if $mobileWidth}
-                        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
-                            <HoverIcon>
-                                {#if $rtlStore}
-                                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                                {:else}
-                                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                                {/if}
-                            </HoverIcon>
+<div
+    id="video-call-container"
+    class="video-call-container"
+    class:visible={$activeVideoCall &&
+        !(threadOpen && $mobileWidth) &&
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
+    {#if chat !== undefined}
+        <SectionHeader shadow flush>
+            <div class="header">
+                {#if $mobileWidth}
+                    <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+                        <HoverIcon>
+                            {#if $rtlStore}
+                                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        </HoverIcon>
+                    </div>
+                {/if}
+                <div class="details">
+                    {#if $activeVideoCall?.status === "joining"}
+                        <div class="joining">
+                            <FancyLoader loop />
+                        </div>
+                    {:else}
+                        <div class="avatar">
+                            <Avatar
+                                url={chat.avatarUrl}
+                                showStatus
+                                userId={chat.userId?.userId}
+                                size={AvatarSize.Default} />
                         </div>
                     {/if}
-                    <div class="details">
-                        {#if $activeVideoCall?.status === "joining"}
-                            <div class="joining">
-                                <FancyLoader loop />
-                            </div>
-                        {:else}
-                            <div class="avatar">
-                                <Avatar
-                                    url={chat.avatarUrl}
-                                    showStatus
-                                    userId={chat.userId?.userId}
-                                    size={AvatarSize.Default} />
-                            </div>
-                        {/if}
-                        <h2 class="name">{chat.name}</h2>
-                        {#if $activeVideoCall?.status === "joining"}
-                            <Typing />
-                        {/if}
-                    </div>
-                    <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                        {#if chat.chatId && chat.messageIndex !== undefined}
-                            <ActiveCallThreadSummary
-                                chatId={chat.chatId}
-                                messageIndex={chat.messageIndex} />
-                        {/if}
-                        <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                            <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                        {#if !$mobileWidth}
-                            <HoverIcon on:click={toggleFullscreen}>
-                                {#if $activeVideoCall?.fullscreen}
-                                    <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                                {:else}
-                                    <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                                {/if}
-                            </HoverIcon>
-                        {/if}
-                    </div>
+                    <h2 class="name">{chat.name}</h2>
+                    {#if $activeVideoCall?.status === "joining"}
+                        <Typing />
+                    {/if}
                 </div>
-            </SectionHeader>
-        {/if}
-        <div class="iframe-container" bind:this={iframeContainer}></div>
-    </div>
-{/if}
+                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                    {#if chat.chatId && chat.messageIndex !== undefined}
+                        <ActiveCallThreadSummary
+                            chatId={chat.chatId}
+                            messageIndex={chat.messageIndex} />
+                    {/if}
+                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                        <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    {#if !$mobileWidth}
+                        <HoverIcon on:click={toggleFullscreen}>
+                            {#if $activeVideoCall?.fullscreen}
+                                <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        </HoverIcon>
+                    {/if}
+                </div>
+            </div>
+        </SectionHeader>
+    {/if}
+    <div class="iframe-container" bind:this={iframeContainer}></div>
+</div>
 
 <style lang="scss">
     :global(.video-call-container .section-header) {
