@@ -14,8 +14,6 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 
-const ONE_HOUR_MS: bigint = BigInt(60 * 60 * 1000);
-
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
