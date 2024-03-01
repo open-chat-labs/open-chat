@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Expose `event_sink_client_info` in metrics ([#5464](https://github.com/open-chat-labs/open-chat/pull/5464))
 
 ### Removed
 

@@ -103,7 +103,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
-                escrow_canister_id: self.data.escrow_canister_id,
+                escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 event_relay: event_relay_canister_id,
             },
@@ -236,7 +236,7 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
-    pub escrow_canister_id: CanisterId,
+    pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub event_relay: CanisterId,
 }
