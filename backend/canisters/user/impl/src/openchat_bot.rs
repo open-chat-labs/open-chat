@@ -134,6 +134,7 @@ pub(crate) fn send_message_with_reply(
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
     let args = HandleMessageArgs {
+        sender: OPENCHAT_BOT_USER_ID,
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
@@ -143,10 +144,12 @@ pub(crate) fn send_message_with_reply(
         forwarding: false,
         is_bot: true,
         sender_avatar_id: None,
+        push_message_sent_event: true,
+        mute_notification,
         now: state.env.now(),
     };
 
-    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, true, state)
+    handle_message_impl(args, state)
 }
 
 fn to_gb(bytes: u64) -> String {

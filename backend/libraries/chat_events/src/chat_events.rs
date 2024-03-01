@@ -16,17 +16,18 @@ use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult,
-    Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped,
-    Tips, UserId, VideoCall, VoteOperation,
+    Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
+    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
+    ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_type: ChatType,
+    #[serde(default = "default_chat")]
+    chat: Chat,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
@@ -36,12 +37,36 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
+    #[serde(default)]
+    anonymized_id: String,
+}
+
+fn default_chat() -> Chat {
+    Chat::Direct(Principal::anonymous().into())
 }
 
 impl ChatEvents {
-    pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
+    // TODO POST RELEASE - remove this
+    pub fn set_chat(&mut self, chat: Chat) {
+        self.chat = chat;
+    }
+
+    pub fn anonymized_id(&self) -> String {
+        self.anonymized_id.clone()
+    }
+
+    pub fn set_anonymized_id(&mut self, id: u128) {
+        self.anonymized_id = hex::encode(id.to_be_bytes());
+    }
+
+    pub fn new_direct_chat(
+        them: UserId,
+        events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
+        now: TimestampMillis,
+    ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Direct,
+            chat: Chat::Direct(them.into()),
             main: ChatEventsList::default(),
             threads: HashMap::new(),
             metrics: ChatMetricsInternal::default(),
@@ -51,6 +76,7 @@ impl ChatEvents {
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
+            anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -59,14 +85,16 @@ impl ChatEvents {
     }
 
     pub fn new_group_chat(
+        chat: MultiUserChat,
         name: String,
         description: String,
         created_by: UserId,
         events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Group,
+            chat: chat.into(),
             main: ChatEventsList::default(),
             threads: HashMap::new(),
             metrics: ChatMetricsInternal::default(),
@@ -76,6 +104,7 @@ impl ChatEvents {
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
+            anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
         };
 
         events.push_event(
@@ -98,14 +127,20 @@ impl ChatEvents {
         self.last_updated_timestamps.iter()
     }
 
-    pub fn iter_all_events(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
+    pub fn iter_all_events(&self) -> impl Iterator<Item = (&EventWrapperInternal<ChatEventInternal>, bool)> {
         self.main
             .iter(None, true, EventIndex::default())
-            .chain(self.threads.values().flat_map(|t| t.iter(None, true, EventIndex::default())))
-            .filter_map(|e| if let EventOrExpiredRangeInternal::Event(ev) = e { Some(ev) } else { None })
+            .map(|e| (e, false))
+            .chain(
+                self.threads
+                    .values()
+                    .flat_map(|t| t.iter(None, true, EventIndex::default()))
+                    .map(|e| (e, true)),
+            )
+            .filter_map(|(e, t)| if let EventOrExpiredRangeInternal::Event(ev) = e { Some((ev, t)) } else { None })
     }
 
-    pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventWrapper<Message>, MessageEventPayload) {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads.entry(root_message_index).or_default()
         } else {
@@ -113,6 +148,20 @@ impl ChatEvents {
         };
 
         let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
+
+        let event_payload = MessageEventPayload {
+            message_type: args.content.message_type(),
+            chat_type: match self.chat {
+                Chat::Direct(_) => "direct",
+                Chat::Group(_) => "group",
+                Chat::Channel(..) => "channel",
+            }
+            .to_string(),
+            chat_id: self.anonymized_id.clone(),
+            thread: args.thread_root_message_index.is_some(),
+            sender_is_bot: args.sender_is_bot,
+            content_specific_payload: args.content.event_payload(),
+        };
 
         let message_index = events_list.next_message_index();
         let message_internal = MessageInternal {
@@ -168,13 +217,15 @@ impl ChatEvents {
             self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
         }
 
-        EventWrapper {
+        let event = EventWrapper {
             index: push_event_result.index,
             timestamp: args.now,
             correlation_id: args.correlation_id,
             expires_at: push_event_result.expires_at,
             event: message,
-        }
+        };
+
+        (event, event_payload)
     }
 
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
@@ -668,7 +719,7 @@ impl ChatEvents {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
                     // Push a PrizeWinnerContent message to the group from the OpenChatBot
-                    let message_event = self.push_message(PushMessageArgs {
+                    let (_, event_payload) = self.push_message(PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
                         thread_root_message_index: Some(message_index),
                         message_id: rng.gen(),
@@ -680,11 +731,12 @@ impl ChatEvents {
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
+                        sender_is_bot: true,
                         correlation_id: 0,
                         now,
                     });
 
-                    ClaimPrizeResult::Success(message_index, message_event)
+                    ClaimPrizeResult::Success(event_payload)
                 } else {
                     ClaimPrizeResult::ReservationNotFound
                 };
@@ -1003,6 +1055,7 @@ impl ChatEvents {
                     event_index,
                 }),
                 forwarded: false,
+                sender_is_bot: true,
                 correlation_id: 0,
                 now,
             });
@@ -1109,9 +1162,9 @@ impl ChatEvents {
         let valid = if thread_root_message_index.is_some() {
             event.is_valid_for_thread()
         } else {
-            match self.chat_type {
-                ChatType::Direct => event.is_valid_for_direct_chat(),
-                ChatType::Group => event.is_valid_for_group_chat(),
+            match self.chat {
+                Chat::Direct(_) => event.is_valid_for_direct_chat(),
+                Chat::Group(_) | Chat::Channel(..) => event.is_valid_for_group_chat(),
             }
         };
 
@@ -1613,6 +1666,7 @@ pub struct PushMessageArgs {
     pub mentioned: Vec<UserId>,
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
+    pub sender_is_bot: bool,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }
@@ -1755,7 +1809,7 @@ pub enum ReservePrizeResult {
 
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPrizeResult {
-    Success(MessageIndex, EventWrapper<Message>),
+    Success(MessageEventPayload),
     MessageNotFound,
     ReservationNotFound,
 }

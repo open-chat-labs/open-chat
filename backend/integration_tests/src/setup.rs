@@ -328,7 +328,12 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
     let event_relay_init_args = event_relay_canister::init::Args {
-        push_events_whitelist: vec![],
+        push_events_whitelist: vec![
+            user_index_canister_id,
+            online_users_canister_id,
+            local_user_index_canister_id,
+            local_group_index_canister_id,
+        ],
         event_sink_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id,
         chat_ledger_canister_id,
