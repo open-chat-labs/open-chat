@@ -11,7 +11,6 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
-use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use utils::env::Environment;
 
 mod guards;
@@ -72,29 +71,13 @@ struct Data {
     pub events_sink_client: EventSinkClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "chat_ledger_canister_id")]
     pub chat_ledger_canister_id: CanisterId,
-    #[serde(default = "chat_governance_canister_id")]
     pub chat_governance_canister_id: CanisterId,
-    #[serde(default = "treasury_subaccount")]
     pub chat_treasury_subaccount: [u8; 32],
-    #[serde(default)]
     pub ledger_transaction_processed_up_to: Option<u64>,
     pub salt: Salt,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn chat_ledger_canister_id() -> CanisterId {
-    SNS_LEDGER_CANISTER_ID
-}
-
-fn chat_governance_canister_id() -> CanisterId {
-    SNS_GOVERNANCE_CANISTER_ID
-}
-
-fn treasury_subaccount() -> [u8; 32] {
-    compute_distribution_subaccount_bytes(SNS_GOVERNANCE_CANISTER_ID, 0)
 }
 
 impl Data {
