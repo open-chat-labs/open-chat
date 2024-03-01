@@ -132,11 +132,12 @@ export class CachePrimer {
         if (chat.membership.archived) return false;
         if (lastUpdated === undefined) return true;
 
-        const isProposalsChat =
-            chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
-
-        return !isProposalsChat && chat.lastUpdated > lastUpdated;
+        return chat.lastUpdated > lastUpdated && !isProposalsChat(chat);
     }
+}
+
+function isProposalsChat(chat: ChatSummary): boolean {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
 
 function debug(message: string) {
