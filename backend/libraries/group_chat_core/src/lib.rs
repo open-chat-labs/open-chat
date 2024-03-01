@@ -606,6 +606,7 @@ impl GroupChatCore {
             mentions_disabled,
             everyone_mentioned,
             sender_is_bot,
+            notification_exclusions,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -698,6 +699,10 @@ impl GroupChatCore {
             }
         }
 
+        for user_id in notification_exclusions {
+            users_to_notify.remove(&user_id);
+        }
+
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
@@ -716,17 +721,20 @@ impl GroupChatCore {
     ) -> PrepareSendMessageResult {
         use PrepareSendMessageResult::*;
 
+        let mut notification_exclusions = Vec::new();
         if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
                 sender_is_bot: true,
+                notification_exclusions,
             });
         }
 
         if let MessageContentInternal::VideoCall(vc) = content {
             sender = vc.participants[0].user_id;
+            notification_exclusions.push(sender);
         }
 
         match self.members.get_mut(&sender) {
@@ -761,6 +769,7 @@ impl GroupChatCore {
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
             sender_is_bot: member.is_bot,
+            notification_exclusions,
         })
     }
 
@@ -2073,4 +2082,5 @@ struct PrepareSendMessageSuccess {
     mentions_disabled: bool,
     everyone_mentioned: bool,
     sender_is_bot: bool,
+    notification_exclusions: Vec<UserId>,
 }
