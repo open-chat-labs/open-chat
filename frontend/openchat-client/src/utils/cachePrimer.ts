@@ -14,6 +14,8 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 
+const ONE_HOUR_MS: bigint = BigInt(60 * 60 * 1000);
+
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
@@ -26,9 +28,8 @@ export class CachePrimer {
         if (chats.length > 0) {
             const lastUpdatedTimestamps = await this.api.getCachePrimerTimestamps();
             for (const chat of chats) {
-                if (chat.membership.archived) continue;
                 const lastUpdated = lastUpdatedTimestamps[chatIdentifierToString(chat.id)];
-                if (lastUpdated === undefined || lastUpdated < chat.lastUpdated) {
+                if (this.shouldEnqueueChat(chat, lastUpdated)) {
                     this.pending.set(chat.id, chat);
                     debug("enqueued " + chat.id);
                 }
@@ -127,6 +128,23 @@ export class CachePrimer {
             threadRootMessageIndex: undefined,
             latestKnownUpdate: chat.lastUpdated,
         });
+    }
+
+    private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
+        if (chat.membership.archived) return false;
+        if (lastUpdated === undefined) return true;
+
+        const isProposalsChat =
+            chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
+
+        if (isProposalsChat) {
+            return (
+                (chat.latestMessage?.timestamp ?? BigInt(0)) > lastUpdated ||
+                chat.lastUpdated > lastUpdated + ONE_HOUR_MS
+            );
+        } else {
+            return chat.lastUpdated > lastUpdated;
+        }
     }
 }
 
