@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 - Don't send video call notification to user who started the call ([#5462](https://github.com/open-chat-labs/open-chat/pull/5462))
 
+### Fixed
+
+- Update group index when community gate changes ([#5463](https://github.com/open-chat-labs/open-chat/pull/5463))
+
 ## [[2.0.1075](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1075-community)] - 2024-02-22
 
 ### Added
