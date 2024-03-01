@@ -41,7 +41,7 @@ impl Environment for CanisterEnv {
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        let seed = CanisterEnv::new([0; 32]).entropy();
+        let seed = CanisterEnv::new([0; 32]).entropy(None);
         CanisterEnv::new(seed)
     }
 }

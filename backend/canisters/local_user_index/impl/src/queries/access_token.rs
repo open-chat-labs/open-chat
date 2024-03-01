@@ -52,8 +52,6 @@ fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Respons
         return InternalError("OC Secret not set".to_string());
     };
 
-    let mut rng = StdRng::from_seed(state.env.entropy());
-
     let claims = Claims::new(
         state.env.now() + 300_000, // Token valid for 5 mins from now
         args.token_type.to_string(),
@@ -62,6 +60,11 @@ fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Respons
             chat_id: args.chat.into(),
         },
     );
+
+    // Salt the RNG with the input args
+    let salt = serde_json::to_string(&args).unwrap().into_bytes();
+
+    let mut rng = StdRng::from_seed(state.env.entropy(Some(&salt)));
 
     match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
         Ok(token) => Success(token),

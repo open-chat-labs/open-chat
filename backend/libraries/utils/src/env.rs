@@ -18,7 +18,7 @@ pub trait Environment {
         self.now_nanos() / 1_000_000
     }
 
-    fn entropy(&mut self) -> Hash {
+    fn entropy(&mut self, salt: Option<&[u8]>) -> Hash {
         let mut bytes = Vec::new();
 
         bytes.extend(self.rng().gen::<Hash>());
@@ -26,6 +26,10 @@ pub trait Environment {
         bytes.extend(self.caller().as_slice());
         bytes.extend(self.now_nanos().to_ne_bytes());
         bytes.extend(self.cycles_balance().to_ne_bytes());
+
+        if let Some(salt) = salt {
+            bytes.extend(salt);
+        }
 
         sha256(&bytes)
     }
