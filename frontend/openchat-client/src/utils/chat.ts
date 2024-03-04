@@ -42,6 +42,7 @@ import type {
     MessagePermissions,
     OptionalMessagePermissions,
     OptionUpdate,
+    GovernanceProposalsSubtype,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -1910,4 +1911,10 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
+}
+
+export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
+    subtype: GovernanceProposalsSubtype;
+} {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }
