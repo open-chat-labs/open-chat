@@ -10,6 +10,7 @@ use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
 use types::{CallParticipant, ChannelMessageNotification, Notification, UserId, VideoCallContent};
+use utils::consts::VIDEO_CALL_BOT_USERNAME;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -82,7 +83,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         message_index,
         event_index,
         sender,
-        sender_name: "VideoCallBot".to_string(),
+        sender_name: VIDEO_CALL_BOT_USERNAME.to_string(),
         sender_display_name: None,
         message_type: content.message_type(),
         message_text: None,
@@ -99,7 +100,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.data.event_sink_client.push(
         EventBuilder::new("message_sent", now)
-            .with_user(sender.to_string())
+            .with_user(VIDEO_CALL_BOT_USERNAME.to_string())
             .with_source(this_canister_id.to_string())
             .with_json_payload(&result.event_payload)
             .build(),

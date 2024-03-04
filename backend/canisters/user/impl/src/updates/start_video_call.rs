@@ -13,6 +13,7 @@ use types::{
 use user_canister::send_message_v2::SuccessResult;
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
+use utils::consts::VIDEO_CALL_BOT_USERNAME;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -98,11 +99,10 @@ pub fn handle_start_video_call(
         }
     }
 
-    let user_string = sender.to_string();
     state.data.event_sink_client.push(
         EventBuilder::new("message_sent", now)
-            .with_user(user_string.clone())
-            .with_source(user_string)
+            .with_user(VIDEO_CALL_BOT_USERNAME.to_string())
+            .with_source(sender.to_string())
             .with_json_payload(&event_payload)
             .build(),
     );
@@ -114,7 +114,7 @@ pub fn handle_start_video_call(
             thread_root_message_index: None,
             message_index: message_event.event.message_index,
             event_index: message_event.index,
-            sender_name: "VideoCallBot".to_string(),
+            sender_name: VIDEO_CALL_BOT_USERNAME.to_string(),
             sender_display_name: None,
             message_type: content.message_type(),
             message_text: None,
