@@ -141,6 +141,8 @@
 
             await call.join();
 
+            client.ringOtherUsers();
+
             activeVideoCall.setCall(chat.id, call);
 
             if (chat.videoCallInProgress !== undefined) {

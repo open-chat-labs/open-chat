@@ -3721,6 +3721,10 @@ export class OpenChat extends OpenChatAgentWorker {
         const parsedMsg = parseWebRtcMessage(fromChatId, msg);
         const { selectedChat, threadEvents, events } = this._liveState;
 
+        if (parsedMsg.kind === "remote_user_started_video_call") {
+            alert("mother fucker started a call");
+        }
+
         if (
             selectedChat !== undefined &&
             chatIdentifiersEqual(fromChatId, selectedChat.id) &&
@@ -5710,6 +5714,33 @@ export class OpenChat extends OpenChatAgentWorker {
                     kind: "getLocalUserIndexForUser",
                     userId: chat.them.userId,
                 });
+        }
+    }
+
+    async ringOtherUsers() {
+        // if we are starting a video call in a private chat, let's make rtc conntections to all other
+        // users and try to ring them
+        const chat = this._liveState.selectedChat;
+        if (!chat) return;
+
+        if (chat.kind === "direct_chat" || !chat.public) {
+            const userIds = this._liveState.currentChatMembers.map((m) => m.userId);
+            await Promise.all(
+                userIds
+                    .filter((id) => !rtcConnectionsManager.exists(id))
+                    .map((id) => {
+                        return rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
+                        );
+                    }),
+            );
+            this.sendRtcMessage(userIds, {
+                kind: "remote_user_started_video_call",
+                id: chat.id,
+                userId: this._liveState.user.userId,
+            });
         }
     }
 

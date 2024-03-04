@@ -28,7 +28,7 @@ export class RtcConnectionsManager {
 
     private getIceServers(meteredApiKey: string) {
         return fetch(
-            `https://openchat.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`
+            `https://openchat.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`,
         ).then((resp) => resp.json());
     }
 
@@ -85,15 +85,16 @@ export class RtcConnectionsManager {
         return this.connections.has(user);
     }
 
-    public create(me: string, them: string, meteredApiKey: string): void {
-        this.init(me, meteredApiKey).then((peer) => {
+    public create(me: string, them: string, meteredApiKey: string): Promise<boolean> {
+        return this.init(me, meteredApiKey).then((peer) => {
             this.cacheConnection(
                 me,
                 them,
                 peer.connect(them, {
                     serialization: "json",
-                })
+                }),
             );
+            return true;
         });
     }
 
