@@ -5,7 +5,7 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
     CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
     CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
     GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
@@ -169,34 +169,6 @@ impl MessageContentInternal {
         }
 
         references
-    }
-
-    pub fn from_initial(value: MessageContentInitial, now: TimestampMillis) -> Option<MessageContentInternal> {
-        match value {
-            MessageContentInitial::Text(t) => Some(MessageContentInternal::Text(t.into())),
-            MessageContentInitial::Image(i) => Some(MessageContentInternal::Image(i.into())),
-            MessageContentInitial::Video(v) => Some(MessageContentInternal::Video(v.into())),
-            MessageContentInitial::Audio(a) => Some(MessageContentInternal::Audio(a.into())),
-            MessageContentInitial::File(f) => Some(MessageContentInternal::File(f.into())),
-            MessageContentInitial::Poll(p) => Some(MessageContentInternal::Poll(p.into())),
-            MessageContentInitial::Deleted(d) => Some(MessageContentInternal::Deleted(d.into())),
-            MessageContentInitial::Giphy(g) => Some(MessageContentInternal::Giphy(g.into())),
-            MessageContentInitial::GovernanceProposal(p) => Some(MessageContentInternal::GovernanceProposal(p.into())),
-            MessageContentInitial::MessageReminderCreated(r) => Some(MessageContentInternal::MessageReminderCreated(r.into())),
-            MessageContentInitial::MessageReminder(r) => Some(MessageContentInternal::MessageReminder(r.into())),
-            MessageContentInitial::Custom(c) => Some(MessageContentInternal::Custom(c.into())),
-            MessageContentInitial::VideoCall(c) => Some(MessageContentInternal::VideoCall(VideoCallContent {
-                ended: None,
-                participants: vec![CallParticipant {
-                    user_id: c.initiator,
-                    joined: now,
-                }],
-            })),
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
-                // These should be created via `new_with_transfer`
-                None
-            }
-        }
     }
 
     pub fn message_type(&self) -> String {
@@ -1033,6 +1005,28 @@ impl MessageContentInternalSubtype for CustomContentInternal {
         CustomContent {
             kind: self.kind.clone(),
             data: self.data.clone(),
+        }
+    }
+}
+
+impl From<MessageContentInitial> for MessageContentInternal {
+    fn from(value: MessageContentInitial) -> Self {
+        match value {
+            MessageContentInitial::Text(t) => MessageContentInternal::Text(t.into()),
+            MessageContentInitial::Image(i) => MessageContentInternal::Image(i.into()),
+            MessageContentInitial::Video(v) => MessageContentInternal::Video(v.into()),
+            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a.into()),
+            MessageContentInitial::File(f) => MessageContentInternal::File(f.into()),
+            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(p.into()),
+            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
+            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g.into()),
+            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p.into()),
+            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
+            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
+            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
+                unreachable!()
+            }
         }
     }
 }

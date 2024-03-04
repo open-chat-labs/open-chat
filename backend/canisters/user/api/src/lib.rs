@@ -171,6 +171,7 @@ pub enum UserCanisterEvent {
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
+    StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
 }
 
@@ -241,6 +242,14 @@ pub struct MarkMessagesReadArgs {
 pub struct P2PSwapStatusChange {
     pub message_id: MessageId,
     pub status: P2PSwapStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StartVideoCallArgs {
+    pub message_id: MessageId,
+    pub message_index: MessageIndex,
+    pub sender: UserId,
+    pub initiator: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

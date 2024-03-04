@@ -541,14 +541,11 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
-        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) =
-            content.validate_for_new_message(false, sender_is_bot, forwarding, is_caller_video_call_operator, now)
-        {
+        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -566,23 +563,19 @@ impl GroupChatCore {
             };
         }
 
-        if let Some(content_internal) = MessageContentInternal::from_initial(content, now) {
-            self.send_message(
-                sender,
-                thread_root_message_index,
-                message_id,
-                content_internal,
-                replies_to,
-                mentioned,
-                forwarding,
-                rules_accepted,
-                suppressed,
-                proposals_bot_user_id,
-                now,
-            )
-        } else {
-            InvalidRequest("Invalid message content type".to_string())
-        }
+        self.send_message(
+            sender,
+            thread_root_message_index,
+            message_id,
+            content.into(),
+            replies_to,
+            mentioned,
+            forwarding,
+            rules_accepted,
+            suppressed,
+            proposals_bot_user_id,
+            now,
+        )
     }
 
     pub fn send_message(

@@ -47,14 +47,11 @@ type SendMessageSuccess = record {
 type StartVideoCallArgs = record {
     message_id : MessageId;
     initiator : UserId;
-    sender_name : text;
-    sender_avatar_id : opt nat;
 };
 
 type StartVideoCallResponse = variant {
     Success : SendMessageSuccess;
     NotAuthorized;
-    InternalError : text;
 };
 
 type EditMessageV2Args = record {

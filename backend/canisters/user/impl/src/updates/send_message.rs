@@ -1,5 +1,5 @@
 use crate::crypto::process_transaction_without_caller_check;
-use crate::guards::{caller_is_owner, caller_is_video_call_operator};
+use crate::guards::caller_is_owner;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
 };
@@ -14,54 +14,12 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
-    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    Notification, P2PSwapLocation, TimestampMillis, UserId, VideoCallContentInitial,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
 use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-
-#[update(guard = "caller_is_video_call_operator")]
-#[trace]
-async fn start_video_call(args: user_canister::start_video_call::Args) -> user_canister::start_video_call::Response {
-    run_regular_jobs();
-
-    let send_message_args = Args {
-        recipient: args.initiator,
-        thread_root_message_index: None,
-        message_id: args.message_id,
-        content: MessageContentInitial::VideoCall(VideoCallContentInitial {
-            initiator: args.initiator,
-        }),
-        replies_to: None,
-        forwarding: false,
-        message_filter_failed: None,
-        correlation_id: 0,
-    };
-
-    if let ValidateRequestResult::Invalid(_) = read_state(|state| validate_request(&send_message_args, state)) {
-        return user_canister::start_video_call::Response::NotAuthorized;
-    }
-
-    match mutate_state(|state| {
-        send_message_impl(
-            send_message_args,
-            None,
-            None,
-            UserType::User,
-            Some(NotificationSender {
-                username: args.sender_name,
-                display_name: None,
-                avatar_id: args.sender_avatar_id,
-            }),
-            state,
-        )
-    }) {
-        Success(s) => user_canister::start_video_call::Response::Success(s),
-        InternalError(text) => user_canister::start_video_call::Response::InternalError(text),
-        _ => user_canister::start_video_call::Response::NotAuthorized,
-    }
-}
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -151,7 +109,7 @@ async fn send_message_v2(mut args: Args) -> Response {
         _ => {}
     };
 
-    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, user_type, None, state))
+    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, user_type, state))
 }
 
 enum UserType {
@@ -199,13 +157,9 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     }
 
     let now = state.env.now();
-    let is_caller_video_call_operator = state.is_caller_video_call_operator();
     let my_user_id: UserId = state.env.canister_id().into();
 
-    if let Err(error) = args
-        .content
-        .validate_for_new_message(true, false, args.forwarding, is_caller_video_call_operator, now)
-    {
+    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -248,18 +202,16 @@ fn send_message_impl(
     completed_transfer: Option<CompletedCryptoTransaction>,
     p2p_swap_id: Option<u32>,
     user_type: UserType,
-    notification_sender: Option<NotificationSender>,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
     let this_canister_id = state.env.canister_id();
-    let is_video_call = matches!(args.content, MessageContentInitial::VideoCall(_));
-    let sender: UserId = if is_video_call { state.env.caller().into() } else { this_canister_id.into() };
+    let sender: UserId = this_canister_id.into();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
     } else {
-        MessageContentInternal::from_initial(args.content.clone(), now).unwrap()
+        args.content.into()
     };
 
     let push_message_args = PushMessageArgs {
@@ -270,7 +222,7 @@ fn send_message_impl(
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
-        sender_is_bot: is_video_call,
+        sender_is_bot: false,
         correlation_id: args.correlation_id,
         now,
     };
@@ -284,9 +236,7 @@ fn send_message_impl(
             .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
     };
 
-    let notifications_muted = chat.notifications_muted.value;
-
-    let (message_event, event_payload) = chat.push_message(!is_video_call, push_message_args, None);
+    let (message_event, event_payload) = chat.push_message(true, push_message_args, None);
 
     let mut is_next_event_to_expire = false;
     if let Some(expiry) = message_event.expires_at {
@@ -355,29 +305,6 @@ fn send_message_impl(
                 })),
             );
         }
-
-        if !notifications_muted {
-            if let Some(notification_sender) = notification_sender {
-                let content = &message_event.event.content;
-                let notification = Notification::DirectMessage(DirectMessageNotification {
-                    sender,
-                    thread_root_message_index: None,
-                    message_index: message_event.event.message_index,
-                    event_index: message_event.index,
-                    sender_name: notification_sender.username,
-                    sender_display_name: notification_sender.display_name,
-                    message_type: content.message_type(),
-                    message_text: content.notification_text(&[], &[]),
-                    image_url: content.notification_image_url(),
-                    sender_avatar_id: notification_sender.avatar_id,
-                    crypto_transfer: content.notification_crypto_transfer_details(&[]),
-                });
-
-                let recipient = this_canister_id.into();
-
-                state.push_notification(recipient, notification);
-            }
-        }
     }
 
     if let Some(transfer) = completed_transfer {
@@ -411,7 +338,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             sender: recipient,
                             thread_root_message_index: None,
                             message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                            content: MessageContentInternal::from_initial(message.content, now).unwrap(),
+                            content: message.content.into(),
                             mentioned: Vec::new(),
                             replies_to: None,
                             forwarded: false,
@@ -468,10 +395,4 @@ pub(crate) fn register_timer_jobs(
             now,
         );
     }
-}
-
-struct NotificationSender {
-    pub username: String,
-    pub display_name: Option<String>,
-    pub avatar_id: Option<u128>,
 }

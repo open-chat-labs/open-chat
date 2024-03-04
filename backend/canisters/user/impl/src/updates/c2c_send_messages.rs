@@ -30,7 +30,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, true, false, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, true, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -45,7 +45,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: MessageContentInternal::from_initial(message.content, now).unwrap(),
+                    content: message.content.into(),
                     replies_to: None,
                     forwarding: false,
                     is_bot: true,
@@ -128,7 +128,6 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         now: args.now,
     };
 
-    let message_id = push_message_args.message_id;
     let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
         c
     } else {
@@ -137,6 +136,8 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
             .direct_chats
             .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
     };
+
+    let message_id = push_message_args.message_id;
 
     let (message_event, event_payload) = chat.push_message(false, push_message_args, args.sender_message_index);
 

@@ -1,5 +1,4 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_video_call_operator;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{
@@ -13,14 +12,13 @@ use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CRespo
 use community_canister::send_message::{Response::*, *};
 use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
-use ic_cdk_macros::update;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageIndex,
-    Notification, TimestampMillis, User, UserId, Version, VideoCallContentInitial,
+    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
+    User, UserId, Version,
 };
 
 #[update_candid_and_msgpack]
@@ -39,39 +37,10 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-#[update(guard = "caller_is_video_call_operator")]
-#[trace]
-fn start_video_call(args: community_canister::start_video_call::Args) -> community_canister::start_video_call::Response {
-    run_regular_jobs();
-
-    let send_message_args = Args {
-        channel_id: args.channel_id,
-        thread_root_message_index: None,
-        message_id: args.message_id,
-        content: MessageContentInitial::VideoCall(VideoCallContentInitial {
-            initiator: args.initiator,
-        }),
-        sender_name: args.sender_name,
-        sender_display_name: None,
-        replies_to: None,
-        mentioned: Vec::new(),
-        forwarding: false,
-        community_rules_accepted: None,
-        channel_rules_accepted: None,
-        message_filter_failed: None,
-    };
-
-    match mutate_state(|state| send_message_impl(send_message_args, state)) {
-        Success(s) => community_canister::start_video_call::Response::Success(s),
-        _ => community_canister::start_video_call::Response::NotAuthorized,
-    }
-}
-
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Caller {
         user_id,
         is_bot,
-        is_video_call_operator,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -94,7 +63,6 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
-            is_video_call_operator,
             now,
         );
 
@@ -121,7 +89,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     let Caller {
         user_id,
         is_bot,
-        is_video_call_operator: _,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -173,7 +140,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 struct Caller {
     user_id: UserId,
     is_bot: bool,
-    is_video_call_operator: bool,
     display_name: Option<String>,
 }
 
@@ -183,14 +149,7 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
     }
 
     let caller = state.env.caller();
-    if state.is_caller_video_call_operator() {
-        Ok(Caller {
-            user_id: caller.into(),
-            is_bot: true,
-            is_video_call_operator: true,
-            display_name: None,
-        })
-    } else if let Some(member) = state.data.members.get_mut(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
         } else {
@@ -210,7 +169,6 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
             Ok(Caller {
                 user_id: member.user_id,
                 is_bot: member.is_bot,
-                is_video_call_operator: false,
                 display_name: member.display_name().value.clone(),
             })
         }

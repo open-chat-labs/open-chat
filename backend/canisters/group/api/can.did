@@ -53,7 +53,6 @@ type EditMessageResponse = variant {
 type StartVideoCallArgs = record {
     message_id : MessageId;
     initiator : UserId;
-    sender_name : text;
 };
 
 type StartVideoCallResponse = variant {

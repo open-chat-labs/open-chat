@@ -853,7 +853,6 @@ type StartVideoCallArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
     initiator : UserId;
-    sender_name : text;
 };
 
 type StartVideoCallResponse = variant {

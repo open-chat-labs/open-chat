@@ -7,7 +7,6 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub message_id: MessageId,
     pub initiator: UserId,
-    pub sender_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
