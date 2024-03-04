@@ -5,10 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Added
-
-- Add `c2c_vote_on_nns_proposal` ([#5444](https://github.com/open-chat-labs/open-chat/pull/5444))
-
 ### Changed
 
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
