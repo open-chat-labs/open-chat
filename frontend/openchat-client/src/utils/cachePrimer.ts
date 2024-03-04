@@ -13,6 +13,7 @@ import { userStore } from "../stores/user";
 import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
+import { isProposalsChat } from "./chat";
 
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
@@ -26,9 +27,8 @@ export class CachePrimer {
         if (chats.length > 0) {
             const lastUpdatedTimestamps = await this.api.getCachePrimerTimestamps();
             for (const chat of chats) {
-                if (chat.membership.archived) continue;
                 const lastUpdated = lastUpdatedTimestamps[chatIdentifierToString(chat.id)];
-                if (lastUpdated === undefined || lastUpdated < chat.lastUpdated) {
+                if (this.shouldEnqueueChat(chat, lastUpdated)) {
                     this.pending.set(chat.id, chat);
                     debug("enqueued " + chat.id);
                 }
@@ -127,6 +127,12 @@ export class CachePrimer {
             threadRootMessageIndex: undefined,
             latestKnownUpdate: chat.lastUpdated,
         });
+    }
+
+    private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
+        if (chat.membership.archived || isProposalsChat(chat)) return false;
+
+        return lastUpdated === undefined || chat.lastUpdated > lastUpdated;
     }
 }
 
