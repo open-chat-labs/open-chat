@@ -1,16 +1,12 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { DerEncodedPublicKey, SignIdentity } from "@dfinity/agent";
+import type { DerEncodedPublicKey, Identity, SignIdentity } from "@dfinity/agent";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import type { CheckAuthPrincipalResponse, MigrateLegacyPrincipalResponse } from "openchat-shared";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
 
-    constructor(
-        private identity: SignIdentity,
-        identityCanister: string,
-        icUrl: string,
-    ) {
+    constructor(identity: Identity, identityCanister: string, icUrl: string) {
         this._identityClient = IdentityClient.create(identity, identityCanister, icUrl);
     }
 
