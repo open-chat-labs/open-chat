@@ -5732,7 +5732,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (token === undefined) {
                         throw new Error("Didn't get an access token");
                     }
-                    console.log("Token: ", token);
+                    performance.mark("oc_token");
                     return token;
                 })
                 .then((token) => this.getRoomAccessToken(token));

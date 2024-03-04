@@ -8,6 +8,8 @@ import { routerReady } from "../routes";
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
     "https://windoge98.com",
+    "https://desktop.windoge98.com",
+    "https://4hy5z-qaaaa-aaaal-addrq-cai.icp0.io",
     "https://signalsicp.com",
     "https://gooble.app",
     "https://www.vault-bet.com",
