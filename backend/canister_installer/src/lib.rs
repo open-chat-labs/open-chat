@@ -218,7 +218,6 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         nns_governance_canister_id: canister_ids.nns_governance,
         nns_ledger_canister_id: canister_ids.nns_ledger,
-        proposals_bot_canister_id: canister_ids.proposals_bot,
         cycles_minting_canister_id: canister_ids.nns_cmc,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
