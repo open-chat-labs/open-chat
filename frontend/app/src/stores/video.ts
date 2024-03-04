@@ -54,9 +54,7 @@ export const activeVideoCall = {
     },
     endCall: () => {
         return store.update((current) => {
-            if (current !== undefined && current.call) {
-                current.call.destroy();
-            }
+            current?.call?.destroy();
             microphone.set(false);
             camera.set(false);
             sharing.set(false);
@@ -65,9 +63,7 @@ export const activeVideoCall = {
     },
     changeTheme: (theme: DailyThemeConfig) => {
         return store.update((current) => {
-            if (current !== undefined && current.call !== undefined) {
-                current.call.setTheme(theme);
-            }
+            current?.call?.setTheme(theme);
             return current;
         });
     },
