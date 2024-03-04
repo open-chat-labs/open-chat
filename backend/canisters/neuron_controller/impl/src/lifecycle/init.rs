@@ -17,7 +17,6 @@ fn init(args: Args) {
         args.governance_principals,
         args.nns_governance_canister_id,
         args.nns_ledger_canister_id,
-        args.proposals_bot_canister_id,
         args.cycles_minting_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
