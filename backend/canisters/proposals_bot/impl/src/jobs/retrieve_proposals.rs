@@ -127,12 +127,14 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                 let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
                 if governance_canister_id == dragginz_governance_canister_id {
                     proposals.retain(|p| p.id() > 36)
-                } else if governance_canister_id == state.data.nns_governance_canister_id {
+                }
+
+                if governance_canister_id == state.data.nns_governance_canister_id {
                     if let Some(neuron_id) = state.data.nns_neuron_to_vote_with {
                         for proposal in proposals.iter() {
                             if let Proposal::NNS(nns) = proposal {
                                 if NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
-                                    && !state.data.nns_proposals_scheduled_to_vote_on.contains(&nns.id)
+                                    && state.data.nns_proposals_scheduled_to_vote_on.insert(nns.id)
                                 {
                                     // Set up a job to reject the proposal 10 minutes before its deadline.
                                     // In parallel, we will submit an SNS proposal instructing the SNS governance
