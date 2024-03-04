@@ -119,16 +119,16 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
-            mutate_state(|state| {
-                // TODO Remove this!
-                // Temp hack for Dragginz
-                // Dfinity are fixing a bug in their governance canister which is causing it to
-                // return old proposals
-                let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
-                if governance_canister_id == dragginz_governance_canister_id {
-                    proposals.retain(|p| p.id() > 36)
-                }
+            // TODO Remove this!
+            // Temp hack for Dragginz
+            // Dfinity are fixing a bug in their governance canister which is causing it to
+            // return old proposals
+            let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+            if governance_canister_id == dragginz_governance_canister_id {
+                proposals.retain(|p| p.id() > 36)
+            }
 
+            mutate_state(|state| {
                 if governance_canister_id == state.data.nns_governance_canister_id {
                     if let Some(neuron_id) = state.data.nns_neuron_to_vote_with {
                         for proposal in proposals.iter() {
