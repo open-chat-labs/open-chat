@@ -1,6 +1,7 @@
-import type { Identity } from "@dfinity/agent";
+import { AnonymousIdentity, type Identity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { OpenChatAgent } from "openchat-agent";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Logger,
@@ -12,6 +13,7 @@ import {
     type WorkerResponseInner,
     type WorkerRequest,
     Stream,
+    IdentityStorage,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -22,15 +24,58 @@ BigInt.prototype.toJSON = function () {
 
 let logger: Logger | undefined = undefined;
 
-const auth = AuthClient.create({
+const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
     },
     storage: new IdbStorage(),
 });
+const ocIdentityStorage = new IdentityStorage();
 
-function getIdentity(): Promise<Identity> {
-    return auth.then((a) => a.getIdentity());
+async function getIdentity(identityCanister: string, icUrl: string): Promise<Identity> {
+    const ocIdentity = await ocIdentityStorage.get();
+    if (ocIdentity !== undefined) {
+        return ocIdentity;
+    }
+    const authProviderIdentity = await authClient.then((a) => a.getIdentity());
+    if (!authProviderIdentity.getPrincipal().isAnonymous()) {
+        const identityAgent = new IdentityAgent(
+            authProviderIdentity as SignIdentity,
+            identityCanister,
+            icUrl,
+        );
+        const checkAuthPrincipalResponse = await identityAgent.checkAuthPrincipal();
+        let shouldGetIdentity = false;
+        let shouldCreateIdentity = false;
+        switch (checkAuthPrincipalResponse.kind) {
+            case "success": {
+                shouldGetIdentity = true;
+                break;
+            }
+            case "legacy": {
+                const migratePrincipalResponse = await identityAgent.migrateLegacyPrincipal();
+                shouldGetIdentity = migratePrincipalResponse.kind === "success";
+                break;
+            }
+            case "not_found": {
+                shouldCreateIdentity = true;
+                break;
+            }
+        }
+        if (shouldGetIdentity || shouldCreateIdentity) {
+            const sessionKey = await ECDSAKeyIdentity.generate();
+
+            const identity = shouldGetIdentity
+                ? await identityAgent.getOpenChatIdentity(sessionKey)
+                : await identityAgent.createOpenChatIdentity(sessionKey);
+
+            if (identity !== undefined) {
+                await ocIdentityStorage.set(sessionKey, identity.getDelegation());
+                return (await ocIdentityStorage.get()) ?? new AnonymousIdentity();
+            }
+        }
+    }
+    return new AnonymousIdentity();
 }
 
 let agent: OpenChatAgent | undefined = undefined;
@@ -139,8 +184,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
     try {
         if (kind === "init") {
-            getIdentity().then((id) => {
-                console.debug("anon: init worker", id, id?.getPrincipal().isAnonymous());
+            getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
+                console.debug(
+                    "anon: init worker",
+                    id.getPrincipal().toString(),
+                    id?.getPrincipal().isAnonymous(),
+                );
                 logger = inititaliseLogger(
                     payload.rollbarApiKey,
                     payload.websiteVersion,
