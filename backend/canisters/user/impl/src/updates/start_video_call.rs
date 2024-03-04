@@ -114,7 +114,7 @@ pub fn handle_start_video_call(
             thread_root_message_index: None,
             message_index: message_event.event.message_index,
             event_index: message_event.index,
-            sender_name: "video_call_operator".to_string(),
+            sender_name: "VideoCallBot".to_string(),
             sender_display_name: None,
             message_type: content.message_type(),
             message_text: None,

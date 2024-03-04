@@ -71,7 +71,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         event_index,
         group_name: state.data.chat.name.value.clone(),
         sender,
-        sender_name: "video_call_operator".to_string(),
+        sender_name: "VideoCallBot".to_string(),
         sender_display_name: None,
         message_type: content.message_type(),
         message_text: None,
