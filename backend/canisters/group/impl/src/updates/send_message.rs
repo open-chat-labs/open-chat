@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, RemoveExpiredEventsJob,
 };
@@ -10,8 +11,10 @@ use event_sink_client::EventBuilder;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
+use ic_cdk_macros::update;
 use types::{
-    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId,
+    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageContentInitial, MessageIndex, Notification,
+    TimestampMillis, User, UserId, VideoCallContentInitial,
 };
 
 #[update_candid_and_msgpack]
@@ -28,6 +31,33 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();
 
     mutate_state(|state| c2c_send_message_impl(args, state))
+}
+
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn start_video_call(args: group_canister::start_video_call::Args) -> group_canister::start_video_call::Response {
+    run_regular_jobs();
+
+    let send_message_args = Args {
+        thread_root_message_index: None,
+        message_id: args.message_id,
+        content: MessageContentInitial::VideoCall(VideoCallContentInitial {
+            initiator: args.initiator,
+        }),
+        sender_name: args.sender_name,
+        sender_display_name: None,
+        replies_to: None,
+        mentioned: Vec::new(),
+        forwarding: false,
+        rules_accepted: None,
+        message_filter_failed: None,
+        correlation_id: 0,
+    };
+
+    match mutate_state(|state| send_message_impl(send_message_args, state)) {
+        Success(s) => group_canister::start_video_call::Response::Success(s),
+        _ => group_canister::start_video_call::Response::NotAuthorized,
+    }
 }
 
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {

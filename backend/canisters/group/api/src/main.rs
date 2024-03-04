@@ -42,6 +42,7 @@ fn main() {
     generate_candid_method!(group, report_message, update);
     generate_candid_method!(group, reset_invite_code, update);
     generate_candid_method!(group, send_message_v2, update);
+    generate_candid_method!(group, start_video_call, update);
     generate_candid_method!(group, toggle_mute_notifications, update);
     generate_candid_method!(group, unblock_user, update);
     generate_candid_method!(group, undelete_messages, update);

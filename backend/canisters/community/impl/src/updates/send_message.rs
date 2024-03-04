@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_video_call_operator;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{
@@ -12,13 +13,14 @@ use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CRespo
 use community_canister::send_message::{Response::*, *};
 use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
+use ic_cdk_macros::update;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    User, UserId, Version,
+    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageIndex,
+    Notification, TimestampMillis, User, UserId, Version, VideoCallContentInitial,
 };
 
 #[update_candid_and_msgpack]
@@ -35,6 +37,34 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();
 
     mutate_state(|state| c2c_send_message_impl(args, state))
+}
+
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn start_video_call(args: community_canister::start_video_call::Args) -> community_canister::start_video_call::Response {
+    run_regular_jobs();
+
+    let send_message_args = Args {
+        channel_id: args.channel_id,
+        thread_root_message_index: None,
+        message_id: args.message_id,
+        content: MessageContentInitial::VideoCall(VideoCallContentInitial {
+            initiator: args.initiator,
+        }),
+        sender_name: args.sender_name,
+        sender_display_name: None,
+        replies_to: None,
+        mentioned: Vec::new(),
+        forwarding: false,
+        community_rules_accepted: None,
+        channel_rules_accepted: None,
+        message_filter_failed: None,
+    };
+
+    match mutate_state(|state| send_message_impl(send_message_args, state)) {
+        Success(s) => community_canister::start_video_call::Response::Success(s),
+        _ => community_canister::start_video_call::Response::NotAuthorized,
+    }
 }
 
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {

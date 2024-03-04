@@ -751,7 +751,7 @@ impl GroupChatCore {
 
         let member = self.members.get(&sender).unwrap();
 
-        if !self.check_rules(member) {
+        if !self.check_rules(member, content) {
             return RulesNotAccepted;
         }
 
@@ -1571,9 +1571,10 @@ impl GroupChatCore {
         result
     }
 
-    pub fn check_rules(&self, member: &GroupMemberInternal) -> bool {
+    pub fn check_rules(&self, member: &GroupMemberInternal, content: &MessageContentInternal) -> bool {
         !self.rules.enabled
             || member.is_bot
+            || matches!(content, MessageContentInternal::VideoCall(_))
             || (member
                 .rules_accepted
                 .as_ref()
