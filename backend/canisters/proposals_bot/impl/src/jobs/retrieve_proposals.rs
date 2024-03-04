@@ -1,6 +1,6 @@
 use crate::jobs::{push_proposals, update_proposals};
 use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
-use crate::timer_job_types::{ProcessUserRefundJob, TopUpNeuronJob};
+use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use ic_cdk::api::call::CallResult;
@@ -16,6 +16,15 @@ pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
 const RETRIEVE_PROPOSALS_INTERVAL: Milliseconds = MINUTE_IN_MS;
+
+const NNS_TOPIC_NETWORK_ECONOMICS: i32 = 3;
+const NNS_TOPIC_GOVERNANCE: i32 = 4;
+const NNS_TOPIC_SNS_AND_NEURON_FUND: i32 = 14;
+const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
+    NNS_TOPIC_NETWORK_ECONOMICS,
+    NNS_TOPIC_GOVERNANCE,
+    NNS_TOPIC_SNS_AND_NEURON_FUND,
+];
 
 pub fn start_job() {
     ic_cdk_timers::set_timer_interval(Duration::from_millis(RETRIEVE_PROPOSALS_INTERVAL), run);
@@ -110,16 +119,41 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
-            // TODO Remove this!
-            // Temp hack for Dragginz
-            // Dfinity are fixing a bug in their governance canister which is causing it to
-            // return old proposals
-            let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
-            if governance_canister_id == dragginz_governance_canister_id {
-                proposals.retain(|p| p.id() > 36)
-            }
-
             mutate_state(|state| {
+                // TODO Remove this!
+                // Temp hack for Dragginz
+                // Dfinity are fixing a bug in their governance canister which is causing it to
+                // return old proposals
+                let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+                if governance_canister_id == dragginz_governance_canister_id {
+                    proposals.retain(|p| p.id() > 36)
+                } else if governance_canister_id == state.data.nns_governance_canister_id {
+                    if let Some(neuron_id) = state.data.nns_neuron_to_vote_with {
+                        for proposal in proposals.iter() {
+                            if let Proposal::NNS(nns) = proposal {
+                                if NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
+                                    && !state.data.nns_proposals_scheduled_to_vote_on.contains(&nns.id)
+                                {
+                                    // Set up a job to reject the proposal 10 minutes before its deadline.
+                                    // In parallel, we will submit an SNS proposal instructing the SNS governance
+                                    // canister to adopt the proposal. So the resulting vote on the NNS proposal will
+                                    // depend on the outcome of the SNS proposal.
+                                    state.data.timer_jobs.enqueue_job(
+                                        TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
+                                            nns_governance_canister_id: governance_canister_id,
+                                            neuron_id,
+                                            proposal_id: nns.id,
+                                            vote: false,
+                                        }),
+                                        nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
+                                        state.env.now(),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
                 let previous_active_proposals = state.data.nervous_systems.active_proposals(&governance_canister_id);
                 let mut no_longer_active: HashSet<_> = previous_active_proposals.into_iter().collect();
                 for id in proposals.iter().map(|p| p.id()) {
