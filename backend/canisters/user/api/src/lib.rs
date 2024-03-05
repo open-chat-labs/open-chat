@@ -248,8 +248,6 @@ pub struct P2PSwapStatusChange {
 pub struct StartVideoCallArgs {
     pub message_id: MessageId,
     pub message_index: MessageIndex,
-    pub sender: UserId,
-    pub initiator: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

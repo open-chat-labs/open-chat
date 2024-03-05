@@ -6,6 +6,8 @@ use types::{MessageId, UserId};
 pub struct Args {
     pub message_id: MessageId,
     pub initiator: UserId,
+    pub initiator_username: String,
+    pub initiator_display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
