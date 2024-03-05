@@ -9,6 +9,7 @@ use community_canister::post_upgrade::Args;
 use event_sink_client::EventBuilder;
 use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
+use rand::Rng;
 use stable_memory::get_reader;
 use tracing::info;
 use types::{Chat, MessageEventPayload};
@@ -46,6 +47,7 @@ fn post_upgrade(args: Args) {
         let community_id = this_canister_id.into();
         for channel in state.data.channels.iter_mut() {
             channel.chat.events.set_chat(Chat::Channel(community_id, channel.id));
+            channel.chat.events.set_anonymized_id(state.env.rng().gen());
         }
 
         let source_string = this_canister_id.to_string();
