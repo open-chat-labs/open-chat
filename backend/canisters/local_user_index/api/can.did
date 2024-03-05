@@ -147,6 +147,7 @@ type InviteUsersToChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     user_ids : vec UserId;
+    caller_username : text;
 };
 
 type InviteUsersToChannelResponse = variant {
@@ -174,6 +175,7 @@ type InviteUsersToChannelFailed = record {
 type InviteUsersToCommunityArgs = record {
     community_id : CommunityId;
     user_ids : vec UserId;
+    caller_username : text;
 };
 
 type InviteUsersToCommunityResponse = variant {
@@ -189,6 +191,7 @@ type InviteUsersToCommunityResponse = variant {
 type InviteUsersToGroupArgs = record {
     group_id : ChatId;
     user_ids : vec UserId;
+    caller_username : text;
     correlation_id : nat64;
 };
 

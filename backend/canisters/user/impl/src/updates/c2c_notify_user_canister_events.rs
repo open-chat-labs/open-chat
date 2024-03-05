@@ -117,6 +117,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 sender_avatar_id: args.sender_avatar_id,
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
+                mentioned: Vec::new(),
                 now,
             },
             state,

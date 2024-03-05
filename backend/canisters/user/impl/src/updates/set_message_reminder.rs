@@ -51,6 +51,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.thread_root_message_index,
             args.event_index,
         )),
+        Vec::new(),
         true,
         state,
     )

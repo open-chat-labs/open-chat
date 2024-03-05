@@ -47,7 +47,10 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         }
         Event::OpenChatBotMessage(content) => {
             let initial_content: MessageContentInitial = (*content).into();
-            openchat_bot::send_message(initial_content.into(), false, state);
+            openchat_bot::send_message(initial_content.into(), Vec::new(), false, state);
+        }
+        Event::OpenChatBotMessageV2(message) => {
+            openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();
@@ -80,7 +83,12 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             state.data.diamond_membership_expires_at = Some(ev.expires_at);
 
             if ev.send_bot_message {
-                openchat_bot::send_text_message("Payment received for Diamond membership!".to_string(), false, state);
+                openchat_bot::send_text_message(
+                    "Payment received for Diamond membership!".to_string(),
+                    Vec::new(),
+                    false,
+                    state,
+                );
             }
         }
     }
