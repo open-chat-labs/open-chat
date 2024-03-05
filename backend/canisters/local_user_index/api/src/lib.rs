@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
-    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, UserId,
+    MessageContentInitial, MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
+    UpdateUserPrincipalArgs, User, UserId,
 };
 
 mod lifecycle;
@@ -29,6 +30,7 @@ pub enum Event {
     UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
+    OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
     SecretKeySet(Vec<u8>),
@@ -129,6 +131,13 @@ pub struct DiamondMembershipPaymentReceived {
 pub struct OpenChatBotMessage {
     pub user_id: UserId,
     pub message: MessageContent,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessageV2 {
+    pub user_id: UserId,
+    pub content: MessageContentInitial,
+    pub mentioned: Vec<User>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

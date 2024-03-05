@@ -88,7 +88,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id],
@@ -175,7 +175,7 @@ fn invite_to_community_oc_bot_message_received() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id],

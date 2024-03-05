@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction, SuspensionDuration,
-    TimestampMillis, UserId,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction,
+    SuspensionDuration, TimestampMillis, User, UserId,
 };
 
 mod lifecycle;
@@ -82,7 +82,7 @@ pub struct ChannelSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     UsernameChanged(Box<UsernameChanged>),
     DisplayNameChanged(Box<DisplayNameChanged>),
@@ -92,42 +92,43 @@ pub enum Event {
     UserSuspended(Box<UserSuspended>),
     // TODO: This should take MessageContentInitial
     OpenChatBotMessage(Box<MessageContent>),
+    OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UsernameChanged {
     pub username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DisplayNameChanged {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PhoneNumberConfirmed {
     pub phone_number: PhoneNumber,
     pub storage_added: u64,
     pub new_storage_limit: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StorageUpgraded {
     pub cost: types::nns::CryptoAmount,
     pub storage_added: u64,
     pub new_storage_limit: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReferredUserRegistered {
     pub user_id: UserId,
     pub username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserSuspended {
     pub timestamp: TimestampMillis,
     pub duration: SuspensionDuration,
@@ -135,21 +136,27 @@ pub struct UserSuspended {
     pub suspended_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessageV2 {
+    pub content: MessageContentInitial,
+    pub mentioned: Vec<User>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,

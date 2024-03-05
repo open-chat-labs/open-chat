@@ -6,8 +6,8 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use event_sink_client::EventBuilder;
 use local_user_index_canister::{
-    Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
-    UsernameChanged,
+    Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, UserId};
@@ -81,6 +81,16 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                     user_id: ev.user_id,
                     message: ev.message,
+                })),
+            );
+        }
+        Event::OpenChatBotMessageV2(ev) => {
+            state.push_event_to_local_user_index(
+                ev.user_id,
+                LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                    user_id: ev.user_id,
+                    content: ev.content,
+                    mentioned: ev.mentioned,
                 })),
             );
         }
