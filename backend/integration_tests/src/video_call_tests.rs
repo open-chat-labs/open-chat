@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
+use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 
@@ -19,19 +20,21 @@ fn start_then_end_video_call_in_direct_chat_succeeds() {
 
     client::user::happy_path::start_video_call(env, &user1, user2.user_id, message_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let user1_chat = client::user::happy_path::initial_state(env, &user1)
         .direct_chats
         .summaries
-        .pop()
+        .into_iter()
+        .find(|c| c.them == user2.user_id)
         .unwrap();
     assert!(user1_chat.video_call_in_progress.is_some());
 
-    let user2_chat = client::user::happy_path::initial_state(env, &user1)
+    let user2_chat = client::user::happy_path::initial_state(env, &user2)
         .direct_chats
         .summaries
-        .pop()
+        .into_iter()
+        .find(|c| c.them == user1.user_id)
         .unwrap();
     assert!(user2_chat.video_call_in_progress.is_some());
 
@@ -42,14 +45,16 @@ fn start_then_end_video_call_in_direct_chat_succeeds() {
     let user1_chat = client::user::happy_path::initial_state(env, &user1)
         .direct_chats
         .summaries
-        .pop()
+        .into_iter()
+        .find(|c| c.them == user2.user_id)
         .unwrap();
     assert!(user1_chat.video_call_in_progress.is_none());
 
-    let user2_chat = client::user::happy_path::initial_state(env, &user1)
+    let user2_chat = client::user::happy_path::initial_state(env, &user2)
         .direct_chats
         .summaries
-        .pop()
+        .into_iter()
+        .find(|c| c.them == user1.user_id)
         .unwrap();
     assert!(user2_chat.video_call_in_progress.is_none());
 }
