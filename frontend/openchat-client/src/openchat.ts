@@ -4030,7 +4030,13 @@ export class OpenChat extends OpenChatAgentWorker {
     inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
         const localUserIndex = this.localUserIndexForChat(chatId);
-        return this.sendRequest({ kind: "inviteUsers", chatId, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsers",
+            chatId,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersLocally(chatId, userIds);
@@ -4059,7 +4065,13 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<InviteUsersResponse> {
         this.inviteUsersToCommunityLocally(id, userIds);
         const localUserIndex = this.localUserIndexForCommunity(id.communityId);
-        return this.sendRequest({ kind: "inviteUsersToCommunity", id, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsersToCommunity",
+            id,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersToCommunityLocally(id, userIds);

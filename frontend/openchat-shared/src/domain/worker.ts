@@ -675,6 +675,7 @@ type InviteUsers = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsers";
 };
 
@@ -682,6 +683,7 @@ type InviteUsersToCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsersToCommunity";
 };
 
