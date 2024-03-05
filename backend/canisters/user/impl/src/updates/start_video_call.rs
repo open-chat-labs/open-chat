@@ -41,7 +41,7 @@ fn start_video_call(args: Args) -> Response {
                 message_type: content.message_type(),
                 message_text: None,
                 image_url: None,
-                sender_avatar_id: None,
+                sender_avatar_id: args.initiator_avatar_id,
                 crypto_transfer: None,
             });
 

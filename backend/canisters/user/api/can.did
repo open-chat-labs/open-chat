@@ -49,6 +49,7 @@ type StartVideoCallArgs = record {
     initiator : UserId;
     initiator_username : text;
     initiator_display_name : opt text;
+    initiator_avatar_id : opt nat;
 };
 
 type StartVideoCallResponse = variant {

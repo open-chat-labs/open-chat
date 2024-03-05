@@ -8,6 +8,7 @@ pub struct Args {
     pub initiator: UserId,
     pub initiator_username: String,
     pub initiator_display_name: Option<String>,
+    pub initiator_avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
