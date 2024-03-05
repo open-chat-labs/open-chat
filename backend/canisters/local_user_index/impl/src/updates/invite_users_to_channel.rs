@@ -75,6 +75,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn commit(
     invited_by: UserId,
     invited_by_username: String,
