@@ -995,6 +995,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
   });
   const InviteUsersToChannelFailed = IDL.Record({
     'failed_users' : IDL.Vec(UserId),
@@ -1018,6 +1019,7 @@ export const idlFactory = ({ IDL }) => {
   const InviteUsersToCommunityArgs = IDL.Record({
     'community_id' : CommunityId,
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
   });
   const InviteUsersToCommunityResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1030,6 +1032,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const InviteUsersToGroupArgs = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
     'group_id' : ChatId,
     'correlation_id' : IDL.Nat64,
   });

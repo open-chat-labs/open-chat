@@ -6,7 +6,7 @@ use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis, User,
     UserId,
 };
 use user_canister::C2CReplyContext;
@@ -51,6 +51,7 @@ async fn c2c_handle_bot_messages(
                     is_bot: true,
                     sender_avatar_id: None,
                     push_message_sent_event: true,
+                    mentioned: Vec::new(),
                     mute_notification: false,
                     now,
                 },
@@ -74,6 +75,7 @@ pub(crate) struct HandleMessageArgs {
     pub sender_avatar_id: Option<u128>,
     pub push_message_sent_event: bool,
     pub mute_notification: bool,
+    pub mentioned: Vec<User>,
     pub now: TimestampMillis,
 }
 
@@ -156,7 +158,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
             sender_name: args.sender_name,
             sender_display_name: args.sender_display_name,
             message_type: content.message_type(),
-            message_text: content.notification_text(&[], &[]),
+            message_text: content.notification_text(&args.mentioned, &[]),
             image_url: content.notification_image_url(),
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),

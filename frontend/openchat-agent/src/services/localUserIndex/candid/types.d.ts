@@ -932,6 +932,7 @@ export interface InviteUsersToChannelArgs {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'user_ids' : Array<UserId>,
+  'caller_username' : string,
 }
 export interface InviteUsersToChannelFailed { 'failed_users' : Array<UserId> }
 export interface InviteUsersToChannelPartialSuccess {
@@ -953,6 +954,7 @@ export type InviteUsersToChannelResponse = {
 export interface InviteUsersToCommunityArgs {
   'community_id' : CommunityId,
   'user_ids' : Array<UserId>,
+  'caller_username' : string,
 }
 export type InviteUsersToCommunityResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
@@ -963,6 +965,7 @@ export type InviteUsersToCommunityResponse = { 'NotAuthorized' : null } |
   { 'TooManyInvites' : number };
 export interface InviteUsersToGroupArgs {
   'user_ids' : Array<UserId>,
+  'caller_username' : string,
   'group_id' : ChatId,
   'correlation_id' : bigint,
 }
