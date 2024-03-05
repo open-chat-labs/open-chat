@@ -47,6 +47,8 @@ type SendMessageSuccess = record {
 type StartVideoCallArgs = record {
     message_id : MessageId;
     initiator : UserId;
+    initiator_username : text;
+    initiator_display_name : opt text;
 };
 
 type StartVideoCallResponse = variant {
