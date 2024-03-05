@@ -45,7 +45,7 @@ fn join_private_group_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![user2.user_id],

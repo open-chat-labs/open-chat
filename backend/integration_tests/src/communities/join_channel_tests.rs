@@ -103,7 +103,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
@@ -188,6 +188,7 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             user_ids: vec![user3.user_id],
+            caller_username: user1.username(),
         },
     );
 
@@ -232,7 +233,7 @@ fn invite_to_channel_oc_bot_message_received() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,

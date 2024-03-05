@@ -226,7 +226,7 @@ fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId, poll_config:
     let group = client::user::happy_path::create_group(env, &user1, "TEST_NAME", false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         local_user_index,
         group,
         vec![(user2.user_id, user2.principal)],

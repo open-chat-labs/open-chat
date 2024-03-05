@@ -26,7 +26,7 @@ fn remove_member_from_channel_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,

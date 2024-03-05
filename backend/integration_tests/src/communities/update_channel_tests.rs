@@ -37,7 +37,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
