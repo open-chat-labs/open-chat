@@ -9,7 +9,6 @@ use types::{
     CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, UserId,
     VideoCallContent,
 };
-use user_canister::send_message_v2::SuccessResult;
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 
@@ -30,7 +29,6 @@ fn start_video_call(args: Args) -> Response {
         } = handle_start_video_call(args.message_id, None, sender, sender, state);
 
         if !mute_notification {
-            let content = &message_event.event.content;
             let notification = Notification::DirectMessage(DirectMessageNotification {
                 sender,
                 thread_root_message_index: None,
@@ -38,7 +36,7 @@ fn start_video_call(args: Args) -> Response {
                 event_index: message_event.index,
                 sender_name: args.initiator_username,
                 sender_display_name: args.initiator_display_name,
-                message_type: content.message_type(),
+                message_type: message_event.event.content.message_type(),
                 message_text: None,
                 image_url: None,
                 sender_avatar_id: args.initiator_avatar_id,
@@ -56,13 +54,7 @@ fn start_video_call(args: Args) -> Response {
             })),
         );
 
-        Success(SuccessResult {
-            chat_id: sender.into(),
-            event_index: message_event.index,
-            message_index: message_event.event.message_index,
-            timestamp: message_event.timestamp,
-            expires_at: message_event.expires_at,
-        })
+        Success
     })
 }
 

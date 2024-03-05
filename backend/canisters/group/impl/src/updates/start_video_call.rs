@@ -5,7 +5,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use event_sink_client::EventBuilder;
-use group_canister::send_message_v2::SuccessResult;
 use group_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
@@ -62,7 +61,6 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    let content = &result.message_event.event.content;
     let this_canister_id = state.env.canister_id();
     let notification = Notification::GroupMessage(GroupMessageNotification {
         chat_id: this_canister_id.into(),
@@ -73,7 +71,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         sender,
         sender_name: args.initiator_username,
         sender_display_name: args.initiator_display_name,
-        message_type: content.message_type(),
+        message_type: result.message_event.event.content.message_type(),
         message_text: None,
         image_url: None,
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
@@ -91,10 +89,5 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             .build(),
     );
 
-    Success(SuccessResult {
-        event_index,
-        message_index,
-        timestamp: now,
-        expires_at,
-    })
+    Success
 }
