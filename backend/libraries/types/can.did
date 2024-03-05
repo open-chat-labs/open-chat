@@ -1753,5 +1753,5 @@ type VideoCallUpdates = variant {
 
 type AccessTokenType = variant {
     StartVideoCall;
-    JoinVideoCall : MessageId;
+    JoinVideoCall;
 };

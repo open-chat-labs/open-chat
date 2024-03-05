@@ -1,12 +1,9 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::{
-    DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
-};
+use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use candid::Principal;
-use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use event_sink_client::EventBuilder;
@@ -238,24 +235,6 @@ fn send_message_impl(
 
     let (message_event, event_payload) = chat.push_message(true, push_message_args, None);
 
-    let mut is_next_event_to_expire = false;
-    if let Some(expiry) = message_event.expires_at {
-        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
-        if is_next_event_to_expire {
-            state.data.next_event_expiry = Some(expiry);
-        }
-    }
-
-    register_timer_jobs(
-        recipient.into(),
-        args.message_id,
-        &message_event,
-        Vec::new(),
-        is_next_event_to_expire,
-        now,
-        &mut state.data.timer_jobs,
-    );
-
     let user_string = sender.to_string();
     state.data.event_sink_client.push(
         EventBuilder::new("message_sent", now)
@@ -306,6 +285,15 @@ fn send_message_impl(
             );
         }
     }
+
+    register_timer_jobs(
+        recipient.into(),
+        args.message_id,
+        &message_event,
+        Vec::new(),
+        now,
+        &mut state.data,
+    );
 
     if let Some(transfer) = completed_transfer {
         TransferSuccessV2(TransferSuccessV2Result {
@@ -365,13 +353,12 @@ pub(crate) fn register_timer_jobs(
     message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
-    is_next_event_to_expire: bool,
     now: TimestampMillis,
-    timer_jobs: &mut TimerJobs<TimerJob>,
+    data: &mut Data,
 ) {
     if !file_references.is_empty() {
         if let Some(expiry) = message_event.expires_at {
-            timer_jobs.enqueue_job(
+            data.timer_jobs.enqueue_job(
                 TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
                 expiry,
                 now,
@@ -379,13 +366,12 @@ pub(crate) fn register_timer_jobs(
         }
     }
 
-    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
-        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    if let Some(expiry) = message_event.expires_at {
+        data.handle_event_expiry(expiry, now);
     }
 
     if let MessageContent::P2PSwap(c) = &message_event.event.content {
-        timer_jobs.enqueue_job(
+        data.timer_jobs.enqueue_job(
             TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
                 chat_id,
                 thread_root_message_index: None,

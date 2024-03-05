@@ -141,24 +141,6 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
 
     let (message_event, event_payload) = chat.push_message(false, push_message_args, args.sender_message_index);
 
-    let mut is_next_event_to_expire = false;
-    if let Some(expiry) = message_event.expires_at {
-        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
-        if is_next_event_to_expire {
-            state.data.next_event_expiry = Some(expiry);
-        }
-    }
-
-    register_timer_jobs(
-        chat_id,
-        message_id,
-        &message_event,
-        files,
-        is_next_event_to_expire,
-        args.now,
-        &mut state.data.timer_jobs,
-    );
-
     if args.is_bot {
         chat.mark_read_up_to(message_event.event.message_index, false, args.now);
     }
@@ -194,6 +176,8 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
                 .build(),
         );
     }
+
+    register_timer_jobs(chat_id, message_id, &message_event, files, args.now, &mut state.data);
 
     message_event
 }

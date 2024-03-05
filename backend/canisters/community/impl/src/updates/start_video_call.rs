@@ -1,6 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -59,14 +58,6 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let message_index = result.message_event.event.message_index;
     let expires_at = result.message_event.expires_at;
 
-    if let Some(expiry) = expires_at {
-        if state.data.next_event_expiry.map_or(true, |ex| expiry < ex) {
-            let timer_jobs = &mut state.data.timer_jobs;
-            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
-        }
-    }
-
     // Exclude suspended members from notification
     let users_to_notify: Vec<UserId> = result
         .users_to_notify
@@ -105,6 +96,10 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             .with_json_payload(&result.event_payload)
             .build(),
     );
+
+    if let Some(expiry) = expires_at {
+        state.data.handle_event_expiry(expiry, now);
+    }
 
     Success(SuccessResult {
         event_index,

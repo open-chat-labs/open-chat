@@ -1,6 +1,5 @@
 use crate::guards::caller_is_video_call_operator;
-use crate::timer_job_types::RemoveExpiredEventsJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs};
 use event_sink_client::EventBuilder;
@@ -90,13 +89,7 @@ pub fn handle_start_video_call(
     let (message_event, event_payload) = chat.push_message(false, push_message_args, message_index);
 
     if let Some(expiry) = message_event.expires_at {
-        if state.data.next_event_expiry.map_or(true, |ex| expiry < ex) {
-            state.data.next_event_expiry = Some(expiry);
-
-            let timer_jobs = &mut state.data.timer_jobs;
-            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
-        }
+        state.data.handle_event_expiry(expiry, now);
     }
 
     state.data.event_sink_client.push(
