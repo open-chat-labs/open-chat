@@ -705,7 +705,7 @@ impl GroupChatCore {
 
     fn prepare_send_message(
         &mut self,
-        mut sender: UserId,
+        sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
@@ -725,27 +725,26 @@ impl GroupChatCore {
             });
         }
 
-        if let MessageContentInternal::VideoCall(vc) = content {
-            sender = vc.participants[0].user_id;
+        let user_to_validate = if let MessageContentInternal::VideoCall(vc) = content {
             notification_exclusions.push(sender);
-        }
-
-        match self.members.get_mut(&sender) {
-            Some(m) => {
-                if m.suspended.value {
-                    return UserSuspended;
-                }
+            vc.participants[0].user_id
+        } else {
+            if let Some(member) = self.members.get_mut(&sender) {
                 if let Some(version) = rules_accepted {
-                    m.accept_rules(min(version, self.rules.text.version), now);
+                    member.accept_rules(min(version, self.rules.text.version), now);
+                }
+                if !member.check_rules(&self.rules.value) {
+                    return RulesNotAccepted;
                 }
             }
-            None => return UserNotInGroup,
+            sender
         };
 
-        let member = self.members.get(&sender).unwrap();
-
-        if !self.check_rules(member, content) {
-            return RulesNotAccepted;
+        let Some(member) = self.members.get(&user_to_validate) else {
+            return UserNotInGroup;
+        };
+        if member.suspended.value {
+            return UserSuspended;
         }
 
         let permissions = &self.permissions;
@@ -761,7 +760,7 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
-            sender_is_bot: member.is_bot,
+            sender_is_bot: member.is_bot || is_video_call,
             notification_exclusions,
         })
     }
@@ -1562,16 +1561,6 @@ impl GroupChatCore {
         }
 
         result
-    }
-
-    pub fn check_rules(&self, member: &GroupMemberInternal, content: &MessageContentInternal) -> bool {
-        !self.rules.enabled
-            || member.is_bot
-            || matches!(content, MessageContentInternal::VideoCall(_))
-            || (member
-                .rules_accepted
-                .as_ref()
-                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
     }
 
     pub fn follow_thread(
