@@ -34,9 +34,8 @@
     $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
 
     function joinCall() {
-        // TODO this doesn't work from the thread
         if (!incall && $selectedChat) {
-            dispatch("startVideoCall", { chat: $selectedChat, messageIndex });
+            dispatch("startVideoCall", { chat: $selectedChat, join: true });
         }
     }
 

@@ -234,6 +234,7 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
+    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -3714,16 +3715,17 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
+        if (msg.kind === "remote_video_call_started") {
+            console.log("Is this happening?", msg);
+            this.dispatchEvent(new RemoteVideoCallStartedEvent(msg.id, msg.userId));
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
         // this means we have a selected chat but it doesn't mean it's the same as this message
         const parsedMsg = parseWebRtcMessage(fromChatId, msg);
         const { selectedChat, threadEvents, events } = this._liveState;
-
-        if (parsedMsg.kind === "remote_user_started_video_call") {
-            alert("mother fucker started a call");
-        }
 
         if (
             selectedChat !== undefined &&
@@ -5666,6 +5668,40 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    async ringOtherUsers() {
+        const chat = this._liveState.selectedChat;
+        let userIds = [];
+        const me = this._liveState.user.userId;
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") {
+                userIds.push(chat.them.userId);
+            } else if (!chat.public) {
+                userIds = this._liveState.currentChatMembers
+                    .map((m) => m.userId)
+                    .filter((id) => id !== me);
+            }
+        }
+        if (userIds.length > 0) {
+            await Promise.all(
+                userIds
+                    .filter((id) => !rtcConnectionsManager.exists(id))
+                    .map((id) =>
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
+                        ),
+                    ),
+            );
+            console.log("About to send remove video started to: ", userIds);
+            this.sendRtcMessage(userIds, {
+                kind: "remote_video_call_started",
+                id: chat.id,
+                userId: me,
+            });
+        }
+    }
+
     private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
@@ -5714,33 +5750,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     kind: "getLocalUserIndexForUser",
                     userId: chat.them.userId,
                 });
-        }
-    }
-
-    async ringOtherUsers() {
-        // if we are starting a video call in a private chat, let's make rtc conntections to all other
-        // users and try to ring them
-        const chat = this._liveState.selectedChat;
-        if (!chat) return;
-
-        if (chat.kind === "direct_chat" || !chat.public) {
-            const userIds = this._liveState.currentChatMembers.map((m) => m.userId);
-            await Promise.all(
-                userIds
-                    .filter((id) => !rtcConnectionsManager.exists(id))
-                    .map((id) => {
-                        return rtcConnectionsManager.create(
-                            this._liveState.user.userId,
-                            id,
-                            this.config.meteredApiKey,
-                        );
-                    }),
-            );
-            this.sendRtcMessage(userIds, {
-                kind: "remote_user_started_video_call",
-                id: chat.id,
-                userId: this._liveState.user.userId,
-            });
         }
     }
 

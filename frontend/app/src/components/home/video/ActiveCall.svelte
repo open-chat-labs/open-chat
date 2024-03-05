@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ring } from "../../../utils/ring";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rtlStore } from "../../../stores/rtl";
@@ -45,7 +46,7 @@
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
-    let confirmSwitchTo: ChatSummary | undefined = undefined;
+    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -91,10 +92,14 @@
         }
     }
 
-    export async function startOrJoinVideoCall(chat: ChatSummary, messageIndex?: number) {
+    export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
+        if (chat === undefined) return;
+
         try {
+            ring.pause();
+
             if ($activeVideoCall !== undefined) {
-                confirmSwitchTo = chat;
+                confirmSwitchTo = { chat, join };
                 return;
             }
 
@@ -106,10 +111,9 @@
 
             activeVideoCall.joining(chat.id);
 
-            const accessType: AccessTokenType =
-                messageIndex === undefined
-                    ? { kind: "start_video_call" }
-                    : { kind: "join_video_call", messageIndex };
+            const accessType: AccessTokenType = join
+                ? { kind: "join_video_call", messageIndex: 123 }
+                : { kind: "start_video_call" };
 
             // first we need tojoin access jwt from the oc backend
             const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
@@ -146,9 +150,12 @@
                 }
             });
 
+            if (!join) {
+                client.ringOtherUsers();
+            }
+
             await call.join();
 
-            client.ringOtherUsers();
             performance.mark("daily_joined");
             performance.measure("get_daily_frame", "daily_token", "daily_frame");
             performance.measure("get_daily_joined", "daily_frame", "daily_joined");
@@ -195,9 +202,9 @@
     function switchCall(confirmed: boolean): Promise<void> {
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
-            const chat = confirmSwitchTo;
+            const { chat, join } = confirmSwitchTo;
             confirmSwitchTo = undefined;
-            return startOrJoinVideoCall(chat);
+            return startOrJoinVideoCall(chat, join);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();

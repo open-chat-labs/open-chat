@@ -3146,24 +3146,10 @@ export class OpenChatAgent extends EventTarget {
         accessTokenType: AccessTokenType,
         localUserIndex: string,
     ): Promise<string | undefined> {
-        switch (chatId.kind) {
-            case "channel":
-                return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
-                    chatId,
-                    accessTokenType,
-                );
-            case "group_chat":
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.getAccessToken(chatId, accessTokenType);
-            case "direct_chat":
-                // todo - get the local user index for the *other* user to find out if we can get an
-                // access token for them
-                const directLocalUserIndex = await this._userIndexClient.userRegistrationCanister();
-                return this.createLocalUserIndexClient(directLocalUserIndex).getAccessToken(
-                    chatId,
-                    accessTokenType,
-                );
-        }
+        return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
+            chatId,
+            accessTokenType,
+        );
     }
 
     async getLocalUserIndexForUser(userId: string): Promise<string> {

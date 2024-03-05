@@ -37,6 +37,7 @@
         SelectedChatInvalid,
         SendMessageFailed,
         ThreadClosed,
+        RemoteVideoCallStartedEvent,
         ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
@@ -95,6 +96,8 @@
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
     import ActiveCall from "./video/ActiveCall.svelte";
+    import { incomingVideoCall } from "../../stores/video";
+    import IncomingCall from "./video/IncomingCall.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -237,6 +240,8 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
+        } else if (ev instanceof RemoteVideoCallStartedEvent) {
+            remoteVideoCallStarted(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
@@ -268,6 +273,10 @@
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
         }
+    }
+
+    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+        incomingVideoCall.set(ev.detail);
     }
 
     async function newChatSelected(
@@ -1049,13 +1058,24 @@
         showProfileCard = undefined;
     }
 
-    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; messageIndex?: number }>) {
-        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.messageIndex);
+    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
+        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
+    }
+
+    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+        incomingVideoCall.set(undefined);
+        const chat = client.lookupChatSummary(ev.detail);
+        if (chat) {
+            page(routeForChatIdentifier("none", chat.id));
+            videoCallElement?.startOrJoinVideoCall(chat, true);
+        }
     }
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
+
+<IncomingCall on:join={joinVideoCall} />
 
 <ActiveCall
     on:clearSelection={() => page(routeForScope($chatListScope))}

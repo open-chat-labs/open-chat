@@ -8,21 +8,24 @@ export class RtcConnectionsManager {
 
     private onMessage?: (message: unknown) => void;
 
-    private cacheConnection(me: string, them: string, conn: DataConnection) {
-        conn.on("open", () => {
-            this.connections.set(them, conn);
-            console.log("c: connection open: ", me, " and ", them);
-        });
+    private cacheConnection(me: string, them: string, conn: DataConnection): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            conn.on("open", () => {
+                this.connections.set(them, conn);
+                console.log("c: connection open: ", me, " and ", them);
+                resolve(true);
+            });
 
-        conn.on("data", (data) => {
-            console.log("c: connection received data: ", data);
-            if (this.onMessage) {
-                this.onMessage(data);
-            }
-        });
+            conn.on("data", (data) => {
+                console.log("c: connection received data: ", data);
+                if (this.onMessage) {
+                    this.onMessage(data);
+                }
+            });
 
-        conn.on("error", (err) => {
-            console.log("c: connection error: ", err);
+            conn.on("error", (err) => {
+                console.log("c: connection error: ", err);
+            });
         });
     }
 
@@ -87,14 +90,13 @@ export class RtcConnectionsManager {
 
     public create(me: string, them: string, meteredApiKey: string): Promise<boolean> {
         return this.init(me, meteredApiKey).then((peer) => {
-            this.cacheConnection(
+            return this.cacheConnection(
                 me,
                 them,
                 peer.connect(them, {
                     serialization: "json",
                 }),
             );
-            return true;
         });
     }
 

@@ -1240,6 +1240,7 @@
     "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
     "youreBlocked": "Sorry - you have been blocked from this group",
     "videoCall": {
+        "incoming": "Incoming video call",
         "chat": "Chat",
         "startVideo": "Start video call",
         "joinVideo": "Join video call",
@@ -1254,6 +1255,8 @@
         "endedAt": "Call ended at {time}",
         "join": "Join call",
         "ended": "Call ended",
-        "leave": "Leave call"
+        "leave": "Leave call",
+        "remoteStart": "A video call has been started by {name}",
+        "clickToJoin": "Click to join the call"
     }
 }
