@@ -226,7 +226,7 @@
                     <div class="amount">
                         <TokenInput
                             ledger={ledgerIn}
-                            minAmount={detailsIn.transferFee * BigInt(100)}
+                            minAmount={detailsIn.transferFee * BigInt(10)}
                             maxAmount={detailsIn.balance}
                             bind:valid={validAmount}
                             bind:amount={amountIn} />

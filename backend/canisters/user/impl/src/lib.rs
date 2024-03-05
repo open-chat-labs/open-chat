@@ -298,6 +298,16 @@ impl Data {
         }
         Some(community)
     }
+
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]

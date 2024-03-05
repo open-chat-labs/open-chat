@@ -1,12 +1,9 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{
-    DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob,
-};
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, TimerJob};
+use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
-use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
@@ -41,7 +38,6 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Caller {
         user_id,
         is_bot,
-        is_video_call_operator,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -64,7 +60,6 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
-            is_video_call_operator,
             now,
         );
 
@@ -91,7 +86,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     let Caller {
         user_id,
         is_bot,
-        is_video_call_operator: _,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -143,7 +137,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 struct Caller {
     user_id: UserId,
     is_bot: bool,
-    is_video_call_operator: bool,
     display_name: Option<String>,
 }
 
@@ -153,14 +146,7 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
     }
 
     let caller = state.env.caller();
-    if state.is_caller_video_call_operator() {
-        Ok(Caller {
-            user_id: caller.into(),
-            is_bot: true,
-            is_video_call_operator: true,
-            display_name: None,
-        })
-    } else if let Some(member) = state.data.members.get_mut(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
         } else {
@@ -180,7 +166,6 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
             Ok(Caller {
                 user_id: member.user_id,
                 is_bot: member.is_bot,
-                is_video_call_operator: false,
                 display_name: member.display_name().value.clone(),
             })
         }
@@ -209,23 +194,6 @@ fn process_send_message_result(
             let event_index = result.message_event.index;
             let message_index = result.message_event.event.message_index;
             let expires_at = result.message_event.expires_at;
-
-            let mut is_next_event_to_expire = false;
-            if let Some(expiry) = expires_at {
-                is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
-                if is_next_event_to_expire {
-                    state.data.next_event_expiry = expires_at;
-                }
-            }
-
-            register_timer_jobs(
-                channel_id,
-                thread_root_message_index,
-                &result.message_event,
-                is_next_event_to_expire,
-                now,
-                &mut state.data.timer_jobs,
-            );
 
             // Exclude suspended members from notification
             let users_to_notify: Vec<UserId> = result
@@ -266,6 +234,14 @@ fn process_send_message_result(
                     .build(),
             );
 
+            register_timer_jobs(
+                channel_id,
+                thread_root_message_index,
+                &result.message_event,
+                now,
+                &mut state.data,
+            );
+
             Success(SuccessResult {
                 event_index,
                 message_index,
@@ -289,26 +265,25 @@ fn register_timer_jobs(
     channel_id: ChannelId,
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
-    is_next_event_to_expire: bool,
     now: TimestampMillis,
-    timer_jobs: &mut TimerJobs<TimerJob>,
+    data: &mut Data,
 ) {
     let files = message_event.event.content.blob_references();
     if !files.is_empty() {
         if let Some(expiry) = message_event.expires_at {
-            timer_jobs.enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
+            data.timer_jobs
+                .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
         }
     }
 
-    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
-        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    if let Some(expiry) = message_event.expires_at {
+        data.handle_event_expiry(expiry, now);
     }
 
     match &message_event.event.content {
         MessageContent::Poll(p) => {
             if let Some(end_date) = p.config.end_date {
-                timer_jobs.enqueue_job(
+                data.timer_jobs.enqueue_job(
                     TimerJob::EndPoll(EndPollJob {
                         channel_id,
                         thread_root_message_index,
@@ -320,7 +295,7 @@ fn register_timer_jobs(
             }
         }
         MessageContent::Prize(p) => {
-            timer_jobs.enqueue_job(
+            data.timer_jobs.enqueue_job(
                 TimerJob::RefundPrize(RefundPrizeJob {
                     channel_id,
                     thread_root_message_index,
@@ -331,7 +306,7 @@ fn register_timer_jobs(
             );
         }
         MessageContent::P2PSwap(c) => {
-            timer_jobs.enqueue_job(
+            data.timer_jobs.enqueue_job(
                 TimerJob::MarkP2PSwapExpired(MarkP2PSwapExpiredJob {
                     channel_id,
                     thread_root_message_index,

@@ -11,7 +11,7 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 }
 
 fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
-    let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall(_));
+    let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall);
 
     (args.is_diamond || joining) && is_member(args, state)
 }

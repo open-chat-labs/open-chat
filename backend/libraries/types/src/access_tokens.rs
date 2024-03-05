@@ -2,12 +2,10 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::MessageIndex;
-
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum AccessTokenType {
     StartVideoCall,
-    JoinVideoCall(MessageIndex),
+    JoinVideoCall,
 }
 
 impl fmt::Display for AccessTokenType {
