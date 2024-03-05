@@ -1,7 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
-use chat_events::MessageContentInternal;
 use ic_cdk_macros::init;
 use tracing::info;
 use user_canister::init::Args;
@@ -33,7 +32,7 @@ fn init(args: Args) {
 
     mutate_state(|state| {
         for message in args.openchat_bot_messages {
-            openchat_bot::send_message(MessageContentInternal::from_initial(message, now).unwrap(), true, state);
+            openchat_bot::send_message(message.into(), true, state);
         }
     });
 
