@@ -112,11 +112,14 @@
             activeVideoCall.joining(chat.id);
 
             const accessType: AccessTokenType = join
-                ? { kind: "join_video_call", messageIndex: 123 }
+                ? { kind: "join_video_call" }
                 : { kind: "start_video_call" };
 
             // first we need tojoin access jwt from the oc backend
-            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
+            const { token, roomName, messageId } = await client.getVideoChatAccessToken(
+                chat.id,
+                accessType,
+            );
 
             performance.mark("daily_token");
             performance.measure("get_oc_token", "start", "oc_token");
@@ -150,7 +153,8 @@
                 }
             });
 
-            if (!join) {
+            // if we got back a message id it means that we have started a new meeting (whether we intended to or not)
+            if (messageId !== undefined) {
                 client.ringOtherUsers();
             }
 

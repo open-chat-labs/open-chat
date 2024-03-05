@@ -8,9 +8,8 @@ export const idlFactory = ({ IDL }) => {
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
     'Direct' : ChatId,
   });
-  const MessageIndex = IDL.Nat32;
   const AccessTokenType = IDL.Variant({
-    'JoinVideoCall' : MessageIndex,
+    'JoinVideoCall' : IDL.Null,
     'StartVideoCall' : IDL.Null,
   });
   const AccessTokenArgs = IDL.Record({
@@ -22,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const MessageIndex = IDL.Nat32;
   const UserId = CanisterId;
   const EventsContext = IDL.Variant({
     'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),

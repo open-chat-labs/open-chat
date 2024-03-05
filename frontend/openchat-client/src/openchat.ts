@@ -5670,7 +5670,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async ringOtherUsers() {
         const chat = this._liveState.selectedChat;
-        let userIds = [];
+        let userIds: string[] = [];
         const me = this._liveState.user.userId;
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
@@ -5680,39 +5680,45 @@ export class OpenChat extends OpenChatAgentWorker {
                     .map((m) => m.userId)
                     .filter((id) => id !== me);
             }
-        }
-        if (userIds.length > 0) {
-            await Promise.all(
-                userIds
-                    .filter((id) => !rtcConnectionsManager.exists(id))
-                    .map((id) =>
-                        rtcConnectionsManager.create(
-                            this._liveState.user.userId,
-                            id,
-                            this.config.meteredApiKey,
+            if (userIds.length > 0) {
+                await Promise.all(
+                    userIds
+                        .filter((id) => !rtcConnectionsManager.exists(id))
+                        .map((id) =>
+                            rtcConnectionsManager.create(
+                                this._liveState.user.userId,
+                                id,
+                                this.config.meteredApiKey,
+                            ),
                         ),
-                    ),
-            );
-            console.log("About to send remove video started to: ", userIds);
-            this.sendRtcMessage(userIds, {
-                kind: "remote_video_call_started",
-                id: chat.id,
-                userId: me,
-            });
+                );
+                console.log("About to send remove video started to: ", userIds);
+                this.sendRtcMessage(userIds, {
+                    kind: "remote_video_call_started",
+                    id: chat.id,
+                    userId: me,
+                });
+            }
         }
     }
 
-    private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
+    private getRoomAccessToken(
+        authToken: string,
+    ): Promise<{ token: string; roomName: string; messageId?: bigint }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
+        const displayName = this.getDisplayName(
+            this._liveState.user,
+            this._liveState.currentCommunityMembers,
+        );
         const username = this._liveState.user.username;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
         return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}`,
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}&displayname=${displayName}`,
             {
                 method: "GET",
                 headers: headers,
@@ -5756,7 +5762,7 @@ export class OpenChat extends OpenChatAgentWorker {
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
-    ): Promise<{ token: string; roomName: string }> {
+    ): Promise<{ token: string; roomName: string; messageId?: bigint }> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
@@ -5772,6 +5778,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (token === undefined) {
                         throw new Error("Didn't get an access token");
                     }
+                    console.log("TOKEN: ", token);
                     performance.mark("oc_token");
                     return token;
                 })

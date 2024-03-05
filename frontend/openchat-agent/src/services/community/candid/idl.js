@@ -963,7 +963,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
   });
-  const VideoCallContentInitial = IDL.Record({ 'initiator' : UserId });
   const P2PSwapContentInitial = IDL.Record({
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
@@ -980,7 +979,6 @@ export const idlFactory = ({ IDL }) => {
     'diamond_only' : IDL.Bool,
   });
   const MessageContentInitial = IDL.Variant({
-    'VideoCall' : VideoCallContentInitial,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -1588,6 +1586,12 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const SendMessageSuccess = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'event_index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
+    'message_index' : MessageIndex,
+  });
   const InvalidPollReason = IDL.Variant({
     'DuplicateOptions' : IDL.Null,
     'TooFewOptions' : IDL.Nat32,
@@ -1602,12 +1606,7 @@ export const idlFactory = ({ IDL }) => {
     'UserNotInChannel' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : IDL.Opt(TimestampMillis),
-      'message_index' : MessageIndex,
-    }),
+    'Success' : SendMessageSuccess,
     'UserNotInCommunity' : IDL.Null,
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
@@ -1628,6 +1627,15 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
+  });
+  const StartVideoCallArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'initiator' : UserId,
+    'message_id' : MessageId,
+  });
+  const StartVideoCallResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : SendMessageSuccess,
   });
   const SummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const CommunityPermissionRole = IDL.Variant({
@@ -2116,6 +2124,11 @@ export const idlFactory = ({ IDL }) => {
     'set_member_display_name' : IDL.Func(
         [SetMemberDisplayNameArgs],
         [SetMemberDisplayNameResponse],
+        [],
+      ),
+    'start_video_call' : IDL.Func(
+        [StartVideoCallArgs],
+        [StartVideoCallResponse],
         [],
       ),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),

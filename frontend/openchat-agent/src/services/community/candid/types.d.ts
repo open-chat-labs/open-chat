@@ -26,7 +26,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -1271,8 +1271,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1893,14 +1892,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |
   { 'NotAuthorized' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
+  { 'Success' : SendMessageSuccess } |
   { 'UserNotInCommunity' : null } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
@@ -1909,6 +1901,12 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CommunityRulesNotAccepted' : null } |
   { 'InvalidRequest' : string } |
   { 'RulesNotAccepted' : null };
+export interface SendMessageSuccess {
+  'timestamp' : TimestampMillis,
+  'event_index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+  'message_index' : MessageIndex,
+}
 export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
 export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
@@ -1940,6 +1938,13 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
   'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StartVideoCallArgs {
+  'channel_id' : ChannelId,
+  'initiator' : UserId,
+  'message_id' : MessageId,
+}
+export type StartVideoCallResponse = { 'NotAuthorized' : null } |
+  { 'Success' : SendMessageSuccess };
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
@@ -2343,6 +2348,10 @@ export interface _SERVICE {
   'set_member_display_name' : ActorMethod<
     [SetMemberDisplayNameArgs],
     SetMemberDisplayNameResponse
+  >,
+  'start_video_call' : ActorMethod<
+    [StartVideoCallArgs],
+    StartVideoCallResponse
   >,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,

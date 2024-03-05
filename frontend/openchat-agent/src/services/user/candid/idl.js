@@ -703,7 +703,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'content' : MessageContent }),
     'MessageHardDeleted' : IDL.Null,
   });
-  const VideoCallContentInitial = IDL.Record({ 'initiator' : UserId });
   const P2PSwapContentInitial = IDL.Record({
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
@@ -720,7 +719,6 @@ export const idlFactory = ({ IDL }) => {
     'diamond_only' : IDL.Bool,
   });
   const MessageContentInitial = IDL.Variant({
-    'VideoCall' : VideoCallContentInitial,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -1324,6 +1322,13 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const SendMessageSuccess = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'chat_id' : ChatId,
+    'event_index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
+    'message_index' : MessageIndex,
+  });
   const InvalidPollReason = IDL.Variant({
     'DuplicateOptions' : IDL.Null,
     'TooFewOptions' : IDL.Nat32,
@@ -1345,13 +1350,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'TransferCannotBeZero' : IDL.Null,
     'DuplicateMessageId' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'expires_at' : IDL.Opt(TimestampMillis),
-      'message_index' : MessageIndex,
-    }),
+    'Success' : SendMessageSuccess,
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
     'RecipientBlocked' : IDL.Null,
@@ -1484,6 +1483,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Nat64,
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
+  });
+  const StartVideoCallArgs = IDL.Record({
+    'initiator' : UserId,
+    'message_id' : MessageId,
+  });
+  const StartVideoCallResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : SendMessageSuccess,
   });
   const ProposalToSubmitAction = IDL.Variant({
     'UpgradeSnsToNextVersion' : IDL.Null,
@@ -1893,6 +1900,11 @@ export const idlFactory = ({ IDL }) => {
     'set_message_reminder_v2' : IDL.Func(
         [SetMessageReminderV2Args],
         [SetMessageReminderResponse],
+        [],
+      ),
+    'start_video_call' : IDL.Func(
+        [StartVideoCallArgs],
+        [StartVideoCallResponse],
         [],
       ),
     'submit_proposal' : IDL.Func(
