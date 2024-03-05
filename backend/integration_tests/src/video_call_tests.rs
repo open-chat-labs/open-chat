@@ -39,8 +39,7 @@ fn start_then_end_video_call_in_direct_chat_succeeds() {
     assert!(user2_chat.video_call_in_progress.is_some());
 
     client::user::happy_path::end_video_call(env, user1.user_id, user2.user_id, message_id);
-
-    env.tick();
+    client::user::happy_path::end_video_call(env, user2.user_id, user1.user_id, message_id);
 
     let user1_chat = client::user::happy_path::initial_state(env, &user1)
         .direct_chats
