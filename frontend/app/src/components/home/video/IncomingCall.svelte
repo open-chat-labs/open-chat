@@ -8,7 +8,6 @@
     import Translatable from "../../Translatable.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import VideoCallIcon from "./VideoCallIcon.svelte";
     import { incomingVideoCall } from "../../../stores/video";
 
     const client = getContext<OpenChat>("client");
@@ -37,17 +36,20 @@
 
     <Overlay on:close={() => dispatch("cancel")} dismissible>
         <ModalContent closeIcon>
-            <span slot="header">
-                <VideoCallIcon />
+            <span slot="header" class="header">
+                <img class="icon" src="/assets/video_call.svg" alt="video call" />
                 <Translatable resourceKey={i18nKey("videoCall.incoming")} />
             </span>
             <span slot="body">
-                Video call started by {$userStore[$incomingVideoCall.userId].username}
+                <Translatable
+                    resourceKey={i18nKey("videoCall.remoteStart", {
+                        name: $userStore[$incomingVideoCall.userId].username,
+                    })} />
             </span>
             <span slot="footer">
                 <ButtonGroup>
                     <Button on:click={cancel} secondary>
-                        <Translatable resourceKey={i18nKey("cancel")} />
+                        <Translatable resourceKey={i18nKey("videoCall.ignore")} />
                     </Button>
                     <Button on:click={join}>
                         <Translatable resourceKey={i18nKey("videoCall.join")} />
@@ -59,4 +61,13 @@
 {/if}
 
 <style lang="scss">
+    .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    .header {
+        display: flex;
+        gap: $sp4;
+        align-items: center;
+    }
 </style>

@@ -115,8 +115,8 @@
                 ? { kind: "join_video_call" }
                 : { kind: "start_video_call" };
 
-            // first we need tojoin access jwt from the oc backend
-            const { token, roomName, messageId } = await client.getVideoChatAccessToken(
+            // first we need to get access jwt from the oc backend
+            const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
                 chat.id,
                 accessType,
             );
@@ -153,8 +153,8 @@
                 }
             });
 
-            // if we got back a message id it means that we have started a new meeting (whether we intended to or not)
-            if (messageId !== undefined) {
+            // if we are not joining aka starting we need to tell the other users
+            if (!joining) {
                 client.ringOtherUsers();
             }
 
@@ -175,7 +175,10 @@
             console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
             console.log("Total: ", performance.getEntriesByName("total"));
 
+            // TODO - change this so that is uses the messageId that came back from the video bridge
+            // once the join video call api has been changed to accept a messageId rather than a message index
             if (chat.videoCallInProgress !== undefined) {
+                console.log("We should be joining by messageId: ", messageId);
                 await client.joinVideoCall(chat.id, chat.videoCallInProgress);
             }
         } catch (err) {

@@ -1254,6 +1254,7 @@
         "startedBy": "A video call was started by {username}",
         "endedAt": "Call ended at {time}",
         "join": "Join call",
+        "ignore": "Ignore",
         "ended": "Call ended",
         "leave": "Leave call",
         "remoteStart": "A video call has been started by {name}",

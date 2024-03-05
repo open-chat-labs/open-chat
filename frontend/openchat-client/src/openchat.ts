@@ -5704,7 +5704,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private getRoomAccessToken(
         authToken: string,
-    ): Promise<{ token: string; roomName: string; messageId?: bigint }> {
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
@@ -5762,7 +5762,7 @@ export class OpenChat extends OpenChatAgentWorker {
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
-    ): Promise<{ token: string; roomName: string; messageId?: bigint }> {
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
