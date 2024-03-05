@@ -22,11 +22,13 @@ generate_update_call!(convert_into_community);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
 generate_update_call!(enable_invite_code);
+generate_update_call!(end_video_call);
 generate_update_call!(pin_message_v2);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message_v2);
+generate_update_call!(start_video_call);
 generate_update_call!(toggle_mute_notifications);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
@@ -34,6 +36,7 @@ generate_update_call!(unpin_message);
 generate_update_call!(update_group_v2);
 
 pub mod happy_path {
+    use crate::env::VIDEO_CALL_OPERATOR;
     use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
@@ -325,6 +328,39 @@ pub mod happy_path {
         match response {
             group_canister::claim_prize::Response::Success => {}
             response => panic!("'claim_prize' error: {response:?}"),
+        }
+    }
+
+    pub fn start_video_call(env: &mut PocketIc, user: &User, group_chat_id: ChatId, message_id: MessageId) {
+        let response = super::start_video_call(
+            env,
+            VIDEO_CALL_OPERATOR,
+            group_chat_id.into(),
+            &group_canister::start_video_call::Args {
+                message_id,
+                initiator: user.user_id,
+                initiator_username: user.username(),
+                initiator_display_name: None,
+            },
+        );
+
+        match response {
+            group_canister::start_video_call::Response::Success(_) => {}
+            response => panic!("'start_video_call' error: {response:?}"),
+        }
+    }
+
+    pub fn end_video_call(env: &mut PocketIc, group_chat_id: ChatId, message_id: MessageId) {
+        let response = super::end_video_call(
+            env,
+            VIDEO_CALL_OPERATOR,
+            group_chat_id.into(),
+            &group_canister::end_video_call::Args { message_id },
+        );
+
+        match response {
+            group_canister::end_video_call::Response::Success => {}
+            response => panic!("'end_video_call' error: {response:?}"),
         }
     }
 }
