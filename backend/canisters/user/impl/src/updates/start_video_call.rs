@@ -6,13 +6,12 @@ use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CallParticipant, ChatId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, UserId,
+    CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, UserId,
     VideoCallContent,
 };
 use user_canister::send_message_v2::SuccessResult;
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
-use utils::consts::VIDEO_CALL_BOT_USERNAME;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -20,27 +19,45 @@ fn start_video_call(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| {
-        if state.data.suspended.value || state.data.blocked_users.contains(&args.initiator) {
+        let sender = args.initiator;
+        if state.data.suspended.value || state.data.blocked_users.contains(&sender) {
             return NotAuthorized;
         }
 
-        let sender: UserId = state.env.caller().into();
+        let StartVideoCallResult {
+            message_event,
+            mute_notification,
+        } = handle_start_video_call(args.message_id, None, sender, sender, state);
 
-        let StartVideoCallResult { chat_id, message_event } =
-            handle_start_video_call(args.message_id, None, sender, args.initiator, args.initiator, state);
+        if !mute_notification {
+            let content = &message_event.event.content;
+            let notification = Notification::DirectMessage(DirectMessageNotification {
+                sender,
+                thread_root_message_index: None,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
+                sender_name: args.initiator_username,
+                sender_display_name: args.initiator_display_name,
+                message_type: content.message_type(),
+                message_text: None,
+                image_url: None,
+                sender_avatar_id: args.initiator_avatar_id,
+                crypto_transfer: None,
+            });
+
+            state.push_notification(state.env.canister_id().into(), notification);
+        }
 
         state.push_user_canister_event(
-            args.initiator.into(),
+            sender.into(),
             UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
                 message_id: args.message_id,
                 message_index: message_event.event.message_index,
-                sender,
-                initiator: args.initiator,
             })),
         );
 
         Success(SuccessResult {
-            chat_id,
+            chat_id: sender.into(),
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: message_event.timestamp,
@@ -51,9 +68,8 @@ fn start_video_call(args: Args) -> Response {
 
 pub fn handle_start_video_call(
     message_id: MessageId,
-    message_index: Option<MessageIndex>,
+    their_message_index: Option<MessageIndex>,
     sender: UserId,
-    initiator: UserId,
     other: UserId,
     state: &mut RuntimeState,
 ) -> StartVideoCallResult {
@@ -65,7 +81,7 @@ pub fn handle_start_video_call(
         sender,
         content: MessageContentInternal::VideoCall(VideoCallContent {
             participants: vec![CallParticipant {
-                user_id: initiator,
+                user_id: sender,
                 joined: now,
             }],
             ended: None,
@@ -83,49 +99,31 @@ pub fn handle_start_video_call(
     } else {
         state.data.direct_chats.create(other, false, state.env.rng().gen(), now)
     };
+    let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 
-    let notifications_muted = message_index.is_some() || chat.notifications_muted.value;
-
-    let (message_event, event_payload) = chat.push_message(false, push_message_args, message_index);
+    let (message_event, event_payload) = chat.push_message(false, push_message_args, their_message_index);
 
     if let Some(expiry) = message_event.expires_at {
         state.data.handle_event_expiry(expiry, now);
     }
 
+    let this_canister_id = state.env.canister_id();
+
     state.data.event_sink_client.push(
         EventBuilder::new("message_sent", now)
-            .with_user(VIDEO_CALL_BOT_USERNAME.to_string())
-            .with_source(sender.to_string())
+            .with_user(sender.to_string())
+            .with_source(this_canister_id.to_string())
             .with_json_payload(&event_payload)
             .build(),
     );
 
-    if !notifications_muted {
-        let content = &message_event.event.content;
-        let notification = Notification::DirectMessage(DirectMessageNotification {
-            sender,
-            thread_root_message_index: None,
-            message_index: message_event.event.message_index,
-            event_index: message_event.index,
-            sender_name: VIDEO_CALL_BOT_USERNAME.to_string(),
-            sender_display_name: None,
-            message_type: content.message_type(),
-            message_text: None,
-            image_url: None,
-            sender_avatar_id: None,
-            crypto_transfer: None,
-        });
-
-        state.push_notification(state.env.canister_id().into(), notification);
-    }
-
     StartVideoCallResult {
-        chat_id: other.into(),
         message_event,
+        mute_notification,
     }
 }
 
 pub struct StartVideoCallResult {
-    pub chat_id: ChatId,
     pub message_event: EventWrapper<Message>,
+    pub mute_notification: bool,
 }

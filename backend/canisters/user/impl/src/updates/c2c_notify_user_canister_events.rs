@@ -83,8 +83,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             handle_start_video_call(
                 args.message_id,
                 Some(args.message_index),
-                args.sender,
-                args.initiator,
+                state.env.canister_id().into(),
                 caller_user_id,
                 state,
             );
