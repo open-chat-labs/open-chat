@@ -35,7 +35,7 @@ fn import_group_succeeds() {
         default_channels,
     } = init_test_data(env, canister_ids, *controller);
 
-    client::group::happy_path::block_user(env, user1.principal, group_id, user3.user_id);
+    client::group::happy_path::block_user(env, user1.principal, group_id, user4.user_id);
 
     for i in 1..10 {
         let text = i.to_string().as_str().repeat(500);
@@ -58,6 +58,12 @@ fn import_group_succeeds() {
     let community_summary2 = client::community::happy_path::summary(env, &user2, community_id);
     assert_eq!(
         community_summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
+        expected_channel_names
+    );
+
+    let community_summary3 = client::community::happy_path::summary(env, &user3, community_id);
+    assert_eq!(
+        community_summary3.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
         expected_channel_names
     );
 
@@ -230,6 +236,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user4 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let group_name = random_string();
     let community_name = random_string();
@@ -248,6 +255,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         user1,
         user2,
         user3,
+        user4,
         group_id,
         group_name,
         community_id,
