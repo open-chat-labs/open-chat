@@ -1718,11 +1718,7 @@ export function buildTransactionUrl(
     }
 
     const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
-
-    return transactionUrlFormat
-        .replace("{block_index}", transfer.blockIndex.toString())
-        .replace("{transaction_index}", transfer.blockIndex.toString())
-        .replace("{transaction_hash}", transfer.transactionHash ?? "");
+    return transactionUrlFormat.replace("{transaction_index}", transfer.blockIndex.toString());
 }
 
 export function buildCryptoTransferText(

@@ -1008,7 +1008,6 @@ export function completedCryptoTransfer(
             feeE8s: trans.fee.e8s,
             memo: trans.memo,
             blockIndex: trans.block_index,
-            transactionHash: bytesToHexString(trans.transaction_hash),
         };
     }
     if ("ICRC1" in candid) {
@@ -1021,7 +1020,6 @@ export function completedCryptoTransfer(
             feeE8s: candid.ICRC1.fee,
             memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             blockIndex: candid.ICRC1.block_index,
-            transactionHash: undefined,
         };
     }
     throw new UnsupportedValueError(
