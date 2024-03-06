@@ -7,6 +7,11 @@ import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
 
+export type IncomingVideoCall = {
+    chatId: ChatIdentifier;
+    userId: string;
+};
+
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
@@ -15,16 +20,17 @@ export type ActiveVideoCall = {
     threadOpen: boolean;
 };
 
-const store = writable<ActiveVideoCall | undefined>(undefined);
+const activeStore = writable<ActiveVideoCall | undefined>(undefined);
+export const incomingVideoCall = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
 
 export const activeVideoCall = {
-    subscribe: store.subscribe,
+    subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, call: DailyCall) => {
-        return store.set({
+        return activeStore.set({
             status: "joined",
             chatId,
             call,
@@ -33,7 +39,7 @@ export const activeVideoCall = {
         });
     },
     fullscreen: (fullscreen: boolean) => {
-        return store.update((current) => {
+        return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
@@ -43,7 +49,7 @@ export const activeVideoCall = {
         });
     },
     threadOpen: (threadOpen: boolean) => {
-        return store.update((current) => {
+        return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
@@ -53,7 +59,7 @@ export const activeVideoCall = {
         });
     },
     endCall: () => {
-        return store.update((current) => {
+        return activeStore.update((current) => {
             current?.call?.destroy();
             microphone.set(false);
             camera.set(false);
@@ -62,13 +68,13 @@ export const activeVideoCall = {
         });
     },
     changeTheme: (theme: DailyThemeConfig) => {
-        return store.update((current) => {
+        return activeStore.update((current) => {
             current?.call?.setTheme(theme);
             return current;
         });
     },
     joining: (chatId: ChatIdentifier) => {
-        return store.set({
+        return activeStore.set({
             status: "joining",
             chatId,
             fullscreen: false,

@@ -234,6 +234,7 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
+    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -3714,6 +3715,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
+        if (msg.kind === "remote_video_call_started") {
+            this.dispatchEvent(new RemoteVideoCallStartedEvent(msg.id, msg.userId));
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -5104,11 +5109,11 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.sendRequest({
             kind: "joinVideoCall",
             chatId,
-            messageIndex,
+            messageId,
         });
     }
 
@@ -5674,17 +5679,65 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
+    async ringOtherUsers() {
+        const chat = this._liveState.selectedChat;
+        let userIds: string[] = [];
+        const me = this._liveState.user.userId;
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") {
+                userIds.push(chat.them.userId);
+            } else if (!chat.public) {
+                userIds = this._liveState.currentChatMembers
+                    .map((m) => m.userId)
+                    .filter((id) => id !== me);
+            }
+            if (userIds.length > 0) {
+                await Promise.all(
+                    userIds
+                        .filter((id) => !rtcConnectionsManager.exists(id))
+                        .map((id) =>
+                            rtcConnectionsManager.create(
+                                this._liveState.user.userId,
+                                id,
+                                this.config.meteredApiKey,
+                            ),
+                        ),
+                );
+                this.sendRtcMessage(userIds, {
+                    kind: "remote_video_call_started",
+                    id: chat.id,
+                    userId: me,
+                });
+            }
+        }
+    }
+
+    private getRoomAccessToken(
+        authToken: string,
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
-        const username = this._liveState.user.username;
+        const displayName = this.getDisplayName(
+            this._liveState.user,
+            this._liveState.currentCommunityMembers,
+        );
+        const user = this._liveState.user;
+        const username = user.username;
+        const avatarId = this._liveState.userStore[user.userId]?.blobReference?.blobId;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
+
+        console.log("User: ", this._liveState.userStore[user.userId]);
+
+        console.log(
+            "Url: ",
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
+        );
         return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}`,
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
             {
                 method: "GET",
                 headers: headers,
@@ -5728,7 +5781,7 @@ export class OpenChat extends OpenChatAgentWorker {
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
-    ): Promise<{ token: string; roomName: string }> {
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
@@ -5744,6 +5797,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (token === undefined) {
                         throw new Error("Didn't get an access token");
                     }
+                    console.log("TOKEN: ", token);
                     performance.mark("oc_token");
                     return token;
                 })

@@ -11,7 +11,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -949,8 +949,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |

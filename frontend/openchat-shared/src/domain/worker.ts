@@ -351,7 +351,7 @@ type GetAccessToken = {
 type JoinVideoCall = {
     kind: "joinVideoCall";
     chatId: ChatIdentifier;
-    messageIndex: number;
+    messageId: bigint;
 };
 
 type ProposeTranslation = {

@@ -34,9 +34,8 @@
     $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
 
     function joinCall() {
-        // TODO this doesn't work from the thread
         if (!incall && $selectedChat) {
-            dispatch("startVideoCall", { chat: $selectedChat, messageIndex });
+            dispatch("startVideoCall", { chat: $selectedChat, join: true });
         }
     }
 
@@ -64,22 +63,42 @@
             </div>
         {/if}
     </div>
-    {#if incall}
-        <Button fill disabled={content.ended !== undefined} on:click={leaveCall}>
-            <Translatable
-                resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
-        </Button>
-    {:else}
-        <Button fill disabled={endedDate !== undefined} on:click={joinCall}>
-            <Translatable
-                resourceKey={endedDate
-                    ? i18nKey("videoCall.endedAt", { time: client.toShortTimeString(endedDate) })
-                    : i18nKey("videoCall.join")} />
-        </Button>
-    {/if}
+    <div class="video-call-btn">
+        {#if incall}
+            <Button fill disabled={content.ended !== undefined} on:click={leaveCall}>
+                <Translatable
+                    resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
+            </Button>
+        {:else}
+            <Button fill disabled={endedDate !== undefined} on:click={joinCall}>
+                <Translatable
+                    resourceKey={endedDate
+                        ? i18nKey("videoCall.endedAt", {
+                              time: client.toShortTimeString(endedDate),
+                          })
+                        : i18nKey("videoCall.join")} />
+            </Button>
+        {/if}
+    </div>
 </div>
 
 <style lang="scss">
+    $accent: var(--prize);
+
+    :global(.video-call-btn button) {
+        &:not(.disabled) {
+            border: 1px solid $accent !important;
+        }
+        min-height: 45px !important;
+        min-width: unset !important;
+
+        &:not(.disabled):hover,
+        &.loading {
+            background-color: $accent;
+            color: var(--button-txt);
+        }
+    }
+
     .video-call {
         padding: $sp3 0 0 0;
     }
