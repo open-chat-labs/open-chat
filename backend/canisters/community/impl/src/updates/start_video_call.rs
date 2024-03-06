@@ -3,7 +3,6 @@ use crate::guards::caller_is_video_call_operator;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
-use community_canister::send_message::SuccessResult;
 use community_canister::start_video_call::{Response::*, *};
 use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
@@ -100,10 +99,5 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         state.data.handle_event_expiry(expiry, now);
     }
 
-    Success(SuccessResult {
-        event_index,
-        message_index,
-        timestamp: now,
-        expires_at,
-    })
+    Success
 }

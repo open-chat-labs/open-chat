@@ -304,7 +304,7 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_canister::start_video_call::Response::Success(_)))
+        assert!(matches!(response, user_canister::start_video_call::Response::Success))
     }
 
     pub fn end_video_call(env: &mut PocketIc, initiator: UserId, recipient: UserId, message_id: MessageId) {

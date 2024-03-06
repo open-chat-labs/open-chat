@@ -858,7 +858,7 @@ type StartVideoCallArgs = record {
 };
 
 type StartVideoCallResponse = variant {
-    Success : SendMessageSuccess;
+    Success;
     NotAuthorized;
 };
 
