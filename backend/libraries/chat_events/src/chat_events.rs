@@ -1530,11 +1530,11 @@ impl ChatEvents {
     pub fn join_video_call(
         &mut self,
         user_id: UserId,
-        message_index: MessageIndex,
+        message_id: MessageId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> JoinVideoCallResult {
-        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_index.into()) {
+        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_id.into()) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                 return if video_call.ended.is_none() {
                     if video_call.participants.iter().any(|p| p.user_id == user_id) {

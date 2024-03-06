@@ -259,7 +259,7 @@ pub struct StartVideoCallArgs {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct JoinVideoCall {
-    pub message_index: MessageIndex,
+    pub message_id: MessageId,
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
