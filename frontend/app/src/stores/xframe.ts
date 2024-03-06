@@ -13,6 +13,7 @@ const FRAME_ANCESTORS = [
     "https://signalsicp.com",
     "https://gooble.app",
     "https://www.vault-bet.com",
+    "https://vault-bet.com",
     "https://calm-pasca-49d7be.netlify.app", // betbase proof of concept
     "https://221bravo.app",
     "https://ht7v7-iaaaa-aaaak-qakga-cai.icp0.io", //221bravo
