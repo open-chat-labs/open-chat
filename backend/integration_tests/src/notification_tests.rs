@@ -52,7 +52,7 @@ fn group_message_notification_succeeds() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![(user2.user_id, user2.principal)],
@@ -127,7 +127,7 @@ fn group_message_notification_muted() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![(user2.user_id, user2.principal)],

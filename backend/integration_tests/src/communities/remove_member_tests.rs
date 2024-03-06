@@ -163,7 +163,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     if !public {
         client::local_user_index::happy_path::invite_users_to_community(
             env,
-            user1.principal,
+            &user1,
             canister_ids.local_user_index,
             community_id,
             vec![user2.user_id],

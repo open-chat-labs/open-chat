@@ -18,8 +18,6 @@ pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 120_000_000_000; // 0.12T cycles
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
-pub const VIDEO_CALL_BOT_USERNAME: &str = "VideoCallBot";
-
 pub const SNS_ROOT_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 23, 1, 1]);
 pub const SNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 24, 1, 1]);
 pub const SNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 25, 1, 1]);

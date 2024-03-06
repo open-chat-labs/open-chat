@@ -83,8 +83,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             handle_start_video_call(
                 args.message_id,
                 Some(args.message_index),
-                args.sender,
-                args.initiator,
+                state.env.canister_id().into(),
                 caller_user_id,
                 state,
             );
@@ -117,6 +116,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 sender_avatar_id: args.sender_avatar_id,
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
+                mentioned: Vec::new(),
                 now,
             },
             state,

@@ -615,6 +615,7 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -626,6 +627,7 @@ export class OpenChatAgent extends EventTarget {
         return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
+            callerUsername,
         );
     }
 
@@ -633,6 +635,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -644,7 +647,11 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
+                return localUserIndexClient.inviteUsersToGroup(
+                    chatId.groupId,
+                    userIds,
+                    callerUsername,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -655,6 +662,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.communityId,
                     chatId.channelId,
                     userIds,
+                    callerUsername,
                 );
             }
         }

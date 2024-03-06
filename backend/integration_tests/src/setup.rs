@@ -1,4 +1,5 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
+use crate::env::VIDEO_CALL_OPERATOR;
 use crate::rng::random_principal;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
@@ -133,7 +134,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
-        video_call_operators: vec![controller],
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -155,7 +156,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
         event_relay_canister_id,
-        video_call_operators: vec![controller],
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };

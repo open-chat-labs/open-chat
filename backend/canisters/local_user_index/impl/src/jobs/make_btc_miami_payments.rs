@@ -8,7 +8,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{
-    icrc1, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, MessageContent,
+    icrc1, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, MessageContentInitial,
     TextContent,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -77,7 +77,7 @@ fn send_oc_bot_messages(pending_payment: &PendingPayment, block_index: BlockInde
     let amount = pending_payment.amount as u128;
 
     let messages = vec![
-        MessageContent::Crypto(CryptoContent {
+        MessageContentInitial::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
                 ledger: Cryptocurrency::CKBTC.ledger_canister_id().unwrap(),
@@ -92,34 +92,34 @@ fn send_oc_bot_messages(pending_payment: &PendingPayment, block_index: BlockInde
             })),
             caption: Some("Here are your 50,000 SATS as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
         }),
-        MessageContent::Text(TextContent {
+        MessageContentInitial::Text(TextContent {
             text: "🤔 No one to send your ckBTC to? Invite your friends to chat!".to_string(),
         }),
-        MessageContent::Custom(CustomContent {
+        MessageContentInitial::Custom(CustomContent {
             kind: "user_referral_card".to_string(),
             data: Vec::new(),
         }),
-        MessageContent::Text(TextContent {
+        MessageContentInitial::Text(TextContent {
             text: format!(
                 "🤝 ...or connect with fellow Bitcoiners and win prizes in the [Operation Miami](/{}) chat",
                 if state.data.test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" }
             ),
         }),
-        MessageContent::Text(TextContent {
+        MessageContentInitial::Text(TextContent {
             text: format!(
                 "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/{}) chat bot",
                 if state.data.test_mode { "uuw5d-uiaaa-aaaar-anzeq-cai" } else { "wznbi-caaaa-aaaar-anvea-cai" }
             ),
         }),
-        MessageContent::Text(TextContent {
+        MessageContentInitial::Text(TextContent {
             text: "👀 View projects, wallets, and DEXs that support ckBTC [here](https://internetcomputer.org/ecosystem/?tag=Bitcoin)".to_string(),
         }),
-        MessageContent::Text(TextContent {
+        MessageContentInitial::Text(TextContent {
             text: "🧐 Find out more about OpenChat [here](/home)".to_string(),
         }),
     ];
 
     for message in messages {
-        state.push_oc_bot_message_to_user(user_id, message);
+        state.push_oc_bot_message_to_user(user_id, message, Vec::new());
     }
 }

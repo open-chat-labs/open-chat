@@ -1512,15 +1512,15 @@ impl ChatEvents {
     pub fn end_video_call(&mut self, event_key: EventKey, now: TimestampMillis) -> EndVideoCallResult {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, event_key) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
-                if video_call.ended.is_none() {
+                return if video_call.ended.is_none() {
                     video_call.ended = Some(now);
                     message.last_updated = Some(now);
                     self.video_call_in_progress = Timestamped::new(None, now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return EndVideoCallResult::Success;
+                    EndVideoCallResult::Success
                 } else {
-                    return EndVideoCallResult::AlreadyEnded;
-                }
+                    EndVideoCallResult::AlreadyEnded
+                };
             }
         }
 
@@ -1536,19 +1536,19 @@ impl ChatEvents {
     ) -> JoinVideoCallResult {
         if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_index.into()) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
-                if video_call.ended.is_none() {
+                return if video_call.ended.is_none() {
                     if video_call.participants.iter().any(|p| p.user_id == user_id) {
-                        return JoinVideoCallResult::AlreadyJoined;
+                        JoinVideoCallResult::AlreadyJoined
+                    } else {
+                        video_call.participants.push(CallParticipant { user_id, joined: now });
+                        message.last_updated = Some(now);
+                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+
+                        JoinVideoCallResult::Success
                     }
-
-                    video_call.participants.push(CallParticipant { user_id, joined: now });
-                    message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-
-                    return JoinVideoCallResult::Success;
                 } else {
-                    return JoinVideoCallResult::AlreadyEnded;
-                }
+                    JoinVideoCallResult::AlreadyEnded
+                };
             }
         }
 

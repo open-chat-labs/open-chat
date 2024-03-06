@@ -6,6 +6,7 @@ use types::{ChatId, UserId};
 pub struct Args {
     pub group_id: ChatId,
     pub user_ids: Vec<UserId>,
+    pub caller_username: String,
     pub correlation_id: u64,
 }
 

@@ -32,7 +32,7 @@ fn init(args: Args) {
 
     mutate_state(|state| {
         for message in args.openchat_bot_messages {
-            openchat_bot::send_message(message.into(), true, state);
+            openchat_bot::send_message(message.into(), Vec::new(), true, state);
         }
     });
 

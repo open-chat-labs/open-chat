@@ -26,7 +26,7 @@ fn cancel_invites_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id, user3.user_id],
@@ -61,7 +61,7 @@ fn cancel_channel_invites_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
@@ -102,7 +102,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel1_id,
@@ -111,7 +111,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel2_id,
@@ -149,7 +149,7 @@ fn cancel_invites_not_authorized() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id, user3.user_id],
