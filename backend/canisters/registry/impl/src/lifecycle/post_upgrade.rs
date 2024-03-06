@@ -29,7 +29,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         state.data.tokens.update(
             registry_canister::update_token::Args {
-                ledger_canister_id: CanisterId::from_text("").unwrap(),
+                ledger_canister_id: CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 name: None,
                 symbol: None,
                 info_url: None,
