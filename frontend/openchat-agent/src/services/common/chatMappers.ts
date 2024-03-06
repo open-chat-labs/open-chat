@@ -1176,6 +1176,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         pinMessages: permissionRole(candid.pin_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
         mentionAllMembers: permissionRole(candid.mention_all_members),
+        startVideoCall: permissionRole(candid.start_video_call),
         messagePermissions: messagePermissions(candid.message_permissions),
         threadPermissions: optional(candid.thread_permissions, messagePermissions),
     };
@@ -1258,6 +1259,7 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
+        start_video_call: apiPermissionRole(permissions.startVideoCall),
         message_permissions: apiMessagePermissions(permissions.messagePermissions),
         thread_permissions: apiOptional(apiMessagePermissions, permissions.threadPermissions),
     };
@@ -1276,7 +1278,7 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
-        video_call: apiOptional(apiPermissionRole, permissions.videoCall),
+        video_call: apiOptional(apiPermissionRole, "none"),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
