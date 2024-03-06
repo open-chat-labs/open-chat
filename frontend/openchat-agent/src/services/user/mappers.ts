@@ -918,7 +918,6 @@ function completedNnsCryptoWithdrawal(
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
         blockIndex: candid.block_index,
-        transactionHash: bytesToHexString(candid.transaction_hash),
     };
 }
 
@@ -933,7 +932,6 @@ function completedIcrc1CryptoWithdrawal(
         feeE8s: candid.fee,
         memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
         blockIndex: candid.block_index,
-        transactionHash: undefined,
     };
 }
 
