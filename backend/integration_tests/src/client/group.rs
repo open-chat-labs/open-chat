@@ -378,4 +378,21 @@ pub mod happy_path {
             response => panic!("'end_video_call' error: {response:?}"),
         }
     }
+
+    pub fn block_user(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId, user_id: UserId) {
+        let response = super::block_user(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::block_user::Args {
+                user_id,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::block_user::Response::Success => {}
+            response => panic!("'block_user' error: {response:?}"),
+        }
+    }
 }

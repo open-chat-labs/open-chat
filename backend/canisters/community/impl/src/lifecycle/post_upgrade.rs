@@ -1,6 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
+use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -12,7 +13,8 @@ use instruction_counts_log::InstructionCountFunctionId;
 use rand::Rng;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{Chat, MessageEventPayload};
+use types::{Chat, MessageEventPayload, UsersBlocked};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[post_upgrade]
 #[trace]
@@ -48,6 +50,28 @@ fn post_upgrade(args: Args) {
         for channel in state.data.channels.iter_mut() {
             channel.chat.events.set_chat(Chat::Channel(community_id, channel.id));
             channel.chat.events.set_anonymized_id(state.env.rng().gen());
+
+            let blocked: Vec<_> = channel.chat.members.blocked.iter().copied().collect();
+            if !blocked.is_empty() {
+                let now = state.env.now();
+                let mut blocked_from_community = Vec::new();
+                for user_id in blocked {
+                    channel.chat.members.unblock(user_id, now);
+
+                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id) {
+                        blocked_from_community.push(user_id);
+                    }
+                }
+                if !blocked_from_community.is_empty() {
+                    state.data.events.push_event(
+                        CommunityEventInternal::UsersBlocked(Box::new(UsersBlocked {
+                            user_ids: blocked_from_community,
+                            blocked_by: OPENCHAT_BOT_USER_ID,
+                        })),
+                        now,
+                    );
+                }
+            }
         }
 
         let source_string = this_canister_id.to_string();
