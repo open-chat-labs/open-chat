@@ -5703,7 +5703,6 @@ export class OpenChat extends OpenChatAgentWorker {
                             ),
                         ),
                 );
-                console.log("About to send remove video started to: ", userIds);
                 this.sendRtcMessage(userIds, {
                     kind: "remote_video_call_started",
                     id: chat.id,
