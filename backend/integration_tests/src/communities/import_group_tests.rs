@@ -71,11 +71,11 @@ fn import_group_succeeds() {
     assert_eq!(initial_state2.communities.summaries.len(), 1);
 
     let selected_initial = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert!(selected_initial.blocked_users.is_empty());
+    assert_eq!(selected_initial.blocked_users.len(), 1);
 
     let selected_channel_initial =
         client::community::happy_path::selected_channel_initial(env, &user1, community_id, import_group_response.channel_id);
-    assert!(selected_channel_initial.blocked_users.is_empty());
+    assert_eq!(selected_channel_initial.blocked_users.len(), 1);
 
     // Check that the group has been deleted
     assert!(!env.canister_exists(group_id.into()));

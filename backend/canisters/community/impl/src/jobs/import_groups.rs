@@ -111,13 +111,15 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             let blocked: Vec<_> = chat.members.blocked.iter().copied().collect();
             if !blocked.is_empty() {
                 // We don't (currently) support blocking/unblocking members at the channel level, so we unblock users
-                // from the chat before turning it into a channel.
-                // If this community is being created from this group, we block the users at the community level.
+                // from the channel and instead block them from the community (unless they were already in the
+                // community).
                 for user_id in blocked {
-                    if state.data.channels.is_empty() {
+                    chat.members.unblock(user_id, now);
+
+                    // If the user is not already a member of the community, then block them from the community
+                    if state.data.members.get_by_user_id(&user_id).is_none() {
                         state.data.members.block(user_id);
                     }
-                    chat.members.unblock(user_id, now);
                 }
             }
 

@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Set `anonymized_id` on each channel in `post_upgrade` ([#5478](https://github.com/open-chat-labs/open-chat/pull/5478))
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
-- Unblock users from channels + block from community after converting ([#5483](https://github.com/open-chat-labs/open-chat/pull/5483))
+- Unblock users from channels + block from community after importing ([#5483](https://github.com/open-chat-labs/open-chat/pull/5483))
 
 ### Fixed
 
