@@ -58,8 +58,7 @@ fn post_upgrade(args: Args) {
                 for user_id in blocked {
                     channel.chat.members.unblock(user_id, now);
 
-                    if state.data.members.get_by_user_id(&user_id).is_none() {
-                        state.data.members.block(user_id);
+                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id) {
                         blocked_from_community.push(user_id);
                     }
                 }
