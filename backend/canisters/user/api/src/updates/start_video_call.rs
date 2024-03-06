@@ -13,6 +13,6 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(crate::send_message_v2::SuccessResult),
+    Success,
     NotAuthorized,
 }

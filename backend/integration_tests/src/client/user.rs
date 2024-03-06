@@ -22,6 +22,7 @@ generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
 generate_update_call!(end_video_call);
+generate_update_call!(join_video_call);
 generate_update_call!(leave_community);
 generate_update_call!(leave_group);
 generate_update_call!(mark_read);
@@ -304,7 +305,21 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_canister::start_video_call::Response::Success(_)))
+        assert!(matches!(response, user_canister::start_video_call::Response::Success))
+    }
+
+    pub fn join_video_call(env: &mut PocketIc, joiner: &User, other: UserId, message_id: MessageId) {
+        let response = super::join_video_call(
+            env,
+            joiner.principal,
+            joiner.canister(),
+            &user_canister::join_video_call::Args {
+                user_id: other,
+                message_id,
+            },
+        );
+
+        assert!(matches!(response, user_canister::join_video_call::Response::Success))
     }
 
     pub fn end_video_call(env: &mut PocketIc, initiator: UserId, recipient: UserId, message_id: MessageId) {
