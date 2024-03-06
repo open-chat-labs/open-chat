@@ -175,11 +175,8 @@
             console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
             console.log("Total: ", performance.getEntriesByName("total"));
 
-            // TODO - change this so that is uses the messageId that came back from the video bridge
-            // once the join video call api has been changed to accept a messageId rather than a message index
-            if (chat.videoCallInProgress !== undefined) {
-                console.log("We should be joining by messageId: ", messageId);
-                await client.joinVideoCall(chat.id, chat.videoCallInProgress);
+            if (joining) {
+                await client.joinVideoCall(chat.id, messageId);
             }
         } catch (err) {
             toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);

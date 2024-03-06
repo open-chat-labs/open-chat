@@ -894,7 +894,7 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
-  const JoinVideoCallArgs = IDL.Record({ 'message_index' : MessageIndex });
+  const JoinVideoCallArgs = IDL.Record({ 'message_id' : MessageId });
   const JoinVideoCallResponse = IDL.Variant({
     'GroupFrozen' : IDL.Null,
     'AlreadyEnded' : IDL.Null,
@@ -1211,7 +1211,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
-    'Success' : SendMessageSuccess,
+    'Success' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
   const VideoCall = IDL.Record({ 'message_index' : MessageIndex });

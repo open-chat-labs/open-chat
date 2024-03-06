@@ -3136,16 +3136,16 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).joinVideoCall(
                 chatId.channelId,
-                messageIndex,
+                messageId,
             );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).joinVideoCall(messageIndex);
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
         } else {
-            return this.userClient.joinVideoCall(chatId.userId, messageIndex);
+            return this.userClient.joinVideoCall(chatId.userId, messageId);
         }
     }
 

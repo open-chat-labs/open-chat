@@ -5109,11 +5109,11 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.sendRequest({
             kind: "joinVideoCall",
             chatId,
-            messageIndex,
+            messageId,
         });
     }
 

@@ -407,7 +407,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    joinVideoCall(_userId: string, _messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(_userId: string, _messageId: bigint): Promise<JoinVideoCallResponse> {
         throw new AnonymousOperationError();
     }
 

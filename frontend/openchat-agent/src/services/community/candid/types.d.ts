@@ -1212,7 +1212,7 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'UserNotInCommunity' : null };
 export interface JoinVideoCallArgs {
   'channel_id' : ChannelId,
-  'message_index' : MessageIndex,
+  'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
   { 'UserNotInChannel' : null } |
@@ -1946,7 +1946,7 @@ export interface StartVideoCallArgs {
   'message_id' : MessageId,
 }
 export type StartVideoCallResponse = { 'NotAuthorized' : null } |
-  { 'Success' : SendMessageSuccess };
+  { 'Success' : null };
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
