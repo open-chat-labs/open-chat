@@ -176,7 +176,7 @@
             console.log("Total: ", performance.getEntriesByName("total"));
 
             if (joining) {
-                await client.joinVideoCall(chat.id, messageId);
+                await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
             toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
