@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 - Don't send video call notification to user who started the call ([#5462](https://github.com/open-chat-labs/open-chat/pull/5462))
+- Use initiator as sender for video calls rather than VideoCallBot ([#5477](https://github.com/open-chat-labs/open-chat/pull/5477))
 - Set `anonymized_id` on each channel in `post_upgrade` ([#5478](https://github.com/open-chat-labs/open-chat/pull/5478))
 
 ### Fixed
