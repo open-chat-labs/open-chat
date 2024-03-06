@@ -261,7 +261,7 @@ type EndVideoCallResponse = variant {
 
 type JoinVideoCallArgs = record {
     user_id : UserId;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type JoinVideoCallResponse = variant {

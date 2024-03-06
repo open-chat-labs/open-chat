@@ -76,7 +76,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.events
-                    .join_video_call(caller_user_id, c.message_index, EventIndex::default(), state.env.now());
+                    .join_video_call(caller_user_id, c.message_id, EventIndex::default(), state.env.now());
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
