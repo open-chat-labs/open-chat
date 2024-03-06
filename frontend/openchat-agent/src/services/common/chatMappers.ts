@@ -1451,13 +1451,6 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
                 },
             };
 
-        case "video_call_content_initial":
-            return {
-                VideoCall: {
-                    initiator: Principal.fromText(domain.intiator),
-                },
-            };
-
         case "video_call_content":
         case "deleted_content":
         case "blocked_content":

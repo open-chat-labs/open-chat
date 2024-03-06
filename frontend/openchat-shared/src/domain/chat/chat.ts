@@ -64,13 +64,7 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent
-    | VideoCallContentInitial;
-
-export type VideoCallContentInitial = {
-    kind: "video_call_content_initial";
-    intiator: string;
-};
+    | VideoCallContent;
 
 export type VideoCallParticipant = {
     userId: string;
