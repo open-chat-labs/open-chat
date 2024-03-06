@@ -8,6 +8,7 @@ use event_sink_client::EventBuilder;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
+use rand::Rng;
 use stable_memory::get_reader;
 use tracing::info;
 use types::{Chat, MessageEventPayload};
@@ -37,6 +38,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let this_canister_id = state.env.canister_id();
         state.data.chat.events.set_chat(Chat::Group(this_canister_id.into()));
+        state.data.chat.events.set_anonymized_id(state.env.rng().gen());
 
         let source_string = this_canister_id.to_string();
         let anonymized_chat_id = state.data.chat.events.anonymized_id();
