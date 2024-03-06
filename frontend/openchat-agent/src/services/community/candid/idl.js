@@ -1629,8 +1629,10 @@ export const idlFactory = ({ IDL }) => {
     'DisplayNameTooShort' : IDL.Nat16,
   });
   const StartVideoCallArgs = IDL.Record({
+    'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
     'initiator' : UserId,
+    'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
   });
   const StartVideoCallResponse = IDL.Variant({

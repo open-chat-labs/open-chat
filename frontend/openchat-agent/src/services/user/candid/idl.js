@@ -1485,7 +1485,10 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
   });
   const StartVideoCallArgs = IDL.Record({
+    'initiator_username' : IDL.Text,
     'initiator' : UserId,
+    'initiator_avatar_id' : IDL.Opt(IDL.Nat),
+    'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
   });
   const StartVideoCallResponse = IDL.Variant({

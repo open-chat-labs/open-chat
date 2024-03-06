@@ -3716,7 +3716,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
         if (msg.kind === "remote_video_call_started") {
-            console.log("Is this happening?", msg);
             this.dispatchEvent(new RemoteVideoCallStartedEvent(msg.id, msg.userId));
             return;
         }
@@ -5726,11 +5725,20 @@ export class OpenChat extends OpenChatAgentWorker {
             this._liveState.user,
             this._liveState.currentCommunityMembers,
         );
-        const username = this._liveState.user.username;
+        const user = this._liveState.user;
+        const username = user.username;
+        const avatarId = this._liveState.userStore[user.userId]?.blobReference?.blobId;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
+
+        console.log("User: ", this._liveState.userStore[user.userId]);
+
+        console.log(
+            "Url: ",
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
+        );
         return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}&displayname=${displayName}`,
+            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
             {
                 method: "GET",
                 headers: headers,

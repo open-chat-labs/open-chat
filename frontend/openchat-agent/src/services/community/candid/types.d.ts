@@ -1939,8 +1939,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export interface StartVideoCallArgs {
+  'initiator_username' : string,
   'channel_id' : ChannelId,
   'initiator' : UserId,
+  'initiator_display_name' : [] | [string],
   'message_id' : MessageId,
 }
 export type StartVideoCallResponse = { 'NotAuthorized' : null } |
