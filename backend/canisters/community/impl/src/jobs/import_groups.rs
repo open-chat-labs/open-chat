@@ -12,7 +12,7 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, ChatId, Empty, UserId};
+use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -104,7 +104,22 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
             let now = state.env.now();
             let channel_id = group.channel_id();
-            let chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
+            let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
+            chat.events
+                .set_chat(Chat::Channel(state.env.canister_id().into(), channel_id));
+
+            let blocked: Vec<_> = chat.members.blocked.iter().copied().collect();
+            if !blocked.is_empty() {
+                // We don't (currently) support blocking/unblocking members at the channel level, so we unblock users
+                // from the chat before turning it into a channel.
+                // If this community is being created from this group, we block the users at the community level.
+                for user_id in blocked {
+                    if state.data.channels.is_empty() {
+                        state.data.members.block(user_id);
+                    }
+                    chat.members.unblock(user_id, now);
+                }
+            }
 
             state.data.channels.add(Channel {
                 id: channel_id,

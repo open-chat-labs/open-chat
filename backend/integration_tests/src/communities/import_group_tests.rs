@@ -35,23 +35,16 @@ fn import_group_succeeds() {
         default_channels,
     } = init_test_data(env, canister_ids, *controller);
 
+    client::group::happy_path::block_user(env, user1.principal, group_id, user3.user_id);
+
     for i in 1..10 {
         let text = i.to_string().as_str().repeat(500);
 
         client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
     }
 
-    let import_group_response = client::community::import_group(
-        env,
-        user1.principal,
-        community_id.into(),
-        &community_canister::import_group::Args { group_id },
-    );
-
-    assert!(matches!(
-        import_group_response,
-        community_canister::import_group::Response::Success(_)
-    ));
+    let import_group_response =
+        client::community::happy_path::import_group(env, user1.principal, community_id.into(), group_id);
 
     tick_many(env, 10);
 
@@ -69,12 +62,6 @@ fn import_group_succeeds() {
         expected_channel_names
     );
 
-    let community_summary3 = client::community::happy_path::summary(env, &user3, community_id);
-    assert_eq!(
-        community_summary3.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
-        expected_channel_names
-    );
-
     let initial_state1 = client::user::happy_path::initial_state(env, &user1);
     assert!(initial_state1.group_chats.summaries.is_empty());
     assert_eq!(initial_state1.communities.summaries.len(), 1);
@@ -82,6 +69,13 @@ fn import_group_succeeds() {
     let initial_state2 = client::user::happy_path::initial_state(env, &user2);
     assert!(initial_state2.group_chats.summaries.is_empty());
     assert_eq!(initial_state2.communities.summaries.len(), 1);
+
+    let selected_initial = client::community::happy_path::selected_initial(env, &user1, community_id);
+    assert!(selected_initial.blocked_users.is_empty());
+
+    let selected_channel_initial =
+        client::community::happy_path::selected_channel_initial(env, &user1, community_id, import_group_response.channel_id);
+    assert!(selected_channel_initial.blocked_users.is_empty());
 
     // Check that the group has been deleted
     assert!(!env.canister_exists(group_id.into()));

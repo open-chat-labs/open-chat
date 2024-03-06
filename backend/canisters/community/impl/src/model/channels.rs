@@ -170,6 +170,10 @@ impl Channels {
 
         self.channels.values().any(|c| c.chat.name.to_lowercase() == lowercase_name)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.channels.is_empty()
+    }
 }
 
 impl Channel {

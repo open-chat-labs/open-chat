@@ -48,6 +48,14 @@ fn post_upgrade(args: Args) {
         for channel in state.data.channels.iter_mut() {
             channel.chat.events.set_chat(Chat::Channel(community_id, channel.id));
             channel.chat.events.set_anonymized_id(state.env.rng().gen());
+
+            let blocked: Vec<_> = channel.chat.members.blocked.iter().copied().collect();
+            if !blocked.is_empty() {
+                let now = state.env.now();
+                for user_id in blocked {
+                    channel.chat.members.unblock(user_id, now);
+                }
+            }
         }
 
         let source_string = this_canister_id.to_string();
