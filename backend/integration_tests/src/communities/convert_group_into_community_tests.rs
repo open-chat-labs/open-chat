@@ -26,7 +26,7 @@ fn convert_into_community_succeeds() {
         group_name,
     } = init_test_data(env, canister_ids, *controller);
 
-    client::group::happy_path::block_user(env, user1.principal, group_id.into(), user3.user_id);
+    client::group::happy_path::block_user(env, user1.principal, group_id, user3.user_id);
 
     for i in 1..10 {
         let text = i.to_string().as_str().repeat(500);
@@ -84,12 +84,7 @@ fn not_group_owner_returns_unauthorized() {
         ..
     } = wrapper.env();
 
-    let TestData {
-        user1: _,
-        user2,
-        group_id,
-        group_name: _,
-    } = init_test_data(env, canister_ids, *controller);
+    let TestData { user2, group_id, .. } = init_test_data(env, canister_ids, *controller);
 
     let convert_into_community_response = client::group::convert_into_community(
         env,

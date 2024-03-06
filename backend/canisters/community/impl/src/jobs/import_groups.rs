@@ -12,7 +12,7 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId};
+use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId, UsersBlocked};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -110,16 +110,28 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             let blocked: Vec<_> = chat.members.blocked.iter().copied().collect();
             if !blocked.is_empty() {
+                let mut blocked_from_community = Vec::new();
+
                 // We don't (currently) support blocking/unblocking members at the channel level, so we unblock users
                 // from the channel and instead block them from the community (unless they were already in the
                 // community).
                 for user_id in blocked {
                     chat.members.unblock(user_id, now);
 
-                    // If the user is not already a member of the community, then block them from the community
+                    // If the user is not already a member of the community, block them from the community
                     if state.data.members.get_by_user_id(&user_id).is_none() {
                         state.data.members.block(user_id);
+                        blocked_from_community.push(user_id);
                     }
+                }
+                if !blocked_from_community.is_empty() {
+                    state.data.events.push_event(
+                        CommunityEventInternal::UsersBlocked(Box::new(UsersBlocked {
+                            user_ids: blocked_from_community,
+                            blocked_by: OPENCHAT_BOT_USER_ID,
+                        })),
+                        now,
+                    );
                 }
             }
 

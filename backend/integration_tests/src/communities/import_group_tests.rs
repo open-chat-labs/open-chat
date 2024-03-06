@@ -43,8 +43,7 @@ fn import_group_succeeds() {
         client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
     }
 
-    let import_group_response =
-        client::community::happy_path::import_group(env, user1.principal, community_id.into(), group_id);
+    let import_group_response = client::community::happy_path::import_group(env, user1.principal, community_id, group_id);
 
     tick_many(env, 10);
 
