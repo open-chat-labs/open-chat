@@ -345,7 +345,7 @@ pub mod happy_path {
         );
 
         match response {
-            group_canister::start_video_call::Response::Success(_) => {}
+            group_canister::start_video_call::Response::Success => {}
             response => panic!("'start_video_call' error: {response:?}"),
         }
     }
