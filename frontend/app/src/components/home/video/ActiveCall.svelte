@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ring } from "../../../utils/ring";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rtlStore } from "../../../stores/rtl";
@@ -45,7 +46,7 @@
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
-    let confirmSwitchTo: ChatSummary | undefined = undefined;
+    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -91,10 +92,14 @@
         }
     }
 
-    export async function startOrJoinVideoCall(chat: ChatSummary, messageIndex?: number) {
+    export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
+        if (chat === undefined) return;
+
         try {
+            ring.pause();
+
             if ($activeVideoCall !== undefined) {
-                confirmSwitchTo = chat;
+                confirmSwitchTo = { chat, join };
                 return;
             }
 
@@ -106,13 +111,15 @@
 
             activeVideoCall.joining(chat.id);
 
-            const accessType: AccessTokenType =
-                messageIndex === undefined
-                    ? { kind: "start_video_call" }
-                    : { kind: "join_video_call", messageIndex };
+            const accessType: AccessTokenType = join
+                ? { kind: "join_video_call" }
+                : { kind: "start_video_call" };
 
-            // first we need tojoin access jwt from the oc backend
-            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
+            // first we need to get access jwt from the oc backend
+            const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
+                chat.id,
+                accessType,
+            );
 
             performance.mark("daily_token");
             performance.measure("get_oc_token", "start", "oc_token");
@@ -146,6 +153,11 @@
                 }
             });
 
+            // if we are not joining aka starting we need to tell the other users
+            if (!joining) {
+                client.ringOtherUsers();
+            }
+
             await call.join();
 
             performance.mark("daily_joined");
@@ -163,8 +175,8 @@
             console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
             console.log("Total: ", performance.getEntriesByName("total"));
 
-            if (chat.videoCallInProgress !== undefined) {
-                await client.joinVideoCall(chat.id, chat.videoCallInProgress);
+            if (joining) {
+                await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
             toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
@@ -194,9 +206,9 @@
     function switchCall(confirmed: boolean): Promise<void> {
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
-            const chat = confirmSwitchTo;
+            const { chat, join } = confirmSwitchTo;
             confirmSwitchTo = undefined;
-            return startOrJoinVideoCall(chat);
+            return startOrJoinVideoCall(chat, join);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();

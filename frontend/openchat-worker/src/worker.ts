@@ -1500,7 +1500,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinVideoCall(payload.chatId, payload.messageIndex),
+                    agent.joinVideoCall(payload.chatId, payload.messageId),
                 );
                 break;
 

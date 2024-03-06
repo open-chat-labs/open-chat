@@ -138,7 +138,6 @@ export type AccessTokenType = JoinVideoCall | StartVideoCall;
 
 export type JoinVideoCall = {
     kind: "join_video_call";
-    messageIndex: number;
 };
 
 export type StartVideoCall = {

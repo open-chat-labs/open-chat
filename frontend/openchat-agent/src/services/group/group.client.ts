@@ -941,10 +941,10 @@ export class GroupClient extends CandidService {
         );
     }
 
-    joinVideoCall(messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.groupService.join_video_call({
-                message_index: messageIndex,
+                message_id: messageId,
             }),
             joinVideoCallResponse,
         );
