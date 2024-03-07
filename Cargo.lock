@@ -1130,6 +1130,7 @@ name = "chat_events"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "event_sink_client",
  "hex",
  "ic-ledger-types",
  "itertools",
@@ -2535,6 +2536,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "event_sink_client",
  "lazy_static",
  "msgpack",
  "regex-lite",

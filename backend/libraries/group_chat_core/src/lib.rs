@@ -2,6 +2,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
+use event_sink_client::{EventSinkClient, Runtime};
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
@@ -13,11 +14,11 @@ use types::{
     EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
     GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules, VideoCall,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -528,7 +529,7 @@ impl GroupChatCore {
         Success(matches)
     }
 
-    pub fn validate_and_send_message(
+    pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
         sender_is_bot: bool,
@@ -541,6 +542,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        event_sink_client: &mut EventSinkClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -574,11 +576,12 @@ impl GroupChatCore {
             rules_accepted,
             suppressed,
             proposals_bot_user_id,
+            event_sink_client,
             now,
         )
     }
 
-    pub fn send_message(
+    pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -590,6 +593,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        event_sink_client: &mut EventSinkClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -636,11 +640,12 @@ impl GroupChatCore {
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             sender_is_bot,
+            sender_name_override: (sender == proposals_bot_user_id).then(|| "ProposalsBot".to_string()),
             correlation_id: 0,
             now,
         };
 
-        let (message_event, event_payload) = self.events.push_message(push_message_args);
+        let message_event = self.events.push_message(push_message_args, Some(event_sink_client));
         let message_index = message_event.event.message_index;
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
@@ -694,7 +699,6 @@ impl GroupChatCore {
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
-            event_payload,
         })
     }
 
@@ -1769,7 +1773,6 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
-    pub event_payload: MessageEventPayload,
 }
 
 pub enum AddRemoveReactionResult {

@@ -2,7 +2,6 @@ use crate::guards::caller_is_video_call_operator;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs};
-use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
@@ -82,6 +81,7 @@ pub fn handle_start_video_call(
         replies_to: None,
         forwarded: false,
         sender_is_bot: true,
+        sender_name_override: None,
         correlation_id: 0,
         now,
     };
@@ -93,21 +93,16 @@ pub fn handle_start_video_call(
     };
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 
-    let (message_event, event_payload) = chat.push_message(false, push_message_args, their_message_index);
+    let message_event = chat.push_message(
+        false,
+        push_message_args,
+        their_message_index,
+        Some(&mut state.data.event_sink_client),
+    );
 
     if let Some(expiry) = message_event.expires_at {
         state.data.handle_event_expiry(expiry, now);
     }
-
-    let this_canister_id = state.env.canister_id();
-
-    state.data.event_sink_client.push(
-        EventBuilder::new("message_sent", now)
-            .with_user(sender.to_string())
-            .with_source(this_canister_id.to_string())
-            .with_json_payload(&event_payload)
-            .build(),
-    );
 
     StartVideoCallResult {
         message_event,

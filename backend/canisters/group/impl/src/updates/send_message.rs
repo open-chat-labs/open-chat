@@ -3,7 +3,6 @@ use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExp
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -44,6 +43,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
                 state.data.proposals_bot_user_id,
+                &mut state.data.event_sink_client,
                 now,
             );
             process_send_message_result(
@@ -81,6 +81,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
                 state.data.proposals_bot_user_id,
+                &mut state.data.event_sink_client,
                 now,
             );
             process_send_message_result(
@@ -143,9 +144,8 @@ fn process_send_message_result(
             register_timer_jobs(thread_root_message_index, &result.message_event, now, &mut state.data);
 
             let content = &result.message_event.event.content;
-            let this_canister_id = state.env.canister_id();
             let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id: this_canister_id.into(),
+                chat_id: state.env.canister_id().into(),
                 thread_root_message_index,
                 message_index,
                 event_index,
@@ -159,17 +159,9 @@ fn process_send_message_result(
                 group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                 crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
             });
-
             state.push_notification(result.users_to_notify, notification);
-            handle_activity_notification(state);
 
-            state.data.event_sink_client.push(
-                EventBuilder::new("message_sent", now)
-                    .with_user(sender.to_string())
-                    .with_source(this_canister_id.to_string())
-                    .with_json_payload(&result.event_payload)
-                    .build(),
-            );
+            handle_activity_notification(state);
 
             Success(SuccessResult {
                 event_index,

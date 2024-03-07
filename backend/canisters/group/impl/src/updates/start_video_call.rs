@@ -4,7 +4,6 @@ use crate::timer_job_types::RemoveExpiredEventsJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
-use event_sink_client::EventBuilder;
 use group_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
@@ -43,6 +42,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         false,
         state.data.proposals_bot_user_id,
+        &mut state.data.event_sink_client,
         now,
     ) {
         SendMessageResult::Success(r) => r,
@@ -61,9 +61,8 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    let this_canister_id = state.env.canister_id();
     let notification = Notification::GroupMessage(GroupMessageNotification {
-        chat_id: this_canister_id.into(),
+        chat_id: state.env.canister_id().into(),
         thread_root_message_index: None,
         message_index,
         event_index,
@@ -77,17 +76,9 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
         crypto_transfer: None,
     });
-
     state.push_notification(result.users_to_notify, notification);
-    handle_activity_notification(state);
 
-    state.data.event_sink_client.push(
-        EventBuilder::new("message_sent", now)
-            .with_user(sender.to_string())
-            .with_source(this_canister_id.to_string())
-            .with_json_payload(&result.event_payload)
-            .build(),
-    );
+    handle_activity_notification(state);
 
     Success
 }
