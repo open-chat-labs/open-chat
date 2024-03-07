@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent,
-    MessageContentInitial, ReferralType, TimestampMillis, Timestamped, User, UserId,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
+    TimestampMillis, Timestamped, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;

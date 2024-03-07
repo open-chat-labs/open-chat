@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{ChatId, MessageContent, MessageContentInitial, TextContent, User, UserId};
+use types::{ChatId, MessageContent, TextContent, User, UserId};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]

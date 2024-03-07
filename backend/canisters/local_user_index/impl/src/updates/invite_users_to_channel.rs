@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_channel::{Response::*, *};
-use types::{ChannelId, CommunityId, MessageContent, MessageContentInitial, TextContent, User, UserId};
+use types::{ChannelId, CommunityId, MessageContent, TextContent, User, UserId};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
