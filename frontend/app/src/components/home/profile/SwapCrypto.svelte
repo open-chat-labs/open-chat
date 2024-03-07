@@ -91,7 +91,7 @@
         swapId = undefined;
 
         client
-            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn)
+            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn - (BigInt(2) * detailsIn.transferFee))
             .then((response) => {
                 if (response.length === 0) {
                     error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
