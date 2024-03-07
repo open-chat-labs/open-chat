@@ -574,6 +574,7 @@ mod tests {
     use super::*;
     use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
+    use event_sink_client::NullRuntime;
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};
@@ -735,20 +736,24 @@ mod tests {
 
         for i in 0..50 {
             let message_id = MessageId::from((now + i) as u128);
-            events.push_message(PushMessageArgs {
-                sender: user_id,
-                thread_root_message_index: None,
-                message_id,
-                content: MessageContentInternal::Text(TextContentInternal {
-                    text: "hello".to_string(),
-                }),
-                mentioned: Vec::new(),
-                replies_to: None,
-                now,
-                forwarded: false,
-                sender_is_bot: false,
-                correlation_id: i,
-            });
+            events.push_message::<NullRuntime>(
+                PushMessageArgs {
+                    sender: user_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContentInternal::Text(TextContentInternal {
+                        text: "hello".to_string(),
+                    }),
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    now,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    sender_name_override: None,
+                    correlation_id: i,
+                },
+                None,
+            );
             events.push_main_event(
                 ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,

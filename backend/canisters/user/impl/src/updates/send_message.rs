@@ -6,7 +6,6 @@ use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, Time
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
-use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
@@ -220,6 +219,7 @@ fn send_message_impl(
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
         sender_is_bot: false,
+        sender_name_override: None,
         correlation_id: args.correlation_id,
         now,
     };
@@ -233,16 +233,7 @@ fn send_message_impl(
             .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
     };
 
-    let (message_event, event_payload) = chat.push_message(true, push_message_args, None);
-
-    let user_string = sender.to_string();
-    state.data.event_sink_client.push(
-        EventBuilder::new("message_sent", now)
-            .with_user(user_string.clone())
-            .with_source(user_string)
-            .with_json_payload(&event_payload)
-            .build(),
-    );
+    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_sink_client));
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
@@ -331,10 +322,11 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: false,
+                            sender_name_override: None,
                             correlation_id: 0,
                             now,
                         };
-                        chat.push_message(false, push_message_args, None);
+                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_sink_client));
 
                         // Mark that the bot has read the message we just sent
                         chat.mark_read_up_to(message_index, false, now);

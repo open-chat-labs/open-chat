@@ -2,7 +2,6 @@ use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
-use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
@@ -126,6 +125,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         replies_to,
         forwarded: args.forwarding,
         sender_is_bot: args.is_bot,
+        sender_name_override: None,
         correlation_id: 0,
         now: args.now,
     };
@@ -141,13 +141,17 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
 
     let message_id = push_message_args.message_id;
 
-    let (message_event, event_payload) = chat.push_message(false, push_message_args, args.sender_message_index);
+    let message_event = chat.push_message(
+        false,
+        push_message_args,
+        args.sender_message_index,
+        args.push_message_sent_event.then_some(&mut state.data.event_sink_client),
+    );
 
     if args.is_bot {
         chat.mark_read_up_to(message_event.event.message_index, false, args.now);
     }
 
-    let this_canister_id = state.env.canister_id();
     if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
         let content = &message_event.event.content;
         let notification = Notification::DirectMessage(DirectMessageNotification {
@@ -163,20 +167,9 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),
         });
-
-        let recipient = this_canister_id.into();
+        let recipient = state.env.canister_id().into();
 
         state.push_notification(recipient, notification);
-    }
-
-    if args.push_message_sent_event {
-        state.data.event_sink_client.push(
-            EventBuilder::new("message_sent", args.now)
-                .with_user(args.sender.to_string())
-                .with_source(this_canister_id.to_string())
-                .with_json_payload(&event_payload)
-                .build(),
-        );
     }
 
     register_timer_jobs(chat_id, message_id, &message_event, files, args.now, &mut state.data);

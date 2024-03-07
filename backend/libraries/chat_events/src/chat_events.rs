@@ -2,6 +2,7 @@ use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::*;
 use candid::Principal;
+use event_sink_client::{EventBuilder, EventSinkClient, Runtime};
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use rand::rngs::StdRng;
@@ -140,7 +141,11 @@ impl ChatEvents {
             .filter_map(|(e, t)| if let EventOrExpiredRangeInternal::Event(ev) = e { Some((ev, t)) } else { None })
     }
 
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventWrapper<Message>, MessageEventPayload) {
+    pub fn push_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: PushMessageArgs,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> EventWrapper<Message> {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads.entry(root_message_index).or_default()
         } else {
@@ -149,19 +154,36 @@ impl ChatEvents {
 
         let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
-        let event_payload = MessageEventPayload {
-            message_type: args.content.message_type(),
-            chat_type: match self.chat {
-                Chat::Direct(_) => "direct",
-                Chat::Group(_) => "group",
-                Chat::Channel(..) => "channel",
-            }
-            .to_string(),
-            chat_id: self.anonymized_id.clone(),
-            thread: args.thread_root_message_index.is_some(),
-            sender_is_bot: args.sender_is_bot,
-            content_specific_payload: args.content.event_payload(),
-        };
+        if let Some(client) = event_sink_client {
+            let event_payload = MessageEventPayload {
+                message_type: args.content.message_type(),
+                chat_type: match self.chat {
+                    Chat::Direct(_) => "direct",
+                    Chat::Group(_) => "group",
+                    Chat::Channel(..) => "channel",
+                }
+                .to_string(),
+                chat_id: self.anonymized_id.clone(),
+                thread: args.thread_root_message_index.is_some(),
+                sender_is_bot: args.sender_is_bot,
+                content_specific_payload: args.content.event_payload(),
+            };
+            let sender_name = if let Some(name) = args.sender_name_override {
+                name
+            } else if args.sender == OPENCHAT_BOT_USER_ID {
+                "OpenChatBot".to_string()
+            } else {
+                args.sender.to_string()
+            };
+
+            client.push(
+                EventBuilder::new("message_sent", args.now)
+                    .with_user(sender_name)
+                    .with_source(self.chat.canister_id().to_string())
+                    .with_json_payload(&event_payload)
+                    .build(),
+            );
+        }
 
         let message_index = events_list.next_message_index();
         let message_internal = MessageInternal {
@@ -217,15 +239,13 @@ impl ChatEvents {
             self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
         }
 
-        let event = EventWrapper {
+        EventWrapper {
             index: push_event_result.index,
             timestamp: args.now,
             correlation_id: args.correlation_id,
             expires_at: push_event_result.expires_at,
             event: message,
-        };
-
-        (event, event_payload)
+        }
     }
 
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
@@ -700,12 +720,13 @@ impl ChatEvents {
         ReservePrizeResult::MessageNotFound
     }
 
-    pub fn claim_prize(
+    pub fn claim_prize<R: Runtime + Send + 'static>(
         &mut self,
         message_id: MessageId,
         winner: UserId,
         transaction: CompletedCryptoTransaction,
         rng: &mut StdRng,
+        event_sink_client: &mut EventSinkClient<R>,
         now: TimestampMillis,
     ) -> ClaimPrizeResult {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
@@ -719,24 +740,28 @@ impl ChatEvents {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
                     // Push a PrizeWinnerContent message to the group from the OpenChatBot
-                    let (_, event_payload) = self.push_message(PushMessageArgs {
-                        sender: OPENCHAT_BOT_USER_ID,
-                        thread_root_message_index: Some(message_index),
-                        message_id: rng.gen(),
-                        content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
-                            winner,
-                            transaction,
-                            prize_message: message_index,
-                        }),
-                        mentioned: Vec::new(),
-                        replies_to: None,
-                        forwarded: false,
-                        sender_is_bot: true,
-                        correlation_id: 0,
-                        now,
-                    });
+                    self.push_message(
+                        PushMessageArgs {
+                            sender: OPENCHAT_BOT_USER_ID,
+                            thread_root_message_index: Some(message_index),
+                            message_id: rng.gen(),
+                            content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
+                                winner,
+                                transaction,
+                                prize_message: message_index,
+                            }),
+                            mentioned: Vec::new(),
+                            replies_to: None,
+                            forwarded: false,
+                            sender_is_bot: true,
+                            sender_name_override: None,
+                            correlation_id: 0,
+                            now,
+                        },
+                        Some(event_sink_client),
+                    );
 
-                    ClaimPrizeResult::Success(event_payload)
+                    ClaimPrizeResult::Success
                 } else {
                     ClaimPrizeResult::ReservationNotFound
                 };
@@ -980,7 +1005,7 @@ impl ChatEvents {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn report_message(
+    pub fn report_message<R: Runtime + Send + 'static>(
         &mut self,
         user_id: UserId,
         chat: MultiUserChat,
@@ -988,6 +1013,7 @@ impl ChatEvents {
         event_index: EventIndex,
         reason_code: u32,
         notes: Option<String>,
+        event_sink_client: &mut EventSinkClient<R>,
         now: TimestampMillis,
     ) {
         // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
@@ -1037,28 +1063,32 @@ impl ChatEvents {
         } else {
             let chat: Chat = chat.into();
 
-            self.push_message(PushMessageArgs {
-                sender: OPENCHAT_BOT_USER_ID,
-                thread_root_message_index: None,
-                message_id,
-                content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
-                    reports: vec![MessageReport {
-                        reported_by: user_id,
-                        timestamp: now,
-                        reason_code,
-                        notes,
-                    }],
-                }),
-                mentioned: Vec::new(),
-                replies_to: Some(ReplyContextInternal {
-                    chat_if_other: Some((chat.into(), thread_root_message_index)),
-                    event_index,
-                }),
-                forwarded: false,
-                sender_is_bot: true,
-                correlation_id: 0,
-                now,
-            });
+            self.push_message(
+                PushMessageArgs {
+                    sender: OPENCHAT_BOT_USER_ID,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
+                        reports: vec![MessageReport {
+                            reported_by: user_id,
+                            timestamp: now,
+                            reason_code,
+                            notes,
+                        }],
+                    }),
+                    mentioned: Vec::new(),
+                    replies_to: Some(ReplyContextInternal {
+                        chat_if_other: Some((chat.into(), thread_root_message_index)),
+                        event_index,
+                    }),
+                    forwarded: false,
+                    sender_is_bot: true,
+                    sender_name_override: None,
+                    correlation_id: 0,
+                    now,
+                },
+                Some(event_sink_client),
+            );
         }
     }
 
@@ -1667,6 +1697,7 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub sender_is_bot: bool,
+    pub sender_name_override: Option<String>,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }
@@ -1809,7 +1840,7 @@ pub enum ReservePrizeResult {
 
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPrizeResult {
-    Success(MessageEventPayload),
+    Success,
     MessageNotFound,
     ReservationNotFound,
 }

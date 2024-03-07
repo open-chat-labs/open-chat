@@ -7,7 +7,6 @@ use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
-use event_sink_client::EventBuilder;
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -60,6 +59,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
+            &mut state.data.event_sink_client,
             now,
         );
 
@@ -112,6 +112,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
+            &mut state.data.event_sink_client,
             now,
         );
 
@@ -203,9 +204,8 @@ fn process_send_message_result(
                 .collect();
 
             let content = &result.message_event.event.content;
-            let this_canister_id = state.env.canister_id();
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                community_id: this_canister_id.into(),
+                community_id: state.env.canister_id().into(),
                 channel_id,
                 thread_root_message_index,
                 message_index: result.message_event.event.message_index,
@@ -225,14 +225,6 @@ fn process_send_message_result(
             state.push_notification(users_to_notify, notification);
 
             handle_activity_notification(state);
-
-            state.data.event_sink_client.push(
-                EventBuilder::new("message_sent", now)
-                    .with_user(sender.to_string())
-                    .with_source(this_canister_id.to_string())
-                    .with_json_payload(&result.event_payload)
-                    .build(),
-            );
 
             register_timer_jobs(
                 channel_id,
