@@ -13,6 +13,8 @@ const store = writable<CommunitySearch>({
     index: 0,
 });
 
+export const communitySearchTerm = writable<string>("");
+
 export const communitySearchStore = {
     subscribe: store.subscribe,
     reset: () => store.update((val) => ({ ...val, index: 0 })),
@@ -22,3 +24,5 @@ export const communitySearchStore = {
     appendResults: (results: CommunityMatch[]) =>
         store.update((val) => ({ ...val, results: [...val.results, ...results] })),
 };
+
+export const communitySearchScrollPos = writable<number>(0);

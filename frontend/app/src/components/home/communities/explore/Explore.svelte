@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { _ } from "svelte-i18n";
@@ -14,7 +15,7 @@
     } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
@@ -23,13 +24,19 @@
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import { communitySearchStore } from "../../../../stores/search";
+    import {
+        communitySearchScrollPos,
+        communitySearchStore,
+        communitySearchTerm,
+    } from "../../../../stores/search";
+    import Fab from "../../../Fab.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let searchTerm = "";
     let searching = false;
+    let showFab = false;
+    let scrollableElement: HTMLElement | null;
 
     $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
@@ -81,7 +88,7 @@
 
         client
             .exploreCommunities(
-                searchTerm === "" ? undefined : searchTerm,
+                $communitySearchTerm === "" ? undefined : $communitySearchTerm,
                 $communitySearchStore.index,
                 pageSize,
                 $filters.flags ?? 0,
@@ -105,10 +112,32 @@
     }
 
     onMount(() => {
+        tick().then(() => {
+            scrollableElement = document.getElementById("communities-wrapper");
+            if (scrollableElement) {
+                scrollableElement.scrollTop = $communitySearchScrollPos;
+            }
+            onScroll();
+        });
         return filters.subscribe((_) => {
-            search(true);
+            if ($communitySearchStore.results.length === 0) {
+                search(true);
+            }
         });
     });
+
+    function scrollToTop() {
+        if (scrollableElement) {
+            scrollableElement.scrollTop = 0;
+        }
+    }
+
+    function onScroll() {
+        if (scrollableElement) {
+            showFab = scrollableElement.scrollTop > 500;
+            communitySearchScrollPos.set(scrollableElement.scrollTop);
+        }
+    }
 </script>
 
 <div class="explore">
@@ -125,7 +154,7 @@
                 <div class="search">
                     <Search
                         fill
-                        bind:searchTerm
+                        bind:searchTerm={$communitySearchTerm}
                         searching={false}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
@@ -153,7 +182,7 @@
                     <Search
                         searching={false}
                         fill
-                        bind:searchTerm
+                        bind:searchTerm={$communitySearchTerm}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
@@ -161,7 +190,7 @@
         </div>
     </div>
 
-    <div class="communities-wrapper">
+    <div on:scroll={onScroll} id="communities-wrapper" class="communities-wrapper">
         <div
             class="communities"
             class:loading
@@ -213,6 +242,11 @@
             </div>
         {/if}
     </div>
+    <div class:show={showFab} class="fab">
+        <Fab on:click={scrollToTop}>
+            <ArrowUp size={$iconSize} color={"#fff"} />
+        </Fab>
+    </div>
 </div>
 
 <style lang="scss">
@@ -223,6 +257,7 @@
         padding: $sp5;
         height: 100%;
         overflow: hidden;
+        position: relative;
 
         @include mobile() {
             padding: $sp3;
@@ -282,6 +317,7 @@
     .communities-wrapper {
         @include nice-scrollbar();
         flex: auto;
+        height: 3000px;
     }
 
     .communities {
@@ -335,5 +371,20 @@
         }
         margin: auto;
         text-align: center;
+    }
+
+    .fab {
+        transition: opacity ease-in-out 300ms;
+        position: absolute;
+        @include z-index("fab");
+        right: 20px;
+        bottom: 20px;
+        opacity: 0;
+        pointer-events: none;
+
+        &.show {
+            opacity: 1;
+            pointer-events: all;
+        }
     }
 </style>
