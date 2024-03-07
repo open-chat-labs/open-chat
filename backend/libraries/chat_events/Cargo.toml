@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-event_sink_client = { workspace = true }
+event_sink_client = { workspace = true, features = ["json"] }
 hex = { workspace = true }
 ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
