@@ -112,7 +112,7 @@ impl GroupRoleInternal {
             MessageContentInternal::Giphy(_) => ps.giphy.unwrap_or(ps.default),
             MessageContentInternal::Prize(_) => ps.prize.unwrap_or(ps.default),
             MessageContentInternal::P2PSwap(_) => ps.p2p_swap.unwrap_or(ps.default),
-            MessageContentInternal::VideoCall(_) => ps.video_call.unwrap_or(ps.default),
+            MessageContentInternal::VideoCall(_) => permissions.start_video_call,
             MessageContentInternal::Custom(mc) => ps
                 .custom
                 .iter()

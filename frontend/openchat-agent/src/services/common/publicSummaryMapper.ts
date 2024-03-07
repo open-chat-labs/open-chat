@@ -40,6 +40,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             inviteUsers: "none",
             reactToMessages: "none",
             mentionAllMembers: "none",
+            startVideoCall: "none",
             messagePermissions: {
                 default: "none",
             },

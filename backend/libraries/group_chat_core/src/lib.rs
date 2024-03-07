@@ -1670,6 +1670,7 @@ impl GroupChatCore {
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
+            start_video_call: new.start_video_call.unwrap_or(old.start_video_call),
             message_permissions,
             thread_permissions,
         }
