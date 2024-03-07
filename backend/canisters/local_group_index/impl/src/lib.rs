@@ -136,18 +136,9 @@ struct Data {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-    #[serde(default)]
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
-    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
-        .build()
 }
 
 impl Data {

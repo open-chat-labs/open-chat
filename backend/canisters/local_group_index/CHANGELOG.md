@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1087](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1087-local_group_index)] - 2024-03-04
+
 ### Added
 
 - Implement ability to push events from Group & Community canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))

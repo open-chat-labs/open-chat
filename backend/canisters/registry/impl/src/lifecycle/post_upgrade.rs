@@ -1,14 +1,12 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use registry_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
-use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
 #[trace]
@@ -25,21 +23,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        state.data.tokens.update(
-            registry_canister::update_token::Args {
-                ledger_canister_id: CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-                name: None,
-                symbol: None,
-                info_url: None,
-                how_to_buy_url: None,
-                transaction_url_format: Some(
-                    "https://dashboard.internetcomputer.org/transaction/{transaction_index}".to_string(),
-                ),
-                logo: None,
-            },
-            state.env.now(),
-        )
-    });
 }
