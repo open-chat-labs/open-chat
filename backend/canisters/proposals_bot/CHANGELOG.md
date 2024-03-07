@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1089](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1089-proposals_bot)] - 2024-03-07
+
 ### Added
 
 - Reject NNS proposal just before deadline if neuron not already voted ([#5472](https://github.com/open-chat-labs/open-chat/pull/5472))
