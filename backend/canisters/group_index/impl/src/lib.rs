@@ -130,7 +130,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "event_relay_canister_id")]
     pub event_relay_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -141,10 +140,6 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
-}
-
-fn event_relay_canister_id() -> CanisterId {
-    CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap()
 }
 
 impl Data {

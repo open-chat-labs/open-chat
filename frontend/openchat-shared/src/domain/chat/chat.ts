@@ -174,7 +174,6 @@ export type CompletedCryptocurrencyWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type FailedCryptocurrencyWithdrawal = {
@@ -207,7 +206,6 @@ export type CompletedCryptocurrencyTransfer = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {
