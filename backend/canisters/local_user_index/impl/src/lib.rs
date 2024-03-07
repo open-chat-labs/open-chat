@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContentInitial,
-    ReferralType, TimestampMillis, Timestamped, User, UserId,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
+    TimestampMillis, Timestamped, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -94,18 +94,14 @@ impl RuntimeState {
         jobs::sync_events_to_user_index_canister::try_run_now(self);
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContentInitial, mentioned: Vec<User>) {
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
         if self.data.local_users.contains(&user_id) {
-            self.push_event_to_user(
-                user_id,
-                UserEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 { content, mentioned })),
-            );
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)));
         } else {
-            self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessageV2(Box::new(
-                user_index_canister::OpenChatBotMessageV2 {
+            self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
+                user_index_canister::OpenChatBotMessage {
                     user_id,
-                    content,
-                    mentioned,
+                    message: content,
                 },
             )));
         }
