@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{ChatId, MessageContentInitial, TextContent, User, UserId};
+use types::{ChatId, MessageContent, MessageContentInitial, TextContent, User, UserId};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -66,7 +66,7 @@ fn commit(
     state: &mut RuntimeState,
 ) {
     let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
-    let message = MessageContentInitial::Text(TextContent { text });
+    let message = MessageContent::Text(TextContent { text });
     let mentioned = vec![User {
         user_id: invited_by,
         username: invited_by_username,
