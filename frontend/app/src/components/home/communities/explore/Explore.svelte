@@ -13,7 +13,7 @@
         ScreenWidth,
     } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
-    import type { CommunityMatch, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
@@ -23,21 +23,19 @@
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { communitySearchStore } from "../../../../stores/search";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let searchTerm = "";
     let searching = false;
-    let searchResults: CommunityMatch[] = [];
-    let total = 0;
-    let pageIndex = 0;
 
     $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
-    $: more = total > searchResults.length;
+    $: more = $communitySearchStore.total > $communitySearchStore.results.length;
     $: isDiamond = client.isDiamond;
-    $: loading = searching && searchResults.length === 0;
+    $: loading = searching && $communitySearchStore.results.length === 0;
     $: offlineStore = client.offlineStore;
 
     let filters = derived(
@@ -76,15 +74,15 @@
     function search(reset = false) {
         searching = true;
         if (reset) {
-            pageIndex = 0;
+            communitySearchStore.reset();
         } else {
-            pageIndex += 1;
+            communitySearchStore.nextPage();
         }
 
         client
             .exploreCommunities(
                 searchTerm === "" ? undefined : searchTerm,
-                pageIndex,
+                $communitySearchStore.index,
                 pageSize,
                 $filters.flags ?? 0,
                 $filters.languages,
@@ -92,11 +90,11 @@
             .then((results) => {
                 if (results.kind === "success") {
                     if (reset) {
-                        searchResults = results.matches;
+                        communitySearchStore.setResults(results.matches);
                     } else {
-                        searchResults = [...searchResults, ...results.matches];
+                        communitySearchStore.appendResults(results.matches);
                     }
-                    total = results.total;
+                    communitySearchStore.setTotal(results.total);
                 }
             })
             .finally(() => (searching = false));
@@ -164,12 +162,15 @@
     </div>
 
     <div class="communities-wrapper">
-        <div class="communities" class:loading class:empty={searchResults.length === 0}>
+        <div
+            class="communities"
+            class:loading
+            class:empty={$communitySearchStore.results.length === 0}>
             {#if loading}
                 <div class="loading">
                     <FancyLoader />
                 </div>
-            {:else if searchResults.length === 0}
+            {:else if $communitySearchStore.results.length === 0}
                 {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
@@ -188,7 +189,7 @@
                     </div>
                 {/if}
             {:else}
-                {#each searchResults as community (community.id.communityId)}
+                {#each $communitySearchStore.results as community (community.id.communityId)}
                     <CommunityCardLink url={`/community/${community.id.communityId}`}>
                         <CommunityCard
                             id={community.id.communityId}
