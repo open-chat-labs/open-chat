@@ -211,6 +211,7 @@ export function apiOptionalGroupPermissions(
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
+        start_video_call: apiOptional(apiPermissionRole, permissions.startVideoCall),
         message_permissions: apiOptional(
             apiOptionalMessagePermissions,
             permissions.messagePermissions,

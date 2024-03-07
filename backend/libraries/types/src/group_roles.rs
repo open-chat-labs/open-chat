@@ -22,8 +22,14 @@ pub struct GroupPermissions {
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
+    #[serde(default = "admin")]
+    pub start_video_call: GroupPermissionRole,
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
+}
+
+fn admin() -> GroupPermissionRole {
+    GroupPermissionRole::Admins
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -60,6 +66,7 @@ pub struct OptionalGroupPermissions {
     pub pin_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
     pub mention_all_members: Option<GroupPermissionRole>,
+    pub start_video_call: Option<GroupPermissionRole>,
     pub message_permissions: Option<OptionalMessagePermissions>,
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
@@ -95,6 +102,7 @@ impl Default for GroupPermissions {
             pin_messages: GroupPermissionRole::Admins,
             invite_users: GroupPermissionRole::Admins,
             react_to_messages: GroupPermissionRole::Members,
+            start_video_call: GroupPermissionRole::Admins,
             message_permissions: MessagePermissions::default(),
             thread_permissions: None,
         }

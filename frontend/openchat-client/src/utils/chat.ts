@@ -525,6 +525,7 @@ function mergePermissions(
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
+        startVideoCall: updated.startVideoCall ?? current.startVideoCall,
         messagePermissions: mergeMessagePermissions(
             current.messagePermissions,
             updated.messagePermissions,
