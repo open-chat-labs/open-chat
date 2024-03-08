@@ -7,18 +7,21 @@ use sha256::sha256;
 use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, ChunkedCanisterWasm, Hash};
-use utils::canister::{clear_chunk_store, should_perform_upgrade, upload_wasm_in_chunks};
+use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
 async fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
-    let PrepareResult { this_canister_id } = match read_state(|state| prepare(&args, state)) {
+    let PrepareResult {
+        this_canister_id,
+        clear_chunk_store,
+    } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    if args.use_for_new_canisters.unwrap_or(true) {
-        clear_chunk_store(this_canister_id).await;
+    if clear_chunk_store {
+        utils::canister::clear_chunk_store(this_canister_id).await;
     }
 
     let chunks = upload_wasm_in_chunks(&args.wasm.module, this_canister_id).await;
@@ -28,6 +31,7 @@ async fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
 
 struct PrepareResult {
     this_canister_id: CanisterId,
+    clear_chunk_store: bool,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -36,6 +40,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     } else {
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
+            clear_chunk_store: args.use_for_new_canisters.unwrap_or(true)
+                && state.data.communities_requiring_upgrade.is_empty(),
         })
     }
 }
