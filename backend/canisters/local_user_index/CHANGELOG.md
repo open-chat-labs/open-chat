@@ -7,14 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
-- Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
 - Pause upgrades if events queue becomes too large ([#5507](https://github.com/open-chat-labs/open-chat/pull/5507))
 
 ### Fixed
 
-- Populate username in 'Invited to group/community' notifications ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
 - Fix 'out of cycles' check to use new response code ([#5503](https://github.com/open-chat-labs/open-chat/pull/5503))
+
+## [[2.0.1093](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1093-local_user_index)] - 2024-03-08
+
+### Changed
+
+- Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
+- Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
+
+### Fixed
+
+- Populate username in 'Invited to group/community' notifications ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
 
 ## [[2.0.1086](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1086-local_user_index)] - 2024-03-01
 
