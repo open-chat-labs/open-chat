@@ -356,7 +356,7 @@
 
                 {#if canEditTranslations}
                     <Toggle
-                        id={"enter-send"}
+                        id={"translation-mode"}
                         small
                         on:change={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
