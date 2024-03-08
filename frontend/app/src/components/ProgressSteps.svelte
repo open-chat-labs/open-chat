@@ -30,7 +30,7 @@
 </script>
 
 <div>
-    {#each steps as step, i (steps[i].label)}
+    {#each steps as step, i ("step" + i)}
         <div in:fade={{ duration: 500 }} animate:flip={{ duration: 500 }}>
             <ProgressStep
                 label={i18nKey(steps[i].label, labelValues)}
