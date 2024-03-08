@@ -22,10 +22,12 @@
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Translatable from "../Translatable.svelte";
     import { calculateDollarAmount } from "../../utils/exchange";
+    import P2PSwapProgress from "./P2PSwapProgress.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    export let senderId: string;
     export let content: P2PSwapContent;
     export let messageContext: MessageContext;
     export let messageId: bigint;
@@ -37,6 +39,7 @@
     let instructionText: string | undefined = undefined;
     let summaryText: ResourceKey | undefined = undefined;
     let confirming = false;
+    let showDetails = false;
 
     $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
@@ -195,6 +198,12 @@
 
         toastStore.showFailureToast(i18nKey("p2pSwap." + key));
     }
+
+    function onSwapClick() {
+        if (!confirming) {
+            showDetails = true;
+        }
+    }
 </script>
 
 {#if confirming}
@@ -214,6 +223,8 @@
             on:accept={accept}
             on:close={() => (confirming = false)} />
     {/if}
+{:else if showDetails}
+    <P2PSwapProgress {senderId} {content} on:close={() => (showDetails = false)} />
 {/if}
 
 <div class="swap">
@@ -224,7 +235,7 @@
                 <span>{timeRemaining}</span>
             </div>
         {/if}
-        <div class="coins">
+        <div class="coins" on:click={onSwapClick}>
             <div class="coin">
                 <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
                 <div class="amount">
@@ -233,7 +244,9 @@
                 </div>
             </div>
 
-            <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
+            <div class="swap-icon">
+                <SwapIcon size={"2.5em"} />
+            </div>
 
             <div class="coin">
                 <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
@@ -335,6 +348,7 @@
         justify-content: space-between;
         margin-top: $sp3;
         width: 100%;
+        cursor: pointer;
     }
 
     .amount {
