@@ -441,14 +441,7 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-        .build()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
