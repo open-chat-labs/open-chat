@@ -106,9 +106,14 @@
                     <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
                 </div>
                 <div class="details">
-                    <h4 class="title">
-                        {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
-                    </h4>
+                    <div class="title-and-link">
+                        <h4 class="title">
+                            {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
+                        </h4>
+                        <LinkButton underline="hover" on:click={selectThread}
+                            ><Translatable
+                                resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
+                    </div>
                     <div class="root-msg">
                         <Markdown
                             text={client.getContentAsText($_, thread.rootMessage.event.content)}
@@ -260,6 +265,13 @@
     .details {
         flex: 1;
         overflow: hidden;
+
+        .title-and-link {
+            display: flex;
+            gap: $sp3;
+            align-items: center;
+            margin-bottom: $sp1;
+        }
 
         .title {
             @include font(book, normal, fs-100);

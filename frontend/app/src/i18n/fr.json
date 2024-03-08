@@ -1034,7 +1034,8 @@
         "replies": "réponses",
         "reply": "Réponse",
         "title": "Fil de discussion",
-        "unread": "{count} fils de discussion avec des messages non lus"
+        "unread": "{count} fils de discussion avec des messages non lus",
+        "open": "ouvrir"
     },
     "tip": {
         "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire",
@@ -1246,5 +1247,26 @@
     "yourAccountIsSuspended": "Votre compte est suspendu",
     "yourChats": "Vos discussions",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
-    "youreBlocked": "Désolé - vous avez été bloqué de ce groupe"
+    "youreBlocked": "Désolé - vous avez été bloqué de ce groupe",
+    "videoCall": {
+        "incoming": "Appel vidéo entrant",
+        "chat": "Chat",
+        "startVideo": "Démarrer un appel vidéo",
+        "joinVideo": "Rejoindre un appel vidéo",
+        "leaveVideo": "Quitter l'appel vidéo",
+        "switchCall": "Vous êtes déjà en appel vidéo. Souhaitez-vous passer à celui-ci ?",
+        "callFailed": "Désolé, nous n'avons pas pu démarrer l'appel vidéo",
+        "toggleMic": "Basculez votre microphone",
+        "toggleCam": "Basculez votre caméra",
+        "toggleShare": "Activer le partage de bureau",
+        "disconnect": "Se déconnecter de l'appel",
+        "startedBy": "Un appel vidéo a été lancé par {username}",
+        "endedAt": "Appel terminé à {time}",
+        "join": "Rejoindre l'appel",
+        "ignore": "Ignorer",
+        "ended": "Appel terminé",
+        "leave": "Quitter l'appel",
+        "remoteStart": "Un appel vidéo a été lancé par {name}",
+        "clickToJoin": "Cliquez pour rejoindre l'appel"
+    }
 }

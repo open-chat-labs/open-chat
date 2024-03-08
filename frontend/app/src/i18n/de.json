@@ -1036,7 +1036,8 @@
         "replies": "antwortet",
         "reply": "Antwort",
         "title": "Faden",
-        "unread": "{count} Thread(s) mit ungelesenen Nachrichten"
+        "unread": "{count} Thread(s) mit ungelesenen Nachrichten",
+        "open": "offen"
     },
     "tip": {
         "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
@@ -1248,5 +1249,26 @@
     "yourAccountIsSuspended": "Ihr Account wurde gesperrt",
     "yourChats": "Ihre Chats",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
-    "youreBlocked": "Entschuldigung - Sie wurden für diese Gruppe blockiert"
+    "youreBlocked": "Entschuldigung - Sie wurden für diese Gruppe blockiert",
+    "videoCall": {
+        "incoming": "Eingehender Videoanruf",
+        "chat": "Plaudern",
+        "startVideo": "Videoanruf starten",
+        "joinVideo": "Nehmen Sie am Videoanruf teil",
+        "leaveVideo": "Videoanruf verlassen",
+        "switchCall": "Sie befinden sich bereits in einem Videoanruf. Möchten Sie zu diesem wechseln?",
+        "callFailed": "Leider konnten wir den Videoanruf nicht starten",
+        "toggleMic": "Schalten Sie Ihr Mikrofon um",
+        "toggleCam": "Schalten Sie Ihre Kamera um",
+        "toggleShare": "Desktop-Freigabe umschalten",
+        "disconnect": "Trennen Sie den Anruf",
+        "startedBy": "Ein Videoanruf wurde von {username} gestartet",
+        "endedAt": "Anruf endete um {time}",
+        "join": "Nehmen Sie am Anruf teil",
+        "ignore": "Ignorieren",
+        "ended": "Anruf beendet",
+        "leave": "Anruf verlassen",
+        "remoteStart": "Ein Videoanruf wurde von {name} gestartet",
+        "clickToJoin": "Klicken Sie hier, um am Anruf teilzunehmen"
+    }
 }
