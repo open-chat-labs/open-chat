@@ -1036,7 +1036,8 @@
         "replies": "respuestas",
         "reply": "respuesta",
         "title": "Hilo",
-        "unread": "{count} hilo(s) con mensajes no leídos"
+        "unread": "{count} hilo(s) con mensajes no leídos",
+        "open": "abierto"
     },
     "tip": {
         "advice": "Toca tantas veces como quieras para dejar una propina.",
@@ -1248,5 +1249,26 @@
     "yourAccountIsSuspended": "Tu cuenta está suspendida",
     "yourChats": "Tus conversaciones",
     "yourRoleChanged": "{changedBy} cambió su rol de {oldRole} a {newRole}",
-    "youreBlocked": "Lo sentimos, has sido bloqueado de este grupo"
+    "youreBlocked": "Lo sentimos, has sido bloqueado de este grupo",
+    "videoCall": {
+        "incoming": "videollamada entrante",
+        "chat": "Charlar",
+        "startVideo": "Iniciar videollamada",
+        "joinVideo": "Unirse a videollamada",
+        "leaveVideo": "Dejar videollamada",
+        "switchCall": "Ya estás en una videollamada. ¿Te gustaría cambiar a este?",
+        "callFailed": "Lo sentimos, no pudimos iniciar la videollamada.",
+        "toggleMic": "Cambia tu micrófono",
+        "toggleCam": "Cambia tu cámara",
+        "toggleShare": "Alternar compartir escritorio",
+        "disconnect": "Desconectarse de la llamada",
+        "startedBy": "{username} inició una videollamada",
+        "endedAt": "La llamada finalizó en {time}",
+        "join": "Unirse a la llamada",
+        "ignore": "Ignorar",
+        "ended": "Llamada terminada",
+        "leave": "dejar llamada",
+        "remoteStart": "{name} ha iniciado una videollamada",
+        "clickToJoin": "Haga clic para unirse a la llamada"
+    }
 }
