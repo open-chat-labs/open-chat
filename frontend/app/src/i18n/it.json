@@ -1034,7 +1034,8 @@
         "replies": "risposte",
         "reply": "rispondere",
         "title": "Filo",
-        "unread": "{count} thread con messaggi non letti"
+        "unread": "{count} thread con messaggi non letti",
+        "open": "aprire"
     },
     "tip": {
         "advice": "Tocca quante volte vuoi per lasciare una mancia",
@@ -1246,5 +1247,26 @@
     "yourAccountIsSuspended": "Il tuo account è sospeso",
     "yourChats": "Le tue chat",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",
-    "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo"
+    "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo",
+    "videoCall": {
+        "incoming": "Videochiamata in arrivo",
+        "chat": "Chiacchierata",
+        "startVideo": "Avvia la videochiamata",
+        "joinVideo": "Partecipa alla videochiamata",
+        "leaveVideo": "Abbandona la videochiamata",
+        "switchCall": "Stai già partecipando a una videochiamata. Vorresti passare a questo?",
+        "callFailed": "Spiacenti, non è stato possibile avviare la videochiamata",
+        "toggleMic": "Attiva/disattiva il microfono",
+        "toggleCam": "Attiva/disattiva la fotocamera",
+        "toggleShare": "Attiva/disattiva la condivisione del desktop",
+        "disconnect": "Disconnettersi dalla chiamata",
+        "startedBy": "Una videochiamata è stata avviata da {username}",
+        "endedAt": "La chiamata è terminata alle {time}",
+        "join": "Partecipa alla chiamata",
+        "ignore": "Ignorare",
+        "ended": "Chiamata terminata",
+        "leave": "Lascia la chiamata",
+        "remoteStart": "Una videochiamata è stata avviata da {name}",
+        "clickToJoin": "Fare clic per partecipare alla chiamata"
+    }
 }

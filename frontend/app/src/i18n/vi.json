@@ -1035,7 +1035,8 @@
         "replies": "trả lời",
         "reply": "Đáp lại",
         "title": "Chủ đề",
-        "unread": "{count} chuỗi có tin nhắn chưa đọc"
+        "unread": "{count} chuỗi có tin nhắn chưa đọc",
+        "open": "mở"
     },
     "tip": {
         "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
@@ -1247,5 +1248,26 @@
     "yourAccountIsSuspended": "Tài khoản của bạn bị treo",
     "yourChats": "Mục trờ chuyện của bạn",
     "yourRoleChanged": "{changeBy} đã thay đổi vai trò của bạn từ {oldRole} thành {newRole}",
-    "youreBlocked": "Xin lỗi, bạn đã bị chặn khỏi nhóm này"
+    "youreBlocked": "Xin lỗi, bạn đã bị chặn khỏi nhóm này",
+    "videoCall": {
+        "incoming": "Cuộc gọi video đến",
+        "chat": "Trò chuyện",
+        "startVideo": "Bắt đầu cuộc gọi video",
+        "joinVideo": "Tham gia cuộc gọi video",
+        "leaveVideo": "Rời khỏi cuộc gọi video",
+        "switchCall": "Bạn đã tham gia cuộc gọi điện video. Bạn có muốn chuyển sang cái này không?",
+        "callFailed": "Rất tiếc, chúng tôi không thể bắt đầu cuộc gọi điện video",
+        "toggleMic": "Chuyển đổi micrô của bạn",
+        "toggleCam": "Chuyển đổi máy ảnh của bạn",
+        "toggleShare": "Chuyển đổi chia sẻ máy tính để bàn",
+        "disconnect": "Ngắt kết nối khỏi cuộc gọi",
+        "startedBy": "Cuộc gọi điện video đã được bắt đầu bởi {username}",
+        "endedAt": "Cuộc gọi kết thúc lúc {time}",
+        "join": "Tham gia cuộc gọi",
+        "ignore": "Phớt lờ",
+        "ended": "Cuộc gọi kết thúc",
+        "leave": "Rời khỏi cuộc gọi",
+        "remoteStart": "Cuộc gọi điện video đã được bắt đầu bởi {name}",
+        "clickToJoin": "Bấm để tham gia cuộc gọi"
+    }
 }
