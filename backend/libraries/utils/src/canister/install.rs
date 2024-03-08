@@ -123,7 +123,7 @@ fn should_deposit_cycles_and_retry(
     }
 
     if let Err((code, msg)) = response {
-        if matches!(code, RejectionCode::CanisterError) && msg.contains("out of cycles") {
+        if matches!(code, RejectionCode::SysTransient) && msg.contains("out of cycles") {
             return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
         }
     }
