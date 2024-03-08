@@ -1023,6 +1023,7 @@
         "moreMessages": "- {number} more message(s) -",
         "nreplies": "{number} {replies} {message}",
         "openThread": "open thread ",
+        "open": "open",
         "previewFailure": "Unable to load thread previews",
         "previewTitle": "Threads",
         "replies": "replies",

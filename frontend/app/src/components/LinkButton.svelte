@@ -3,7 +3,11 @@
     export let light = false;
 </script>
 
-<span class={`link-button ${underline}`} class:hover={underline === "hover"} class:light on:click>
+<span
+    class={`link-button ${underline}`}
+    class:hover={underline === "hover"}
+    class:light
+    on:click|stopPropagation>
     <slot />
 </span>
 

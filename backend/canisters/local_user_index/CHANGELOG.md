@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
 - Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
+- Pause upgrades if events queue becomes too large ([#5507](https://github.com/open-chat-labs/open-chat/pull/5507))
 
 ### Fixed
 
