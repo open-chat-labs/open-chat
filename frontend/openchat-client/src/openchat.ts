@@ -49,6 +49,7 @@ import {
     isFrozen,
     isPreviewing,
     buildTransactionLink,
+    buildTransactionUrlByIndex,
     buildCryptoTransferText,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
@@ -3490,6 +3491,13 @@ export class OpenChat extends OpenChatAgentWorker {
         transfer: CryptocurrencyTransfer,
     ): string | undefined {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
+    }
+
+    buildTransactionUrl(
+        transactionIndex: bigint,
+        ledger: string,
+    ): string | undefined {
+        return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
     }
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
