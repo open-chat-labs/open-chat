@@ -30,7 +30,6 @@
     import { iconSize } from "../../stores/iconSize";
     import {
         eventListLastScrolled,
-        eventListScrollTop,
         eventListScrolling,
         reverseScroll,
     } from "../../stores/scrollPos";
@@ -54,7 +53,6 @@
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let threadRootEvent: EventWrapper<Message> | undefined;
-    export let maintainScroll: boolean;
 
     let interrupt = false;
     let morePrevAvailable = false;
@@ -201,7 +199,8 @@
 
         labelObserver = new IntersectionObserver((_entries: IntersectionObserverEntry[]) => {
             const labels = [
-                ...messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ?? [],
+                ...(messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ??
+                    []),
             ];
             if (!reverseScroll) {
                 labels.reverse();
@@ -220,15 +219,6 @@
                 }
             }
         }, labelObserverOptions);
-
-        if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
-            interruptScroll(() => {
-                if (messagesDiv !== undefined && $eventListScrollTop !== undefined) {
-                    initialised = true;
-                    messagesDiv.scrollTop = $eventListScrollTop;
-                }
-            });
-        }
 
         client.addEventListener("openchat_event", clientEvent);
         return () => {
@@ -586,9 +576,6 @@
 
     function onUserScroll() {
         trackScrollStop(SCROLL_THRESHOLD);
-        if (maintainScroll) {
-            $eventListScrollTop = messagesDiv?.scrollTop;
-        }
         updateShowGoToBottom();
         menuStore.hideMenu();
         tooltipStore.hide();

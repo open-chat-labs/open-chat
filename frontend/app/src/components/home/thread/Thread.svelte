@@ -252,7 +252,6 @@
 <ChatEventList
     threadRootEvent={rootEvent}
     rootSelector={"thread-messages"}
-    maintainScroll={false}
     bind:this={chatEventList}
     {readonly}
     unreadMessages={0}

@@ -273,7 +273,6 @@
     bind:this={chatEventList}
     rootSelector={"chat-messages"}
     threadRootEvent={undefined}
-    maintainScroll
     {readonly}
     {unreadMessages}
     {firstUnreadMention}
