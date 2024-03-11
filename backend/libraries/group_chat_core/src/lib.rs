@@ -827,7 +827,11 @@ impl GroupChatCore {
         }
     }
 
-    pub fn tip_message(&mut self, args: TipMessageArgs) -> TipMessageResult {
+    pub fn tip_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: TipMessageArgs,
+        event_sink_client: &mut EventSinkClient<R>,
+    ) -> TipMessageResult {
         use TipMessageResult::*;
 
         if let Some(member) = self.members.get(&args.user_id) {
@@ -840,7 +844,9 @@ impl GroupChatCore {
 
             let min_visible_event_index = member.min_visible_event_index();
 
-            self.events.tip_message(args, min_visible_event_index).into()
+            self.events
+                .tip_message(args, min_visible_event_index, Some(event_sink_client))
+                .into()
         } else {
             UserNotInGroup
         }

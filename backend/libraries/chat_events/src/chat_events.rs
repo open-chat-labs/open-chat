@@ -18,9 +18,10 @@ use types::{
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult,
+    ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
+    VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -643,7 +644,12 @@ impl ChatEvents {
         }
     }
 
-    pub fn tip_message(&mut self, args: TipMessageArgs, min_visible_event_index: EventIndex) -> TipMessageResult {
+    pub fn tip_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: TipMessageArgs,
+        min_visible_event_index: EventIndex,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> TipMessageResult {
         use TipMessageResult::*;
 
         if let Some((message, event_index)) = self.message_internal_mut(
@@ -660,8 +666,25 @@ impl ChatEvents {
 
             message.tips.push(args.ledger, args.user_id, args.amount);
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+
+            if let Some(client) = event_sink_client {
+                let message_type = message.content.message_type();
+
+                client.push(
+                    EventBuilder::new("message_tipped", args.now)
+                        .with_user(args.user_id.to_string())
+                        .with_source(self.chat.canister_id().to_string())
+                        .with_json_payload(&MessageTippedEventPayload {
+                            message_type,
+                            chat_type: self.chat.chat_type().to_string(),
+                            chat_id: self.anonymized_id.clone(),
+                            thread: args.thread_root_message_index.is_some(),
+                            token: args.token.token_symbol().to_string(),
+                            amount: args.amount,
+                        })
+                        .build(),
+                );
+            }
 
             add_to_metrics(
                 &mut self.metrics,
@@ -670,6 +693,9 @@ impl ChatEvents {
                 |m| incr(&mut m.tips),
                 args.now,
             );
+
+            self.last_updated_timestamps
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
 
             Success
         } else {

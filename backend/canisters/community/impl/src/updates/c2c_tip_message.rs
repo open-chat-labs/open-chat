@@ -41,7 +41,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             };
 
-            match channel.chat.tip_message(tip_message_args) {
+            match channel.chat.tip_message(tip_message_args, &mut state.data.event_sink_client) {
                 TipMessageResult::Success => {
                     if let Some((message_index, message_event_index)) = channel
                         .chat
