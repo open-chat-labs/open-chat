@@ -77,7 +77,6 @@
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "../../routes";
-    import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./HallOfFame.svelte";
@@ -351,7 +350,6 @@
 
             // if it's a known chat let's select it
             closeNotificationsForChat(chat.id);
-            $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
         }

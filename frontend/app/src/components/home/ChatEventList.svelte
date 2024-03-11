@@ -133,9 +133,20 @@
     let showGoToBottom = false;
     let floatingTimestamp: bigint | undefined = undefined;
 
+    // use this when we need to be absolutely sure that we have the correct live value
+    // rather than a stale dom reference
+    function withScrollableElement(fn: (el: HTMLElement) => void) {
+        const scrollableElement = document.getElementById(`scrollable-list-${rootSelector}`);
+        if (scrollableElement) {
+            fn(scrollableElement);
+        }
+    }
+
     beforeUpdate(() => {
-        previousScrollHeight = messagesDiv?.scrollHeight;
-        previousScrollTop = messagesDiv?.scrollTop;
+        withScrollableElement((el) => {
+            previousScrollHeight = el.scrollHeight;
+            previousScrollTop = el.scrollTop;
+        });
     });
 
     afterUpdate(() => {
@@ -529,34 +540,36 @@
     }
 
     async function adjustScrollTopIfNecessary(initialLoad: boolean, add: boolean): Promise<void> {
-        if (
-            !initialLoad &&
-            messagesDiv !== undefined &&
-            previousScrollHeight !== undefined &&
-            previousScrollTop !== undefined
-        ) {
-            const sensitivityThreshold = 100;
-            const scrollHeightDiff = messagesDiv.scrollHeight - previousScrollHeight;
-            const scrollTopDiff = messagesDiv.scrollTop - previousScrollTop;
-            const diffDiff = scrollHeightDiff - scrollTopDiff;
-            // sometimes chrome is *a little* out but it we only want to intervene if if's way off
-            if (diffDiff > sensitivityThreshold) {
-                await interruptScroll(() => {
-                    if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-                        let adjusted = add
-                            ? messagesDiv.scrollTop + scrollHeightDiff
-                            : messagesDiv.scrollTop - scrollHeightDiff;
-                        messagesDiv.scrollTop = adjusted;
-                        console.debug("SCROLL: adjusted: ", {
-                            ...keyMeasurements(),
-                            scrollHeightDiff,
-                            scrollTopDiff,
-                            reverseRender: reverseScroll,
-                        });
-                    }
-                });
+        withScrollableElement(async (el) => {
+            if (
+                !initialLoad &&
+                previousScrollHeight !== undefined &&
+                previousScrollTop !== undefined
+            ) {
+                const { scrollTop, scrollHeight } = el;
+                const sensitivityThreshold = 100;
+                const scrollHeightDiff = scrollHeight - previousScrollHeight;
+                const scrollTopDiff = scrollTop - previousScrollTop;
+                const diffDiff = scrollHeightDiff - scrollTopDiff;
+                // sometimes chrome is *a little* out but it we only want to intervene if if's way off
+                if (diffDiff > sensitivityThreshold) {
+                    await interruptScroll(() => {
+                        if (el !== undefined && previousScrollTop !== undefined) {
+                            let adjusted = add
+                                ? scrollTop + scrollHeightDiff
+                                : scrollTop - scrollHeightDiff;
+                            el.scrollTop = adjusted;
+                            console.debug("SCROLL: adjusted: ", {
+                                ...keyMeasurements(),
+                                scrollHeightDiff,
+                                scrollTopDiff,
+                                reverseRender: reverseScroll,
+                            });
+                        }
+                    });
+                }
             }
-        }
+        });
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
@@ -626,6 +639,7 @@
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
 <div
+    id={`scrollable-list-${rootSelector}`}
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     on:scroll={onUserScroll}
