@@ -8,6 +8,7 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
     TipMessageArgs, TipMessageResult,
 };
+use event_sink_client_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
@@ -267,7 +268,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         };
 
         if matches!(
-            chat.events.tip_message(tip_message_args, EventIndex::default(),),
+            chat.events
+                .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
             TipMessageResult::Success
         ) {
             if let Some(event) = chat

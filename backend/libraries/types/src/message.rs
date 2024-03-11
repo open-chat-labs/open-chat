@@ -42,6 +42,16 @@ pub struct MessageEventPayload {
     pub content_specific_payload: MessageContentEventPayload,
 }
 
+#[derive(Serialize)]
+pub struct MessageTippedEventPayload {
+    pub message_type: String,
+    pub chat_type: String,
+    pub chat_id: String,
+    pub thread: bool,
+    pub token: String,
+    pub amount: u128,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
