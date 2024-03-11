@@ -264,6 +264,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            video_call_operators: self.data.video_call_operators.clone(),
         }
     }
 }
@@ -511,6 +512,7 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
+    pub video_call_operators: Vec<Principal>,
 }
 
 #[derive(Serialize, Debug)]

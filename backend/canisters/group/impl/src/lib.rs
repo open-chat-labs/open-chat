@@ -409,6 +409,7 @@ impl RuntimeState {
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            video_call_operators: self.data.video_call_operators.clone(),
         }
     }
 }
@@ -676,6 +677,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
+    pub video_call_operators: Vec<Principal>,
 }
 
 fn run_regular_jobs() {
