@@ -28,7 +28,6 @@ pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    #[serde(default = "default_chat")]
     chat: Chat,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
@@ -39,28 +38,10 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
-    #[serde(default)]
     anonymized_id: String,
 }
 
-fn default_chat() -> Chat {
-    Chat::Direct(Principal::anonymous().into())
-}
-
 impl ChatEvents {
-    // TODO POST RELEASE - remove this
-    pub fn set_chat(&mut self, chat: Chat) {
-        self.chat = chat;
-    }
-
-    pub fn anonymized_id(&self) -> String {
-        self.anonymized_id.clone()
-    }
-
-    pub fn set_anonymized_id(&mut self, id: u128) {
-        self.anonymized_id = hex::encode(id.to_be_bytes());
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -121,6 +102,10 @@ impl ChatEvents {
         );
 
         events
+    }
+
+    pub fn set_chat(&mut self, chat: Chat) {
+        self.chat = chat;
     }
 
     pub fn iter_recently_updated_events(
