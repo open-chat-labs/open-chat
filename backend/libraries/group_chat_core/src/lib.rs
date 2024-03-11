@@ -757,13 +757,14 @@ impl GroupChatCore {
         })
     }
 
-    pub fn add_reaction(
+    pub fn add_reaction<R: Runtime + Send + 'static>(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
+        event_sink_client: &mut EventSinkClient<R>,
     ) -> AddRemoveReactionResult {
         use AddRemoveReactionResult::*;
 
@@ -778,14 +779,17 @@ impl GroupChatCore {
             let min_visible_event_index = member.min_visible_event_index();
 
             self.events
-                .add_reaction(AddRemoveReactionArgs {
-                    user_id,
-                    min_visible_event_index,
-                    thread_root_message_index,
-                    message_id,
-                    reaction,
-                    now,
-                })
+                .add_reaction(
+                    AddRemoveReactionArgs {
+                        user_id,
+                        min_visible_event_index,
+                        thread_root_message_index,
+                        message_id,
+                        reaction,
+                        now,
+                    },
+                    Some(event_sink_client),
+                )
                 .into()
         } else {
             UserNotInGroup

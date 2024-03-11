@@ -201,7 +201,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 
         if args.added {
             if matches!(
-                chat.events.add_reaction(add_remove_reaction_args),
+                chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
                 AddRemoveReactionResult::Success
             ) && !state.data.suspended.value
             {
