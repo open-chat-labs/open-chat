@@ -440,7 +440,7 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
-    #[serde(skip, default = "video_call_operators")]
+    #[serde(skip_deserializing, default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
     pub event_sink_client: EventSinkClient<CdkRuntime>,
 }

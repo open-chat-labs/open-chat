@@ -201,7 +201,7 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
-    #[serde(skip, default = "video_call_operators")]
+    #[serde(skip_deserializing, default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
     #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,

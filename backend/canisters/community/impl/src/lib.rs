@@ -305,7 +305,7 @@ struct Data {
     #[serde(skip, default = "init_instruction_counts_log")]
     instruction_counts_log: InstructionCountsLog,
     next_event_expiry: Option<TimestampMillis>,
-    #[serde(skip, default = "video_call_operators")]
+    #[serde(skip_deserializing, default = "video_call_operators")]
     video_call_operators: Vec<Principal>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
