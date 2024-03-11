@@ -79,6 +79,15 @@
         threadRootMessageIndex: threadRootEvent?.event.messageIndex,
     };
 
+    // use this when it's critical that we get the live value from the dom and
+    // not a potentially stale value from the captured variable
+    function withScrollableElement(fn: (el: HTMLElement) => void) {
+        const el = document.getElementById(`scrollable-list-${rootSelector}`);
+        if (el) {
+            fn(el);
+        }
+    }
+
     const keyMeasurements = () => ({
         scrollHeight: messagesDiv!.scrollHeight,
         clientHeight: messagesDiv!.clientHeight,
@@ -136,8 +145,10 @@
     let floatingTimestamp: bigint | undefined = undefined;
 
     beforeUpdate(() => {
-        previousScrollHeight = messagesDiv?.scrollHeight;
-        previousScrollTop = messagesDiv?.scrollTop;
+        withScrollableElement((el) => {
+            previousScrollHeight = el.scrollHeight;
+            previousScrollTop = el.scrollTop;
+        });
     });
 
     afterUpdate(() => {
@@ -201,7 +212,8 @@
 
         labelObserver = new IntersectionObserver((_entries: IntersectionObserverEntry[]) => {
             const labels = [
-                ...messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ?? [],
+                ...(messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ??
+                    []),
             ];
             if (!reverseScroll) {
                 labels.reverse();
@@ -221,11 +233,11 @@
             }
         }, labelObserverOptions);
 
-        if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
-            interruptScroll(() => {
-                if (messagesDiv !== undefined && $eventListScrollTop !== undefined) {
+        if ($eventListScrollTop !== undefined && maintainScroll) {
+            interruptScroll((el) => {
+                if ($eventListScrollTop !== undefined) {
                     initialised = true;
-                    messagesDiv.scrollTop = $eventListScrollTop;
+                    el.scrollTop = $eventListScrollTop;
                 }
             });
         }
@@ -539,43 +551,45 @@
     }
 
     async function adjustScrollTopIfNecessary(initialLoad: boolean, add: boolean): Promise<void> {
-        if (
-            !initialLoad &&
-            messagesDiv !== undefined &&
-            previousScrollHeight !== undefined &&
-            previousScrollTop !== undefined
-        ) {
-            const sensitivityThreshold = 100;
-            const scrollHeightDiff = messagesDiv.scrollHeight - previousScrollHeight;
-            const scrollTopDiff = messagesDiv.scrollTop - previousScrollTop;
-            const diffDiff = scrollHeightDiff - scrollTopDiff;
-            // sometimes chrome is *a little* out but it we only want to intervene if if's way off
-            if (diffDiff > sensitivityThreshold) {
-                await interruptScroll(() => {
-                    if (messagesDiv !== undefined && previousScrollTop !== undefined) {
-                        let adjusted = add
-                            ? messagesDiv.scrollTop + scrollHeightDiff
-                            : messagesDiv.scrollTop - scrollHeightDiff;
-                        messagesDiv.scrollTop = adjusted;
-                        console.debug("SCROLL: adjusted: ", {
-                            ...keyMeasurements(),
-                            scrollHeightDiff,
-                            scrollTopDiff,
-                            reverseRender: reverseScroll,
-                        });
-                    }
-                });
+        withScrollableElement(async (el) => {
+            if (
+                !initialLoad &&
+                previousScrollHeight !== undefined &&
+                previousScrollTop !== undefined
+            ) {
+                const { scrollHeight, scrollTop } = el;
+                const sensitivityThreshold = 100;
+                const scrollHeightDiff = scrollHeight - previousScrollHeight;
+                const scrollTopDiff = scrollTop - previousScrollTop;
+                const diffDiff = scrollHeightDiff - scrollTopDiff;
+                // sometimes chrome is *a little* out but it we only want to intervene if if's way off
+                if (diffDiff > sensitivityThreshold) {
+                    await interruptScroll((el) => {
+                        if (previousScrollTop !== undefined) {
+                            let adjusted = add
+                                ? el.scrollTop + scrollHeightDiff
+                                : el.scrollTop - scrollHeightDiff;
+                            el.scrollTop = adjusted;
+                            console.debug("SCROLL: adjusted: ", {
+                                ...keyMeasurements(),
+                                scrollHeightDiff,
+                                scrollTopDiff,
+                                reverseRender: reverseScroll,
+                            });
+                        }
+                    });
+                }
             }
-        }
+        });
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
     // we set the overflow to hidden. This has the effect of immediately halting any momentum scrolling
     // on iOS which prevents the screen going black.
     // This also provides a robust way to short-circuit the scroll handler when we are programmatically scrolling
-    function interruptScroll(fn: () => void): Promise<void> {
+    function interruptScroll(fn: (el: HTMLElement) => void): Promise<void> {
         interrupt = true;
-        fn();
+        withScrollableElement(fn);
         return new Promise((resolve) => {
             window.requestAnimationFrame(() => {
                 interrupt = false;
@@ -639,6 +653,7 @@
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
 <div
+    id={`scrollable-list-${rootSelector}`}
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     on:scroll={onUserScroll}
