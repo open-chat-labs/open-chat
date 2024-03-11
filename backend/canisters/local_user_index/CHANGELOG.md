@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1099](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1099-local_user_index)] - 2024-03-11
+
 ### Changed
 
 - Pause upgrades if events queue becomes too large ([#5507](https://github.com/open-chat-labs/open-chat/pull/5507))
@@ -18,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
+- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
 
 ### Fixed
