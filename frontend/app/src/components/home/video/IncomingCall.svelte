@@ -74,7 +74,7 @@
     <audio
         playsinline={true}
         autoplay={true}
-        src="/assets/ringring.mp3"
+        src="/assets/ringtones/ringring.mp3"
         muted={false}
         preload="auto"></audio>
 
