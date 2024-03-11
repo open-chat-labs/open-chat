@@ -18,9 +18,9 @@ use types::{
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
+    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
