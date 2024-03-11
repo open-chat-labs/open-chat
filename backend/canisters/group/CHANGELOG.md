@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
+
 ## [[2.0.1096](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1096-group)] - 2024-03-08
 
 ### Added

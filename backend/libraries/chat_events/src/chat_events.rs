@@ -18,9 +18,9 @@ use types::{
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
+    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -157,12 +157,7 @@ impl ChatEvents {
         if let Some(client) = event_sink_client {
             let event_payload = MessageEventPayload {
                 message_type: args.content.message_type(),
-                chat_type: match self.chat {
-                    Chat::Direct(_) => "direct",
-                    Chat::Group(_) => "group",
-                    Chat::Channel(..) => "channel",
-                }
-                .to_string(),
+                chat_type: self.chat.chat_type().to_string(),
                 chat_id: self.anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
                 sender_is_bot: args.sender_is_bot,
@@ -898,7 +893,8 @@ impl ChatEvents {
         AcceptP2PSwapResult::SwapNotFound
     }
 
-    pub fn complete_p2p_swap(
+    #[allow(clippy::too_many_arguments)]
+    pub fn complete_p2p_swap<R: Runtime + Send + 'static>(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -906,14 +902,33 @@ impl ChatEvents {
         token0_txn_out: u64,
         token1_txn_out: u64,
         now: TimestampMillis,
+        event_sink_client: &mut EventSinkClient<R>,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
+                    let payload = P2PSwapCompletedEventPayload {
+                        token0: content.token0.token.token_symbol().to_string(),
+                        token0_amount: content.token0_amount,
+                        token1: content.token1.token.token_symbol().to_string(),
+                        token1_amount: content.token1_amount,
+                        chat_type: self.chat.chat_type().to_string(),
+                        chat_id: self.anonymized_id.clone(),
+                    };
+
+                    event_sink_client.push(
+                        EventBuilder::new("p2p_swap_completed", now)
+                            .with_user(user_id.to_string())
+                            .with_source(self.chat.canister_id().to_string())
+                            .with_json_payload(&payload)
+                            .build(),
+                    );
+
                     self.last_updated_timestamps
                         .mark_updated(thread_root_message_index, event_index, now);
+
                     CompleteP2PSwapResult::Success(status)
                 } else {
                     CompleteP2PSwapResult::Failure(content.status.clone())
