@@ -233,17 +233,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-    #[serde(default)]
     pub event_deduper: EventDeduper,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
-    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
-        .build()
 }
 
 #[derive(Serialize, Deserialize)]

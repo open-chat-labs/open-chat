@@ -1,15 +1,12 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use local_group_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
-use types::CanisterId;
-use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -27,31 +24,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(retry_upgrades()));
-}
-
-async fn retry_upgrades() {
-    let (wasm_module, this_canister_id) = read_state(|state| {
-        (
-            state.data.community_canister_wasm_for_upgrades.wasm.module.clone(),
-            state.env.canister_id(),
-        )
-    });
-
-    upload_wasm_in_chunks(&wasm_module, this_canister_id).await;
-
-    mutate_state(|state| {
-        state.data.communities_requiring_upgrade.clear();
-        let version = state.data.community_canister_wasm_for_upgrades.wasm.version;
-        for canister_id in state
-            .data
-            .local_communities
-            .iter()
-            .filter(|(_, community)| should_perform_upgrade(community.wasm_version, version, state.data.test_mode))
-            .map(|(community_id, _)| CanisterId::from(*community_id))
-        {
-            state.data.communities_requiring_upgrade.enqueue(canister_id, false);
-        }
-    })
 }
