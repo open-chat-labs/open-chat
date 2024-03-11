@@ -409,6 +409,7 @@ impl RuntimeState {
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            video_call_operators: self.data.video_call_operators.clone(),
         }
     }
 }
@@ -440,8 +441,13 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+    #[serde(skip_deserializing, default = "video_call_operators")]
     pub video_call_operators: Vec<Principal>,
     pub event_sink_client: EventSinkClient<CdkRuntime>,
+}
+
+fn video_call_operators() -> Vec<Principal> {
+    vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()]
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -671,6 +677,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
+    pub video_call_operators: Vec<Principal>,
 }
 
 fn run_regular_jobs() {
