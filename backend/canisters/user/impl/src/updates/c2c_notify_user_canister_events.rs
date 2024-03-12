@@ -128,14 +128,17 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
-        chat.events.edit_message(EditMessageArgs {
-            sender: caller_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: args.message_id,
-            content: args.content.into(),
-            now,
-        });
+        chat.events.edit_message::<CdkRuntime>(
+            EditMessageArgs {
+                sender: caller_user_id,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_id: args.message_id,
+                content: args.content.into(),
+                now,
+            },
+            None,
+        );
     }
 }
 
