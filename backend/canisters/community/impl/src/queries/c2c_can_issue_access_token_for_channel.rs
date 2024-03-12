@@ -21,5 +21,5 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
         return false;
     };
 
-    return joining || (args.is_diamond && member.role.is_permitted(channel.chat.permissions.start_video_call));
+    joining || (args.is_diamond && member.role.is_permitted(channel.chat.permissions.start_video_call))
 }

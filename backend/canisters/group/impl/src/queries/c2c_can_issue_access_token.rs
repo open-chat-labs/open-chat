@@ -17,5 +17,5 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
         return false;
     };
 
-    return joining || (args.is_diamond && member.role.is_permitted(state.data.chat.permissions.start_video_call));
+    joining || (args.is_diamond && member.role.is_permitted(state.data.chat.permissions.start_video_call))
 }
