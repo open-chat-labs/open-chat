@@ -150,6 +150,11 @@
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                } else {
+                    if (ev?.participant.user_name === $user.username) {
+                        // this means that I have joined the call from somewhere else e.g. another device
+                        activeVideoCall.endCall();
+                    }
                 }
             });
 
