@@ -642,6 +642,7 @@
         "removeMembers": "supprimer/bloquer des membres",
         "replyInThread": "répondre dans le fil",
         "sendMessages": "envoyer des messages",
+        "startVideoCall": "démarrer des appels vidéo",
         "thread": "Sujets",
         "threadPermissions": {
             "audio": "envoyer des messages audio dans les fils de discussion",
@@ -1044,14 +1045,14 @@
         "menu": "Répondre dans le fil",
         "moreMessages": "- {number} autre(s) message(s) -",
         "nreplies": "{number} {replies} {message}",
+        "open": "ouvrir",
         "openThread": "fil ouvert",
         "previewFailure": "Impossible de charger les aperçus des fils de discussion",
         "previewTitle": "Fils",
         "replies": "réponses",
         "reply": "Réponse",
         "title": "Fil de discussion",
-        "unread": "{count} fils de discussion avec des messages non lus",
-        "open": "ouvrir"
+        "unread": "{count} fils de discussion avec des messages non lus"
     },
     "tip": {
         "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire",
@@ -1284,26 +1285,5 @@
     "yourAccountIsSuspended": "Votre compte est suspendu",
     "yourChats": "Vos discussions",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
-    "youreBlocked": "Désolé - vous avez été bloqué de ce groupe",
-    "videoCall": {
-        "incoming": "Appel vidéo entrant",
-        "chat": "Chat",
-        "startVideo": "Démarrer un appel vidéo",
-        "joinVideo": "Rejoindre un appel vidéo",
-        "leaveVideo": "Quitter l'appel vidéo",
-        "switchCall": "Vous êtes déjà en appel vidéo. Souhaitez-vous passer à celui-ci ?",
-        "callFailed": "Désolé, nous n'avons pas pu démarrer l'appel vidéo",
-        "toggleMic": "Basculez votre microphone",
-        "toggleCam": "Basculez votre caméra",
-        "toggleShare": "Activer le partage de bureau",
-        "disconnect": "Se déconnecter de l'appel",
-        "startedBy": "Un appel vidéo a été lancé par {username}",
-        "endedAt": "Appel terminé à {time}",
-        "join": "Rejoindre l'appel",
-        "ignore": "Ignorer",
-        "ended": "Appel terminé",
-        "leave": "Quitter l'appel",
-        "remoteStart": "Un appel vidéo a été lancé par {name}",
-        "clickToJoin": "Cliquez pour rejoindre l'appel"
-    }
+    "youreBlocked": "Désolé - vous avez été bloqué de ce groupe"
 }

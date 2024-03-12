@@ -44,7 +44,6 @@
     export let hasPinned: boolean;
 
     $: platformModerator = client.platformModerator;
-    $: platformOperator = client.platformOperator;
     $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
@@ -70,17 +69,20 @@
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
+    $: canStartVideoCalls = client.canStartVideoCalls(selectedChatSummary.id);
 
     $: incall =
         $activeVideoCall !== undefined &&
         selectedChatSummary.videoCallInProgress !== undefined &&
         chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id);
 
-    $: videoMenuText = incall
-        ? i18nKey("videoCall.leaveVideo")
-        : selectedChatSummary.videoCallInProgress !== undefined
-          ? i18nKey("videoCall.joinVideo")
-          : i18nKey("videoCall.startVideo");
+    $: videoMenuText =
+        selectedChatSummary.videoCallInProgress !== undefined
+            ? i18nKey("videoCall.joinVideo")
+            : i18nKey("videoCall.startVideo");
+
+    $: canStartOrJoinVideoCall =
+        !incall && (selectedChatSummary.videoCallInProgress !== undefined || canStartVideoCalls);
 
     let hasUnreadPinned = false;
 
@@ -308,7 +310,7 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if $platformOperator}
+                {#if canStartOrJoinVideoCall}
                     <MenuItem on:click={startVideoCall}>
                         <Headphones
                             size={$iconSize}

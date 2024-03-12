@@ -641,6 +641,7 @@
         "removeMembers": "להסיר/לחסום חברים",
         "replyInThread": "תשובה בשרשור",
         "sendMessages": "לשלוח הודעות",
+        "startVideoCall": "להתחיל שיחות וידאו",
         "thread": "חוטים",
         "threadPermissions": {
             "audio": "לשלוח הודעות אודיו באשכולות",
@@ -1042,14 +1043,14 @@
         "menu": "תשובה בשרשור",
         "moreMessages": "- {number} הודעות נוספות -",
         "nreplies": "{number} {replies} {message}",
+        "open": "לִפְתוֹחַ",
         "openThread": "חוט פתוח",
         "previewFailure": "לא ניתן לטעון תצוגות מקדימות של שרשור",
         "previewTitle": "חוטים",
         "replies": "עונה",
         "reply": "תשובה",
         "title": "פְּתִיל",
-        "unread": "{count} שרשור(ים) עם הודעות שלא נקראו",
-        "open": "לִפְתוֹחַ"
+        "unread": "{count} שרשור(ים) עם הודעות שלא נקראו"
     },
     "tip": {
         "advice": "הקש כמה פעמים שתרצה כדי להשאיר טיפ",
@@ -1282,26 +1283,5 @@
     "yourAccountIsSuspended": "החשבון שלך מושעה",
     "yourChats": "הצ'אטים שלך",
     "yourRoleChanged": "{changedBy} שינה את התפקיד שלך מ-{oldRole} ל-{newRole}",
-    "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
-    "videoCall": {
-        "incoming": "שיחת וידאו נכנסת",
-        "chat": "לְשׂוֹחֵחַ",
-        "startVideo": "התחל שיחת וידאו",
-        "joinVideo": "הצטרף לשיחת וידאו",
-        "leaveVideo": "עזוב שיחת וידאו",
-        "switchCall": "אתה כבר בשיחת וידאו. האם תרצה לעבור לזה?",
-        "callFailed": "מצטערים, לא הצלחנו להתחיל את שיחת הווידאו",
-        "toggleMic": "החלף את המיקרופון שלך",
-        "toggleCam": "החלף את המצלמה שלך",
-        "toggleShare": "החלף את שיתוף שולחן העבודה",
-        "disconnect": "התנתק מהשיחה",
-        "startedBy": "שיחת וידאו התחילה על ידי {username}",
-        "endedAt": "השיחה הסתיימה בשעה {time}",
-        "join": "הצטרף לשיחה",
-        "ignore": "להתעלם",
-        "ended": "השיחה הסתיימה",
-        "leave": "עזוב את השיחה",
-        "remoteStart": "שיחת וידאו התחילה על ידי {name}",
-        "clickToJoin": "לחץ כדי להצטרף לשיחה"
-    }
+    "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו"
 }

@@ -643,6 +643,7 @@
         "removeMembers": "quitar/bloquear miembros",
         "replyInThread": "responder en el hilo",
         "sendMessages": "enviar mensajes",
+        "startVideoCall": "iniciar videollamadas",
         "thread": "Hilos",
         "threadPermissions": {
             "audio": "enviar mensajes de audio en hilos",
@@ -1046,14 +1047,14 @@
         "menu": "Responder en hilo",
         "moreMessages": "- {number} mensaje(s) más -",
         "nreplies": "{number} {replies} {message}",
+        "open": "abierto",
         "openThread": "hilo abierto",
         "previewFailure": "No se pueden cargar las vistas previas del hilo",
         "previewTitle": "Hilos",
         "replies": "respuestas",
         "reply": "respuesta",
         "title": "Hilo",
-        "unread": "{count} hilo(s) con mensajes no leídos",
-        "open": "abierto"
+        "unread": "{count} hilo(s) con mensajes no leídos"
     },
     "tip": {
         "advice": "Toca tantas veces como quieras para dejar una propina.",
@@ -1286,26 +1287,5 @@
     "yourAccountIsSuspended": "Tu cuenta está suspendida",
     "yourChats": "Tus conversaciones",
     "yourRoleChanged": "{changedBy} cambió su rol de {oldRole} a {newRole}",
-    "youreBlocked": "Lo sentimos, has sido bloqueado de este grupo",
-    "videoCall": {
-        "incoming": "videollamada entrante",
-        "chat": "Charlar",
-        "startVideo": "Iniciar videollamada",
-        "joinVideo": "Unirse a videollamada",
-        "leaveVideo": "Dejar videollamada",
-        "switchCall": "Ya estás en una videollamada. ¿Te gustaría cambiar a este?",
-        "callFailed": "Lo sentimos, no pudimos iniciar la videollamada.",
-        "toggleMic": "Cambia tu micrófono",
-        "toggleCam": "Cambia tu cámara",
-        "toggleShare": "Alternar compartir escritorio",
-        "disconnect": "Desconectarse de la llamada",
-        "startedBy": "{username} inició una videollamada",
-        "endedAt": "La llamada finalizó en {time}",
-        "join": "Unirse a la llamada",
-        "ignore": "Ignorar",
-        "ended": "Llamada terminada",
-        "leave": "dejar llamada",
-        "remoteStart": "{name} ha iniciado una videollamada",
-        "clickToJoin": "Haga clic para unirse a la llamada"
-    }
+    "youreBlocked": "Lo sentimos, has sido bloqueado de este grupo"
 }
