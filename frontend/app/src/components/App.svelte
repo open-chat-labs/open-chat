@@ -4,7 +4,6 @@
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/scream";
-    import "../utils/ring";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";

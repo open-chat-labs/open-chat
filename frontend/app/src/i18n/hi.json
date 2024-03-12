@@ -746,7 +746,12 @@
         "selectCommunity": "एक समुदाय चुनें",
         "settings": "समायोजन",
         "title": "प्रोफ़ाइल सेटिंग्स",
-        "unblock": "अनब्लॉक"
+        "unblock": "अनब्लॉक",
+        "videoSettings": "वीडियो कॉल सेटिंग",
+        "videoCameraOn": "कैमरा ऑन करके शुरुआत करें",
+        "videoMicOn": "माइक ऑन करके शुरुआत करें",
+        "videoSpeakerView": "सक्रिय स्पीकर दृश्य से प्रारंभ करें",
+        "ringtone": "अपनी रिंगटोन चुनें"
     },
     "promoteFailed": "{role} में प्रचार करने में असमर्थ",
     "promoteTo": "{role} पर प्रचार करें",

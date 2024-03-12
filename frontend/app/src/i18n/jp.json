@@ -751,7 +751,12 @@
         "selectCommunity": "コミュニティを選択してください",
         "settings": "設定",
         "title": "設定",
-        "unblock": "ブロックを解除する"
+        "unblock": "ブロックを解除する",
+        "videoSettings": "ビデオ通話設定",
+        "videoCameraOn": "カメラをオンにして開始",
+        "videoMicOn": "マイクをオンにして開始",
+        "videoSpeakerView": "アクティブ スピーカー ビューから始める",
+        "ringtone": "着信音を選択してください"
     },
     "promoteFailed": "{role} に昇格できません",
     "promoteTo": "{role} に昇格",

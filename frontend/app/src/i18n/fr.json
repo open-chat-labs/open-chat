@@ -751,7 +751,12 @@
         "selectCommunity": "Sélectionnez une communauté",
         "settings": "Réglages",
         "title": "Paramètres de profil",
-        "unblock": "Débloquer"
+        "unblock": "Débloquer",
+        "videoSettings": "Paramètres d'appel vidéo",
+        "videoCameraOn": "Commencez avec la caméra allumée",
+        "videoMicOn": "Commencez avec le micro allumé",
+        "videoSpeakerView": "Commencer avec la vue Haut-parleur actif",
+        "ringtone": "Choisissez votre sonnerie"
     },
     "promoteFailed": "Impossible de promouvoir en {role}",
     "promoteTo": "Promouvoir à {role}",
