@@ -21,7 +21,7 @@ use types::{
     MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
     P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
     PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -130,7 +130,7 @@ impl ChatEvents {
     pub fn push_message<R: Runtime + Send + 'static>(
         &mut self,
         args: PushMessageArgs,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        mut event_sink_client: Option<&mut EventSinkClient<R>>,
     ) -> EventWrapper<Message> {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads.entry(root_message_index).or_default()
@@ -140,7 +140,7 @@ impl ChatEvents {
 
         let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
-        if let Some(client) = event_sink_client {
+        if let Some(client) = event_sink_client.as_mut() {
             let event_payload = MessageEventPayload {
                 message_type: args.content.message_type(),
                 chat_type: self.chat.chat_type().to_string(),
@@ -214,7 +214,7 @@ impl ChatEvents {
 
         if is_video_call {
             if let Some(vc) = &self.video_call_in_progress.value {
-                self.end_video_call(vc.message_index.into(), args.now);
+                self.end_video_call(vc.message_index.into(), args.now, event_sink_client);
             }
 
             self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
@@ -1615,21 +1615,40 @@ impl ChatEvents {
         &self.main
     }
 
-    pub fn end_video_call(&mut self, event_key: EventKey, now: TimestampMillis) -> EndVideoCallResult {
-        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, event_key) {
-            if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
-                return if video_call.ended.is_none() {
-                    video_call.ended = Some(now);
-                    message.last_updated = Some(now);
-                    self.video_call_in_progress = Timestamped::new(None, now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    EndVideoCallResult::Success
-                } else {
-                    EndVideoCallResult::AlreadyEnded
-                };
+    pub fn end_video_call<R: Runtime + Send + 'static>(
+        &mut self,
+        event_key: EventKey,
+        now: TimestampMillis,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> EndVideoCallResult {
+        if let Some(event) = self.main.get_event_mut(event_key, EventIndex::default()) {
+            if let Some(message) = event.event.as_message_mut() {
+                if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
+                    return if video_call.ended.is_none() {
+                        if let Some(client) = event_sink_client {
+                            client.push(
+                                EventBuilder::new("video_call_ended", now)
+                                    .with_source(self.chat.canister_id().to_string())
+                                    .with_json_payload(&VideoCallEndedEventPayload {
+                                        chat_type: self.chat.chat_type().to_string(),
+                                        chat_id: self.anonymized_id.clone(),
+                                        participants: video_call.participants.len() as u32,
+                                        duration_secs: ((now - event.timestamp) / 1000) as u32,
+                                    })
+                                    .build(),
+                            );
+                        }
+                        video_call.ended = Some(now);
+                        message.last_updated = Some(now);
+                        self.video_call_in_progress = Timestamped::new(None, now);
+                        self.last_updated_timestamps.mark_updated(None, event.index, now);
+                        EndVideoCallResult::Success
+                    } else {
+                        EndVideoCallResult::AlreadyEnded
+                    };
+                }
             }
         }
-
         EndVideoCallResult::MessageNotFound
     }
 
