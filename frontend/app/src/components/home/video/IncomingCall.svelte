@@ -8,7 +8,13 @@
     import Translatable from "../../Translatable.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { AvatarSize, type OpenChat } from "openchat-client";
-    import { incomingVideoCall, type IncomingVideoCall } from "../../../stores/video";
+    import {
+        incomingVideoCall,
+        ringtoneUrls,
+        type IncomingVideoCall,
+        selectedRingtone,
+        type RingtoneKey,
+    } from "../../../stores/video";
     import Avatar from "../../Avatar.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
@@ -68,15 +74,13 @@
     function cancel() {
         incomingVideoCall.set(undefined);
     }
+
+    $: ringtoneUrl = ringtoneUrls[$selectedRingtone as RingtoneKey];
 </script>
 
 {#if chat !== undefined}
-    <audio
-        playsinline={true}
-        autoplay={true}
-        src="/assets/ringtones/ringring.mp3"
-        muted={false}
-        preload="auto"></audio>
+    <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto"
+    ></audio>
 
     <Overlay on:close={() => dispatch("cancel")} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>

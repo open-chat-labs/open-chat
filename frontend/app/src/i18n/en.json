@@ -745,7 +745,12 @@
         "selectCommunity": "Select a community",
         "settings": "Settings",
         "title": "Profile settings",
-        "unblock": "Unblock"
+        "unblock": "Unblock",
+        "videoSettings": "Video call settings",
+        "videoCameraOn": "Start with camera on",
+        "videoMicOn": "Start with mic on",
+        "videoSpeakerView": "Start with Active Speaker view",
+        "ringtone": "Choose your ringtone"
     },
     "promoteFailed": "Unable to promote to {role}",
     "promoteTo": "Promote to {role}",

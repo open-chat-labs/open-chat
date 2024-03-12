@@ -3493,10 +3493,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
-    buildTransactionUrl(
-        transactionIndex: bigint,
-        ledger: string,
-    ): string | undefined {
+    buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
         return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
     }
 
@@ -5738,19 +5735,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
-        console.log("User: ", this._liveState.userStore[user.userId]);
-
-        console.log(
-            "Url: ",
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
-        );
-        return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
-            {
-                method: "GET",
-                headers: headers,
-            },
-        ).then((res) => {
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        if (avatarId) {
+            url += `&initiator-avatarid=${avatarId}`;
+        }
+        return fetch(url, {
+            method: "GET",
+            headers: headers,
+        }).then((res) => {
             if (res.ok) {
                 return res.json();
             }
