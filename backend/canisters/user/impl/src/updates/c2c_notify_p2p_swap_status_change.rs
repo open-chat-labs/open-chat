@@ -79,6 +79,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         c.token0_transfer_out.block_index,
                         c.token1_transfer_out.block_index,
                         state.env.now(),
+                        &mut state.data.event_sink_client,
                     ) {
                         status_to_push_c2c = Some(P2PSwapStatus::Completed(status));
                     }

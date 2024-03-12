@@ -125,6 +125,10 @@ impl MessageContentInternal {
         }
     }
 
+    pub fn text_length(&self) -> u32 {
+        self.text().map(|t| t.len() as u32).unwrap_or_default()
+    }
+
     pub fn blob_references(&self) -> Vec<BlobReference> {
         let mut references = Vec::new();
 

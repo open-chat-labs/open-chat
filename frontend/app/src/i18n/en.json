@@ -637,6 +637,7 @@
         "removeMembers": "remove/block members",
         "replyInThread": "reply in thread",
         "sendMessages": "send messages",
+        "startVideoCall": "start video calls",
         "thread": "Threads",
         "threadPermissions": {
             "audio": "send audio messages in threads",
@@ -1043,8 +1044,8 @@
         "menu": "Reply in thread",
         "moreMessages": "- {number} more message(s) -",
         "nreplies": "{number} {replies} {message}",
-        "openThread": "open thread ",
         "open": "open",
+        "openThread": "open thread ",
         "previewFailure": "Unable to load thread previews",
         "previewTitle": "Threads",
         "replies": "replies",

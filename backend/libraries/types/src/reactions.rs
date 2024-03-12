@@ -17,3 +17,11 @@ impl Reaction {
         (1..=MAX_REACTION_LENGTH_BYTES).contains(&len)
     }
 }
+
+#[derive(Serialize)]
+pub struct ReactionAddedEventPayload {
+    pub message_type: String,
+    pub chat_type: String,
+    pub chat_id: String,
+    pub thread: bool,
+}

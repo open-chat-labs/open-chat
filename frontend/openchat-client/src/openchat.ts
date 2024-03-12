@@ -65,6 +65,7 @@ import {
     permittedMessagesInGroup,
     activeUserIdFromEvent,
     doesMessageFailFilter,
+    canStartVideoCalls,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1525,6 +1526,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canDeleteOtherUsersMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canDeleteOtherUsersMessages);
+    }
+
+    canStartVideoCalls(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, canStartVideoCalls);
     }
 
     canPinMessages(chatId: ChatIdentifier): boolean {

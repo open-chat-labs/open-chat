@@ -113,6 +113,16 @@ impl P2PSwapLocation {
     }
 }
 
+#[derive(Serialize)]
+pub struct P2PSwapCompletedEventPayload {
+    pub chat_type: String,
+    pub chat_id: String,
+    pub token0: String,
+    pub token0_amount: u128,
+    pub token1: String,
+    pub token1_amount: u128,
+}
+
 pub mod swap_location {
     use super::*;
 

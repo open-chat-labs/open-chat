@@ -8,6 +8,7 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
     TipMessageArgs, TipMessageResult,
 };
+use event_sink_client_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
@@ -127,14 +128,17 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
-        chat.events.edit_message(EditMessageArgs {
-            sender: caller_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: args.message_id,
-            content: args.content.into(),
-            now,
-        });
+        chat.events.edit_message::<CdkRuntime>(
+            EditMessageArgs {
+                sender: caller_user_id,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_id: args.message_id,
+                content: args.content.into(),
+                now,
+            },
+            None,
+        );
     }
 }
 
@@ -200,7 +204,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 
         if args.added {
             if matches!(
-                chat.events.add_reaction(add_remove_reaction_args),
+                chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
                 AddRemoveReactionResult::Success
             ) && !state.data.suspended.value
             {
@@ -267,7 +271,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         };
 
         if matches!(
-            chat.events.tip_message(tip_message_args, EventIndex::default(),),
+            chat.events
+                .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
             TipMessageResult::Success
         ) {
             if let Some(event) = chat

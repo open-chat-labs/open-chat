@@ -5,9 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
+- Push event each time a user tips a message ([#5521](https://github.com/open-chat-labs/open-chat/pull/5521))
+- Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
+- Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
+
 ### Changed
 
-- Reset `video_call_operators` ([#5517](https://github.com/open-chat-labs/open-chat/pull/5517))
+- Check start video call permission in access_token ([#5524](https://github.com/open-chat-labs/open-chat/pull/5524))
 
 ## [[2.0.1094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1094-community)] - 2024-03-08
 
@@ -29,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
 - Unblock users from channels and block from community instead ([#5483](https://github.com/open-chat-labs/open-chat/pull/5483))
+- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ### Fixed

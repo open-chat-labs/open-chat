@@ -36,6 +36,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.message_id,
                 args.reaction.clone(),
                 now,
+                &mut state.data.event_sink_client,
             ) {
                 AddRemoveReactionResult::Success => {
                     if let Some(message) = should_push_notification(&args, user_id, &channel.chat) {

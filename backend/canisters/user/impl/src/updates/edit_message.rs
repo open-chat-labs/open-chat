@@ -36,7 +36,10 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             now,
         };
 
-        match chat.events.edit_message(edit_message_args) {
+        match chat
+            .events
+            .edit_message(edit_message_args, Some(&mut state.data.event_sink_client))
+        {
             EditMessageResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
                     state.push_user_canister_event(

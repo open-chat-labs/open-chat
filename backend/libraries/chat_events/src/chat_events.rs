@@ -17,9 +17,10 @@ use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
+    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
+    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
+    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
     TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
 };
 
@@ -27,7 +28,6 @@ pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    #[serde(default = "default_chat")]
     chat: Chat,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
@@ -38,28 +38,10 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
-    #[serde(default)]
     anonymized_id: String,
 }
 
-fn default_chat() -> Chat {
-    Chat::Direct(Principal::anonymous().into())
-}
-
 impl ChatEvents {
-    // TODO POST RELEASE - remove this
-    pub fn set_chat(&mut self, chat: Chat) {
-        self.chat = chat;
-    }
-
-    pub fn anonymized_id(&self) -> String {
-        self.anonymized_id.clone()
-    }
-
-    pub fn set_anonymized_id(&mut self, id: u128) {
-        self.anonymized_id = hex::encode(id.to_be_bytes());
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -122,6 +104,10 @@ impl ChatEvents {
         events
     }
 
+    pub fn set_chat(&mut self, chat: Chat) {
+        self.chat = chat;
+    }
+
     pub fn iter_recently_updated_events(
         &self,
     ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
@@ -157,12 +143,7 @@ impl ChatEvents {
         if let Some(client) = event_sink_client {
             let event_payload = MessageEventPayload {
                 message_type: args.content.message_type(),
-                chat_type: match self.chat {
-                    Chat::Direct(_) => "direct",
-                    Chat::Group(_) => "group",
-                    Chat::Channel(..) => "channel",
-                }
-                .to_string(),
+                chat_type: self.chat.chat_type().to_string(),
                 chat_id: self.anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
                 sender_is_bot: args.sender_is_bot,
@@ -248,7 +229,11 @@ impl ChatEvents {
         }
     }
 
-    pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
+    pub fn edit_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: EditMessageArgs,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> EditMessageResult {
         if let Some((message, event_index)) = self.message_internal_mut(
             args.min_visible_event_index,
             args.thread_root_message_index,
@@ -263,11 +248,35 @@ impl ChatEvents {
                         let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                             != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
 
+                        let old_length = message.content.text_length();
                         message.content = args.content.into();
                         message.last_updated = Some(args.now);
 
                         if edited {
+                            let already_edited = message.last_edited.is_some();
                             message.last_edited = Some(args.now);
+
+                            if let Some(client) = event_sink_client {
+                                let new_length = message.content.text_length();
+                                let payload = MessageEditedEventPayload {
+                                    message_type: message.content.message_type(),
+                                    chat_type: self.chat.chat_type().to_string(),
+                                    chat_id: self.anonymized_id.clone(),
+                                    thread: args.thread_root_message_index.is_some(),
+                                    already_edited,
+                                    old_length,
+                                    new_length,
+                                };
+
+                                client.push(
+                                    EventBuilder::new("message_edited", args.now)
+                                        .with_user(args.sender.to_string())
+                                        .with_source(self.chat.canister_id().to_string())
+                                        .with_json_payload(&payload)
+                                        .build(),
+                                )
+                            }
+
                             add_to_metrics(
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
@@ -567,7 +576,11 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reaction(&mut self, args: AddRemoveReactionArgs) -> AddRemoveReactionResult {
+    pub fn add_reaction<R: Runtime + Send + 'static>(
+        &mut self,
+        args: AddRemoveReactionArgs,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> AddRemoveReactionResult {
         if !args.reaction.is_valid() {
             // This should never happen because we validate earlier
             panic!("Invalid reaction: {:?}", args.reaction);
@@ -592,8 +605,23 @@ impl ChatEvents {
             }
 
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+
+            if let Some(client) = event_sink_client {
+                let payload = ReactionAddedEventPayload {
+                    message_type: message.content.message_type(),
+                    chat_type: self.chat.chat_type().to_string(),
+                    chat_id: self.anonymized_id.clone(),
+                    thread: args.thread_root_message_index.is_some(),
+                };
+
+                client.push(
+                    EventBuilder::new("reaction_added", args.now)
+                        .with_user(args.user_id.to_string())
+                        .with_source(self.chat.canister_id().to_string())
+                        .with_json_payload(&payload)
+                        .build(),
+                )
+            }
 
             add_to_metrics(
                 &mut self.metrics,
@@ -602,6 +630,9 @@ impl ChatEvents {
                 |m| incr(&mut m.reactions),
                 args.now,
             );
+
+            self.last_updated_timestamps
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
 
             AddRemoveReactionResult::Success
         } else {
@@ -648,7 +679,12 @@ impl ChatEvents {
         }
     }
 
-    pub fn tip_message(&mut self, args: TipMessageArgs, min_visible_event_index: EventIndex) -> TipMessageResult {
+    pub fn tip_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: TipMessageArgs,
+        min_visible_event_index: EventIndex,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> TipMessageResult {
         use TipMessageResult::*;
 
         if let Some((message, event_index)) = self.message_internal_mut(
@@ -665,8 +701,25 @@ impl ChatEvents {
 
             message.tips.push(args.ledger, args.user_id, args.amount);
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+
+            if let Some(client) = event_sink_client {
+                let message_type = message.content.message_type();
+
+                client.push(
+                    EventBuilder::new("message_tipped", args.now)
+                        .with_user(args.user_id.to_string())
+                        .with_source(self.chat.canister_id().to_string())
+                        .with_json_payload(&MessageTippedEventPayload {
+                            message_type,
+                            chat_type: self.chat.chat_type().to_string(),
+                            chat_id: self.anonymized_id.clone(),
+                            thread: args.thread_root_message_index.is_some(),
+                            token: args.token.token_symbol().to_string(),
+                            amount: args.amount,
+                        })
+                        .build(),
+                );
+            }
 
             add_to_metrics(
                 &mut self.metrics,
@@ -675,6 +728,9 @@ impl ChatEvents {
                 |m| incr(&mut m.tips),
                 args.now,
             );
+
+            self.last_updated_timestamps
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
 
             Success
         } else {
@@ -898,7 +954,8 @@ impl ChatEvents {
         AcceptP2PSwapResult::SwapNotFound
     }
 
-    pub fn complete_p2p_swap(
+    #[allow(clippy::too_many_arguments)]
+    pub fn complete_p2p_swap<R: Runtime + Send + 'static>(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -906,14 +963,33 @@ impl ChatEvents {
         token0_txn_out: u64,
         token1_txn_out: u64,
         now: TimestampMillis,
+        event_sink_client: &mut EventSinkClient<R>,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
+                    let payload = P2PSwapCompletedEventPayload {
+                        token0: content.token0.token.token_symbol().to_string(),
+                        token0_amount: content.token0_amount,
+                        token1: content.token1.token.token_symbol().to_string(),
+                        token1_amount: content.token1_amount,
+                        chat_type: self.chat.chat_type().to_string(),
+                        chat_id: self.anonymized_id.clone(),
+                    };
+
+                    event_sink_client.push(
+                        EventBuilder::new("p2p_swap_completed", now)
+                            .with_user(user_id.to_string())
+                            .with_source(self.chat.canister_id().to_string())
+                            .with_json_payload(&payload)
+                            .build(),
+                    );
+
                     self.last_updated_timestamps
                         .mark_updated(thread_root_message_index, event_index, now);
+
                     CompleteP2PSwapResult::Success(status)
                 } else {
                     CompleteP2PSwapResult::Failure(content.status.clone())
