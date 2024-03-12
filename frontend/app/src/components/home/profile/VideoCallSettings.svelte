@@ -24,8 +24,6 @@
         });
         ringtones = ringtones;
     }
-
-    // todo stop the same person joining twice
 </script>
 
 <Toggle
