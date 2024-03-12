@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
 - Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
 
+### Changed
+
+- Check start video call permission in access_token ([#5524](https://github.com/open-chat-labs/open-chat/pull/5524))
+
 ## [[2.0.1094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1094-community)] - 2024-03-08
 
 ### Added
