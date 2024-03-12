@@ -22,6 +22,16 @@ impl AccessGate {
     pub fn is_payment_gate(&self) -> bool {
         matches!(self, AccessGate::Payment(_))
     }
+
+    pub fn gate_type(&self) -> &'static str {
+        match self {
+            AccessGate::DiamondMember => "diamond",
+            AccessGate::VerifiedCredential(_) => "verified_credential",
+            AccessGate::SnsNeuron(_) => "sns_neuron",
+            AccessGate::Payment(_) => "payment",
+            AccessGate::TokenBalance(_) => "token_balance",
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
