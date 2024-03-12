@@ -1055,6 +1055,14 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
+export function canStartVideoCalls(chat: ChatSummary): boolean {
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
+    } else {
+        return true;
+    }
+}
+
 export function canPinMessages(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.pinMessages);
@@ -1859,6 +1867,9 @@ export function diffGroupPermissions(
     }
     if (original.deleteMessages !== updated.deleteMessages) {
         diff.deleteMessages = updated.deleteMessages;
+    }
+    if (original.startVideoCall !== updated.startVideoCall) {
+        diff.startVideoCall = updated.startVideoCall;
     }
     if (original.pinMessages !== updated.pinMessages) {
         diff.pinMessages = updated.pinMessages;

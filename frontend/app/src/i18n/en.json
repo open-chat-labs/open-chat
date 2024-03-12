@@ -637,6 +637,7 @@
         "removeMembers": "remove/block members",
         "replyInThread": "reply in thread",
         "sendMessages": "send messages",
+        "startVideoCall": "start video calls",
         "thread": "Threads",
         "threadPermissions": {
             "audio": "send audio messages in threads",
