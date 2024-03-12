@@ -92,6 +92,7 @@
                     fav,
                     eventsTTL: undefined,
                     video,
+                    private: false,
                 };
             default:
                 return {
@@ -108,6 +109,7 @@
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
                     video,
+                    private: !chatSummary.public,
                 };
         }
     }
@@ -357,6 +359,9 @@
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
                 <div class="chat-name">
+                    {#if chat.private}
+                        <div class="private" />
+                    {/if}
                     <h4>
                         {#if community !== undefined && $chatListScope.kind === "favourite"}
                             <span>{community.name}</span>
@@ -798,5 +803,13 @@
         &.rtl {
             margin-left: 2px;
         }
+    }
+    .private {
+        background-repeat: no-repeat;
+        $size: 12px;
+        flex: 0 0 $size;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/locked.svg");
     }
 </style>

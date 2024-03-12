@@ -7,15 +7,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
+- Push event each time a user tips a message ([#5521](https://github.com/open-chat-labs/open-chat/pull/5521))
+- Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
+- Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
+
+## [[2.0.1100](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1100-user)] - 2024-03-11
+
+### Added
+
 - Implement ability to push events from User canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
 - Push event each time a message is sent ([#5439](https://github.com/open-chat-labs/open-chat/pull/5439))
 - Push backdated message events ([#5441](https://github.com/open-chat-labs/open-chat/pull/5441))
+- Add 'start_video_call' endpoint ([#5470](https://github.com/open-chat-labs/open-chat/pull/5470))
 
 ### Changed
 
 - Use ICRC1 for ICP transactions between users ([#5426](https://github.com/open-chat-labs/open-chat/pull/5426))
 - Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Support populating usernames in OpenChat Bot messages ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
+- Use initiator as sender for video calls rather than VideoCallBot ([#5477](https://github.com/open-chat-labs/open-chat/pull/5477))
+- Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
+- Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
+- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ### Removed
 

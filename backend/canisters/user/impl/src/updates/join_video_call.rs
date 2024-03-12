@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::JoinVideoCallResult;
@@ -8,7 +9,7 @@ use user_canister::{
     JoinVideoCall, UserCanisterEvent,
 };
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn join_video_call(args: Args) -> Response {
     run_regular_jobs();
@@ -31,13 +32,13 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         match chat
             .events
-            .join_video_call(my_user_id, args.message_index, EventIndex::default(), now)
+            .join_video_call(my_user_id, args.message_id, EventIndex::default(), now)
         {
             JoinVideoCallResult::Success => {
                 state.push_user_canister_event(
                     args.user_id.into(),
                     UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
-                        message_index: args.message_index,
+                        message_id: args.message_id,
                     })),
                 );
 

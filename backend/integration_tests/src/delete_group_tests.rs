@@ -102,7 +102,7 @@ fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId) -> TestData 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         local_user_index,
         group_id,
         vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],

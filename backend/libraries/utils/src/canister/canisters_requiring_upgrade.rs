@@ -61,6 +61,10 @@ impl CanistersRequiringUpgrade {
         self.in_progress.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.in_progress.is_empty() && self.pending.is_empty()
+    }
+
     pub fn metrics(&self) -> Metrics {
         let mut failed = Vec::new();
         for ((from_version, to_version), group) in &self.failed.iter().group_by(|f| (f.from_version, f.to_version)) {

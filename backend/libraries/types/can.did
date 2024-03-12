@@ -797,7 +797,6 @@ type MessageContentInitial = variant {
     GovernanceProposal : ProposalContent;
     Prize : PrizeContentInitial;
     P2PSwap : P2PSwapContentInitial;
-    VideoCall : VideoCallContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     Custom : CustomMessageContent;
@@ -1228,6 +1227,7 @@ type GroupPermissions = record {
     invite_users : PermissionRole;
     react_to_messages : PermissionRole;
     mention_all_members : PermissionRole;
+    start_video_call : PermissionRole;
     message_permissions : MessagePermissions;
     thread_permissions : opt MessagePermissions;
 };
@@ -1262,6 +1262,7 @@ type OptionalGroupPermissions = record {
     invite_users : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
+    start_video_call : opt PermissionRole;
     message_permissions : opt OptionalMessagePermissions;
     thread_permissions : OptionalMessagePermissionsUpdate;
 };
@@ -1754,5 +1755,5 @@ type VideoCallUpdates = variant {
 
 type AccessTokenType = variant {
     StartVideoCall;
-    JoinVideoCall : MessageIndex;
+    JoinVideoCall;
 };

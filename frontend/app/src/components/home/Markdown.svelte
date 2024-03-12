@@ -89,23 +89,21 @@
     :global {
         .markdown-wrapper {
             h1 {
-                @include font-size(fs-120);
+                @include font(bold, normal, fs-130);
             }
 
             h2 {
-                font-size: toRem(19);
-                line-height: 125%;
+                @include font(bold, normal, fs-120);
             }
 
             h3 {
-                @include font-size(fs-110);
+                @include font(bold, normal, fs-110);
             }
 
             h1,
             h2,
             h3,
             h4 {
-                font-weight: normal;
                 color: var(--markdown-fg-bright);
             }
 
@@ -201,8 +199,24 @@
             video,
             svg,
             select,
+            table,
             textarea {
                 max-width: 100%;
+            }
+
+            table {
+                width: 100%;
+                margin-bottom: toRem(8);
+            }
+
+            td,
+            th {
+                padding: toRem(8);
+                border: 1px solid var(--code);
+            }
+
+            th {
+                font-weight: 500;
             }
 
             &.suppressLinks {

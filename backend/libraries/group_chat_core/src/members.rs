@@ -1,5 +1,6 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
+use crate::AccessRulesInternal;
 use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -390,6 +391,15 @@ impl GroupMemberInternal {
             .unwrap_or_default();
 
         self.rules_accepted = Some(Timestamped::new(max(version, current_version), now));
+    }
+
+    pub fn check_rules(&self, rules: &AccessRulesInternal) -> bool {
+        !rules.enabled
+            || self.is_bot
+            || (self
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |accepted| accepted.value >= rules.text.version))
     }
 }
 

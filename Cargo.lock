@@ -1130,6 +1130,7 @@ name = "chat_events"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "event_sink_client",
  "hex",
  "ic-ledger-types",
  "itertools",
@@ -2535,6 +2536,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "event_sink_client",
  "lazy_static",
  "msgpack",
  "regex-lite",
@@ -4042,9 +4044,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.10"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f3d0b296e374a4e6f3c7b0a1f5a51d748a0d34c85e7dc48fc3fa9a87657fe09"
+checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
 dependencies = [
  "libc",
  "wasi",
@@ -4115,18 +4117,6 @@ dependencies = [
  "human_readable",
  "nns_governance_canister",
  "serde",
- "types",
-]
-
-[[package]]
-name = "neuron_controller_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-cdk 0.12.1",
- "neuron_controller_canister",
- "tracing",
  "types",
 ]
 

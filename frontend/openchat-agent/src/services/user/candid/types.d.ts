@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'user_id' : UserId,
@@ -22,7 +21,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -987,6 +986,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -1162,7 +1162,7 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'PollsNotValidForDirectChats' : null };
 export interface JoinVideoCallArgs {
   'user_id' : UserId,
-  'message_index' : MessageIndex,
+  'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
   { 'MessageNotFound' : null } |
@@ -1243,8 +1243,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1436,6 +1435,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1759,15 +1759,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   } |
   { 'TransferCannotBeZero' : null } |
   { 'DuplicateMessageId' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
+  { 'Success' : SendMessageSuccess } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
@@ -1777,6 +1769,13 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
+export interface SendMessageSuccess {
+  'timestamp' : TimestampMillis,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+  'message_index' : MessageIndex,
+}
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
@@ -1919,6 +1918,15 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
   'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StartVideoCallArgs {
+  'initiator_username' : string,
+  'initiator' : UserId,
+  'initiator_avatar_id' : [] | [bigint],
+  'initiator_display_name' : [] | [string],
+  'message_id' : MessageId,
+}
+export type StartVideoCallResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type Subaccount = Uint8Array | number[];
 export interface SubmitProposalArgs {
   'token' : Cryptocurrency,
@@ -2319,6 +2327,10 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'start_video_call' : ActorMethod<
+    [StartVideoCallArgs],
+    StartVideoCallResponse
+  >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
   'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
@@ -2342,5 +2354,3 @@ export interface _SERVICE {
     WithdrawCryptoResponse
   >,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

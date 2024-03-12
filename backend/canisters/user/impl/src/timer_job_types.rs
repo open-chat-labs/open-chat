@@ -221,7 +221,7 @@ impl Job for MessageReminderJob {
                 chat.events
                     .mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
             }
-            openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
+            openchat_bot::send_message_with_reply(content, Some(replies_to), Vec::new(), false, state)
         });
     }
 }

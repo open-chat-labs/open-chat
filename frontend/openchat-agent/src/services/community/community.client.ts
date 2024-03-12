@@ -1304,10 +1304,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    joinVideoCall(channelId: string, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(channelId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.service.join_video_call({
-                message_index: messageIndex,
+                message_id: messageId,
                 channel_id: BigInt(channelId),
             }),
             joinVideoCallResponse,

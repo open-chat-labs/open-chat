@@ -8,11 +8,14 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
     TipMessageArgs, TipMessageResult,
 };
+use event_sink_client_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 use utils::time::MINUTE_IN_MS;
+
+use super::start_video_call::handle_start_video_call;
 
 #[update_msgpack]
 #[trace]
@@ -74,8 +77,17 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.events
-                    .join_video_call(caller_user_id, c.message_index, EventIndex::default(), state.env.now());
+                    .join_video_call(caller_user_id, c.message_id, EventIndex::default(), state.env.now());
             }
+        }
+        UserCanisterEvent::StartVideoCall(args) => {
+            handle_start_video_call(
+                args.message_id,
+                Some(args.message_index),
+                state.env.canister_id().into(),
+                caller_user_id,
+                state,
+            );
         }
     }
 }
@@ -105,6 +117,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 sender_avatar_id: args.sender_avatar_id,
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
+                mentioned: Vec::new(),
                 now,
             },
             state,
@@ -115,14 +128,17 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
-        chat.events.edit_message(EditMessageArgs {
-            sender: caller_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: args.message_id,
-            content: args.content.into(),
-            now,
-        });
+        chat.events.edit_message::<CdkRuntime>(
+            EditMessageArgs {
+                sender: caller_user_id,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_id: args.message_id,
+                content: args.content.into(),
+                now,
+            },
+            None,
+        );
     }
 }
 
@@ -188,7 +204,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 
         if args.added {
             if matches!(
-                chat.events.add_reaction(add_remove_reaction_args),
+                chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
                 AddRemoveReactionResult::Success
             ) && !state.data.suspended.value
             {
@@ -255,7 +271,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         };
 
         if matches!(
-            chat.events.tip_message(tip_message_args, EventIndex::default(),),
+            chat.events
+                .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
             TipMessageResult::Success
         ) {
             if let Some(event) = chat

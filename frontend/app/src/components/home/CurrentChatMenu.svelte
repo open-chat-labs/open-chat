@@ -229,7 +229,7 @@
     function startVideoCall() {
         dispatch("startVideoCall", {
             chat: selectedChatSummary,
-            messageIndex: selectedChatSummary.videoCallInProgress,
+            join: selectedChatSummary.videoCallInProgress !== undefined,
         });
     }
 </script>

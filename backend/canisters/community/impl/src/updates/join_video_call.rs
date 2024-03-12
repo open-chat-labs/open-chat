@@ -32,7 +32,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             match channel
                 .chat
                 .events
-                .join_video_call(user_id, args.message_index, min_visible_event_index, now)
+                .join_video_call(user_id, args.message_id, min_visible_event_index, now)
             {
                 JoinVideoCallResult::Success => {
                     handle_activity_notification(state);

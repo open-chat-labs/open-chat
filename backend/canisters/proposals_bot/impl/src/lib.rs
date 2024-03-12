@@ -9,7 +9,8 @@ use sha2::{Digest, Sha256};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
-    BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, ProposalId, TimestampMillis, Timestamped,
+    BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, NnsNeuronId, ProposalId, TimestampMillis,
+    Timestamped,
 };
 use utils::env::Environment;
 
@@ -79,6 +80,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    pub nns_proposals_scheduled_to_vote_on: HashSet<ProposalId>,
+    pub nns_neuron_to_vote_with: Option<NnsNeuronId>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -105,6 +108,8 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             registry_synced_up_to: 0,
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            nns_proposals_scheduled_to_vote_on: HashSet::new(),
+            nns_neuron_to_vote_with: None,
             rng_seed: [0; 32],
             test_mode,
         }

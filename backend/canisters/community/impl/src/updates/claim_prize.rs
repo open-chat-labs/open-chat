@@ -3,7 +3,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
-use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
@@ -111,20 +110,15 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         None => return Some("ChannelNotFound".to_string()),
     };
 
-    match channel
-        .chat
-        .events
-        .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
-    {
-        chat_events::ClaimPrizeResult::Success(event_payload) => {
-            state.data.event_sink_client.push(
-                EventBuilder::new("message_sent", now)
-                    .with_user(winner.to_string())
-                    .with_source(state.env.canister_id().to_string())
-                    .with_json_payload(&event_payload)
-                    .build(),
-            );
-
+    match channel.chat.events.claim_prize(
+        args.message_id,
+        winner,
+        transaction,
+        state.env.rng(),
+        &mut state.data.event_sink_client,
+        now,
+    ) {
+        chat_events::ClaimPrizeResult::Success => {
             handle_activity_notification(state);
             None
         }

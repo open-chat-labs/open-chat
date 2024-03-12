@@ -15,12 +15,7 @@ type SendMessageV2Args = record {
 };
 
 type SendMessageResponse = variant {
-    Success : record {
-        message_index : MessageIndex;
-        event_index : EventIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-    };
+    Success : SendMessageSuccess;
     MessageEmpty;
     TextTooLong : nat32;
     InvalidPoll : InvalidPollReason;
@@ -31,6 +26,13 @@ type SendMessageResponse = variant {
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
+};
+
+type SendMessageSuccess = record {
+    message_index : MessageIndex;
+    event_index : EventIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
 };
 
 type EditMessageV2Args = record {
@@ -48,6 +50,18 @@ type EditMessageResponse = variant {
     ChatFrozen;
 };
 
+type StartVideoCallArgs = record {
+    message_id : MessageId;
+    initiator : UserId;
+    initiator_username : text;
+    initiator_display_name : opt text;
+};
+
+type StartVideoCallResponse = variant {
+    Success;
+    NotAuthorized;
+};
+
 type EndVideoCallArgs = record {
     message_id : MessageId;
 };
@@ -59,7 +73,7 @@ type EndVideoCallResponse = variant {
 };
 
 type JoinVideoCallArgs = record {
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type JoinVideoCallResponse = variant {
@@ -695,6 +709,7 @@ service : {
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
 
     // Video call operator only
+    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
 
     summary : (SummaryArgs) -> (SummaryResponse) query;

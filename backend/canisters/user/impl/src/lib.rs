@@ -163,6 +163,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            video_call_operators: self.data.video_call_operators.clone(),
         }
     }
 }
@@ -202,15 +203,8 @@ struct Data {
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
     pub rng_seed: [u8; 32],
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-        .build()
 }
 
 impl Data {
@@ -298,6 +292,16 @@ impl Data {
         }
         Some(community)
     }
+
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -315,6 +319,7 @@ pub struct Metrics {
     pub direct_chat_metrics: ChatMetrics,
     pub event_sink_client_info: EventSinkClientInfo,
     pub canister_ids: CanisterIds,
+    pub video_call_operators: Vec<Principal>,
 }
 
 fn run_regular_jobs() {

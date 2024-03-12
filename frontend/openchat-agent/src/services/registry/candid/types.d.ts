@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
@@ -11,7 +10,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -727,6 +726,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -925,8 +925,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1113,6 +1112,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1547,5 +1547,3 @@ export interface _SERVICE {
   >,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

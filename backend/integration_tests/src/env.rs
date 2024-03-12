@@ -1,5 +1,6 @@
 use crate::setup::setup_new_env;
 use crate::TestEnv;
+use candid::Principal;
 use lazy_static::lazy_static;
 use std::ops::Deref;
 use std::sync::Mutex;
@@ -8,6 +9,8 @@ use types::Hash;
 lazy_static! {
     pub static ref ENV: TestEnvManager = TestEnvManager::default();
 }
+
+pub const VIDEO_CALL_OPERATOR: Principal = Principal::from_slice(&[1, 2, 3, 4, 5]);
 
 #[derive(Default)]
 pub struct TestEnvManager {

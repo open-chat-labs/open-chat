@@ -1261,11 +1261,11 @@ export class UserClient extends CandidService {
         );
     }
 
-    joinVideoCall(userId: string, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(userId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.userService.join_video_call({
                 user_id: Principal.fromText(userId),
-                message_index: messageIndex,
+                message_id: messageId,
             }),
             joinVideoCallResponse,
         );

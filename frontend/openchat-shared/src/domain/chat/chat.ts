@@ -64,13 +64,7 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent
-    | VideoCallContentInitial;
-
-export type VideoCallContentInitial = {
-    kind: "video_call_content_initial";
-    intiator: string;
-};
+    | VideoCallContent;
 
 export type VideoCallParticipant = {
     userId: string;
@@ -180,7 +174,6 @@ export type CompletedCryptocurrencyWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type FailedCryptocurrencyWithdrawal = {
@@ -213,7 +206,6 @@ export type CompletedCryptocurrencyTransfer = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {

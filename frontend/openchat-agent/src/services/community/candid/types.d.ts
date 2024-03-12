@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'channel_id' : ChannelId,
@@ -26,7 +25,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -1037,6 +1036,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -1212,7 +1212,7 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'UserNotInCommunity' : null };
 export interface JoinVideoCallArgs {
   'channel_id' : ChannelId,
-  'message_index' : MessageIndex,
+  'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
   { 'UserNotInChannel' : null } |
@@ -1271,8 +1271,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1461,6 +1460,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1893,14 +1893,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |
   { 'NotAuthorized' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
+  { 'Success' : SendMessageSuccess } |
   { 'UserNotInCommunity' : null } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
@@ -1909,6 +1902,12 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CommunityRulesNotAccepted' : null } |
   { 'InvalidRequest' : string } |
   { 'RulesNotAccepted' : null };
+export interface SendMessageSuccess {
+  'timestamp' : TimestampMillis,
+  'event_index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+  'message_index' : MessageIndex,
+}
 export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
 export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
@@ -1940,6 +1939,15 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
   'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StartVideoCallArgs {
+  'initiator_username' : string,
+  'channel_id' : ChannelId,
+  'initiator' : UserId,
+  'initiator_display_name' : [] | [string],
+  'message_id' : MessageId,
+}
+export type StartVideoCallResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
@@ -2344,6 +2352,10 @@ export interface _SERVICE {
     [SetMemberDisplayNameArgs],
     SetMemberDisplayNameResponse
   >,
+  'start_video_call' : ActorMethod<
+    [StartVideoCallArgs],
+    StartVideoCallResponse
+  >,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
@@ -2368,5 +2380,3 @@ export interface _SERVICE {
     UpdateUserGroupResponse
   >,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

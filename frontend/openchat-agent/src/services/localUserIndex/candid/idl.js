@@ -8,9 +8,8 @@ export const idlFactory = ({ IDL }) => {
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
     'Direct' : ChatId,
   });
-  const MessageIndex = IDL.Nat32;
   const AccessTokenType = IDL.Variant({
-    'JoinVideoCall' : MessageIndex,
+    'JoinVideoCall' : IDL.Null,
     'StartVideoCall' : IDL.Null,
   });
   const AccessTokenArgs = IDL.Record({
@@ -22,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const MessageIndex = IDL.Nat32;
   const UserId = CanisterId;
   const EventsContext = IDL.Variant({
     'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
@@ -508,6 +508,7 @@ export const idlFactory = ({ IDL }) => {
     'invite_users' : PermissionRole,
     'thread_permissions' : IDL.Opt(MessagePermissions),
     'change_roles' : PermissionRole,
+    'start_video_call' : PermissionRole,
     'add_members' : PermissionRole,
     'pin_messages' : PermissionRole,
     'react_to_messages' : PermissionRole,
@@ -995,6 +996,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
   });
   const InviteUsersToChannelFailed = IDL.Record({
     'failed_users' : IDL.Vec(UserId),
@@ -1018,6 +1020,7 @@ export const idlFactory = ({ IDL }) => {
   const InviteUsersToCommunityArgs = IDL.Record({
     'community_id' : CommunityId,
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
   });
   const InviteUsersToCommunityResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1030,6 +1033,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const InviteUsersToGroupArgs = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
+    'caller_username' : IDL.Text,
     'group_id' : ChatId,
     'correlation_id' : IDL.Nat64,
   });

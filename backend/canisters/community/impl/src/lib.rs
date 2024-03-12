@@ -311,14 +311,7 @@ struct Data {
     rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-        .build()
 }
 
 impl Data {
@@ -465,6 +458,16 @@ impl Data {
             .as_ref()
             .map(|g| matches!(g, AccessGate::Payment(_)))
             .unwrap_or_default()
+    }
+
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

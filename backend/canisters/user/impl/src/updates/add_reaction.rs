@@ -29,14 +29,17 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
 
-        match chat.events.add_reaction(AddRemoveReactionArgs {
-            user_id: my_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: args.message_id,
-            reaction: args.reaction.clone(),
-            now,
-        }) {
+        match chat.events.add_reaction(
+            AddRemoveReactionArgs {
+                user_id: my_user_id,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_id: args.message_id,
+                reaction: args.reaction.clone(),
+                now,
+            },
+            Some(&mut state.data.event_sink_client),
+        ) {
             AddRemoveReactionResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
                     state.push_user_canister_event(

@@ -441,14 +441,7 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-        .build()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -626,6 +619,16 @@ impl Data {
             "c2c_mark_group_updated_for_user_msgpack".to_string(),
             serialize_then_unwrap(Empty {}),
         );
+    }
+
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

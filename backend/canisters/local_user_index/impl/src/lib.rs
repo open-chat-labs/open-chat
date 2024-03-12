@@ -17,7 +17,7 @@ use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -94,12 +94,15 @@ impl RuntimeState {
         jobs::sync_events_to_user_index_canister::try_run_now(self);
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, message: MessageContent) {
-        if self.data.local_users.get(&user_id).is_some() {
-            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message)));
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
+        if self.data.local_users.contains(&user_id) {
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)));
         } else {
             self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
-                user_index_canister::OpenChatBotMessage { user_id, message },
+                user_index_canister::OpenChatBotMessage {
+                    user_id,
+                    message: content,
+                },
             )));
         }
     }
@@ -230,17 +233,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
-    #[serde(default = "event_sink_client")]
     pub event_sink_client: EventSinkClient<CdkRuntime>,
-    #[serde(default)]
     pub event_deduper: EventDeduper,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
-    EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
-        .build()
 }
 
 #[derive(Serialize, Deserialize)]

@@ -2,7 +2,6 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::MessageContentInternal;
 use types::{MessageContentInitial, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
@@ -48,12 +47,10 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         }
         Event::OpenChatBotMessage(content) => {
             let initial_content: MessageContentInitial = (*content).into();
-            let now = state.env.now();
-            openchat_bot::send_message(
-                MessageContentInternal::from_initial(initial_content, now).unwrap(),
-                false,
-                state,
-            );
+            openchat_bot::send_message(initial_content.into(), Vec::new(), false, state);
+        }
+        Event::OpenChatBotMessageV2(message) => {
+            openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();
@@ -86,7 +83,12 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             state.data.diamond_membership_expires_at = Some(ev.expires_at);
 
             if ev.send_bot_message {
-                openchat_bot::send_text_message("Payment received for Diamond membership!".to_string(), false, state);
+                openchat_bot::send_text_message(
+                    "Payment received for Diamond membership!".to_string(),
+                    Vec::new(),
+                    false,
+                    state,
+                );
             }
         }
     }

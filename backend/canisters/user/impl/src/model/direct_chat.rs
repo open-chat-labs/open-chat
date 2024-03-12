@@ -1,10 +1,11 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, PushMessageArgs, Reader};
+use event_sink_client::{EventSinkClient, Runtime};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageEventPayload, MessageId, MessageIndex,
-    Milliseconds, OptionUpdate, TimestampMillis, Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
+    TimestampMillis, Timestamped, UserId,
 };
 use user_canister::SendMessageArgs;
 
@@ -61,14 +62,15 @@ impl DirectChat {
         .unwrap()
     }
 
-    pub fn push_message(
+    pub fn push_message<R: Runtime + Send + 'static>(
         &mut self,
         sent_by_me: bool,
         args: PushMessageArgs,
         their_message_index: Option<MessageIndex>,
-    ) -> (EventWrapper<Message>, MessageEventPayload) {
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> EventWrapper<Message> {
         let now = args.now;
-        let (message_event, event_payload) = self.events.push_message(args);
+        let message_event = self.events.push_message(args, event_sink_client);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
@@ -79,7 +81,7 @@ impl DirectChat {
             }
         }
 
-        (message_event, event_payload)
+        message_event
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {

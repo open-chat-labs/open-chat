@@ -525,6 +525,7 @@ function mergePermissions(
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
+        startVideoCall: updated.startVideoCall ?? current.startVideoCall,
         messagePermissions: mergeMessagePermissions(
             current.messagePermissions,
             updated.messagePermissions,
@@ -1713,16 +1714,19 @@ export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
     cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
-    if (transfer.kind !== "completed") {
-        return undefined;
+    if (transfer.kind === "completed") {
+        return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
     }
+}
 
-    const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
-
-    return transactionUrlFormat
-        .replace("{block_index}", transfer.blockIndex.toString())
-        .replace("{transaction_index}", transfer.blockIndex.toString())
-        .replace("{transaction_hash}", transfer.transactionHash ?? "");
+export function buildTransactionUrlByIndex(
+    transactionIndex: bigint,
+    ledger: string,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): string | undefined {
+    return cryptoLookup[ledger]
+        .transactionUrlFormat
+        .replace("{transaction_index}", transactionIndex.toString());
 }
 
 export function buildCryptoTransferText(

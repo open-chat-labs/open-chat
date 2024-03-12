@@ -7,8 +7,8 @@ use local_user_index_canister::Event;
 use std::cmp::min;
 use tracing::info;
 use user_canister::{
-    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered,
-    StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
+    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, OpenChatBotMessageV2, PhoneNumberConfirmed,
+    ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
 };
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
@@ -141,6 +141,15 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         }
         Event::OpenChatBotMessage(ev) => {
             state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
+        }
+        Event::OpenChatBotMessageV2(ev) => {
+            state.push_event_to_user(
+                ev.user_id,
+                UserEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                    content: ev.content,
+                    mentioned: ev.mentioned,
+                })),
+            );
         }
         Event::ReferralCodeAdded(ev) => {
             state

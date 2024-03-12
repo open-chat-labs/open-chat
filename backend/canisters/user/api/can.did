@@ -12,13 +12,7 @@ type SendMessageV2Args = record {
 };
 
 type SendMessageResponse = variant {
-    Success : record {
-        chat_id : ChatId;
-        event_index : EventIndex;
-        message_index : MessageIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-    };
+    Success : SendMessageSuccess;
     TransferSuccessV2 : record {
         chat_id : ChatId;
         event_index : EventIndex;
@@ -40,6 +34,27 @@ type SendMessageResponse = variant {
     DuplicateMessageId;
     UserSuspended;
     InternalError : text;
+};
+
+type SendMessageSuccess = record {
+    chat_id : ChatId;
+    event_index : EventIndex;
+    message_index : MessageIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
+};
+
+type StartVideoCallArgs = record {
+    message_id : MessageId;
+    initiator : UserId;
+    initiator_username : text;
+    initiator_display_name : opt text;
+    initiator_avatar_id : opt nat;
+};
+
+type StartVideoCallResponse = variant {
+    Success;
+    NotAuthorized;
 };
 
 type EditMessageV2Args = record {
@@ -246,7 +261,7 @@ type EndVideoCallResponse = variant {
 
 type JoinVideoCallArgs = record {
     user_id : UserId;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type JoinVideoCallResponse = variant {
@@ -1071,8 +1086,9 @@ service : {
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
-    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

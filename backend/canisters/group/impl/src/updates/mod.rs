@@ -35,6 +35,7 @@ pub mod remove_participant;
 pub mod remove_reaction;
 pub mod report_message;
 pub mod send_message;
+pub mod start_video_call;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;

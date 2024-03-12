@@ -241,8 +241,8 @@ impl CommunityMembers {
         }
     }
 
-    pub fn block(&mut self, user_id: UserId) {
-        self.blocked.insert(user_id);
+    pub fn block(&mut self, user_id: UserId) -> bool {
+        self.blocked.insert(user_id)
     }
 
     pub fn unblock(&mut self, user_id: &UserId) -> bool {

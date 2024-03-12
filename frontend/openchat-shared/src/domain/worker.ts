@@ -351,7 +351,7 @@ type GetAccessToken = {
 type JoinVideoCall = {
     kind: "joinVideoCall";
     chatId: ChatIdentifier;
-    messageIndex: number;
+    messageId: bigint;
 };
 
 type ProposeTranslation = {
@@ -675,6 +675,7 @@ type InviteUsers = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsers";
 };
 
@@ -682,6 +683,7 @@ type InviteUsersToCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsersToCommunity";
 };
 

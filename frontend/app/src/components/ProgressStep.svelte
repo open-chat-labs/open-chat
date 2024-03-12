@@ -1,10 +1,11 @@
 <script lang="ts">
     import Spinner from "./icons/Spinner.svelte";
+    import { _ } from "svelte-i18n";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
     import { currentTheme } from "../theme/themes";
-    import type { ResourceKey } from "../i18n/i18n";
-    import Translatable from "./Translatable.svelte";
+    import { interpolate, type ResourceKey } from "../i18n/i18n";
+    import Markdown from "./home/Markdown.svelte";
 
     export let label: ResourceKey;
     export let status: string;
@@ -34,7 +35,7 @@
         </div>
     {/if}
     <div class={`label ${status}`}>
-        <Translatable resourceKey={label} />
+        <Markdown text={interpolate($_, label)} />
     </div>
 </div>
 

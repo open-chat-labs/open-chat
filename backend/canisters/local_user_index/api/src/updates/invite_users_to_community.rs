@@ -6,6 +6,7 @@ use types::{CommunityId, UserId};
 pub struct Args {
     pub community_id: CommunityId,
     pub user_ids: Vec<UserId>,
+    pub caller_username: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

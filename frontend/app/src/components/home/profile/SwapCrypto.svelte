@@ -91,7 +91,7 @@
         swapId = undefined;
 
         client
-            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn)
+            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn - (BigInt(2) * detailsIn.transferFee))
             .then((response) => {
                 if (response.length === 0) {
                     error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
@@ -226,7 +226,7 @@
                     <div class="amount">
                         <TokenInput
                             ledger={ledgerIn}
-                            minAmount={detailsIn.transferFee * BigInt(100)}
+                            minAmount={detailsIn.transferFee * BigInt(10)}
                             maxAmount={detailsIn.balance}
                             bind:valid={validAmount}
                             bind:amount={amountIn} />

@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_channel::{Response::*, *};
-use types::{ChannelId, CommunityId, MessageContent, TextContent, UserId};
+use types::{ChannelId, CommunityId, MessageContent, TextContent, User, UserId};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -32,6 +32,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
                 mutate_state(|state| {
                     commit(
                         invited_by,
+                        args.caller_username,
                         args.community_id,
                         s.community_name,
                         args.channel_id,
@@ -46,6 +47,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
                 mutate_state(|state| {
                     commit(
                         invited_by,
+                        args.caller_username,
                         args.community_id,
                         r.community_name,
                         args.channel_id,
@@ -73,8 +75,10 @@ async fn invite_users_to_channel(args: Args) -> Response {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn commit(
     invited_by: UserId,
+    invited_by_username: String,
     community_id: CommunityId,
     community_name: String,
     channel_id: ChannelId,
@@ -86,9 +90,13 @@ fn commit(
         "You have been invited to the channel [{channel_name}](/community/{community_id}/channel/{channel_id}) in the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
     let message = MessageContent::Text(TextContent { text });
+    let mentioned = vec![User {
+        user_id: invited_by,
+        username: invited_by_username.clone(),
+    }];
 
     for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone());
     }
 
     crate::jobs::sync_events_to_user_canisters::try_run_now(state);

@@ -23,6 +23,7 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         args.event_index,
         args.reason_code,
         args.notes,
+        &mut state.data.event_sink_client,
         now,
     );
 

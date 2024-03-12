@@ -615,6 +615,7 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -626,6 +627,7 @@ export class OpenChatAgent extends EventTarget {
         return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
+            callerUsername,
         );
     }
 
@@ -633,6 +635,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -644,7 +647,11 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
+                return localUserIndexClient.inviteUsersToGroup(
+                    chatId.groupId,
+                    userIds,
+                    callerUsername,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -655,6 +662,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.communityId,
                     chatId.channelId,
                     userIds,
+                    callerUsername,
                 );
             }
         }
@@ -3128,16 +3136,16 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).joinVideoCall(
                 chatId.channelId,
-                messageIndex,
+                messageId,
             );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).joinVideoCall(messageIndex);
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
         } else {
-            return this.userClient.joinVideoCall(chatId.userId, messageIndex);
+            return this.userClient.joinVideoCall(chatId.userId, messageId);
         }
     }
 
@@ -3146,24 +3154,10 @@ export class OpenChatAgent extends EventTarget {
         accessTokenType: AccessTokenType,
         localUserIndex: string,
     ): Promise<string | undefined> {
-        switch (chatId.kind) {
-            case "channel":
-                return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
-                    chatId,
-                    accessTokenType,
-                );
-            case "group_chat":
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.getAccessToken(chatId, accessTokenType);
-            case "direct_chat":
-                // todo - get the local user index for the *other* user to find out if we can get an
-                // access token for them
-                const directLocalUserIndex = await this._userIndexClient.userRegistrationCanister();
-                return this.createLocalUserIndexClient(directLocalUserIndex).getAccessToken(
-                    chatId,
-                    accessTokenType,
-                );
-        }
+        return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
+            chatId,
+            accessTokenType,
+        );
     }
 
     async getLocalUserIndexForUser(userId: string): Promise<string> {
