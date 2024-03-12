@@ -752,7 +752,12 @@
         "selectCommunity": "Seleccione una comunidad",
         "settings": "Ajustes",
         "title": "Configuración de perfil",
-        "unblock": "Desatascar"
+        "unblock": "Desatascar",
+        "videoSettings": "Configuración de videollamadas",
+        "videoCameraOn": "Comience con la cámara encendida",
+        "videoMicOn": "Comience con el micrófono encendido",
+        "videoSpeakerView": "Comience con la vista de orador activo",
+        "ringtone": "Elige tu tono de llamada"
     },
     "promoteFailed": "No se puede promocionar a {role}",
     "promoteTo": "Promocionar a {role}",

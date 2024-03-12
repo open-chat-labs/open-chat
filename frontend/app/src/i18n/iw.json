@@ -750,7 +750,12 @@
         "selectCommunity": "בחר קהילה",
         "settings": "הגדרות",
         "title": "הגדרות פרופיל",
-        "unblock": "בטל את החסימה"
+        "unblock": "בטל את החסימה",
+        "videoSettings": "הגדרות שיחת וידאו",
+        "videoCameraOn": "התחל עם מצלמה דולקת",
+        "videoMicOn": "התחל עם מיקרופון דולק",
+        "videoSpeakerView": "התחל עם תצוגת רמקול פעיל",
+        "ringtone": "בחר את הרינגטון שלך"
     },
     "promoteFailed": "לא ניתן לקדם ל-{role}",
     "promoteTo": "קדם ל-{role}",

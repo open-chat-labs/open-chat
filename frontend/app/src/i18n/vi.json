@@ -752,7 +752,12 @@
         "selectCommunity": "Chọn một cộng đồng",
         "settings": "Cài đặt",
         "title": "Cài đặt cấu hình",
-        "unblock": "Mở khóa"
+        "unblock": "Mở khóa",
+        "videoSettings": "Cài đặt cuộc gọi video",
+        "videoCameraOn": "Bắt đầu khi bật camera",
+        "videoMicOn": "Bắt đầu với micrô bật",
+        "videoSpeakerView": "Bắt đầu với chế độ xem Người phát biểu đang hoạt động",
+        "ringtone": "Chọn nhạc chuông của bạn"
     },
     "promoteFailed": "Không thể thăng hạng lên {role}",
     "promoteTo": "Quảng cáo lên {role}",

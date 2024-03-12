@@ -751,7 +751,12 @@
         "selectCommunity": "选择一个社区",
         "settings": "设置",
         "title": "配置文件设置",
-        "unblock": "取消屏蔽"
+        "unblock": "取消屏蔽",
+        "videoSettings": "视频通话设置",
+        "videoCameraOn": "从打开相机开始",
+        "videoMicOn": "从打开麦克风开始",
+        "videoSpeakerView": "从当前发言者视图开始",
+        "ringtone": "选择您的铃声"
     },
     "promoteFailed": "无法提升到 {role}",
     "promoteTo": "晋升为{role}",

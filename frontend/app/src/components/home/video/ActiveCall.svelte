@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { ring } from "../../../utils/ring";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rtlStore } from "../../../stores/rtl";
@@ -34,6 +33,7 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
+    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -96,8 +96,6 @@
         if (chat === undefined) return;
 
         try {
-            ring.pause();
-
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = { chat, join };
                 return;
@@ -127,9 +125,11 @@
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                activeSpeakerMode: false,
+                activeSpeakerMode: $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
+                startVideoOff: !$videoCameraOn,
+                startAudioOff: !$videoMicOn,
                 iframeStyle: {
                     width: "100%",
                     height: "100%",
@@ -150,6 +150,11 @@
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                } else {
+                    if (ev?.participant.user_name === $user.username) {
+                        // this means that I have joined the call from somewhere else e.g. another device
+                        activeVideoCall.endCall();
+                    }
                 }
             });
 

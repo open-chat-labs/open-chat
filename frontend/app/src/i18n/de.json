@@ -751,7 +751,12 @@
         "selectCommunity": "Wählen Sie eine Community aus",
         "settings": "Einstellungen",
         "title": "Profileinstellungen",
-        "unblock": "Entsperren"
+        "unblock": "Entsperren",
+        "videoSettings": "Videoanrufeinstellungen",
+        "videoCameraOn": "Beginnen Sie mit eingeschalteter Kamera",
+        "videoMicOn": "Beginnen Sie mit eingeschaltetem Mikrofon",
+        "videoSpeakerView": "Beginnen Sie mit der Ansicht „Aktiver Sprecher“.",
+        "ringtone": "Wählen Sie Ihren Klingelton"
     },
     "promoteFailed": "Heraufstufen auf {role} nicht möglich",
     "promoteTo": "Heraufstufen zu {role}",

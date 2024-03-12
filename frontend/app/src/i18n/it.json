@@ -751,7 +751,12 @@
         "selectCommunity": "Seleziona una comunità",
         "settings": "Impostazioni",
         "title": "Impostazioni del profilo",
-        "unblock": "Sbloccare"
+        "unblock": "Sbloccare",
+        "videoSettings": "Impostazioni delle videochiamate",
+        "videoCameraOn": "Inizia con la fotocamera accesa",
+        "videoMicOn": "Inizia con il microfono acceso",
+        "videoSpeakerView": "Inizia con la visualizzazione Relatore attivo",
+        "ringtone": "Scegli la tua suoneria"
     },
     "promoteFailed": "Impossibile promuovere a {role}",
     "promoteTo": "Promuovi a {role}",
