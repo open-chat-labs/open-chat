@@ -19,9 +19,9 @@ use types::{
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
     MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
-    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult,
-    ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VoteOperation,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -548,7 +548,11 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reaction(&mut self, args: AddRemoveReactionArgs) -> AddRemoveReactionResult {
+    pub fn add_reaction<R: Runtime + Send + 'static>(
+        &mut self,
+        args: AddRemoveReactionArgs,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> AddRemoveReactionResult {
         if !args.reaction.is_valid() {
             // This should never happen because we validate earlier
             panic!("Invalid reaction: {:?}", args.reaction);
@@ -573,8 +577,23 @@ impl ChatEvents {
             }
 
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+
+            if let Some(client) = event_sink_client {
+                let payload = ReactionAddedEventPayload {
+                    message_type: message.content.message_type(),
+                    chat_type: self.chat.chat_type().to_string(),
+                    chat_id: self.anonymized_id.clone(),
+                    thread: args.thread_root_message_index.is_some(),
+                };
+
+                client.push(
+                    EventBuilder::new("reaction_added", args.now)
+                        .with_user(args.user_id.to_string())
+                        .with_source(self.chat.canister_id().to_string())
+                        .with_json_payload(&payload)
+                        .build(),
+                )
+            }
 
             add_to_metrics(
                 &mut self.metrics,
@@ -583,6 +602,9 @@ impl ChatEvents {
                 |m| incr(&mut m.reactions),
                 args.now,
             );
+
+            self.last_updated_timestamps
+                .mark_updated(args.thread_root_message_index, event_index, args.now);
 
             AddRemoveReactionResult::Success
         } else {
