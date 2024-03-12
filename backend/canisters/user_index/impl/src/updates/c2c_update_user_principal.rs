@@ -49,7 +49,10 @@ fn commit(
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
-    let mut user = state.data.users.get_by_user_id(&user_id).unwrap().clone();
+    let Some(mut user) = state.data.users.get(&old_principal).cloned() else {
+        // Exit if the migration has already run
+        return;
+    };
     user.principal = new_principal;
 
     assert!(matches!(state.data.users.update(user, now), UpdateUserResult::Success));
