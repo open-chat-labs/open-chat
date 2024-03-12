@@ -17,11 +17,11 @@ use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
-    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VoteOperation,
+    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
+    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
+    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -229,7 +229,11 @@ impl ChatEvents {
         }
     }
 
-    pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
+    pub fn edit_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: EditMessageArgs,
+        event_sink_client: Option<&mut EventSinkClient<R>>,
+    ) -> EditMessageResult {
         if let Some((message, event_index)) = self.message_internal_mut(
             args.min_visible_event_index,
             args.thread_root_message_index,
@@ -244,11 +248,35 @@ impl ChatEvents {
                         let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                             != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
 
+                        let old_length = message.content.text_length();
                         message.content = args.content.into();
                         message.last_updated = Some(args.now);
 
                         if edited {
+                            let already_edited = message.last_edited.is_some();
                             message.last_edited = Some(args.now);
+
+                            if let Some(client) = event_sink_client {
+                                let new_length = message.content.text_length();
+                                let payload = MessageEditedEventPayload {
+                                    message_type: message.content.message_type(),
+                                    chat_type: self.chat.chat_type().to_string(),
+                                    chat_id: self.anonymized_id.clone(),
+                                    thread: args.thread_root_message_index.is_some(),
+                                    already_edited,
+                                    old_length,
+                                    new_length,
+                                };
+
+                                client.push(
+                                    EventBuilder::new("message_edited", args.now)
+                                        .with_user(args.sender.to_string())
+                                        .with_source(self.chat.canister_id().to_string())
+                                        .with_json_payload(&payload)
+                                        .build(),
+                                )
+                            }
+
                             add_to_metrics(
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,

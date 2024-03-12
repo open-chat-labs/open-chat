@@ -52,6 +52,17 @@ pub struct MessageTippedEventPayload {
     pub amount: u128,
 }
 
+#[derive(Serialize)]
+pub struct MessageEditedEventPayload {
+    pub message_type: String,
+    pub chat_type: String,
+    pub chat_id: String,
+    pub thread: bool,
+    pub already_edited: bool,
+    pub old_length: u32,
+    pub new_length: u32,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
