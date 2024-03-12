@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix Dragginz transaction fee ([#5531](https://github.com/open-chat-labs/open-chat/pull/5531))
+
 ## [[2.0.1088](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1088-registry)] - 2024-03-07
 
 ### Changed
