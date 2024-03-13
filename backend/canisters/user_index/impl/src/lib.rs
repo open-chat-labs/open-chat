@@ -7,8 +7,8 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
@@ -165,8 +165,8 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
-        let event_sink_client_info = self.data.event_sink_client.info();
-        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -194,7 +194,7 @@ impl RuntimeState {
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
-            event_sink_client_info,
+            event_store_client_info,
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
             pending_payments: self.data.pending_payments_queue.len(),
             pending_user_principal_updates: self.data.user_principal_updates_queue.len(),
@@ -235,7 +235,8 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    #[serde(alias = "event_sink_client")]
+    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
@@ -300,7 +301,7 @@ impl Data {
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
-            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
@@ -391,7 +392,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
-            event_sink_client: EventSinkClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
+            event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -446,7 +447,7 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub pending_modclub_submissions: usize,
     pub pending_payments: usize,
     pub pending_user_principal_updates: usize,

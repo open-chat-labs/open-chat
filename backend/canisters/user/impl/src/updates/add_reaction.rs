@@ -38,7 +38,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 reaction: args.reaction.clone(),
                 now,
             },
-            Some(&mut state.data.event_sink_client),
+            Some(&mut state.data.event_store_client),
         ) {
             AddRemoveReactionResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {

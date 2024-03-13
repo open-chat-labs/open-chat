@@ -2,7 +2,7 @@ use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::*;
 use candid::Principal;
-use event_sink_client::{EventBuilder, EventSinkClient, Runtime};
+use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use rand::rngs::StdRng;
@@ -130,7 +130,7 @@ impl ChatEvents {
     pub fn push_message<R: Runtime + Send + 'static>(
         &mut self,
         args: PushMessageArgs,
-        mut event_sink_client: Option<&mut EventSinkClient<R>>,
+        mut event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EventWrapper<Message> {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
             self.threads.entry(root_message_index).or_default()
@@ -140,7 +140,7 @@ impl ChatEvents {
 
         let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
 
-        if let Some(client) = event_sink_client.as_mut() {
+        if let Some(client) = event_store_client.as_mut() {
             let event_payload = MessageEventPayload {
                 message_type: args.content.message_type(),
                 chat_type: self.chat.chat_type().to_string(),
@@ -214,7 +214,7 @@ impl ChatEvents {
 
         if is_video_call {
             if let Some(vc) = &self.video_call_in_progress.value {
-                self.end_video_call(vc.message_index.into(), args.now, event_sink_client);
+                self.end_video_call(vc.message_index.into(), args.now, event_store_client);
             }
 
             self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
@@ -232,7 +232,7 @@ impl ChatEvents {
     pub fn edit_message<R: Runtime + Send + 'static>(
         &mut self,
         args: EditMessageArgs,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EditMessageResult {
         if let Some((message, event_index)) = self.message_internal_mut(
             args.min_visible_event_index,
@@ -256,7 +256,7 @@ impl ChatEvents {
                             let already_edited = message.last_edited.is_some();
                             message.last_edited = Some(args.now);
 
-                            if let Some(client) = event_sink_client {
+                            if let Some(client) = event_store_client {
                                 let new_length = message.content.text_length();
                                 let payload = MessageEditedEventPayload {
                                     message_type: message.content.message_type(),
@@ -579,7 +579,7 @@ impl ChatEvents {
     pub fn add_reaction<R: Runtime + Send + 'static>(
         &mut self,
         args: AddRemoveReactionArgs,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> AddRemoveReactionResult {
         if !args.reaction.is_valid() {
             // This should never happen because we validate earlier
@@ -606,7 +606,7 @@ impl ChatEvents {
 
             message.last_updated = Some(args.now);
 
-            if let Some(client) = event_sink_client {
+            if let Some(client) = event_store_client {
                 let payload = ReactionAddedEventPayload {
                     message_type: message.content.message_type(),
                     chat_type: self.chat.chat_type().to_string(),
@@ -683,7 +683,7 @@ impl ChatEvents {
         &mut self,
         args: TipMessageArgs,
         min_visible_event_index: EventIndex,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> TipMessageResult {
         use TipMessageResult::*;
 
@@ -702,7 +702,7 @@ impl ChatEvents {
             message.tips.push(args.ledger, args.user_id, args.amount);
             message.last_updated = Some(args.now);
 
-            if let Some(client) = event_sink_client {
+            if let Some(client) = event_store_client {
                 let message_type = message.content.message_type();
 
                 client.push(
@@ -782,7 +782,7 @@ impl ChatEvents {
         winner: UserId,
         transaction: CompletedCryptoTransaction,
         rng: &mut StdRng,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> ClaimPrizeResult {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
@@ -814,7 +814,7 @@ impl ChatEvents {
                             correlation_id: 0,
                             now,
                         },
-                        Some(event_sink_client),
+                        Some(event_store_client),
                     );
 
                     ClaimPrizeResult::Success
@@ -963,7 +963,7 @@ impl ChatEvents {
         token0_txn_out: u64,
         token1_txn_out: u64,
         now: TimestampMillis,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_producer: &mut EventStoreClient<R>,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
@@ -979,7 +979,7 @@ impl ChatEvents {
                         chat_id: self.anonymized_id.clone(),
                     };
 
-                    event_sink_client.push(
+                    event_store_producer.push(
                         EventBuilder::new("p2p_swap_completed", now)
                             .with_user(user_id.to_string())
                             .with_source(self.chat.canister_id().to_string())
@@ -1089,7 +1089,7 @@ impl ChatEvents {
         event_index: EventIndex,
         reason_code: u32,
         notes: Option<String>,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_producer: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) {
         // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
@@ -1163,7 +1163,7 @@ impl ChatEvents {
                     correlation_id: 0,
                     now,
                 },
-                Some(event_sink_client),
+                Some(event_store_producer),
             );
         }
     }
@@ -1619,13 +1619,13 @@ impl ChatEvents {
         &mut self,
         event_key: EventKey,
         now: TimestampMillis,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        event_store_producer: Option<&mut EventStoreClient<R>>,
     ) -> EndVideoCallResult {
         if let Some(event) = self.main.get_event_mut(event_key, EventIndex::default()) {
             if let Some(message) = event.event.as_message_mut() {
                 if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                     return if video_call.ended.is_none() {
-                        if let Some(client) = event_sink_client {
+                        if let Some(client) = event_store_producer {
                             client.push(
                                 EventBuilder::new("video_call_ended", now)
                                     .with_source(self.chat.canister_id().to_string())

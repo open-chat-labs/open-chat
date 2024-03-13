@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
 - Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
 
+### Changed
+
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+
 ## [[2.0.1100](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1100-user)] - 2024-03-11
 
 ### Added

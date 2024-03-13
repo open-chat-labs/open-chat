@@ -2,7 +2,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
-use event_sink_client::{EventSinkClient, Runtime};
+use event_store_producer::{EventStoreClient, Runtime};
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
@@ -542,7 +542,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -576,7 +576,7 @@ impl GroupChatCore {
             rules_accepted,
             suppressed,
             proposals_bot_user_id,
-            event_sink_client,
+            event_store_client,
             now,
         )
     }
@@ -593,7 +593,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -645,7 +645,7 @@ impl GroupChatCore {
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args, Some(event_sink_client));
+        let message_event = self.events.push_message(push_message_args, Some(event_store_client));
         let message_index = message_event.event.message_index;
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
@@ -764,7 +764,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
     ) -> AddRemoveReactionResult {
         use AddRemoveReactionResult::*;
 
@@ -788,7 +788,7 @@ impl GroupChatCore {
                         reaction,
                         now,
                     },
-                    Some(event_sink_client),
+                    Some(event_store_client),
                 )
                 .into()
         } else {
@@ -834,7 +834,7 @@ impl GroupChatCore {
     pub fn tip_message<R: Runtime + Send + 'static>(
         &mut self,
         args: TipMessageArgs,
-        event_sink_client: &mut EventSinkClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
     ) -> TipMessageResult {
         use TipMessageResult::*;
 
@@ -849,7 +849,7 @@ impl GroupChatCore {
             let min_visible_event_index = member.min_visible_event_index();
 
             self.events
-                .tip_message(args, min_visible_event_index, Some(event_sink_client))
+                .tip_message(args, min_visible_event_index, Some(event_store_client))
                 .into()
         } else {
             UserNotInGroup

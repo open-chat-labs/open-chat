@@ -4,9 +4,9 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
-use event_sink_utils::EventDeduper;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
+use event_store_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
@@ -166,8 +166,8 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
-        let event_sink_client_info = self.data.event_sink_client.info();
-        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -188,7 +188,7 @@ impl RuntimeState {
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             referral_codes: self.data.referral_codes.metrics(),
-            event_sink_client_info,
+            event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -233,7 +233,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    #[serde(alias = "event_sink_client")]
+    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
 }
 
@@ -289,7 +290,7 @@ impl Data {
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der,
-            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
@@ -317,7 +318,7 @@ pub struct Metrics {
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
 }

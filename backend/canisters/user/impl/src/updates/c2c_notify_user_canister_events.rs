@@ -8,7 +8,7 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
     TipMessageArgs, TipMessageResult,
 };
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};

@@ -25,7 +25,7 @@ mod upgrade_groups {
     }
 
     fn next_batch(state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
-        if state.data.event_sink_client.info().events_pending > 100000 {
+        if state.data.event_store_client.info().events_pending > 100000 {
             return Vec::new();
         }
 
