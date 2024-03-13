@@ -24,4 +24,12 @@ impl LastUpdatedTimestamps {
     pub fn iter(&self) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
         self.by_timestamp.iter().rev().cloned().map(|(ts, r, e)| (r, e, ts))
     }
+
+    pub fn last_updated(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        event_index: EventIndex,
+    ) -> Option<TimestampMillis> {
+        self.by_event_index.get(&(thread_root_message_index, event_index)).copied()
+    }
 }
