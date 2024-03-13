@@ -24,6 +24,7 @@
     import { afterUpdate, beforeUpdate, getContext, onMount, tick } from "svelte";
     import { pathParams } from "../../routes";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
+    import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import Fab from "../Fab.svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -38,7 +39,7 @@
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
-    const FROM_BOTTOM_THRESHOLD = 600;
+    const FROM_END_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
     const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
@@ -55,6 +56,7 @@
     export let footer: boolean;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
+    export let scrollTopButtonEnabled: boolean = false;
 
     let interrupt = false;
     let morePrevAvailable = false;
@@ -142,6 +144,7 @@
     };
 
     let showGoToBottom = false;
+    let showGoToTop = false;
     let floatingTimestamp: bigint | undefined = undefined;
 
     beforeUpdate(() => {
@@ -153,6 +156,7 @@
 
     afterUpdate(() => {
         updateShowGoToBottom();
+        updateShowGoToTop();
     });
 
     function elementIsOffTheTop(el: Element): boolean {
@@ -160,7 +164,11 @@
     }
 
     function updateShowGoToBottom() {
-        showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
+        showGoToBottom = fromBottom() > FROM_END_THRESHOLD;
+    }
+
+    function updateShowGoToTop() {
+        showGoToTop = fromTop() > FROM_END_THRESHOLD;
     }
 
     onMount(() => {
@@ -604,6 +612,7 @@
             $eventListScrollTop = messagesDiv?.scrollTop;
         }
         updateShowGoToBottom();
+        updateShowGoToTop();
         menuStore.hideMenu();
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
@@ -618,6 +627,10 @@
         if (messageContextsEqual(context, messageContext)) {
             await scrollBottom();
         }
+    }
+
+    function scrollToTop() {
+        scrollToMessageIndex(messageContext, 0, false);
     }
 
     function scrollToLast() {
@@ -662,6 +675,18 @@
     class={`scrollable-list ${rootSelector}`}>
     <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
+
+{#if scrollTopButtonEnabled}
+    <div
+        title={$_("scrollToTop")}
+        class:show={showGoToTop}
+        class="fab to-top"
+        class:rtl={$rtlStore}>
+        <Fab on:click={scrollToTop}>
+            <ArrowUp size={$iconSize} color={"#fff"} />
+        </Fab>
+    </div>
+{/if}
 
 {#if !readonly}
     <div
@@ -757,5 +782,9 @@
         &.footer {
             bottom: 80px;
         }
+    }
+
+    .to-top {
+        top: 95px;
     }
 </style>

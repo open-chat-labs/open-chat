@@ -254,6 +254,7 @@
     rootSelector={"thread-messages"}
     maintainScroll={false}
     bind:this={chatEventList}
+    scrollTopButtonEnabled
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
