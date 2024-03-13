@@ -49,7 +49,7 @@
             const callContainer = document.getElementById("video-call-container");
             const rect = middlePanel.getBoundingClientRect();
             if (callContainer) {
-                if (call.fullscreen) {
+                if (call.view === "fullscreen") {
                     let width = window.innerWidth;
                     if (layout.rightPanel !== "floating" && call.threadOpen) {
                         width = width - (rightPanelWidth ?? 500);

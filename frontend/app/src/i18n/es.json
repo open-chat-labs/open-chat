@@ -1262,6 +1262,7 @@
         "joinVideo": "Unirse a videollamada",
         "leave": "dejar llamada",
         "leaveVideo": "Dejar videollamada",
+        "noMeetingToJoin": "Lo sentimos, pero no hay ninguna reunión en curso a la que puedas unirte.",
         "remoteStart": "{name} ha iniciado una videollamada",
         "startedBy": "{username} inició una videollamada",
         "startVideo": "Iniciar videollamada",
