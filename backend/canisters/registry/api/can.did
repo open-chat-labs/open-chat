@@ -68,8 +68,20 @@ type RemoveMessageFilterResponse = variant {
     InternalError : text;
 };
 
+type SetTokenEnabledArgs = record {
+    ledger_canister_id : CanisterId;
+    enabled : bool;
+};
+
+type SetTokenEnabledResponse = variant {
+    Success;
+    NotAuthorized;
+    InternalError : text;
+};
+
 service : {
     add_message_filter : (AddMessageFilterArgs) -> (AddMessageFilterResponse);
     remove_message_filter : (RemoveMessageFilterArgs) -> (RemoveMessageFilterResponse);
+    set_token_enabled : (SetTokenEnabledArgs) -> (SetTokenEnabledResponse);
     updates : (UpdatesArgs) -> (UpdatesResponse) query;
 };
