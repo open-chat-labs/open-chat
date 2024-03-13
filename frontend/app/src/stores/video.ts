@@ -13,11 +13,13 @@ export type IncomingVideoCall = {
     userId: string;
 };
 
+export type VideoCallView = "fullscreen" | "minimised" | "default";
+
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
     call?: DailyCall;
-    fullscreen: boolean;
+    view: VideoCallView;
     threadOpen: boolean;
 };
 
@@ -36,17 +38,17 @@ export const activeVideoCall = {
             status: "joined",
             chatId,
             call,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },
-    fullscreen: (fullscreen: boolean) => {
+    setView: (view: VideoCallView) => {
         return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
                       ...current,
-                      fullscreen,
+                      view,
                   };
         });
     },
@@ -79,7 +81,7 @@ export const activeVideoCall = {
         return activeStore.set({
             status: "joining",
             chatId,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },

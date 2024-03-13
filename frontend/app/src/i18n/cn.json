@@ -1262,6 +1262,7 @@
         "joinVideo": "加入视频通话",
         "leave": "留下电话",
         "leaveVideo": "留下视频通话",
+        "noMeetingToJoin": "抱歉，没有正在进行的会议供您参加",
         "remoteStart": "{name} 已发起视频通话",
         "startedBy": "{username} 发起了视频通话",
         "startVideo": "开始视频通话",
