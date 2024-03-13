@@ -443,7 +443,7 @@ export function mergeUnconfirmedIntoSummary(
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
             latestMessage === undefined ||
-            latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
+            latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
         }
