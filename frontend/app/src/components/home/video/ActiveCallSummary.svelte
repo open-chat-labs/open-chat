@@ -31,11 +31,16 @@
     $: userStore = client.userStore;
     $: show =
         $activeVideoCall?.chatId !== undefined &&
-        !chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId);
+        (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) ||
+            (chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
+                $activeVideoCall.view === "minimised"));
 
     function goToCall() {
         if ($activeVideoCall) {
-            page(routeForChatIdentifier("none", $activeVideoCall.chatId));
+            if (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)) {
+                page(routeForChatIdentifier("none", $activeVideoCall.chatId));
+            }
+            activeVideoCall.setView("default");
         }
     }
 
@@ -103,7 +108,7 @@
 </script>
 
 {#if show && $activeVideoCall !== undefined && chat !== undefined}
-    <div class="call">
+    <div class="call" tabindex="0" role="button" on:click={goToCall}>
         {#if $activeVideoCall.status === "joining"}
             <div class="joining">
                 <FancyLoader loop />
@@ -125,7 +130,7 @@
                         role="button"
                         tabindex="0"
                         class="cam"
-                        on:click={toggleCamera}>
+                        on:click|stopPropagation={toggleCamera}>
                         {#if $camera}
                             <Video size={"1.6em"} color={"var(--txt)"} />
                         {:else}
@@ -139,7 +144,12 @@
                     </div>
                 </TooltipWrapper>
                 <TooltipWrapper position={"top"} align={"middle"}>
-                    <div slot="target" role="button" tabindex="0" class="mic" on:click={toggleMic}>
+                    <div
+                        slot="target"
+                        role="button"
+                        tabindex="0"
+                        class="mic"
+                        on:click|stopPropagation={toggleMic}>
                         {#if $microphone}
                             <Microphone size={"1.6em"} color={"var(--txt)"} />
                         {:else}
@@ -158,7 +168,7 @@
                         role="button"
                         tabindex="0"
                         class="mic"
-                        on:click={toggleShare}>
+                        on:click|stopPropagation={toggleShare}>
                         {#if $sharing}
                             <MonitorOff size={"1.6em"} color={"var(--txt)"} />
                         {:else}
@@ -172,7 +182,12 @@
                     </div>
                 </TooltipWrapper>
                 <TooltipWrapper position={"top"} align={"middle"}>
-                    <div slot="target" role="button" tabindex="0" class="hangup" on:click={hangup}>
+                    <div
+                        slot="target"
+                        role="button"
+                        tabindex="0"
+                        class="hangup"
+                        on:click|stopPropagation={hangup}>
                         <PhoneHangup size={"1.6em"} color={"var(--txt)"} />
                     </div>
                     <div let:position let:align slot="tooltip">
@@ -182,13 +197,14 @@
                     </div>
                 </TooltipWrapper>
             </div>
-            <span role="button" tabindex="0" class="name" on:click={goToCall}>{chat.name}</span>
+            <span class="name">{chat.name}</span>
         </div>
     </div>
 {/if}
 
 <style lang="scss">
     .call {
+        cursor: pointer;
         position: sticky;
         display: flex;
         gap: $sp4;
@@ -200,17 +216,12 @@
         color: var(--toast-success-txt);
     }
 
-    .name {
-        cursor: pointer;
-    }
-
     .joining {
         width: toRem(48);
         height: toRem(48);
     }
 
     .actions {
-        cursor: pointer;
         display: flex;
         gap: $sp4;
     }
