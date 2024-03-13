@@ -13,7 +13,7 @@ fn push_events(args: Args) {
 fn push_events_impl(args: Args, state: &mut RuntimeState) {
     let now = state.env.now();
 
-    state.data.event_sink_client.push_many(
+    state.data.event_store_client.push_many(
         args.events
             .into_iter()
             .filter(|e| state.data.event_deduper.try_push(e.idempotency_key, now))

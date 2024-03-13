@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use event_relay_canister::push_events::*;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use ic_cdk_macros::update;
 use sha256::sha256_string;
 
@@ -18,7 +18,7 @@ fn push_events_impl(args: Args, state: &mut RuntimeState) {
 
     let salt = state.data.salt.get();
 
-    state.data.events_sink_client.push_many(
+    state.data.event_store_client.push_many(
         args.events
             .into_iter()
             .filter(|e| state.data.event_deduper.try_push(e.idempotency_key, now))

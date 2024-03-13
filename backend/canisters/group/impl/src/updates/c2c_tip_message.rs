@@ -38,7 +38,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     match state
         .data
         .chat
-        .tip_message(tip_message_args, &mut state.data.event_sink_client)
+        .tip_message(tip_message_args, &mut state.data.event_store_client)
     {
         TipMessageResult::Success => {
             if let Some((message_index, message_event_index)) = state

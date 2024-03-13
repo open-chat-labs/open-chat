@@ -150,7 +150,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
         match chat
             .events
-            .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_sink_client))
+            .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_store_client))
         {
             TipMessageResult::Success => {
                 state.push_user_canister_event(

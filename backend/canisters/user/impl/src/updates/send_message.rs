@@ -233,7 +233,7 @@ fn send_message_impl(
             .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
     };
 
-    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_sink_client));
+    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
@@ -326,7 +326,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             correlation_id: 0,
                             now,
                         };
-                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_sink_client));
+                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
 
                         // Mark that the bot has read the message we just sent
                         chat.mark_read_up_to(message_index, false, now);

@@ -145,7 +145,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         false,
         push_message_args,
         args.sender_message_index,
-        args.push_message_sent_event.then_some(&mut state.data.event_sink_client),
+        args.push_message_sent_event.then_some(&mut state.data.event_store_client),
     );
 
     if args.is_bot {

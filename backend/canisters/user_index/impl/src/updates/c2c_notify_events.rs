@@ -4,7 +4,7 @@ use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use local_user_index_canister::{
     Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserRegistered, UsernameChanged,
@@ -135,7 +135,7 @@ fn process_new_user(
         Some(local_user_index_canister_id),
     );
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
             .with_user(user_id.to_string())
             .with_source(state.env.canister_id().to_string())

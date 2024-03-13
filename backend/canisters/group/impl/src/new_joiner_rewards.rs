@@ -87,6 +87,6 @@ fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryp
             correlation_id: 0,
             now: state.env.now(),
         },
-        Some(&mut state.data.event_sink_client),
+        Some(&mut state.data.event_store_client),
     );
 }
