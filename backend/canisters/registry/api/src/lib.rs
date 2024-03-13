@@ -27,7 +27,13 @@ pub struct TokenDetails {
     pub transaction_url_format: String,
     pub supported_standards: Vec<String>,
     pub added: TimestampMillis,
+    #[serde(default = "bool_true")]
+    pub enabled: bool,
     pub last_updated: TimestampMillis,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

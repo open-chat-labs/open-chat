@@ -37,9 +37,10 @@ impl Tokens {
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
-                added: now,
-                last_updated: now,
                 supported_standards,
+                added: now,
+                enabled: true,
+                last_updated: now,
             });
             self.last_updated = now;
             true
@@ -47,11 +48,7 @@ impl Tokens {
     }
 
     pub fn update(&mut self, args: registry_canister::update_token::Args, now: TimestampMillis) -> bool {
-        if let Some(token) = self
-            .tokens
-            .iter_mut()
-            .find(|t| t.ledger_canister_id == args.ledger_canister_id)
-        {
+        if let Some(token) = self.get_token_mut(args.ledger_canister_id) {
             if let Some(name) = args.name {
                 token.name = name;
             }
@@ -79,7 +76,7 @@ impl Tokens {
     }
 
     pub fn set_standards(&mut self, ledger_canister_id: CanisterId, supported_standards: Vec<String>, now: TimestampMillis) {
-        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+        if let Some(token) = self.get_token_mut(ledger_canister_id) {
             if token.supported_standards != supported_standards {
                 token.supported_standards = supported_standards;
                 token.last_updated = now;
@@ -89,9 +86,18 @@ impl Tokens {
 
     #[allow(dead_code)]
     pub fn set_fee(&mut self, ledger_canister_id: CanisterId, fee: u128, now: TimestampMillis) {
-        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+        if let Some(token) = self.get_token_mut(ledger_canister_id) {
             if token.fee != fee {
                 token.fee = fee;
+                token.last_updated = now;
+            }
+        }
+    }
+
+    pub fn set_enabled(&mut self, ledger_canister_id: CanisterId, enabled: bool, now: TimestampMillis) {
+        if let Some(token) = self.get_token_mut(ledger_canister_id) {
+            if token.enabled != enabled {
+                token.enabled = enabled;
                 token.last_updated = now;
             }
         }
@@ -107,6 +113,10 @@ impl Tokens {
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
         self.tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id)
+    }
+
+    fn get_token_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
+        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
     }
 }
 
