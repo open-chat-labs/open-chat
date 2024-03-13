@@ -175,7 +175,6 @@ impl ChatEvents {
             replies_to: args.replies_to,
             reactions: Vec::new(),
             tips: Tips::default(),
-            last_updated: None,
             last_edited: None,
             deleted_by: None,
             thread_summary: None,
@@ -250,7 +249,6 @@ impl ChatEvents {
 
                         let old_length = message.content.text_length();
                         message.content = args.content.into();
-                        message.last_updated = Some(args.now);
 
                         if edited {
                             let already_edited = message.last_edited.is_some();
@@ -330,7 +328,6 @@ impl ChatEvents {
                     DeleteMessageResult::AlreadyDeleted
                 } else {
                     let sender = message.sender;
-                    message.last_updated = Some(args.now);
                     message.deleted_by = Some(DeletedByInternal {
                         deleted_by: args.caller,
                         timestamp: args.now,
@@ -378,7 +375,6 @@ impl ChatEvents {
                         MessageContentInternal::Crypto(_) => UndeleteMessageResult::InvalidMessageType,
                         _ => {
                             let sender = message.sender;
-                            message.last_updated = Some(args.now);
                             message.deleted_by = None;
                             self.last_updated_timestamps
                                 .mark_updated(args.thread_root_message_index, event_index, args.now);
@@ -438,7 +434,6 @@ impl ChatEvents {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(args.user_id, args.option_index, args.operation) {
                     RegisterVoteResult::Success(existing_vote_removed) => {
-                        message.last_updated = Some(args.now);
                         let votes = p.hydrate(Some(args.user_id)).votes;
 
                         self.last_updated_timestamps
@@ -495,7 +490,6 @@ impl ChatEvents {
                 return if p.ended || p.config.end_date.is_none() {
                     EndPollResult::UnableToEndPoll
                 } else {
-                    message.last_updated = Some(now);
                     p.ended = true;
                     self.last_updated_timestamps
                         .mark_updated(thread_root_message_index, event_index, now);
@@ -568,7 +562,6 @@ impl ChatEvents {
                 if message.sender == user_id {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
                         p.proposal.update_status(update.into(), now);
-                        message.last_updated = Some(now);
                         self.last_updated_timestamps.mark_updated(None, event_index, now);
                     }
                 }
@@ -603,8 +596,6 @@ impl ChatEvents {
             if !added {
                 return AddRemoveReactionResult::NoChange;
             }
-
-            message.last_updated = Some(args.now);
 
             if let Some(client) = event_store_client {
                 let payload = ReactionAddedEventPayload {
@@ -661,7 +652,6 @@ impl ChatEvents {
                 message.reactions.retain(|(_, u)| !u.is_empty());
             }
 
-            message.last_updated = Some(args.now);
             self.last_updated_timestamps
                 .mark_updated(args.thread_root_message_index, event_index, args.now);
 
@@ -700,7 +690,6 @@ impl ChatEvents {
             }
 
             message.tips.push(args.ledger, args.user_id, args.amount);
-            message.last_updated = Some(args.now);
 
             if let Some(client) = event_store_client {
                 let message_type = message.content.message_type();
@@ -766,7 +755,6 @@ impl ChatEvents {
                 let fee = content.transaction.fee();
 
                 content.reservations.insert(user_id);
-                message.last_updated = Some(now);
                 self.last_updated_timestamps.mark_updated(None, event_index, now);
 
                 return ReservePrizeResult::Success(token, ledger_canister_id, amount.e8s() as u128, fee);
@@ -791,7 +779,6 @@ impl ChatEvents {
                 return if content.reservations.remove(&winner) {
                     // Add the user to winners list
                     content.winners.insert(winner);
-                    message.last_updated = Some(now);
                     let message_index = message.message_index;
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
@@ -840,7 +827,6 @@ impl ChatEvents {
                 return if content.reservations.remove(&user_id) {
                     // Put the prize back
                     content.prizes_remaining.push(amount);
-                    message.last_updated = Some(now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
                     UnreservePrizeResult::Success
@@ -963,7 +949,7 @@ impl ChatEvents {
         token0_txn_out: u64,
         token1_txn_out: u64,
         now: TimestampMillis,
-        event_store_producer: &mut EventStoreClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
@@ -979,7 +965,7 @@ impl ChatEvents {
                         chat_id: self.anonymized_id.clone(),
                     };
 
-                    event_store_producer.push(
+                    event_store_client.push(
                         EventBuilder::new("p2p_swap_completed", now)
                             .with_user(user_id.to_string())
                             .with_source(self.chat.canister_id().to_string())
@@ -1089,7 +1075,7 @@ impl ChatEvents {
         event_index: EventIndex,
         reason_code: u32,
         notes: Option<String>,
-        event_store_producer: &mut EventStoreClient<R>,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) {
         // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
@@ -1163,7 +1149,7 @@ impl ChatEvents {
                     correlation_id: 0,
                     now,
                 },
-                Some(event_store_producer),
+                Some(event_store_client),
             );
         }
     }
@@ -1243,7 +1229,6 @@ impl ChatEvents {
         };
 
         if update_fn(summary) {
-            root_message.last_updated = Some(now);
             self.last_updated_timestamps.mark_updated(None, event_index, now);
             Some(true)
         } else {
@@ -1373,7 +1358,6 @@ impl ChatEvents {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into()) {
             if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
                 r.hidden = true;
-                message.last_updated = Some(now);
                 self.last_updated_timestamps.mark_updated(None, event_index, now);
                 return true;
             }
@@ -1575,11 +1559,11 @@ impl ChatEvents {
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader {
-        ChatEventsListReader::new(&self.main)
+        ChatEventsListReader::new(&self.main, &self.last_updated_timestamps)
     }
 
     pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader {
-        ChatEventsListReader::with_min_visible_event_index(&self.main, min_visible_event_index)
+        ChatEventsListReader::with_min_visible_event_index(&self.main, &self.last_updated_timestamps, min_visible_event_index)
     }
 
     pub fn events_reader(
@@ -1590,10 +1574,11 @@ impl ChatEvents {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
         if thread_root_message_index.is_some() {
-            Some(ChatEventsListReader::new(events_list))
+            Some(ChatEventsListReader::new(events_list, &self.last_updated_timestamps))
         } else {
             Some(ChatEventsListReader::with_min_visible_event_index(
                 events_list,
+                &self.last_updated_timestamps,
                 min_visible_event_index,
             ))
         }
@@ -1619,13 +1604,13 @@ impl ChatEvents {
         &mut self,
         event_key: EventKey,
         now: TimestampMillis,
-        event_store_producer: Option<&mut EventStoreClient<R>>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EndVideoCallResult {
         if let Some(event) = self.main.get_event_mut(event_key, EventIndex::default()) {
             if let Some(message) = event.event.as_message_mut() {
                 if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                     return if video_call.ended.is_none() {
-                        if let Some(client) = event_store_producer {
+                        if let Some(client) = event_store_client {
                             client.push(
                                 EventBuilder::new("video_call_ended", now)
                                     .with_source(self.chat.canister_id().to_string())
@@ -1633,13 +1618,12 @@ impl ChatEvents {
                                         chat_type: self.chat.chat_type().to_string(),
                                         chat_id: self.anonymized_id.clone(),
                                         participants: video_call.participants.len() as u32,
-                                        duration_secs: ((now - event.timestamp) / 1000) as u32,
+                                        duration_secs: (now.saturating_sub(event.timestamp) / 1000) as u32,
                                     })
                                     .build(),
                             );
                         }
                         video_call.ended = Some(now);
-                        message.last_updated = Some(now);
                         self.video_call_in_progress = Timestamped::new(None, now);
                         self.last_updated_timestamps.mark_updated(None, event.index, now);
                         EndVideoCallResult::Success
@@ -1666,7 +1650,6 @@ impl ChatEvents {
                         JoinVideoCallResult::AlreadyJoined
                     } else {
                         video_call.participants.push(CallParticipant { user_id, joined: now });
-                        message.last_updated = Some(now);
                         self.last_updated_timestamps.mark_updated(None, event_index, now);
 
                         JoinVideoCallResult::Success

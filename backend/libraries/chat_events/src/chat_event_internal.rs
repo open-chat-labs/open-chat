@@ -174,8 +174,6 @@ pub struct MessageInternal {
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
     pub tips: Tips,
-    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
-    pub last_updated: Option<TimestampMillis>,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
     #[serde(rename = "d", default, skip_serializing_if = "Option::is_none")]
@@ -207,7 +205,6 @@ impl MessageInternal {
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
-            last_updated: self.last_updated,
         }
     }
 
@@ -617,7 +614,6 @@ mod tests {
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),
-            last_updated: None,
             last_edited: None,
             deleted_by: None,
             thread_summary: None,
@@ -659,7 +655,6 @@ mod tests {
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
             tips,
-            last_updated: Some(1),
             last_edited: Some(1),
             deleted_by: Some(DeletedByInternal {
                 deleted_by: principal.into(),
