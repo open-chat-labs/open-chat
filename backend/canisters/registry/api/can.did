@@ -27,6 +27,7 @@ type TokenDetails = record {
     transaction_url_format : text;
     supported_standards : vec text;
     added : TimestampMillis;
+    enabled : bool;
     last_updated : TimestampMillis;
 };
 
