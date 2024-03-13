@@ -38,7 +38,7 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
     pub video_call_in_progress: Timestamped<Option<VideoCall>>,
-    anonymized_id: String,
+    pub anonymized_id: String,
 }
 
 impl ChatEvents {
