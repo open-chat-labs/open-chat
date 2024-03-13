@@ -335,7 +335,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             local_user_index_canister_id,
             local_group_index_canister_id,
         ],
-        event_sink_canister_id: Principal::anonymous(),
+        event_store_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id,
         chat_ledger_canister_id,
         chat_governance_canister_id,

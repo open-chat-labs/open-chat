@@ -1,8 +1,8 @@
 use crate::model::last_online_dates::LastOnlineDates;
 use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use canister_state_macros::canister_state;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::time::Duration;
@@ -33,8 +33,8 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let event_sink_client_info = self.data.event_sink_client.info();
-        let event_sink_canister_id = event_sink_client_info.event_sink_canister_id;
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_store_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -44,10 +44,10 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             mark_as_online_count: self.data.mark_as_online_count,
             active_users: self.data.cached_active_users.clone(),
-            event_sink_client_info,
+            event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
-                event_relay: event_sink_canister_id,
+                event_relay: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -60,7 +60,8 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    #[serde(alias = "event_sink_client")]
+    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
     pub rng_seed: [u8; 32],
@@ -79,7 +80,7 @@ impl Data {
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
-            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             mark_as_online_count: 0,
@@ -99,7 +100,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub mark_as_online_count: u64,
     pub active_users: ActiveUsers,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
 }
 

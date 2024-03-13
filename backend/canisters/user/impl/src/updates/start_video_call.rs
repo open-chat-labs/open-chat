@@ -97,7 +97,7 @@ pub fn handle_start_video_call(
         false,
         push_message_args,
         their_message_index,
-        Some(&mut state.data.event_sink_client),
+        Some(&mut state.data.event_store_client),
     );
 
     if let Some(expiry) = message_event.expires_at {

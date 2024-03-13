@@ -15,7 +15,7 @@ fn init(args: Args) {
     let env = init_env([0; 32]);
     let data = Data::new(
         args.push_events_whitelist.into_iter().collect(),
-        args.event_sink_canister_id,
+        args.event_store_canister_id,
         args.cycles_dispenser_canister_id,
         args.chat_ledger_canister_id,
         args.chat_governance_canister_id,

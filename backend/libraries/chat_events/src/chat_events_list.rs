@@ -574,7 +574,7 @@ mod tests {
     use super::*;
     use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
-    use event_sink_client::NullRuntime;
+    use event_store_producer::NullRuntime;
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};

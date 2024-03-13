@@ -37,7 +37,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         content: args.content,
                         now,
                     },
-                    Some(&mut state.data.event_sink_client),
+                    Some(&mut state.data.event_store_client),
                 ) {
                     EditMessageResult::Success => {
                         handle_activity_notification(state);

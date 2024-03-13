@@ -42,7 +42,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         false,
         state.data.proposals_bot_user_id,
-        &mut state.data.event_sink_client,
+        &mut state.data.event_store_client,
         now,
     ) {
         SendMessageResult::Success(r) => r,

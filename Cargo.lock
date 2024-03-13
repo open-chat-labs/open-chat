@@ -1130,7 +1130,7 @@ name = "chat_events"
 version = "0.1.0"
 dependencies = [
  "candid",
- "event_sink_client",
+ "event_store_producer",
  "hex",
  "ic-ledger-types",
  "itertools",
@@ -1282,8 +1282,8 @@ dependencies = [
  "community_canister",
  "escrow_canister",
  "escrow_canister_c2c_client",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "gated_groups",
@@ -2072,7 +2072,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
- "event_sink_canister",
+ "event_store_canister",
  "serde",
  "types",
 ]
@@ -2086,10 +2086,10 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "event_relay_canister",
- "event_sink_canister",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
- "event_sink_utils",
+ "event_store_canister",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
+ "event_store_utils",
  "http_request",
  "ic-cdk 0.12.1",
  "ic-cdk-macros 0.8.4 (git+https://github.com/hpeebles/cdk-rs?rev=1833cb37ecfd6154cc9cc55b5de76329114e8c5f)",
@@ -2109,9 +2109,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "event_sink_canister"
+name = "event_store_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=9b408f884c42d9b2b1c4c4657d49f233acc6cbee#9b408f884c42d9b2b1c4c4657d49f233acc6cbee"
+source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
 dependencies = [
  "candid",
  "serde",
@@ -2119,23 +2119,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "event_sink_client"
+name = "event_store_producer"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=9b408f884c42d9b2b1c4c4657d49f233acc6cbee#9b408f884c42d9b2b1c4c4657d49f233acc6cbee"
+source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
 dependencies = [
- "event_sink_canister",
+ "event_store_canister",
  "ic_principal",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "event_sink_client_cdk_runtime"
+name = "event_store_producer_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=9b408f884c42d9b2b1c4c4657d49f233acc6cbee#9b408f884c42d9b2b1c4c4657d49f233acc6cbee"
+source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
 dependencies = [
- "event_sink_canister",
- "event_sink_client",
+ "event_store_canister",
+ "event_store_producer",
  "ic-cdk 0.12.0",
  "ic-cdk-timers",
  "ic_principal",
@@ -2145,9 +2145,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "event_sink_utils"
+name = "event_store_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-sink?rev=9b408f884c42d9b2b1c4c4657d49f233acc6cbee#9b408f884c42d9b2b1c4c4657d49f233acc6cbee"
+source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
 dependencies = [
  "serde",
 ]
@@ -2487,8 +2487,8 @@ dependencies = [
  "chat_events",
  "escrow_canister",
  "escrow_canister_c2c_client",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "gated_groups",
@@ -2536,7 +2536,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
- "event_sink_client",
+ "event_store_producer",
  "lazy_static",
  "msgpack",
  "regex-lite",
@@ -3780,7 +3780,7 @@ name = "local_group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "event_sink_canister",
+ "event_store_canister",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
@@ -3809,9 +3809,9 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "community_canister",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
- "event_sink_utils",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
+ "event_store_utils",
  "futures",
  "group_canister",
  "http_request",
@@ -3842,7 +3842,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "community_canister",
- "event_sink_canister",
+ "event_store_canister",
  "group_canister",
  "ic-ledger-types",
  "serde",
@@ -3876,9 +3876,9 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
- "event_sink_utils",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
+ "event_store_utils",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -4574,8 +4574,8 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "http_request",
  "ic-cdk 0.12.1",
  "ic-cdk-macros 0.8.4 (git+https://github.com/hpeebles/cdk-rs?rev=1833cb37ecfd6154cc9cc55b5de76329114e8c5f)",
@@ -7175,8 +7175,8 @@ dependencies = [
  "community_canister_c2c_client",
  "escrow_canister",
  "escrow_canister_c2c_client",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "group_canister",
@@ -7276,8 +7276,8 @@ dependencies = [
  "chat_events",
  "community_canister",
  "community_canister_c2c_client",
- "event_sink_client",
- "event_sink_client_cdk_runtime",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
  "futures",
  "group_canister",

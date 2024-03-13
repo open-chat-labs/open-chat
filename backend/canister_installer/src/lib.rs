@@ -239,7 +239,7 @@ async fn install_service_canisters_impl(
             canister_ids.local_user_index,
             canister_ids.local_group_index,
         ],
-        event_sink_canister_id: Principal::anonymous(),
+        event_store_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
