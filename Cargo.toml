@@ -161,7 +161,7 @@ aws-types = "1.1.5"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.3"
-canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "36621c439f3eef17ed4c2fba9b2f8160b656b95e" }
 ciborium = "0.2.1"
 clap = "4.4.8"
 ct-codecs = "1.1.1"

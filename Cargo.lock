@@ -1026,7 +1026,7 @@ dependencies = [
 [[package]]
 name = "canister_sig_util"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/internet-identity?rev=f46da3bfefff638a844117606a4dea70b2dd4405#f46da3bfefff638a844117606a4dea70b2dd4405"
+source = "git+https://github.com/dfinity/internet-identity?rev=36621c439f3eef17ed4c2fba9b2f8160b656b95e#36621c439f3eef17ed4c2fba9b2f8160b656b95e"
 dependencies = [
  "candid",
  "hex",
