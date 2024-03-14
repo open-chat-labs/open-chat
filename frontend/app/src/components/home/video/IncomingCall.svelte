@@ -67,7 +67,7 @@
 
     function join() {
         if ($incomingVideoCall !== undefined) {
-            dispatch("join", $incomingVideoCall.chatId);
+            dispatch("joinVideoCall", $incomingVideoCall.chatId);
         }
     }
 
