@@ -1253,7 +1253,6 @@
         "callFailed": "抱歉，我们无法开始视频通话",
         "chat": "聊天",
         "clickToJoin": "点击加入通话",
-        "disconnect": "挂断通话",
         "ended": "通话结束",
         "endedAt": "通话于 {time} 结束",
         "ignore": "忽略",

@@ -104,10 +104,6 @@ impl Tokens {
         }
     }
 
-    pub fn mark_updated(&mut self, now: TimestampMillis) {
-        self.last_updated = now;
-    }
-
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }

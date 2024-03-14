@@ -1253,7 +1253,6 @@
         "callFailed": "Rất tiếc, chúng tôi không thể bắt đầu cuộc gọi điện video",
         "chat": "Trò chuyện",
         "clickToJoin": "Bấm để tham gia cuộc gọi",
-        "disconnect": "Ngắt kết nối khỏi cuộc gọi",
         "ended": "Cuộc gọi kết thúc",
         "endedAt": "Cuộc gọi kết thúc lúc {time}",
         "ignore": "Phớt lờ",
