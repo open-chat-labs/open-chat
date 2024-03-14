@@ -90,6 +90,7 @@ impl Tokens {
             if token.fee != fee {
                 token.fee = fee;
                 token.last_updated = now;
+                self.last_updated = now;
             }
         }
     }
@@ -101,6 +102,10 @@ impl Tokens {
                 token.last_updated = now;
             }
         }
+    }
+
+    pub fn mark_updated(&mut self, now: TimestampMillis) {
+        self.last_updated = now;
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
