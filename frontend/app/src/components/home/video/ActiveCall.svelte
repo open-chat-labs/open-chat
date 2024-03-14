@@ -287,6 +287,7 @@
                     {:else}
                         <div class="avatar">
                             <Avatar
+                                statusBorder={"var(--section-bg)"}
                                 url={chat.avatarUrl}
                                 showStatus
                                 userId={chat.userId?.userId}
