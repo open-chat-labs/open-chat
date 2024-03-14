@@ -30,7 +30,7 @@ fn post_upgrade(args: Args) {
         for swap in state.data.token_swaps.iter_mut().filter(|s| {
             s.args.output_token.ledger == dragginz_ledger
                 && s.args.output_token.fee == 1000
-                && matches!(s.withdrawn_from_dex_at, Some(Err(_)))
+                && s.withdrawn_from_dex_at.as_ref().is_some_and(|r| r.is_err())
         }) {
             let now = state.env.now();
             swap.args.output_token.fee = 100000;
