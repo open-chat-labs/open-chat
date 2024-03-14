@@ -34,6 +34,8 @@ fn post_upgrade(args: Args) {
         }) {
             let now = state.env.now();
             swap.args.output_token.fee = 100000;
+            swap.withdrawn_from_dex_at = None;
+
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
                     token_swap: swap.clone(),
