@@ -5,6 +5,7 @@
     import Toggle from "../../Toggle.svelte";
     import Legend from "../../Legend.svelte";
     import { Ringtone } from "../../../stores/video";
+    import { onDestroy } from "svelte";
 
     let ringtones: Ringtone[] = [
         new Ringtone("boring", "Boring"),
@@ -24,6 +25,10 @@
         });
         ringtones = ringtones;
     }
+
+    onDestroy(() => {
+        ringtones.forEach((r) => r.stop());
+    });
 </script>
 
 <Toggle
