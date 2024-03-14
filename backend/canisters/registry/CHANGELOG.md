@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow platform operators to disable sending/swapping of tokens ([#5533](https://github.com/open-chat-labs/open-chat/pull/5533))
 
+### Fixed
+
+- Update `last_updated` when `set_fee` is called ([#5544](https://github.com/open-chat-labs/open-chat/pull/5544))
+
 ## [[2.0.1101](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1101-registry)] - 2024-03-12
 
 ### Fixed
