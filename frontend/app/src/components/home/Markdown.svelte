@@ -231,9 +231,9 @@
     .markdown-wrapper:not(:empty) {
         display: inline;
 
-        &:not(.inline) {
-            display: block;
-        }
+        // &:not(.inline) {
+        //     display: block;
+        // }
 
         &.oneLine {
             display: block;
