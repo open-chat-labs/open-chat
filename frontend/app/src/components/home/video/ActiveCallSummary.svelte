@@ -192,7 +192,7 @@
                     </div>
                     <div let:position let:align slot="tooltip">
                         <TooltipPopup {position} {align}>
-                            <Translatable resourceKey={i18nKey("videoCall.disconnect")} />
+                            <Translatable resourceKey={i18nKey("videoCall.leave")} />
                         </TooltipPopup>
                     </div>
                 </TooltipWrapper>
