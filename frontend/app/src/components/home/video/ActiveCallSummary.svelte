@@ -116,6 +116,7 @@
         {:else}
             <div class="avatar">
                 <Avatar
+                    statusBorder={"var(--toast-success-bg)"}
                     url={chat.avatarUrl}
                     showStatus
                     userId={chat.userId?.userId}
