@@ -211,7 +211,7 @@ fn send_message_impl(
     };
 
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         sender,
         content: content.clone(),
@@ -237,6 +237,7 @@ fn send_message_impl(
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
+            thread_root_message_id: args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
             content,

@@ -153,10 +153,12 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
             .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_store_client))
         {
             TipMessageResult::Success => {
+                let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+
                 state.push_user_canister_event(
                     args.recipient.into(),
                     UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
-                        thread_root_message_index: args.thread_root_message_index,
+                        thread_root_message_id,
                         message_id: args.message_id,
                         ledger: args.ledger,
                         token: args.token,
