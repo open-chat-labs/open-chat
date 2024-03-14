@@ -1253,7 +1253,6 @@
         "callFailed": "Sorry, we were unable to start the video call",
         "chat": "Chat",
         "clickToJoin": "Click to join the call",
-        "disconnect": "Disconnect from the call",
         "ended": "Call ended",
         "endedAt": "Call ended at {time}",
         "ignore": "Ignore",

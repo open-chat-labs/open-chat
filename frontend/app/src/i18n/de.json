@@ -1253,7 +1253,6 @@
         "callFailed": "Leider konnten wir den Videoanruf nicht starten",
         "chat": "Plaudern",
         "clickToJoin": "Klicken Sie hier, um am Anruf teilzunehmen",
-        "disconnect": "Trennen Sie den Anruf",
         "ended": "Anruf beendet",
         "endedAt": "Anruf endete um {time}",
         "ignore": "Ignorieren",

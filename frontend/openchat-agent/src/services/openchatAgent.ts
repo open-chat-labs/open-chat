@@ -2806,7 +2806,7 @@ export class OpenChatAgent extends EventTarget {
                         const updated = {
                             lastUpdated: updates.lastUpdated,
                             tokenDetails: distinctBy(
-                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
                             ),
                             nervousSystemSummary: distinctBy(
