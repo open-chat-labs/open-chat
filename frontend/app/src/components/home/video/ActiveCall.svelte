@@ -69,7 +69,8 @@
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
-                            messageIndex: chat.videoCallInProgress,
+                            // TODO undo this as and when we can support threads in direct chats
+                            messageIndex: undefined,
                         };
                     case "group_chat":
                         return {

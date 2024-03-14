@@ -218,7 +218,11 @@ import {
     spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
-import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
+import {
+    createRemoteVideoStartedEvent,
+    filterWebRtcMessage,
+    parseWebRtcMessage,
+} from "./utils/rtc";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -3727,7 +3731,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
         if (msg.kind === "remote_video_call_started") {
-            this.dispatchEvent(new RemoteVideoCallStartedEvent(msg.id, msg.userId));
+            const ev = createRemoteVideoStartedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
             return;
         }
         const fromChatId = filterWebRtcMessage(msg);
