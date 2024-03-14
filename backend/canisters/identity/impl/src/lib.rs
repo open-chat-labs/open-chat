@@ -86,6 +86,8 @@ struct Data {
     signature_map: SignatureMap,
     #[serde(default)]
     salt: Salt,
+    #[serde(default)]
+    principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -111,6 +113,7 @@ impl Data {
             legacy_principals: HashSet::default(),
             signature_map: SignatureMap::default(),
             salt: Salt::default(),
+            principal_migration_job_enabled: false,
             rng_seed: [0; 32],
             test_mode,
         }
