@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
 
+### Fixed
+
+- Retry failed DKP swaps with correct transaction fee ([#5542](https://github.com/open-chat-labs/open-chat/pull/5542))
+
 ## [[2.0.1100](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1100-user)] - 2024-03-11
 
 ### Added

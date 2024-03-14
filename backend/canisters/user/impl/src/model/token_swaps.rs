@@ -27,6 +27,10 @@ impl TokenSwaps {
     pub fn iter(&self) -> impl Iterator<Item = &TokenSwap> {
         self.swaps.values()
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TokenSwap> {
+        self.swaps.values_mut()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

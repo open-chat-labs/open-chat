@@ -1,5 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
+use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -68,6 +69,26 @@ fn post_upgrade(args: Args) {
     .collect();
 
     mutate_state(|state| {
+        let dragginz_ledger = CanisterId::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap();
+        for swap in state.data.token_swaps.iter_mut().filter(|s| {
+            s.args.output_token.ledger == dragginz_ledger
+                && s.args.output_token.fee == 1000
+                && s.withdrawn_from_dex_at.as_ref().is_some_and(|r| r.is_err())
+        }) {
+            let now = state.env.now();
+            swap.args.output_token.fee = 100000;
+            swap.withdrawn_from_dex_at = None;
+
+            state.data.timer_jobs.enqueue_job(
+                TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
+                    token_swap: swap.clone(),
+                    attempt: 0,
+                })),
+                now,
+                now,
+            );
+        }
+      
         let events = extract_events(state, &token_lookup);
         state.data.event_store_client.push_many(events.into_iter(), false);
     });
