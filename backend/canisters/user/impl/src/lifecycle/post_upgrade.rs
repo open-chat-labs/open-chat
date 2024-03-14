@@ -88,7 +88,7 @@ fn post_upgrade(args: Args) {
                 now,
             );
         }
-      
+
         let events = extract_events(state, &token_lookup);
         state.data.event_store_client.push_many(events.into_iter(), false);
     });
