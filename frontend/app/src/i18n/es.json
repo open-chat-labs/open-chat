@@ -1253,7 +1253,6 @@
         "callFailed": "Lo sentimos, no pudimos iniciar la videollamada.",
         "chat": "Charlar",
         "clickToJoin": "Haga clic para unirse a la llamada",
-        "disconnect": "Desconectarse de la llamada",
         "ended": "Llamada terminada",
         "endedAt": "La llamada finalizó en {time}",
         "ignore": "Ignorar",
