@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
 - Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
 - Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
-- Initial work to support threads in direct chats ([#5552](https://github.com/open-chat-labs/open-chat/pull/5552))
+- Initial groundwork to support threads in direct chats ([#5552](https://github.com/open-chat-labs/open-chat/pull/5552))
 
 ### Changed
 
