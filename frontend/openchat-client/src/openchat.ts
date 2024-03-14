@@ -240,7 +240,6 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
-    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
