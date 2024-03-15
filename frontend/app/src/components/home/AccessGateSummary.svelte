@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { isNeuronGate, type AccessGate, isPaymentGate } from "openchat-client";
+    import { isNeuronGate, type AccessGate, isPaymentGate, isBalanceGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import AccessGateParameters from "./AccessGateParameters.svelte";
     import Translatable from "../Translatable.svelte";
@@ -22,7 +22,7 @@
             <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
                 <p><Translatable resourceKey={i18nKey("access.diamondMember")} /></p>
-            {:else if isNeuronGate(gate) || gate.kind === "credential_gate" || isPaymentGate(gate)}
+            {:else if isNeuronGate(gate) || gate.kind === "credential_gate" || isPaymentGate(gate) || isBalanceGate(gate)}
                 <AccessGateParameters {gate} />
             {/if}
         </div>

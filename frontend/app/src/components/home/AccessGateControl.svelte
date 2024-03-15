@@ -7,6 +7,7 @@
         getNeuronGateBindings,
         type GateBinding,
         getPaymentGateBindings,
+        getBalanceGateBindings,
     } from "../../utils/access";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Select from "../Select.svelte";
@@ -25,6 +26,8 @@
         type AccessGate,
         type CryptocurrencyDetails,
         type PaymentGate,
+        isBalanceGate,
+        type TokenBalanceGate,
     } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -39,18 +42,23 @@
     let gateBindings: GateBinding[] = getGateBindings();
     let neuronGateBindings: GateBinding[] = [];
     let paymentGateBindings: GateBinding[] = [];
+    let balanceGateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
     let selectedNeuronGateKey: string | undefined = undefined;
     let selectedPaymentGateKey: string | undefined = undefined;
+    let selectedBalanceGateKey: string | undefined = undefined;
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate) ?? "";
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let amountText = initialPaymentAmount(original.gate);
+    let minBalanceText = initialMinBalance(original.gate);
 
     $: candidateTokenDetails = client.getTokenDetailsForAccessGate(candidate.gate);
     // The minimum payment is 100x the transfer fee for the given token
     $: minPayment = (candidateTokenDetails?.transferFee ?? BigInt(0)) * BigInt(100);
     $: amount = amountFromText(amountText, candidateTokenDetails);
+    $: minBalance = amountFromText(minBalanceText, candidateTokenDetails);
     $: invalidAmount = amount === undefined || amount < minPayment;
+    $: invalidMinBalance = minBalance === undefined || minBalance < minPayment;
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -61,7 +69,9 @@
             !(
                 selectedGateKey === "neuron_gate_folder" &&
                 (invalidDissolveDelay || invalidMinStake)
-            ) && !(selectedGateKey === "payment_gate_folder" && invalidAmount);
+            ) &&
+            !(selectedGateKey === "payment_gate_folder" && invalidAmount) &&
+            !(selectedGateKey === "balance_gate_folder" && invalidMinBalance);
     }
 
     onMount(() => {
@@ -70,24 +80,32 @@
             Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId),
         );
         paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
+        balanceGateBindings = getBalanceGateBindings($cryptoLookup);
+
         selectedGateKey = gateBindings.find((g) => {
-            return candidate.gate.kind === "neuron_gate"
-                ? "neuron_gate_folder" === g.key
-                : candidate.gate.kind === "payment_gate"
-                  ? "payment_gate_folder" === g.key
-                  : candidate.gate.kind === g.gate.kind;
+            switch (candidate.gate.kind) {
+                case "neuron_gate":
+                    return "neuron_gate_folder" === g.key;
+                case "payment_gate":
+                    return "payment_gate_folder" === g.key;
+                case "token_balance_gate":
+                    return "balance_gate_folder" === g.key;
+                default:
+                    return candidate.gate.kind === g.gate.kind;
+            }
         })?.key;
 
-        selectedNeuronGateKey = gateBindings.find(
-            (g) =>
-                candidate.gate.kind === "neuron_gate" &&
-                candidate.gate.governanceCanister === g.key,
-        )?.key;
-
-        selectedPaymentGateKey = gateBindings.find(
-            (g) =>
-                candidate.gate.kind === "payment_gate" && candidate.gate.ledgerCanister === g.key,
-        )?.key;
+        switch (candidate.gate.kind) {
+            case "neuron_gate":
+                selectedNeuronGateKey = candidate.gate.governanceCanister;
+                break;
+            case "payment_gate":
+                selectedPaymentGateKey = candidate.gate.ledgerCanister;
+                break;
+            case "token_balance_gate":
+                selectedBalanceGateKey = candidate.gate.ledgerCanister;
+                break;
+        }
     });
 
     afterUpdate(() => {
@@ -114,6 +132,14 @@
                     amount,
                 },
             };
+        } else if (isBalanceGate(candidate.gate) && minBalance !== undefined) {
+            candidate = {
+                ...candidate,
+                gate: {
+                    ...candidate.gate,
+                    minBalance,
+                },
+            };
         }
     });
 
@@ -122,6 +148,17 @@
             const token = client.tryGetCryptocurrency(gate.ledgerCanister);
             if (token !== undefined) {
                 return client.formatTokens(gate.amount, token.decimals);
+            }
+        }
+
+        return "";
+    }
+
+    function initialMinBalance(gate: AccessGate): string {
+        if (isBalanceGate(gate)) {
+            const token = client.tryGetCryptocurrency(gate.ledgerCanister);
+            if (token !== undefined) {
+                return client.formatTokens(gate.minBalance, token.decimals);
             }
         }
 
@@ -151,6 +188,8 @@
             selectedGate = neuronGateBindings.find((g) => g.key === selectedNeuronGateKey);
         } else if (selectedGateKey === "payment_gate_folder") {
             selectedGate = paymentGateBindings.find((g) => g.key === selectedPaymentGateKey);
+        } else if (selectedGateKey === "balance_gate_folder") {
+            selectedGate = balanceGateBindings.find((g) => g.key === selectedBalanceGateKey);
         } else {
             selectedGate = gateBindings.find((g) => g.key === selectedGateKey);
         }
@@ -160,7 +199,7 @@
         minStake = "";
     }
 
-    function tokenParams(gate: NeuronGate | PaymentGate): InterpolationValues {
+    function tokenParams(gate: NeuronGate | PaymentGate | TokenBalanceGate): InterpolationValues {
         const tokenDetails = client.getTokenDetailsForAccessGate(gate);
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
@@ -237,6 +276,18 @@
 
             <Legend label={i18nKey("access.amount")} required />
             <Input maxlength={100} invalid={invalidAmount} bind:value={amountText} />
+        {:else if selectedGateKey === "balance_gate_folder"}
+            <Legend label={i18nKey("access.chooseToken")} />
+            <div class="choose-gate">
+                <Select margin={false} on:change={updateGate} bind:value={selectedBalanceGateKey}>
+                    {#each balanceGateBindings as g}
+                        <option disabled={!g.enabled} value={g.key}>{g.label}</option>
+                    {/each}
+                </Select>
+            </div>
+
+            <Legend label={i18nKey("access.minimumBalance")} required />
+            <Input maxlength={100} invalid={invalidMinBalance} bind:value={minBalanceText} />
         {/if}
         {#if candidate.gate.kind === "diamond_gate"}
             <div class="info"><Translatable resourceKey={i18nKey("access.diamondGateInfo")} /></div>
@@ -248,6 +299,10 @@
         {:else if isPaymentGate(candidate.gate)}
             <div class="info">
                 <Markdown text={buildPaymentInfoMessage(candidate)} />
+            </div>
+        {:else if isBalanceGate(candidate.gate)}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("access.minimumBalanceInfo")} />
             </div>
         {:else if candidate.gate.kind === "no_gate"}
             <div class="info"><Translatable resourceKey={i18nKey("access.openAccessInfo")} /></div>
