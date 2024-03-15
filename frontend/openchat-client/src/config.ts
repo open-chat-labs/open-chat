@@ -1,5 +1,6 @@
 import type { Logger } from "openchat-shared";
 import type { MessageFormatter } from "./utils/i18n";
+import type { GroupInvite } from "openchat-shared";
 
 export type OpenChatConfig = {
     icUrl?: string;
@@ -26,4 +27,5 @@ export type OpenChatConfig = {
     websiteVersion: string;
     rollbarApiKey: string;
     env: string;
+    groupInvite?: GroupInvite,
 };

@@ -100,11 +100,13 @@ export type RingtoneKey = "boring" | "pleasant" | "boomboom" | "garage" | "siren
 export class Ringtone {
     audio: HTMLAudioElement;
     playing: boolean;
+    url: string;
 
     constructor(
         public key: RingtoneKey,
         public name: string,
     ) {
+        this.url = ringtoneUrls[key];
         this.audio = new Audio(ringtoneUrls[key]);
         this.audio.loop = true;
         this.playing = false;

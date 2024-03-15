@@ -448,8 +448,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_init_args,
     );
 
-    // Tick a load of times so that all of the child canisters have time to get installed
-    tick_many(env, 30);
+    // Tick a load of times so that all the child canisters have time to get installed
+    tick_many(env, 10);
 
     CanisterIds {
         user_index: user_index_canister_id,

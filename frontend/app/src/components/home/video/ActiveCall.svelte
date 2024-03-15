@@ -13,7 +13,7 @@
         type ChatIdentifier,
         AvatarSize,
         type AccessTokenType,
-        NoMeeingToJoin,
+        NoMeetingToJoin,
     } from "openchat-client";
     import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
@@ -190,8 +190,8 @@
                 await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
-            if (err instanceof NoMeeingToJoin) {
-                toastStore.showFailureToast(i18nKey("videoCall.noMeetingToJoin"), err);
+            if (err instanceof NoMeetingToJoin) {
+                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
             } else {
                 toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
             }

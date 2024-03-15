@@ -4,6 +4,7 @@
         type CredentialGate,
         type NeuronGate,
         type PaymentGate,
+        type TokenBalanceGate,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
@@ -12,7 +13,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: NeuronGate | CredentialGate | PaymentGate;
+    export let gate: NeuronGate | CredentialGate | PaymentGate | TokenBalanceGate;
     $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
 </script>
 
@@ -61,6 +62,23 @@
                         })} />
                 </div>
             {/if}
+        </div>
+    </div>
+{:else if gate.kind === "token_balance_gate" && tokenDetails !== undefined}
+    <div class="detail">
+        <div>
+            <Translatable
+                resourceKey={i18nKey("access.minimumTokenBalance", {
+                    token: tokenDetails.symbol,
+                })} />
+        </div>
+        <div class="params">
+            <div>
+                <Translatable
+                    resourceKey={i18nKey("access.minimumBalanceN", {
+                        n: client.formatTokens(gate.minBalance, tokenDetails.decimals),
+                    })} />
+            </div>
         </div>
     </div>
 {/if}

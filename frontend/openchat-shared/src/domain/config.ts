@@ -1,3 +1,5 @@
+import type { GroupInvite } from "./inviteCodes";
+
 export type AgentConfig = {
     icUrl: string;
     iiDerivationOrigin?: string;
@@ -22,4 +24,5 @@ export type AgentConfig = {
     websiteVersion: string;
     rollbarApiKey: string;
     env: string;
+    groupInvite?: GroupInvite;
 };

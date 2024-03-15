@@ -154,6 +154,62 @@ fn migrate_principal_updates_principal_in_all_canisters() {
 }
 
 #[test]
+fn principal_migration_job_migrates_all_principals() {
+    let mut wrapper = ENV.deref().get_new();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let platform_operator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    env.tick();
+
+    let new_platform_operator_principal =
+        client::identity::happy_path::migrate_legacy_principal(env, platform_operator.principal, canister_ids.identity);
+
+    let users: Vec<_> = (0..5)
+        .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
+        .collect();
+
+    env.tick();
+
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, platform_operator.user_id);
+
+    assert!(users.iter().all(|u| {
+        matches!(
+            client::identity::check_auth_principal(env, u.principal, canister_ids.identity, &Empty {}),
+            identity_canister::check_auth_principal::Response::Legacy
+        )
+    }));
+
+    client::identity::happy_path::set_principal_migration_job_enabled(
+        env,
+        new_platform_operator_principal,
+        canister_ids.identity,
+        true,
+    );
+
+    tick_many(env, 5);
+
+    client::identity::happy_path::set_principal_migration_job_enabled(
+        env,
+        new_platform_operator_principal,
+        canister_ids.identity,
+        false,
+    );
+
+    assert!(users.iter().all(|u| {
+        matches!(
+            client::identity::check_auth_principal(env, u.principal, canister_ids.identity, &Empty {}),
+            identity_canister::check_auth_principal::Response::Success
+        )
+    }));
+}
+
+#[test]
 fn unknown_principal_returns_not_found() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
