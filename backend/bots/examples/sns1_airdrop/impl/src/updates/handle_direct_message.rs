@@ -19,6 +19,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
         bot_name: state.data.bot_name.clone(),
         bot_display_name: None,
         messages: vec![BotMessage {
+            thread_root_message_id: None,
             content: MessageContentInitial::Text(TextContent { text }),
             message_id: None,
         }],

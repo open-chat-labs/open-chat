@@ -84,6 +84,9 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         state.data.user_canister_events_queue.push(
                             args.user_id.into(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                                thread_root_message_id: args
+                                    .thread_root_message_index
+                                    .map(|i| chat.main_message_index_to_id(i)),
                                 message_id: args.message_id,
                                 status: P2PSwapStatus::Accepted(status),
                             })),

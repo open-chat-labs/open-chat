@@ -40,7 +40,8 @@ async fn c2c_handle_bot_messages(
             handle_message_impl(
                 HandleMessageArgs {
                     sender,
-                    message_id: None,
+                    thread_root_message_id: message.thread_root_message_id,
+                    message_id: message.message_id,
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
@@ -63,6 +64,7 @@ async fn c2c_handle_bot_messages(
 
 pub(crate) struct HandleMessageArgs {
     pub sender: UserId,
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
@@ -116,8 +118,17 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
 
+    let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
+        c
+    } else {
+        state
+            .data
+            .direct_chats
+            .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
+    };
+
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id)),
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender: args.sender,
         content: args.content,
@@ -128,15 +139,6 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         sender_name_override: None,
         correlation_id: 0,
         now: args.now,
-    };
-
-    let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
-        c
-    } else {
-        state
-            .data
-            .direct_chats
-            .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
     };
 
     let message_id = push_message_args.message_id;

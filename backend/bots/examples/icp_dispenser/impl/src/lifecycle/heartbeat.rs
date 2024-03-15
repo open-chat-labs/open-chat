@@ -38,6 +38,7 @@ mod process_pending_actions {
             Ok(Ok(block_index)) => {
                 let this_canister_id = read_state(|state| state.env.canister_id());
                 let message = BotMessage {
+                    thread_root_message_id: None,
                     content: MessageContentInitial::Crypto(CryptoContent {
                         recipient,
                         transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(

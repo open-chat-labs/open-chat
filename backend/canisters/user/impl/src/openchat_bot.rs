@@ -150,6 +150,7 @@ pub(crate) fn send_message_with_reply(
 ) -> EventWrapper<Message> {
     let args = HandleMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
+        thread_root_message_id: None,
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),

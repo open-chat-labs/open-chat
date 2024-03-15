@@ -179,4 +179,20 @@ impl DirectChat {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
+
+    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
+        self.events
+            .main_events_reader()
+            .message_internal(message_id.into())
+            .unwrap()
+            .message_index
+    }
+
+    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
+        self.events
+            .main_events_reader()
+            .message_internal(message_index.into())
+            .unwrap()
+            .message_id
+    }
 }

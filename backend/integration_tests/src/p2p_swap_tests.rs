@@ -75,6 +75,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         user2.canister(),
         &user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
+            thread_root_message_index: None,
             message_id,
         },
     );

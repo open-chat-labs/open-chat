@@ -138,6 +138,7 @@ type RemoveReactionResponse = variant {
 
 type ReportMessageArgs = record {
     them : UserId;
+    thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     delete : bool;
 };
@@ -223,6 +224,7 @@ type TokenSwapStatusResponse = variant {
 
 type AcceptP2PSwapArgs = record {
     user_id : UserId;
+    thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
 };
 

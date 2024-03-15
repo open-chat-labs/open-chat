@@ -89,6 +89,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 ev.user_id,
                 LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                     user_id: ev.user_id,
+                    thread_root_message_id: ev.thread_root_message_id,
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
