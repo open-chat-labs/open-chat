@@ -179,6 +179,16 @@
     </Feature>
 
     <Feature {landing}>
+        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.startVideoCalls")} /></div>
+        <div slot="free">
+            <Minus size={"1em"} color={"var(--menu-warn)"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.p2pSwap")} /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
