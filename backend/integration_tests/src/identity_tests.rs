@@ -155,7 +155,7 @@ fn migrate_principal_updates_principal_in_all_canisters() {
 
 #[test]
 fn principal_migration_job_migrates_all_principals() {
-    let mut wrapper = ENV.deref().get();
+    let mut wrapper = ENV.deref().get_new();
     let TestEnv {
         env,
         canister_ids,
@@ -192,7 +192,7 @@ fn principal_migration_job_migrates_all_principals() {
         true,
     );
 
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     client::identity::happy_path::set_principal_migration_job_enabled(
         env,
