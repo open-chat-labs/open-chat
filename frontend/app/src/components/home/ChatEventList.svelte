@@ -786,5 +786,6 @@
 
     .to-top {
         top: 95px;
+        height: $sp7;
     }
 </style>
