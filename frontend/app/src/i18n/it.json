@@ -1208,6 +1208,7 @@
         "giphys": "Gifi",
         "groupMsg": "Per creare fino a 10 gruppi pubblici e per controllare l'accesso ai gruppi, devi essere un utente Diamond",
         "insufficientFunds": "Assicurati che il tuo account {token} contenga almeno {amount}",
+        "joinVideoCalls": "Partecipa alle videochiamate",
         "lifetime": "Tutta la vita",
         "lifetimeMessage": "Hai un abbonamento Diamond a vita.",
         "maxMessageLength": "Lunghezza massima del messaggio di {number} caratteri",
