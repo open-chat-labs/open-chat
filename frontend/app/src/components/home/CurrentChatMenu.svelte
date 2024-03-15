@@ -70,19 +70,18 @@
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
     $: canStartVideoCalls = client.canStartVideoCalls(selectedChatSummary.id);
+    $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
 
     $: incall =
         $activeVideoCall !== undefined &&
-        selectedChatSummary.videoCallInProgress !== undefined &&
+        videoCallInProgress &&
         chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id);
 
-    $: videoMenuText =
-        selectedChatSummary.videoCallInProgress !== undefined
-            ? i18nKey("videoCall.joinVideo")
-            : i18nKey("videoCall.startVideo");
+    $: videoMenuText = videoCallInProgress
+        ? i18nKey("videoCall.joinVideo")
+        : i18nKey("videoCall.startVideo");
 
-    $: canStartOrJoinVideoCall =
-        !incall && (selectedChatSummary.videoCallInProgress !== undefined || canStartVideoCalls);
+    $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 
     let hasUnreadPinned = false;
 
@@ -229,10 +228,14 @@
     }
 
     function startVideoCall() {
-        dispatch("startVideoCall", {
-            chat: selectedChatSummary,
-            join: selectedChatSummary.videoCallInProgress !== undefined,
-        });
+        if (isDiamond || videoCallInProgress) {
+            dispatch("startVideoCall", {
+                chat: selectedChatSummary,
+                join: videoCallInProgress,
+            });
+        } else {
+            dispatch("upgrade");
+        }
     }
 </script>
 

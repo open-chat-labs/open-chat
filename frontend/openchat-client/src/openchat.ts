@@ -1533,7 +1533,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this._liveState.isDiamond && this.chatPredicate(chatId, canStartVideoCalls);
+        return this.chatPredicate(chatId, canStartVideoCalls);
     }
 
     canPinMessages(chatId: ChatIdentifier): boolean {
