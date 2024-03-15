@@ -259,6 +259,7 @@ export class OpenChatAgent extends EventTarget {
         this._groupClients = {};
         this._communityClients = {};
         this._dexesAgent = new DexesAgent(config);
+        this._groupInvite = config.groupInvite;
     }
 
     private get principal(): Principal {

@@ -4283,6 +4283,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     set groupInvite(value: GroupInvite) {
+        this.config.groupInvite = value;
         this.sendRequest({
             kind: "groupInvite",
             value,
