@@ -419,7 +419,7 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
-    NoMeeingToJoin,
+    NoMeetingToJoin,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -5765,7 +5765,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 throw new Error(msg);
             }
             if (res.status === 400) {
-                throw new NoMeeingToJoin();
+                throw new NoMeetingToJoin();
             }
             throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
         });

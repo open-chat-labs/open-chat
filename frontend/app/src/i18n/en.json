@@ -1263,7 +1263,7 @@
         "joinVideo": "Join video call",
         "leave": "Leave call",
         "leaveVideo": "Leave video call",
-        "noMeetingToJoin": "Sorry but there is no meeting in progress for you to join",
+        "noMeetingToJoin": "Sorry but the meeting you are trying to join has ended",
         "remoteStart": "A video call has been started by {name}",
         "startedBy": "A video call was started by {username}",
         "startVideo": "Start video call",

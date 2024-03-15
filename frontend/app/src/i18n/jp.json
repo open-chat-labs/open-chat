@@ -1263,7 +1263,7 @@
         "joinVideo": "ビデオ通話に参加する",
         "leave": "通話を終了する",
         "leaveVideo": "ビデオ通話を終了する",
-        "noMeetingToJoin": "申し訳ありませんが、あなたが参加できる進行中の会議はありません",
+        "noMeetingToJoin": "申し訳ありませんが、参加しようとしている会議は終了しました",
         "remoteStart": "{name} によってビデオ通話が開始されました",
         "startedBy": "{username} によってビデオ通話が開始されました",
         "startVideo": "ビデオ通話を開始する",
