@@ -1268,7 +1268,7 @@
         "joinVideo": "Partecipa alla videochiamata",
         "leave": "Lascia la chiamata",
         "leaveVideo": "Abbandona la videochiamata",
-        "noMeetingToJoin": "Siamo spiacenti ma non ci sono riunioni in corso a cui puoi partecipare",
+        "noMeetingToJoin": "Siamo spiacenti ma la riunione a cui stai tentando di partecipare è terminata",
         "remoteStart": "Una videochiamata è stata avviata da {name}",
         "startedBy": "Una videochiamata è stata avviata da {username}",
         "startVideo": "Avvia la videochiamata",

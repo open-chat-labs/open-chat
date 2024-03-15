@@ -15,7 +15,7 @@ export class HttpError extends Error {
     }
 }
 
-export class NoMeeingToJoin extends Error {}
+export class NoMeetingToJoin extends Error {}
 
 export class AuthError extends HttpError {
     constructor(

@@ -1268,7 +1268,7 @@
         "joinVideo": "Nehmen Sie am Videoanruf teil",
         "leave": "Anruf verlassen",
         "leaveVideo": "Videoanruf verlassen",
-        "noMeetingToJoin": "Es tut uns leid, aber es findet gerade kein Meeting statt, an dem Sie teilnehmen können",
+        "noMeetingToJoin": "Es tut uns leid, aber das Meeting, an dem Sie teilnehmen möchten, ist beendet",
         "remoteStart": "Ein Videoanruf wurde von {name} gestartet",
         "startedBy": "Ein Videoanruf wurde von {username} gestartet",
         "startVideo": "Videoanruf starten",

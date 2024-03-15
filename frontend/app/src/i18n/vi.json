@@ -1268,7 +1268,7 @@
         "joinVideo": "Tham gia cuộc gọi video",
         "leave": "Rời khỏi cuộc gọi",
         "leaveVideo": "Rời khỏi cuộc gọi video",
-        "noMeetingToJoin": "Xin lỗi nhưng không có cuộc họp nào đang diễn ra để bạn tham gia",
+        "noMeetingToJoin": "Xin lỗi nhưng cuộc họp bạn đang cố gắng tham gia đã kết thúc",
         "remoteStart": "Cuộc gọi điện video đã được bắt đầu bởi {name}",
         "startedBy": "Cuộc gọi điện video đã được bắt đầu bởi {username}",
         "startVideo": "Bắt đầu cuộc gọi video",
