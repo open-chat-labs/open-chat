@@ -191,7 +191,7 @@
             }
         } catch (err) {
             if (err instanceof NoMeeingToJoin) {
-                toastStore.showFailureToast(i18nKey("videoCall.noMeetingToJoin"), err);
+                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
             } else {
                 toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
             }

@@ -1263,7 +1263,7 @@
         "joinVideo": "Rejoindre un appel vidéo",
         "leave": "Quitter l'appel",
         "leaveVideo": "Quitter l'appel vidéo",
-        "noMeetingToJoin": "Désolé mais il n'y a aucune réunion en cours à laquelle vous pourriez participer.",
+        "noMeetingToJoin": "Désolé mais la réunion à laquelle vous essayez de participer est terminée",
         "remoteStart": "Un appel vidéo a été lancé par {name}",
         "startedBy": "Un appel vidéo a été lancé par {username}",
         "startVideo": "Démarrer un appel vidéo",
