@@ -52,6 +52,10 @@ export function isPaymentGate(gate: AccessGate): gate is PaymentGate {
     return gate.kind === "payment_gate";
 }
 
+export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
+    return gate.kind === "token_balance_gate";
+}
+
 export type DiamondGate = { kind: "diamond_gate" };
 
 export type AccessControlled = {

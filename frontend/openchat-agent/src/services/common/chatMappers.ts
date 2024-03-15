@@ -1611,6 +1611,16 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
             },
         ];
     }
+    if (domain.kind === "token_balance_gate") {
+        return [
+            {
+                TokenBalance: {
+                    ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                    min_balance: domain.minBalance,
+                },
+            },
+        ];
+    }
     return [];
 }
 
@@ -1642,6 +1652,14 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
                 ledger_canister_id: Principal.fromText(domain.ledgerCanister),
                 amount: domain.amount,
                 fee: domain.fee,
+            },
+        };
+    }
+    if (domain.kind === "token_balance_gate") {
+        return {
+            TokenBalance: {
+                ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                min_balance: domain.minBalance,
             },
         };
     }
