@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Sync `salt` to EventStore so that anonymized users match ([#5566](https://github.com/open-chat-labs/open-chat/pull/5566))
 
 ## [[2.0.1084](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1084-event_relay)] - 2024-03-01
 
