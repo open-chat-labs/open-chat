@@ -50,6 +50,6 @@ mod migrate_legacy_principals {
             }
         }
 
-        IN_PROGRESS.with_borrow_mut(|i| state.data.legacy_principals.iter().copied().filter(|p| i.insert(*p)).next())
+        IN_PROGRESS.with_borrow_mut(|i| state.data.legacy_principals.iter().copied().find(|p| i.insert(*p)))
     }
 }
