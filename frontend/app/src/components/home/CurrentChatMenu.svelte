@@ -228,7 +228,7 @@
     }
 
     function startVideoCall() {
-        if (isDiamond || videoCallInProgress) {
+        if ($isDiamond || videoCallInProgress) {
             dispatch("startVideoCall", {
                 chat: selectedChatSummary,
                 join: videoCallInProgress,
