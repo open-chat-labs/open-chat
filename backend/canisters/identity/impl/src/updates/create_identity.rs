@@ -20,14 +20,18 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         return AlreadyRegistered;
     }
 
-    if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
-        return PublicKeyInvalid(error);
-    }
+    let originating_canister = match validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
+        Ok(c) => c,
+        Err(error) => return PublicKeyInvalid(error),
+    };
 
     let index = state.data.user_principals.next_index();
     let seed = state.data.calculate_seed(index);
     let principal = state.get_principal_from_seed(seed);
-    state.data.user_principals.push(index, principal, caller);
+    state
+        .data
+        .user_principals
+        .push(index, principal, caller, originating_canister);
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
@@ -38,7 +42,11 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     })
 }
 
-fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_canister_id: CanisterId) -> Result<(), String> {
+fn validate_public_key(
+    caller: Principal,
+    public_key: &[u8],
+    internet_identity_canister_id: CanisterId,
+) -> Result<CanisterId, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
@@ -49,7 +57,7 @@ fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_c
 
     let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {
-        Ok(())
+        Ok(canister_id)
     } else {
         Err("PublicKey does not match caller".to_string())
     }
