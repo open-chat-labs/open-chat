@@ -186,7 +186,7 @@
             blockquote {
                 padding: 0 toRem(16);
                 border-left: toRem(4) solid var(--bd);
-                color: var(--markdown-fg-muted);
+                color: var(--txt-light);
             }
 
             a {

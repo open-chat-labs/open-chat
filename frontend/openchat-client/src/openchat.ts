@@ -419,7 +419,7 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
-    NoMeeingToJoin,
+    NoMeetingToJoin,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -479,6 +479,7 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
+import { isBalanceGate } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1533,7 +1534,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this._liveState.isDiamond && this.chatPredicate(chatId, canStartVideoCalls);
+        return this.chatPredicate(chatId, canStartVideoCalls);
     }
 
     canPinMessages(chatId: ChatIdentifier): boolean {
@@ -2519,13 +2520,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 current.amount !== original.amount
             );
         }
+        if (isBalanceGate(current) && isBalanceGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.minBalance !== original.minBalance
+            );
+        }
         return false;
     }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
-        } else if (gate.kind === "payment_gate") {
+        } else if (gate.kind === "payment_gate" || gate.kind === "token_balance_gate") {
             return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
@@ -5765,7 +5772,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 throw new Error(msg);
             }
             if (res.status === 400) {
-                throw new NoMeeingToJoin();
+                throw new NoMeetingToJoin();
             }
             throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
         });
