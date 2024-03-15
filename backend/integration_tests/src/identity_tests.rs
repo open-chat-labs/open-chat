@@ -194,19 +194,19 @@ fn principal_migration_job_migrates_all_principals() {
 
     tick_many(env, 5);
 
-    assert!(users.iter().all(|u| {
-        matches!(
-            client::identity::check_auth_principal(env, u.principal, canister_ids.identity, &Empty {}),
-            identity_canister::check_auth_principal::Response::Success
-        )
-    }));
-
     client::identity::happy_path::set_principal_migration_job_enabled(
         env,
         new_platform_operator_principal,
         canister_ids.identity,
         false,
     );
+
+    assert!(users.iter().all(|u| {
+        matches!(
+            client::identity::check_auth_principal(env, u.principal, canister_ids.identity, &Empty {}),
+            identity_canister::check_auth_principal::Response::Success
+        )
+    }));
 }
 
 #[test]
