@@ -69,7 +69,10 @@ fn prepare(old_principal: Option<Principal>, state: &mut RuntimeState) -> Result
         } else {
             let index = state.data.user_principals.next_index();
             let principal = state.get_principal_from_index(index);
-            state.data.user_principals.push(index, principal, old_principal);
+            state
+                .data
+                .user_principals
+                .push(index, principal, old_principal, state.data.internet_identity_canister_id);
             principal
         };
 
