@@ -214,6 +214,7 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
+            user_principal_updates_queue: self.data.user_principal_updates_queue.len() as u32,
         }
     }
 }
@@ -456,6 +457,7 @@ pub struct Metrics {
     pub reporting_metrics: ReportingMetrics,
     pub canister_ids: CanisterIds,
     pub oc_public_key: String,
+    pub user_principal_updates_queue: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
