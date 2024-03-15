@@ -192,7 +192,7 @@ fn principal_migration_job_migrates_all_principals() {
         true,
     );
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     client::identity::happy_path::set_principal_migration_job_enabled(
         env,
