@@ -280,6 +280,7 @@ fn send_message_impl(
 
     register_timer_jobs(
         recipient.into(),
+        args.thread_root_message_index,
         args.message_id,
         &message_event,
         Vec::new(),
@@ -343,6 +344,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
 
 pub(crate) fn register_timer_jobs(
     chat_id: ChatId,
+    thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
@@ -367,7 +369,7 @@ pub(crate) fn register_timer_jobs(
         data.timer_jobs.enqueue_job(
             TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
                 chat_id,
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id,
             })),
             c.expires_at,

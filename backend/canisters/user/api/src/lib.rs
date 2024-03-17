@@ -23,6 +23,7 @@ pub use queries::*;
 pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
+    ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 

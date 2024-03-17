@@ -127,8 +127,10 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
             .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
     };
 
+    let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id)),
+        thread_root_message_index,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender: args.sender,
         content: args.content,
@@ -158,7 +160,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         let content = &message_event.event.content;
         let notification = Notification::DirectMessage(DirectMessageNotification {
             sender: args.sender,
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_index: message_event.event.message_index,
             event_index: message_event.index,
             sender_name: args.sender_name,
@@ -174,7 +176,15 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         state.push_notification(recipient, notification);
     }
 
-    register_timer_jobs(chat_id, message_id, &message_event, files, args.now, &mut state.data);
+    register_timer_jobs(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        &message_event,
+        files,
+        args.now,
+        &mut state.data,
+    );
 
     message_event
 }
