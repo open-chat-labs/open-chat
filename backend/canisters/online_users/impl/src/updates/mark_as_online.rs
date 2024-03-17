@@ -42,8 +42,8 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
     state.data.mark_as_online_count += 1;
     state.data.event_store_client.push(
         EventBuilder::new("user_online", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .build(),
     );
     Success

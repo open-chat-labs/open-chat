@@ -149,18 +149,11 @@ impl ChatEvents {
                 sender_is_bot: args.sender_is_bot,
                 content_specific_payload: args.content.event_payload(),
             };
-            let sender_name = if let Some(name) = args.sender_name_override {
-                name
-            } else if args.sender == OPENCHAT_BOT_USER_ID {
-                "OpenChatBot".to_string()
-            } else {
-                args.sender.to_string()
-            };
 
             client.push(
                 EventBuilder::new("message_sent", args.now)
-                    .with_user(sender_name)
-                    .with_source(self.chat.canister_id().to_string())
+                    .with_user(args.sender.to_string(), true)
+                    .with_source(self.chat.canister_id().to_string(), true)
                     .with_json_payload(&event_payload)
                     .build(),
             );
@@ -268,8 +261,8 @@ impl ChatEvents {
 
                                 client.push(
                                     EventBuilder::new("message_edited", args.now)
-                                        .with_user(args.sender.to_string())
-                                        .with_source(self.chat.canister_id().to_string())
+                                        .with_user(args.sender.to_string(), true)
+                                        .with_source(self.chat.canister_id().to_string(), true)
                                         .with_json_payload(&payload)
                                         .build(),
                                 )
@@ -607,8 +600,8 @@ impl ChatEvents {
 
                 client.push(
                     EventBuilder::new("reaction_added", args.now)
-                        .with_user(args.user_id.to_string())
-                        .with_source(self.chat.canister_id().to_string())
+                        .with_user(args.user_id.to_string(), true)
+                        .with_source(self.chat.canister_id().to_string(), true)
                         .with_json_payload(&payload)
                         .build(),
                 )
@@ -696,8 +689,8 @@ impl ChatEvents {
 
                 client.push(
                     EventBuilder::new("message_tipped", args.now)
-                        .with_user(args.user_id.to_string())
-                        .with_source(self.chat.canister_id().to_string())
+                        .with_user(args.user_id.to_string(), true)
+                        .with_source(self.chat.canister_id().to_string(), true)
                         .with_json_payload(&MessageTippedEventPayload {
                             message_type,
                             chat_type: self.chat.chat_type().to_string(),
@@ -797,7 +790,6 @@ impl ChatEvents {
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: true,
-                            sender_name_override: None,
                             correlation_id: 0,
                             now,
                         },
@@ -967,8 +959,8 @@ impl ChatEvents {
 
                     event_store_client.push(
                         EventBuilder::new("p2p_swap_completed", now)
-                            .with_user(user_id.to_string())
-                            .with_source(self.chat.canister_id().to_string())
+                            .with_user(user_id.to_string(), true)
+                            .with_source(self.chat.canister_id().to_string(), true)
                             .with_json_payload(&payload)
                             .build(),
                     );
@@ -1145,7 +1137,6 @@ impl ChatEvents {
                     }),
                     forwarded: false,
                     sender_is_bot: true,
-                    sender_name_override: None,
                     correlation_id: 0,
                     now,
                 },
@@ -1613,7 +1604,7 @@ impl ChatEvents {
                         if let Some(client) = event_store_client {
                             client.push(
                                 EventBuilder::new("video_call_ended", now)
-                                    .with_source(self.chat.canister_id().to_string())
+                                    .with_source(self.chat.canister_id().to_string(), true)
                                     .with_json_payload(&VideoCallEndedEventPayload {
                                         chat_type: self.chat.chat_type().to_string(),
                                         chat_id: self.anonymized_id.clone(),
@@ -1775,7 +1766,6 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub sender_is_bot: bool,
-    pub sender_name_override: Option<String>,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }

@@ -103,8 +103,8 @@ fn process_charge(
 
     state.data.event_store_client.push(
         EventBuilder::new("diamond_membership_payment", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&PayForDiamondMembershipEventPayload {
                 token: args.token.token_symbol().to_string(),
                 amount: args.expected_price_e8s,

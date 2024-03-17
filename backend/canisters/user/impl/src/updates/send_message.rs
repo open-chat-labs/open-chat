@@ -219,7 +219,6 @@ fn send_message_impl(
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
         sender_is_bot: false,
-        sender_name_override: None,
         correlation_id: args.correlation_id,
         now,
     };
@@ -324,7 +323,6 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: false,
-                            sender_name_override: None,
                             correlation_id: 0,
                             now,
                         };

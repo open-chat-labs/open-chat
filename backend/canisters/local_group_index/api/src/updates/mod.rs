@@ -11,3 +11,4 @@ pub mod c2c_trigger_upgrade;
 pub mod c2c_upgrade_community_canister_wasm;
 pub mod c2c_upgrade_group_canister_wasm;
 pub mod push_events;
+pub mod push_events_v2;

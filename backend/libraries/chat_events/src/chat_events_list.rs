@@ -763,7 +763,6 @@ mod tests {
                     now,
                     forwarded: false,
                     sender_is_bot: false,
-                    sender_name_override: None,
                     correlation_id: i,
                 },
                 None,

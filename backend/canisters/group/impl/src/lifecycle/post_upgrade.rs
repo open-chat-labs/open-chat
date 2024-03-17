@@ -98,8 +98,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                     for (user_id, amount) in tips.iter() {
                         events.push(
                             EventBuilder::new("message_tipped", e.timestamp)
-                                .with_user(user_id.to_string())
-                                .with_source(this_canister_id_string.clone())
+                                .with_user(user_id.to_string(), true)
+                                .with_source(this_canister_id_string.clone(), true)
                                 .with_json_payload(&MessageTippedEventPayload {
                                     message_type: m.content.message_type(),
                                     chat_type: "group".to_string(),
@@ -117,8 +117,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                     for user_id in user_ids {
                         events.push(
                             EventBuilder::new("reaction_added", e.timestamp)
-                                .with_user(user_id.to_string())
-                                .with_source(this_canister_id_string.clone())
+                                .with_user(user_id.to_string(), true)
+                                .with_source(this_canister_id_string.clone(), true)
                                 .with_json_payload(&ReactionAddedEventPayload {
                                     message_type: m.content.message_type(),
                                     chat_type: "group".to_string(),
@@ -133,8 +133,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                 if m.last_edited.is_some() {
                     events.push(
                         EventBuilder::new("message_edited", e.timestamp)
-                            .with_user(m.sender.to_string())
-                            .with_source(this_canister_id_string.clone())
+                            .with_user(m.sender.to_string(), true)
+                            .with_source(this_canister_id_string.clone(), true)
                             .with_json_payload(&MessageEditedEventPayload {
                                 message_type: m.content.message_type(),
                                 chat_type: "group".to_string(),
@@ -152,7 +152,7 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                     if let Some(ts) = video.ended {
                         events.push(
                             EventBuilder::new("video_call_ended", e.timestamp)
-                                .with_source(this_canister_id_string.clone())
+                                .with_source(this_canister_id_string.clone(), true)
                                 .with_json_payload(&VideoCallEndedEventPayload {
                                     chat_type: "group".to_string(),
                                     chat_id: anonymized_chat_id.clone(),
@@ -168,8 +168,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                     if let P2PSwapStatus::Completed(c) = &swap.status {
                         events.push(
                             EventBuilder::new("p2p_swap_completed", e.timestamp)
-                                .with_user(c.accepted_by.to_string())
-                                .with_source(this_canister_id_string.clone())
+                                .with_user(c.accepted_by.to_string(), true)
+                                .with_source(this_canister_id_string.clone(), true)
                                 .with_json_payload(&P2PSwapCompletedEventPayload {
                                     token0: swap.token0.token.token_symbol().to_string(),
                                     token0_amount: swap.token0_amount,

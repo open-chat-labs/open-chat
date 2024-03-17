@@ -138,7 +138,6 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         replies_to,
         forwarded: args.forwarding,
         sender_is_bot: args.is_bot,
-        sender_name_override: None,
         correlation_id: 0,
         now: args.now,
     };

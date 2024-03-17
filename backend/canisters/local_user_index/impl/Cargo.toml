@@ -18,6 +18,7 @@ canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+event_store_canister = { workspace = true }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }

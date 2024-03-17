@@ -2111,7 +2111,7 @@ dependencies = [
 [[package]]
 name = "event_store_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
+source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
 dependencies = [
  "candid",
  "serde",
@@ -2121,7 +2121,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
+source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2132,7 +2132,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
+source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
@@ -2147,7 +2147,7 @@ dependencies = [
 [[package]]
 name = "event_store_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=77f0dfbf670fc15a871aa4088bdedf9bb6706bd8#77f0dfbf670fc15a871aa4088bdedf9bb6706bd8"
+source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
 dependencies = [
  "serde",
 ]
@@ -3809,6 +3809,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "community_canister",
+ "event_store_canister",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
@@ -3876,6 +3877,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "event_store_canister",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
