@@ -1,11 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AcceptSwapSuccess, MessageId, MessageIndex, SwapStatusError};
+use types::{AcceptSwapSuccess, MessageId, MessageIndex, Milliseconds, SwapStatusError};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+    pub pin_attempt: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -17,5 +18,8 @@ pub enum Response {
     UserNotInGroup,
     UserSuspended,
     ChatFrozen,
+    PinRequired,
+    PinIncorrect(Option<Milliseconds>),
+    TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }

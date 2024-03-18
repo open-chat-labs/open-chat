@@ -101,6 +101,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin_attempt: None,
         },
     );
 
@@ -192,6 +193,7 @@ fn send_prize_in_channel() {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin_attempt: None,
         },
     );
 

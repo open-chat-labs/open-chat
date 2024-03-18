@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
+use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -118,6 +119,14 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
+    if let Err(error) = state.data.pin_number.verify(args.pin_attempt.as_deref(), state.env.now()) {
+        return Err(Box::new(match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        }));
+    }
+
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();

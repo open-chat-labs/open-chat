@@ -54,6 +54,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool) {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin_attempt: None,
             correlation_id: 0,
         },
     );
@@ -137,6 +138,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool) {
             mentioned: Vec::new(),
             rules_accepted: None,
             message_filter_failed: None,
+            pin_attempt: None,
             correlation_id: 0,
         },
     );

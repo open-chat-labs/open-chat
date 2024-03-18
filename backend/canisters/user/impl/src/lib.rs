@@ -5,6 +5,7 @@ use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
+use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -205,6 +206,8 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     #[serde(alias = "event_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
+    #[serde(default)]
+    pub pin_number: PinNumber,
     pub rng_seed: [u8; 32],
 }
 
@@ -260,6 +263,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            pin_number: PinNumber::default(),
             rng_seed: [0; 32],
         }
     }

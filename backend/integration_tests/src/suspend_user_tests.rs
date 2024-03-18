@@ -58,6 +58,7 @@ fn suspend_user() {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin_attempt: None,
             correlation_id: 0,
         },
     );
@@ -137,6 +138,7 @@ fn suspend_user() {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin_attempt: None,
             correlation_id: 0,
         },
     );

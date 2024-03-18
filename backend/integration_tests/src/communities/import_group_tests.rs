@@ -206,6 +206,7 @@ fn pending_prizes_transferred_to_community() {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin_attempt: None,
         },
     );
 
