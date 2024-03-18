@@ -45,7 +45,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        Reaction, Rules, TextContent, TimestampMillis, UserId,
+        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -291,7 +291,13 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::tip_message::Response::Success))
     }
 
-    pub fn start_video_call(env: &mut PocketIc, user: &User, recipient: UserId, message_id: MessageId) {
+    pub fn start_video_call(
+        env: &mut PocketIc,
+        user: &User,
+        recipient: UserId,
+        message_id: MessageId,
+        max_duration: Option<Milliseconds>,
+    ) {
         let response = super::start_video_call(
             env,
             VIDEO_CALL_OPERATOR,
@@ -302,6 +308,7 @@ pub mod happy_path {
                 initiator_username: user.username(),
                 initiator_display_name: None,
                 initiator_avatar_id: None,
+                max_duration,
             },
         );
 
