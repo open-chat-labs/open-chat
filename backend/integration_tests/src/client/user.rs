@@ -346,7 +346,7 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::end_video_call::Response::Success))
     }
 
-    pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<Vec<u8>>, new: Option<Vec<u8>>) {
+    pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
         let response = super::set_pin_number(
             env,
             user.principal,

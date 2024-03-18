@@ -16,15 +16,15 @@ fn can_set_pin_number() {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::user::happy_path::set_pin_number(env, &user, None, Some(vec![1, 0, 0, 0]));
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
     let initial_state1 = client::user::happy_path::initial_state(env, &user);
 
     assert!(initial_state1.pin_number_settings.enabled);
     assert!(initial_state1.pin_number_settings.attempts_blocked_until.is_none());
 
-    client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 0]), Some(vec![1, 0, 0, 1]));
-    client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 1]), None);
+    client::user::happy_path::set_pin_number(env, &user, Some("1000".to_string()), Some("1001".to_string()));
+    client::user::happy_path::set_pin_number(env, &user, Some("1001".to_string()), None);
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user);
 
@@ -38,7 +38,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::user::happy_path::set_pin_number(env, &user, None, Some(vec![1, 0, 0, 0]));
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
     for i in 1..5 {
         let response = client::user::set_pin_number(
@@ -46,8 +46,8 @@ fn attempts_blocked_after_incorrect_attempts() {
             user.principal,
             user.canister(),
             &user_canister::set_pin_number::Args {
-                current: Some(vec![1, 0, 0, i]),
-                new: Some(vec![2, 0, 0, 0]),
+                current: Some(format!("100{i}")),
+                new: Some("2000".to_string()),
             },
         );
 
@@ -79,7 +79,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS + 1));
 
-    client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 0]), Some(vec![1, 0, 0, 1]));
+    client::user::happy_path::set_pin_number(env, &user, Some("1000".to_string()), Some("1001".to_string()));
 
     let initial_state = client::user::happy_path::initial_state(env, &user);
 
@@ -101,7 +101,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::user::happy_path::set_pin_number(env, &user1, None, Some(vec![1, 0, 0, 0]));
+    client::user::happy_path::set_pin_number(env, &user1, None, Some("1000".to_string()));
 
     // Send user1 some ICP
     client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
@@ -131,8 +131,8 @@ fn transfer_requires_correct_pin(test_case: u32) {
             forwarding: false,
             message_filter_failed: None,
             pin: match test_case {
-                1 => Some(vec![1, 0, 0, 0]),
-                2 => Some(vec![2, 0, 0, 0]),
+                1 => Some("1000".to_string()),
+                2 => Some("2000".to_string()),
                 3 => None,
                 _ => unreachable!(),
             },
