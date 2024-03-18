@@ -10,7 +10,7 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
-    pub pin: Option<Vec<u8>>,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -141,7 +141,7 @@ type RegisterPollVoteResponse = variant {
 type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {

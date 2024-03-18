@@ -8,7 +8,7 @@ type SendMessageV2Args = record {
     replies_to : opt ReplyContext;
     forwarding : bool;
     message_filter_failed : opt nat64;
-    pin : opt blob;
+    pin : opt text;
     correlation_id : nat64;
 };
 
@@ -162,7 +162,7 @@ type ApproveTransferArgs = record {
     ledger_canister_id : CanisterId;
     amount : nat;
     expires_in : opt Milliseconds;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type ApproveTransferResponse = variant {
@@ -186,7 +186,7 @@ type SwapTokensArgs = record {
         };
     };
     min_output_amount : nat;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type SwapTokensResponse = variant {
@@ -239,7 +239,7 @@ type AcceptP2PSwapArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -302,7 +302,7 @@ type TipMessageArgs = record {
     amount : nat;
     fee : nat;
     decimals : nat8;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type TipMessageResponse = variant {
@@ -608,12 +608,14 @@ type CancelMessageReminderResponse = variant {
 };
 
 type SetPinNumberArgs = record {
-    current : opt blob;
-    new : opt blob;
+    current : opt text;
+    new : opt text;
 };
 
 type SetPinNumberResponse = variant {
     Success;
+    TooShort : FieldTooShortResult;
+    TooLong : FieldTooLongResult;
     PinRequired;
     PinIncorrect : opt Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
@@ -632,7 +634,7 @@ type SendMessageWithTransferToChannelArgs = record {
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -675,7 +677,7 @@ type SendMessageWithTransferToGroupArgs = record {
     mentioned : vec User;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
-    pin : opt blob;
+    pin : opt text;
     correlation_id : nat64;
 };
 
@@ -707,7 +709,7 @@ type SendMessageWithTransferToGroupResponse = variant {
 
 type WithdrawCryptoArgs = record {
     withdrawal : PendingCryptoTransaction;
-    pin : opt blob;
+    pin : opt text;
 };
 
 type WithdrawCryptoResponse = variant {
@@ -877,6 +879,7 @@ type CommunitiesInitial = record {
 
 type PinNumberSettings = record {
     enabled : bool;
+    length : nat8;
     attempts_blocked_until : opt TimestampMillis;
 };
 

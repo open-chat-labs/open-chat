@@ -260,7 +260,7 @@ fn prepare(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     content: &MessageContentInitial,
-    pin: Option<Vec<u8>>,
+    pin: Option<String>,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) -> PrepareResult {

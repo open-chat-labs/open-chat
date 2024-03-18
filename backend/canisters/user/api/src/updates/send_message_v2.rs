@@ -14,7 +14,7 @@ pub struct Args {
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,
     pub message_filter_failed: Option<u64>,
-    pub pin: Option<Vec<u8>>,
+    pub pin: Option<String>,
     pub correlation_id: u64,
 }
 

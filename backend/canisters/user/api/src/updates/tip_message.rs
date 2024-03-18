@@ -13,7 +13,7 @@ pub struct Args {
     pub amount: u128,
     pub fee: u128,
     pub decimals: u8,
-    pub pin: Option<Vec<u8>>,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

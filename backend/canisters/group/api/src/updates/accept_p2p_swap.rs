@@ -6,7 +6,7 @@ use types::{AcceptSwapSuccess, MessageId, MessageIndex, Milliseconds, SwapStatus
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub pin: Option<Vec<u8>>,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

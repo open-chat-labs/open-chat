@@ -9,7 +9,7 @@ pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub expires_in: Option<Milliseconds>,
-    pub pin: Option<Vec<u8>>,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

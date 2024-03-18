@@ -6,18 +6,18 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PinNumber {
-    value: Timestamped<Option<Vec<u8>>>,
+    value: Timestamped<Option<String>>,
     attempts: Vec<TimestampMillis>,
 }
 
 impl PinNumber {
-    pub fn set(&mut self, value: Option<Vec<u8>>, now: TimestampMillis) {
+    pub fn set(&mut self, value: Option<String>, now: TimestampMillis) {
         self.value = Timestamped::new(value, now);
         self.attempts.clear();
     }
 
-    pub fn verify(&mut self, attempt: Option<&[u8]>, now: TimestampMillis) -> Result<(), VerifyPinError> {
-        if let Some(value) = self.value.value.as_ref() {
+    pub fn verify(&mut self, attempt: Option<&str>, now: TimestampMillis) -> Result<(), VerifyPinError> {
+        if let Some(value) = self.value.as_ref() {
             if let Some(delay) = self.delay_until_next_attempt(now) {
                 return Err(VerifyPinError::TooManyFailedAttempted(delay));
             }
@@ -26,7 +26,7 @@ impl PinNumber {
                 return Err(VerifyPinError::PinRequired);
             };
 
-            if attempt != value.as_slice() {
+            if attempt != value {
                 self.attempts.push(now);
                 return Err(VerifyPinError::PinIncorrect(self.delay_until_next_attempt(now)));
             }
@@ -52,7 +52,8 @@ impl PinNumber {
 
     pub fn settings(&self, now: TimestampMillis) -> PinNumberSettings {
         PinNumberSettings {
-            enabled: self.value.value.is_some(),
+            enabled: self.value.is_some(),
+            length: self.value.as_ref().map(|v| v.len() as u8).unwrap_or_default(),
             attempts_blocked_until: self.delay_until_next_attempt(now).map(|d| now + d),
         }
     }

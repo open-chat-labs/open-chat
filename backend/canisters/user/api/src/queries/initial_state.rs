@@ -56,5 +56,6 @@ pub struct FavouriteChatsInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PinNumberSettings {
     pub enabled: bool,
+    pub length: u8,
     pub attempts_blocked_until: Option<TimestampMillis>,
 }
