@@ -51,21 +51,25 @@ fn attempts_blocked_after_incorrect_attempts() {
             },
         );
 
-        if i < 3 {
-            assert!(matches!(
-                response,
-                user_canister::set_pin_number::Response::PinIncorrect(None)
-            ));
-        } else if i == 3 {
-            assert!(matches!(
-                response,
-                user_canister::set_pin_number::Response::PinIncorrect(Some(_))
-            ));
-        } else {
-            assert!(matches!(
-                response,
-                user_canister::set_pin_number::Response::TooManyFailedPinAttempts(_)
-            ));
+        match i {
+            1 | 2 => {
+                assert!(matches!(
+                    response,
+                    user_canister::set_pin_number::Response::PinIncorrect(None)
+                ))
+            }
+            3 => {
+                assert!(matches!(
+                    response,
+                    user_canister::set_pin_number::Response::PinIncorrect(Some(_))
+                ));
+            }
+            _ => {
+                assert!(matches!(
+                    response,
+                    user_canister::set_pin_number::Response::TooManyFailedPinAttempts(_)
+                ));
+            }
         }
     }
 
