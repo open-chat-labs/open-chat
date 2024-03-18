@@ -138,8 +138,8 @@ fn process_new_user(
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&UserRegisteredEventPayload {
                 referred: referred_by.is_some(),
                 is_bot: false,

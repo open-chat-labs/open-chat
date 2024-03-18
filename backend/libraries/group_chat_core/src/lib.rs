@@ -640,7 +640,6 @@ impl GroupChatCore {
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             sender_is_bot,
-            sender_name_override: (sender == proposals_bot_user_id).then(|| "ProposalsBot".to_string()),
             correlation_id: 0,
             now,
         };

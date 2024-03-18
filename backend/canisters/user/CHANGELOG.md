@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
 - Initial groundwork to support threads in direct chats ([#5552](https://github.com/open-chat-labs/open-chat/pull/5552))
 - Further groundwork to support threads in direct chats ([#5567](https://github.com/open-chat-labs/open-chat/pull/5567))
+- Anonymize all User canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
 
 ### Fixed
 
