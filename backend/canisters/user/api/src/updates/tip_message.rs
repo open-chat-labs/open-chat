@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, MessageId, MessageIndex, UserId};
+use types::{CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, MessageId, MessageIndex, Milliseconds, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,6 +13,7 @@ pub struct Args {
     pub amount: u128,
     pub fee: u128,
     pub decimals: u8,
+    pub pin: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,6 +27,9 @@ pub enum Response {
     TransferNotToMessageSender,
     TransferFailed(String),
     ChatFrozen,
+    PinRequired,
+    PinIncorrect(Option<Milliseconds>),
+    TooManyFailedPinAttempts(Milliseconds),
     UserSuspended,
     Retrying(String),
     InternalError(String, Box<CompletedCryptoTransaction>),
