@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction,
-    SuspensionDuration, TimestampMillis, User, UserId,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
+    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
 };
 
 mod lifecycle;
@@ -262,6 +262,7 @@ pub struct P2PSwapStatusChange {
 pub struct StartVideoCallArgs {
     pub message_id: MessageId,
     pub message_index: MessageIndex,
+    pub max_duration: Option<Milliseconds>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
