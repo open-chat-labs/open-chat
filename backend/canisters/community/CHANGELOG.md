@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Anonymize all Community canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
 - Fallback job to mark video calls as ended ([#5569](https://github.com/open-chat-labs/open-chat/pull/5569))
 
+### Fixed
+
+- Mark old video calls as having ended ([#5572](https://github.com/open-chat-labs/open-chat/pull/5572))
+
 ## [[2.0.1094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1094-community)] - 2024-03-08
 
 ### Added

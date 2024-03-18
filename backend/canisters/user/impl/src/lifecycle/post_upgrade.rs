@@ -1,10 +1,10 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
+use crate::timer_job_types::{MarkVideoCallEndedJob, ProcessTokenSwapJob, TimerJob};
 use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, MessageContentInternal};
+use chat_events::{ChatEventInternal, MessageContentInternal, Reader};
 use event_store_producer::{Event, EventBuilder};
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
@@ -15,6 +15,7 @@ use types::{
     ReactionAddedEventPayload, UserId, VideoCallEndedEventPayload,
 };
 use user_canister::post_upgrade::Args;
+use utils::time::HOUR_IN_MS;
 
 #[post_upgrade]
 #[trace]
@@ -69,13 +70,13 @@ fn post_upgrade(args: Args) {
     .collect();
 
     mutate_state(|state| {
+        let now = state.env.now();
         let dragginz_ledger = CanisterId::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap();
         for swap in state.data.token_swaps.iter_mut().filter(|s| {
             s.args.output_token.ledger == dragginz_ledger
                 && s.args.output_token.fee == 1000
                 && s.withdrawn_from_dex_at.as_ref().is_some_and(|r| r.is_err())
         }) {
-            let now = state.env.now();
             swap.args.output_token.fee = 100000;
             swap.withdrawn_from_dex_at = None;
 
@@ -91,6 +92,33 @@ fn post_upgrade(args: Args) {
 
         let events = extract_events(state, &token_lookup);
         state.data.event_store_client.push_many(events.into_iter(), false);
+
+        for chat in state.data.direct_chats.iter_mut() {
+            if chat.events.video_call_in_progress.timestamp < now.saturating_sub(HOUR_IN_MS) {
+                if let Some(message_id) = chat
+                    .events
+                    .video_call_in_progress
+                    .value
+                    .as_ref()
+                    .map(|vc| vc.message_index)
+                    .and_then(|index| {
+                        chat.events
+                            .main_events_reader()
+                            .message_internal(index.into())
+                            .map(|m| m.message_id)
+                    })
+                {
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::Args {
+                            user_id: chat.them,
+                            message_id,
+                        })),
+                        now,
+                        now,
+                    );
+                }
+            }
+        }
     });
 }
 
