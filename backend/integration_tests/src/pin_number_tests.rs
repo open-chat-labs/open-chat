@@ -18,16 +18,17 @@ fn can_set_pin_number() {
 
     client::user::happy_path::set_pin_number(env, &user, None, Some(vec![1, 0, 0, 0]));
 
-    let initial_state = client::user::happy_path::initial_state(env, &user);
+    let initial_state1 = client::user::happy_path::initial_state(env, &user);
 
-    assert!(initial_state.pin_number_settings.enabled);
-    assert!(initial_state.pin_number_settings.attempts_blocked_until.is_none());
+    assert!(initial_state1.pin_number_settings.enabled);
+    assert!(initial_state1.pin_number_settings.attempts_blocked_until.is_none());
 
     client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 0]), Some(vec![1, 0, 0, 1]));
-
     client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 1]), None);
 
-    assert!(!initial_state.pin_number_settings.enabled);
+    let initial_state2 = client::user::happy_path::initial_state(env, &user);
+
+    assert!(!initial_state2.pin_number_settings.enabled);
 }
 
 #[test]
@@ -39,7 +40,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     client::user::happy_path::set_pin_number(env, &user, None, Some(vec![1, 0, 0, 0]));
 
-    for i in 1..4 {
+    for i in 1..5 {
         let response = client::user::set_pin_number(
             env,
             user.principal,
@@ -50,10 +51,15 @@ fn attempts_blocked_after_incorrect_attempts() {
             },
         );
 
-        if i <= 3 {
+        if i < 3 {
             assert!(matches!(
                 response,
                 user_canister::set_pin_number::Response::PinIncorrect(None)
+            ));
+        } else if i == 3 {
+            assert!(matches!(
+                response,
+                user_canister::set_pin_number::Response::PinIncorrect(Some(_))
             ));
         } else {
             assert!(matches!(
@@ -67,7 +73,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     assert!(initial_state.pin_number_settings.attempts_blocked_until.is_some());
 
-    env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
+    env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS + 1));
 
     client::user::happy_path::set_pin_number(env, &user, Some(vec![1, 0, 0, 0]), Some(vec![1, 0, 0, 1]));
 
@@ -131,7 +137,10 @@ fn transfer_requires_correct_pin(test_case: u32) {
     );
 
     match test_case {
-        1 => assert!(matches!(response, user_canister::send_message_v2::Response::Success(_))),
+        1 => assert!(matches!(
+            response,
+            user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        )),
         2 => assert!(matches!(response, user_canister::send_message_v2::Response::PinIncorrect(_))),
         3 => assert!(matches!(response, user_canister::send_message_v2::Response::PinRequired)),
         _ => unreachable!(),
