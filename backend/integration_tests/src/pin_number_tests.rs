@@ -1,13 +1,12 @@
-use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
-use crate::utils::{now_nanos, tick_many};
-use crate::{client, env, TestEnv};
+use crate::rng::random_message_id;
+use crate::utils::now_nanos;
+use crate::{client, TestEnv};
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{ChatEvent, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial};
+use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
 use utils::time::MINUTE_IN_MS;
 
 #[test]

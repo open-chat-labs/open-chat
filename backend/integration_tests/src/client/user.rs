@@ -287,6 +287,7 @@ pub mod happy_path {
                 fee: token.fee().unwrap(),
                 decimals: token.decimals().unwrap(),
                 token,
+                pin: None,
             },
         );
 
