@@ -97,7 +97,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                         token1: result.content.token1,
                         token1_amount: result.content.token1_amount,
                         expires_at: result.content.expires_at,
-                        pin_attempt: args.pin_attempt,
+                        pin: args.pin,
                     },
                 })
             }

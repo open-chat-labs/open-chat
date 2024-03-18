@@ -15,7 +15,7 @@ pub struct Args {
     pub token1: TokenInfo,
     pub token1_amount: u128,
     pub expires_at: TimestampMillis,
-    pub pin_attempt: Option<Vec<u8>>,
+    pub pin: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

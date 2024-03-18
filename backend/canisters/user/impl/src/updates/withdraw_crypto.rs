@@ -12,7 +12,7 @@ use utils::consts::MEMO_SEND;
 async fn withdraw_crypto_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin_attempt.as_deref(), state.env.now())) {
+    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), state.env.now())) {
         return match error {
             VerifyPinError::PinRequired => PinRequired,
             VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),

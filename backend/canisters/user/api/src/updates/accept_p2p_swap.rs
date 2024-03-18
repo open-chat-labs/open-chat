@@ -7,7 +7,7 @@ pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub pin_attempt: Option<Vec<u8>>,
+    pub pin: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

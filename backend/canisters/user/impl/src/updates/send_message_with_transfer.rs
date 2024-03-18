@@ -41,7 +41,7 @@ async fn send_message_with_transfer_to_channel(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin_attempt,
+            args.pin,
             now,
             state,
         )
@@ -155,7 +155,7 @@ async fn send_message_with_transfer_to_group(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin_attempt,
+            args.pin,
             now,
             state,
         )
@@ -260,7 +260,7 @@ fn prepare(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     content: &MessageContentInitial,
-    pin_attempt: Option<Vec<u8>>,
+    pin: Option<Vec<u8>>,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) -> PrepareResult {
@@ -272,7 +272,7 @@ fn prepare(
         return TextTooLong(MAX_TEXT_LENGTH);
     }
 
-    if let Err(error) = state.data.pin_number.verify(pin_attempt.as_deref(), now) {
+    if let Err(error) = state.data.pin_number.verify(pin.as_deref(), now) {
         return match error {
             VerifyPinError::PinRequired => PinRequired,
             VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),

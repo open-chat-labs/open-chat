@@ -19,7 +19,7 @@ pub struct Args {
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
-    pub pin_attempt: Option<Vec<u8>>,
+    pub pin: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

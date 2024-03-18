@@ -284,6 +284,7 @@ type AcceptP2PSwapArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt blob;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -296,6 +297,9 @@ type AcceptP2PSwapResponse = variant {
     UserNotInChannel;
     UserSuspended;
     ChatFrozen;
+    PinRequired;
+    PinIncorrect : opt Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 

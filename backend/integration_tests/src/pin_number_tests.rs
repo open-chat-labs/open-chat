@@ -121,7 +121,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
-            pin_attempt: match test_case {
+            pin: match test_case {
                 1 => Some(vec![1, 0, 0, 0]),
                 2 => Some(vec![2, 0, 0, 0]),
                 3 => None,

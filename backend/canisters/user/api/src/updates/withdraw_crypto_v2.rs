@@ -5,7 +5,7 @@ use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, P
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub withdrawal: PendingCryptoTransaction,
-    pub pin_attempt: Option<Vec<u8>>,
+    pub pin: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

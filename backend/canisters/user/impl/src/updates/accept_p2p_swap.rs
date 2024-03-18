@@ -119,7 +119,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
-    if let Err(error) = state.data.pin_number.verify(args.pin_attempt.as_deref(), state.env.now()) {
+    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), state.env.now()) {
         return Err(Box::new(match error {
             VerifyPinError::PinRequired => PinRequired,
             VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),

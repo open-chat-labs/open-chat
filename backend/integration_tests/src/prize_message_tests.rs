@@ -69,7 +69,7 @@ fn prize_messages_can_be_claimed_successfully() {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
-            pin_attempt: None,
+            pin: None,
         },
     );
 
@@ -158,7 +158,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
-            pin_attempt: None,
+            pin: None,
         },
     );
 

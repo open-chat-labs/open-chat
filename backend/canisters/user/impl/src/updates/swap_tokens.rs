@@ -30,7 +30,7 @@ async fn swap_tokens(args: Args) -> Response {
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<TokenSwap, Response> {
     let now = state.env.now();
 
-    if let Err(error) = state.data.pin_number.verify(args.pin_attempt.as_deref(), now) {
+    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
         return Err(match error {
             VerifyPinError::PinRequired => PinRequired,
             VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),

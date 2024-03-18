@@ -157,7 +157,7 @@ fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestRes
     let my_user_id: UserId = state.env.canister_id().into();
 
     if args.content.contains_crypto_transfer() {
-        if let Err(error) = state.data.pin_number.verify(args.pin_attempt.as_deref(), now) {
+        if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
             return ValidateRequestResult::Invalid(match error {
                 VerifyPinError::PinRequired => PinRequired,
                 VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
