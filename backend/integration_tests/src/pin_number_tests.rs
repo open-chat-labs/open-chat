@@ -53,21 +53,18 @@ fn attempts_blocked_after_incorrect_attempts() {
 
         match i {
             1 | 2 => {
-                assert!(matches!(
-                    response,
-                    user_canister::set_pin_number::Response::PinIncorrect(None)
-                ))
+                assert!(matches!(response, user_canister::set_pin_number::Response::PinIncorrect(0)))
             }
             3 => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::PinIncorrect(Some(_))
+                    user_canister::set_pin_number::Response::PinIncorrect(delay) if delay > 0
                 ));
             }
             _ => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::TooManyFailedPinAttempts(_)
+                    user_canister::set_pin_number::Response::TooManyFailedPinAttempts(delay) if delay > 0
                 ));
             }
         }
