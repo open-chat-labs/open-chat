@@ -847,7 +847,7 @@ type InitialStateResponse = variant {
         avatar_id : opt nat;
         blocked_users : vec UserId;
         suspended : bool;
-        pin_number_settings : PinNumberSettings;
+        pin_number_settings : opt PinNumberSettings;
         local_user_index_canister_id : CanisterId;
     };
 };
@@ -878,7 +878,6 @@ type CommunitiesInitial = record {
 };
 
 type PinNumberSettings = record {
-    enabled : bool;
     length : nat8;
     attempts_blocked_until : opt TimestampMillis;
 };
@@ -898,7 +897,11 @@ type UpdatesResponse = variant {
         communities : CommunitiesUpdates;
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
-        pin_number_settings : opt PinNumberSettings;
+        pin_number_settings : variant {
+            SetToSome: PinNumberSettings;
+            SetToNone;
+            NoChange;
+        };
         suspended : opt bool;
     };
     SuccessNoUpdates;

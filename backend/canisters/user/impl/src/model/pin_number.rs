@@ -37,6 +37,10 @@ impl PinNumber {
         Ok(())
     }
 
+    pub fn enabled(&self) -> bool {
+        self.value.is_some()
+    }
+
     pub fn delay_until_next_attempt(&self, now: TimestampMillis) -> Milliseconds {
         let delay = match self.attempts.len() {
             x if x < 3 => return 0,
@@ -55,7 +59,6 @@ impl PinNumber {
         let delay = self.delay_until_next_attempt(now);
 
         PinNumberSettings {
-            enabled: self.value.is_some(),
             length: self.value.as_ref().map(|v| v.len() as u8).unwrap_or_default(),
             attempts_blocked_until: if delay > 0 { Some(now + delay) } else { None },
         }
