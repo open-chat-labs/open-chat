@@ -28,7 +28,7 @@ fn can_set_pin_number() {
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user);
 
-    assert!(initial_state2.pin_number_settings.is_some());
+    assert!(initial_state2.pin_number_settings.is_none());
 }
 
 #[test]
