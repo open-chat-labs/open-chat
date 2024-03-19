@@ -4,15 +4,15 @@ use crate::timer_job_types::{MarkVideoCallEndedJob, ProcessTokenSwapJob, TimerJo
 use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, MessageContentInternal, Reader};
+use chat_events::{ChatEventInternal, MessageContentInternal, Reader, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{Event, EventBuilder};
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use std::collections::HashMap;
 use tracing::info;
 use types::{
-    CanisterId, MessageEditedEventPayload, MessageTippedEventPayload, P2PSwapCompletedEventPayload, P2PSwapStatus,
-    ReactionAddedEventPayload, UserId, VideoCallEndedEventPayload,
+    CanisterId, MessageEditedEventPayload, MessageEventPayload, MessageTippedEventPayload, P2PSwapCompletedEventPayload,
+    P2PSwapStatus, ReactionAddedEventPayload, UserId, VideoCallEndedEventPayload,
 };
 use user_canister::post_upgrade::Args;
 use utils::time::HOUR_IN_MS;
@@ -124,7 +124,8 @@ fn post_upgrade(args: Args) {
 
 fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>) -> Vec<Event> {
     let my_user_id: UserId = state.env.canister_id().into();
-    let user_string = my_user_id.to_string();
+    let user_id_string = my_user_id.to_string();
+    let user_id_str = user_id_string.as_str();
 
     state
         .data
@@ -132,17 +133,34 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
         .iter()
         .flat_map(|c| {
             let anonymized_chat_id = c.events.anonymized_id.clone();
-            let user_string_clone = user_string.clone();
             c.events.iter_all_events().flat_map(move |(e, is_thread)| {
                 let mut events = Vec::new();
                 if let ChatEventInternal::Message(m) = &e.event {
+                    let is_oc_bot = m.sender == OPENCHAT_BOT_USER_ID;
+                    if m.sender == my_user_id || is_oc_bot {
+                        events.push(
+                            EventBuilder::new("message_sent", e.timestamp)
+                                .with_user(m.sender.to_string(), true)
+                                .with_source(user_id_str, true)
+                                .with_json_payload(&MessageEventPayload {
+                                    message_type: m.content.message_type(),
+                                    chat_type: "direct".to_string(),
+                                    chat_id: anonymized_chat_id.clone(),
+                                    thread: is_thread,
+                                    sender_is_bot: is_oc_bot,
+                                    content_specific_payload: m.content.event_payload(),
+                                })
+                                .build(),
+                        );
+                    }
+
                     for (ledger, tips) in m.tips.iter() {
                         let token = token_lookup.get(ledger).unwrap();
                         if let Some(amount) = tips.iter().find(|(u, _)| *u == my_user_id).map(|(_, a)| *a) {
                             events.push(
                                 EventBuilder::new("message_tipped", e.timestamp)
-                                    .with_user(user_string_clone.clone(), true)
-                                    .with_source(user_string_clone.clone(), true)
+                                    .with_user(user_id_str, true)
+                                    .with_source(user_id_str, true)
                                     .with_json_payload(&MessageTippedEventPayload {
                                         message_type: m.content.message_type(),
                                         chat_type: "direct".to_string(),
@@ -160,8 +178,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                         if user_ids.contains(&my_user_id) {
                             events.push(
                                 EventBuilder::new("reaction_added", e.timestamp)
-                                    .with_user(user_string_clone.clone(), true)
-                                    .with_source(user_string_clone.clone(), true)
+                                    .with_user(user_id_str, true)
+                                    .with_source(user_id_str, true)
                                     .with_json_payload(&ReactionAddedEventPayload {
                                         message_type: m.content.message_type(),
                                         chat_type: "direct".to_string(),
@@ -177,8 +195,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                         if m.last_edited.is_some() {
                             events.push(
                                 EventBuilder::new("message_edited", e.timestamp)
-                                    .with_user(user_string_clone.clone(), true)
-                                    .with_source(user_string_clone.clone(), true)
+                                    .with_user(user_id_str, true)
+                                    .with_source(user_id_str, true)
                                     .with_json_payload(&MessageEditedEventPayload {
                                         message_type: m.content.message_type(),
                                         chat_type: "direct".to_string(),
@@ -196,7 +214,7 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                             if let Some(ts) = video.ended {
                                 events.push(
                                     EventBuilder::new("video_call_ended", e.timestamp)
-                                        .with_source(user_string_clone.clone(), true)
+                                        .with_source(user_id_str, true)
                                         .with_json_payload(&VideoCallEndedEventPayload {
                                             chat_type: "direct".to_string(),
                                             chat_id: anonymized_chat_id.clone(),
@@ -211,8 +229,8 @@ fn extract_events(state: &RuntimeState, token_lookup: &HashMap<CanisterId, &str>
                         if matches!(swap.status, P2PSwapStatus::Completed(_)) {
                             events.push(
                                 EventBuilder::new("p2p_swap_completed", e.timestamp)
-                                    .with_user(user_string_clone.clone(), true)
-                                    .with_source(user_string_clone.clone(), true)
+                                    .with_user(user_id_str, true)
+                                    .with_source(user_id_str, true)
                                     .with_json_payload(&P2PSwapCompletedEventPayload {
                                         token0: swap.token0.token.token_symbol().to_string(),
                                         token0_amount: swap.token0_amount,
