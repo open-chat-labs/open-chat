@@ -548,6 +548,8 @@
                         on:startVideoCall
                         on:expandMessage />
 
+                    <pre>{msg.messageIndex}</pre>
+
                     {#if !inert && !isPrize}
                         <TimeAndTicks
                             {pinned}
