@@ -1,8 +1,10 @@
 use crate::guards::caller_is_owner;
-use crate::{read_state, run_regular_jobs};
+use crate::model::pin_number::VerifyPinError;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use types::TimestampNanos;
 use user_canister::approve_transfer::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
@@ -11,7 +13,10 @@ use utils::time::NANOS_PER_MILLISECOND;
 async fn approve_transfer(args: Args) -> Response {
     run_regular_jobs();
 
-    let now_nanos = read_state(|state| state.env.now_nanos());
+    let now_nanos = match mutate_state(|state| prepare(&args, state)) {
+        Ok(ts) => ts,
+        Err(response) => return response,
+    };
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
@@ -34,4 +39,18 @@ async fn approve_transfer(args: Args) -> Response {
         Ok(icrc_ledger_canister::icrc2_approve::Response::Err(err)) => ApproveError(err),
         Err(error) => InternalError(format!("{error:?}")),
     }
+}
+
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, Response> {
+    let now = state.env.now();
+
+    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+        return Err(match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        });
+    }
+
+    Ok(now * NANOS_PER_MILLISECOND)
 }

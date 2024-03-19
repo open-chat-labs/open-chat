@@ -8,6 +8,7 @@ type SendMessageV2Args = record {
     replies_to : opt ReplyContext;
     forwarding : bool;
     message_filter_failed : opt nat64;
+    pin : opt text;
     correlation_id : nat64;
 };
 
@@ -33,6 +34,9 @@ type SendMessageResponse = variant {
     P2PSwapSetUpFailed : text;
     DuplicateMessageId;
     UserSuspended;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -158,11 +162,15 @@ type ApproveTransferArgs = record {
     ledger_canister_id : CanisterId;
     amount : nat;
     expires_in : opt Milliseconds;
+    pin : opt text;
 };
 
 type ApproveTransferResponse = variant {
     Success;
     ApproveError : ICRC2_ApproveError;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -178,6 +186,7 @@ type SwapTokensArgs = record {
         };
     };
     min_output_amount : nat;
+    pin : opt text;
 };
 
 type SwapTokensResponse = variant {
@@ -185,6 +194,9 @@ type SwapTokensResponse = variant {
         amount_out : nat;
     };
     SwapFailed;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -227,6 +239,7 @@ type AcceptP2PSwapArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -236,6 +249,9 @@ type AcceptP2PSwapResponse = variant {
     SwapNotFound;
     ChatNotFound;
     UserSuspended;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -286,6 +302,7 @@ type TipMessageArgs = record {
     amount : nat;
     fee : nat;
     decimals : nat8;
+    pin : opt text;
 };
 
 type TipMessageResponse = variant {
@@ -300,6 +317,9 @@ type TipMessageResponse = variant {
     ChatFrozen;
     UserSuspended;
     Retrying : text;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : record { text; CompletedCryptoTransaction };
 };
 
@@ -587,6 +607,20 @@ type CancelMessageReminderResponse = variant {
     Success;
 };
 
+type SetPinNumberArgs = record {
+    current : opt text;
+    new : opt text;
+};
+
+type SetPinNumberResponse = variant {
+    Success;
+    TooShort : FieldTooShortResult;
+    TooLong : FieldTooLongResult;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
+};
+
 type SendMessageWithTransferToChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
@@ -600,6 +634,7 @@ type SendMessageWithTransferToChannelArgs = record {
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
+    pin : opt text;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -626,6 +661,9 @@ type SendMessageWithTransferToChannelResponse = variant {
     RulesNotAccepted;
     CommunityRulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
 };
 
 type SendMessageWithTransferToGroupArgs = record {
@@ -639,6 +677,7 @@ type SendMessageWithTransferToGroupArgs = record {
     mentioned : vec User;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
+    pin : opt text;
     correlation_id : nat64;
 };
 
@@ -663,16 +702,23 @@ type SendMessageWithTransferToGroupResponse = variant {
     ChatFrozen;
     RulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
 };
 
 type WithdrawCryptoArgs = record {
     withdrawal : PendingCryptoTransaction;
+    pin : opt text;
 };
 
 type WithdrawCryptoResponse = variant {
     Success : CompletedCryptoTransaction;
     TransactionFailed : FailedCryptoTransaction;
     CurrencyNotSupported;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
 };
 
 type PinChatV2Request = record {
@@ -801,6 +847,7 @@ type InitialStateResponse = variant {
         avatar_id : opt nat;
         blocked_users : vec UserId;
         suspended : bool;
+        pin_number_settings : PinNumberSettings;
         local_user_index_canister_id : CanisterId;
     };
 };
@@ -830,6 +877,12 @@ type CommunitiesInitial = record {
     summaries : vec UserCanisterCommunitySummary;
 };
 
+type PinNumberSettings = record {
+    enabled : bool;
+    length : nat8;
+    attempts_blocked_until : opt TimestampMillis;
+};
+
 type UpdatesArgs = record {
     updates_since : TimestampMillis;
 };
@@ -845,6 +898,7 @@ type UpdatesResponse = variant {
         communities : CommunitiesUpdates;
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
+        pin_number_settings : opt PinNumberSettings;
         suspended : opt bool;
     };
     SuccessNoUpdates;
@@ -1077,6 +1131,7 @@ service : {
     set_contact : (SetContactArgs) -> (SetContactResponse);
     set_message_reminder_v2 : (SetMessageReminderV2Args) -> (SetMessageReminderResponse);
     cancel_message_reminder : (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
+    set_pin_number : (SetPinNumberArgs) -> (SetPinNumberResponse);
     send_message_with_transfer_to_channel : (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);
     send_message_with_transfer_to_group : (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2 : (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
