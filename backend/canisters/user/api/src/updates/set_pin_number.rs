@@ -1,18 +1,19 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, PendingCryptoTransaction};
+use std::fmt::Debug;
+use types::{FieldTooLongResult, FieldTooShortResult, Milliseconds};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub withdrawal: PendingCryptoTransaction,
-    pub pin: Option<String>,
+    pub current: Option<String>,
+    pub new: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(CompletedCryptoTransaction),
-    TransactionFailed(FailedCryptoTransaction),
-    CurrencyNotSupported,
+    Success,
+    TooShort(FieldTooShortResult),
+    TooLong(FieldTooLongResult),
     PinRequired,
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),

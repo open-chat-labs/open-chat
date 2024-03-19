@@ -1,6 +1,7 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::model::pin_number::VerifyPinError;
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
@@ -10,13 +11,14 @@ use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCry
 use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
+use utils::time::NANOS_PER_MILLISECOND;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    let (prepare_result, now_nanos) = match read_state(|state| prepare(&args, state)) {
+    let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return *response,
     };
@@ -82,7 +84,7 @@ enum PrepareResult {
     Channel(CommunityId, community_canister::c2c_tip_message::Args),
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, TimestampNanos), Box<Response>> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, TimestampNanos), Box<Response>> {
     let my_user_id: UserId = state.env.canister_id().into();
     if state.data.suspended.value {
         Err(Box::new(UserSuspended))
@@ -91,7 +93,17 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
     } else if my_user_id == args.recipient {
         Err(Box::new(CannotTipSelf))
     } else {
-        let now_nanos = state.env.now_nanos();
+        let now = state.env.now();
+        let now_nanos = now * NANOS_PER_MILLISECOND;
+
+        if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+            return Err(Box::new(match error {
+                VerifyPinError::PinRequired => PinRequired,
+                VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+                VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+            }));
+        }
+
         match args.chat {
             Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((
                 PrepareResult::Direct(TipMessageArgs {
@@ -102,7 +114,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                     ledger: args.ledger,
                     token: args.token.clone(),
                     amount: args.amount,
-                    now: state.env.now(),
+                    now,
                 }),
                 now_nanos,
             )),
