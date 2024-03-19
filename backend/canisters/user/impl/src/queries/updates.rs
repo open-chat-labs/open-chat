@@ -113,6 +113,16 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pinned: state.data.favourite_chats.pinned_if_updated(updates_since),
     };
 
+    let pin_number_settings = if pin_number_updated {
+        if state.data.pin_number.enabled() {
+            OptionUpdate::SetToSome(state.data.pin_number.settings(now))
+        } else {
+            OptionUpdate::SetToNone
+        }
+    } else {
+        OptionUpdate::NoChange
+    };
+
     Success(SuccessResult {
         timestamp: now,
         username,
@@ -124,6 +134,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         avatar_id,
         blocked_users,
         suspended,
-        pin_number_settings: pin_number_updated.then(|| state.data.pin_number.settings(now)),
+        pin_number_settings,
     })
 }

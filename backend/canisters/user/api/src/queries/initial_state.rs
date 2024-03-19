@@ -19,7 +19,7 @@ pub struct SuccessResult {
     pub avatar_id: Option<u128>,
     pub blocked_users: Vec<UserId>,
     pub suspended: bool,
-    pub pin_number_settings: PinNumberSettings,
+    pub pin_number_settings: Option<PinNumberSettings>,
     pub local_user_index_canister_id: CanisterId,
 }
 
@@ -55,7 +55,6 @@ pub struct FavouriteChatsInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PinNumberSettings {
-    pub enabled: bool,
     pub length: u8,
     pub attempts_blocked_until: Option<TimestampMillis>,
 }

@@ -20,15 +20,15 @@ fn can_set_pin_number() {
 
     let initial_state1 = client::user::happy_path::initial_state(env, &user);
 
-    assert!(initial_state1.pin_number_settings.enabled);
-    assert!(initial_state1.pin_number_settings.attempts_blocked_until.is_none());
+    assert!(initial_state1.pin_number_settings.is_some());
+    assert!(initial_state1.pin_number_settings.unwrap().attempts_blocked_until.is_none());
 
     client::user::happy_path::set_pin_number(env, &user, Some("1000".to_string()), Some("1001".to_string()));
     client::user::happy_path::set_pin_number(env, &user, Some("1001".to_string()), None);
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user);
 
-    assert!(!initial_state2.pin_number_settings.enabled);
+    assert!(initial_state2.pin_number_settings.is_none());
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user);
 
-    assert!(initial_state.pin_number_settings.attempts_blocked_until.is_some());
+    assert!(initial_state.pin_number_settings.unwrap().attempts_blocked_until.is_some());
 
     env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS + 1));
 
@@ -80,7 +80,7 @@ fn attempts_blocked_after_incorrect_attempts() {
 
     let initial_state = client::user::happy_path::initial_state(env, &user);
 
-    assert!(initial_state.pin_number_settings.attempts_blocked_until.is_none());
+    assert!(initial_state.pin_number_settings.unwrap().attempts_blocked_until.is_none());
 }
 
 #[test_case(1; "Correct PIN")]

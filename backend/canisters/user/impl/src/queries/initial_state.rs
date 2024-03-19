@@ -44,7 +44,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         avatar_id,
         blocked_users,
         suspended: state.data.suspended.value,
-        pin_number_settings: state.data.pin_number.settings(now),
+        pin_number_settings: state.data.pin_number.enabled().then(|| state.data.pin_number.settings(now)),
         local_user_index_canister_id: state.data.local_user_index_canister_id,
     })
 }

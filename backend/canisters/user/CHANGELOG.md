@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Further groundwork to support threads in direct chats ([#5567](https://github.com/open-chat-labs/open-chat/pull/5567))
 - Anonymize all User canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
 - Fallback job to mark video calls as ended ([#5569](https://github.com/open-chat-labs/open-chat/pull/5569))
+- Simplify `pin_number_settings` ([#5577](https://github.com/open-chat-labs/open-chat/pull/5577))
 
 ### Fixed
 
