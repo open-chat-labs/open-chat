@@ -335,7 +335,6 @@
 
     async function clientEvent(ev: Event): Promise<void> {
         await tick();
-        console.debug("SCROLL: onClientEvent: ", ev);
         if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
             onLoadedNewMessages(ev.detail);
         }
