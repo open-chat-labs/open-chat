@@ -11,12 +11,7 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 }
 
 fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
-    if args.is_bot || state.data.blocked_users.contains(&args.user_id) {
-        return false;
-    }
+    let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall);
 
-    match args.access_type {
-        AccessTokenType::StartVideoCall => args.is_diamond,
-        AccessTokenType::JoinVideoCall => true,
-    }
+    (args.is_diamond || joining) && !state.data.blocked_users.contains(&args.user_id)
 }
