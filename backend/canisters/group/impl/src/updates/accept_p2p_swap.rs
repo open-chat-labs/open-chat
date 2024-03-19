@@ -12,7 +12,10 @@ use types::{AcceptSwapSuccess, Chat, MessageId, MessageIndex, P2PSwapLocation, U
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
 
-    let ReserveP2PSwapResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_swap(&args, state)) {
+    let thread_root_message_index = args.thread_root_message_index;
+    let message_id = args.message_id;
+
+    let ReserveP2PSwapResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_swap(args, state)) {
         Ok(result) => result,
         Err(response) => return *response,
     };
@@ -22,8 +25,8 @@ async fn accept_p2p_swap(args: Args) -> Response {
             NotifyEscrowCanisterOfDepositJob::run(
                 user_id,
                 c2c_args.swap_id,
-                args.thread_root_message_index,
-                args.message_id,
+                thread_root_message_index,
+                message_id,
                 transaction_index,
             );
             Success(AcceptSwapSuccess {
@@ -33,12 +36,15 @@ async fn accept_p2p_swap(args: Args) -> Response {
         Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
             InsufficientFunds
         }
+        Ok(user_canister::c2c_accept_p2p_swap::Response::PinRequired) => PinRequired,
+        Ok(user_canister::c2c_accept_p2p_swap::Response::PinIncorrect(delay)) => PinIncorrect(delay),
+        Ok(user_canister::c2c_accept_p2p_swap::Response::TooManyFailedPinAttempts(delay)) => TooManyFailedPinAttempts(delay),
         Ok(response) => InternalError(format!("{response:?}")),
         Err(error) => InternalError(format!("{error:?}")),
     };
 
     if !matches!(result, Success(_)) {
-        mutate_state(|state| rollback(user_id, args.thread_root_message_index, args.message_id, state));
+        mutate_state(|state| rollback(user_id, thread_root_message_index, message_id, state));
     }
 
     result
@@ -49,7 +55,7 @@ struct ReserveP2PSwapResult {
     c2c_args: user_canister::c2c_accept_p2p_swap::Args,
 }
 
-fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PSwapResult, Box<Response>> {
+fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSwapResult, Box<Response>> {
     if state.data.is_frozen() {
         return Err(Box::new(ChatFrozen));
     }
@@ -91,6 +97,7 @@ fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PS
                         token1: result.content.token1,
                         token1_amount: result.content.token1_amount,
                         expires_at: result.content.expires_at,
+                        pin: args.pin,
                     },
                 })
             }

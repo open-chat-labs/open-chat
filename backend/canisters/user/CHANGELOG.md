@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
 - Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
 - Push backdated events for tips, edits, reactions, swaps + video calls ([#5541](https://github.com/open-chat-labs/open-chat/pull/5541))
+- Add optional PIN for sending crypto transfers ([#5571](https://github.com/open-chat-labs/open-chat/pull/5571))
 - Push backdated message events ([#5575](https://github.com/open-chat-labs/open-chat/pull/5575))
 
 ### Changed

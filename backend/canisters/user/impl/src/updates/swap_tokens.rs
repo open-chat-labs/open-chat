@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::model::pin_number::VerifyPinError;
 use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::swap_client::SwapClient;
@@ -18,12 +19,26 @@ use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 async fn swap_tokens(args: Args) -> Response {
     run_regular_jobs();
 
-    let token_swap = mutate_state(|state| {
-        let now = state.env.now();
-        state.data.token_swaps.push_new(args, now)
-    });
+    let token_swap = match mutate_state(|state| prepare(args, state)) {
+        Ok(ts) => ts,
+        Err(response) => return response,
+    };
 
     process_token_swap(token_swap, 0).await
+}
+
+fn prepare(args: Args, state: &mut RuntimeState) -> Result<TokenSwap, Response> {
+    let now = state.env.now();
+
+    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+        return Err(match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        });
+    }
+
+    Ok(state.data.token_swaps.push_new(args, now))
 }
 
 pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) -> Response {

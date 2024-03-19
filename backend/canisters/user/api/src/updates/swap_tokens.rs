@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, ExchangeId, TokenInfo};
+use types::{CanisterId, ExchangeId, Milliseconds, TokenInfo};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -10,6 +10,7 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -35,6 +36,9 @@ pub struct ICPSwapArgs {
 pub enum Response {
     Success(SuccessResult),
     SwapFailed,
+    PinRequired,
+    PinIncorrect(Milliseconds),
+    TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }
 

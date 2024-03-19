@@ -8,5 +8,6 @@ pub mod group_chat;
 pub mod group_chats;
 pub mod hot_group_exclusions;
 pub mod p2p_swaps;
+pub mod pin_number;
 pub mod token_swaps;
 pub mod unread_message_index_map;

@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     ChannelId, CommunityId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial,
-    MessageId, MessageIndex, TimestampMillis, User, Version,
+    MessageId, MessageIndex, Milliseconds, TimestampMillis, User, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,6 +19,7 @@ pub struct Args {
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
+    pub pin: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -40,6 +41,9 @@ pub enum Response {
     RulesNotAccepted,
     CommunityRulesNotAccepted,
     Retrying(String, CompletedCryptoTransaction),
+    PinRequired,
+    PinIncorrect(Milliseconds),
+    TooManyFailedPinAttempts(Milliseconds),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
