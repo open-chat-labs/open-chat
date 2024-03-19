@@ -150,6 +150,10 @@ mod upgrade_communities {
     }
 
     fn next_batch(state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+        if state.data.event_store_client.info().events_pending > 100000 {
+            return Vec::new();
+        }
+
         let count_in_progress = state.data.communities_requiring_upgrade.count_in_progress();
         let community_upgrade_concurrency = state.data.community_upgrade_concurrency as usize;
 
