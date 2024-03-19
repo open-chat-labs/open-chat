@@ -15,6 +15,6 @@ pub enum Response {
     TooShort(FieldTooShortResult),
     TooLong(FieldTooLongResult),
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
 }

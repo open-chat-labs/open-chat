@@ -19,7 +19,7 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }

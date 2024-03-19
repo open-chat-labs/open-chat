@@ -14,6 +14,6 @@ pub enum Response {
     TransactionFailed(FailedCryptoTransaction),
     CurrencyNotSupported,
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
 }

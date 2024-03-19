@@ -37,7 +37,7 @@ pub enum Response {
     Success(SuccessResult),
     SwapFailed,
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }

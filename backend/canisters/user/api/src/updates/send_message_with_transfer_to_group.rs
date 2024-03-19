@@ -38,7 +38,7 @@ pub enum Response {
     RulesNotAccepted,
     Retrying(String, CompletedCryptoTransaction),
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
 }
 

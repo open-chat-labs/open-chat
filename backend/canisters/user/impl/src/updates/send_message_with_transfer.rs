@@ -251,7 +251,7 @@ enum PrepareResult {
     TransferCannotBeZero,
     TransferCannotBeToSelf,
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
 }
 

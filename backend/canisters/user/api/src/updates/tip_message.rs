@@ -28,7 +28,7 @@ pub enum Response {
     TransferFailed(String),
     ChatFrozen,
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     UserSuspended,
     Retrying(String),

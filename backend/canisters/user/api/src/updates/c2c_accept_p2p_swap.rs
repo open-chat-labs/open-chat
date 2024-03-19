@@ -23,7 +23,7 @@ pub enum Response {
     Success(u64),
     TransferError(TransferError),
     PinRequired,
-    PinIncorrect(Option<Milliseconds>),
+    PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }

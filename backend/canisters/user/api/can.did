@@ -35,7 +35,7 @@ type SendMessageResponse = variant {
     DuplicateMessageId;
     UserSuspended;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
@@ -169,7 +169,7 @@ type ApproveTransferResponse = variant {
     Success;
     ApproveError : ICRC2_ApproveError;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
@@ -195,7 +195,7 @@ type SwapTokensResponse = variant {
     };
     SwapFailed;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
@@ -250,7 +250,7 @@ type AcceptP2PSwapResponse = variant {
     ChatNotFound;
     UserSuspended;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
@@ -318,7 +318,7 @@ type TipMessageResponse = variant {
     UserSuspended;
     Retrying : text;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : record { text; CompletedCryptoTransaction };
 };
@@ -617,7 +617,7 @@ type SetPinNumberResponse = variant {
     TooShort : FieldTooShortResult;
     TooLong : FieldTooLongResult;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
 };
 
@@ -662,7 +662,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     CommunityRulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
 };
 
@@ -703,7 +703,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     RulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
 };
 
@@ -717,7 +717,7 @@ type WithdrawCryptoResponse = variant {
     TransactionFailed : FailedCryptoTransaction;
     CurrencyNotSupported;
     PinRequired;
-    PinIncorrect : opt Milliseconds;
+    PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
 };
 
