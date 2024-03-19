@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::query;
 use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
+use local_user_index_canister::GlobalUser;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, UserId, VideoCallClaims};
@@ -11,7 +12,7 @@ use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, UserId, Video
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
 async fn access_token(args: Args) -> Response {
-    let Some((user_id, is_diamond)) = read_state(get_user) else {
+    let Some((user, is_diamond)) = read_state(get_user) else {
         return NotAuthorized;
     };
 
@@ -19,31 +20,31 @@ async fn access_token(args: Args) -> Response {
 
     match args.chat {
         Chat::Direct(chat_id) => {
-            if let Err(response) = check_user_access(chat_id, user_id, is_diamond, token_type).await {
+            if let Err(response) = check_user_access(chat_id, user.user_id, is_diamond, user.is_bot, token_type).await {
                 return response;
             }
         }
         Chat::Group(chat_id) => {
-            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, token_type).await {
+            if let Err(response) = check_group_access(chat_id, user.user_id, is_diamond, user.is_bot, token_type).await {
                 return response;
             }
         }
         Chat::Channel(community_id, channel_id) => {
-            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, token_type).await {
+            if let Err(response) =
+                check_channel_access(community_id, channel_id, user.user_id, is_diamond, user.is_bot, token_type).await
+            {
                 return response;
             }
         }
     }
 
-    mutate_state(|state| build_token(user_id, args, state))
+    mutate_state(|state| build_token(user.user_id, args, state))
 }
 
-fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
+fn get_user(state: &RuntimeState) -> Option<(GlobalUser, bool)> {
     state.data.global_users.get_by_principal(&state.env.caller()).map(|u| {
-        (
-            u.user_id,
-            state.data.global_users.is_diamond_member(&u.user_id, state.env.now()),
-        )
+        let is_diamond = state.data.global_users.is_diamond_member(&u.user_id, state.env.now());
+        (u, is_diamond)
     })
 }
 
@@ -73,6 +74,7 @@ async fn check_group_access(
     chat_id: ChatId,
     user_id: UserId,
     is_diamond: bool,
+    is_bot: bool,
     access_type: AccessTokenType,
 ) -> Result<(), Response> {
     match group_canister_c2c_client::c2c_can_issue_access_token(
@@ -80,6 +82,7 @@ async fn check_group_access(
         &group_canister::c2c_can_issue_access_token::Args {
             user_id,
             is_diamond,
+            is_bot,
             access_type,
         },
     )
@@ -92,17 +95,19 @@ async fn check_group_access(
 }
 
 async fn check_channel_access(
-    communty_id: CommunityId,
+    community_id: CommunityId,
     channel_id: ChannelId,
     user_id: UserId,
     is_diamond: bool,
+    is_bot: bool,
     access_type: AccessTokenType,
 ) -> Result<(), Response> {
     match community_canister_c2c_client::c2c_can_issue_access_token_for_channel(
-        communty_id.into(),
+        community_id.into(),
         &community_canister::c2c_can_issue_access_token_for_channel::Args {
             user_id,
             is_diamond,
+            is_bot,
             access_type,
             channel_id,
         },
@@ -119,6 +124,7 @@ async fn check_user_access(
     chat_id: ChatId,
     user_id: UserId,
     is_diamond: bool,
+    is_bot: bool,
     access_type: AccessTokenType,
 ) -> Result<(), Response> {
     match user_canister_c2c_client::c2c_can_issue_access_token(
@@ -126,6 +132,7 @@ async fn check_user_access(
         &user_canister::c2c_can_issue_access_token::Args {
             user_id,
             is_diamond,
+            is_bot,
             access_type,
         },
     )

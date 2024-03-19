@@ -5,6 +5,8 @@ use types::{AccessTokenType, ChannelId, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub is_diamond: bool,
+    #[serde(default)]
+    pub is_bot: bool,
     pub channel_id: ChannelId,
     pub access_type: AccessTokenType,
 }
