@@ -1193,19 +1193,11 @@ export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): bool
 }
 
 export function canDeleteGroup(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canConvertToCommunity(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canChangeVisibility(thing: AccessControlled & HasMembershipRole): boolean {
