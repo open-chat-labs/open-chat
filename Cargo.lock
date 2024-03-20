@@ -2111,7 +2111,7 @@ dependencies = [
 [[package]]
 name = "event_store_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
+source = "git+https://github.com/open-chat-labs/event-store?rev=3fcc99a7aebba7d8668b3bbb108de435133b2c52#3fcc99a7aebba7d8668b3bbb108de435133b2c52"
 dependencies = [
  "candid",
  "serde",
@@ -2121,7 +2121,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
+source = "git+https://github.com/open-chat-labs/event-store?rev=3fcc99a7aebba7d8668b3bbb108de435133b2c52#3fcc99a7aebba7d8668b3bbb108de435133b2c52"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2132,7 +2132,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
+source = "git+https://github.com/open-chat-labs/event-store?rev=3fcc99a7aebba7d8668b3bbb108de435133b2c52#3fcc99a7aebba7d8668b3bbb108de435133b2c52"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
@@ -2147,7 +2147,7 @@ dependencies = [
 [[package]]
 name = "event_store_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=612592809ffd4910851193456e0e663e2a0c610c#612592809ffd4910851193456e0e663e2a0c610c"
+source = "git+https://github.com/open-chat-labs/event-store?rev=3fcc99a7aebba7d8668b3bbb108de435133b2c52#3fcc99a7aebba7d8668b3bbb108de435133b2c52"
 dependencies = [
  "serde",
 ]
