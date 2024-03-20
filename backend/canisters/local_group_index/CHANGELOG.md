@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
 - Anonymize all Group/Community canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
 
+### Fixed
+
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
 ## [[2.0.1098](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1098-local_group_index)] - 2024-03-11
 
 ### Fixed

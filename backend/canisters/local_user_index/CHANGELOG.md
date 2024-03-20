@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Anonymize all User canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
 - Prevent bot users from being able to get video call access tokens ([#5573](https://github.com/open-chat-labs/open-chat/pull/5573))
 
+### Fixed
+
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
 ## [[2.0.1099](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1099-local_user_index)] - 2024-03-11
 
 ### Changed
