@@ -63,7 +63,7 @@
     <div class="content">
         <div class="name">{name}</div>
         <div class="desc" class:fixed={!header}>
-            <Markdown text={description} />
+            <Markdown inline={false} text={description} />
         </div>
         {#if !header}
             <div class="footer">
