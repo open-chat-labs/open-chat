@@ -73,6 +73,8 @@ fn post_upgrade(args: Args) {
         (CanisterId::from_text("hvgxa-wqaaa-aaaaq-aacia-cai").unwrap(), "SNEED"),
         (CanisterId::from_text("uwihq-liaaa-aaaal-qcbrq-cai").unwrap(), "NOBL"),
         (CanisterId::from_text("ek3ei-xyaaa-aaaak-afkma-cai").unwrap(), "DIZNI"),
+        (CanisterId::from_text("hhaaz-2aaaa-aaaaq-aacla-cai").unwrap(), "ICL"),
+        (CanisterId::from_text("gemj7-oyaaa-aaaaq-aacnq-cai").unwrap(), "ELNA"),
     ]
     .into_iter()
     .collect();
