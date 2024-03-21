@@ -61,6 +61,7 @@ fn post_upgrade(args: Args) {
         (CanisterId::from_text("rffwt-piaaa-aaaaq-aabqq-cai").unwrap(), "ICX"),
         (CanisterId::from_text("rxdbk-dyaaa-aaaaq-aabtq-cai").unwrap(), "NUA"),
         (CanisterId::from_text("qbizb-wiaaa-aaaaq-aabwq-cai").unwrap(), "SONIC"),
+        (CanisterId::from_text("r7cp6-6aaaa-aaaag-qco5q-cai").unwrap(), "SNEED"),
         (CanisterId::from_text("6qfxa-ryaaa-aaaai-qbhsq-cai").unwrap(), "TAGGR"),
         (CanisterId::from_text("rh2pm-ryaaa-aaaan-qeniq-cai").unwrap(), "EXE"),
         (CanisterId::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap(), "ckETH"),
