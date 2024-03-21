@@ -1421,10 +1421,12 @@ export class OpenChatAgent extends EventTarget {
             });
 
         userResponse.communities.updated.forEach((c) => {
-            if (c.pinned === undefined) {
-                byCommunity.delete(c.id.communityId);
-            } else {
-                byCommunity.set(c.id.communityId, c.pinned);
+            if (c.pinned !== undefined) {
+                if (c.pinned.length === 0) {
+                    byCommunity.delete(c.id.communityId);
+                } else {
+                    byCommunity.set(c.id.communityId, c.pinned);
+                }
             }
         });
 
