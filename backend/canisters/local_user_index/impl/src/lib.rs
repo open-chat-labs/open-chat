@@ -233,7 +233,6 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
-    #[serde(alias = "event_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
 }

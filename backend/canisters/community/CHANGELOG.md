@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1118](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1118-community)] - 2024-03-21
+
+- Add missing mappings for ICL and ELNA ([#5580](https://github.com/open-chat-labs/open-chat/pull/5580))
+- Add missing mapping for the old SNEED token ([#5581](https://github.com/open-chat-labs/open-chat/pull/5581))
+
+## [[2.0.1115](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1115-community)] - 2024-03-20
+
 ### Added
 
 - Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
@@ -26,8 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Mark old video calls as having ended ([#5572](https://github.com/open-chat-labs/open-chat/pull/5572))
-- Add missing mappings for ICL and ELNA ([#5580](https://github.com/open-chat-labs/open-chat/pull/5580))
-- Add missing mapping for the old SNEED token ([#5581](https://github.com/open-chat-labs/open-chat/pull/5581))
 
 ## [[2.0.1094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1094-community)] - 2024-03-08
 

@@ -236,7 +236,6 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
-    #[serde(alias = "event_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,

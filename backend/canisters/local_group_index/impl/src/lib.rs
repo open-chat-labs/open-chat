@@ -136,7 +136,6 @@ struct Data {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub video_call_operators: Vec<Principal>,
-    #[serde(alias = "event_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],

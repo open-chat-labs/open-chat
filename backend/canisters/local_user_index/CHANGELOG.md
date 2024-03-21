@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1113](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1113-local_user_index)] - 2024-03-20
+
 ### Changed
 
 - Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))

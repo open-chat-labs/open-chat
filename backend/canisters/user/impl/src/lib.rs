@@ -204,9 +204,7 @@ struct Data {
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub video_call_operators: Vec<Principal>,
-    #[serde(alias = "event_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(default)]
     pub pin_number: PinNumber,
     pub rng_seed: [u8; 32],
 }
