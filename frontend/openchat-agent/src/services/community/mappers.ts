@@ -577,8 +577,7 @@ export function apiOptionalCommunityPermissions(
             apiCommunityPermissionRole,
             permissions.createPrivateChannel,
         ),
-        // TODO
-        manage_user_groups: [],
+        manage_user_groups: apiOptional(apiCommunityPermissionRole, permissions.manageUserGroups),
     };
 }
 

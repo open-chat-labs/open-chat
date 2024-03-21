@@ -1227,8 +1227,7 @@ export function apiCommunityPermissions(
         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         change_roles: apiCommunityPermissionRole(permissions.changeRoles),
         create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
-        // TODO
-        manage_user_groups: apiCommunityPermissionRole("admin"),
+        manage_user_groups: apiCommunityPermissionRole(permissions.manageUserGroups),
     };
 }
 
