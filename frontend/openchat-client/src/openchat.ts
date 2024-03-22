@@ -6021,6 +6021,15 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
+        }).then((resp) => {
+            if (resp.kind === "success") {
+                candidate.id = {
+                    kind: "community",
+                    communityId: resp.id,
+                };
+                this.addCommunityLocally(candidate);
+            }
+            return resp;
         }).catch(() => ({
             kind: "failure",
         }));
