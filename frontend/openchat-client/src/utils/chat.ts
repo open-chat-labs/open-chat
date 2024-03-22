@@ -1058,7 +1058,6 @@ export function canStartVideoCalls(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
         return (
             !chat.frozen &&
-            !chat.public &&
             isPermitted(chat.membership.role, chat.permissions.startVideoCall)
         );
     } else {
