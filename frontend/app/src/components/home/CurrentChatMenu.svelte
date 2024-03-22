@@ -69,7 +69,7 @@
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
-    $: canStartVideoCalls = client.canStartVideoCalls(selectedChatSummary.id);
+    $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
     $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
 
     $: incall =
