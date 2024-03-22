@@ -5,7 +5,7 @@
 
 import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
 export type IncomingVideoCall = {
@@ -15,10 +15,43 @@ export type IncomingVideoCall = {
 
 export type VideoCallView = "fullscreen" | "minimised" | "default";
 
+export interface IProviderCall {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setTheme: (theme: any) => void;
+    destroy: () => void;
+    toggleCamera: () => void;
+    toggleMic: () => void;
+    toggleShare: () => void;
+}
+
+export function dailyCall(call: DailyCall): IProviderCall {
+    return {
+        setTheme(theme: DailyThemeConfig) {
+            call.setTheme(theme);
+        },
+        destroy() {
+            call.destroy();
+        },
+        toggleCamera() {
+            call.setLocalVideo(!call.localVideo());
+        },
+        toggleMic() {
+            call.setLocalAudio(!call.localAudio());
+        },
+        toggleShare() {
+            if (get(sharing)) {
+                call.stopScreenShare();
+            } else {
+                call.startScreenShare();
+            }
+        },
+    };
+}
+
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
-    call?: DailyCall;
+    call?: IProviderCall;
     view: VideoCallView;
     threadOpen: boolean;
 };
@@ -33,7 +66,7 @@ export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "bo
 
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
-    setCall: (chatId: ChatIdentifier, call: DailyCall) => {
+    setCall: (chatId: ChatIdentifier, call: IProviderCall) => {
         return activeStore.set({
             status: "joined",
             chatId,

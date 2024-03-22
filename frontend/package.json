@@ -60,6 +60,7 @@
     },
     "dependencies": {
         "@daily-co/daily-js": "^0.57.2",
+        "@huddle01/iframe": "^0.0.13",
         "wavesurfer.js": "^7.7.5",
         "workbox-cacheable-response": "^7.0.0",
         "workbox-expiration": "^7.0.0",

@@ -5755,7 +5755,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
-        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        let url = `${this.config.videoBridgeUrl}/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
         if (avatarId) {
             url += `&initiator-avatarid=${avatarId}`;
         }
@@ -5821,7 +5821,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         throw new Error("Didn't get an access token");
                     }
                     console.log("TOKEN: ", token);
-                    performance.mark("oc_token");
                     return token;
                 })
                 .then((token) => this.getRoomAccessToken(token));

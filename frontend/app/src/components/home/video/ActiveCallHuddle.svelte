@@ -15,14 +15,10 @@
         type AccessTokenType,
         NoMeetingToJoin,
     } from "openchat-client";
-    import { activeVideoCall, camera, dailyCall, microphone, sharing } from "../../../stores/video";
-    import { currentTheme } from "../../../theme/themes";
-    import type { Theme } from "../../../theme/types";
-    import type { DailyThemeConfig } from "@daily-co/daily-js";
-    import daily from "@daily-co/daily-js";
+    import { activeVideoCall } from "../../../stores/video";
     import AreYouSure from "../../AreYouSure.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -34,7 +30,7 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
-    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
+    import { iframeApi } from "@huddle01/iframe";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -42,16 +38,15 @@
     $: selectedChat = client.selectedChatStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
-    $: user = client.user;
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
-    let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
+    let meetingUrl: string | undefined = undefined;
 
-    $: {
-        activeVideoCall.changeTheme(getThemeConfig($currentTheme));
-    }
+    // $: {
+    //     activeVideoCall.changeTheme(getThemeConfig($currentTheme));
+    // }
 
     // Note: _selectedChat is passed in as a reactivity hack for svelte :puke:
     function normaliseChatSummary(
@@ -98,6 +93,20 @@
         }
     }
 
+    onMount(() => {
+        window.addEventListener("message", (ev) => {
+            if (ev.origin === "https://openchat.huddle01.com") {
+                if (ev?.data?.eventData?.event === "app:initialized") {
+                    iframeApi.initialize({
+                        background:
+                            "https://imageserver.petsbest.com/marketing/blog/puppy-diarrhea.jpg",
+                    });
+                }
+                console.log("Maybe Message from huddle iframe: ", ev);
+            }
+        });
+    });
+
     export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
         if (chat === undefined) return;
 
@@ -123,47 +132,23 @@
                 accessType,
             );
 
-            const call = daily.createFrame(iframeContainer, {
-                token,
-                activeSpeakerMode: $videoSpeakerView,
-                showLeaveButton: false,
-                showFullscreenButton: false,
-                startVideoOff: !$videoCameraOn,
-                startAudioOff: !$videoMicOn,
-                iframeStyle: {
-                    width: "100%",
-                    height: "100%",
-                },
-                url: `https://openchat.daily.co/${roomName}`,
-                userName: $user.username,
-                theme: getThemeConfig($currentTheme),
-            });
-
-            call.on("left-meeting", async () => {
-                activeVideoCall.endCall();
-            });
-
-            call.on("participant-updated", (ev) => {
-                if (ev?.participant.local) {
-                    microphone.set(ev?.participant.tracks.audio.state !== "off");
-                    camera.set(ev?.participant.tracks.video.state !== "off");
-                    sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
-                } else {
-                    if (ev?.participant.user_name === $user.username) {
-                        // this means that I have joined the call from somewhere else e.g. another device
-                        activeVideoCall.endCall();
-                    }
-                }
-            });
+            // here is where we need to do something different for huddle
+            meetingUrl = `https://openchat.huddle01.com/${roomName}/token?token=${token}`;
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
                 client.ringOtherUsers();
             }
 
-            await call.join();
-
-            activeVideoCall.setCall(chat.id, dailyCall(call));
+            activeVideoCall.setCall(chat.id, {
+                setTheme(_theme: unknown) {},
+                destroy() {},
+                toggleCamera() {},
+                toggleMic() {
+                    iframeApi.muteMic();
+                },
+                toggleShare() {},
+            });
 
             if (joining) {
                 await client.joinVideoCall(chat.id, BigInt(messageId));
@@ -177,24 +162,6 @@
             activeVideoCall.endCall();
             console.error("Unable to start video call: ", err);
         }
-    }
-
-    function getThemeConfig(theme: Theme): DailyThemeConfig {
-        const dailyTheme = {
-            colors: {
-                accent: `${theme.daily.accent}`,
-                accentText: `${theme.daily.accentText}`,
-                background: `${theme.daily.background}`,
-                backgroundAccent: `${theme.daily.backgroundAccent}`,
-                baseText: `${theme.daily.baseText}`,
-                border: `${theme.daily.border}`,
-                mainAreaBg: `${theme.daily.mainAreaBg}`,
-                mainAreaBgAccent: `${theme.daily.mainAreaBgAccent}`,
-                mainAreaText: `${theme.daily.mainAreaText}`,
-                supportiveText: `${theme.daily.supportiveText}`,
-            },
-        };
-        return dailyTheme;
     }
 
     function switchCall(confirmed: boolean): Promise<void> {
@@ -299,7 +266,15 @@
             </div>
         </SectionHeader>
     {/if}
-    <div class="iframe-container" bind:this={iframeContainer}></div>
+    <iframe
+        id="huddle01-iframe"
+        src={meetingUrl}
+        title="Huddle iframe"
+        scrolling="no"
+        height="100%"
+        width="100%"
+        allowFullScreen
+        allow="camera; microphone; clipboard-read; clipboard-write; display-capture"></iframe>
 </div>
 
 <style lang="scss">

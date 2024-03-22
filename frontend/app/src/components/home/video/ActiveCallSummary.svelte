@@ -81,25 +81,15 @@
     }
 
     function toggleShare() {
-        if ($activeVideoCall?.call) {
-            if ($sharing) {
-                $activeVideoCall.call.stopScreenShare();
-            } else {
-                $activeVideoCall.call.startScreenShare();
-            }
-        }
+        $activeVideoCall?.call?.toggleShare();
     }
 
     function toggleMic() {
-        if ($activeVideoCall?.call) {
-            $activeVideoCall.call.setLocalAudio(!$activeVideoCall.call.localAudio());
-        }
+        $activeVideoCall?.call?.toggleMic();
     }
 
     function toggleCamera() {
-        if ($activeVideoCall?.call) {
-            $activeVideoCall.call.setLocalVideo(!$activeVideoCall.call.localVideo());
-        }
+        $activeVideoCall?.call?.toggleCamera();
     }
 
     function hangup() {

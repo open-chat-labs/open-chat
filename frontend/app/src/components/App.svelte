@@ -39,7 +39,7 @@
     import Head from "./Head.svelte";
     import { snowing } from "../stores/snow";
     import Snow from "./Snow.svelte";
-    import ActiveCall from "./home/video/ActiveCall.svelte";
+    import ActiveCall from "./home/video/ActiveCallHuddle.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
