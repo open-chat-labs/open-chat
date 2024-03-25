@@ -130,8 +130,23 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                         for proposal in proposals.iter() {
                             if let Proposal::NNS(nns) = proposal {
                                 if NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
-                                    && state.data.nns_proposals_requiring_oc_proposals.insert(nns.id)
+                                    && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
                                 {
+                                    // Set up a job to reject the proposal 10 minutes before its deadline.
+                                    // In parallel, we will submit an SNS proposal instructing the SNS governance
+                                    // canister to adopt the proposal. So the resulting vote on the NNS proposal will
+                                    // depend on the outcome of the SNS proposal.
+                                    state.data.timer_jobs.enqueue_job(
+                                        TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
+                                            nns_governance_canister_id: governance_canister_id,
+                                            neuron_id,
+                                            proposal_id: nns.id,
+                                            vote: false,
+                                        }),
+                                        nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
+                                        now,
+                                    );
+
                                     if let Some(oc_neuron_id) = state
                                         .data
                                         .nervous_systems
@@ -149,21 +164,6 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                             now,
                                         );
                                     }
-
-                                    // Set up a job to reject the proposal 10 minutes before its deadline.
-                                    // In parallel, we will submit an SNS proposal instructing the SNS governance
-                                    // canister to adopt the proposal. So the resulting vote on the NNS proposal will
-                                    // depend on the outcome of the SNS proposal.
-                                    state.data.timer_jobs.enqueue_job(
-                                        TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
-                                            nns_governance_canister_id: governance_canister_id,
-                                            neuron_id,
-                                            proposal_id: nns.id,
-                                            vote: false,
-                                        }),
-                                        nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
-                                        now,
-                                    );
                                 }
                             }
                         }
