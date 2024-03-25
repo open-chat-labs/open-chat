@@ -1,1 +1,1 @@
-pub mod infinity_swap;
+pub mod nns_governance;
