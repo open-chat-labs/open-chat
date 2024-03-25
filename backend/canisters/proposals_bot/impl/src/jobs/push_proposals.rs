@@ -1,7 +1,7 @@
 use crate::model::nervous_systems::ProposalToPush;
 use crate::{generate_message_id, mutate_state, read_state, RuntimeState};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -72,13 +72,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
 
     let response = group_canister_c2c_client::c2c_send_message(group_id.into(), &send_message_args).await;
 
-    let result = match response {
-        Ok(group_canister::c2c_send_message::Response::Success(_)) => PushProposalResult::Success,
-        Err(error) => error.into(),
-        _ => PushProposalResult::Error,
-    };
-
-    mark_proposal_pushed(governance_canister_id, proposal, message_id, result);
+    mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
 }
 
 async fn push_channel_proposal(
@@ -109,53 +103,31 @@ async fn push_channel_proposal(
 
     let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;
 
-    let result = match response {
-        Ok(community_canister::c2c_send_message::Response::Success(_)) => PushProposalResult::Success,
-        Err(error) => error.into(),
-        _ => PushProposalResult::Error,
-    };
-
-    mark_proposal_pushed(governance_canister_id, proposal, message_id, result);
+    mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
 }
 
-fn mark_proposal_pushed(
-    governance_canister_id: CanisterId,
-    proposal: Proposal,
-    message_id: MessageId,
-    result: PushProposalResult,
-) {
+fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id: MessageId, failed: bool) {
     mutate_state(|state| {
-        match result {
-            PushProposalResult::Success => {
-                state
-                    .data
-                    .nervous_systems
-                    .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
-            }
-            PushProposalResult::Error => {
-                state
-                    .data
-                    .nervous_systems
-                    .mark_proposal_push_failed(&governance_canister_id, proposal);
-            }
-            PushProposalResult::Duplicate => return,
+        if failed {
+            state
+                .data
+                .nervous_systems
+                .mark_proposal_push_failed(&governance_canister_id, proposal);
+        } else {
+            state
+                .data
+                .nervous_systems
+                .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
         }
         start_job_if_required(state);
     });
 }
 
-enum PushProposalResult {
-    Success,
-    Duplicate,
-    Error,
-}
-
-impl From<(RejectionCode, String)> for PushProposalResult {
-    fn from((code, error): (RejectionCode, String)) -> Self {
-        if code == RejectionCode::CanisterError && error.contains("MessageId") {
-            PushProposalResult::Duplicate
-        } else {
-            PushProposalResult::Error
-        }
+fn is_failure<T>(response: CallResult<T>) -> bool {
+    match response {
+        // If the messageId has already been used, treat that as success
+        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => false,
+        Err(_) => true,
+        _ => false,
     }
 }
