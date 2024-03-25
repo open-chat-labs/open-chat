@@ -42,6 +42,7 @@ import type {
     MessagePermissions,
     OptionalMessagePermissions,
     OptionUpdate,
+    GovernanceProposalsSubtype,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -260,7 +261,6 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
-        lastUpdated: undefined,
     };
 }
 
@@ -442,7 +442,7 @@ export function mergeUnconfirmedIntoSummary(
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
             latestMessage === undefined ||
-            latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
+            latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
         }
@@ -524,6 +524,7 @@ function mergePermissions(
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
+        startVideoCall: updated.startVideoCall ?? current.startVideoCall,
         messagePermissions: mergeMessagePermissions(
             current.messagePermissions,
             updated.messagePermissions,
@@ -1053,6 +1054,17 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
+export function canStartVideoCalls(chat: ChatSummary): boolean {
+    if (chat.kind !== "direct_chat") {
+        return (
+            !chat.frozen &&
+            isPermitted(chat.membership.role, chat.permissions.startVideoCall)
+        );
+    } else {
+        return true;
+    }
+}
+
 export function canPinMessages(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.pinMessages);
@@ -1180,19 +1192,11 @@ export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): bool
 }
 
 export function canDeleteGroup(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canConvertToCommunity(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canChangeVisibility(thing: AccessControlled & HasMembershipRole): boolean {
@@ -1712,16 +1716,20 @@ export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
     cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
-    if (transfer.kind !== "completed") {
-        return undefined;
+    if (transfer.kind === "completed") {
+        return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
     }
+}
 
-    const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
-
-    return transactionUrlFormat
-        .replace("{block_index}", transfer.blockIndex.toString())
-        .replace("{transaction_index}", transfer.blockIndex.toString())
-        .replace("{transaction_hash}", transfer.transactionHash ?? "");
+export function buildTransactionUrlByIndex(
+    transactionIndex: bigint,
+    ledger: string,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): string | undefined {
+    return cryptoLookup[ledger].transactionUrlFormat.replace(
+        "{transaction_index}",
+        transactionIndex.toString(),
+    );
 }
 
 export function buildCryptoTransferText(
@@ -1855,6 +1863,9 @@ export function diffGroupPermissions(
     if (original.deleteMessages !== updated.deleteMessages) {
         diff.deleteMessages = updated.deleteMessages;
     }
+    if (original.startVideoCall !== updated.startVideoCall) {
+        diff.startVideoCall = updated.startVideoCall;
+    }
     if (original.pinMessages !== updated.pinMessages) {
         diff.pinMessages = updated.pinMessages;
     }
@@ -1910,4 +1921,10 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
+}
+
+export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
+    subtype: GovernanceProposalsSubtype;
+} {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }

@@ -79,6 +79,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         c.token0_transfer_out.block_index,
                         c.token1_transfer_out.block_index,
                         state.env.now(),
+                        &mut state.data.event_store_client,
                     ) {
                         status_to_push_c2c = Some(P2PSwapStatus::Completed(status));
                     }
@@ -90,6 +91,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 state.data.user_canister_events_queue.push(
                     chat_id.into(),
                     UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                        thread_root_message_id: m.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
                         message_id: m.message_id,
                         status,
                     })),

@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction, SuspensionDuration,
-    TimestampMillis, UserId,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
+    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
 };
 
 mod lifecycle;
@@ -23,6 +23,7 @@ pub use queries::*;
 pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
+    ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 
@@ -82,7 +83,7 @@ pub struct ChannelSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     UsernameChanged(Box<UsernameChanged>),
     DisplayNameChanged(Box<DisplayNameChanged>),
@@ -92,42 +93,43 @@ pub enum Event {
     UserSuspended(Box<UserSuspended>),
     // TODO: This should take MessageContentInitial
     OpenChatBotMessage(Box<MessageContent>),
+    OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UsernameChanged {
     pub username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DisplayNameChanged {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PhoneNumberConfirmed {
     pub phone_number: PhoneNumber,
     pub storage_added: u64,
     pub new_storage_limit: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct StorageUpgraded {
     pub cost: types::nns::CryptoAmount,
     pub storage_added: u64,
     pub new_storage_limit: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReferredUserRegistered {
     pub user_id: UserId,
     pub username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserSuspended {
     pub timestamp: TimestampMillis,
     pub duration: SuspensionDuration,
@@ -135,21 +137,28 @@ pub struct UserSuspended {
     pub suspended_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessageV2 {
+    pub thread_root_message_id: Option<MessageId>,
+    pub content: MessageContentInitial,
+    pub mentioned: Vec<User>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
@@ -171,6 +180,7 @@ pub enum UserCanisterEvent {
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
+    StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
 }
 
@@ -184,6 +194,7 @@ pub struct SendMessagesArgs {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SendMessageArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub sender_message_index: MessageIndex,
     pub content: MessageContentInternal,
@@ -200,17 +211,20 @@ pub enum C2CReplyContext {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EditMessageArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub content: MessageContent,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ToggleReactionArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub reaction: Reaction,
     pub added: bool,
@@ -221,7 +235,7 @@ pub struct ToggleReactionArgs {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TipMessageArgs {
-    pub thread_root_message_index: Option<MessageIndex>,
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
     pub token: Cryptocurrency,
@@ -239,13 +253,21 @@ pub struct MarkMessagesReadArgs {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapStatusChange {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub status: P2PSwapStatus,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct JoinVideoCall {
+pub struct StartVideoCallArgs {
+    pub message_id: MessageId,
     pub message_index: MessageIndex,
+    pub max_duration: Option<Milliseconds>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct JoinVideoCall {
+    pub message_id: MessageId,
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {

@@ -1,3 +1,4 @@
+use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -263,6 +264,7 @@ impl<M: EventsMap> ChatEventsList<M> {
 
 pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
     events_list: &'r ChatEventsList<M>,
+    last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
 }
 
@@ -275,16 +277,21 @@ impl<'r, M> Deref for ChatEventsListReader<'r, M> {
 }
 
 impl<'r, M: EventsMap + 'r> ChatEventsListReader<'r, M> {
-    pub(crate) fn new(events_list: &ChatEventsList<M>) -> ChatEventsListReader<M> {
-        Self::with_min_visible_event_index(events_list, EventIndex::default())
+    pub(crate) fn new(
+        events_list: &'r ChatEventsList<M>,
+        last_updated_timestamps: &'r LastUpdatedTimestamps,
+    ) -> ChatEventsListReader<'r, M> {
+        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
-        events_list: &ChatEventsList<M>,
+        events_list: &'r ChatEventsList<M>,
+        last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
-    ) -> ChatEventsListReader<M> {
+    ) -> ChatEventsListReader<'r, M> {
         ChatEventsListReader {
             events_list,
+            last_updated_timestamps,
             min_visible_event_index,
         }
     }
@@ -390,10 +397,7 @@ pub trait Reader {
         &self,
         since: TimestampMillis,
         my_user_id: Option<UserId>,
-    ) -> Option<EventWrapper<Message>> {
-        self.latest_message_event(my_user_id)
-            .filter(|m| m.event.last_updated.unwrap_or(m.timestamp) > since)
-    }
+    ) -> Option<EventWrapper<Message>>;
 
     fn hydrate(&self, event_or_expired_range: EventOrExpiredRangeInternal, my_user_id: Option<UserId>) -> EventOrExpiredRange {
         match event_or_expired_range {
@@ -505,6 +509,16 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
+
+    fn latest_message_event_if_updated(
+        &self,
+        since: TimestampMillis,
+        my_user_id: Option<UserId>,
+    ) -> Option<EventWrapper<Message>> {
+        self.latest_message_event(my_user_id).filter(|m| {
+            m.timestamp > since || self.last_updated_timestamps.last_updated(None, m.index).unwrap_or_default() > since
+        })
+    }
 }
 
 fn try_into_message_event(
@@ -574,6 +588,7 @@ mod tests {
     use super::*;
     use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
+    use event_store_producer::NullRuntime;
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};
@@ -735,20 +750,23 @@ mod tests {
 
         for i in 0..50 {
             let message_id = MessageId::from((now + i) as u128);
-            events.push_message(PushMessageArgs {
-                sender: user_id,
-                thread_root_message_index: None,
-                message_id,
-                content: MessageContentInternal::Text(TextContentInternal {
-                    text: "hello".to_string(),
-                }),
-                mentioned: Vec::new(),
-                replies_to: None,
-                now,
-                forwarded: false,
-                sender_is_bot: false,
-                correlation_id: i,
-            });
+            events.push_message::<NullRuntime>(
+                PushMessageArgs {
+                    sender: user_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContentInternal::Text(TextContentInternal {
+                        text: "hello".to_string(),
+                    }),
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    now,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    correlation_id: i,
+                },
+                None,
+            );
             events.push_main_event(
                 ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,

@@ -56,18 +56,19 @@ pub mod happy_path {
 
     pub fn invite_users_to_group(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
         user_ids: Vec<UserId>,
     ) {
         let response = super::invite_users_to_group(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
             &local_user_index_canister::invite_users_to_group::Args {
                 group_id,
                 user_ids,
+                caller_username: user.username(),
                 correlation_id: 0,
             },
         );
@@ -98,14 +99,14 @@ pub mod happy_path {
 
     pub fn add_users_to_group(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
         users: Vec<(UserId, Principal)>,
     ) {
         invite_users_to_group(
             env,
-            sender,
+            user,
             local_user_index_canister_id,
             group_id,
             users.iter().map(|(user_id, _)| *user_id).collect(),
@@ -120,16 +121,20 @@ pub mod happy_path {
 
     pub fn invite_users_to_community(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         user_ids: Vec<UserId>,
     ) {
         let response = super::invite_users_to_community(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
+            &local_user_index_canister::invite_users_to_community::Args {
+                community_id,
+                user_ids,
+                caller_username: user.username(),
+            },
         );
 
         match response {
@@ -140,7 +145,7 @@ pub mod happy_path {
 
     pub fn invite_users_to_channel(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         channel_id: ChannelId,
@@ -148,12 +153,13 @@ pub mod happy_path {
     ) {
         let response = super::invite_users_to_channel(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
             &local_user_index_canister::invite_users_to_channel::Args {
                 community_id,
                 channel_id,
                 user_ids,
+                caller_username: user.username(),
             },
         );
 
@@ -212,14 +218,14 @@ pub mod happy_path {
 
     pub fn add_users_to_community(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         users: Vec<(UserId, Principal)>,
     ) {
         invite_users_to_community(
             env,
-            sender,
+            user,
             local_user_index_canister_id,
             community_id,
             users.iter().map(|(user_id, _)| *user_id).collect(),

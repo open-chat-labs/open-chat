@@ -1,13 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
-use candid::Principal;
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use event_relay_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
-use tracing::info;
+use std::time::Duration;
+use tracing::{error, info};
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -26,16 +26,20 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    let local_user_indexes = vec!["nq4qv-wqaaa-aaaaf-bhdgq-cai", "aboy3-giaaa-aaaar-aaaaq-cai"];
-    let local_group_indexes = vec!["suaf3-hqaaa-aaaaf-bfyoa-cai", "ainth-qaaaa-aaaar-aaaba-cai"];
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(sync_salt_to_event_store()));
+}
 
-    mutate_state(|state| {
-        for principal in local_user_indexes
-            .into_iter()
-            .chain(local_group_indexes.into_iter())
-            .map(|s| Principal::from_text(s).unwrap())
-        {
-            state.data.push_events_whitelist.insert(principal);
-        }
+async fn sync_salt_to_event_store() {
+    let (event_store_canister_id, salt) = read_state(|state| {
+        (
+            state.data.event_store_client.info().event_store_canister_id,
+            state.data.salt.get(),
+        )
     });
+
+    if let Err(error) = ic_cdk::call::<_, ()>(event_store_canister_id, "set_salt", (salt,)).await {
+        error!("Failed to sync salt to event store. Error: {error:?}")
+    } else {
+        info!("Salt synced to event store");
+    }
 }

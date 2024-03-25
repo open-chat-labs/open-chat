@@ -1,4 +1,5 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
+use crate::env::VIDEO_CALL_OPERATOR;
 use crate::rng::random_principal;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
@@ -133,7 +134,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
-        video_call_operators: vec![controller],
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -155,7 +156,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
         event_relay_canister_id,
-        video_call_operators: vec![controller],
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -236,7 +237,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         group_index_canister_id,
         registry_canister_id,
-        neuron_controller_canister_id: Principal::anonymous(),
         nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
@@ -335,7 +335,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             local_user_index_canister_id,
             local_group_index_canister_id,
         ],
-        event_sink_canister_id: Principal::anonymous(),
+        event_store_canister_id: Principal::anonymous(),
         cycles_dispenser_canister_id,
         chat_ledger_canister_id,
         chat_governance_canister_id,
@@ -448,8 +448,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_init_args,
     );
 
-    // Tick a load of times so that all of the child canisters have time to get installed
-    tick_many(env, 30);
+    // Tick a load of times so that all the child canisters have time to get installed
+    tick_many(env, 10);
 
     CanisterIds {
         user_index: user_index_canister_id,

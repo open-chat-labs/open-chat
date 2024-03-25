@@ -446,6 +446,7 @@
                 rootEvent={threadRootEvent}
                 chat={$selectedChat}
                 on:retrySend={retrySend}
+                on:removePreview
                 on:sendMessageWithContent={sendMessageWithContent}
                 on:sendMessageWithAttachment={sendMessageWithAttachment}
                 on:forwardMessage={forwardMessage}

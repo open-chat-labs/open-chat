@@ -11,7 +11,7 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
-use types::{icrc1, CanisterId, MultiUserChat, ProposalId, SnsNeuronId, TimestampMillis, UserId};
+use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -23,6 +23,7 @@ pub enum TimerJob {
     ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
+    VoteOnNnsProposal(VoteOnNnsProposalJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -37,9 +38,16 @@ pub struct SubmitProposalJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SubmitOCProposalForNnsProposalJob {
     pub nns_proposal_id: ProposalId,
-    pub nns_proposal_deadline: TimestampMillis,
+    pub nns_proposal_title: String,
+    pub nns_proposal_summary: String,
+    pub nns_neuron_id: NnsNeuronId,
     pub oc_neuron_id: SnsNeuronId,
-    pub proposal: ProposalToSubmit,
+}
+
+impl SubmitOCProposalForNnsProposalJob {
+    fn build_proposal(&self) -> ProposalToSubmit {
+        todo!()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -76,6 +84,14 @@ pub struct RefreshNeuronJob {
     pub neuron_id: SnsNeuronId,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct VoteOnNnsProposalJob {
+    pub nns_governance_canister_id: CanisterId,
+    pub neuron_id: NnsNeuronId,
+    pub proposal_id: ProposalId,
+    pub vote: bool,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -85,6 +101,7 @@ impl Job for TimerJob {
             TimerJob::ProcessUserRefund(job) => job.execute(),
             TimerJob::TopUpNeuron(job) => job.execute(),
             TimerJob::RefreshNeuron(job) => job.execute(),
+            TimerJob::VoteOnNnsProposal(job) => job.execute(),
         }
     }
 }
@@ -107,25 +124,17 @@ impl Job for SubmitProposalJob {
 impl Job for SubmitOCProposalForNnsProposalJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
-            match submit_proposal(SNS_GOVERNANCE_CANISTER_ID, self.oc_neuron_id, self.proposal.clone())
+            if submit_proposal(SNS_GOVERNANCE_CANISTER_ID, self.oc_neuron_id, self.build_proposal())
                 .await
-                .map(|r| r.command)
+                .is_err()
             {
-                Ok(Some(manage_neuron_response::Command::MakeProposal(r))) => mutate_state(|state| {
-                    state.data.oc_proposals_for_nns_proposals.push(
-                        r.proposal_id.unwrap().id,
-                        self.nns_proposal_id,
-                        self.nns_proposal_deadline,
-                    );
-                }),
-                Err(_) => mutate_state(|state| {
+                mutate_state(|state| {
                     let now = state.env.now();
                     state
                         .data
                         .timer_jobs
                         .enqueue_job(TimerJob::SubmitOCProposalForNnsProposal(self), now + MINUTE_IN_MS, now);
-                }),
-                _ => {}
+                });
             }
         });
     }
@@ -236,6 +245,41 @@ impl Job for RefreshNeuronJob {
                         .data
                         .timer_jobs
                         .enqueue_job(TimerJob::RefreshNeuron(self), now + (10 * SECOND_IN_MS), now);
+                }),
+            }
+        })
+    }
+}
+
+impl Job for VoteOnNnsProposalJob {
+    fn execute(self) {
+        use nns_governance_canister::types::manage_neuron;
+        use nns_governance_canister::types::manage_neuron_response;
+
+        let args = nns_governance_canister::manage_neuron::Args {
+            id: Some(self.neuron_id.into()),
+            neuron_id_or_subaccount: None,
+            command: Some(manage_neuron::Command::RegisterVote(manage_neuron::RegisterVote {
+                proposal: Some(self.proposal_id.into()),
+                vote: if self.vote { 1 } else { 2 },
+            })),
+        };
+
+        ic_cdk::spawn(async move {
+            match nns_governance_canister_c2c_client::manage_neuron(self.nns_governance_canister_id, &args).await {
+                Ok(response) => match response.command.unwrap() {
+                    manage_neuron_response::Command::RegisterVote(_) => {}
+                    manage_neuron_response::Command::Error(error) => {
+                        error!(?error, "Failed to vote on NNS proposal")
+                    }
+                    _ => unreachable!(),
+                },
+                Err(_) => mutate_state(|state| {
+                    let now = state.env.now();
+                    state
+                        .data
+                        .timer_jobs
+                        .enqueue_job(TimerJob::VoteOnNnsProposal(self), now + MINUTE_IN_MS, now);
                 }),
             }
         })

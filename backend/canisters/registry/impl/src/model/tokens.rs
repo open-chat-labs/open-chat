@@ -1,5 +1,7 @@
+use dataurl::DataUrl;
 use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
+use sha256::sha256;
 use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -27,6 +29,7 @@ impl Tokens {
         if self.exists(ledger_canister_id) {
             false
         } else {
+            let logo_id = logo_id(&logo);
             self.tokens.push(TokenDetails {
                 ledger_canister_id,
                 name,
@@ -34,12 +37,14 @@ impl Tokens {
                 decimals,
                 fee,
                 logo,
+                logo_id,
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
-                added: now,
-                last_updated: now,
                 supported_standards,
+                added: now,
+                enabled: true,
+                last_updated: now,
             });
             self.last_updated = now;
             true
@@ -47,11 +52,7 @@ impl Tokens {
     }
 
     pub fn update(&mut self, args: registry_canister::update_token::Args, now: TimestampMillis) -> bool {
-        if let Some(token) = self
-            .tokens
-            .iter_mut()
-            .find(|t| t.ledger_canister_id == args.ledger_canister_id)
-        {
+        if let Some(token) = self.get_mut(args.ledger_canister_id) {
             if let Some(name) = args.name {
                 token.name = name;
             }
@@ -79,7 +80,7 @@ impl Tokens {
     }
 
     pub fn set_standards(&mut self, ledger_canister_id: CanisterId, supported_standards: Vec<String>, now: TimestampMillis) {
-        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+        if let Some(token) = self.get_mut(ledger_canister_id) {
             if token.supported_standards != supported_standards {
                 token.supported_standards = supported_standards;
                 token.last_updated = now;
@@ -89,9 +90,19 @@ impl Tokens {
 
     #[allow(dead_code)]
     pub fn set_fee(&mut self, ledger_canister_id: CanisterId, fee: u128, now: TimestampMillis) {
-        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+        if let Some(token) = self.get_mut(ledger_canister_id) {
             if token.fee != fee {
                 token.fee = fee;
+                token.last_updated = now;
+                self.last_updated = now;
+            }
+        }
+    }
+
+    pub fn set_enabled(&mut self, ledger_canister_id: CanisterId, enabled: bool, now: TimestampMillis) {
+        if let Some(token) = self.get_mut(ledger_canister_id) {
+            if token.enabled != enabled {
+                token.enabled = enabled;
                 token.last_updated = now;
             }
         }
@@ -106,8 +117,22 @@ impl Tokens {
     }
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
-        self.tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id)
+        self.get(ledger_canister_id).is_some()
     }
+
+    pub fn get(&self, ledger_canister_id: CanisterId) -> Option<&TokenDetails> {
+        self.tokens.iter().find(|t| t.ledger_canister_id == ledger_canister_id)
+    }
+
+    fn get_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
+        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+    }
+}
+
+fn logo_id(logo: &str) -> Option<u128> {
+    DataUrl::parse(logo)
+        .is_ok()
+        .then(|| u128::from_be_bytes(sha256(logo.as_bytes())[..16].try_into().unwrap()))
 }
 
 #[derive(Serialize)]
@@ -118,6 +143,7 @@ pub struct TokenMetrics {
     decimals: u8,
     fee: u128,
     logo_length: usize,
+    logo_id: Option<u128>,
     info_url: String,
     how_to_buy_url: String,
     transaction_url_format: String,
@@ -135,6 +161,7 @@ impl From<&TokenDetails> for TokenMetrics {
             decimals: value.decimals,
             fee: value.fee,
             logo_length: value.logo.len(),
+            logo_id: value.logo_id,
             info_url: value.info_url.clone(),
             how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),

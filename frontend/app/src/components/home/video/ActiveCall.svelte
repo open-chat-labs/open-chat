@@ -4,8 +4,8 @@
     import { rtlStore } from "../../../stores/rtl";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
+    import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
+    import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
     import {
         chatIdentifiersEqual,
         type ChatSummary,
@@ -13,6 +13,7 @@
         type ChatIdentifier,
         AvatarSize,
         type AccessTokenType,
+        NoMeetingToJoin,
     } from "openchat-client";
     import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
@@ -33,25 +34,30 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
+    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: selectedChatId = client.selectedChatId;
+    $: selectedChat = client.selectedChatStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
     $: user = client.user;
-    $: chat = normaliseChatSummary($activeVideoCall?.chatId);
+    $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
-    let confirmSwitchTo: ChatSummary | undefined = undefined;
+    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
     }
 
-    function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
+    // Note: _selectedChat is passed in as a reactivity hack for svelte :puke:
+    function normaliseChatSummary(
+        _selectedChat: ChatSummary | undefined,
+        chatId: ChatIdentifier | undefined,
+    ) {
         if (chatId) {
             const chat = client.lookupChatSummary(chatId);
             if (chat) {
@@ -63,7 +69,8 @@
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
-                            messageIndex: chat.videoCallInProgress,
+                            // TODO undo this as and when we can support threads in direct chats
+                            messageIndex: undefined,
                         };
                     case "group_chat":
                         return {
@@ -91,13 +98,16 @@
         }
     }
 
-    export async function startOrJoinVideoCall(chat: ChatSummary, messageIndex?: number) {
+    export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
+        if (chat === undefined) return;
+
         try {
-            // todo - we need to figure out if we are starting the call or joining the call
             if ($activeVideoCall !== undefined) {
-                confirmSwitchTo = chat;
+                confirmSwitchTo = { chat, join };
                 return;
             }
+
+            performance.mark("start");
 
             // close and threads we have open in the right panel
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
@@ -105,19 +115,27 @@
 
             activeVideoCall.joining(chat.id);
 
-            const accessType: AccessTokenType =
-                messageIndex === undefined
-                    ? { kind: "start_video_call" }
-                    : { kind: "join_video_call", messageIndex };
+            const accessType: AccessTokenType = join
+                ? { kind: "join_video_call" }
+                : { kind: "start_video_call" };
 
-            // first we need tojoin access jwt from the oc backend
-            const { token, roomName } = await client.getVideoChatAccessToken(chat.id, accessType);
+            // first we need to get access jwt from the oc backend
+            const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
+                chat.id,
+                accessType,
+            );
+
+            performance.mark("daily_token");
+            performance.measure("get_oc_token", "start", "oc_token");
+            performance.measure("get_daily_token", "oc_token", "daily_token");
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                activeSpeakerMode: false,
+                activeSpeakerMode: $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
+                startVideoOff: !$videoCameraOn,
+                startAudioOff: !$videoMicOn,
                 iframeStyle: {
                     width: "100%",
                     height: "100%",
@@ -126,6 +144,8 @@
                 userName: $user.username,
                 theme: getThemeConfig($currentTheme),
             });
+
+            performance.mark("daily_frame");
 
             call.on("left-meeting", async () => {
                 activeVideoCall.endCall();
@@ -136,18 +156,45 @@
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                } else {
+                    if (ev?.participant.user_name === $user.username) {
+                        // this means that I have joined the call from somewhere else e.g. another device
+                        activeVideoCall.endCall();
+                    }
                 }
             });
 
+            // if we are not joining aka starting we need to tell the other users
+            if (!joining) {
+                client.ringOtherUsers();
+            }
+
             await call.join();
+
+            performance.mark("daily_joined");
+            performance.measure("get_daily_frame", "daily_token", "daily_frame");
+            performance.measure("get_daily_joined", "daily_frame", "daily_joined");
 
             activeVideoCall.setCall(chat.id, call);
 
-            if (chat.videoCallInProgress !== undefined) {
-                await client.joinVideoCall(chat.id, chat.videoCallInProgress);
+            performance.mark("end");
+            performance.measure("total", "start", "end");
+
+            console.log("OCToken: ", performance.getEntriesByName("get_oc_token"));
+            console.log("DailyToken: ", performance.getEntriesByName("get_daily_token"));
+            console.log("DailyFrame: ", performance.getEntriesByName("get_daily_frame"));
+            console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
+            console.log("Total: ", performance.getEntriesByName("total"));
+
+            if (joining) {
+                await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
-            toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
+            if (err instanceof NoMeetingToJoin) {
+                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
+            } else {
+                toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
+            }
             activeVideoCall.endCall();
             console.error("Unable to start video call: ", err);
         }
@@ -174,18 +221,24 @@
     function switchCall(confirmed: boolean): Promise<void> {
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
-            const chat = confirmSwitchTo;
+            const { chat, join } = confirmSwitchTo;
             confirmSwitchTo = undefined;
-            return startOrJoinVideoCall(chat);
+            return startOrJoinVideoCall(chat, join);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();
     }
 
     function toggleFullscreen() {
-        if ($activeVideoCall) {
-            activeVideoCall.fullscreen(!$activeVideoCall.fullscreen);
+        if ($activeVideoCall?.view === "default") {
+            activeVideoCall.setView("fullscreen");
+        } else if ($activeVideoCall?.view === "fullscreen") {
+            activeVideoCall.setView("default");
         }
+    }
+
+    function minimise() {
+        activeVideoCall.setView("minimised");
     }
 
     function hangup() {
@@ -205,71 +258,70 @@
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-{#if $activeVideoCall}
-    <div
-        id="video-call-container"
-        class="video-call-container"
-        class:visible={$activeVideoCall &&
-            !(threadOpen && $mobileWidth) &&
-            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
-        {#if chat !== undefined}
-            <SectionHeader shadow flush>
-                <div class="header">
-                    {#if $mobileWidth}
-                        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
-                            <HoverIcon>
-                                {#if $rtlStore}
-                                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                                {:else}
-                                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                                {/if}
-                            </HoverIcon>
+<div
+    id="video-call-container"
+    class="video-call-container"
+    class:visible={$activeVideoCall &&
+        $activeVideoCall.view !== "minimised" &&
+        !(threadOpen && $mobileWidth) &&
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
+    {#if chat !== undefined}
+        <SectionHeader shadow flush>
+            <div class="header">
+                {#if $mobileWidth}
+                    <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+                        <HoverIcon>
+                            {#if $rtlStore}
+                                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        </HoverIcon>
+                    </div>
+                {/if}
+                <div class="details">
+                    {#if $activeVideoCall?.status === "joining"}
+                        <div class="joining">
+                            <FancyLoader loop />
+                        </div>
+                    {:else}
+                        <div class="avatar">
+                            <Avatar
+                                statusBorder={"var(--section-bg)"}
+                                url={chat.avatarUrl}
+                                showStatus
+                                userId={chat.userId?.userId}
+                                size={AvatarSize.Default} />
                         </div>
                     {/if}
-                    <div class="details">
-                        {#if $activeVideoCall?.status === "joining"}
-                            <div class="joining">
-                                <FancyLoader loop />
-                            </div>
-                        {:else}
-                            <div class="avatar">
-                                <Avatar
-                                    url={chat.avatarUrl}
-                                    showStatus
-                                    userId={chat.userId?.userId}
-                                    size={AvatarSize.Default} />
-                            </div>
-                        {/if}
-                        <h2 class="name">{chat.name}</h2>
-                        {#if $activeVideoCall?.status === "joining"}
-                            <Typing />
-                        {/if}
-                    </div>
-                    <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                        {#if chat.chatId && chat.messageIndex !== undefined}
-                            <ActiveCallThreadSummary
-                                chatId={chat.chatId}
-                                messageIndex={chat.messageIndex} />
-                        {/if}
-                        <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                            <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                        {#if !$mobileWidth}
-                            <HoverIcon on:click={toggleFullscreen}>
-                                {#if $activeVideoCall?.fullscreen}
-                                    <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                                {:else}
-                                    <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                                {/if}
-                            </HoverIcon>
-                        {/if}
-                    </div>
+                    <h2 class="name">{chat.name}</h2>
+                    {#if $activeVideoCall?.status === "joining"}
+                        <Typing />
+                    {/if}
                 </div>
-            </SectionHeader>
-        {/if}
-        <div class="iframe-container" bind:this={iframeContainer}></div>
-    </div>
-{/if}
+                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                    {#if chat.chatId && chat.messageIndex !== undefined}
+                        <ActiveCallThreadSummary
+                            chatId={chat.chatId}
+                            messageIndex={chat.messageIndex} />
+                    {/if}
+                    <HoverIcon on:click={minimise}>
+                        <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    {#if !$mobileWidth}
+                        <HoverIcon on:click={toggleFullscreen}>
+                            <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    {/if}
+                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                        <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
+                    </HoverIcon>
+                </div>
+            </div>
+        </SectionHeader>
+    {/if}
+    <div class="iframe-container" bind:this={iframeContainer}></div>
+</div>
 
 <style lang="scss">
     :global(.video-call-container .section-header) {

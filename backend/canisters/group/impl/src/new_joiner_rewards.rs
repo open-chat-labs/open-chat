@@ -69,20 +69,23 @@ fn update_status(user_id: &UserId, status: NewJoinerRewardStatus, state: &mut Ru
 }
 
 fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryptoTransaction, state: &mut RuntimeState) {
-    state.data.chat.events.push_message(PushMessageArgs {
-        sender: OPENCHAT_BOT_USER_ID,
-        thread_root_message_index: None,
-        message_id: state.env.rng().gen(),
-        content: MessageContentInternal::Crypto(CryptoContentInternal {
-            recipient: user_id,
-            transfer: CompletedCryptoTransaction::NNS(transfer),
-            caption: None,
-        }),
-        mentioned: Vec::new(),
-        replies_to: None,
-        forwarded: false,
-        sender_is_bot: true,
-        correlation_id: 0,
-        now: state.env.now(),
-    });
+    state.data.chat.events.push_message(
+        PushMessageArgs {
+            sender: OPENCHAT_BOT_USER_ID,
+            thread_root_message_index: None,
+            message_id: state.env.rng().gen(),
+            content: MessageContentInternal::Crypto(CryptoContentInternal {
+                recipient: user_id,
+                transfer: CompletedCryptoTransaction::NNS(transfer),
+                caption: None,
+            }),
+            mentioned: Vec::new(),
+            replies_to: None,
+            forwarded: false,
+            sender_is_bot: true,
+            correlation_id: 0,
+            now: state.env.now(),
+        },
+        Some(&mut state.data.event_store_client),
+    );
 }

@@ -3,7 +3,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use ic_cdk_macros::query;
-use types::MessagesResponse;
+use types::{EventIndex, MessagesResponse};
 use user_canister::messages_by_message_index::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -17,8 +17,14 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
     }
 
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
+        let Some(events_reader) = chat
+            .events
+            .events_reader(EventIndex::default(), args.thread_root_message_index)
+        else {
+            return ThreadMessageNotFound;
+        };
+
         let my_user_id = state.env.canister_id().into();
-        let events_reader = chat.events.main_events_reader();
         let messages: Vec<_> = args
             .messages
             .into_iter()

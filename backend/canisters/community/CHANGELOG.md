@@ -5,11 +5,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+## [[2.0.1118](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1118-community)] - 2024-03-21
+
+### Fixed
+
+- Add missing mappings for ICL and ELNA ([#5580](https://github.com/open-chat-labs/open-chat/pull/5580))
+- Add missing mapping for the old SNEED token ([#5581](https://github.com/open-chat-labs/open-chat/pull/5581))
+
+## [[2.0.1115](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1115-community)] - 2024-03-20
+
+### Added
+
+- Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
+- Push event each time a user tips a message ([#5521](https://github.com/open-chat-labs/open-chat/pull/5521))
+- Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
+- Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
+- Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
+- Push backdated events for tips, edits, reactions, swaps + video calls ([#5541](https://github.com/open-chat-labs/open-chat/pull/5541))
+- Add optional PIN for sending crypto transfers ([#5571](https://github.com/open-chat-labs/open-chat/pull/5571))
+- Push backdated message events ([#5575](https://github.com/open-chat-labs/open-chat/pull/5575))
+
+### Changed
+
+- Check start video call permission in access_token ([#5524](https://github.com/open-chat-labs/open-chat/pull/5524))
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Anonymize all Community canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+- Fallback job to mark video calls as ended ([#5569](https://github.com/open-chat-labs/open-chat/pull/5569))
+
+### Fixed
+
+- Mark old video calls as having ended ([#5572](https://github.com/open-chat-labs/open-chat/pull/5572))
+
+## [[2.0.1094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1094-community)] - 2024-03-08
+
 ### Added
 
 - Implement ability to push events from Community canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
 - Push event each time a message is sent ([#5439](https://github.com/open-chat-labs/open-chat/pull/5439))
 - Push backdated message events ([#5441](https://github.com/open-chat-labs/open-chat/pull/5441))
+- Add 'start_video_call' endpoint ([#5470](https://github.com/open-chat-labs/open-chat/pull/5470))
 
 ### Changed
 
@@ -17,6 +55,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 - Don't send video call notification to user who started the call ([#5462](https://github.com/open-chat-labs/open-chat/pull/5462))
+- Use initiator as sender for video calls rather than VideoCallBot ([#5477](https://github.com/open-chat-labs/open-chat/pull/5477))
+- Set `anonymized_id` on each channel in `post_upgrade` ([#5478](https://github.com/open-chat-labs/open-chat/pull/5478))
+- Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
+- Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
+- Unblock users from channels and block from community instead ([#5483](https://github.com/open-chat-labs/open-chat/pull/5483))
+- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ### Fixed
 

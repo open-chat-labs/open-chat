@@ -32,6 +32,10 @@ impl Environment for TestEnv {
     fn rng(&mut self) -> &mut StdRng {
         &mut self.rng
     }
+
+    fn arg_data_raw(&self) -> Vec<u8> {
+        Vec::new()
+    }
 }
 
 impl Default for TestEnv {

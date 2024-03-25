@@ -49,6 +49,7 @@ import {
     isFrozen,
     isPreviewing,
     buildTransactionLink,
+    buildTransactionUrlByIndex,
     buildCryptoTransferText,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
@@ -64,6 +65,7 @@ import {
     permittedMessagesInGroup,
     activeUserIdFromEvent,
     doesMessageFailFilter,
+    canStartVideoCalls,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -216,7 +218,11 @@ import {
     spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
-import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
+import {
+    createRemoteVideoStartedEvent,
+    filterWebRtcMessage,
+    parseWebRtcMessage,
+} from "./utils/rtc";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -413,6 +419,7 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    NoMeetingToJoin,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -472,6 +479,7 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
+import { isBalanceGate } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1525,6 +1533,21 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.chatPredicate(chatId, canDeleteOtherUsersMessages);
     }
 
+    canStartVideoCalls(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat));
+    }
+
+    isChatPrivate(chat: ChatSummary): boolean {
+        switch (chat.kind) {
+            case "channel": {
+                let community = this.getCommunityForChannel(chat.id);
+                return !(community?.public ?? true) || !chat.public;
+            }
+            case "group_chat": return !chat.public;
+            default: return true;
+        }
+    }    
+
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
     }
@@ -2508,13 +2531,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 current.amount !== original.amount
             );
         }
+        if (isBalanceGate(current) && isBalanceGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.minBalance !== original.minBalance
+            );
+        }
         return false;
     }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
-        } else if (gate.kind === "payment_gate") {
+        } else if (gate.kind === "payment_gate" || gate.kind === "token_balance_gate") {
             return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
@@ -3491,6 +3520,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
+    buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
+        return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
+    }
+
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
         return messagesRead.getFirstUnreadMention(chat);
     }
@@ -3714,6 +3747,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
+        if (msg.kind === "remote_video_call_started") {
+            const ev = createRemoteVideoStartedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -4030,7 +4070,13 @@ export class OpenChat extends OpenChatAgentWorker {
     inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
         const localUserIndex = this.localUserIndexForChat(chatId);
-        return this.sendRequest({ kind: "inviteUsers", chatId, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsers",
+            chatId,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersLocally(chatId, userIds);
@@ -4059,7 +4105,13 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<InviteUsersResponse> {
         this.inviteUsersToCommunityLocally(id, userIds);
         const localUserIndex = this.localUserIndexForCommunity(id.communityId);
-        return this.sendRequest({ kind: "inviteUsersToCommunity", id, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsersToCommunity",
+            id,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersToCommunityLocally(id, userIds);
@@ -4242,6 +4294,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     set groupInvite(value: GroupInvite) {
+        this.config.groupInvite = value;
         this.sendRequest({
             kind: "groupInvite",
             value,
@@ -5092,11 +5145,11 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageIndex: number): Promise<JoinVideoCallResponse> {
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         return this.sendRequest({
             kind: "joinVideoCall",
             chatId,
-            messageIndex,
+            messageId,
         });
     }
 
@@ -5662,22 +5715,65 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    private getRoomAccessToken(authToken: string): Promise<{ token: string; roomName: string }> {
+    async ringOtherUsers() {
+        const chat = this._liveState.selectedChat;
+        let userIds: string[] = [];
+        const me = this._liveState.user.userId;
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") {
+                userIds.push(chat.them.userId);
+            } else if (!chat.public) {
+                userIds = this._liveState.currentChatMembers
+                    .map((m) => m.userId)
+                    .filter((id) => id !== me);
+            }
+            if (userIds.length > 0) {
+                await Promise.all(
+                    userIds
+                        .filter((id) => !rtcConnectionsManager.exists(id))
+                        .map((id) =>
+                            rtcConnectionsManager.create(
+                                this._liveState.user.userId,
+                                id,
+                                this.config.meteredApiKey,
+                            ),
+                        ),
+                );
+                this.sendRtcMessage(userIds, {
+                    kind: "remote_video_call_started",
+                    id: chat.id,
+                    userId: me,
+                });
+            }
+        }
+    }
+
+    private getRoomAccessToken(
+        authToken: string,
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
         // * create the room if necessary
         // * obtain an access token for the user
         // * return it to the front end
-        const username = this._liveState.user.username;
+        const displayName = this.getDisplayName(
+            this._liveState.user,
+            this._liveState.currentCommunityMembers,
+        );
+        const user = this._liveState.user;
+        const username = user.username;
+        const avatarId = this._liveState.userStore[user.userId]?.blobReference?.blobId;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
-        return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?username=${username}`,
-            {
-                method: "GET",
-                headers: headers,
-            },
-        ).then((res) => {
+
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        if (avatarId) {
+            url += `&initiator-avatarid=${avatarId}`;
+        }
+        return fetch(url, {
+            method: "GET",
+            headers: headers,
+        }).then((res) => {
             if (res.ok) {
                 return res.json();
             }
@@ -5686,6 +5782,9 @@ export class OpenChat extends OpenChatAgentWorker {
                     "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
                 console.error(msg);
                 throw new Error(msg);
+            }
+            if (res.status === 400) {
+                throw new NoMeetingToJoin();
             }
             throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
         });
@@ -5716,7 +5815,7 @@ export class OpenChat extends OpenChatAgentWorker {
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
-    ): Promise<{ token: string; roomName: string }> {
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
@@ -5732,7 +5831,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (token === undefined) {
                         throw new Error("Didn't get an access token");
                     }
-                    console.log("Token: ", token);
+                    console.log("TOKEN: ", token);
+                    performance.mark("oc_token");
                     return token;
                 })
                 .then((token) => this.getRoomAccessToken(token));
@@ -5932,6 +6032,15 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
+        }).then((resp) => {
+            if (resp.kind === "success") {
+                candidate.id = {
+                    kind: "community",
+                    communityId: resp.id,
+                };
+                this.addCommunityLocally(candidate);
+            }
+            return resp;
         }).catch(() => ({
             kind: "failure",
         }));

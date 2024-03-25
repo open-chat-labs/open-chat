@@ -45,7 +45,6 @@ members = [
     "backend/canisters/market_maker/client",
     "backend/canisters/market_maker/impl",
     "backend/canisters/neuron_controller/api",
-    "backend/canisters/neuron_controller/c2c_client",
     "backend/canisters/neuron_controller/impl",
     "backend/canisters/notifications/api",
     "backend/canisters/notifications/c2c_client",
@@ -162,17 +161,18 @@ aws-types = "1.1.5"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.3"
-canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "36621c439f3eef17ed4c2fba9b2f8160b656b95e" }
 ciborium = "0.2.1"
 clap = "4.4.8"
 ct-codecs = "1.1.1"
+dataurl = "0.1.2"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_sink_canister = { git = "https://github.com/open-chat-labs/event-sink", rev = "9b408f884c42d9b2b1c4c4657d49f233acc6cbee" }
-event_sink_client = { git = "https://github.com/open-chat-labs/event-sink", rev = "9b408f884c42d9b2b1c4c4657d49f233acc6cbee" }
-event_sink_client_cdk_runtime = { git = "https://github.com/open-chat-labs/event-sink", rev = "9b408f884c42d9b2b1c4c4657d49f233acc6cbee" }
-event_sink_utils = { git = "https://github.com/open-chat-labs/event-sink", rev = "9b408f884c42d9b2b1c4c4657d49f233acc6cbee" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"

@@ -18,6 +18,14 @@ impl Chat {
             Chat::Channel(c, _) => c.into(),
         }
     }
+
+    pub fn chat_type(&self) -> &'static str {
+        match self {
+            Chat::Direct(_) => "direct",
+            Chat::Group(_) => "group",
+            Chat::Channel(..) => "channel",
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]

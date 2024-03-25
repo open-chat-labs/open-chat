@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UserRegistered};
 use types::{Cycles, UserId};
@@ -61,10 +61,10 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&crate::UserRegisteredEventPayload {
                 referred: false,
                 is_bot: true,

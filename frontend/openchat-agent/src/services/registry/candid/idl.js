@@ -14,9 +14,18 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const CanisterId = IDL.Principal;
+  const SetTokenEnabledArgs = IDL.Record({
+    'enabled' : IDL.Bool,
+    'ledger_canister_id' : CanisterId,
+  });
+  const SetTokenEnabledResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const TimestampMillis = IDL.Nat64;
   const UpdatesArgs = IDL.Record({ 'since' : IDL.Opt(TimestampMillis) });
-  const CanisterId = IDL.Principal;
   const TokenDetails = IDL.Record({
     'fee' : IDL.Nat,
     'decimals' : IDL.Nat8,
@@ -26,6 +35,8 @@ export const idlFactory = ({ IDL }) => {
     'logo' : IDL.Text,
     'name' : IDL.Text,
     'last_updated' : TimestampMillis,
+    'enabled' : IDL.Bool,
+    'logo_id' : IDL.Opt(IDL.Nat),
     'ledger_canister_id' : CanisterId,
     'supported_standards' : IDL.Vec(IDL.Text),
     'symbol' : IDL.Text,
@@ -63,6 +74,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_message_filter' : IDL.Func(
         [RemoveMessageFilterArgs],
         [RemoveMessageFilterResponse],
+        [],
+      ),
+    'set_token_enabled' : IDL.Func(
+        [SetTokenEnabledArgs],
+        [SetTokenEnabledResponse],
         [],
       ),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),

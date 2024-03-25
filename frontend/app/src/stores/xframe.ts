@@ -8,9 +8,12 @@ import { routerReady } from "../routes";
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
     "https://windoge98.com",
+    "https://desktop.windoge98.com",
+    "https://4hy5z-qaaaa-aaaal-addrq-cai.icp0.io",
     "https://signalsicp.com",
     "https://gooble.app",
     "https://www.vault-bet.com",
+    "https://vault-bet.com",
     "https://calm-pasca-49d7be.netlify.app", // betbase proof of concept
     "https://221bravo.app",
     "https://ht7v7-iaaaa-aaaak-qakga-cai.icp0.io", //221bravo

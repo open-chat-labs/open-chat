@@ -284,6 +284,7 @@ type AcceptP2PSwapArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -296,6 +297,9 @@ type AcceptP2PSwapResponse = variant {
     UserNotInChannel;
     UserSuspended;
     ChatFrozen;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -626,7 +630,7 @@ type ImportGroupResponse = variant {
 
 type JoinVideoCallArgs = record {
     channel_id : ChannelId;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
 type JoinVideoCallResponse = variant {
@@ -812,12 +816,7 @@ type SendMessageArgs = record {
 };
 
 type SendMessageResponse = variant {
-    Success : record {
-        event_index : EventIndex;
-        message_index : MessageIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-    };
+    Success : SendMessageSuccess;
     ChannelNotFound;
     ThreadMessageNotFound;
     MessageEmpty;
@@ -833,6 +832,13 @@ type SendMessageResponse = variant {
     CommunityRulesNotAccepted;
 };
 
+type SendMessageSuccess = record {
+    message_index : MessageIndex;
+    event_index : EventIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
+};
+
 type SetMemberDisplayNameArgs = record {
     display_name : opt text;
 };
@@ -845,6 +851,20 @@ type SetMemberDisplayNameResponse = variant {
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;
     DisplayNameTooLong : nat16;
+};
+
+type StartVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    initiator : UserId;
+    initiator_username : text;
+    initiator_display_name : opt text;
+    max_duration : opt Milliseconds;
+};
+
+type StartVideoCallResponse = variant {
+    Success;
+    NotAuthorized;
 };
 
 type ToggleMuteNotificationsArgs = record {
@@ -1063,6 +1083,7 @@ service : {
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
+    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);

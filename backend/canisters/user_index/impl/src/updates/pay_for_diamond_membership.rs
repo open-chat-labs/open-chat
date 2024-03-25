@@ -4,7 +4,7 @@ use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
@@ -101,10 +101,10 @@ fn process_charge(
     let recurring = args.recurring && !args.duration.is_lifetime();
     let now = state.env.now();
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("diamond_membership_payment", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&PayForDiamondMembershipEventPayload {
                 token: args.token.token_symbol().to_string(),
                 amount: args.expected_price_e8s,

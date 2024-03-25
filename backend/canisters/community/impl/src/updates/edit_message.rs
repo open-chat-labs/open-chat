@@ -28,14 +28,17 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             let sender = member.user_id;
             if let Some(channel_member) = channel.chat.members.get(&sender) {
-                match channel.chat.events.edit_message(EditMessageArgs {
-                    sender,
-                    min_visible_event_index: channel_member.min_visible_event_index(),
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
-                    content: args.content,
-                    now,
-                }) {
+                match channel.chat.events.edit_message(
+                    EditMessageArgs {
+                        sender,
+                        min_visible_event_index: channel_member.min_visible_event_index(),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id: args.message_id,
+                        content: args.content,
+                        now,
+                    },
+                    Some(&mut state.data.event_store_client),
+                ) {
                     EditMessageResult::Success => {
                         handle_activity_notification(state);
                         Success

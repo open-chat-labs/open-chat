@@ -583,7 +583,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.chatId, payload.localUserIndex, payload.userIds),
+                    agent.inviteUsers(
+                        payload.chatId,
+                        payload.localUserIndex,
+                        payload.userIds,
+                        payload.callerUsername,
+                    ),
                 );
                 break;
 
@@ -595,6 +600,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.id,
                         payload.localUserIndex,
                         payload.userIds,
+                        payload.callerUsername,
                     ),
                 );
                 break;
@@ -1494,7 +1500,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinVideoCall(payload.chatId, payload.messageIndex),
+                    agent.joinVideoCall(payload.chatId, payload.messageId),
                 );
                 break;
 

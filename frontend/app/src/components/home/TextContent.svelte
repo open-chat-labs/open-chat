@@ -23,7 +23,6 @@
 
     $: expanded = !$lowBandwidth && $renderPreviews;
     $: text = truncateText(content.text);
-    $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
     $: previewUrls = extractPreviewUrls(content.text);
 
     function extractPreviewUrls(text: string): string[] {
@@ -49,7 +48,7 @@
     }
 </script>
 
-<Markdown inline={!containsCodeBlock} suppressLinks={pinned} {text} />
+<Markdown inline={false} suppressLinks={pinned} {text} />
 {#if edited}
     <span class="edited-msg">({$_("edited")})</span>
 {/if}
@@ -75,6 +74,5 @@
 <style lang="scss">
     .expand {
         cursor: pointer;
-        padding: 0 $sp3;
     }
 </style>

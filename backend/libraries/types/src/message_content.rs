@@ -29,7 +29,6 @@ pub enum MessageContentInitial {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     P2PSwap(P2PSwapContentInitial),
-    VideoCall(VideoCallContentInitial),
     Custom(CustomContent),
 }
 
@@ -225,7 +224,6 @@ impl MessageContentInitial {
         is_direct_chat: bool,
         sender_is_bot: bool,
         forwarding: bool,
-        is_caller_video_call_operator: bool,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
@@ -263,15 +261,8 @@ impl MessageContentInitial {
             | MessageContentInitial::MessageReminder(_) => {
                 return Err(ContentValidationError::Unauthorized);
             }
-            MessageContentInitial::VideoCall(_) if !is_caller_video_call_operator => {
-                return Err(ContentValidationError::Unauthorized)
-            }
             _ => {}
         };
-
-        if is_caller_video_call_operator && !matches!(self, MessageContentInitial::VideoCall(_)) {
-            return Err(ContentValidationError::Unauthorized);
-        }
 
         let is_empty = match self {
             MessageContentInitial::Text(t) => t.text.is_empty(),
@@ -288,7 +279,6 @@ impl MessageContentInitial {
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_)
             | MessageContentInitial::P2PSwap(_)
-            | MessageContentInitial::VideoCall(_)
             | MessageContentInitial::Custom(_) => false,
         };
 
@@ -321,8 +311,15 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
-            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) | MessageContentInitial::VideoCall(_) => None,
+            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
+    }
+
+    pub fn contains_crypto_transfer(&self) -> bool {
+        matches!(
+            self,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
+        )
     }
 }
 
@@ -345,11 +342,8 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
-            MessageContent::P2PSwap(_) => todo!(),
-            MessageContent::VideoCall(c) => MessageContentInitial::VideoCall(VideoCallContentInitial {
-                initiator: c.participants[0].user_id,
-            }),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
+            MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
 }
@@ -380,7 +374,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
-            MessageContentInitial::P2PSwap(_) | MessageContentInitial::VideoCall(_) => unimplemented!(),
+            MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
 }

@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{ChatId, MessageContent, TextContent, UserId};
+use types::{ChatId, MessageContent, TextContent, User, UserId};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -21,7 +21,14 @@ async fn invite_users_to_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    commit(invited_by, args.group_id, s.group_name, s.invited_users, state);
+                    commit(
+                        invited_by,
+                        args.caller_username,
+                        args.group_id,
+                        s.group_name,
+                        s.invited_users,
+                        state,
+                    );
                 });
                 Success
             }
@@ -50,12 +57,23 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
     PrepareResult { invited_by, users }
 }
 
-fn commit(invited_by: UserId, group_id: ChatId, group_name: String, invited_users: Vec<UserId>, state: &mut RuntimeState) {
+fn commit(
+    invited_by: UserId,
+    invited_by_username: String,
+    group_id: ChatId,
+    group_name: String,
+    invited_users: Vec<UserId>,
+    state: &mut RuntimeState,
+) {
     let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
     let message = MessageContent::Text(TextContent { text });
+    let mentioned = vec![User {
+        user_id: invited_by,
+        username: invited_by_username,
+    }];
 
     for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone());
     }
 
     crate::jobs::sync_events_to_user_canisters::try_run_now(state);

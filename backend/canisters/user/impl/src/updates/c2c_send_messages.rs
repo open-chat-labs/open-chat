@@ -2,11 +2,10 @@ use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
-use event_sink_client::EventBuilder;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis, User,
     UserId,
 };
 use user_canister::C2CReplyContext;
@@ -30,7 +29,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, true, false, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, true, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -41,16 +40,18 @@ async fn c2c_handle_bot_messages(
             handle_message_impl(
                 HandleMessageArgs {
                     sender,
-                    message_id: None,
+                    thread_root_message_id: message.thread_root_message_id,
+                    message_id: message.message_id,
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: MessageContentInternal::from_initial(message.content, now).unwrap(),
+                    content: message.content.into(),
                     replies_to: None,
                     forwarding: false,
                     is_bot: true,
                     sender_avatar_id: None,
                     push_message_sent_event: true,
+                    mentioned: Vec::new(),
                     mute_notification: false,
                     now,
                 },
@@ -63,6 +64,7 @@ async fn c2c_handle_bot_messages(
 
 pub(crate) struct HandleMessageArgs {
     pub sender: UserId,
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
@@ -74,6 +76,7 @@ pub(crate) struct HandleMessageArgs {
     pub sender_avatar_id: Option<u128>,
     pub push_message_sent_event: bool,
     pub mute_notification: bool,
+    pub mentioned: Vec<User>,
     pub now: TimestampMillis,
 }
 
@@ -115,8 +118,19 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
 
+    let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
+        c
+    } else {
+        state
+            .data
+            .direct_chats
+            .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
+    };
+
+    let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
+        thread_root_message_index,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender: args.sender,
         content: args.content,
@@ -129,70 +143,47 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
     };
 
     let message_id = push_message_args.message_id;
-    let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
-        c
-    } else {
-        state
-            .data
-            .direct_chats
-            .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
-    };
 
-    let (message_event, event_payload) = chat.push_message(false, push_message_args, args.sender_message_index);
-
-    let mut is_next_event_to_expire = false;
-    if let Some(expiry) = message_event.expires_at {
-        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
-        if is_next_event_to_expire {
-            state.data.next_event_expiry = Some(expiry);
-        }
-    }
-
-    register_timer_jobs(
-        chat_id,
-        message_id,
-        &message_event,
-        files,
-        is_next_event_to_expire,
-        args.now,
-        &mut state.data.timer_jobs,
+    let message_event = chat.push_message(
+        false,
+        push_message_args,
+        args.sender_message_index,
+        args.push_message_sent_event.then_some(&mut state.data.event_store_client),
     );
 
     if args.is_bot {
         chat.mark_read_up_to(message_event.event.message_index, false, args.now);
     }
 
-    let this_canister_id = state.env.canister_id();
     if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
         let content = &message_event.event.content;
         let notification = Notification::DirectMessage(DirectMessageNotification {
             sender: args.sender,
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_index: message_event.event.message_index,
             event_index: message_event.index,
             sender_name: args.sender_name,
             sender_display_name: args.sender_display_name,
             message_type: content.message_type(),
-            message_text: content.notification_text(&[], &[]),
+            message_text: content.notification_text(&args.mentioned, &[]),
             image_url: content.notification_image_url(),
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),
         });
-
-        let recipient = this_canister_id.into();
+        let recipient = state.env.canister_id().into();
 
         state.push_notification(recipient, notification);
     }
 
-    if args.push_message_sent_event {
-        state.data.event_sink_client.push(
-            EventBuilder::new("message_sent", args.now)
-                .with_user(args.sender.to_string())
-                .with_source(this_canister_id.to_string())
-                .with_json_payload(&event_payload)
-                .build(),
-        );
-    }
+    register_timer_jobs(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        &message_event,
+        files,
+        args.now,
+        &mut state.data,
+    );
 
     message_event
 }

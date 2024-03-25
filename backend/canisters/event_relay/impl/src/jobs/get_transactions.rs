@@ -1,5 +1,5 @@
 use crate::{mutate_state, read_state};
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc3::transactions::{GetTransactionsRequest, Transaction};
 use serde::Serialize;
@@ -59,14 +59,14 @@ async fn run_async() -> Milliseconds {
             };
             events.push(
                 EventBuilder::new("mint", timestamp)
-                    .with_source(ledger_canister_id.to_string())
+                    .with_source(ledger_canister_id.to_string(), false)
                     .with_json_payload(&payload)
                     .build(),
             );
             if mint.to == treasury_account {
                 events.push(
                     EventBuilder::new("transfer_to_treasury", timestamp)
-                        .with_source(ledger_canister_id.to_string())
+                        .with_source(ledger_canister_id.to_string(), false)
                         .with_json_payload(&payload)
                         .build(),
                 );
@@ -79,14 +79,14 @@ async fn run_async() -> Milliseconds {
             };
             events.push(
                 EventBuilder::new("burn", timestamp)
-                    .with_source(ledger_canister_id.to_string())
+                    .with_source(ledger_canister_id.to_string(), false)
                     .with_json_payload(&payload)
                     .build(),
             );
             if burn.from == treasury_account {
                 events.push(
                     EventBuilder::new("transfer_from_treasury", timestamp)
-                        .with_source(ledger_canister_id.to_string())
+                        .with_source(ledger_canister_id.to_string(), false)
                         .with_json_payload(&payload)
                         .build(),
                 );
@@ -95,7 +95,7 @@ async fn run_async() -> Milliseconds {
             if transfer.from == treasury_account {
                 events.push(
                     EventBuilder::new("transfer_from_treasury", transaction.timestamp / NANOS_PER_MILLISECOND)
-                        .with_source(ledger_canister_id.to_string())
+                        .with_source(ledger_canister_id.to_string(), false)
                         .with_json_payload(&TransactionPayload {
                             index,
                             amount: transfer.amount.0.try_into().unwrap(),
@@ -105,7 +105,7 @@ async fn run_async() -> Milliseconds {
             } else if transfer.to == treasury_account {
                 events.push(
                     EventBuilder::new("transfer_to_treasury", transaction.timestamp / NANOS_PER_MILLISECOND)
-                        .with_source(ledger_canister_id.to_string())
+                        .with_source(ledger_canister_id.to_string(), false)
                         .with_json_payload(&TransactionPayload {
                             index,
                             amount: transfer.amount.0.try_into().unwrap(),
@@ -119,7 +119,7 @@ async fn run_async() -> Milliseconds {
     mutate_state(|state| {
         state.data.ledger_transaction_processed_up_to = Some(end);
         if !events.is_empty() {
-            state.data.events_sink_client.push_many(events.into_iter(), true);
+            state.data.event_store_client.push_many(events.into_iter(), true);
         }
     });
     delay

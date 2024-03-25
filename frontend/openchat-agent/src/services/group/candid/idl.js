@@ -554,7 +554,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
-  const VideoCallContentInitial = IDL.Record({ 'initiator' : UserId });
   const Milliseconds = IDL.Nat64;
   const P2PSwapContentInitial = IDL.Record({
     'token0_amount' : IDL.Nat,
@@ -572,7 +571,6 @@ export const idlFactory = ({ IDL }) => {
     'diamond_only' : IDL.Bool,
   });
   const MessageContentInitial = IDL.Variant({
-    'VideoCall' : VideoCallContentInitial,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -687,7 +685,6 @@ export const idlFactory = ({ IDL }) => {
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),
-    'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
     'message_id' : MessageId,
@@ -730,6 +727,7 @@ export const idlFactory = ({ IDL }) => {
     'invite_users' : PermissionRole,
     'thread_permissions' : IDL.Opt(MessagePermissions),
     'change_roles' : PermissionRole,
+    'start_video_call' : PermissionRole,
     'add_members' : PermissionRole,
     'pin_messages' : PermissionRole,
     'react_to_messages' : PermissionRole,
@@ -896,7 +894,7 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
-  const JoinVideoCallArgs = IDL.Record({ 'message_index' : MessageIndex });
+  const JoinVideoCallArgs = IDL.Record({ 'message_id' : MessageId });
   const JoinVideoCallResponse = IDL.Variant({
     'GroupFrozen' : IDL.Null,
     'AlreadyEnded' : IDL.Null,
@@ -1178,6 +1176,12 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const SendMessageSuccess = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'event_index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
+    'message_index' : MessageIndex,
+  });
   const InvalidPollReason = IDL.Variant({
     'DuplicateOptions' : IDL.Null,
     'TooFewOptions' : IDL.Nat32,
@@ -1192,17 +1196,22 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : IDL.Opt(TimestampMillis),
-      'message_index' : MessageIndex,
-    }),
+    'Success' : SendMessageSuccess,
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
+  });
+  const StartVideoCallArgs = IDL.Record({
+    'initiator_username' : IDL.Text,
+    'initiator' : UserId,
+    'initiator_display_name' : IDL.Opt(IDL.Text),
+    'message_id' : MessageId,
+  });
+  const StartVideoCallResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
   const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
@@ -1478,6 +1487,7 @@ export const idlFactory = ({ IDL }) => {
     'invite_users' : IDL.Opt(PermissionRole),
     'thread_permissions' : OptionalMessagePermissionsUpdate,
     'change_roles' : IDL.Opt(PermissionRole),
+    'start_video_call' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
@@ -1666,6 +1676,11 @@ export const idlFactory = ({ IDL }) => {
     'send_message_v2' : IDL.Func(
         [SendMessageV2Args],
         [SendMessageResponse],
+        [],
+      ),
+    'start_video_call' : IDL.Func(
+        [StartVideoCallArgs],
+        [StartVideoCallResponse],
         [],
       ),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),

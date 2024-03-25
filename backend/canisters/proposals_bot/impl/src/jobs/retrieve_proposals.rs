@@ -1,6 +1,8 @@
 use crate::jobs::{push_proposals, update_proposals};
 use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
-use crate::timer_job_types::{ProcessUserRefundJob, TopUpNeuronJob};
+use crate::timer_job_types::{
+    ProcessUserRefundJob, SubmitOCProposalForNnsProposalJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob,
+};
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use ic_cdk::api::call::CallResult;
@@ -8,7 +10,7 @@ use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal, ProposalId};
+use types::{CanisterId, Milliseconds, Proposal};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -17,6 +19,15 @@ pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
 const RETRIEVE_PROPOSALS_INTERVAL: Milliseconds = MINUTE_IN_MS;
+
+const NNS_TOPIC_NETWORK_ECONOMICS: i32 = 3;
+const NNS_TOPIC_GOVERNANCE: i32 = 4;
+const NNS_TOPIC_SNS_AND_NEURON_FUND: i32 = 14;
+const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
+    NNS_TOPIC_NETWORK_ECONOMICS,
+    NNS_TOPIC_GOVERNANCE,
+    NNS_TOPIC_SNS_AND_NEURON_FUND,
+];
 
 pub fn start_job() {
     ic_cdk_timers::set_timer_interval(Duration::from_millis(RETRIEVE_PROPOSALS_INTERVAL), run);
@@ -109,27 +120,51 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
 fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
     match response {
         Ok(raw_proposals) => {
-            let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+            let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
             mutate_state(|state| {
-                // TODO Remove this!
-                // Temp hack for Dragginz
-                // Dfinity are fixing a bug in their governance canister which is causing it to
-                // return old proposals
-                let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
-                if governance_canister_id == dragginz_governance_canister_id {
-                    proposals.retain(|p| p.id() > 36)
-                } else if governance_canister_id == SNS_GOVERNANCE_CANISTER_ID {
-                    for proposal in proposals.iter() {
-                        if let Some(decision) = proposal.status().decision() {
-                            if let Some(nns_proposal_id) = state.data.oc_proposals_for_nns_proposals.should_vote(&proposal.id())
-                            {
-                                ic_cdk::spawn(vote_on_nns_proposal(
-                                    proposal.id(),
-                                    nns_proposal_id,
-                                    decision,
-                                    state.data.neuron_controller_canister_id,
-                                ));
+                let now = state.env.now();
+
+                if governance_canister_id == state.data.nns_governance_canister_id {
+                    if let Some(neuron_id) = state.data.nns_neuron_to_vote_with {
+                        for proposal in proposals.iter() {
+                            if let Proposal::NNS(nns) = proposal {
+                                if NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
+                                    && state.data.nns_proposals_requiring_oc_proposals.insert(nns.id)
+                                {
+                                    if let Some(oc_neuron_id) = state
+                                        .data
+                                        .nervous_systems
+                                        .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
+                                    {
+                                        state.data.timer_jobs.enqueue_job(
+                                            TimerJob::SubmitOCProposalForNnsProposal(SubmitOCProposalForNnsProposalJob {
+                                                nns_proposal_id: nns.id,
+                                                nns_proposal_title: nns.title.clone(),
+                                                nns_proposal_summary: nns.summary.clone(),
+                                                nns_neuron_id: neuron_id,
+                                                oc_neuron_id,
+                                            }),
+                                            now,
+                                            now,
+                                        );
+                                    }
+
+                                    // Set up a job to reject the proposal 10 minutes before its deadline.
+                                    // In parallel, we will submit an SNS proposal instructing the SNS governance
+                                    // canister to adopt the proposal. So the resulting vote on the NNS proposal will
+                                    // depend on the outcome of the SNS proposal.
+                                    state.data.timer_jobs.enqueue_job(
+                                        TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
+                                            nns_governance_canister_id: governance_canister_id,
+                                            neuron_id,
+                                            proposal_id: nns.id,
+                                            vote: false,
+                                        }),
+                                        nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
+                                        now,
+                                    );
+                                }
                             }
                         }
                     }
@@ -163,7 +198,6 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .nervous_systems
                     .take_newly_decided_user_submitted_proposals(governance_canister_id);
 
-                let now = state.env.now();
                 if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
                     let ledger_canister_id = ns.ledger_canister_id();
                     let amount = ns.proposal_rejection_fee().into();
@@ -209,28 +243,5 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .mark_sync_complete(&governance_canister_id, false, now);
             });
         }
-    }
-}
-
-async fn vote_on_nns_proposal(
-    oc_proposal_id: ProposalId,
-    nns_proposal_id: ProposalId,
-    vote: bool,
-    neuron_controller_canister_id: CanisterId,
-) {
-    let args = neuron_controller_canister::c2c_vote_on_nns_proposal::Args {
-        proposal_id: nns_proposal_id,
-        vote,
-    };
-    if neuron_controller_canister_c2c_client::c2c_vote_on_nns_proposal(neuron_controller_canister_id, &args)
-        .await
-        .is_ok()
-    {
-        mutate_state(|state| {
-            state
-                .data
-                .oc_proposals_for_nns_proposals
-                .mark_vote_cast(&oc_proposal_id, vote)
-        });
     }
 }

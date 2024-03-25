@@ -116,21 +116,31 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    inviteUsersToCommunity(communityId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    inviteUsersToCommunity(
+        communityId: string,
+        userIds: string[],
+        callerUsername: string,
+    ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_community({
                 community_id: Principal.fromText(communityId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
             }),
             inviteUsersResponse,
         );
     }
 
-    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    inviteUsersToGroup(
+        chatId: string,
+        userIds: string[],
+        callerUsername: string,
+    ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_group({
                 group_id: Principal.fromText(chatId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
                 correlation_id: BigInt(0),
             }),
             inviteUsersResponse,
@@ -141,12 +151,14 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         channelId: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_channel({
                 community_id: Principal.fromText(communityId),
                 channel_id: BigInt(channelId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
             }),
             inviteUsersResponse,
         );

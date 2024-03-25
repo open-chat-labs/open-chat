@@ -1,7 +1,9 @@
 use canister_agent_utils::{build_ic_agent, get_dfx_identity};
 use itertools::Itertools;
+use serde::Serialize;
 use serde_json::{Map, Value};
 use std::{
+    cmp::Ordering,
     collections::{hash_map::Entry, HashMap},
     error::Error,
     fs,
@@ -155,14 +157,32 @@ async fn write_translation_files(
 
     for (locale, translations) in data {
         let mut translations: Vec<_> = translations.into_iter().collect();
-        translations.sort_by(|(k1, _), (k2, _)| k1.partial_cmp(k2).unwrap());
+        translations.sort_by(|(k1, _), (k2, _)| compare_strings(k1, k2));
 
         let object = build_object(translations.iter().collect(), 0);
 
-        let text = serde_json::to_string_pretty(&object)?;
+        let text = to_string_pretty(&object);
+
         fs::write(format!("{path}/{locale}.json"), text)?;
     }
     Ok(())
+}
+
+fn compare_strings(s1: &str, s2: &str) -> core::cmp::Ordering {
+    match s1.to_lowercase().cmp(&s2.to_lowercase()) {
+        Ordering::Equal => s1.cmp(s2),
+        Ordering::Less => Ordering::Less,
+        Ordering::Greater => Ordering::Greater,
+    }
+}
+
+// Pretty print with a 4 space indent
+fn to_string_pretty<T: Serialize>(value: T) -> String {
+    let mut buf = Vec::new();
+    let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
+    let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
+    value.serialize(&mut ser).unwrap();
+    String::from_utf8(buf).unwrap()
 }
 
 async fn write_latest_approval(path: &str, timestamp: TimestampMillis) -> Result<(), Box<dyn Error + Send + Sync>> {

@@ -43,6 +43,7 @@ fn empty_message_fails() {
         replies_to: None,
         forwarding: false,
         message_filter_failed: None,
+        pin: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
@@ -69,6 +70,7 @@ fn text_too_long_fails() {
         replies_to: None,
         forwarding: false,
         message_filter_failed: None,
+        pin: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);

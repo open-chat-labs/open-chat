@@ -30,13 +30,13 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
-        ChatSummary,
     } from "openchat-client";
     import {
         ChatsUpdated,
         SelectedChatInvalid,
         SendMessageFailed,
         ThreadClosed,
+        RemoteVideoCallStartedEvent,
         ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
@@ -94,7 +94,7 @@
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
-    import ActiveCall from "./video/ActiveCall.svelte";
+    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
 
     type ViewProfileConfig = {
         userId: string;
@@ -109,7 +109,6 @@
     let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
     let showProfileCard: ViewProfileConfig | undefined = undefined;
-    let videoCallElement: ActiveCall;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -237,6 +236,8 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
+        } else if (ev instanceof RemoteVideoCallStartedEvent) {
+            remoteVideoCallStarted(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
@@ -268,6 +269,10 @@
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
         }
+    }
+
+    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+        incomingVideoCall.set(ev.detail);
     }
 
     async function newChatSelected(
@@ -505,7 +510,7 @@
             return;
         }
         tick().then(() => {
-            videoCallElement?.closeThread();
+            activeVideoCall?.threadOpen(false);
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }
@@ -940,6 +945,7 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
+                startVideoCall: "admin",
                 messagePermissions: {
                     default: "member",
                     p2pSwap: "none",
@@ -1049,17 +1055,9 @@
         showProfileCard = undefined;
     }
 
-    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; messageIndex?: number }>) {
-        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.messageIndex);
-    }
-
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
-
-<ActiveCall
-    on:clearSelection={() => page(routeForScope($chatListScope))}
-    bind:this={videoCallElement} />
 
 {#if showProfileCard !== undefined}
     <ViewUserProfile
@@ -1107,7 +1105,7 @@
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:startVideoCall={startVideoCall}
+            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1132,7 +1130,7 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
-        on:startVideoCall={startVideoCall}
+        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}

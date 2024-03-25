@@ -27,6 +27,7 @@ mod last_online_date_tests;
 mod mentions_tests;
 mod notification_tests;
 mod p2p_swap_tests;
+mod pin_number_tests;
 mod platform_moderator_tests;
 mod poll_tests;
 mod prize_message_tests;
@@ -45,6 +46,7 @@ mod tip_message_tests;
 mod update_group_tests;
 mod update_profile_tests;
 mod utils;
+mod video_call_tests;
 mod wasms;
 
 pub struct TestEnv {

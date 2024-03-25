@@ -8,11 +8,14 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
     TipMessageArgs, TipMessageResult,
 };
+use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 use utils::time::MINUTE_IN_MS;
+
+use super::start_video_call::handle_start_video_call;
 
 #[update_msgpack]
 #[trace]
@@ -74,8 +77,18 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.events
-                    .join_video_call(caller_user_id, c.message_index, EventIndex::default(), state.env.now());
+                    .join_video_call(caller_user_id, c.message_id, EventIndex::default(), state.env.now());
             }
+        }
+        UserCanisterEvent::StartVideoCall(args) => {
+            handle_start_video_call(
+                args.message_id,
+                Some(args.message_index),
+                state.env.canister_id().into(),
+                caller_user_id,
+                args.max_duration,
+                state,
+            );
         }
     }
 }
@@ -94,6 +107,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
         handle_message_impl(
             HandleMessageArgs {
                 sender,
+                thread_root_message_id: message.thread_root_message_id,
                 message_id: Some(message.message_id),
                 sender_message_index: Some(message.sender_message_index),
                 sender_name: args.sender_name.clone(),
@@ -105,6 +119,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 sender_avatar_id: args.sender_avatar_id,
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
+                mentioned: Vec::new(),
                 now,
             },
             state,
@@ -115,14 +130,19 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
-        chat.events.edit_message(EditMessageArgs {
-            sender: caller_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: args.message_id,
-            content: args.content.into(),
-            now,
-        });
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
+        chat.events.edit_message::<CdkRuntime>(
+            EditMessageArgs {
+                sender: caller_user_id,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index,
+                message_id: args.message_id,
+                content: args.content.into(),
+                now,
+            },
+            None,
+        );
     }
 }
 
@@ -130,12 +150,13 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
     let chat_id = caller_user_id.into();
     if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
         let now = state.env.now();
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
         let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
             is_admin: false,
             min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_ids: args.message_ids,
             now,
         });
@@ -146,7 +167,7 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
                 state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,
-                        thread_root_message_index: None,
+                        thread_root_message_index,
                         message_id,
                     })),
                     remove_deleted_message_content_at,
@@ -159,11 +180,13 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
         chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
             is_admin: false,
             min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_ids: args.message_ids,
             now: state.env.now(),
         });
@@ -176,19 +199,20 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
     }
 
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-        let now = state.env.now();
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
         let add_remove_reaction_args = AddRemoveReactionArgs {
             user_id: caller_user_id,
             min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            now,
+            now: state.env.now(),
         };
 
         if args.added {
             if matches!(
-                chat.events.add_reaction(add_remove_reaction_args),
+                chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
                 AddRemoveReactionResult::Success
             ) && !state.data.suspended.value
             {
@@ -204,6 +228,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 
 fn build_notification(
     ToggleReactionArgs {
+        thread_root_message_id,
         message_id,
         reaction,
         username,
@@ -217,17 +242,18 @@ fn build_notification(
         return None;
     }
 
+    let thread_root_message_index = thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
     let message_event = chat
         .events
-        .main_events_reader()
-        .message_event(message_id.into(), None)
+        .events_reader(EventIndex::default(), thread_root_message_index)
+        .and_then(|reader| reader.message_event(message_id.into(), None))
         .filter(|m| m.event.sender != chat.them)?;
 
     Some((
         message_event.event.sender,
         Notification::DirectReactionAdded(DirectReactionAddedNotification {
             them: chat.them,
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_index: message_event.event.message_index,
             message_event_index: message_event.index,
             username,
@@ -242,11 +268,12 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
         let tip_message_args = TipMessageArgs {
             user_id: caller_user_id,
             recipient: my_user_id,
-            thread_root_message_index: args.thread_root_message_index,
+            thread_root_message_index,
             message_id: args.message_id,
             ledger: args.ledger,
             token: args.token.clone(),
@@ -255,7 +282,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         };
 
         if matches!(
-            chat.events.tip_message(tip_message_args, EventIndex::default(),),
+            chat.events
+                .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
             TipMessageResult::Success
         ) {
             if let Some(event) = chat
@@ -265,7 +293,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
             {
                 let notification = Notification::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
-                    thread_root_message_index: args.thread_root_message_index,
+                    thread_root_message_index,
                     message_index: event.event.message_index,
                     message_event_index: event.index,
                     username: args.username,

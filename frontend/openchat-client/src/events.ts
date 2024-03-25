@@ -1,4 +1,4 @@
-import type { EventWrapper, Message, MessageContext } from "openchat-shared";
+import type { ChatIdentifier, EventWrapper, Message, MessageContext } from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
@@ -24,6 +24,15 @@ export class LoadedPreviousMessages extends CustomEvent<{
 export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "add" | "remove" }> {
     constructor(messageId: bigint, kind: "add" | "remove") {
         super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
+export class RemoteVideoCallStartedEvent extends CustomEvent<{
+    chatId: ChatIdentifier;
+    userId: string;
+}> {
+    constructor(chatId: ChatIdentifier, userId: string) {
+        super("openchat_event", { detail: { chatId, userId } });
     }
 }
 

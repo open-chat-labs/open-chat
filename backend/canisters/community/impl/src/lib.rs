@@ -8,8 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
@@ -253,7 +253,7 @@ impl RuntimeState {
             frozen: self.data.is_frozen(),
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
-            event_sink_client_info: self.data.event_sink_client.info(),
+            event_store_client_info: self.data.event_store_client.info(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -309,16 +309,10 @@ struct Data {
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
     rng_seed: [u8; 32],
-    pub pending_payments_queue: PendingPaymentsQueue,
-    pub total_payment_receipts: PaymentReceipts,
-    #[serde(default = "event_sink_client")]
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
-}
-
-fn event_sink_client() -> EventSinkClient<CdkRuntime> {
-    EventSinkClientBuilder::new(ic_cdk::caller(), CdkRuntime::default())
-        .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
-        .build()
+    pending_payments_queue: PendingPaymentsQueue,
+    total_payment_receipts: PaymentReceipts,
+    #[serde(alias = "event_sink_client")]
+    event_store_client: EventStoreClient<CdkRuntime>,
 }
 
 impl Data {
@@ -400,7 +394,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
-            event_sink_client: EventSinkClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
         }
@@ -467,6 +461,16 @@ impl Data {
             .unwrap_or_default()
     }
 
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
@@ -501,7 +505,7 @@ pub struct Metrics {
     pub frozen: bool,
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
 }
 

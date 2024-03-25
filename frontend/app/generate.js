@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
 const { Translate } = require("@google-cloud/translate").v2;
-const { merge, chunk } = require("lodash");
+const { chunk } = require("lodash");
 const fs = require("fs");
 const path = require("path");
 
@@ -29,24 +29,9 @@ async function generateLanguage(lang, code) {
     }
 
     function missingEntries(enEntries, targetEntries) {
-        // if we need to delete a bunch of keys from all languages (for example if the english key has changed), add all the keys to this set
-        const toDelete = new Set([
-            // "confirmMakeGroupPrivate",
-            // "makeGroupPrivateFailed",
-            // "groupVisibilityChangedBy",
-            // "confirmLeaveGroup",
-            // "userJoined",
-            // "addedBy",
-            // "removedBy",
-            // "invitedBy",
-            // "permissionsChangedBy",
-            // "failedToLeaveGroup",
-            // "nUsersJoined",
-            // "ownerCantLeave",
-        ]);
         const missing = [];
         enEntries.forEach(([k, v]) => {
-            if (targetEntries.find(([tk]) => tk === k) === undefined || toDelete.has(k)) {
+            if (targetEntries.find(([tk]) => tk === k) === undefined) {
                 const cleaned = v.replace(/{[^}.]*}/g, (match) => {
                     if (tokensByKey[k] === undefined) {
                         tokensByKey[k] = [];
@@ -62,8 +47,11 @@ async function generateLanguage(lang, code) {
     }
 
     async function translateText() {
-        const enEntries = Object.entries(flatten(enData));
-        const targetEntries = Object.entries(flatten(targetData));
+        const enMap = flatten(enData);
+        const enKeys = Object.keys(enMap);
+        const enEntries = Object.entries(enMap);
+        const targetMap = flatten(targetData);
+        const targetEntries = Object.entries(targetMap);
         const missing = missingEntries(enEntries, targetEntries);
 
         const translated = await Promise.all(
@@ -84,15 +72,20 @@ async function generateLanguage(lang, code) {
             }),
         );
 
-        const merged = translated.reduce((agg, chunk) => {
+        const newTranslationsMap = translated.reduce((agg, chunk) => {
             return {
                 ...agg,
                 ...chunk,
             };
         }, {});
 
-        const unflattened = unflatten(merged);
-        return merge(targetData, unflattened);
+        return unflatten(buildNewTargetEntries(enKeys, targetMap, newTranslationsMap));
+    }
+
+    function buildNewTargetEntries(enKeys, targetMap, newTranslationsMap) {
+        return enKeys
+            .sort((a, b) => a.localeCompare(b))
+            .map((k) => [k, targetMap[k] ?? newTranslationsMap[k]]);
     }
 
     async function translateBatch(values) {
@@ -100,8 +93,8 @@ async function generateLanguage(lang, code) {
         return Array.isArray(translations) ? translations : [translations];
     }
 
-    function unflatten(flat) {
-        return Object.entries(flat).reduce((agg, [k, v]) => {
+    function unflatten(flatEntries) {
+        return flatEntries.reduce((agg, [k, v]) => {
             const segments = k.split(".");
             segments.reduce((agg_, segment, i) => {
                 if (i == segments.length - 1) {
@@ -141,16 +134,18 @@ async function generateLanguage(lang, code) {
 }
 
 const languages = [
+    { lang: "en", code: "en" },
     { lang: "cn", code: "zh-cn" },
     { lang: "de", code: "de" },
     { lang: "es", code: "es" },
     { lang: "fr", code: "fr" },
+    { lang: "hi", code: "hi" },
     { lang: "it", code: "it" },
+    { lang: "iw", code: "iw" },
     { lang: "jp", code: "ja" },
     { lang: "ru", code: "ru" },
+    { lang: "uk", code: "uk" },
     { lang: "vi", code: "vi" },
-    { lang: "iw", code: "iw" },
-    { lang: "hi", code: "hi" },
 ];
 
 languages.forEach(async ({ lang, code }) => {

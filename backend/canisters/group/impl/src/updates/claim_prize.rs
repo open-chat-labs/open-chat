@@ -2,7 +2,6 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
-use event_sink_client::EventBuilder;
 use group_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
@@ -95,21 +94,15 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
 
 fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, state: &mut RuntimeState) -> Option<String> {
     let now = state.env.now();
-    match state
-        .data
-        .chat
-        .events
-        .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
-    {
-        chat_events::ClaimPrizeResult::Success(event_payload) => {
-            state.data.event_sink_client.push(
-                EventBuilder::new("message_sent", now)
-                    .with_user(winner.to_string())
-                    .with_source(state.env.canister_id().to_string())
-                    .with_json_payload(&event_payload)
-                    .build(),
-            );
-
+    match state.data.chat.events.claim_prize(
+        args.message_id,
+        winner,
+        transaction,
+        state.env.rng(),
+        &mut state.data.event_store_client,
+        now,
+    ) {
+        chat_events::ClaimPrizeResult::Success => {
             handle_activity_notification(state);
             None
         }

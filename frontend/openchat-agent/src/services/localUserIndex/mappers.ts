@@ -30,7 +30,7 @@ export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType 
     switch (domain.kind) {
         case "join_video_call":
             return {
-                JoinVideoCall: domain.messageIndex,
+                JoinVideoCall: null,
             };
         case "start_video_call":
             return {

@@ -192,7 +192,6 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
-            last_updated: None,
         };
 
         let report = construct_html_report(Chat::Group(chat_id), None, &message, true);
@@ -228,7 +227,6 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
-            last_updated: None,
         };
 
         let report = construct_html_report(chat, None, &message, true);
@@ -268,7 +266,6 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
-            last_updated: None,
         };
 
         let report = construct_html_report(chat, None, &message, true);

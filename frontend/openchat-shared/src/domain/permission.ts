@@ -24,7 +24,6 @@ export const messagePermissionsList = [
     "prize",
     "memeFighter",
     "p2pSwap",
-    "videoCall",
 ] as const;
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
@@ -48,6 +47,7 @@ export type ChatPermissions = {
     pinMessages: ChatPermissionRole;
     reactToMessages: ChatPermissionRole;
     mentionAllMembers: ChatPermissionRole;
+    startVideoCall: ChatPermissionRole;
     messagePermissions: MessagePermissions;
     threadPermissions: MessagePermissions | undefined;
 };
@@ -65,7 +65,6 @@ export type MessagePermissions = {
     prize?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
     p2pSwap?: ChatPermissionRole;
-    videoCall?: ChatPermissionRole;
 };
 
 export type OptionalChatPermissions = {
@@ -77,6 +76,7 @@ export type OptionalChatPermissions = {
     pinMessages?: ChatPermissionRole;
     reactToMessages?: ChatPermissionRole;
     mentionAllMembers?: ChatPermissionRole;
+    startVideoCall?: ChatPermissionRole;
     messagePermissions: OptionalMessagePermissions | undefined;
     threadPermissions: OptionUpdate<OptionalMessagePermissions>;
 };
@@ -94,7 +94,6 @@ export type OptionalMessagePermissions = {
     prize: OptionUpdate<ChatPermissionRole>;
     memeFighter: OptionUpdate<ChatPermissionRole>;
     p2pSwap: OptionUpdate<ChatPermissionRole>;
-    videoCall: OptionUpdate<ChatPermissionRole>;
 };
 
 export type CommunityPermissions = {
@@ -128,7 +127,6 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
         prize: undefined,
         memeFighter: undefined,
         p2pSwap: undefined,
-        videoCall: undefined,
     };
 }
 
@@ -138,7 +136,6 @@ export type AccessTokenType = JoinVideoCall | StartVideoCall;
 
 export type JoinVideoCall = {
     kind: "join_video_call";
-    messageIndex: number;
 };
 
 export type StartVideoCall = {

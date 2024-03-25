@@ -1,6 +1,4 @@
-use crate::{
-    CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, TimestampMillis, UserId,
-};
+use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
@@ -17,7 +15,6 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
-    pub last_updated: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -40,6 +37,27 @@ pub struct MessageEventPayload {
     pub sender_is_bot: bool,
     #[serde(flatten)]
     pub content_specific_payload: MessageContentEventPayload,
+}
+
+#[derive(Serialize)]
+pub struct MessageTippedEventPayload {
+    pub message_type: String,
+    pub chat_type: String,
+    pub chat_id: String,
+    pub thread: bool,
+    pub token: String,
+    pub amount: u128,
+}
+
+#[derive(Serialize)]
+pub struct MessageEditedEventPayload {
+    pub message_type: String,
+    pub chat_type: String,
+    pub chat_id: String,
+    pub thread: bool,
+    pub already_edited: bool,
+    pub old_length: u32,
+    pub new_length: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]

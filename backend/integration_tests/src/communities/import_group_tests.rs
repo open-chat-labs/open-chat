@@ -29,11 +29,14 @@ fn import_group_succeeds() {
         user1,
         user2,
         user3,
+        user4,
         group_id,
         group_name,
         community_id,
         default_channels,
     } = init_test_data(env, canister_ids, *controller);
+
+    client::group::happy_path::block_user(env, user1.principal, group_id, user4.user_id);
 
     for i in 1..10 {
         let text = i.to_string().as_str().repeat(500);
@@ -41,17 +44,7 @@ fn import_group_succeeds() {
         client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
     }
 
-    let import_group_response = client::community::import_group(
-        env,
-        user1.principal,
-        community_id.into(),
-        &community_canister::import_group::Args { group_id },
-    );
-
-    assert!(matches!(
-        import_group_response,
-        community_canister::import_group::Response::Success(_)
-    ));
+    let import_group_response = client::community::happy_path::import_group(env, user1.principal, community_id, group_id);
 
     tick_many(env, 10);
 
@@ -82,6 +75,13 @@ fn import_group_succeeds() {
     let initial_state2 = client::user::happy_path::initial_state(env, &user2);
     assert!(initial_state2.group_chats.summaries.is_empty());
     assert_eq!(initial_state2.communities.summaries.len(), 1);
+
+    let selected_initial = client::community::happy_path::selected_initial(env, &user1, community_id);
+    assert_eq!(selected_initial.blocked_users.len(), 1);
+
+    let selected_channel_initial =
+        client::community::happy_path::selected_channel_initial(env, &user1, community_id, import_group_response.channel_id);
+    assert!(selected_channel_initial.blocked_users.is_empty());
 
     // Check that the group has been deleted
     assert!(!env.canister_exists(group_id.into()));
@@ -206,6 +206,7 @@ fn pending_prizes_transferred_to_community() {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -237,6 +238,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user4 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let group_name = random_string();
     let community_name = random_string();
@@ -255,6 +257,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         user1,
         user2,
         user3,
+        user4,
         group_id,
         group_name,
         community_id,
@@ -266,6 +269,7 @@ struct TestData {
     user1: User,
     user2: User,
     user3: User,
+    user4: User,
     group_id: ChatId,
     group_name: String,
     community_id: CommunityId,

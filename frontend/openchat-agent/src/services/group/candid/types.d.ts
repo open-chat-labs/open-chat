@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'message_id' : MessageId,
@@ -23,7 +22,7 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : MessageIndex } |
+export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -891,6 +890,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -1052,7 +1052,7 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
-export interface JoinVideoCallArgs { 'message_index' : MessageIndex }
+export interface JoinVideoCallArgs { 'message_id' : MessageId }
 export type JoinVideoCallResponse = { 'GroupFrozen' : null } |
   { 'AlreadyEnded' : null } |
   { 'UserNotInGroup' : null } |
@@ -1075,7 +1075,6 @@ export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
-  'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
@@ -1101,8 +1100,7 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'VideoCall' : VideoCallContentInitial } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1290,6 +1288,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1647,19 +1646,18 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
+  { 'Success' : SendMessageSuccess } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'UserSuspended' : null } |
   { 'InvalidRequest' : string } |
   { 'RulesNotAccepted' : null };
+export interface SendMessageSuccess {
+  'timestamp' : TimestampMillis,
+  'event_index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+  'message_index' : MessageIndex,
+}
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
@@ -1696,6 +1694,14 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
   'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StartVideoCallArgs {
+  'initiator_username' : string,
+  'initiator' : UserId,
+  'initiator_display_name' : [] | [string],
+  'message_id' : MessageId,
+}
+export type StartVideoCallResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
@@ -2006,6 +2012,10 @@ export interface _SERVICE {
     SelectedUpdatesV2Response
   >,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
+  'start_video_call' : ActorMethod<
+    [StartVideoCallArgs],
+    StartVideoCallResponse
+  >,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
@@ -2022,5 +2032,3 @@ export interface _SERVICE {
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

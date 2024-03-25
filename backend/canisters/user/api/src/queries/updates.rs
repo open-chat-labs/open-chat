@@ -1,3 +1,4 @@
+use crate::initial_state::PinNumberSettings;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{Chat, ChatId, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId};
@@ -26,6 +27,7 @@ pub struct SuccessResult {
     pub avatar_id: OptionUpdate<u128>,
     pub blocked_users: Option<Vec<UserId>>,
     pub suspended: Option<bool>,
+    pub pin_number_settings: OptionUpdate<PinNumberSettings>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -6,44 +6,54 @@
 import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
+import { createLocalStorageStore } from "../utils/store";
+
+export type IncomingVideoCall = {
+    chatId: ChatIdentifier;
+    userId: string;
+};
+
+export type VideoCallView = "fullscreen" | "minimised" | "default";
 
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
     call?: DailyCall;
-    fullscreen: boolean;
+    view: VideoCallView;
     threadOpen: boolean;
 };
 
-const store = writable<ActiveVideoCall | undefined>(undefined);
+const activeStore = writable<ActiveVideoCall | undefined>(undefined);
+export const incomingVideoCall = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
+export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
 
 export const activeVideoCall = {
-    subscribe: store.subscribe,
+    subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, call: DailyCall) => {
-        return store.set({
+        return activeStore.set({
             status: "joined",
             chatId,
             call,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },
-    fullscreen: (fullscreen: boolean) => {
-        return store.update((current) => {
+    setView: (view: VideoCallView) => {
+        return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
                       ...current,
-                      fullscreen,
+                      view,
                   };
         });
     },
     threadOpen: (threadOpen: boolean) => {
-        return store.update((current) => {
+        return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
@@ -53,10 +63,8 @@ export const activeVideoCall = {
         });
     },
     endCall: () => {
-        return store.update((current) => {
-            if (current !== undefined && current.call) {
-                current.call.destroy();
-            }
+        return activeStore.update((current) => {
+            current?.call?.destroy();
             microphone.set(false);
             camera.set(false);
             sharing.set(false);
@@ -64,19 +72,57 @@ export const activeVideoCall = {
         });
     },
     changeTheme: (theme: DailyThemeConfig) => {
-        return store.update((current) => {
-            if (current !== undefined && current.call !== undefined) {
-                current.call.setTheme(theme);
-            }
+        return activeStore.update((current) => {
+            current?.call?.setTheme(theme);
             return current;
         });
     },
     joining: (chatId: ChatIdentifier) => {
-        return store.set({
+        return activeStore.set({
             status: "joining",
             chatId,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },
 };
+
+export const ringtoneUrls: Record<RingtoneKey, string> = {
+    boring: "/assets/ringtones/ringring_boring.mp3",
+    pleasant: "/assets/ringtones/tinkle.mp3",
+    boomboom: "/assets/ringtones/ringring.mp3",
+    garage: "/assets/ringtones/garage.mp3",
+    siren: "/assets/ringtones/sirens.mp3",
+};
+
+export type RingtoneKey = "boring" | "pleasant" | "boomboom" | "garage" | "siren";
+
+export class Ringtone {
+    audio: HTMLAudioElement;
+    playing: boolean;
+    url: string;
+
+    constructor(
+        public key: RingtoneKey,
+        public name: string,
+    ) {
+        this.url = ringtoneUrls[key];
+        this.audio = new Audio(ringtoneUrls[key]);
+        this.audio.loop = true;
+        this.playing = false;
+    }
+
+    toggle() {
+        this.playing = !this.playing;
+        if (this.playing) {
+            this.audio.play();
+        } else {
+            this.audio.pause();
+        }
+    }
+
+    stop() {
+        this.playing = false;
+        this.audio.pause();
+    }
+}

@@ -32,14 +32,6 @@ pub fn caller_is_owner_or_local_user_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_owner_or_video_call_operator() -> Result<(), String> {
-    if read_state(|state| state.is_caller_owner() || state.is_caller_video_call_operator()) {
-        Ok(())
-    } else {
-        Err("Caller is not the canister owner or the video call operator".to_owned())
-    }
-}
-
 pub fn caller_is_group_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_group_index()) {
         Ok(())

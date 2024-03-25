@@ -45,6 +45,7 @@ const defaultGroupChat: GroupChatSummary = {
         inviteUsers: "admin",
         reactToMessages: "member",
         mentionAllMembers: "member",
+        startVideoCall: "admin",
         messagePermissions: {
             default: "member",
         },
@@ -114,7 +115,6 @@ describe("thread utils", () => {
                             edited: false,
                             forwarded: false,
                             deleted: false,
-                            lastUpdated: undefined,
                         },
                     },
                 ],

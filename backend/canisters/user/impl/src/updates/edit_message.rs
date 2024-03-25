@@ -36,12 +36,18 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             now,
         };
 
-        match chat.events.edit_message(edit_message_args) {
+        match chat
+            .events
+            .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
+        {
             EditMessageResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
+                    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+
                     state.push_user_canister_event(
                         args.user_id.into(),
                         UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+                            thread_root_message_id,
                             message_id: args.message_id,
                             content: args.content.into(),
                         })),
