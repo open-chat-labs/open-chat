@@ -22,6 +22,7 @@ type TokenDetails = record {
     decimals : nat8;
     fee : nat;
     logo : text;
+    logo_id : opt nat;
     info_url : text;
     how_to_buy_url : text;
     transaction_url_format : text;
