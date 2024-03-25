@@ -51,7 +51,7 @@ async function generateLanguage(lang, code) {
         const enKeys = Object.keys(enMap);
         const enEntries = Object.entries(enMap);
         const targetMap = flatten(targetData);
-        const targetEntries = Object.entries(targetMap);        
+        const targetEntries = Object.entries(targetMap);
         const missing = missingEntries(enEntries, targetEntries);
 
         const translated = await Promise.all(
@@ -83,7 +83,9 @@ async function generateLanguage(lang, code) {
     }
 
     function buildNewTargetEntries(enKeys, targetMap, newTranslationsMap) {
-        return enKeys.sort((a, b) => a.localeCompare(b)).map(k => ([k, targetMap[k] ?? newTranslationsMap[k]]));
+        return enKeys
+            .sort((a, b) => a.localeCompare(b))
+            .map((k) => [k, targetMap[k] ?? newTranslationsMap[k]]);
     }
 
     async function translateBatch(values) {
@@ -137,12 +139,13 @@ const languages = [
     { lang: "de", code: "de" },
     { lang: "es", code: "es" },
     { lang: "fr", code: "fr" },
+    { lang: "hi", code: "hi" },
     { lang: "it", code: "it" },
+    { lang: "iw", code: "iw" },
     { lang: "jp", code: "ja" },
     { lang: "ru", code: "ru" },
+    { lang: "uk", code: "uk" },
     { lang: "vi", code: "vi" },
-    { lang: "iw", code: "iw" },
-    { lang: "hi", code: "hi" },
 ];
 
 languages.forEach(async ({ lang, code }) => {

@@ -6,15 +6,16 @@ import { type InterpolationValues, type Level, type MessageFormatter } from "ope
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
     de: "de",
-    es: "es",
     en: "en",
+    es: "es",
     fr: "fr",
+    hi: "hi",
     it: "it",
+    iw: "iw",
     jp: "ja",
     ru: "ru",
+    uk: "uk",
     vi: "vi",
-    iw: "iw",
-    hi: "hi",
 };
 
 export const supportedLanguages = [
@@ -62,6 +63,10 @@ export const supportedLanguages = [
         name: "हिंदी",
         code: "hi",
     },
+    {
+        name: "Yкраїнська",
+        code: "uk",
+    },
 ];
 
 export const supportedLanguagesByCode = supportedLanguages.reduce(
@@ -78,12 +83,13 @@ register("cn", () => import("./cn.json"));
 register("de", () => import("./de.json"));
 register("es", () => import("./es.json"));
 register("fr", () => import("./fr.json"));
+register("hi", () => import("./hi.json"));
 register("it", () => import("./it.json"));
+register("iw", () => import("./iw.json"));
 register("jp", () => import("./jp.json"));
 register("ru", () => import("./ru.json"));
+register("uk", () => import("./uk.json"));
 register("vi", () => import("./vi.json"));
-register("iw", () => import("./iw.json"));
-register("hi", () => import("./hi.json"));
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
