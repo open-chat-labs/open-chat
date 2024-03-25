@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
 
+### Removed
+
+- Removed InfinitySwap functions which are no longer used ([#5595](https://github.com/open-chat-labs/open-chat/pull/5595))
+
 ## [[2.0.919](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.919-proposal_validation)] - 2023-11-02
 
 ### Added
