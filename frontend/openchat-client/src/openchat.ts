@@ -1534,8 +1534,19 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canStartVideoCalls);
+        return this.chatPredicate(chatId, (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat));
     }
+
+    isChatPrivate(chat: ChatSummary): boolean {
+        switch (chat.kind) {
+            case "channel": {
+                let community = this.getCommunityForChannel(chat.id);
+                return !(community?.public ?? true) || !chat.public;
+            }
+            case "group_chat": return !chat.public;
+            default: return true;
+        }
+    }    
 
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
