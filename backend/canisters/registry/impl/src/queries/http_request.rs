@@ -52,6 +52,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 streaming_strategy: None,
             }
         } else {
+            let ledger = token.ledger_canister_id;
+
             // If the requested id doesn't match the logo id, forward the caller to the url for the current id.
             HttpResponse::moved_permanently(&format!("/logo?ledger={ledger}&id={logo_id}"))
         }
