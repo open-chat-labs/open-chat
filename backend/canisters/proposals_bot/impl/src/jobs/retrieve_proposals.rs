@@ -120,7 +120,16 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
 fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
     match response {
         Ok(raw_proposals) => {
-            let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+            let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+
+            // TODO Remove this!
+            // Temp hack for Dragginz
+            // Dfinity are fixing a bug in their governance canister which is causing it to
+            // return old proposals
+            let dragginz_governance_canister_id: CanisterId = CanisterId::from_text("zqfso-syaaa-aaaaq-aaafq-cai").unwrap();
+            if governance_canister_id == dragginz_governance_canister_id {
+                proposals.retain(|p| p.id() > 36)
+            }
 
             mutate_state(|state| {
                 let now = state.env.now();
