@@ -393,7 +393,18 @@ export function buildBlobUrl(
 
     return `${pattern
         .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobTypeFragment)}${blobId}`;
+        .replace("{blobType}", blobTypeFragment)}/${blobId}`;
+}
+
+export function buildTokenLogoUrl(
+    pattern: string,
+    canisterId: string,
+    ledger: string,
+    logoId: bigint,
+): string {
+    return `${pattern
+        .replace("{canisterId}", canisterId)
+        .replace("{blobType}", "logo")}?ledger=${ledger}&id=${logoId}`;
 }
 
 export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: bigint): string {

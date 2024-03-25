@@ -1340,6 +1340,13 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
+export interface SetTokenEnabledArgs {
+  'enabled' : boolean,
+  'ledger_canister_id' : CanisterId,
+}
+export type SetTokenEnabledResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1439,6 +1446,8 @@ export interface TokenDetails {
   'logo' : string,
   'name' : string,
   'last_updated' : TimestampMillis,
+  'enabled' : boolean,
+  'logo_id' : [] | [bigint],
   'ledger_canister_id' : CanisterId,
   'supported_standards' : Array<string>,
   'symbol' : string,
@@ -1543,6 +1552,10 @@ export interface _SERVICE {
   'remove_message_filter' : ActorMethod<
     [RemoveMessageFilterArgs],
     RemoveMessageFilterResponse
+  >,
+  'set_token_enabled' : ActorMethod<
+    [SetTokenEnabledArgs],
+    SetTokenEnabledResponse
   >,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
 }

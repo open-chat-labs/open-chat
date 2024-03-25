@@ -6,15 +6,22 @@ import type {
 } from "openchat-shared";
 import { optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
+import { buildTokenLogoUrl } from "../../utils/chat";
 
-export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResponse {
+export function updatesResponse(
+    candid: ApiUpdatesResponse,
+    blobUrlPattern: string,
+    registryCanisterId: string,
+): RegistryUpdatesResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
             lastUpdated: candid.Success.last_updated,
             tokenDetails:
                 optional(candid.Success.token_details, (tokens) =>
-                    tokens.map((t) => tokenDetails(t)),
+                    tokens
+                        .filter((t) => t.enabled)
+                        .map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
             nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
             messageFiltersAdded: candid.Success.message_filters_added,
@@ -29,14 +36,24 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
     throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
 }
 
-function tokenDetails(candid: ApiTokenDetails): CryptocurrencyDetails {
+function tokenDetails(
+    candid: ApiTokenDetails,
+    blobUrlPattern: string,
+    registryCanisterId: string,
+): CryptocurrencyDetails {
+    const ledger = candid.ledger_canister_id.toString();
+    const logoId = candid.logo_id[0];
+
     return {
-        ledger: candid.ledger_canister_id.toString(),
+        ledger,
         name: candid.name,
         symbol: candid.symbol,
         decimals: candid.decimals,
         transferFee: candid.fee,
-        logo: candid.logo,
+        logo:
+            logoId !== undefined
+                ? buildTokenLogoUrl(blobUrlPattern, registryCanisterId, ledger, BigInt(logoId))
+                : candid.logo,
         infoUrl: candid.info_url,
         howToBuyUrl: candid.how_to_buy_url,
         transactionUrlFormat: candid.transaction_url_format,
