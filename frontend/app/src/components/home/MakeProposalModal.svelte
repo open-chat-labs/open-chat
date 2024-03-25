@@ -487,7 +487,7 @@
                                 disabled={busy}
                                 invalid={!isTokenLogoValid(addOrUpdateTokenLogo)}
                                 minlength={0}
-                                maxlength={10000}
+                                maxlength={50000}
                                 bind:value={addOrUpdateTokenLogo}
                                 countdown
                                 placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
