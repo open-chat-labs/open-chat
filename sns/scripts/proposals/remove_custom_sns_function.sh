@@ -16,11 +16,7 @@ FUNCTION_ID=$4
 
 TITLE="Remove custom SNS function \\\"$FUNCTION_NAME\\\""
 
-echo "Remove custom SNS function $FUNCTION_ID"
-
 PROPOSAL="(record { title=\"$TITLE\"; url=\"$URL\"; summary=\"$SUMMARY\"; action=opt variant {RemoveGenericNervousSystemFunction = $FUNCTION_ID:nat64}})"
-
-echo $PROPOSAL
 
 ../utils/submit_proposal.sh "$PROPOSAL"
 
