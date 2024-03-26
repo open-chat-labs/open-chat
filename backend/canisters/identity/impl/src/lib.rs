@@ -84,22 +84,15 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     internet_identity_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(default)]
     salt: Salt,
-    #[serde(default)]
     principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
     test_mode: bool,
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 impl Data {
