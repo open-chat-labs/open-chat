@@ -259,6 +259,7 @@ export class OpenChatAgent extends EventTarget {
         this._groupClients = {};
         this._communityClients = {};
         this._dexesAgent = new DexesAgent(config);
+        this._groupInvite = config.groupInvite;
     }
 
     private get principal(): Principal {
@@ -1420,10 +1421,12 @@ export class OpenChatAgent extends EventTarget {
             });
 
         userResponse.communities.updated.forEach((c) => {
-            if (c.pinned === undefined) {
-                byCommunity.delete(c.id.communityId);
-            } else {
-                byCommunity.set(c.id.communityId, c.pinned);
+            if (c.pinned !== undefined) {
+                if (c.pinned.length === 0) {
+                    byCommunity.delete(c.id.communityId);
+                } else {
+                    byCommunity.set(c.id.communityId, c.pinned);
+                }
             }
         });
 
@@ -2806,7 +2809,7 @@ export class OpenChatAgent extends EventTarget {
                         const updated = {
                             lastUpdated: updates.lastUpdated,
                             tokenDetails: distinctBy(
-                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
                             ),
                             nervousSystemSummary: distinctBy(

@@ -58,6 +58,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -75,7 +76,9 @@ fn p2p_swap_in_direct_chat_succeeds() {
         user2.canister(),
         &user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
+            thread_root_message_index: None,
             message_id,
+            pin: None,
         },
     );
 
@@ -175,6 +178,7 @@ fn p2p_swap_in_group_succeeds() {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -190,6 +194,7 @@ fn p2p_swap_in_group_succeeds() {
         &group_canister::accept_p2p_swap::Args {
             thread_root_message_index: None,
             message_id,
+            pin: None,
         },
     );
 
@@ -267,6 +272,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -396,6 +402,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -505,6 +512,7 @@ fn deposit_refunded_if_swap_expires() {
             replies_to: None,
             forwarding: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );

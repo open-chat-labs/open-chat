@@ -52,6 +52,7 @@ fn main() {
     generate_candid_method!(user, set_community_indexes, update);
     generate_candid_method!(user, set_contact, update);
     generate_candid_method!(user, set_message_reminder_v2, update);
+    generate_candid_method!(user, set_pin_number, update);
     generate_candid_method!(user, start_video_call, update);
     generate_candid_method!(user, submit_proposal, update);
     generate_candid_method!(user, swap_tokens, update);

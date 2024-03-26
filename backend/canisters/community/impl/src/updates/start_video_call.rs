@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
+use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -45,7 +46,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         false,
         state.data.proposals_bot_user_id,
-        &mut state.data.event_sink_client,
+        &mut state.data.event_store_client,
         now,
     ) {
         SendMessageResult::Success(r) => r,
@@ -87,6 +88,17 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(expiry) = expires_at {
         state.data.handle_event_expiry(expiry, now);
+    }
+
+    if let Some(duration) = args.max_duration {
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(community_canister::end_video_call::Args {
+                channel_id: args.channel_id,
+                message_id: args.message_id,
+            })),
+            now + duration,
+            now,
+        );
     }
 
     Success

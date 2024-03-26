@@ -146,6 +146,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                    thread_root_message_id: ev.thread_root_message_id,
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),

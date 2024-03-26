@@ -40,7 +40,8 @@ async fn c2c_handle_bot_messages(
             handle_message_impl(
                 HandleMessageArgs {
                     sender,
-                    message_id: None,
+                    thread_root_message_id: message.thread_root_message_id,
+                    message_id: message.message_id,
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
@@ -63,6 +64,7 @@ async fn c2c_handle_bot_messages(
 
 pub(crate) struct HandleMessageArgs {
     pub sender: UserId,
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: Option<MessageId>,
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
@@ -116,20 +118,6 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
 
-    let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
-        message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
-        sender: args.sender,
-        content: args.content,
-        mentioned: Vec::new(),
-        replies_to,
-        forwarded: args.forwarding,
-        sender_is_bot: args.is_bot,
-        sender_name_override: None,
-        correlation_id: 0,
-        now: args.now,
-    };
-
     let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
         c
     } else {
@@ -139,13 +127,28 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
             .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
     };
 
+    let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
+    let push_message_args = PushMessageArgs {
+        thread_root_message_index,
+        message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
+        sender: args.sender,
+        content: args.content,
+        mentioned: Vec::new(),
+        replies_to,
+        forwarded: args.forwarding,
+        sender_is_bot: args.is_bot,
+        correlation_id: 0,
+        now: args.now,
+    };
+
     let message_id = push_message_args.message_id;
 
     let message_event = chat.push_message(
         false,
         push_message_args,
         args.sender_message_index,
-        args.push_message_sent_event.then_some(&mut state.data.event_sink_client),
+        args.push_message_sent_event.then_some(&mut state.data.event_store_client),
     );
 
     if args.is_bot {
@@ -156,7 +159,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         let content = &message_event.event.content;
         let notification = Notification::DirectMessage(DirectMessageNotification {
             sender: args.sender,
-            thread_root_message_index: None,
+            thread_root_message_index,
             message_index: message_event.event.message_index,
             event_index: message_event.index,
             sender_name: args.sender_name,
@@ -172,7 +175,15 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         state.push_notification(recipient, notification);
     }
 
-    register_timer_jobs(chat_id, message_id, &message_event, files, args.now, &mut state.data);
+    register_timer_jobs(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        &message_event,
+        files,
+        args.now,
+        &mut state.data,
+    );
 
     message_event
 }

@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::Event;
 use types::{CanisterId, UpdateUserPrincipalArgs, UserId};
 use user_index_canister::c2c_update_user_principal::{Response::*, *};
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[update_msgpack(guard = "caller_is_identity_canister")]
 #[trace]
@@ -21,18 +22,15 @@ async fn c2c_update_user_principal(args: Args) -> Response {
     )
     .await
     {
-        Ok(user_canister::c2c_update_user_principal::Response::Success(result)) => {
-            mutate_state(|state| {
-                commit(
-                    user_id,
-                    args.old_principal,
-                    args.new_principal,
-                    result.canisters_to_notify,
-                    state,
-                )
-            });
-            Success
-        }
+        Ok(user_canister::c2c_update_user_principal::Response::Success(result)) => mutate_state(|state| {
+            commit(
+                user_id,
+                args.old_principal,
+                args.new_principal,
+                result.canisters_to_notify,
+                state,
+            )
+        }),
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
@@ -47,9 +45,12 @@ fn commit(
     new_principal: Principal,
     mut canisters_to_notify: Vec<CanisterId>,
     state: &mut RuntimeState,
-) {
+) -> Response {
     let now = state.env.now();
-    let mut user = state.data.users.get_by_user_id(&user_id).unwrap().clone();
+    let Some(mut user) = state.data.users.get(&old_principal).cloned() else {
+        // Exit if the migration has already run
+        return Success;
+    };
     user.principal = new_principal;
 
     assert!(matches!(state.data.users.update(user, now), UpdateUserResult::Success));
@@ -72,4 +73,12 @@ fn commit(
 
     crate::jobs::notify_user_principal_updates::start_job_if_required(state);
     crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
+
+    if state.data.user_principal_updates_queue.len() > 1000 {
+        SuccessPause(MINUTE_IN_MS)
+    } else if state.data.user_principal_updates_queue.len() > 500 {
+        SuccessPause(15 * SECOND_IN_MS)
+    } else {
+        Success
+    }
 }

@@ -62,6 +62,10 @@
             bind:rolePermission={permissions.deleteMessages} />
         <SelectPermissionRole
             {roles}
+            label={i18nKey("permissions.startVideoCall")}
+            bind:rolePermission={permissions.startVideoCall} />
+        <SelectPermissionRole
+            {roles}
             label={i18nKey("permissions.pinMessages")}
             bind:rolePermission={permissions.pinMessages} />
         <SelectPermissionRole

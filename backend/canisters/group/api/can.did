@@ -55,6 +55,7 @@ type StartVideoCallArgs = record {
     initiator : UserId;
     initiator_username : text;
     initiator_display_name : opt text;
+    max_duration : opt Milliseconds;
 };
 
 type StartVideoCallResponse = variant {
@@ -140,6 +141,7 @@ type RegisterPollVoteResponse = variant {
 type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -150,6 +152,9 @@ type AcceptP2PSwapResponse = variant {
     UserNotInGroup;
     UserSuspended;
     ChatFrozen;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 

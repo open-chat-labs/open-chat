@@ -13,6 +13,7 @@ import { getTheme as getSignalsTheme } from "./community/signals";
 import { getTheme as getWindoge98Theme } from "./community/windoge98";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
+import { createLocalStorageStore } from "../utils/store";
 
 const defaultTheme = lightTheme();
 const dark = darkTheme(defaultTheme);
@@ -140,14 +141,3 @@ export const currentTheme = derived(currentThemeName, (name) => {
     writeCssVars("--", theme);
     return theme;
 });
-
-function createLocalStorageStore(key: string, def: string) {
-    const store = writable<string>(localStorage.getItem(key) || def);
-    return {
-        subscribe: store.subscribe,
-        set: (state: string): void => {
-            store.set(state);
-            localStorage.setItem(key, state);
-        },
-    };
-}

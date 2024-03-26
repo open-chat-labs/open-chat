@@ -5,9 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+## [[2.0.1111](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1111-user_index)] - 2024-03-20
+
+### Changed
+
+- Avoid case where principal migration could happen twice ([#5528](https://github.com/open-chat-labs/open-chat/pull/5528))
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Pause principal migration job if pending queue becomes too large ([#5557](https://github.com/open-chat-labs/open-chat/pull/5557))
+- Update `event_store` packages to latest version ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+
 ### Fixed
 
 - Fix 'out of cycles' check to use new response code ([#5503](https://github.com/open-chat-labs/open-chat/pull/5503))
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
 
 ## [[2.0.1091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1091-user_index)] - 2024-03-07
 

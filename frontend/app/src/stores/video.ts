@@ -6,17 +6,20 @@
 import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
+import { createLocalStorageStore } from "../utils/store";
 
 export type IncomingVideoCall = {
     chatId: ChatIdentifier;
     userId: string;
 };
 
+export type VideoCallView = "fullscreen" | "minimised" | "default";
+
 export type ActiveVideoCall = {
     status: "joining" | "joined";
     chatId: ChatIdentifier;
     call?: DailyCall;
-    fullscreen: boolean;
+    view: VideoCallView;
     threadOpen: boolean;
 };
 
@@ -26,6 +29,7 @@ export const incomingVideoCall = writable<IncomingVideoCall | undefined>(undefin
 export const microphone = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
+export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
 
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
@@ -34,17 +38,17 @@ export const activeVideoCall = {
             status: "joined",
             chatId,
             call,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },
-    fullscreen: (fullscreen: boolean) => {
+    setView: (view: VideoCallView) => {
         return activeStore.update((current) => {
             return current === undefined
                 ? undefined
                 : {
                       ...current,
-                      fullscreen,
+                      view,
                   };
         });
     },
@@ -77,8 +81,48 @@ export const activeVideoCall = {
         return activeStore.set({
             status: "joining",
             chatId,
-            fullscreen: false,
+            view: "default",
             threadOpen: false,
         });
     },
 };
+
+export const ringtoneUrls: Record<RingtoneKey, string> = {
+    boring: "/assets/ringtones/ringring_boring.mp3",
+    pleasant: "/assets/ringtones/tinkle.mp3",
+    boomboom: "/assets/ringtones/ringring.mp3",
+    garage: "/assets/ringtones/garage.mp3",
+    siren: "/assets/ringtones/sirens.mp3",
+};
+
+export type RingtoneKey = "boring" | "pleasant" | "boomboom" | "garage" | "siren";
+
+export class Ringtone {
+    audio: HTMLAudioElement;
+    playing: boolean;
+    url: string;
+
+    constructor(
+        public key: RingtoneKey,
+        public name: string,
+    ) {
+        this.url = ringtoneUrls[key];
+        this.audio = new Audio(ringtoneUrls[key]);
+        this.audio.loop = true;
+        this.playing = false;
+    }
+
+    toggle() {
+        this.playing = !this.playing;
+        if (this.playing) {
+            this.audio.play();
+        } else {
+            this.audio.pause();
+        }
+    }
+
+    stop() {
+        this.playing = false;
+        this.audio.pause();
+    }
+}

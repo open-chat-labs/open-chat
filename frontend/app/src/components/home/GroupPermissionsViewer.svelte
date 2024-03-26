@@ -26,6 +26,7 @@
                 inviteUsers: permissions.inviteUsers,
                 removeMembers: permissions.removeMembers,
                 deleteMessages: permissions.deleteMessages,
+                startVideoCall: permissions.startVideoCall,
                 pinMessages: permissions.pinMessages,
                 reactToMessages: permissions.reactToMessages,
                 mentionAllMembers: permissions.mentionAllMembers,

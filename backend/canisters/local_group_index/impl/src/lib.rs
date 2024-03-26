@@ -1,9 +1,9 @@
 use crate::model::local_community_map::LocalCommunityMap;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
-use event_sink_utils::EventDeduper;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
+use event_store_utils::EventDeduper;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -69,8 +69,8 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let group_upgrades_metrics = self.data.groups_requiring_upgrade.metrics();
         let community_upgrades_metrics = self.data.communities_requiring_upgrade.metrics();
-        let event_sink_client_info = self.data.event_sink_client.info();
-        let event_relay_canister_id = event_sink_client_info.event_sink_canister_id;
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -96,7 +96,7 @@ impl RuntimeState {
             group_upgrade_concurrency: self.data.group_upgrade_concurrency,
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
-            event_sink_client_info,
+            event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -136,7 +136,7 @@ struct Data {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub video_call_operators: Vec<Principal>,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
 }
@@ -183,7 +183,7 @@ impl Data {
             community_upgrade_concurrency: 2,
             rng_seed: [0; 32],
             video_call_operators,
-            event_sink_client: EventSinkClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
@@ -216,7 +216,7 @@ pub struct Metrics {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
 }
 

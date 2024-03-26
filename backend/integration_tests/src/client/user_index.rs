@@ -14,6 +14,7 @@ generate_query_call!(users_v2);
 // Updates
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
+generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
 generate_update_call!(pay_for_diamond_membership);
@@ -191,6 +192,19 @@ pub mod happy_path {
         match response {
             user_index_canister::public_key::Response::Success(pk) => pk,
             response => panic!("'public_key' error: {response:?}"),
+        }
+    }
+
+    pub fn add_platform_operator(env: &mut PocketIc, sender: Principal, user_index_canister_id: CanisterId, user_id: UserId) {
+        let response = super::add_platform_operator(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::add_platform_operator::Args { user_id },
+        );
+
+        match response {
+            user_index_canister::add_platform_operator::Response::Success => {}
         }
     }
 }

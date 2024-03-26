@@ -115,7 +115,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         winner,
         transaction,
         state.env.rng(),
-        &mut state.data.event_sink_client,
+        &mut state.data.event_store_client,
         now,
     ) {
         chat_events::ClaimPrizeResult::Success => {

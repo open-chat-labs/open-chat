@@ -67,6 +67,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
+                    groupInvite: this.config.groupInvite,
                 },
                 true,
             ).then(() => {

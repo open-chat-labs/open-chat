@@ -40,7 +40,7 @@ fn run() {
 }
 
 fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
-    if state.data.event_sink_client.info().events_pending > 100000 {
+    if state.data.event_store_client.info().events_pending > 100000 {
         return None;
     }
 

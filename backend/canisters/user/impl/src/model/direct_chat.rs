@@ -1,6 +1,6 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, PushMessageArgs, Reader};
-use event_sink_client::{EventSinkClient, Runtime};
+use event_store_producer::{EventStoreClient, Runtime};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
@@ -67,10 +67,10 @@ impl DirectChat {
         sent_by_me: bool,
         args: PushMessageArgs,
         their_message_index: Option<MessageIndex>,
-        event_sink_client: Option<&mut EventSinkClient<R>>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EventWrapper<Message> {
         let now = args.now;
-        let message_event = self.events.push_message(args, event_sink_client);
+        let message_event = self.events.push_message(args, event_store_client);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
@@ -178,5 +178,21 @@ impl DirectChat {
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
+    }
+
+    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
+        self.events
+            .main_events_reader()
+            .message_internal(message_id.into())
+            .unwrap()
+            .message_index
+    }
+
+    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
+        self.events
+            .main_events_reader()
+            .message_internal(message_index.into())
+            .unwrap()
+            .message_id
     }
 }

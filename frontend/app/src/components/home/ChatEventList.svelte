@@ -1,12 +1,13 @@
 <script lang="ts">
-    import type {
-        ChatSummary,
-        EventWrapper,
-        Message,
-        ChatEvent as ChatEventType,
-        OpenChat,
-        Mention,
-        MessageContext,
+    import {
+        type ChatSummary,
+        type EventWrapper,
+        type Message,
+        type ChatEvent as ChatEventType,
+        type OpenChat,
+        type Mention,
+        type MessageContext,
+        MessageContextMap,
     } from "openchat-client";
     import {
         ChatUpdated,
@@ -24,6 +25,7 @@
     import { afterUpdate, beforeUpdate, getContext, onMount, tick } from "svelte";
     import { pathParams } from "../../routes";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
+    import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import Fab from "../Fab.svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -38,7 +40,7 @@
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
-    const FROM_BOTTOM_THRESHOLD = 600;
+    const FROM_END_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
     const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
@@ -55,18 +57,21 @@
     export let footer: boolean;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
+    export let scrollTopButtonEnabled: boolean = false;
 
     let interrupt = false;
     let morePrevAvailable = false;
     let moreNewAvailable = false;
     let loadingFromUserScroll = false;
-    let previousScrollHeight: number | undefined = undefined;
-    let previousScrollTop: number | undefined = undefined;
+    let previousScrollHeight: MessageContextMap<number> = new MessageContextMap();
+    let previousScrollTopByHeight: MessageContextMap<Record<number, number>> =
+        new MessageContextMap();
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
     let messageObserver: IntersectionObserver;
     let labelObserver: IntersectionObserver;
+    let heightObserver: MutationObserver;
     let messageReadTimers: Record<number, number> = {};
 
     $: user = client.user;
@@ -142,17 +147,22 @@
     };
 
     let showGoToBottom = false;
+    let showGoToTop = false;
     let floatingTimestamp: bigint | undefined = undefined;
+    let loadingNewMessages = false;
+    let loadingPrevMessages = false;
 
     beforeUpdate(() => {
         withScrollableElement((el) => {
-            previousScrollHeight = el.scrollHeight;
-            previousScrollTop = el.scrollTop;
+            const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
+            scrollTopByHeight[el.scrollHeight] = el.scrollTop;
+            previousScrollTopByHeight.set(messageContext, scrollTopByHeight);
         });
     });
 
     afterUpdate(() => {
         updateShowGoToBottom();
+        updateShowGoToTop();
     });
 
     function elementIsOffTheTop(el: Element): boolean {
@@ -160,7 +170,11 @@
     }
 
     function updateShowGoToBottom() {
-        showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
+        showGoToBottom = fromBottom() > FROM_END_THRESHOLD;
+    }
+
+    function updateShowGoToTop() {
+        showGoToTop = fromTop() > FROM_END_THRESHOLD;
     }
 
     onMount(() => {
@@ -169,6 +183,75 @@
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
+
+        heightObserver = new MutationObserver((_: MutationRecord[]) => {
+            withScrollableElement(async (el) => {
+                const previousScrollHeightVal = previousScrollHeight.get(messageContext);
+                if (
+                    el.scrollHeight !== previousScrollHeightVal &&
+                    previousScrollHeightVal !== undefined
+                ) {
+                    const scrollHeightDiff = el.scrollHeight - previousScrollHeightVal;
+                    const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
+                    const previousScrollTop = scrollTopByHeight[previousScrollHeightVal] ?? 0;
+
+                    const scrollTopDiff = Math.abs(el.scrollTop - previousScrollTop);
+                    const sensitivityThreshold = 100;
+                    const diffDiff = Math.abs(scrollHeightDiff - scrollTopDiff);
+                    const needsAdjustment =
+                        loadingFromUserScroll && diffDiff > sensitivityThreshold;
+
+                    if (scrollHeightDiff > 0) {
+                        console.debug(
+                            `SCROLL: scrollHeight has changed from: ${previousScrollHeightVal} to: ${el.scrollHeight}`,
+                        );
+                    }
+                    if (scrollTopDiff > 0) {
+                        console.debug(
+                            `SCROLL: scrollTop has changed from: ${previousScrollTop} to: ${el.scrollTop}`,
+                        );
+                    }
+
+                    if (needsAdjustment) {
+                        if (reverseScroll && loadingNewMessages && !loadingPrevMessages) {
+                            await interruptScroll((el) => {
+                                if (previousScrollTop !== undefined) {
+                                    el.scrollTop = previousScrollTop - scrollHeightDiff;
+                                }
+                            });
+                        }
+                        if (!reverseScroll && loadingPrevMessages && !loadingNewMessages) {
+                            await interruptScroll((el) => {
+                                if (previousScrollTop !== undefined) {
+                                    el.scrollTop = previousScrollTop + scrollHeightDiff;
+                                }
+                            });
+                        }
+                        console.debug("SCROLL: adjusted: ", {
+                            ...keyMeasurements(),
+                            scrollTop: el.scrollTop,
+                            scrollHeight: el.scrollHeight,
+                            scrollHeightDiff,
+                            scrollTopDiff,
+                            reverseRender: reverseScroll,
+                        });
+                    }
+
+                    // after the scroll height has changed, make sure that we check whether we need to load more messages
+                    if (loadingFromUserScroll) {
+                        await loadMoreIfRequired(loadingFromUserScroll);
+                    }
+                }
+                previousScrollHeight.set(messageContext, el.scrollHeight);
+            });
+        });
+
+        heightObserver.observe(messagesDiv!, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ["scrollHeight"],
+        });
 
         messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -244,6 +327,7 @@
 
         client.addEventListener("openchat_event", clientEvent);
         return () => {
+            heightObserver.disconnect();
             client.removeEventListener("openchat_event", clientEvent);
             destroyed = true;
         };
@@ -337,22 +421,22 @@
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
-        const loadingPrev = shouldLoadPreviousMessages();
-        const loadingNew = shouldLoadNewMessages();
-        loadingFromUserScroll = (loadingNew || loadingPrev) && fromScroll;
+        loadingPrevMessages = shouldLoadPreviousMessages();
+        loadingNewMessages = shouldLoadNewMessages();
+        loadingFromUserScroll = (loadingPrevMessages || loadingNewMessages) && fromScroll;
         const loadPromises = [];
-        if (loadingNew) {
+        if (loadingNewMessages) {
             console.debug("SCROLL: about to load new message");
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
-        if (loadingPrev) {
+        if (loadingPrevMessages) {
             console.debug("SCROLL: about to load previous message");
             loadPromises.push(client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad));
         }
         if (loadPromises.length > 0) {
             await Promise.all(loadPromises);
         }
-        return loadingNew || loadingPrev;
+        return loadingNewMessages || loadingPrevMessages;
     }
 
     async function resetScroll(initialLoad: boolean) {
@@ -513,7 +597,6 @@
     }
 
     async function onLoadedPreviousMessages(context: MessageContext, initialLoad: boolean) {
-        await tick();
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
@@ -524,19 +607,11 @@
             await interruptScroll(() => {
                 console.debug("SCROLL: onLoadedPrevious interrupt");
             });
-        } else {
-            await adjustScrollTopIfNecessary(initialLoad, true);
         }
-        await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
     async function onLoadedNewMessages(context: MessageContext) {
-        await tick();
         if (!messageContextsEqual(context, messageContext)) return;
-
-        if (reverseScroll) {
-            await adjustScrollTopIfNecessary(false, false);
-        }
 
         if (
             !loadingFromUserScroll &&
@@ -546,41 +621,6 @@
             // only scroll if we are now within threshold from the bottom
             scrollBottom("smooth");
         }
-
-        await loadMoreIfRequired(loadingFromUserScroll);
-    }
-
-    async function adjustScrollTopIfNecessary(initialLoad: boolean, add: boolean): Promise<void> {
-        withScrollableElement(async (el) => {
-            if (
-                !initialLoad &&
-                previousScrollHeight !== undefined &&
-                previousScrollTop !== undefined
-            ) {
-                const { scrollHeight, scrollTop } = el;
-                const sensitivityThreshold = 100;
-                const scrollHeightDiff = scrollHeight - previousScrollHeight;
-                const scrollTopDiff = scrollTop - previousScrollTop;
-                const diffDiff = scrollHeightDiff - scrollTopDiff;
-                // sometimes chrome is *a little* out but it we only want to intervene if if's way off
-                if (diffDiff > sensitivityThreshold) {
-                    await interruptScroll((el) => {
-                        if (previousScrollTop !== undefined) {
-                            let adjusted = add
-                                ? el.scrollTop + scrollHeightDiff
-                                : el.scrollTop - scrollHeightDiff;
-                            el.scrollTop = adjusted;
-                            console.debug("SCROLL: adjusted: ", {
-                                ...keyMeasurements(),
-                                scrollHeightDiff,
-                                scrollTopDiff,
-                                reverseRender: reverseScroll,
-                            });
-                        }
-                    });
-                }
-            }
-        });
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
@@ -604,6 +644,7 @@
             $eventListScrollTop = messagesDiv?.scrollTop;
         }
         updateShowGoToBottom();
+        updateShowGoToTop();
         menuStore.hideMenu();
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
@@ -618,6 +659,10 @@
         if (messageContextsEqual(context, messageContext)) {
             await scrollBottom();
         }
+    }
+
+    function scrollToTop() {
+        scrollToMessageIndex(messageContext, 0, false);
     }
 
     function scrollToLast() {
@@ -662,6 +707,18 @@
     class={`scrollable-list ${rootSelector}`}>
     <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
+
+{#if scrollTopButtonEnabled}
+    <div
+        title={$_("scrollToTop")}
+        class:show={showGoToTop}
+        class="fab to-top"
+        class:rtl={$rtlStore}>
+        <Fab on:click={scrollToTop}>
+            <ArrowUp size={$iconSize} color={"#fff"} />
+        </Fab>
+    </div>
+{/if}
 
 {#if !readonly}
     <div
@@ -757,5 +814,10 @@
         &.footer {
             bottom: 80px;
         }
+    }
+
+    .to-top {
+        top: 95px;
+        height: $sp7;
     }
 </style>

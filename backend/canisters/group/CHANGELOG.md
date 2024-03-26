@@ -5,16 +5,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+## [[2.0.1121](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1121-group)] - 2024-03-21
+
+### Fixed
+
+- Add missing mapping for the old SNEED token ([#5581](https://github.com/open-chat-labs/open-chat/pull/5581))
+
+## [[2.0.1117](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1117-group)] - 2024-03-21
+
 ### Added
 
 - Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
 - Push event each time a user tips a message ([#5521](https://github.com/open-chat-labs/open-chat/pull/5521))
 - Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
 - Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
+- Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
+- Push backdated events for tips, edits, reactions, swaps + video calls ([#5541](https://github.com/open-chat-labs/open-chat/pull/5541))
+- Add optional PIN for sending crypto transfers ([#5571](https://github.com/open-chat-labs/open-chat/pull/5571))
+- Push backdated message events ([#5575](https://github.com/open-chat-labs/open-chat/pull/5575))
 
 ### Changed
 
 - Check start video call permission in access_token ([#5524](https://github.com/open-chat-labs/open-chat/pull/5524))
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Anonymize all Group canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+- Fallback job to mark video calls as ended ([#5569](https://github.com/open-chat-labs/open-chat/pull/5569))
+
+### Fixed
+
+- Mark old video calls as having ended ([#5572](https://github.com/open-chat-labs/open-chat/pull/5572))
+- Add missing mappings for ICL and ELNA ([#5580](https://github.com/open-chat-labs/open-chat/pull/5580))
 
 ## [[2.0.1096](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1096-group)] - 2024-03-08
 

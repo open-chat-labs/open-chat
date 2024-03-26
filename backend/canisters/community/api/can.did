@@ -284,6 +284,7 @@ type AcceptP2PSwapArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -296,6 +297,9 @@ type AcceptP2PSwapResponse = variant {
     UserNotInChannel;
     UserSuspended;
     ChatFrozen;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -855,6 +859,7 @@ type StartVideoCallArgs = record {
     initiator : UserId;
     initiator_username : text;
     initiator_display_name : opt text;
+    max_duration : opt Milliseconds;
 };
 
 type StartVideoCallResponse = variant {

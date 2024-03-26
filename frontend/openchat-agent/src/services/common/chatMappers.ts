@@ -483,7 +483,6 @@ export function message(candid: ApiMessage): Message {
         edited: candid.edited,
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
-        lastUpdated: optional(candid.last_updated, identity),
         thread: optional(candid.thread_summary, threadSummary),
     };
 }
@@ -1228,8 +1227,7 @@ export function apiCommunityPermissions(
         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         change_roles: apiCommunityPermissionRole(permissions.changeRoles),
         create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
-        // TODO
-        manage_user_groups: apiCommunityPermissionRole("admin"),
+        manage_user_groups: apiCommunityPermissionRole(permissions.manageUserGroups),
     };
 }
 
@@ -1612,6 +1610,16 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
             },
         ];
     }
+    if (domain.kind === "token_balance_gate") {
+        return [
+            {
+                TokenBalance: {
+                    ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                    min_balance: domain.minBalance,
+                },
+            },
+        ];
+    }
     return [];
 }
 
@@ -1643,6 +1651,14 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
                 ledger_canister_id: Principal.fromText(domain.ledgerCanister),
                 amount: domain.amount,
                 fee: domain.fee,
+            },
+        };
+    }
+    if (domain.kind === "token_balance_gate") {
+        return {
+            TokenBalance: {
+                ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                min_balance: domain.minBalance,
             },
         };
     }

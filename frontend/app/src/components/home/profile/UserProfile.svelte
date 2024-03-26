@@ -32,6 +32,7 @@
         chatsSectionOpen,
         dclickReply,
         restrictedSectionOpen,
+        videoSectionOpen,
         enterSend,
         lowBandwidth,
         referralOpen,
@@ -52,6 +53,7 @@
     import ThemeSelector from "./ThemeSelector.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import Translatable from "../../Translatable.svelte";
+    import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -424,6 +426,14 @@
                         on:change={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
+                </CollapsibleCard>
+            </div>
+            <div class="video">
+                <CollapsibleCard
+                    on:toggle={videoSectionOpen.toggle}
+                    open={$videoSectionOpen}
+                    headerText={i18nKey("profile.videoSettings")}>
+                    <VideoCallSettings />
                 </CollapsibleCard>
             </div>
             <div class="restricted">

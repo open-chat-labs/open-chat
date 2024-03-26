@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
-    MessageContentInitial, MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
+    MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
     UpdateUserPrincipalArgs, User, UserId,
 };
 
@@ -136,6 +136,7 @@ pub struct OpenChatBotMessage {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OpenChatBotMessageV2 {
     pub user_id: UserId,
+    pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
     pub mentioned: Vec<User>,
 }

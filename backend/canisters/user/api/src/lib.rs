@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, Reaction,
-    SuspensionDuration, TimestampMillis, User, UserId,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
+    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
 };
 
 mod lifecycle;
@@ -23,6 +23,7 @@ pub use queries::*;
 pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
+    ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 
@@ -138,6 +139,7 @@ pub struct UserSuspended {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OpenChatBotMessageV2 {
+    pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
     pub mentioned: Vec<User>,
 }
@@ -192,6 +194,7 @@ pub struct SendMessagesArgs {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SendMessageArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub sender_message_index: MessageIndex,
     pub content: MessageContentInternal,
@@ -208,17 +211,20 @@ pub enum C2CReplyContext {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EditMessageArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub content: MessageContent,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ToggleReactionArgs {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub reaction: Reaction,
     pub added: bool,
@@ -229,7 +235,7 @@ pub struct ToggleReactionArgs {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TipMessageArgs {
-    pub thread_root_message_index: Option<MessageIndex>,
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
     pub token: Cryptocurrency,
@@ -247,6 +253,7 @@ pub struct MarkMessagesReadArgs {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapStatusChange {
+    pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub status: P2PSwapStatus,
 }
@@ -255,6 +262,7 @@ pub struct P2PSwapStatusChange {
 pub struct StartVideoCallArgs {
     pub message_id: MessageId,
     pub message_index: MessageIndex,
+    pub max_duration: Option<Milliseconds>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
