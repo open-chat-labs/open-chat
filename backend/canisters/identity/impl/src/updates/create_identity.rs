@@ -25,13 +25,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         Err(error) => return PublicKeyInvalid(error),
     };
 
-    let index = state.data.user_principals.next_index();
-    let seed = state.data.calculate_seed(index);
-    let principal = state.get_principal_from_seed(seed);
-    state
-        .data
-        .user_principals
-        .push(index, principal, caller, originating_canister);
+    let (principal, seed) = state.push_new_user(caller, originating_canister);
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
