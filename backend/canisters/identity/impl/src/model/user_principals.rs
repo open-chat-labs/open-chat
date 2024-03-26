@@ -33,7 +33,7 @@ struct AuthPrincipalInternal {
 
 impl UserPrincipals {
     pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal, originating_canister: CanisterId) {
-        assert_eq!(self.user_principals.len() as u32, index);
+        assert_eq!(index, self.next_index());
         assert!(!self.auth_principals.contains_key(&auth_principal));
 
         self.user_principals.push(UserPrincipalInternal {
@@ -50,13 +50,13 @@ impl UserPrincipals {
     }
 
     pub fn next_index(&self) -> u32 {
-        self.user_principals.len() as u32
+        self.user_principals.len().try_into().unwrap()
     }
 
     pub fn get_by_auth_principal(&self, auth_principal: &Principal) -> Option<UserPrincipal> {
         self.auth_principals.get(auth_principal).and_then(|a| {
             self.user_principals
-                .get(a.user_principal_index as usize)
+                .get(usize::try_from(a.user_principal_index).unwrap())
                 .map(|u| UserPrincipal {
                     index: a.user_principal_index,
                     principal: u.principal,
