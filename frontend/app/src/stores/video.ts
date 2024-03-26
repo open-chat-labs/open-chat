@@ -3,10 +3,22 @@
  * DailyCall object in a store
  */
 
-import { type DailyCall, type DailyThemeConfig } from "@daily-co/daily-js";
+import {
+    type DailyCall,
+    type DailyEventObjectAppMessage,
+    type DailyThemeConfig,
+} from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
+
+export type InterCallMessage = RequestToSpeak;
+
+export type RequestToSpeak = DailyEventObjectAppMessage<{
+    kind: "ask_to_speak";
+    participantId: string;
+    userId: string;
+}>;
 
 export type IncomingVideoCall = {
     chatId: ChatIdentifier;
@@ -27,6 +39,7 @@ const activeStore = writable<ActiveVideoCall | undefined>(undefined);
 export const incomingVideoCall = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
+export const hasPresence = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
 export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
@@ -68,6 +81,7 @@ export const activeVideoCall = {
             microphone.set(false);
             camera.set(false);
             sharing.set(false);
+            hasPresence.set(false);
             return undefined;
         });
     },

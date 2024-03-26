@@ -6,6 +6,7 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
     import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
+    import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import {
         chatIdentifiersEqual,
         type ChatSummary,
@@ -15,7 +16,14 @@
         type AccessTokenType,
         NoMeetingToJoin,
     } from "openchat-client";
-    import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
+    import {
+        activeVideoCall,
+        camera,
+        hasPresence,
+        microphone,
+        sharing,
+        type InterCallMessage,
+    } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import type { DailyThemeConfig } from "@daily-co/daily-js";
@@ -107,8 +115,6 @@
                 return;
             }
 
-            performance.mark("start");
-
             // close and threads we have open in the right panel
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
@@ -124,10 +130,6 @@
                 chat.id,
                 accessType,
             );
-
-            performance.mark("daily_token");
-            performance.measure("get_oc_token", "start", "oc_token");
-            performance.measure("get_daily_token", "oc_token", "daily_token");
 
             const call = daily.createFrame(iframeContainer, {
                 token,
@@ -145,7 +147,16 @@
                 theme: getThemeConfig($currentTheme),
             });
 
-            performance.mark("daily_frame");
+            call.on("app-message", (ev: InterCallMessage | undefined) => {
+                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak") {
+                    call.updateParticipant(ev.data.participantId, {
+                        updatePermissions: {
+                            hasPresence: true,
+                            canSend: true,
+                        },
+                    });
+                }
+            });
 
             call.on("left-meeting", async () => {
                 activeVideoCall.endCall();
@@ -153,9 +164,11 @@
 
             call.on("participant-updated", (ev) => {
                 if (ev?.participant.local) {
+                    console.log("Participant info: ", ev?.participant);
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                    hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
                     if (ev?.participant.user_name === $user.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
@@ -171,20 +184,7 @@
 
             await call.join();
 
-            performance.mark("daily_joined");
-            performance.measure("get_daily_frame", "daily_token", "daily_frame");
-            performance.measure("get_daily_joined", "daily_frame", "daily_joined");
-
             activeVideoCall.setCall(chat.id, call);
-
-            performance.mark("end");
-            performance.measure("total", "start", "end");
-
-            console.log("OCToken: ", performance.getEntriesByName("get_oc_token"));
-            console.log("DailyToken: ", performance.getEntriesByName("get_daily_token"));
-            console.log("DailyFrame: ", performance.getEntriesByName("get_daily_frame"));
-            console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
-            console.log("Total: ", performance.getEntriesByName("total"));
 
             if (joining) {
                 await client.joinVideoCall(chat.id, BigInt(messageId));
@@ -234,6 +234,28 @@
             activeVideoCall.setView("fullscreen");
         } else if ($activeVideoCall?.view === "fullscreen") {
             activeVideoCall.setView("default");
+        }
+    }
+
+    function askToSpeak() {
+        // we need to send a message to all of the current admins on the call to and send our userId and our participantId
+        if ($activeVideoCall?.call) {
+            const participants = $activeVideoCall.call.participants();
+            const me = participants.local;
+            Object.entries(participants).map(([key, val]) => {
+                if (key !== "local") {
+                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
+                        $activeVideoCall?.call?.sendAppMessage(
+                            {
+                                kind: "ask_to_speak",
+                                participantId: me.session_id,
+                                userId: me.user_id,
+                            },
+                            val.session_id,
+                        );
+                    }
+                }
+            });
         }
     }
 
@@ -300,6 +322,14 @@
                     {/if}
                 </div>
                 <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                    {#if !$hasPresence}
+                        <HoverIcon on:click={askToSpeak}>
+                            <HandFrontLeft
+                                title={$_("videoCall.askToSpeak")}
+                                size={$iconSize}
+                                color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}
                         <ActiveCallThreadSummary
                             chatId={chat.chatId}

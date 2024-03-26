@@ -5739,6 +5739,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private getRoomAccessToken(
         authToken: string,
+        roomType: "default" | "livestream",
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
@@ -5755,7 +5756,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
-        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?room-type=${roomType}&initiator-username=${username}&initiator-displayname=${displayName}`;
         if (avatarId) {
             url += `&initiator-avatarid=${avatarId}`;
         }
@@ -5809,6 +5810,9 @@ export class OpenChat extends OpenChatAgentWorker {
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
+
+        const roomType =
+            chat.kind === "direct_chat" ? "default" : chat.public ? "livestream" : "default";
         return this.getLocalUserIndex(chat).then((localUserIndex) => {
             return this.sendRequest({
                 kind: "getAccessToken",
@@ -5821,10 +5825,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         throw new Error("Didn't get an access token");
                     }
                     console.log("TOKEN: ", token);
-                    performance.mark("oc_token");
                     return token;
                 })
-                .then((token) => this.getRoomAccessToken(token));
+                .then((token) => this.getRoomAccessToken(token, roomType));
         });
     }
 
@@ -6021,18 +6024,20 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).then((resp) => {
-            if (resp.kind === "success") {
-                candidate.id = {
-                    kind: "community",
-                    communityId: resp.id,
-                };
-                this.addCommunityLocally(candidate);
-            }
-            return resp;
-        }).catch(() => ({
-            kind: "failure",
-        }));
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    candidate.id = {
+                        kind: "community",
+                        communityId: resp.id,
+                    };
+                    this.addCommunityLocally(candidate);
+                }
+                return resp;
+            })
+            .catch(() => ({
+                kind: "failure",
+            }));
     }
 
     private addToFavouritesLocally(chatId: ChatIdentifier): void {

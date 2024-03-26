@@ -71,6 +71,7 @@
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
     $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
     $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
+    $: isPublic = selectedChatSummary.kind === "direct_chat" ? false : selectedChatSummary.public;
 
     $: incall =
         $activeVideoCall !== undefined &&
@@ -79,7 +80,9 @@
 
     $: videoMenuText = videoCallInProgress
         ? i18nKey("videoCall.joinVideo")
-        : i18nKey("videoCall.startVideo");
+        : isPublic
+          ? i18nKey("videoCall.startLivestream")
+          : i18nKey("videoCall.startVideo");
 
     $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 

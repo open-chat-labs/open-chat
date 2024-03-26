@@ -1257,6 +1257,7 @@
     "userSearchFailed": "There was an error searching for users",
     "version": "Version",
     "videoCall": {
+        "askToSpeak": "Ask to speak",
         "callFailed": "Sorry, we were unable to start the video call",
         "chat": "Chat",
         "clickToJoin": "Click to join the call",
@@ -1271,6 +1272,7 @@
         "noMeetingToJoin": "Sorry but the meeting you are trying to join has ended",
         "remoteStart": "A video call has been started by {name}",
         "startedBy": "A video call was started by {username}",
+        "startLivestream": "Start live stream",
         "startVideo": "Start video call",
         "switchCall": "You are already in a video call. Would you like to switch to this one?",
         "toggleCam": "Toggle your camera",
