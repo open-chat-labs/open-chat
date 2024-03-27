@@ -11,6 +11,7 @@ mod macros;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
+pub mod event_store;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;

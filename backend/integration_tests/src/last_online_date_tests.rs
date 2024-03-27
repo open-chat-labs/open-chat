@@ -1,8 +1,10 @@
 use crate::env::ENV;
 use crate::rng::random_principal;
+use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn set_then_get_last_online_date_succeeds() {
@@ -12,16 +14,7 @@ fn set_then_get_last_online_date_succeeds() {
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    let mark_online_response = client::online_users::mark_as_online(
-        env,
-        user1.principal,
-        canister_ids.online_users,
-        &online_users_canister::mark_as_online::Args {},
-    );
-    assert!(matches!(
-        mark_online_response,
-        online_users_canister::mark_as_online::Response::Success
-    ));
+    client::online_users::happy_path::mark_as_online(env, user1.principal, canister_ids.online_users);
 
     env.advance_time(Duration::from_millis(1000));
     env.tick();
@@ -37,4 +30,44 @@ fn set_then_get_last_online_date_succeeds() {
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].user_id, user1.user_id);
     assert_eq!(users[0].duration_since_last_online, 1000);
+}
+
+#[test]
+fn mark_online_pushes_event() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
+    env.tick();
+    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.tick();
+
+    let timestamp = now_millis(env);
+    client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+
+    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.tick();
+    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.tick();
+    env.tick();
+
+    let latest_event_index = client::event_store::happy_path::events(env, *controller, canister_ids.event_store, 0, 0)
+        .latest_event_index
+        .unwrap();
+
+    let latest_event =
+        client::event_store::happy_path::events(env, *controller, canister_ids.event_store, latest_event_index, 1)
+            .events
+            .pop()
+            .unwrap();
+
+    assert_eq!(latest_event.name, "user_online");
+    assert_eq!(latest_event.timestamp, timestamp);
 }
