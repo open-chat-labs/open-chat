@@ -121,6 +121,11 @@
       "wasm": "wasms/event_relay.wasm.gz",
       "build": "./scripts/generate-wasm.sh event_relay"
     },
+    "event_store": {
+      "type": "custom",
+      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.1.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.1.0/event_store.wasm.gz"
+    },
     "website": {
       "build": "",
       "source": ["frontend/app/build", "frontend/app/public"],
