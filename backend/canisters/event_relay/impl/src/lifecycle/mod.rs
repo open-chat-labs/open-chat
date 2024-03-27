@@ -37,11 +37,6 @@ fn reseed_rng() {
         mutate_state(|state| {
             state.data.rng_seed = seed;
             state.env = Box::new(CanisterEnv::new(seed));
-
-            // We only want to set the salt once
-            if !state.data.salt.is_initialized() {
-                state.data.salt.set(seed);
-            }
         });
         trace!("Successfully reseeded rng");
     }
