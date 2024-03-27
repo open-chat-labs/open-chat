@@ -273,6 +273,17 @@ pub async fn upgrade_event_relay_canister(
     println!("Event relay canister upgraded");
 }
 
+pub async fn upgrade_event_store_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    event_store_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(identity, url, event_store_canister_id, version, (), CanisterName::EventStore).await;
+
+    println!("Event store canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: Box<dyn Identity>,
     url: String,
