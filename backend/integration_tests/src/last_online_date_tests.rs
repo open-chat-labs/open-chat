@@ -46,15 +46,15 @@ fn mark_online_pushes_event() {
 
     env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
     env.tick();
-    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.advance_time(Duration::from_millis(MINUTE_IN_MS));
     env.tick();
 
     let timestamp = now_millis(env);
     client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
 
-    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.advance_time(Duration::from_millis(MINUTE_IN_MS));
     env.tick();
-    env.advance_time(Duration::from_millis(1 * MINUTE_IN_MS));
+    env.advance_time(Duration::from_millis(MINUTE_IN_MS));
     env.tick();
     env.tick();
 
