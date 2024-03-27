@@ -5802,6 +5802,41 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    endVideoCallOnBridge(authToken: string) {
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+        return fetch(`${this.config.videoBridgeUrl}/room/end_meeting`, {
+            method: "POST",
+            headers: headers,
+        }).then((res) => {
+            if (!res.ok) {
+                console.error(`Unable to get end meeting: ${res.status}, ${res.statusText}`);
+            }
+        });
+    }
+
+    endVideoCall(chatId: ChatIdentifier) {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId,
+                accessTokenType: { kind: "join_video_call" }, // TODO - this should have it's own token type really
+                localUserIndex,
+            })
+                .then((token) => {
+                    if (token === undefined) {
+                        throw new Error("Didn't get an access token");
+                    }
+                    return token;
+                })
+                .then((token) => this.endVideoCallOnBridge(token));
+        });
+    }
+
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,

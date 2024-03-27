@@ -1099,7 +1099,9 @@
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:leaveGroup={triggerConfirm} />
+            on:leaveGroup={triggerConfirm}
+            on:askToSpeak
+            on:hangup />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel

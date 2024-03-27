@@ -40,6 +40,7 @@
     import { snowing } from "../stores/snow";
     import Snow from "./Snow.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
+    import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
@@ -370,6 +371,14 @@
         videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
     }
 
+    function askToSpeak() {
+        videoCallElement?.askToSpeak();
+    }
+
+    function hangup() {
+        videoCallElement?.hangup();
+    }
+
     function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
         incomingVideoCall.set(undefined);
         const chat = client.lookupChatSummary(ev.detail);
@@ -398,6 +407,8 @@
     on:clearSelection={() => page(routeForScope($chatListScope))}
     bind:this={videoCallElement} />
 
+<VideoCallAccessRequests />
+
 <IncomingCall on:joinVideoCall={joinVideoCall} />
 
 <Witch background />
@@ -408,7 +419,11 @@
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router on:startVideoCall={startVideoCall} {showLandingPage} />
+        <Router
+            on:hangup={hangup}
+            on:askToSpeak={askToSpeak}
+            on:startVideoCall={startVideoCall}
+            {showLandingPage} />
     {/if}
 {/if}
 

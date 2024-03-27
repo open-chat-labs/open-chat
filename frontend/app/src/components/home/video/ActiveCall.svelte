@@ -43,6 +43,11 @@
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
+    import Overlay from "../../Overlay.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import Button from "../../Button.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -56,6 +61,7 @@
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
+    let hostEnded = false;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -109,6 +115,8 @@
     export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
         if (chat === undefined) return;
 
+        const isPublic = chat.kind !== "direct_chat" && chat.public;
+
         try {
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = { chat, join };
@@ -149,17 +157,24 @@
 
             call.on("app-message", (ev: InterCallMessage | undefined) => {
                 if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak") {
-                    call.updateParticipant(ev.data.participantId, {
-                        updatePermissions: {
-                            hasPresence: true,
-                            canSend: true,
-                        },
-                    });
+                    activeVideoCall.captureAccessRequest(ev.data);
                 }
             });
 
-            call.on("left-meeting", async () => {
+            // this only fires when *I* leave the meeting
+            call.on("left-meeting", () => {
+                // at this point I have already left the meeting and so participantCount will always report 0
+                // so we can't use it.
                 activeVideoCall.endCall();
+            });
+
+            // this fires when a remote participant leaves the meeting
+            call.on("participant-left", (ev) => {
+                // if the owner leaves, end the call
+                if (ev?.participant.owner && !ev.participant.local && isPublic) {
+                    hangup();
+                    hostEnded = true;
+                }
             });
 
             call.on("participant-updated", (ev) => {
@@ -172,7 +187,7 @@
                 } else {
                     if (ev?.participant.user_name === $user.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
-                        activeVideoCall.endCall();
+                        hangup();
                     }
                 }
             });
@@ -237,7 +252,7 @@
         }
     }
 
-    function askToSpeak() {
+    export function askToSpeak() {
         // we need to send a message to all of the current admins on the call to and send our userId and our participantId
         if ($activeVideoCall?.call) {
             const participants = $activeVideoCall.call.participants();
@@ -249,7 +264,7 @@
                             {
                                 kind: "ask_to_speak",
                                 participantId: me.session_id,
-                                userId: me.user_id,
+                                userId: $user.userId,
                             },
                             val.session_id,
                         );
@@ -263,8 +278,17 @@
         activeVideoCall.setView("minimised");
     }
 
-    function hangup() {
-        activeVideoCall.endCall();
+    export function hangup() {
+        if ($activeVideoCall?.call) {
+            const present = $activeVideoCall.call.participantCounts().present;
+            if (present === 1) {
+                // I must be the last person left in the call
+                client.endVideoCall($activeVideoCall.chatId);
+            }
+
+            // this will trigger the left-meeting event which will in turn end the call
+            $activeVideoCall.call.leave();
+        }
     }
 
     function clearSelection() {
@@ -278,6 +302,23 @@
 
 {#if confirmSwitchTo}
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
+{/if}
+
+{#if hostEnded}
+    <Overlay>
+        <ModalContent hideHeader>
+            <div class="host-ended" slot="body">
+                <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
+            </div>
+            <span slot="footer">
+                <ButtonGroup align={"center"}>
+                    <Button on:click={() => (hostEnded = false)}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
 {/if}
 
 <div
@@ -322,7 +363,7 @@
                     {/if}
                 </div>
                 <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                    {#if !$hasPresence}
+                    {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
                         <HoverIcon on:click={askToSpeak}>
                             <HandFrontLeft
                                 title={$_("videoCall.askToSpeak")}
@@ -356,6 +397,11 @@
 <style lang="scss">
     :global(.video-call-container .section-header) {
         background-color: var(--daily-header);
+    }
+
+    .host-ended {
+        @include font(bold, normal, fs-130);
+        text-align: center;
     }
 
     .video-call-container {

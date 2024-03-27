@@ -12,13 +12,15 @@ import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
-export type InterCallMessage = RequestToSpeak;
+export type InterCallMessage = RequestToSpeakMessage;
 
-export type RequestToSpeak = DailyEventObjectAppMessage<{
+export type RequestToSpeak = {
     kind: "ask_to_speak";
     participantId: string;
     userId: string;
-}>;
+};
+
+export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 
 export type IncomingVideoCall = {
     chatId: ChatIdentifier;
@@ -33,6 +35,7 @@ export type ActiveVideoCall = {
     call?: DailyCall;
     view: VideoCallView;
     threadOpen: boolean;
+    accessRequests: RequestToSpeak[];
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
@@ -53,6 +56,7 @@ export const activeVideoCall = {
             call,
             view: "default",
             threadOpen: false,
+            accessRequests: [],
         });
     },
     setView: (view: VideoCallView) => {
@@ -62,6 +66,46 @@ export const activeVideoCall = {
                 : {
                       ...current,
                       view,
+                  };
+        });
+    },
+    rejectAccessRequest: (req: RequestToSpeak) => {
+        return activeStore.update((current) => {
+            if (current === undefined) return undefined;
+            return {
+                ...current,
+                accessRequests: current.accessRequests.filter(
+                    (r) => r.participantId !== req.participantId,
+                ),
+            };
+        });
+    },
+    approveAccessRequest: (req: RequestToSpeak) => {
+        return activeStore.update((current) => {
+            if (current === undefined) return undefined;
+            if (current.call) {
+                current.call.updateParticipant(req.participantId, {
+                    updatePermissions: {
+                        hasPresence: true,
+                        canSend: true,
+                    },
+                });
+            }
+            return {
+                ...current,
+                accessRequests: current.accessRequests.filter(
+                    (r) => r.participantId !== req.participantId,
+                ),
+            };
+        });
+    },
+    captureAccessRequest: (req: RequestToSpeak) => {
+        return activeStore.update((current) => {
+            return current === undefined
+                ? undefined
+                : {
+                      ...current,
+                      accessRequests: [...current.accessRequests, req],
                   };
         });
     },
@@ -97,6 +141,7 @@ export const activeVideoCall = {
             chatId,
             view: "default",
             threadOpen: false,
+            accessRequests: [],
         });
     },
 };
