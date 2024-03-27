@@ -45,6 +45,7 @@ NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_contro
 ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
 EVENT_RELAY_CANISTER_ID=$(dfx canister --network $NETWORK id event_relay)
+EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml -- \
@@ -68,6 +69,7 @@ cargo run \
   --escrow $ESCROW_CANISTER_ID \
   --translations $TRANSLATIONS_CANISTER_ID \
   --event-relay $EVENT_RELAY_CANISTER_ID \
+  --event-store $EVENT_STORE_CANISTER_ID \
   --nns-root $NNS_ROOT_CANISTER_ID \
   --nns-governance $NNS_GOVERNANCE_CANISTER_ID \
   --nns-internet-identity $NNS_INTERNET_IDENTITY_CANISTER_ID \
