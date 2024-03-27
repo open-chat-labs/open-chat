@@ -25,6 +25,7 @@ async fn main() {
         escrow: opts.escrow,
         translations: opts.translations,
         event_relay: opts.event_relay,
+        event_store: opts.event_store,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -100,6 +101,9 @@ struct Opts {
 
     #[arg(long)]
     event_relay: CanisterId,
+
+    #[arg(long)]
+    event_store: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,
