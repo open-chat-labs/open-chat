@@ -248,7 +248,7 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let event_store_canister_wasm = get_canister_wasm(CanisterName::EventRelay, version);
+    let event_store_canister_wasm = get_canister_wasm(CanisterName::EventStore, version);
     let event_store_init_args = event_store_canister::InitArgs {
         push_events_whitelist: vec![canister_ids.event_relay],
         read_events_whitelist: vec![principal],
