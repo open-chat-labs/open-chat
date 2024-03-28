@@ -1,10 +1,11 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
+use event_store_producer_cdk_runtime::CdkRuntime;
 use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
@@ -36,5 +37,15 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+    });
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        for channel in state.data.channels.iter_mut() {
+            channel
+                .chat
+                .events
+                .mark_video_call_ended_if_message_deleted::<CdkRuntime>(now);
+        }
     });
 }
