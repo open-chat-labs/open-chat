@@ -419,6 +419,7 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    IdentityStorage,
     NoMeetingToJoin,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -493,8 +494,10 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _ocIdentityStorage: IdentityStorage;
     private _authClient: Promise<AuthClient>;
-    private _identity: Identity | undefined;
+    private _authPrincipal: string | undefined;
+    private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
@@ -546,6 +549,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.warn("GEO: Unable to determine user's country location", err);
             });
 
+        this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
@@ -554,7 +558,9 @@ export class OpenChat extends OpenChatAgentWorker {
             storage: idbAuthClientStore,
         });
 
-        this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+        this._authClient
+            .then((c) => c.getIdentity())
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -581,9 +587,9 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
-    private loadedIdentity(id: Identity) {
-        this._identity = id;
+    private loadedAuthenticationIdentity(id: Identity) {
         const anon = id.getPrincipal().isAnonymous();
+        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
         this.loadUser(anon);
     }
@@ -611,7 +617,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 onSuccess: () => {
                     currentUser.set(anonymousUser());
                     chatsInitialised.set(false);
-                    this.loadedIdentity(c.getIdentity());
+                    this.loadedAuthenticationIdentity(c.getIdentity());
                 },
                 onError: (err) => {
                     this.identityState.set({ kind: "anon" });
@@ -704,6 +710,10 @@ export class OpenChat extends OpenChatAgentWorker {
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
+        if (!anon) {
+            this._ocIdentity = await this._ocIdentityStorage.get();
+        }
+
         this.startRegistryPoller();
         this.startExchangeRatePoller();
 
@@ -711,7 +721,7 @@ export class OpenChat extends OpenChatAgentWorker {
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
 
-        if (anon) {
+        if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
@@ -768,18 +778,17 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        if (this._identity === undefined) {
-            throw new Error("onCreatedUser called before the user's identity has been established");
-        }
         this.user.set(user);
         this.setDiamondStatus(user.diamondStatus);
-        const id = this._identity;
+        const id = this._ocIdentity;
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
         this.startOnlinePoller();
         startSwCheckPoller();
-        this.startSession(id).then(() => this.logout());
+        if (id !== undefined) {
+            this.startSession(id).then(() => this.logout());
+        }
         this.startChatsPoller();
         this.startUserUpdatePoller();
         initNotificationStores();
@@ -858,10 +867,11 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    logout(): Promise<void> {
-        return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.replace("/"));
-        });
+    async logout(): Promise<void> {
+        await Promise.all([
+            this._ocIdentityStorage.remove(),
+            this._authClient.then((c) => c.logout({ returnTo: "/" })),
+        ]);
     }
 
     async previouslySignedIn(): Promise<boolean> {
@@ -1194,11 +1204,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
-        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
+        if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
+            return Promise.resolve(undefined);
+        }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._identity!.getPrincipal().toString(),
+            this._authPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.credentialType,
             gate.credential.credentialArguments,
