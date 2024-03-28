@@ -26,6 +26,15 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     };
 
+    match (args.call_type, channel.chat.is_public) {
+        (VideoCallContent::PublicVideoCall, false) => {
+            return NotAuthorized;
+        }
+        (VideoCallContent::PrivateVideoCall, true) => {
+            return NotAuthorized;
+        }
+    }
+
     let sender = args.initiator;
     let now = state.env.now();
 
@@ -34,6 +43,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         args.message_id,
         MessageContentInternal::VideoCall(VideoCallContent {
+            call_type: args.call_type,
             ended: None,
             participants: vec![CallParticipant {
                 user_id: sender,
