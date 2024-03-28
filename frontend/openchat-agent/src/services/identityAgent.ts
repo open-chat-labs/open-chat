@@ -54,7 +54,6 @@ export class IdentityAgent {
         sessionKey: SignIdentity,
         sessionKeyDer: Uint8Array,
         expiration: bigint,
-        attempt = 0,
     ): Promise<DelegationIdentity | undefined> {
         const getDelegationResponse = await this._identityClient.getDelegation(
             sessionKeyDer,
@@ -62,16 +61,6 @@ export class IdentityAgent {
         );
 
         if (getDelegationResponse.kind === "not_found") {
-            // We could get 'not_found' if we hit a replica that is a bit behind
-            if (attempt < 5) {
-                return this.getDelegation(
-                    userKey,
-                    sessionKey,
-                    sessionKeyDer,
-                    expiration,
-                    attempt + 1,
-                );
-            }
             return undefined;
         }
 
