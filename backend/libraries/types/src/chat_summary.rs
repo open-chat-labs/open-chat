@@ -403,3 +403,9 @@ pub struct UpdatedRules {
 pub struct VideoCall {
     pub message_index: MessageIndex,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
+pub enum VideoCallType {
+    PublicVideoCall,
+    PrivateVideoCall,
+}

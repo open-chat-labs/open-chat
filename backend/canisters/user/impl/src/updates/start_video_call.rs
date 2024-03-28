@@ -7,7 +7,7 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
     CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification,
-    UserId, VideoCallContent,
+    UserId, VideoCallContent, VideoCallType,
 };
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -17,9 +17,14 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 fn start_video_call(args: Args) -> Response {
     run_regular_jobs();
 
+
     mutate_state(|state| {
         let sender = args.initiator;
         if state.data.suspended.value || state.data.blocked_users.contains(&sender) {
+            return NotAuthorized;
+        }
+
+        if let VideoCallType::PublicVideoCall = args.call_type {
             return NotAuthorized;
         }
 
@@ -74,6 +79,7 @@ pub fn handle_start_video_call(
         message_id,
         sender,
         content: MessageContentInternal::VideoCall(VideoCallContent {
+            call_type: VideoCallType::PrivateVideoCall,
             participants: vec![CallParticipant {
                 user_id: sender,
                 joined: now,

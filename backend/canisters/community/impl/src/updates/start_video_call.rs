@@ -7,7 +7,7 @@ use chat_events::MessageContentInternal;
 use community_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
-use types::{CallParticipant, ChannelMessageNotification, Notification, UserId, VideoCallContent};
+use types::{CallParticipant, ChannelMessageNotification, Notification, UserId, VideoCallContent, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -26,13 +26,14 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     };
 
-    match (args.call_type, channel.chat.is_public) {
-        (VideoCallContent::PublicVideoCall, false) => {
+    match (args.call_type, channel.chat.is_public.value) {
+        (VideoCallType::PublicVideoCall, false) => {
             return NotAuthorized;
         }
-        (VideoCallContent::PrivateVideoCall, true) => {
+        (VideoCallType::PrivateVideoCall, true) => {
             return NotAuthorized;
         }
+        _ => {}
     }
 
     let sender = args.initiator;

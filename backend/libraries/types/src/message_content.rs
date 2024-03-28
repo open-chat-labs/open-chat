@@ -2,7 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
     Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -568,6 +568,7 @@ pub struct VideoCallContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
+    pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
 }
