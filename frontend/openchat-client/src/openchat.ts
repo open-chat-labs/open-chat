@@ -1546,19 +1546,24 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat));
+        return this.chatPredicate(
+            chatId,
+            (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat),
+        );
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
         switch (chat.kind) {
             case "channel": {
-                let community = this.getCommunityForChannel(chat.id);
+                const community = this.getCommunityForChannel(chat.id);
                 return !(community?.public ?? true) || !chat.public;
             }
-            case "group_chat": return !chat.public;
-            default: return true;
+            case "group_chat":
+                return !chat.public;
+            default:
+                return true;
         }
-    }    
+    }
 
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
@@ -1794,6 +1799,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const userId = this._liveState.user.userId;
         localMessageUpdates.markDeleted(messageId, userId);
+        undeletingMessagesStore.delete(messageId);
 
         const recipients = [...chatStateStore.getProp(id, "userIds")];
 
@@ -6044,18 +6050,20 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).then((resp) => {
-            if (resp.kind === "success") {
-                candidate.id = {
-                    kind: "community",
-                    communityId: resp.id,
-                };
-                this.addCommunityLocally(candidate);
-            }
-            return resp;
-        }).catch(() => ({
-            kind: "failure",
-        }));
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    candidate.id = {
+                        kind: "community",
+                        communityId: resp.id,
+                    };
+                    this.addCommunityLocally(candidate);
+                }
+                return resp;
+            })
+            .catch(() => ({
+                kind: "failure",
+            }));
     }
 
     private addToFavouritesLocally(chatId: ChatIdentifier): void {

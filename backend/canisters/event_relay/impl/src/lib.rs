@@ -1,4 +1,3 @@
-use crate::model::salt::Salt;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -17,7 +16,6 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
-mod model;
 mod queries;
 mod updates;
 
@@ -68,7 +66,6 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub push_events_whitelist: HashSet<Principal>,
-    #[serde(alias = "events_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -76,7 +73,6 @@ struct Data {
     pub chat_governance_canister_id: CanisterId,
     pub chat_treasury_subaccount: [u8; 32],
     pub ledger_transaction_processed_up_to: Option<u64>,
-    pub salt: Salt,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -101,7 +97,6 @@ impl Data {
             chat_governance_canister_id,
             chat_treasury_subaccount: compute_distribution_subaccount_bytes(chat_governance_canister_id, 0),
             ledger_transaction_processed_up_to: None,
-            salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }

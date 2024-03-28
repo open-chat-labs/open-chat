@@ -22,7 +22,7 @@ fi
 
 if [[ $WASM_SRC == "build" ]]
 then
-    ./scripts/generate-all-canister-wasms.sh
+    ./scripts/generate-all-canister-wasms.sh || exit 1
 elif [[ $WASM_SRC != "local" ]]
 then
     ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
@@ -40,5 +40,6 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
+./scripts/download-event-store-canister-wasm.sh || exit 1
 
 cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS

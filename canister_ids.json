@@ -16,6 +16,10 @@
     "ic": "6ofpc-2aaaa-aaaaf-biibq-cai",
     "ic_test": "6jejw-xyaaa-aaaaf-biiba-cai"
   },
+  "event_store": {
+    "ic": "64dy3-wqaaa-aaaaf-biicq-cai",
+    "ic_test": "63c6p-3iaaa-aaaaf-biica-cai"
+  },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"

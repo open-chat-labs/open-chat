@@ -4,6 +4,7 @@ use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use serde::de::DeserializeOwned;
+use std::time::Duration;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
@@ -11,6 +12,7 @@ mod macros;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
+pub mod event_store;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
@@ -56,6 +58,7 @@ pub fn install_canister<P: CandidType>(
     wasm: CanisterWasm,
     payload: P,
 ) {
+    env.advance_time(Duration::from_millis(1));
     env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
 }
 

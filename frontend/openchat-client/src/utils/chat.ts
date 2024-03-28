@@ -1056,10 +1056,7 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
 
 export function canStartVideoCalls(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.startVideoCall)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     } else {
         return true;
     }
@@ -1467,6 +1464,7 @@ function mergeLocalUpdates(
 
     if (localUpdates?.revealedContent !== undefined) {
         message.content = localUpdates.revealedContent;
+        message.deleted = true;
     }
 
     if (localUpdates?.prizeClaimed !== undefined) {

@@ -98,6 +98,7 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub translations: CanisterId,
     pub event_relay: CanisterId,
+    pub event_store: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
