@@ -6,6 +6,7 @@ use std::fmt;
 pub enum AccessTokenType {
     StartVideoCall,
     JoinVideoCall,
+    MarkVideoCallAsEnded
 }
 
 impl fmt::Display for AccessTokenType {

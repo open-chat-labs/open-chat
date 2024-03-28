@@ -12,6 +12,7 @@ fn c2c_can_issue_access_token_for_channel(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState) -> bool {
     let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall);
+    let ending = matches!(args.access_type, AccessTokenType::MarkVideoCallAsEnded);
 
     let Some(channel) = state.data.channels.get(&args.channel_id) else {
         return false;
@@ -21,5 +22,5 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
         return false;
     };
 
-    joining || (args.is_diamond && member.role.is_permitted(channel.chat.permissions.start_video_call))
+    ending || joining || (args.is_diamond && member.role.is_permitted(channel.chat.permissions.start_video_call))
 }
