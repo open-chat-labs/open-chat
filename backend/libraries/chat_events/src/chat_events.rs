@@ -319,6 +319,8 @@ impl ChatEvents {
             if message.sender == args.caller || args.is_admin {
                 if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                     DeleteMessageResult::AlreadyDeleted
+                } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {
+                    DeleteMessageResult::NotAuthorized
                 } else {
                     let sender = message.sender;
                     message.deleted_by = Some(DeletedByInternal {
