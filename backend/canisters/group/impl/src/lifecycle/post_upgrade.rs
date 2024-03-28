@@ -1,5 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
+use crate::timer_job_types::TimerJob;
 use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -9,6 +10,7 @@ use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
+use types::{CanisterId, PendingCryptoTransaction};
 
 #[post_upgrade]
 #[trace]
@@ -39,5 +41,17 @@ fn post_upgrade(args: Args) {
             .chat
             .events
             .mark_video_call_ended_if_message_deleted::<CdkRuntime>(now);
+
+        for (_, job) in state.data.timer_jobs.iter() {
+            if let Some(TimerJob::MakeTransfer(j)) = job.borrow_mut().as_mut() {
+                if let PendingCryptoTransaction::ICRC1(t) = &mut j.pending_transaction {
+                    let dragginz_ledger = CanisterId::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap();
+                    if t.ledger == dragginz_ledger && t.fee == 1000 {
+                        t.fee = 100000;
+                        t.amount = t.amount.saturating_sub(99000);
+                    }
+                }
+            }
+        }
     });
 }

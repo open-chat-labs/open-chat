@@ -9,7 +9,7 @@ use std::time::Duration;
 type TimestampMillis = u64;
 
 pub struct TimerJobs<J> {
-    pub jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
+    jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
 }
 
 type JobWrapper<J> = Rc<RefCell<Option<J>>>;
@@ -66,6 +66,10 @@ impl<J> TimerJobs<J> {
             }
         }
         removed
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &(TimestampMillis, JobWrapper<J>)> {
+        self.jobs.values()
     }
 }
 
