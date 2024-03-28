@@ -29,6 +29,7 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
         this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
             undeletedContent: content,
+            revealedContent: undefined,
         }));
     }
     markContentRevealed(messageId: bigint, content: MessageContent): void {
