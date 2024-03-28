@@ -180,7 +180,6 @@
     }
 
     function canDeleteMessage() {
-        if (inert) return false;
         if (msg.content.kind === "video_call_content" && msg.content.ended === undefined) return false;
         return canDelete || $user.userId === msg.sender;
     }
@@ -458,7 +457,7 @@
                         <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
                     </MenuItem>
                 {/if}
-                {#if canDeleteMessage()}
+                {#if canDeleteMessage() && !inert}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
