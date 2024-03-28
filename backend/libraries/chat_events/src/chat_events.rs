@@ -37,11 +37,24 @@ pub struct ChatEvents {
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
     last_updated_timestamps: LastUpdatedTimestamps,
-    pub video_call_in_progress: Timestamped<Option<VideoCall>>,
-    pub anonymized_id: String,
+    video_call_in_progress: Timestamped<Option<VideoCall>>,
+    anonymized_id: String,
 }
 
 impl ChatEvents {
+    pub fn mark_video_call_ended_if_message_deleted<R: Runtime + Send + 'static>(&mut self, now: TimestampMillis) {
+        if let Some(message_index) = self.video_call_in_progress.value.as_ref().map(|v| v.message_index) {
+            let mark_ended = self
+                .main_events_reader()
+                .message_internal(message_index.into())
+                .map_or(true, |m| m.deleted_by.is_some());
+
+            if mark_ended {
+                self.end_video_call::<R>(message_index.into(), now, None);
+            }
+        }
+    }
+
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -1654,6 +1667,10 @@ impl ChatEvents {
         }
 
         JoinVideoCallResult::MessageNotFound
+    }
+
+    pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
+        &self.video_call_in_progress
     }
 
     fn events_list(
