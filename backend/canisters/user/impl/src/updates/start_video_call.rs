@@ -17,7 +17,6 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 fn start_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-
     mutate_state(|state| {
         let sender = args.initiator;
         if state.data.suspended.value || state.data.blocked_users.contains(&sender) {
