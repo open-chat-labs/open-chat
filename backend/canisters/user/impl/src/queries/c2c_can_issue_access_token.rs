@@ -11,8 +11,12 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 }
 
 fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
-    let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall);
-    let ending = matches!(args.access_type, AccessTokenType::MarkVideoCallAsEnded);
+    if state.data.blocked_users.contains(&args.user_id) {
+        return false;
+    }
 
-    (args.is_diamond || joining || ending) && !state.data.blocked_users.contains(&args.user_id)
+    match args.access_type {
+        AccessTokenType::StartVideoCall => args.is_diamond,
+        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+    }
 }
