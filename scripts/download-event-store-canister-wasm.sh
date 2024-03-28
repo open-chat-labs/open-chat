@@ -6,10 +6,11 @@ cd $SCRIPT_DIR/..
 
 URL=$(jq '.canisters.event_store.wasm' dfx.json)
 URL=$(echo "$URL" | tr -d '"')
-echo $URL
 
 mkdir -p wasms
 cd wasms
+
+echo "Downloading event_store wasm"
 
 HTTP_CODE=$(curl -sOL $URL --write-out "%{http_code}")
 
