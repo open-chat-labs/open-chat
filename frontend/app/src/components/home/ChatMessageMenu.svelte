@@ -81,6 +81,10 @@
         msg.content.kind !== "message_reminder_created_content";
     $: canCancelRemind =
         msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now;
+    $: canDeleteMessage =
+        (canDelete || me) &&
+        !inert &&
+        !(msg.content.kind === "video_call_content" && msg.content.ended === undefined);
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
@@ -179,17 +183,12 @@
         dispatch("reportMessage");
     }
 
-    function canDeleteMessage() {
-        if (msg.content.kind === "video_call_content" && msg.content.ended === undefined) return false;
-        return canDelete || $user.userId === msg.sender;
-    }
-
     function deleteMessage() {
         if (failed) {
             dispatch("deleteFailedMessage");
             return;
         }
-        if (!canDeleteMessage()) return;
+        if (!canDeleteMessage) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
@@ -457,7 +456,7 @@
                         <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
                     </MenuItem>
                 {/if}
-                {#if canDeleteMessage() && !inert}
+                {#if canDeleteMessage}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
