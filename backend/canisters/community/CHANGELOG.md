@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - One time job to mark video calls ended if message deleted ([#5612](https://github.com/open-chat-labs/open-chat/pull/5612))
+- Fix DKP transfers which have the old fee ([#5614](https://github.com/open-chat-labs/open-chat/pull/5614))
 
 ## [[2.0.1118](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1118-community)] - 2024-03-21
 
