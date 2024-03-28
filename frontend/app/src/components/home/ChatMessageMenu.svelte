@@ -179,12 +179,18 @@
         dispatch("reportMessage");
     }
 
+    function canDeleteMessage() {
+        if (inert) return false;
+        if (msg.content.kind === "video_call_content" && msg.content.ended === undefined) return false;
+        return canDelete || $user.userId === msg.sender;
+    }
+
     function deleteMessage() {
         if (failed) {
             dispatch("deleteFailedMessage");
             return;
         }
-        if (!canDelete && $user.userId !== msg.sender) return;
+        if (!canDeleteMessage()) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
@@ -452,7 +458,7 @@
                         <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
                     </MenuItem>
                 {/if}
-                {#if (canDelete || me) && !inert}
+                {#if canDeleteMessage()}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
