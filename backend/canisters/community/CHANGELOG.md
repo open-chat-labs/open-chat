@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
 - Disallow deleting video call message if the call is still in progress ([#5607](https://github.com/open-chat-labs/open-chat/pull/5607))
+- Refactor `c2c_can_issue_access_token_for_channel` ([#5613](https://github.com/open-chat-labs/open-chat/pull/5613))
 
 ### Fixed
 
