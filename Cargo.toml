@@ -82,6 +82,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/ckbtc_minter/api",
+    "backend/external_canisters/ckbtc_minter/c2c_client",
     "backend/external_canisters/cmc/api",
     "backend/external_canisters/cmc/c2c_client",
     "backend/external_canisters/icdex/api",

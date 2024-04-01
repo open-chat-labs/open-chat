@@ -1199,6 +1199,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckbtc_minter_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "icrc-ledger-types",
+ "serde",
+]
+
+[[package]]
+name = "ckbtc_minter_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ckbtc_minter_canister",
+ "ic-cdk 0.12.1",
+ "types",
+]
+
+[[package]]
 name = "clap"
 version = "2.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
