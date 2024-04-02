@@ -10,6 +10,7 @@ pub struct Response {
     pub governance: Option<CanisterSummary>,
     pub ledger: Option<CanisterSummary>,
     pub swap: Option<CanisterSummary>,
+    pub dapps: Vec<CanisterSummary>,
     pub archives: Vec<CanisterSummary>,
     pub index: Option<CanisterSummary>,
 }
