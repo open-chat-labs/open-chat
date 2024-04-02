@@ -29,8 +29,8 @@ async fn run_async(canister_id: CanisterId) {
         ]
         .into_iter()
         .flatten()
-        .chain(response.archives)
         .chain(response.dapps)
+        .chain(response.archives)
         .filter(requires_top_up)
         .map(|s| s.canister_id.unwrap())
         .collect();
