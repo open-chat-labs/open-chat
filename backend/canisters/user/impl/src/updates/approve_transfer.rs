@@ -35,8 +35,8 @@ async fn approve_transfer(args: Args) -> Response {
     )
     .await
     {
-        Ok(icrc_ledger_canister::icrc2_approve::Response::Ok(_)) => Success,
-        Ok(icrc_ledger_canister::icrc2_approve::Response::Err(err)) => ApproveError(err),
+        Ok(Ok(_)) => Success,
+        Ok(Err(err)) => ApproveError(err),
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
