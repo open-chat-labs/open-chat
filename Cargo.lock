@@ -7276,6 +7276,8 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "ckbtc_minter_canister",
+ "ckbtc_minter_canister_c2c_client",
  "community_canister",
  "community_canister_c2c_client",
  "escrow_canister",
