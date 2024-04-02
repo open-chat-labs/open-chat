@@ -206,6 +206,7 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
+    pub btc_address: Option<String>,
     pub rng_seed: [u8; 32],
 }
 
@@ -262,6 +263,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             pin_number: PinNumber::default(),
+            btc_address: None,
             rng_seed: [0; 32],
         }
     }
