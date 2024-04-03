@@ -79,6 +79,14 @@ type PrepareDelegationResponse = variant {
     NotFound;
 };
 
+type SetPrincipalMigrationJobEnabledArgs = record {
+    enabled : bool;
+};
+
+type SetPrincipalMigrationJobEnabledResponse = variant {
+    Success;
+};
+
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
@@ -86,4 +94,5 @@ service : {
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     migrate_legacy_principal : (record {}) -> (MigrateLegacyPrincipalResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
+    set_principal_migration_job_enabled : (SetPrincipalMigrationJobEnabledArgs) -> (SetPrincipalMigrationJobEnabledResponse);
 }

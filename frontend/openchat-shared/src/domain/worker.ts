@@ -334,7 +334,8 @@ export type WorkerRequest =
     | GetTranslationsPendingDeployment
     | JoinVideoCall
     | GetAccessToken
-    | GetLocalUserIndexForUser;
+    | GetLocalUserIndexForUser
+    | SetPrincipalMigrationJobEnabled;
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -1111,6 +1112,11 @@ type SetCachePrimerTimestamp = {
     kind: "setCachePrimerTimestamp";
 };
 
+type SetPrincipalMigrationJobEnabled = {
+    enabled: boolean;
+    kind: "setPrincipalMigrationJobEnabled";
+};
+
 /**
  * Worker error type
  */
@@ -1861,4 +1867,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? string | undefined
     : T extends GetLocalUserIndexForUser
     ? string
+    : T extends SetPrincipalMigrationJobEnabled
+    ? void
     : never;
