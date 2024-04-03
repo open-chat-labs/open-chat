@@ -58,9 +58,17 @@ async fn run_async(exchanges: Vec<(ExchangeId, Box<dyn Exchange>, Config)>) {
 async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
     trace!(%exchange_id, "Running market maker");
 
-    let my_previous_open_orders = mutate_state(|state| {
+    let (my_previous_open_orders, previous_latest_bid_taken, previous_latest_ask_taken) = mutate_state(|state| {
         state.data.market_makers_in_progress.insert(exchange_id, state.env.now());
-        state.data.my_open_orders.get(&exchange_id).cloned()
+
+        let (latest_bid_taken, latest_ask_taken) =
+            state.data.latest_orders_taken.get(&exchange_id).copied().unwrap_or_default();
+
+        (
+            state.data.my_open_orders.get(&exchange_id).cloned(),
+            latest_bid_taken,
+            latest_ask_taken,
+        )
     });
 
     let market_state = exchange_client.market_state().await?;
@@ -75,8 +83,18 @@ async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>,
 
     let my_open_orders_aggregated: AggregatedOrders = market_state.my_open_orders.as_slice().into();
 
-    let (latest_bid_taken, latest_ask_taken) =
+    let (bid_taken_since_previous_round, ask_taken_since_previous_round) =
         calculate_orders_taken_since_previous_round(&my_open_orders_aggregated, my_previous_open_orders.as_ref());
+
+    let latest_bid_taken = bid_taken_since_previous_round.or(previous_latest_bid_taken);
+    let latest_ask_taken = ask_taken_since_previous_round.or(previous_latest_ask_taken);
+
+    mutate_state(|state| {
+        state
+            .data
+            .latest_orders_taken
+            .insert(exchange_id, (latest_bid_taken, latest_ask_taken));
+    });
 
     let (max_bid_price, min_ask_price) =
         calculate_price_limits(current_bid, current_ask, latest_bid_taken, latest_ask_taken, &config);
