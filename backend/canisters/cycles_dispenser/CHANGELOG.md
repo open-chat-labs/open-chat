@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Automatically add SNS controlled canisters to the whitelist ([#5625](https://github.com/open-chat-labs/open-chat/pull/5625))
+
 ### Changed
 
 - Top up all canisters registered with the SNS ([#5621](https://github.com/open-chat-labs/open-chat/pull/5621))
