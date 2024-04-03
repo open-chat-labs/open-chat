@@ -26,10 +26,23 @@ type SignedDelegation = record {
     signature : blob;
 };
 
+type GenerateChallengeResponse = variant {
+    Success : record {
+        key : nat32;
+        png_base64 : text;
+    };
+    AlreadyRegistered;
+    Throttled;
+};
+
 type CreateIdentityArgs = record {
     public_key : PublicKey;
     session_key : PublicKey;
     max_time_to_live : opt Nanoseconds;
+    challenge_attempt : opt record {
+        key : nat32;
+        chars : text;
+    };
 };
 
 type CreateIdentityResponse = variant {
@@ -40,6 +53,8 @@ type CreateIdentityResponse = variant {
     };
     AlreadyRegistered;
     PublicKeyInvalid : text;
+    ChallengeRequired;
+    ChallengeFailed;
 };
 
 type MigrateLegacyPrincipalResponse = variant {
@@ -67,6 +82,7 @@ type PrepareDelegationResponse = variant {
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    generate_challenge : (record {}) -> (GenerateChallengeResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     migrate_legacy_principal : (record {}) -> (MigrateLegacyPrincipalResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
