@@ -1,3 +1,4 @@
+use crate::model::challenges::Challenges;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
@@ -92,6 +93,8 @@ struct Data {
     salt: Salt,
     principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
+    #[serde(default)]
+    challenges: Challenges,
     test_mode: bool,
 }
 
@@ -114,6 +117,7 @@ impl Data {
             salt: Salt::default(),
             principal_migration_job_enabled: false,
             rng_seed: [0; 32],
+            challenges: Challenges::default(),
             test_mode,
         }
     }
