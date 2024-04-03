@@ -40,6 +40,6 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
-./scripts/download-event-store-canister-wasm.sh || exit 1
+./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 
 cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
