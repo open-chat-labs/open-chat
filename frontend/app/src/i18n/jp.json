@@ -209,6 +209,7 @@
         "visibility": "可視性"
     },
     "communityDisplayNameRules": "このコミュニティ内だけで",
+    "communityMembers": "コミュニティメンバー",
     "communityTheme": "コミュニティのテーマ",
     "confirmLeaveGroup": "本当にこの {level} から離れてもよろしいですか?",
     "confirmMakeGroupPrivate": "この {level} を非公開にしてもよろしいですか?現在、この操作を元に戻すことはできません。",
@@ -550,6 +551,7 @@
     "onlineNow": "今すぐオンライン",
     "openChat": "オープンチャット",
     "original": "オリジナル",
+    "otherUsers": "他のユーザー",
     "ownedBy": "@{username}が所有",
     "owner": "オーナー",
     "ownerCantLeave": "{level} から離れる前に、別の所有者を追加する必要があります",

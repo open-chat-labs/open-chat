@@ -209,6 +209,7 @@
         "visibility": "רְאוּת"
     },
     "communityDisplayNameRules": "רק בתוך הקהילה הזו",
+    "communityMembers": "חברי הקהילה",
     "communityTheme": "נושא קהילה",
     "confirmLeaveGroup": "האם אתה באמת רוצה לעזוב את {level} הזה?",
     "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לפרטי? כרגע לא ניתן לבטל את הפעולה הזו!",
@@ -550,6 +551,7 @@
     "onlineNow": "מקוון עכשיו",
     "openChat": "OpenChat",
     "original": "מְקוֹרִי",
+    "otherUsers": "משתמשים אחרים",
     "ownedBy": "בבעלות @{username}",
     "owner": "בעלים",
     "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את {level}",

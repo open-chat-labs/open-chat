@@ -93,7 +93,7 @@
         return steps;
     }
 
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
             $selectedCommunity === undefined || client.canInviteUsers($selectedCommunity.id);
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
