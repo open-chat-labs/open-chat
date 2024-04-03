@@ -42,6 +42,7 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
+
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
