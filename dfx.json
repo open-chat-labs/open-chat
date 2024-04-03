@@ -126,6 +126,16 @@
       "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.1.0/can.did",
       "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.1.0/event_store.wasm.gz"
     },
+    "sign_in_with_ethereum": {
+      "type": "custom",
+      "candid": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.wasm.gz"
+    },
+    "sign_in_with_solana": {
+      "type": "custom",
+      "candid": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.wasm.gz"
+    },
     "website": {
       "build": "",
       "source": ["frontend/app/build", "frontend/app/public"],
