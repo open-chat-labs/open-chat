@@ -209,6 +209,7 @@
         "visibility": "दृश्यता"
     },
     "communityDisplayNameRules": "केवल चयनित समुदाय के भीतर",
+    "communityMembers": "समुदाय के सदस्यों",
     "communityTheme": "सामुदायिक थीम",
     "confirmLeaveGroup": "क्या आप सचमुच इसे {level} छोड़ना चाहते हैं?",
     "confirmMakeGroupPrivate": "क्या आप निश्चित रूप से इस {level} को निजी बनाना चाहते हैं?",
@@ -550,6 +551,7 @@
     "onlineNow": "अब ऑनलाइन हैं",
     "openChat": "ओपनचैट",
     "original": "मूल",
+    "otherUsers": "अन्य उपयोगकर्ता",
     "ownedBy": "@{username} के स्वामित्व में",
     "owner": "मालिक",
     "ownerCantLeave": "{level} छोड़ने से पहले आपको एक अन्य मालिक को जोड़ना होगा",

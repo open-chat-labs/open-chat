@@ -10,6 +10,7 @@
     import { i18nKey } from "../i18n/i18n";
     import { translatable } from "../actions/translatable";
     import MatchingUser from "./MatchingUser.svelte";
+    import Translatable from "./Translatable.svelte";
 
     export let mode: "add" | "edit";
     export let enabled = true;
@@ -90,13 +91,15 @@
         <Loading />
     {:else}
         {#if communityMembers?.length > 0}
-            <div class="sub-heading">Community members</div>
+            <div class="sub-heading">
+                <Translatable resourceKey={i18nKey("communityMembers")} />
+            </div>
             {#each communityMembers as user (user.userId)}
                 <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
             {/each}
         {/if}
         {#if communityMembers?.length > 0 && users?.length > 0}
-            <div class="sub-heading">Other users</div>
+            <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
         {/if}
         {#each users as user (user.userId)}
             <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
@@ -146,44 +149,6 @@
 
         &::placeholder {
             color: var(--placeholder);
-        }
-    }
-
-    .user {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--txt);
-        padding: $sp4;
-        margin: 0 0 $sp3 0;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        cursor: pointer;
-        gap: 12px;
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--members-hv);
-            }
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-    }
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 0 5px;
-
-        .username {
-            font-weight: 200;
-            color: var(--txt-light);
         }
     }
 
