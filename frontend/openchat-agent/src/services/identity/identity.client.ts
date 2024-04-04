@@ -83,4 +83,11 @@ export class IdentityClient extends CandidService {
             args,
         );
     }
+
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {
+        return this.handleResponse(
+            this.service.set_principal_migration_job_enabled({ enabled }),
+            (_) => {},
+        );
+    }
 }

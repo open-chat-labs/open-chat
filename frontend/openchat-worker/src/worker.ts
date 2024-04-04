@@ -1524,6 +1524,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "setPrincipalMigrationJobEnabled":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPrincipalMigrationJobEnabled(payload.enabled).then(() => undefined),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

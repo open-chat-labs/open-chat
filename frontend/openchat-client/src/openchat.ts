@@ -5845,6 +5845,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
+            .then((_) => true)
+            .catch(() => false);
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
