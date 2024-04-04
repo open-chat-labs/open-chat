@@ -5,7 +5,7 @@ use crate::{client, TestEnv};
 use rand::random;
 use serde_bytes::ByteBuf;
 use std::ops::Deref;
-use types::Empty;
+use types::{DiamondMembershipPlanDuration, Empty};
 
 #[test]
 fn delegation_signed_successfully() {
@@ -58,7 +58,8 @@ fn migrate_principal_updates_principal_in_all_canisters() {
         ..
     } = wrapper.env();
 
-    let mut user = client::register_diamond_user(env, canister_ids, *controller);
+    let mut user = client::local_user_index::happy_path::register_legacy_user(env, canister_ids.local_user_index);
+    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
 
     let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
     let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec![random_string()]);
