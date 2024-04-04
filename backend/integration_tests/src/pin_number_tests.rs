@@ -14,7 +14,7 @@ fn can_set_pin_number() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
@@ -36,7 +36,7 @@ fn attempts_blocked_after_incorrect_attempts() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
@@ -95,8 +95,8 @@ fn transfer_requires_correct_pin(test_case: u32) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user1, None, Some("1000".to_string()));
 
