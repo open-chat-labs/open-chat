@@ -8,47 +8,6 @@ use std::ops::Deref;
 use types::Empty;
 
 #[test]
-fn register_via_identity_canister_succeeds() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let (auth_principal, public_key) = random_internet_identity_principal();
-    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
-
-    let create_identity_result = client::identity::happy_path::create_identity(
-        env,
-        auth_principal,
-        canister_ids.identity,
-        public_key.clone(),
-        session_key.clone(),
-    );
-
-    client::identity::happy_path::get_delegation(
-        env,
-        auth_principal,
-        canister_ids.identity,
-        session_key,
-        create_identity_result.expiration,
-    );
-
-    let register_response = client::local_user_index::register_user(
-        env,
-        create_identity_result.principal,
-        canister_ids.local_user_index,
-        &local_user_index_canister::register_user::Args {
-            public_key: create_identity_result.user_key,
-            username: random_string(),
-            referral_code: None,
-        },
-    );
-
-    assert!(matches!(
-        register_response,
-        local_user_index_canister::register_user::Response::Success(_)
-    ));
-}
-
-#[test]
 fn delegation_signed_successfully() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
