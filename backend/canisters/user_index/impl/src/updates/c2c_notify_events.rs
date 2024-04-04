@@ -4,7 +4,7 @@ use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use local_user_index_canister::{
     Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserRegistered, UsernameChanged,
@@ -89,6 +89,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 ev.user_id,
                 LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                     user_id: ev.user_id,
+                    thread_root_message_id: ev.thread_root_message_id,
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
@@ -135,10 +136,10 @@ fn process_new_user(
         Some(local_user_index_canister_id),
     );
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
-            .with_user(user_id.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&UserRegisteredEventPayload {
                 referred: referred_by.is_some(),
                 is_bot: false,
@@ -173,7 +174,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
 
-    if !is_from_identity_canister && state.data.test_mode {
+    if !is_from_identity_canister {
         state.data.legacy_principals_sync_queue.push_back(caller);
         crate::jobs::sync_legacy_user_principals::try_run_now(state);
     }

@@ -101,6 +101,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -192,6 +193,7 @@ fn send_prize_in_channel() {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -695,7 +697,7 @@ fn send_dummy_message_with_rules(
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);

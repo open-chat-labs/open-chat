@@ -1,5 +1,6 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
+use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
@@ -24,7 +25,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let (my_user_id, user_type) = match read_state(|state| validate_request(&args, state)) {
+    let (my_user_id, user_type) = match mutate_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(u, t) => (u, t),
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(u, local_user_index_canister_id) => {
@@ -131,7 +132,7 @@ enum ValidateRequestResult {
     RecipientUnknown(UserId, CanisterId), // UserId, UserIndexCanisterId
 }
 
-fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult {
+fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestResult {
     if state.data.suspended.value {
         return ValidateRequestResult::Invalid(UserSuspended);
     }
@@ -154,6 +155,16 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
 
     let now = state.env.now();
     let my_user_id: UserId = state.env.canister_id().into();
+
+    if args.content.contains_crypto_transfer() {
+        if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+            return ValidateRequestResult::Invalid(match error {
+                VerifyPinError::PinRequired => PinRequired,
+                VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+                VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+            });
+        }
+    }
 
     if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
@@ -211,7 +222,7 @@ fn send_message_impl(
     };
 
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         sender,
         content: content.clone(),
@@ -219,7 +230,6 @@ fn send_message_impl(
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
         sender_is_bot: false,
-        sender_name_override: None,
         correlation_id: args.correlation_id,
         now,
     };
@@ -233,10 +243,11 @@ fn send_message_impl(
             .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
     };
 
-    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_sink_client));
+    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
+            thread_root_message_id: args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
             content,
@@ -279,6 +290,7 @@ fn send_message_impl(
 
     register_timer_jobs(
         recipient.into(),
+        args.thread_root_message_index,
         args.message_id,
         &message_event,
         Vec::new(),
@@ -322,11 +334,10 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: false,
-                            sender_name_override: None,
                             correlation_id: 0,
                             now,
                         };
-                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_sink_client));
+                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
 
                         // Mark that the bot has read the message we just sent
                         chat.mark_read_up_to(message_index, false, now);
@@ -342,6 +353,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
 
 pub(crate) fn register_timer_jobs(
     chat_id: ChatId,
+    thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
@@ -366,7 +378,7 @@ pub(crate) fn register_timer_jobs(
         data.timer_jobs.enqueue_job(
             TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
                 chat_id,
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id,
             })),
             c.expires_at,

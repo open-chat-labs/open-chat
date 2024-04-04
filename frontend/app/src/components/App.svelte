@@ -4,18 +4,24 @@
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/scream";
-    import "../utils/ring";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { notFound, pathParams } from "../routes";
+    import { notFound, pathParams, routeForScope } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, UserLoggedIn, type DiamondMembershipFees } from "openchat-client";
+    import {
+        OpenChat,
+        UserLoggedIn,
+        type DiamondMembershipFees,
+        type ChatSummary,
+        type ChatIdentifier,
+        routeForChatIdentifier,
+    } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -33,6 +39,10 @@
     import Head from "./Head.svelte";
     import { snowing } from "../stores/snow";
     import Snow from "./Snow.svelte";
+    import ActiveCall from "./home/video/ActiveCall.svelte";
+    import { incomingVideoCall } from "../stores/video";
+    import IncomingCall from "./home/video/IncomingCall.svelte";
+
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
@@ -72,9 +82,11 @@
     let client: OpenChat = createOpenChatClient();
 
     let profileTrace = client.showTrace();
+    let videoCallElement: ActiveCall;
 
     setContext<OpenChat>("client", client);
 
+    $: chatListScope = client.chatListScope;
     $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);
     $: anonUser = client.anonUser;
@@ -113,6 +125,7 @@
             setDiamondMembershipFees,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            setPrincipalMigrationJobEnabled,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -319,6 +332,16 @@
         });
     }
 
+    function setPrincipalMigrationJobEnabled(enabled: boolean): void {
+        client.setPrincipalMigrationJobEnabled(enabled).then((resp) => {
+            if (resp) {
+                console.log("Principal migration job updated");
+            } else {
+                console.log("Failed to update principal migration job");
+            }
+        });
+    }
+
     $: {
         if (!$notFound && showLandingPage) {
             document.body.classList.add("landing-page");
@@ -355,6 +378,19 @@
         calculateHeight();
     }
 
+    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
+        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
+    }
+
+    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+        incomingVideoCall.set(undefined);
+        const chat = client.lookupChatSummary(ev.detail);
+        if (chat) {
+            page(routeForChatIdentifier("none", chat.id));
+            videoCallElement?.startOrJoinVideoCall(chat, true);
+        }
+    }
+
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
@@ -370,6 +406,12 @@
 
 <Head />
 
+<ActiveCall
+    on:clearSelection={() => page(routeForScope($chatListScope))}
+    bind:this={videoCallElement} />
+
+<IncomingCall on:joinVideoCall={joinVideoCall} />
+
 <Witch background />
 
 {#if isCanisterUrl}
@@ -378,7 +420,7 @@
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router {showLandingPage} />
+        <Router on:startVideoCall={startVideoCall} {showLandingPage} />
     {/if}
 {/if}
 

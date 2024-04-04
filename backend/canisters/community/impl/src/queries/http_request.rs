@@ -42,8 +42,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             state
                 .data
                 .timer_jobs
-                .jobs
-                .values()
+                .iter()
                 .filter_map(|(ts, wrapper)| wrapper.borrow().as_ref().map(|j| (*ts, j.clone())))
                 .collect()
         } else {

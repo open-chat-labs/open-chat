@@ -18,7 +18,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_diamond_user(env, canister_ids, *controller);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
 

@@ -27,6 +27,7 @@ mod last_online_date_tests;
 mod mentions_tests;
 mod notification_tests;
 mod p2p_swap_tests;
+mod pin_number_tests;
 mod platform_moderator_tests;
 mod poll_tests;
 mod prize_message_tests;
@@ -97,6 +98,7 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub translations: CanisterId,
     pub event_relay: CanisterId,
+    pub event_store: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,

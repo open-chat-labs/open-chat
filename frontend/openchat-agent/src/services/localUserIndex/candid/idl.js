@@ -465,7 +465,6 @@ export const idlFactory = ({ IDL }) => {
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),
-    'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
     'message_id' : MessageId,

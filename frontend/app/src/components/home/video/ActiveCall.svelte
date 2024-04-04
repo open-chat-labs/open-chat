@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { ring } from "../../../utils/ring";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rtlStore } from "../../../stores/rtl";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
+    import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
+    import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
     import {
         chatIdentifiersEqual,
         type ChatSummary,
@@ -14,6 +13,7 @@
         type ChatIdentifier,
         AvatarSize,
         type AccessTokenType,
+        NoMeetingToJoin,
     } from "openchat-client";
     import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
@@ -34,15 +34,16 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
+    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: selectedChatId = client.selectedChatId;
+    $: selectedChat = client.selectedChatStore;
     $: communities = client.communities;
     $: userStore = client.userStore;
     $: user = client.user;
-    $: chat = normaliseChatSummary($activeVideoCall?.chatId);
+    $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
@@ -52,7 +53,11 @@
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
     }
 
-    function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
+    // Note: _selectedChat is passed in as a reactivity hack for svelte :puke:
+    function normaliseChatSummary(
+        _selectedChat: ChatSummary | undefined,
+        chatId: ChatIdentifier | undefined,
+    ) {
         if (chatId) {
             const chat = client.lookupChatSummary(chatId);
             if (chat) {
@@ -64,7 +69,8 @@
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
-                            messageIndex: chat.videoCallInProgress,
+                            // TODO undo this as and when we can support threads in direct chats
+                            messageIndex: undefined,
                         };
                     case "group_chat":
                         return {
@@ -96,8 +102,6 @@
         if (chat === undefined) return;
 
         try {
-            ring.pause();
-
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = { chat, join };
                 return;
@@ -127,9 +131,11 @@
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                activeSpeakerMode: false,
+                activeSpeakerMode: $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
+                startVideoOff: !$videoCameraOn,
+                startAudioOff: !$videoMicOn,
                 iframeStyle: {
                     width: "100%",
                     height: "100%",
@@ -150,6 +156,11 @@
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                } else {
+                    if (ev?.participant.user_name === $user.username) {
+                        // this means that I have joined the call from somewhere else e.g. another device
+                        activeVideoCall.endCall();
+                    }
                 }
             });
 
@@ -179,7 +190,11 @@
                 await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
-            toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
+            if (err instanceof NoMeetingToJoin) {
+                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
+            } else {
+                toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
+            }
             activeVideoCall.endCall();
             console.error("Unable to start video call: ", err);
         }
@@ -215,9 +230,15 @@
     }
 
     function toggleFullscreen() {
-        if ($activeVideoCall) {
-            activeVideoCall.fullscreen(!$activeVideoCall.fullscreen);
+        if ($activeVideoCall?.view === "default") {
+            activeVideoCall.setView("fullscreen");
+        } else if ($activeVideoCall?.view === "fullscreen") {
+            activeVideoCall.setView("default");
         }
+    }
+
+    function minimise() {
+        activeVideoCall.setView("minimised");
     }
 
     function hangup() {
@@ -241,8 +262,9 @@
     id="video-call-container"
     class="video-call-container"
     class:visible={$activeVideoCall &&
+        $activeVideoCall.view !== "minimised" &&
         !(threadOpen && $mobileWidth) &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId)}>
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
         <SectionHeader shadow flush>
             <div class="header">
@@ -265,6 +287,7 @@
                     {:else}
                         <div class="avatar">
                             <Avatar
+                                statusBorder={"var(--section-bg)"}
                                 url={chat.avatarUrl}
                                 showStatus
                                 userId={chat.userId?.userId}
@@ -282,18 +305,17 @@
                             chatId={chat.chatId}
                             messageIndex={chat.messageIndex} />
                     {/if}
-                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                        <PhoneHangup size={$iconSize} color={"var(--icon-txt)"} />
+                    <HoverIcon on:click={minimise}>
+                        <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                     {#if !$mobileWidth}
                         <HoverIcon on:click={toggleFullscreen}>
-                            {#if $activeVideoCall?.fullscreen}
-                                <ArrowCollapse size={$iconSize} color={"var(--icon-txt)"} />
-                            {:else}
-                                <ArrowExpand size={$iconSize} color={"var(--icon-txt)"} />
-                            {/if}
+                            <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     {/if}
+                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
+                        <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
+                    </HoverIcon>
                 </div>
             </div>
         </SectionHeader>

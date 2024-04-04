@@ -40,7 +40,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             .data
             .chat
             .events
-            .edit_message(edit_message_args, Some(&mut state.data.event_sink_client))
+            .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
         {
             EditMessageResult::Success => {
                 handle_activity_notification(state);

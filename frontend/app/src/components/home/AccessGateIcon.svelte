@@ -8,6 +8,7 @@
         OpenChat,
         isPaymentGate,
         type CryptocurrencyDetails,
+        isBalanceGate,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
@@ -110,6 +111,30 @@
                             resourceKey={i18nKey(
                                 "access.tokenPaymentInfo",
                                 tokenDetails ? { token: tokenDetails.symbol } : undefined,
+                            )} />
+                    </p>
+                    <p class="params">{params}</p>
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if isBalanceGate(gate)}
+        <TooltipWrapper {position} {align}>
+            <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "access.minimumBalanceInfo2",
+                                tokenDetails
+                                    ? {
+                                          token: tokenDetails.symbol,
+                                          n: client.formatTokens(
+                                              gate.minBalance,
+                                              tokenDetails?.decimals ?? 8,
+                                          ),
+                                      }
+                                    : undefined,
                             )} />
                     </p>
                     <p class="params">{params}</p>

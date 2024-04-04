@@ -33,6 +33,7 @@ generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
 generate_update_call!(set_message_reminder_v2);
+generate_update_call!(set_pin_number);
 generate_update_call!(start_video_call);
 generate_update_call!(tip_message);
 generate_update_call!(unblock_user);
@@ -45,7 +46,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        Reaction, Rules, TextContent, TimestampMillis, UserId,
+        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -67,6 +68,7 @@ pub mod happy_path {
                 replies_to: None,
                 forwarding: false,
                 message_filter_failed: None,
+                pin: None,
                 correlation_id: 0,
             },
         );
@@ -285,13 +287,20 @@ pub mod happy_path {
                 fee: token.fee().unwrap(),
                 decimals: token.decimals().unwrap(),
                 token,
+                pin: None,
             },
         );
 
         assert!(matches!(response, user_canister::tip_message::Response::Success))
     }
 
-    pub fn start_video_call(env: &mut PocketIc, user: &User, recipient: UserId, message_id: MessageId) {
+    pub fn start_video_call(
+        env: &mut PocketIc,
+        user: &User,
+        recipient: UserId,
+        message_id: MessageId,
+        max_duration: Option<Milliseconds>,
+    ) {
         let response = super::start_video_call(
             env,
             VIDEO_CALL_OPERATOR,
@@ -302,6 +311,7 @@ pub mod happy_path {
                 initiator_username: user.username(),
                 initiator_display_name: None,
                 initiator_avatar_id: None,
+                max_duration,
             },
         );
 
@@ -334,5 +344,16 @@ pub mod happy_path {
         );
 
         assert!(matches!(response, user_canister::end_video_call::Response::Success))
+    }
+
+    pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
+        let response = super::set_pin_number(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::set_pin_number::Args { current, new },
+        );
+
+        assert!(matches!(response, user_canister::set_pin_number::Response::Success));
     }
 }

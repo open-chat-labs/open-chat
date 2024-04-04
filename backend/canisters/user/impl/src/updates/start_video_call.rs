@@ -1,12 +1,13 @@
 use crate::guards::caller_is_video_call_operator;
+use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs};
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, UserId,
-    VideoCallContent,
+    CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification,
+    UserId, VideoCallContent,
 };
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -25,7 +26,7 @@ fn start_video_call(args: Args) -> Response {
         let StartVideoCallResult {
             message_event,
             mute_notification,
-        } = handle_start_video_call(args.message_id, None, sender, sender, state);
+        } = handle_start_video_call(args.message_id, None, sender, sender, args.max_duration, state);
 
         if !mute_notification {
             let notification = Notification::DirectMessage(DirectMessageNotification {
@@ -50,6 +51,7 @@ fn start_video_call(args: Args) -> Response {
             UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
                 message_id: args.message_id,
                 message_index: message_event.event.message_index,
+                max_duration: args.max_duration,
             })),
         );
 
@@ -62,6 +64,7 @@ pub fn handle_start_video_call(
     their_message_index: Option<MessageIndex>,
     sender: UserId,
     other: UserId,
+    max_duration: Option<Milliseconds>,
     state: &mut RuntimeState,
 ) -> StartVideoCallResult {
     let now = state.env.now();
@@ -81,7 +84,6 @@ pub fn handle_start_video_call(
         replies_to: None,
         forwarded: false,
         sender_is_bot: true,
-        sender_name_override: None,
         correlation_id: 0,
         now,
     };
@@ -97,11 +99,23 @@ pub fn handle_start_video_call(
         false,
         push_message_args,
         their_message_index,
-        Some(&mut state.data.event_sink_client),
+        Some(&mut state.data.event_store_client),
     );
 
     if let Some(expiry) = message_event.expires_at {
         state.data.handle_event_expiry(expiry, now);
+    }
+
+    if let Some(duration) = max_duration {
+        let now = state.env.now();
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::Args {
+                user_id: other,
+                message_id,
+            })),
+            now + duration,
+            now,
+        );
     }
 
     StartVideoCallResult {

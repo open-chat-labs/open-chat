@@ -603,7 +603,6 @@ export type Message = {
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
-    lastUpdated: bigint | undefined;
     thread?: ThreadSummary;
 };
 

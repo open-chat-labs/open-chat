@@ -1,5 +1,7 @@
 use candid::CandidType;
+use dataurl::DataUrl;
 use serde::{Deserialize, Serialize};
+use sha256::sha256;
 use std::fmt::{Display, Formatter};
 use types::{CanisterId, Milliseconds, TimestampMillis};
 
@@ -15,7 +17,26 @@ pub use lifecycle::*;
 pub use queries::*;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "TokenDetailsPrevious")]
 pub struct TokenDetails {
+    pub ledger_canister_id: CanisterId,
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+    pub fee: u128,
+    pub logo: String,
+    pub logo_id: Option<u128>,
+    pub info_url: String,
+    pub how_to_buy_url: String,
+    pub transaction_url_format: String,
+    pub supported_standards: Vec<String>,
+    pub added: TimestampMillis,
+    pub enabled: bool,
+    pub last_updated: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct TokenDetailsPrevious {
     pub ledger_canister_id: CanisterId,
     pub name: String,
     pub symbol: String,
@@ -27,7 +48,33 @@ pub struct TokenDetails {
     pub transaction_url_format: String,
     pub supported_standards: Vec<String>,
     pub added: TimestampMillis,
+    pub enabled: bool,
     pub last_updated: TimestampMillis,
+}
+
+impl From<TokenDetailsPrevious> for TokenDetails {
+    fn from(value: TokenDetailsPrevious) -> Self {
+        let logo_id = DataUrl::parse(value.logo.as_str())
+            .is_ok()
+            .then(|| u128::from_be_bytes(sha256(value.logo.as_bytes())[..16].try_into().unwrap()));
+
+        TokenDetails {
+            ledger_canister_id: value.ledger_canister_id,
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            fee: value.fee,
+            logo: value.logo,
+            logo_id,
+            info_url: value.info_url,
+            how_to_buy_url: value.how_to_buy_url,
+            transaction_url_format: value.transaction_url_format,
+            supported_standards: value.supported_standards,
+            added: value.added,
+            enabled: value.enabled,
+            last_updated: value.last_updated,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

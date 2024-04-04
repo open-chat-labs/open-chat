@@ -563,7 +563,6 @@ type Message = record {
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
-    last_updated : opt TimestampMillis;
 };
 
 type MessageEventWrapper = record {
@@ -1756,4 +1755,5 @@ type VideoCallUpdates = variant {
 type AccessTokenType = variant {
     StartVideoCall;
     JoinVideoCall;
+    MarkVideoCallAsEnded;
 };

@@ -30,7 +30,6 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
-        ChatSummary,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -95,9 +94,7 @@
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
-    import ActiveCall from "./video/ActiveCall.svelte";
-    import { incomingVideoCall } from "../../stores/video";
-    import IncomingCall from "./video/IncomingCall.svelte";
+    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
 
     type ViewProfileConfig = {
         userId: string;
@@ -112,7 +109,6 @@
     let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
     let showProfileCard: ViewProfileConfig | undefined = undefined;
-    let videoCallElement: ActiveCall;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -514,7 +510,7 @@
             return;
         }
         tick().then(() => {
-            videoCallElement?.closeThread();
+            activeVideoCall?.threadOpen(false);
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }
@@ -1059,28 +1055,9 @@
         showProfileCard = undefined;
     }
 
-    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
-        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
-    }
-
-    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
-        incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(ev.detail);
-        if (chat) {
-            page(routeForChatIdentifier("none", chat.id));
-            videoCallElement?.startOrJoinVideoCall(chat, true);
-        }
-    }
-
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
-
-<IncomingCall on:join={joinVideoCall} />
-
-<ActiveCall
-    on:clearSelection={() => page(routeForScope($chatListScope))}
-    bind:this={videoCallElement} />
 
 {#if showProfileCard !== undefined}
     <ViewUserProfile
@@ -1128,7 +1105,7 @@
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:startVideoCall={startVideoCall}
+            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1153,7 +1130,7 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
-        on:startVideoCall={startVideoCall}
+        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}

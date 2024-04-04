@@ -8,6 +8,7 @@ fn main() {
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
     generate_candid_method!(user, events_window, query);
+    generate_candid_method!(user, get_cached_btc_address, query);
     generate_candid_method!(user, hot_group_exclusions, query);
     generate_candid_method!(user, initial_state, query);
     generate_candid_method!(user, local_user_index, query);
@@ -34,6 +35,7 @@ fn main() {
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
     generate_candid_method!(user, end_video_call, update);
+    generate_candid_method!(user, get_btc_address, update);
     generate_candid_method!(user, join_video_call, update);
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
@@ -43,6 +45,7 @@ fn main() {
     generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);
     generate_candid_method!(user, report_message, update);
+    generate_candid_method!(user, retrieve_btc, update);
     generate_candid_method!(user, save_crypto_account, update);
     generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);
@@ -52,6 +55,7 @@ fn main() {
     generate_candid_method!(user, set_community_indexes, update);
     generate_candid_method!(user, set_contact, update);
     generate_candid_method!(user, set_message_reminder_v2, update);
+    generate_candid_method!(user, set_pin_number, update);
     generate_candid_method!(user, start_video_call, update);
     generate_candid_method!(user, submit_proposal, update);
     generate_candid_method!(user, swap_tokens, update);

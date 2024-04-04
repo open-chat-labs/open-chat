@@ -44,7 +44,6 @@
     export let hasPinned: boolean;
 
     $: platformModerator = client.platformModerator;
-    $: platformOperator = client.platformOperator;
     $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
@@ -70,17 +69,19 @@
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
+    $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
+    $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
 
     $: incall =
         $activeVideoCall !== undefined &&
-        selectedChatSummary.videoCallInProgress !== undefined &&
+        videoCallInProgress &&
         chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id);
 
-    $: videoMenuText = incall
-        ? i18nKey("videoCall.leaveVideo")
-        : selectedChatSummary.videoCallInProgress !== undefined
-          ? i18nKey("videoCall.joinVideo")
-          : i18nKey("videoCall.startVideo");
+    $: videoMenuText = videoCallInProgress
+        ? i18nKey("videoCall.joinVideo")
+        : i18nKey("videoCall.startVideo");
+
+    $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 
     let hasUnreadPinned = false;
 
@@ -227,10 +228,14 @@
     }
 
     function startVideoCall() {
-        dispatch("startVideoCall", {
-            chat: selectedChatSummary,
-            join: selectedChatSummary.videoCallInProgress !== undefined,
-        });
+        if ($isDiamond || videoCallInProgress) {
+            dispatch("startVideoCall", {
+                chat: selectedChatSummary,
+                join: videoCallInProgress,
+            });
+        } else {
+            dispatch("upgrade");
+        }
     }
 </script>
 
@@ -308,7 +313,7 @@
         </div>
         <div slot="menu">
             <Menu>
-                {#if $platformOperator}
+                {#if canStartOrJoinVideoCall}
                     <MenuItem on:click={startVideoCall}>
                         <Headphones
                             size={$iconSize}

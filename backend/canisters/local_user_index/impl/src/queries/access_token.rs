@@ -39,12 +39,17 @@ async fn access_token(args: Args) -> Response {
 }
 
 fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
-    state.data.global_users.get_by_principal(&state.env.caller()).map(|u| {
-        (
-            u.user_id,
-            state.data.global_users.is_diamond_member(&u.user_id, state.env.now()),
-        )
-    })
+    state
+        .data
+        .global_users
+        .get_by_principal(&state.env.caller())
+        .filter(|u| !u.is_bot)
+        .map(|u| {
+            (
+                u.user_id,
+                state.data.global_users.is_diamond_member(&u.user_id, state.env.now()),
+            )
+        })
 }
 
 fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {

@@ -314,6 +314,13 @@ impl MessageContentInitial {
             MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
+
+    pub fn contains_crypto_transfer(&self) -> bool {
+        matches!(
+            self,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
+        )
+    }
 }
 
 // TODO: We shouldn't need this

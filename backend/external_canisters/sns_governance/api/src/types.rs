@@ -2022,11 +2022,22 @@ impl ProposalData {
     }
 
     fn is_accepted(&self) -> bool {
-        // https://github.com/dfinity/ic/blob/17f0bb9bbbde697ebc3675c9d09e69b803d70bf9/rs/sns/governance/src/proposal.rs#L37
-        const MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO: f64 = 0.03;
+        const DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS: u64 = 300;
+        const DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS: u64 = 5000;
 
         if let Some(tally) = self.latest_tally.as_ref() {
-            (tally.yes as f64 >= tally.total as f64 * MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO) && tally.yes > tally.no
+            let min_yes_proportion_of_total = self
+                .minimum_yes_proportion_of_total
+                .and_then(|p| p.basis_points)
+                .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS);
+
+            let min_yes_proportion_of_exercised = self
+                .minimum_yes_proportion_of_exercised
+                .and_then(|p| p.basis_points)
+                .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS);
+
+            tally.yes > tally.total * min_yes_proportion_of_total / 10000
+                && tally.yes > (tally.yes + tally.no) * min_yes_proportion_of_exercised / 10000
         } else {
             false
         }

@@ -65,6 +65,7 @@ import {
     permittedMessagesInGroup,
     activeUserIdFromEvent,
     doesMessageFailFilter,
+    canStartVideoCalls,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -217,7 +218,11 @@ import {
     spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
-import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
+import {
+    createRemoteVideoStartedEvent,
+    filterWebRtcMessage,
+    parseWebRtcMessage,
+} from "./utils/rtc";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -235,7 +240,6 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
-    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -375,6 +379,7 @@ import type {
     RejectReason,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -415,6 +420,7 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    NoMeetingToJoin,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -474,6 +480,7 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
+import { isBalanceGate } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1527,6 +1534,26 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.chatPredicate(chatId, canDeleteOtherUsersMessages);
     }
 
+    canStartVideoCalls(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(
+            chatId,
+            (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat),
+        );
+    }
+
+    isChatPrivate(chat: ChatSummary): boolean {
+        switch (chat.kind) {
+            case "channel": {
+                const community = this.getCommunityForChannel(chat.id);
+                return !(community?.public ?? true) || !chat.public;
+            }
+            case "group_chat":
+                return !chat.public;
+            default:
+                return true;
+        }
+    }
+
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
     }
@@ -1761,6 +1788,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const userId = this._liveState.user.userId;
         localMessageUpdates.markDeleted(messageId, userId);
+        undeletingMessagesStore.delete(messageId);
 
         const recipients = [...chatStateStore.getProp(id, "userIds")];
 
@@ -2510,13 +2538,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 current.amount !== original.amount
             );
         }
+        if (isBalanceGate(current) && isBalanceGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.minBalance !== original.minBalance
+            );
+        }
         return false;
     }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
-        } else if (gate.kind === "payment_gate") {
+        } else if (gate.kind === "payment_gate" || gate.kind === "token_balance_gate") {
             return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
@@ -3493,10 +3527,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
-    buildTransactionUrl(
-        transactionIndex: bigint,
-        ledger: string,
-    ): string | undefined {
+    buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
         return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
     }
 
@@ -3724,7 +3755,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
         if (msg.kind === "remote_video_call_started") {
-            this.dispatchEvent(new RemoteVideoCallStartedEvent(msg.id, msg.userId));
+            const ev = createRemoteVideoStartedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
             return;
         }
         const fromChatId = filterWebRtcMessage(msg);
@@ -3849,7 +3883,7 @@ export class OpenChat extends OpenChatAgentWorker {
         level: Level,
         newGroup: boolean,
         canInviteUsers: boolean,
-    ): Promise<UserSummary[]> {
+    ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup
@@ -3864,7 +3898,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 channelMembers,
             );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
-                return Promise.resolve(communityMatches);
+                return Promise.resolve([communityMatches, []]);
             }
 
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3877,19 +3911,19 @@ export class OpenChat extends OpenChatAgentWorker {
                     keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
                 }
 
-                const matches = [...communityMatches];
+                const matches = [];
 
                 // Add the global matches to the results, but only if they are not already in the community matches
                 for (const match of globalMatches) {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some((m) => m.userId === match.userId)) {
+                    if (!communityMatches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
 
-                return matches;
+                return [communityMatches, matches];
             });
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3908,7 +3942,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
                     keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
                 }
-                return matches;
+                return [[], matches];
             });
         }
     }
@@ -4267,6 +4301,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     set groupInvite(value: GroupInvite) {
+        this.config.groupInvite = value;
         this.sendRequest({
             kind: "groupInvite",
             value,
@@ -5738,19 +5773,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
-        console.log("User: ", this._liveState.userStore[user.userId]);
-
-        console.log(
-            "Url: ",
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
-        );
-        return fetch(
-            `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}&initiator-avatarid=${avatarId}`,
-            {
-                method: "GET",
-                headers: headers,
-            },
-        ).then((res) => {
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        if (avatarId) {
+            url += `&initiator-avatarid=${avatarId}`;
+        }
+        return fetch(url, {
+            method: "GET",
+            headers: headers,
+        }).then((res) => {
             if (res.ok) {
                 return res.json();
             }
@@ -5759,6 +5789,9 @@ export class OpenChat extends OpenChatAgentWorker {
                     "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
                 console.error(msg);
                 throw new Error(msg);
+            }
+            if (res.status === 400) {
+                throw new NoMeetingToJoin();
             }
             throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
         });
@@ -5811,6 +5844,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .then((token) => this.getRoomAccessToken(token));
         });
+    }
+
+    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
+        return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
+    }
+
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
+            .then((_) => true)
+            .catch(() => false);
     }
 
     // **** Communities Stuff
@@ -6006,9 +6049,20 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).catch(() => ({
-            kind: "failure",
-        }));
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    candidate.id = {
+                        kind: "community",
+                        communityId: resp.id,
+                    };
+                    this.addCommunityLocally(candidate);
+                }
+                return resp;
+            })
+            .catch(() => ({
+                kind: "failure",
+            }));
     }
 
     private addToFavouritesLocally(chatId: ChatIdentifier): void {

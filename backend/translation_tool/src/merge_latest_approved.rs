@@ -3,6 +3,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use serde_json::{Map, Value};
 use std::{
+    cmp::Ordering,
     collections::{hash_map::Entry, HashMap},
     error::Error,
     fs,
@@ -156,7 +157,7 @@ async fn write_translation_files(
 
     for (locale, translations) in data {
         let mut translations: Vec<_> = translations.into_iter().collect();
-        translations.sort_by(|(k1, _), (k2, _)| k1.partial_cmp(k2).unwrap());
+        translations.sort_by(|(k1, _), (k2, _)| compare_strings(k1, k2));
 
         let object = build_object(translations.iter().collect(), 0);
 
@@ -165,6 +166,14 @@ async fn write_translation_files(
         fs::write(format!("{path}/{locale}.json"), text)?;
     }
     Ok(())
+}
+
+fn compare_strings(s1: &str, s2: &str) -> core::cmp::Ordering {
+    match s1.to_lowercase().cmp(&s2.to_lowercase()) {
+        Ordering::Equal => s1.cmp(s2),
+        Ordering::Less => Ordering::Less,
+        Ordering::Greater => Ordering::Greater,
+    }
 }
 
 // Pretty print with a 4 space indent

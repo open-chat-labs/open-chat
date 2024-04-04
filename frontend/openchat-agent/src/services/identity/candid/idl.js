@@ -53,6 +53,12 @@ export const idlFactory = ({ IDL }) => {
       'expiration' : TimestampNanoseconds,
     }),
   });
+  const SetPrincipalMigrationJobEnabledArgs = IDL.Record({
+    'enabled' : IDL.Bool,
+  });
+  const SetPrincipalMigrationJobEnabledResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   return IDL.Service({
     'check_auth_principal' : IDL.Func(
         [IDL.Record({})],
@@ -77,6 +83,11 @@ export const idlFactory = ({ IDL }) => {
     'prepare_delegation' : IDL.Func(
         [PrepareDelegationArgs],
         [PrepareDelegationResponse],
+        [],
+      ),
+    'set_principal_migration_job_enabled' : IDL.Func(
+        [SetPrincipalMigrationJobEnabledArgs],
+        [SetPrincipalMigrationJobEnabledResponse],
         [],
       ),
   });

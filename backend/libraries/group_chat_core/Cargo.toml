@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
-event_sink_client = { workspace = true }
+event_store_producer = { workspace = true }
 lazy_static = { workspace = true }
 regex-lite = { workspace = true }
 search = { path = "../search" }

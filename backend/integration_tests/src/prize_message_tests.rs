@@ -25,8 +25,8 @@ fn prize_messages_can_be_claimed_successfully() {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
     client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
@@ -69,6 +69,7 @@ fn prize_messages_can_be_claimed_successfully() {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -115,7 +116,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
@@ -157,6 +158,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 

@@ -1,9 +1,8 @@
-use crate::model::salt::Salt;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
-use event_sink_utils::EventDeduper;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
+use event_store_utils::EventDeduper;
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
@@ -17,7 +16,6 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
-mod model;
 mod queries;
 mod updates;
 
@@ -43,8 +41,8 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let event_sink_client_info = self.data.events_sink_client.info();
-        let event_sink_canister_id = event_sink_client_info.event_sink_canister_id;
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_store_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -53,10 +51,10 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
-            event_sink_client_info,
+            event_store_client_info,
             ledger_transaction_processed_up_to: self.data.ledger_transaction_processed_up_to,
             canister_ids: CanisterIds {
-                event_sink: event_sink_canister_id,
+                event_sink: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
                 chat_governance: self.data.chat_governance_canister_id,
@@ -68,14 +66,13 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub push_events_whitelist: HashSet<Principal>,
-    pub events_sink_client: EventSinkClient<CdkRuntime>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub chat_governance_canister_id: CanisterId,
     pub chat_treasury_subaccount: [u8; 32],
     pub ledger_transaction_processed_up_to: Option<u64>,
-    pub salt: Salt,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -83,7 +80,7 @@ struct Data {
 impl Data {
     pub fn new(
         push_events_whitelist: HashSet<Principal>,
-        events_sink_canister_id: CanisterId,
+        event_store_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         chat_ledger_canister_id: CanisterId,
         chat_governance_canister_id: CanisterId,
@@ -91,7 +88,7 @@ impl Data {
     ) -> Data {
         Data {
             push_events_whitelist,
-            events_sink_client: EventSinkClientBuilder::new(events_sink_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(event_store_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             event_deduper: EventDeduper::default(),
@@ -100,7 +97,6 @@ impl Data {
             chat_governance_canister_id,
             chat_treasury_subaccount: compute_distribution_subaccount_bytes(chat_governance_canister_id, 0),
             ledger_transaction_processed_up_to: None,
-            salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -122,7 +118,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub push_events_whitelist: Vec<Principal>,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub ledger_transaction_processed_up_to: Option<u64>,
     pub canister_ids: CanisterIds,
 }

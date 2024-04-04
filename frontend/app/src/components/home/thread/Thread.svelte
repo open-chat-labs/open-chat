@@ -28,6 +28,7 @@
     import { reverseScroll } from "../../../stores/scrollPos";
     import { i18nKey } from "../../../i18n/i18n";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
+    import AreYouSure from "../../AreYouSure.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -47,6 +48,8 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let creatingP2PSwapMessage = false;
+    let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
+        undefined;
 
     $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -215,7 +218,30 @@
     function createP2PSwapMessage() {
         creatingP2PSwapMessage = true;
     }
+
+    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
+        removeLinkPreviewDetails = ev.detail;
+    }
+
+    function removePreview(yes: boolean): Promise<void> {
+        if (removeLinkPreviewDetails !== undefined && yes) {
+            const { event, url } = removeLinkPreviewDetails;
+
+            client.hideLinkPreview(messageContext, event, url).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+                }
+            });
+        }
+
+        removeLinkPreviewDetails = undefined;
+        return Promise.resolve();
+    }
 </script>
+
+{#if removeLinkPreviewDetails !== undefined}
+    <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
+{/if}
 
 <PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
 
@@ -254,6 +280,7 @@
     rootSelector={"thread-messages"}
     maintainScroll={false}
     bind:this={chatEventList}
+    scrollTopButtonEnabled
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
@@ -311,6 +338,7 @@
                             canReplyInThread={false}
                             collapsed={false}
                             on:chatWith
+                            on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}

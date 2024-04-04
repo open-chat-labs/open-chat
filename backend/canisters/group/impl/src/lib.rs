@@ -8,8 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::Reader;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
@@ -224,7 +224,7 @@ impl RuntimeState {
             gate: chat.gate.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
-            video_call_in_progress: chat.events.video_call_in_progress.value.clone(),
+            video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
         }
     }
 
@@ -398,7 +398,7 @@ impl RuntimeState {
                 .as_ref()
                 .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
-            event_sink_client_info: self.data.event_sink_client.info(),
+            event_store_client_info: self.data.event_store_client.info(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -441,7 +441,8 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
     pub video_call_operators: Vec<Principal>,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    #[serde(alias = "event_sink_client")]
+    pub event_store_client: EventStoreClient<CdkRuntime>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -521,7 +522,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
-            event_sink_client: EventSinkClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
         }
@@ -669,7 +670,7 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
 }
 

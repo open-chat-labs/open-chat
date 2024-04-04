@@ -5,13 +5,14 @@ use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
+use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_sink_client::{EventSinkClient, EventSinkClientBuilder, EventSinkClientInfo};
-use event_sink_client_cdk_runtime::CdkRuntime;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
@@ -153,7 +154,7 @@ impl RuntimeState {
             blocked_users: self.data.blocked_users.len() as u32,
             created: self.data.user_created,
             direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
-            event_sink_client_info: self.data.event_sink_client.info(),
+            event_store_client_info: self.data.event_store_client.info(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -203,7 +204,9 @@ struct Data {
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub video_call_operators: Vec<Principal>,
-    pub event_sink_client: EventSinkClient<CdkRuntime>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
+    pub pin_number: PinNumber,
+    pub btc_address: Option<String>,
     pub rng_seed: [u8; 32],
 }
 
@@ -256,9 +259,11 @@ impl Data {
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: CanisterEventSyncQueue::default(),
             video_call_operators,
-            event_sink_client: EventSinkClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
+            event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            pin_number: PinNumber::default(),
+            btc_address: None,
             rng_seed: [0; 32],
         }
     }
@@ -317,7 +322,7 @@ pub struct Metrics {
     pub blocked_users: u32,
     pub created: TimestampMillis,
     pub direct_chat_metrics: ChatMetrics,
-    pub event_sink_client_info: EventSinkClientInfo,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub video_call_operators: Vec<Principal>,
 }

@@ -1,8 +1,8 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageIndex, User,
-    UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    User, UserId,
 };
 
 mod lifecycle;
@@ -63,6 +63,7 @@ pub struct OpenChatBotMessage {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OpenChatBotMessageV2 {
     pub user_id: UserId,
+    pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
     pub mentioned: Vec<User>,
 }

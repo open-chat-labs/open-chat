@@ -1,3 +1,4 @@
+use crate::updates::end_video_call::end_video_call_impl;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
@@ -19,6 +20,7 @@ pub enum TimerJob {
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
+    MarkVideoCallEnded(MarkVideoCallEndedJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -101,6 +103,9 @@ pub struct MarkP2PSwapExpiredJob {
     pub message_id: MessageId,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call::Args);
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -113,6 +118,7 @@ impl Job for TimerJob {
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
+            TimerJob::MarkVideoCallEnded(job) => job.execute(),
         }
     }
 }
@@ -352,5 +358,11 @@ impl Job for MarkP2PSwapExpiredJob {
                 .events
                 .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
         });
+    }
+}
+
+impl Job for MarkVideoCallEndedJob {
+    fn execute(self) {
+        mutate_state(|state| end_video_call_impl(self.0, state));
     }
 }
