@@ -216,8 +216,8 @@ fn latest_notification_index(env: &PocketIc, notifications_canister_id: Principa
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::notifications_index::happy_path::push_subscription(
         env,

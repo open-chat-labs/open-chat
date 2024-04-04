@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::rng::{random_principal, random_string, random_user_principal};
+use crate::rng::{random_internet_identity_principal, random_principal, random_string};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use rand::random;
@@ -12,7 +12,7 @@ fn register_via_identity_canister_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (auth_principal, public_key) = random_user_principal();
+    let (auth_principal, public_key) = random_internet_identity_principal();
     let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
 
     let create_identity_result = client::identity::happy_path::create_identity(
@@ -53,7 +53,7 @@ fn delegation_signed_successfully() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::local_user_index::happy_path::register_legacy_user(env, canister_ids.local_user_index);
 
     client::identity::happy_path::migrate_legacy_principal(env, user.principal, canister_ids.identity);
 
@@ -78,7 +78,7 @@ fn new_users_synced_to_identity_canister() {
     let user_count = 5usize;
 
     let users: Vec<_> = (0..user_count)
-        .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
+        .map(|_| client::local_user_index::happy_path::register_legacy_user(env, canister_ids.local_user_index))
         .collect();
 
     env.tick();
@@ -163,7 +163,7 @@ fn principal_migration_job_migrates_all_principals() {
         ..
     } = wrapper.env();
 
-    let platform_operator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let platform_operator = client::local_user_index::happy_path::register_legacy_user(env, canister_ids.local_user_index);
 
     env.tick();
 
@@ -171,7 +171,7 @@ fn principal_migration_job_migrates_all_principals() {
         client::identity::happy_path::migrate_legacy_principal(env, platform_operator.principal, canister_ids.identity);
 
     let users: Vec<_> = (0..5)
-        .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
+        .map(|_| client::local_user_index::happy_path::register_legacy_user(env, canister_ids.local_user_index))
         .collect();
 
     env.tick();

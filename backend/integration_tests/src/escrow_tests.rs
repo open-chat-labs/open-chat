@@ -16,8 +16,8 @@ fn swap_via_escrow_canister_succeeds() {
         controller,
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
     let now = now_millis(env);
 
     let icp_amount = 100_000_000_000;

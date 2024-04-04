@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::rng::{random_string, random_user_principal};
+use crate::rng::{random_delegated_principal, random_string};
 use crate::{client, TestEnv};
 use itertools::Itertools;
 use std::ops::Deref;
@@ -11,9 +11,7 @@ fn register_users() {
 
     let user_count = 5usize;
 
-    let users: Vec<_> = (0..user_count)
-        .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
-        .collect();
+    let users: Vec<_> = (0..user_count).map(|_| client::register_user(env, canister_ids)).collect();
 
     let user_summaries = client::user_index::happy_path::users(
         env,
@@ -36,7 +34,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
     let mut first_user_principal = None;
 
     for _ in 0..user_count {
-        let (principal, public_key) = random_user_principal();
+        let (principal, public_key) = random_delegated_principal(canister_ids.identity);
         if first_user_principal.is_none() {
             first_user_principal = Some(principal);
         }
