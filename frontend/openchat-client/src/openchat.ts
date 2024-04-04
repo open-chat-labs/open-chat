@@ -379,6 +379,7 @@ import type {
     RejectReason,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5843,6 +5844,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .then((token) => this.getRoomAccessToken(token));
         });
+    }
+
+    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
+        return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
     }
 
     setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {

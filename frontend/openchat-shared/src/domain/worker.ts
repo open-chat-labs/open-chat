@@ -144,6 +144,7 @@ import type {
     SetMemberDisplayNameResponse,
     FollowThreadResponse,
 } from "./community";
+import type { UpdateBtcBalanceResponse } from "./bitcoin";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
@@ -335,6 +336,7 @@ export type WorkerRequest =
     | JoinVideoCall
     | GetAccessToken
     | GetLocalUserIndexForUser
+    | UpdateBtcBalance
     | SetPrincipalMigrationJobEnabled;
 
 type GetLocalUserIndexForUser = {
@@ -1112,6 +1114,11 @@ type SetCachePrimerTimestamp = {
     kind: "setCachePrimerTimestamp";
 };
 
+type UpdateBtcBalance = {
+    userId: string;
+    kind: "updateBtcBalance";
+};
+
 type SetPrincipalMigrationJobEnabled = {
     enabled: boolean;
     kind: "setPrincipalMigrationJobEnabled";
@@ -1258,7 +1265,8 @@ export type WorkerResponseInner =
     | MarkDeployedResponse
     | ProposedResponse
     | PendingDeploymentResponse
-    | JoinVideoCallResponse;
+    | JoinVideoCallResponse
+    | UpdateBtcBalanceResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1867,6 +1875,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? string | undefined
     : T extends GetLocalUserIndexForUser
     ? string
+    : T extends UpdateBtcBalance
+    ? UpdateBtcBalanceResponse
     : T extends SetPrincipalMigrationJobEnabled
     ? void
     : never;
