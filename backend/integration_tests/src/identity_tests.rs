@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::rng::{random_internet_identity_principal, random_principal, random_string};
+use crate::rng::{random_principal, random_string};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use rand::random;
