@@ -106,14 +106,13 @@ pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterId
     let create_identity_result =
         identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
 
-    let user = local_user_index::happy_path::register_user_with_referrer(
+    local_user_index::happy_path::register_user_with_referrer(
         env,
         create_identity_result.principal,
         canister_ids.local_user_index,
         create_identity_result.user_key,
         referral_code,
-    );
-    user
+    )
 }
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
