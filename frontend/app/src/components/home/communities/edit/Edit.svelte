@@ -104,7 +104,7 @@
         step = ev.detail;
     }
 
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
 

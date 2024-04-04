@@ -379,6 +379,7 @@ import type {
     RejectReason,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -3882,7 +3883,7 @@ export class OpenChat extends OpenChatAgentWorker {
         level: Level,
         newGroup: boolean,
         canInviteUsers: boolean,
-    ): Promise<UserSummary[]> {
+    ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup
@@ -3897,7 +3898,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 channelMembers,
             );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
-                return Promise.resolve(communityMatches);
+                return Promise.resolve([communityMatches, []]);
             }
 
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3910,19 +3911,19 @@ export class OpenChat extends OpenChatAgentWorker {
                     keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
                 }
 
-                const matches = [...communityMatches];
+                const matches = [];
 
                 // Add the global matches to the results, but only if they are not already in the community matches
                 for (const match of globalMatches) {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some((m) => m.userId === match.userId)) {
+                    if (!communityMatches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
 
-                return matches;
+                return [communityMatches, matches];
             });
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3941,7 +3942,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
                     keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
                 }
-                return matches;
+                return [[], matches];
             });
         }
     }
@@ -5843,6 +5844,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .then((token) => this.getRoomAccessToken(token));
         });
+    }
+
+    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
+        return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
+    }
+
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
+            .then((_) => true)
+            .catch(() => false);
     }
 
     // **** Communities Stuff

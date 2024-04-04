@@ -209,6 +209,7 @@
         "visibility": "Видимость"
     },
     "communityDisplayNameRules": "только в этом сообществе",
+    "communityMembers": "Члены сообщества",
     "communityTheme": "Тема сообщества",
     "confirmLeaveGroup": "Вы действительно хотите выйти из этого {level}?",
     "confirmMakeGroupPrivate": "Вы определенно хотите сделать этот {level} приватным? В настоящее время эту операцию нельзя отменить!",
@@ -550,6 +551,7 @@
     "onlineNow": "Сейчас в сети",
     "openChat": "OpenChat",
     "original": "по умолчанию",
+    "otherUsers": "Другие пользователи",
     "ownedBy": "Владелец @{username}",
     "owner": "Владелец",
     "ownerCantLeave": "Вы должны добавить другого владельца, прежде чем сможете покинуть {level}",

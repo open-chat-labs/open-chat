@@ -1,13 +1,12 @@
 use crate::{mutate_state, State};
-use candid::{CandidType, Principal};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::c2c_request_cycles::{Response::*, *};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use std::cmp::min;
-use std::convert::TryInto;
 use tracing::{error, info};
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis};
+use utils::canister::deposit_cycles;
 
 #[update]
 #[trace]
@@ -64,21 +63,8 @@ fn commit(canister_id: &CanisterId, top_up_amount: Option<Cycles>, state: &mut S
     }
 }
 
-async fn top_up_canister(canister_id: CanisterId, amount: Cycles) -> CallResult<()> {
-    #[derive(CandidType, Debug)]
-    struct CanisterIdRecord {
-        canister_id: CanisterId,
-    }
-
-    let payload = CanisterIdRecord { canister_id };
-
-    let response: CallResult<()> = ic_cdk::api::call::call_with_payment(
-        Principal::management_canister(),
-        "deposit_cycles",
-        (payload,),
-        amount.try_into().unwrap(),
-    )
-    .await;
+pub(crate) async fn top_up_canister(canister_id: CanisterId, amount: Cycles) -> CallResult<()> {
+    let response = deposit_cycles(canister_id, amount).await;
 
     if let Err((code, msg)) = response {
         error!(

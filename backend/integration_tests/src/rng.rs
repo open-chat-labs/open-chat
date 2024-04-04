@@ -2,7 +2,7 @@ use crate::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use candid::Principal;
 use rand::{random, RngCore};
 use serde_bytes::ByteBuf;
-use types::MessageId;
+use types::{CanisterId, MessageId};
 
 pub fn random_principal() -> Principal {
     let random_bytes = rand::thread_rng().next_u32().to_ne_bytes();
@@ -10,13 +10,17 @@ pub fn random_principal() -> Principal {
     Principal::from_slice(&random_bytes)
 }
 
-pub fn random_user_principal() -> (Principal, ByteBuf) {
+pub fn random_internet_identity_principal() -> (Principal, ByteBuf) {
+    random_delegated_principal(NNS_INTERNET_IDENTITY_CANISTER_ID)
+}
+
+pub fn random_delegated_principal(originating_canister_id: CanisterId) -> (Principal, ByteBuf) {
     let algorithm_bytes = [48u8, 60, 48, 12, 6, 10, 43, 6, 1, 4, 1, 131, 184, 67, 1, 2, 3, 44, 0];
     let random_bytes: [u8; 32] = random();
 
     let mut public_key = Vec::from(algorithm_bytes);
-    public_key.push(NNS_INTERNET_IDENTITY_CANISTER_ID.as_slice().len() as u8);
-    public_key.extend_from_slice(NNS_INTERNET_IDENTITY_CANISTER_ID.as_slice());
+    public_key.push(originating_canister_id.as_slice().len() as u8);
+    public_key.extend_from_slice(originating_canister_id.as_slice());
     public_key.extend_from_slice(&random_bytes);
 
     (Principal::self_authenticating(&public_key), ByteBuf::from(public_key))

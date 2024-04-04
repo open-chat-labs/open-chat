@@ -209,6 +209,7 @@
         "visibility": "Видимість"
     },
     "communityDisplayNameRules": "лише в межах обраної спільноти",
+    "communityMembers": "Члени спільноти",
     "communityTheme": "Тема спільноти",
     "confirmLeaveGroup": "Ви дійсно хочете залишити цей {level}?",
     "confirmMakeGroupPrivate": "Ви точно хочете зробити це {level} приватним?",
@@ -550,6 +551,7 @@
     "onlineNow": "Онлайн зараз",
     "openChat": "OpenChat",
     "original": "оригінальний",
+    "otherUsers": "Інші користувачі",
     "ownedBy": "Належить @{username}",
     "owner": "власник",
     "ownerCantLeave": "Ви повинні додати іншого власника, перш ніж ви зможете залишити {level}",

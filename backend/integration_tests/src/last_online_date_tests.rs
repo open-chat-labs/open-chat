@@ -11,8 +11,8 @@ fn set_then_get_last_online_date_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::online_users::happy_path::mark_as_online(env, user1.principal, canister_ids.online_users);
 
@@ -42,7 +42,7 @@ fn mark_online_pushes_event() {
         ..
     } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
     env.tick();

@@ -70,7 +70,7 @@ fn remove_member_from_channel_succeeds() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
 
