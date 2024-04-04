@@ -2,7 +2,7 @@ use crate::guards::caller_is_group_index_canister;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId};
@@ -131,10 +131,10 @@ fn commit(
 ) {
     state.data.local_groups.add(chat_id, wasm_version);
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("group_created", state.env.now())
-            .with_user(created_by.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(created_by.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&event_payload)
             .build(),
     );

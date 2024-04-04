@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, COMMUNITY_CANISTER_INITIAL_CYCLES_BALANC
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
-use event_sink_client::EventBuilder;
+use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId};
 use utils::canister;
@@ -134,10 +134,10 @@ fn commit(
 ) {
     state.data.local_communities.add(community_id, wasm_version);
 
-    state.data.event_sink_client.push(
+    state.data.event_store_client.push(
         EventBuilder::new("community_created", state.env.now())
-            .with_user(created_by.to_string())
-            .with_source(state.env.canister_id().to_string())
+            .with_user(created_by.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&event_payload)
             .build(),
     );
