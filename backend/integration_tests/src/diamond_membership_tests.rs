@@ -28,7 +28,7 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::icrc1::happy_path::transfer(env, *controller, ledger, user.user_id, 10_000_000_000);
 
@@ -101,7 +101,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let start_time = now_millis(env);
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
 
@@ -152,7 +152,7 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     } = wrapper.env();
 
     // Register referrer and upgrade to Diamond
-    let user_a = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user_a = client::register_user(env, canister_ids);
     client::upgrade_user(
         &user_a,
         env,
@@ -162,11 +162,7 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     );
 
     // Register user_b with referral from user_a
-    let user_b = client::local_user_index::happy_path::register_user_with_referrer(
-        env,
-        canister_ids.local_user_index,
-        Some(user_a.user_id.to_string()),
-    );
+    let user_b = client::register_user_with_referrer(env, canister_ids, Some(user_a.user_id.to_string()));
 
     // Take a snapshot of the ledger and referrer ICP balances
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
@@ -215,7 +211,7 @@ fn update_subscription_succeeds(disable: bool) {
 
     let start_time = now_millis(env);
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
 

@@ -326,7 +326,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     client::icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
 

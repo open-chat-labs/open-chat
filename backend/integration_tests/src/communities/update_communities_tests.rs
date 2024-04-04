@@ -205,7 +205,7 @@ fn make_private_community_public_succeeds() {
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, community_name: &str) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
 
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_id =
         client::user::happy_path::create_community(env, &user1, community_name, true, vec!["general".to_string()]);

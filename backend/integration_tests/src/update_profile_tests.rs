@@ -11,7 +11,7 @@ fn update_username_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 
@@ -69,7 +69,7 @@ fn update_display_name_unauthorized_if_not_diamond_member() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 
