@@ -190,6 +190,7 @@ import type {
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -217,6 +218,7 @@ import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChe
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 import { TranslationsClient } from "./translations/translations.client";
 import { IdentityClient } from "./identity/identity.client";
+import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -3180,6 +3182,10 @@ export class OpenChatAgent extends EventTarget {
             .then((localUserIndex) => {
                 return cacheLocalUserIndexForUser(userId, localUserIndex);
             });
+    }
+
+    updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
+        return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
     }
 
     setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {

@@ -1524,6 +1524,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "updateBtcBalance":
+                executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
+                break;
+
             case "setPrincipalMigrationJobEnabled":
                 executeThenReply(
                     payload,
