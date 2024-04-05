@@ -511,6 +511,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
+    private _mostRecentSentMessageTimes: number[] = [];
 
     user = currentUser;
     anonUser = anonUser;
@@ -3385,6 +3386,10 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
+        if (this.throttleSendMessage()) {
+            return;
+        }
+
         const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
@@ -3417,6 +3422,25 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
+    }
+
+    private throttleSendMessage(): boolean {
+        if (this._liveState.isDiamond) {
+            return false;
+        }
+
+        const nowInSecs = Math.floor(Date.now() / 1000);
+
+        if (this._mostRecentSentMessageTimes.length >= 5) {
+            if (this._mostRecentSentMessageTimes[0] > nowInSecs - 60) {
+                return true;
+            }
+
+            this._mostRecentSentMessageTimes.shift();
+        }
+        
+        this._mostRecentSentMessageTimes.push(nowInSecs);
+        return false;
     }
 
     sendMessageWithAttachment(
