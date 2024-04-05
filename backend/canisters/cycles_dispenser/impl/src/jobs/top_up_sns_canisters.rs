@@ -1,8 +1,8 @@
-use crate::updates::c2c_request_cycles::top_up_canister;
 use crate::{mutate_state, read_state};
 use sns_root_canister::get_sns_canisters_summary::CanisterSummary;
 use std::time::Duration;
 use types::{CanisterId, Cycles, Empty};
+use utils::canister::deposit_cycles;
 use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 1 day
@@ -51,7 +51,7 @@ async fn run_async(canister_id: CanisterId) {
             let top_up_amount = read_state(|state| state.data.max_top_up_amount);
 
             for canister_id in to_top_up {
-                let _ = top_up_canister(canister_id, top_up_amount).await;
+                let _ = deposit_cycles(canister_id, top_up_amount).await;
             }
         }
     }

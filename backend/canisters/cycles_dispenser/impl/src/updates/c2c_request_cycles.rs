@@ -1,10 +1,8 @@
 use crate::{mutate_state, State};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::c2c_request_cycles::{Response::*, *};
-use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use std::cmp::min;
-use tracing::{error, info};
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis};
 use utils::canister::deposit_cycles;
 
@@ -16,7 +14,7 @@ async fn c2c_request_cycles(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let result = top_up_canister(canister_id, amount).await;
+    let result = deposit_cycles(canister_id, amount).await;
 
     mutate_state(|state| commit(&canister_id, result.is_ok().then_some(amount), state));
 
@@ -60,26 +58,6 @@ fn commit(canister_id: &CanisterId, top_up_amount: Option<Cycles>, state: &mut S
         if let Some(amount) = top_up_amount {
             canister.record_top_up(amount, state.env.now())
         }
-    }
-}
-
-pub(crate) async fn top_up_canister(canister_id: CanisterId, amount: Cycles) -> CallResult<()> {
-    let response = deposit_cycles(canister_id, amount).await;
-
-    if let Err((code, msg)) = response {
-        error!(
-            canister_id = canister_id.to_string().as_str(),
-            error_code = code as u8,
-            error_message = msg.as_str(),
-            "Error calling 'deposit_cycles'"
-        );
-        Err((code, msg))
-    } else {
-        info!(
-            canister_id = canister_id.to_string().as_str(),
-            amount, "Topped up canister with cycles"
-        );
-        Ok(())
     }
 }
 
