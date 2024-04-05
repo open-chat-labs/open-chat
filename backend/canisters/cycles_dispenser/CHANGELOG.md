@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove duplicate code ([#5637](https://github.com/open-chat-labs/open-chat/pull/5637))
+
+## [[2.0.1126](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1126-cycles_dispenser)] - 2024-04-05
+
 ### Added
 
 - Automatically add SNS controlled canisters to the whitelist ([#5625](https://github.com/open-chat-labs/open-chat/pull/5625))
