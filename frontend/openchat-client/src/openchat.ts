@@ -3425,20 +3425,15 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private throttleSendMessage(): boolean {
-        if (this._liveState.isDiamond) {
-            return false;
-        }
-
         const nowInSecs = Math.floor(Date.now() / 1000);
+        const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
 
-        if (this._mostRecentSentMessageTimes.length >= 5) {
-            if (this._mostRecentSentMessageTimes[0] > nowInSecs - 60) {
-                return true;
-            }
+        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter((t) => t >= nowInSecs - 60);
 
-            this._mostRecentSentMessageTimes.shift();
+        if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
+            return true;
         }
-        
+
         this._mostRecentSentMessageTimes.push(nowInSecs);
         return false;
     }
