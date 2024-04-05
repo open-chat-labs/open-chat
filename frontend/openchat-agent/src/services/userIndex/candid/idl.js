@@ -74,6 +74,7 @@ export const idlFactory = ({ IDL }) => {
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
+      'date_created' : TimestampMillis,
       'is_platform_operator' : IDL.Bool,
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,

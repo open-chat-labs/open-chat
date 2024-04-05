@@ -1502,7 +1502,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return false;
                 }
             } else {
-                return canSendGroupMessage(chat, mode, permission);
+                return canSendGroupMessage(this._liveState.user, chat, mode, permission);
             }
         });
     }
@@ -1523,7 +1523,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                 }
             } else {
-                return permittedMessagesInGroup(chat, mode);
+                return permittedMessagesInGroup(this._liveState.user, chat, mode);
             }
         }
 
