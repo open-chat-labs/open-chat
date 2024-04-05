@@ -29,6 +29,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
+            date_created: u.date_created,
             display_name: u.display_name.clone(),
             canister_upgrade_status: CanisterUpgradeStatus::NotRequired,
             avatar_id: u.avatar_id,
