@@ -18,6 +18,7 @@ pub enum Response {
 pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
+    pub date_created: TimestampMillis,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
