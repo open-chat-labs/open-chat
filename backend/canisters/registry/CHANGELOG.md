@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1122](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1122-registry)] - 2024-03-26
+
 ### Added
 
 - Serve up token logos from the Registry canister ([#5592](https://github.com/open-chat-labs/open-chat/pull/5592))

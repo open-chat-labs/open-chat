@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1124](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1124-proposals_bot)] - 2024-03-26
+
 ### Fixed
 
 - Fix proposal decision calculation to account for critical proposals ([#5600](https://github.com/open-chat-labs/open-chat/pull/5600))
