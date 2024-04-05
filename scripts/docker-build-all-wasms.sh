@@ -4,6 +4,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
+./scripts/check-docker-is-running.sh || exit 1
+
 GIT_COMMIT_ID=$(git rev-parse HEAD)
 
 echo "CommitId: $GIT_COMMIT_ID"
