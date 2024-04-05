@@ -9,6 +9,9 @@ cd $SCRIPT_DIR/..
 RELEASE_VERSION=$1
 EXPECTED_WASM_HASH=$2
 
+[[ -z "$RELEASE_VERSION" ]] && { echo "Release version not provided" ; exit 1; }
+[[ -z "$EXPECTED_WASM_HASH" ]] && { echo "Expected wasm hash not provided" ; exit 1; }
+
 TAG_ID=$(git tag -l --sort=-version:refname "v${RELEASE_VERSION}-*")
 GIT_COMMIT_ID=$(git rev-list $TAG_ID -1)
 CANISTER_NAME=${TAG_ID#*-}
