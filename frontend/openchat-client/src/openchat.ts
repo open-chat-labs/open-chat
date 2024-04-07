@@ -488,7 +488,7 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
-const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
@@ -511,6 +511,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
+    private _mostRecentSentMessageTimes: number[] = [];
 
     user = currentUser;
     anonUser = anonUser;
@@ -3385,6 +3386,10 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
+        if (this.throttleSendMessage()) {
+            return;
+        }
+
         const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
@@ -3417,6 +3422,20 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
+    }
+
+    private throttleSendMessage(): boolean {
+        const nowInSecs = Math.floor(Date.now() / 1000);
+        const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
+
+        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter((t) => t >= nowInSecs - 60);
+
+        if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
+            return true;
+        }
+
+        this._mostRecentSentMessageTimes.push(nowInSecs);
+        return false;
     }
 
     sendMessageWithAttachment(
