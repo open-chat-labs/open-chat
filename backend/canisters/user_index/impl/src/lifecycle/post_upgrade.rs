@@ -1,11 +1,11 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
-use tracing::info;
+use tracing::{error, info};
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -24,4 +24,30 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    read_state(|state| {
+        let users_with_duplicate_usernames: Vec<_> = state
+            .data
+            .users
+            .users_with_duplicate_usernames
+            .iter()
+            .map(|(u1, u2)| (u1.to_string(), u2.to_string()))
+            .collect();
+
+        let users_with_duplicate_principals: Vec<_> = state
+            .data
+            .users
+            .users_with_duplicate_principals
+            .iter()
+            .map(|(u1, u2)| (u1.to_string(), u2.to_string()))
+            .collect();
+
+        if !users_with_duplicate_usernames.is_empty() {
+            error!(?users_with_duplicate_usernames);
+        }
+
+        if !users_with_duplicate_principals.is_empty() {
+            error!(?users_with_duplicate_principals);
+        }
+    })
 }
