@@ -1760,6 +1760,6 @@ type AccessTokenType = variant {
 };
 
 type VideoCallType = variant {
-    PublicVideoCall;
-    PrivateVideoCall;
+    Broadcast;
+    Default;
 }

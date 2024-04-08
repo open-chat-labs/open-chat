@@ -27,10 +27,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     match (args.call_type, channel.chat.is_public.value, state.data.is_public) {
-        (VideoCallType::PublicVideoCall, false, _) => {
-            return NotAuthorized;
-        }
-        (VideoCallType::PrivateVideoCall, true, true) => {
+        (VideoCallType::Default, true, true) => {
             return NotAuthorized;
         }
         _ => {}

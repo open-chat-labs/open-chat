@@ -23,7 +23,7 @@ fn start_video_call(args: Args) -> Response {
             return NotAuthorized;
         }
 
-        if let VideoCallType::PublicVideoCall = args.call_type {
+        if let VideoCallType::Broadcast = args.call_type {
             return NotAuthorized;
         }
 
@@ -78,7 +78,7 @@ pub fn handle_start_video_call(
         message_id,
         sender,
         content: MessageContentInternal::VideoCall(VideoCallContent {
-            call_type: VideoCallType::PrivateVideoCall,
+            call_type: VideoCallType::Default,
             participants: vec![CallParticipant {
                 user_id: sender,
                 joined: now,

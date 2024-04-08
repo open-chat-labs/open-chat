@@ -406,6 +406,6 @@ pub struct VideoCall {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
 pub enum VideoCallType {
-    PublicVideoCall,
-    PrivateVideoCall,
+    Broadcast,
+    Default,
 }

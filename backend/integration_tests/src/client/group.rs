@@ -350,7 +350,7 @@ pub mod happy_path {
                 initiator_username: user.username(),
                 initiator_display_name: None,
                 max_duration,
-                call_type: VideoCallType::PublicVideoCall,
+                call_type: VideoCallType::Broadcast,
             },
         );
 
