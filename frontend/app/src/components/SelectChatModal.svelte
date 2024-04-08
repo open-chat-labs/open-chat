@@ -74,10 +74,18 @@
     $: selectedChatId = client.selectedChatId;
     $: globalState = client.globalStateStore;
 
+    let initialGlobalState: GlobalState | undefined = undefined;
+
     $: {
-        buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
-            (t) => (targets = t),
-        );
+        if (initialGlobalState === undefined && $globalState !== undefined) {
+            initialGlobalState = $globalState;
+        }
+
+        if (initialGlobalState !== undefined) {
+            buildListOfTargets(initialGlobalState, $now, $selectedChatId, searchTermLower).then(
+                (t) => (targets = t),
+            );
+        }
     }
     $: noTargets = getNumberOfTargets(targets) === 0;
 
