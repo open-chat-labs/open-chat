@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Re-sync principals to Identity canister but excluding bot users ([#5650](https://github.com/open-chat-labs/open-chat/pull/5650))
+
 ## [[2.0.1130](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1130-identity)] - 2024-04-05
 
 ### Added

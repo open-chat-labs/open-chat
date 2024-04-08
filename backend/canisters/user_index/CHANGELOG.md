@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Log error if any users have duplicate usernames or principals ([#5645](https://github.com/open-chat-labs/open-chat/pull/5645))
+- Re-sync principals to Identity canister but excluding bot users ([#5650](https://github.com/open-chat-labs/open-chat/pull/5650))
 
 ### Fixed
 
