@@ -101,7 +101,6 @@ struct Data {
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
-    #[serde(default)]
     pub latest_orders_taken: HashMap<ExchangeId, (Option<u64>, Option<u64>)>,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,

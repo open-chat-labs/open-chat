@@ -94,7 +94,6 @@ struct Data {
     salt: Salt,
     principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
-    #[serde(default)]
     challenges: Challenges,
     test_mode: bool,
 }
