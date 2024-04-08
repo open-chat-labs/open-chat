@@ -46,7 +46,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId,
+        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
 
     pub fn send_text_message(
@@ -312,6 +312,7 @@ pub mod happy_path {
                 initiator_display_name: None,
                 initiator_avatar_id: None,
                 max_duration,
+                call_type: VideoCallType::PrivateVideoCall
             },
         );
 
