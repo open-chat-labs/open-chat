@@ -568,6 +568,7 @@ pub struct VideoCallContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
+    #[serde(default)]
     pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
