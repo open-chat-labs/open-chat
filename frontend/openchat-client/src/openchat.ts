@@ -2809,7 +2809,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private buildBlobUrl(canisterId: string, blobId: bigint, blobType: "blobs" | "avatar"): string {
         return `${this.config.blobUrlPattern
             .replace("{canisterId}", canisterId)
-            .replace("{blobType}", blobType)}${blobId}`;
+            .replace("{blobType}", blobType)}/${blobId}`;
     }
 
     // this is unavoidably duplicated from the agent
