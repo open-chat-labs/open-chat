@@ -7,6 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const Milliseconds = IDL.Nat64;
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -36,6 +37,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInChannel' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
@@ -281,7 +283,6 @@ export const idlFactory = ({ IDL }) => {
     'issuer_origin' : IDL.Text,
     'credential_type' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -329,9 +330,14 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'joined' : TimestampMillis,
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -1632,8 +1638,10 @@ export const idlFactory = ({ IDL }) => {
     'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
     'initiator' : UserId,
+    'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
+    'call_type' : VideoCallType,
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,

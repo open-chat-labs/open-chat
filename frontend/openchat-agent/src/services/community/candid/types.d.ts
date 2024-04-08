@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'channel_id' : ChannelId,
@@ -26,7 +27,8 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null };
+  { 'StartVideoCall' : null } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -1942,8 +1944,10 @@ export interface StartVideoCallArgs {
   'initiator_username' : string,
   'channel_id' : ChannelId,
   'initiator' : UserId,
+  'max_duration' : [] | [Milliseconds],
   'initiator_display_name' : [] | [string],
   'message_id' : MessageId,
+  'call_type' : VideoCallType,
 }
 export type StartVideoCallResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
@@ -2227,8 +2231,11 @@ export interface VideoCall { 'message_index' : MessageIndex }
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : VideoCall };
@@ -2379,3 +2386,5 @@ export interface _SERVICE {
     UpdateUserGroupResponse
   >,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

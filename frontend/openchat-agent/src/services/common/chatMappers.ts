@@ -74,6 +74,7 @@ import type {
     ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
     ApiVideoCallContent,
     ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
+    ApiVideoCallType,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -173,6 +174,7 @@ import type {
     GroupInviteCodeChange,
     VideoCallContent,
     JoinVideoCallResponse,
+    VideoCallType,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -660,7 +662,18 @@ function videoCallContent(candid: ApiVideoCallContent): VideoCallContent {
             userId: p.user_id.toString(),
             joined: p.joined,
         })),
+        callType: videoCallType(candid.call_type),
     };
+}
+
+function videoCallType(candid: ApiVideoCallType): VideoCallType {
+    if ("Default" in candid) {
+        return "default";
+    }
+    if ("Broadcast" in candid) {
+        return "broadcast";
+    }
+    throw new UnsupportedValueError("Unexpected ApiVideoCallTypye type received", candid);
 }
 
 function p2pSwapContent(candid: ApiP2PSwapContent): P2PSwapContent {

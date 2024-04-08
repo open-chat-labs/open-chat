@@ -5,6 +5,7 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const Milliseconds = IDL.Nat64;
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -34,6 +35,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
     'UserSuspended' : IDL.Null,
@@ -268,9 +270,14 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'joined' : TimestampMillis,
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -554,7 +561,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
-  const Milliseconds = IDL.Nat64;
   const P2PSwapContentInitial = IDL.Record({
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
@@ -1206,8 +1212,10 @@ export const idlFactory = ({ IDL }) => {
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,
     'initiator' : UserId,
+    'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
+    'call_type' : VideoCallType,
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
