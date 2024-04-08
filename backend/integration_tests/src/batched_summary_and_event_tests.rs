@@ -205,7 +205,7 @@ fn assert_is_summary_updates_with_id(response: &SummaryUpdatesResponse, canister
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id1 = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     let group_id2 = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);

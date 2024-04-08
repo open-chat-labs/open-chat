@@ -27,7 +27,7 @@ fn post_upgrade(args: Args) {
 
     // Post upgrade - remove
     mutate_state(|state| {
-        if !state.data.legacy_principals_synced && state.data.test_mode {
+        if !state.data.legacy_principals_synced {
             state.data.legacy_principals_synced = true;
             state
                 .data

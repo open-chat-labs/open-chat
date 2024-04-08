@@ -8,6 +8,7 @@ pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
 pub mod events_window;
+pub mod get_cached_btc_address;
 pub mod hot_group_exclusions;
 pub mod http_request;
 pub mod initial_state;

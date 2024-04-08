@@ -1,9 +1,13 @@
 #![allow(dead_code)]
+use crate::rng::random_internet_identity_principal;
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
+use rand::random;
 use serde::de::DeserializeOwned;
+use serde_bytes::ByteBuf;
+use std::time::Duration;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
@@ -11,6 +15,7 @@ mod macros;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
+pub mod event_store;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
@@ -56,6 +61,7 @@ pub fn install_canister<P: CandidType>(
     wasm: CanisterWasm,
     payload: P,
 ) {
+    env.advance_time(Duration::from_millis(1));
     env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
 }
 
@@ -90,8 +96,27 @@ pub fn execute_update_no_response<P: CandidType>(
         .unwrap();
 }
 
+pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
+    register_user_with_referrer(env, canister_ids, None)
+}
+
+pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
+    let create_identity_result =
+        identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
+
+    local_user_index::happy_path::register_user_with_referrer(
+        env,
+        create_identity_result.principal,
+        canister_ids.local_user_index,
+        create_identity_result.user_key,
+        referral_code,
+    )
+}
+
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
-    let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = register_user(env, canister_ids);
     upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
     user
 }

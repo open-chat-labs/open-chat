@@ -20,8 +20,8 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     // Send user1 some ICP
     client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
@@ -100,7 +100,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 

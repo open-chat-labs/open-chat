@@ -9,6 +9,5 @@ pub mod join_channel;
 pub mod join_community;
 pub mod join_group;
 pub mod push_events;
-pub mod push_events_v2;
 pub mod register_user;
 pub mod report_message_v2;

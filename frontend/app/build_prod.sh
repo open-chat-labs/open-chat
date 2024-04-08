@@ -6,6 +6,6 @@ export VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
 export IC_URL=https://icp-api.io
 export II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app
 export CUSTOM_DOMAINS=oc.app,webtest.oc.app
-export BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}/
+export BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}
 
 npx rollup -c

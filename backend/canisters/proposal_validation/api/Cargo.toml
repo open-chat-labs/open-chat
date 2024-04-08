@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }

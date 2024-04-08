@@ -20,18 +20,24 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         return AlreadyRegistered;
     }
 
-    let originating_canister = match validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
+    let originating_canister = match validate_public_key(caller, &args.public_key) {
         Ok(c) => c,
         Err(error) => return PublicKeyInvalid(error),
     };
 
-    let index = state.data.user_principals.next_index();
-    let seed = state.data.calculate_seed(index);
-    let principal = state.get_principal_from_seed(seed);
-    state
-        .data
-        .user_principals
-        .push(index, principal, caller, originating_canister);
+    // Internet Identity already has a Captcha so we can skip the check for
+    // identities originating from the Internet Identity canister
+    if originating_canister != state.data.internet_identity_canister_id {
+        let Some(attempt) = args.challenge_attempt else {
+            return ChallengeRequired;
+        };
+
+        if !state.data.challenges.check(&attempt, state.env.now()) {
+            return ChallengeFailed;
+        }
+    }
+
+    let (principal, seed) = state.push_new_user(caller, originating_canister);
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
@@ -42,18 +48,11 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     })
 }
 
-fn validate_public_key(
-    caller: Principal,
-    public_key: &[u8],
-    internet_identity_canister_id: CanisterId,
-) -> Result<CanisterId, String> {
+fn validate_public_key(caller: Principal, public_key: &[u8]) -> Result<CanisterId, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-    if canister_id != internet_identity_canister_id {
-        return Err("PublicKey is not derived from the InternetIdentity canister".to_string());
-    }
 
     let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {

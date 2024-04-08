@@ -224,7 +224,7 @@ impl RuntimeState {
             gate: chat.gate.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
-            video_call_in_progress: chat.events.video_call_in_progress.value.clone(),
+            video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
         }
     }
 

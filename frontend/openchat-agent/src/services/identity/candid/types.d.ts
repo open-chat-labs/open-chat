@@ -38,6 +38,8 @@ export type PrepareDelegationResponse = { 'NotFound' : null } |
     'Success' : { 'user_key' : PublicKey, 'expiration' : TimestampNanoseconds }
   };
 export type PublicKey = Uint8Array | number[];
+export interface SetPrincipalMigrationJobEnabledArgs { 'enabled' : boolean }
+export type SetPrincipalMigrationJobEnabledResponse = { 'Success' : null };
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : { 'pubkey' : PublicKey, 'expiration' : TimestampNanoseconds },
@@ -54,5 +56,9 @@ export interface _SERVICE {
   'prepare_delegation' : ActorMethod<
     [PrepareDelegationArgs],
     PrepareDelegationResponse
+  >,
+  'set_principal_migration_job_enabled' : ActorMethod<
+    [SetPrincipalMigrationJobEnabledArgs],
+    SetPrincipalMigrationJobEnabledResponse
   >,
 }

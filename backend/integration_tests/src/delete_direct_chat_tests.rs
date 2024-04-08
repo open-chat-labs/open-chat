@@ -12,8 +12,8 @@ fn delete_direct_chat_succeeds() {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let start = now_millis(env);
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 

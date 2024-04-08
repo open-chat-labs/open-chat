@@ -1,37 +1,14 @@
 use crate::guards::caller_can_push_events;
 use crate::{mutate_state, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
-use event_relay_canister::push_events::Args as ArgsPrevious;
-use event_relay_canister::push_events_v2::Args;
-use event_store_canister::{Anonymizable, IdempotentEvent};
+use event_relay_canister::push_events::Args;
 use event_store_producer::EventBuilder;
 use ic_cdk_macros::update;
 
 #[update(guard = "caller_can_push_events")]
 #[trace]
-fn push_events(args: ArgsPrevious) {
-    mutate_state(|state| {
-        push_events_impl(
-            Args {
-                events: args
-                    .events
-                    .into_iter()
-                    .map(|e| IdempotentEvent {
-                        idempotency_key: e.idempotency_key,
-                        name: e.name,
-                        timestamp: e.timestamp,
-                        user: e
-                            .user
-                            .map(|u| Anonymizable::new(u.as_str().to_string(), Principal::from_text(u.as_str()).is_ok())),
-                        source: e.source.map(|s| Anonymizable::new(s.as_str().to_string(), false)),
-                        payload: e.payload,
-                    })
-                    .collect(),
-            },
-            state,
-        )
-    })
+fn push_events(args: Args) {
+    mutate_state(|state| push_events_impl(args, state))
 }
 
 #[update(guard = "caller_can_push_events")]

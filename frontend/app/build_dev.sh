@@ -7,6 +7,6 @@ export VIDEO_BRIDGE_URL=http://localhost:5050
 
 export DFX_NETWORK=local
 export DEV_PORT=5001
-export BLOB_URL_PATTERN=http://{canisterId}.localhost:8080/{blobType}/
+export BLOB_URL_PATTERN=http://{canisterId}.localhost:8080/{blobType}
 
 npx rollup -c $WATCH

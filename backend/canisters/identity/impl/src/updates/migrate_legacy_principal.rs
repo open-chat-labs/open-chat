@@ -67,13 +67,7 @@ fn prepare(old_principal: Option<Principal>, state: &mut RuntimeState) -> Result
         let new_principal = if let Some(user) = state.data.user_principals.get_by_auth_principal(&old_principal) {
             user.principal
         } else {
-            let index = state.data.user_principals.next_index();
-            let principal = state.get_principal_from_index(index);
-            state
-                .data
-                .user_principals
-                .push(index, principal, old_principal, state.data.internet_identity_canister_id);
-            principal
+            state.push_new_user(old_principal, state.data.internet_identity_canister_id).0
         };
 
         Ok(PrepareResult {

@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+### Removed
+
+- Remove code to anonymize events since that now happens in the EventStore ([#5602](https://github.com/open-chat-labs/open-chat/pull/5602))
+
 ## [[2.0.1110](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1110-event_relay)] - 2024-03-20
 
 ### Changed

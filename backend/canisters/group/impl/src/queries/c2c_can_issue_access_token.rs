@@ -11,11 +11,14 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 }
 
 fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
-    let joining = matches!(args.access_type, AccessTokenType::JoinVideoCall);
-
     let Some(member) = state.data.chat.members.get(&args.user_id) else {
         return false;
     };
 
-    joining || (args.is_diamond && member.role.is_permitted(state.data.chat.permissions.start_video_call))
+    match args.access_type {
+        AccessTokenType::StartVideoCall => {
+            args.is_diamond && member.role.is_permitted(state.data.chat.permissions.start_video_call)
+        }
+        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+    }
 }

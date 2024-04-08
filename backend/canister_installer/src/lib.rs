@@ -41,6 +41,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
         set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
         set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.event_store, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -239,12 +240,19 @@ async fn install_service_canisters_impl(
             canister_ids.local_user_index,
             canister_ids.local_group_index,
         ],
-        event_store_canister_id: Principal::anonymous(),
+        event_store_canister_id: canister_ids.event_store,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,
         test_mode,
+    };
+
+    let event_store_canister_wasm = get_canister_wasm(CanisterName::EventStore, version);
+    let event_store_init_args = event_store_canister::InitArgs {
+        push_events_whitelist: vec![canister_ids.event_relay],
+        read_events_whitelist: vec![principal],
+        time_granularity: None,
     };
 
     futures::future::join5(
@@ -315,7 +323,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join4(
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -339,6 +347,12 @@ async fn install_service_canisters_impl(
             &canister_ids.event_relay,
             &event_relay_canister_wasm.module,
             event_relay_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.event_store,
+            &event_store_canister_wasm.module,
+            event_store_init_args,
         ),
     )
     .await;

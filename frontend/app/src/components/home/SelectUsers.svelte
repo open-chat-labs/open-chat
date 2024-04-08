@@ -9,7 +9,7 @@
     export let mode: "add" | "edit";
     export let selectedUsers: UserSummary[];
     export let enabled = true;
-    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
+    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
 
     let error: string | undefined = undefined;
 </script>

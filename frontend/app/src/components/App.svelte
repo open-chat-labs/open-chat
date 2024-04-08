@@ -43,6 +43,7 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
+
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
@@ -125,6 +126,7 @@
             setDiamondMembershipFees,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            setPrincipalMigrationJobEnabled,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -327,6 +329,16 @@
                 console.log("Market maker config updated");
             } else {
                 console.log("Failed to update market maker config", resp);
+            }
+        });
+    }
+
+    function setPrincipalMigrationJobEnabled(enabled: boolean): void {
+        client.setPrincipalMigrationJobEnabled(enabled).then((resp) => {
+            if (resp) {
+                console.log("Principal migration job updated");
+            } else {
+                console.log("Failed to update principal migration job");
             }
         });
     }

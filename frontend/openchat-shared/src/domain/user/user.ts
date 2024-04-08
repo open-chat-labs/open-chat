@@ -108,6 +108,7 @@ export function anonymousUser(): CreatedUser {
     return {
         kind: "created_user",
         username: ANON_USERNAME,
+        dateCreated: BigInt(0),
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
@@ -125,6 +126,7 @@ export function anonymousUser(): CreatedUser {
 export type CreatedUser = {
     kind: "created_user";
     username: string;
+    dateCreated: bigint;
     displayName: string | undefined;
     cryptoAccount: string;
     userId: string;

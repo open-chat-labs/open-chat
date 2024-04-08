@@ -1,0 +1,43 @@
+// Copied from https://github.com/dfinity/ic/blob/master/rs/bitcoin/ckbtc/minter/ckbtc_minter.did
+// Represents an account on the ckBTC ledger.
+type Account = record { owner : principal; subaccount : opt blob };
+
+type RetrieveBtcWithApprovalArgs = record {
+    // The address to which the ckBTC minter should deposit BTC.
+    address : text;
+    // The amount of ckBTC in Satoshis that the client wants to withdraw.
+    amount : nat64;
+    // The subaccount to burn ckBTC from.
+    from_subaccount : opt blob;
+};
+
+type RetrieveBtcWithApprovalError = variant {
+    // The minter failed to parse the destination address.
+    MalformedAddress : text;
+    // The minter is already processing another retrieval request for the same
+    // principal.
+    AlreadyProcessing;
+    // The withdrawal amount is too low.
+    // The payload contains the minimal withdrawal amount.
+    AmountTooLow : nat64;
+    // The ckBTC balance of the withdrawal account is too low.
+    InsufficientFunds : record { balance : nat64 };
+    // The allowance given to the minter is too low.
+    InsufficientAllowance : record { allowance : nat64 };
+    // The minter is overloaded, retry the request.
+    // The payload contains a human-readable message explaining what caused the unavailability.
+    TemporarilyUnavailable : text;
+    // A generic error reserved for future extensions.
+    GenericError : record { error_message : text; error_code : nat64 };
+};
+
+type RetrieveBtcOk = record {
+    // Returns the burn transaction index corresponding to the withdrawal.
+    // You can use this index to query the withdrawal status.
+    block_index : nat64
+};
+
+service : {
+    get_btc_address : (record { owner: opt principal; subaccount : opt blob }) -> (text);
+    retrieve_btc_with_approval : (RetrieveBtcWithApprovalArgs) -> (variant { Ok : RetrieveBtcOk; Err : RetrieveBtcWithApprovalError });
+}

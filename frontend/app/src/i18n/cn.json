@@ -209,6 +209,7 @@
         "visibility": "能见度"
     },
     "communityDisplayNameRules": "只在被选择的社区内",
+    "communityMembers": "社区成员",
     "communityTheme": "社区主题",
     "confirmLeaveGroup": "你真的想离开这个{level}吗？",
     "confirmMakeGroupPrivate": "您确定要将此 {level} 设为私有吗？目前此操作无法撤消！",
@@ -550,6 +551,7 @@
     "onlineNow": "在线",
     "openChat": "OpenChat",
     "original": "普通模式",
+    "otherUsers": "其他用户",
     "ownedBy": "群主：@{username}",
     "owner": "群主",
     "ownerCantLeave": "您必须先添加另一个所有者，然后才能离开 {level}",

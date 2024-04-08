@@ -1,3 +1,4 @@
+use crate::model::challenges::Challenges;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
@@ -42,11 +43,6 @@ impl RuntimeState {
         self.data.user_index_canister_id == caller
     }
 
-    pub fn get_principal_from_index(&self, index: u32) -> Principal {
-        let seed = self.data.calculate_seed(index);
-        self.get_principal_from_seed(seed)
-    }
-
     pub fn get_principal_from_seed(&self, seed: [u8; 32]) -> Principal {
         let public_key = self.der_encode_canister_sig_key(seed);
         Principal::self_authenticating(public_key)
@@ -57,6 +53,17 @@ impl RuntimeState {
         CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
     }
 
+    pub fn push_new_user(&mut self, auth_principal: Principal, originating_canister: CanisterId) -> (Principal, [u8; 32]) {
+        let index = self.data.user_principals.next_index();
+        let seed = self.data.calculate_seed(index);
+        let principal = self.get_principal_from_seed(seed);
+        self.data
+            .user_principals
+            .push(index, principal, auth_principal, originating_canister);
+
+        (principal, seed)
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -65,6 +72,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             legacy_principals: self.data.legacy_principals.len() as u32,
+            principal_migration_job_enabled: self.data.principal_migration_job_enabled,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -78,22 +86,17 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     internet_identity_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(default)]
     salt: Salt,
-    #[serde(default)]
     principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
+    #[serde(default)]
+    challenges: Challenges,
     test_mode: bool,
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 impl Data {
@@ -115,6 +118,7 @@ impl Data {
             salt: Salt::default(),
             principal_migration_job_enabled: false,
             rng_seed: [0; 32],
+            challenges: Challenges::default(),
             test_mode,
         }
     }
@@ -157,6 +161,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub legacy_principals: u32,
+    pub principal_migration_job_enabled: bool,
     pub canister_ids: CanisterIds,
 }
 

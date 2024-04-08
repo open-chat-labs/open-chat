@@ -43,6 +43,7 @@ import type {
     OptionalMessagePermissions,
     OptionUpdate,
     GovernanceProposalsSubtype,
+    CreatedUser,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -1056,11 +1057,7 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
 
 export function canStartVideoCalls(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.frozen &&
-            // !chat.public &&
-            isPermitted(chat.membership.role, chat.permissions.startVideoCall)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     } else {
         return true;
     }
@@ -1083,32 +1080,42 @@ export function canInviteUsers(chat: ChatSummary): boolean {
 }
 
 export function permittedMessagesInGroup(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread",
 ): Map<MessagePermission, boolean> {
     return new Map(
         messagePermissionsList.map((m: MessagePermission) => [
             m,
-            canSendGroupMessage(chat, mode, m),
+            canSendGroupMessage(user, chat, mode, m),
         ]),
     );
 }
 
+const PERMISSIONS_BLOCKED_FOR_NEW_USERS: MessagePermission[] = [
+    "audio",
+    "file",
+    "giphy",
+    "image",
+    "video",
+];
+
 export function canSendGroupMessage(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread" | "any",
     permission?: MessagePermission,
 ): boolean {
     if (mode === "any") {
         return (
-            canSendGroupMessage(chat, "message", permission) ||
-            canSendGroupMessage(chat, "thread", permission)
+            canSendGroupMessage(user, chat, "message", permission) ||
+            canSendGroupMessage(user, chat, "thread", permission)
         );
     }
 
     if (permission === undefined) {
         return messagePermissionsList.some((mp: MessagePermission) =>
-            canSendGroupMessage(chat, mode, mp as MessagePermission),
+            canSendGroupMessage(user, chat, mode, mp as MessagePermission),
         );
     }
 
@@ -1119,6 +1126,17 @@ export function canSendGroupMessage(
 
     if (permission === "prize" && mode === "thread") {
         return false;
+    }
+
+    if (
+        chat.public &&
+        user.diamondStatus.kind === "inactive" &&
+        PERMISSIONS_BLOCKED_FOR_NEW_USERS.includes(permission)
+    ) {
+        const isNewUser = Date.now() - Number(user.dateCreated) < 24 * 60 * 60 * 1000; // 1 day
+        if (isNewUser) {
+            return false;
+        }
     }
 
     return (
@@ -1468,6 +1486,7 @@ function mergeLocalUpdates(
 
     if (localUpdates?.revealedContent !== undefined) {
         message.content = localUpdates.revealedContent;
+        message.deleted = true;
     }
 
     if (localUpdates?.prizeClaimed !== undefined) {

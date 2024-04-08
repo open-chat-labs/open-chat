@@ -82,6 +82,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/ckbtc_minter/api",
+    "backend/external_canisters/ckbtc_minter/c2c_client",
     "backend/external_canisters/cmc/api",
     "backend/external_canisters/cmc/c2c_client",
     "backend/external_canisters/icdex/api",
@@ -165,18 +167,20 @@ canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev 
 ciborium = "0.2.1"
 clap = "4.4.8"
 ct-codecs = "1.1.1"
+dataurl = "0.1.2"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "3fcc99a7aebba7d8668b3bbb108de435133b2c52" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "3fcc99a7aebba7d8668b3bbb108de435133b2c52" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "3fcc99a7aebba7d8668b3bbb108de435133b2c52" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "3fcc99a7aebba7d8668b3bbb108de435133b2c52" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
 ic-agent = "0.33.0"
+ic-captcha = "1.0.0"
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2e39ea5a8fb5ec7e09eb0fc20cfbc536d3ee5398" }
 ic-cdk-macros = "0.8.4"
 ic-cdk-timers = "0.6.0"
