@@ -860,6 +860,7 @@ type StartVideoCallArgs = record {
     initiator_username : text;
     initiator_display_name : opt text;
     max_duration : opt Milliseconds;
+    call_type: VideoCallType;
 };
 
 type StartVideoCallResponse = variant {

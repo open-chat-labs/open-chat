@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -24,17 +24,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    // Post upgrade - remove
-    mutate_state(|state| {
-        if !state.data.legacy_principals_synced {
-            state.data.legacy_principals_synced = true;
-            state
-                .data
-                .legacy_principals_sync_queue
-                .extend(state.data.users.iter().map(|u| u.principal));
-
-            crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
-        }
-    });
 }
