@@ -74,8 +74,10 @@
     $: selectedChatId = client.selectedChatId;
     $: globalState = client.globalStateStore;
 
+    let initialGlobalState = structuredClone($globalState);
+
     $: {
-        buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
+        buildListOfTargets(initialGlobalState, $now, $selectedChatId, searchTermLower).then(
             (t) => (targets = t),
         );
     }
