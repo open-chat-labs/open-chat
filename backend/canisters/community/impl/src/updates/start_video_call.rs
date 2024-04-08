@@ -26,11 +26,11 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     };
 
-    match (args.call_type, channel.chat.is_public.value, state.data.is_public) {
-        (VideoCallType::Default, true, true) => {
-            return NotAuthorized;
-        }
-        _ => {}
+    if matches!(
+        (args.call_type, channel.chat.is_public.value, state.data.is_public),
+        (VideoCallType::Default, true, true)
+    ) {
+        return NotAuthorized;
     }
 
     let sender = args.initiator;
