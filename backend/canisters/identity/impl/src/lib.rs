@@ -88,6 +88,7 @@ struct Data {
     cycles_dispenser_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
     user_principals: UserPrincipals,
+    #[serde(skip_deserializing)]
     legacy_principals: HashSet<Principal>,
     #[serde(skip)]
     signature_map: SignatureMap,

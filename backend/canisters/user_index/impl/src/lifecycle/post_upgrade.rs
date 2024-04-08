@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -25,7 +25,7 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    read_state(|state| {
+    mutate_state(|state| {
         let users_with_duplicate_usernames: Vec<_> = state
             .data
             .users
@@ -49,5 +49,12 @@ fn post_upgrade(args: Args) {
         if !users_with_duplicate_principals.is_empty() {
             error!(?users_with_duplicate_principals);
         }
+
+        state
+            .data
+            .legacy_principals_sync_queue
+            .extend(state.data.users.iter().filter(|u| !u.is_bot).map(|u| u.principal));
+
+        crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
     })
 }
