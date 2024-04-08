@@ -1108,6 +1108,28 @@ type LocalUserIndexResponse = variant {
     Success : CanisterId;
 };
 
+type GetCachedBtcAddressResponse = variant {
+    Success : text;
+    NotFound;
+};
+
+type GetBtcAddressResponse = variant {
+    Success : text;
+    InternalError : text;
+};
+
+type RetrieveBtcArgs = record {
+    amount : nat64;
+    address : text;
+};
+
+type RetrieveBtcResponse = variant {
+    Success : nat64;
+    ApproveError : text;
+    RetrieveBtcError : text;
+    InternalError : text;
+};
+
 service : {
     send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
     edit_message_v2 : (EditMessageV2Args) -> (EditMessageResponse);
@@ -1170,4 +1192,8 @@ service : {
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
     token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
+
+    get_cached_btc_address : (EmptyArgs) -> (GetCachedBtcAddressResponse) query;
+    get_btc_address : (EmptyArgs) -> (GetBtcAddressResponse);
+    retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };

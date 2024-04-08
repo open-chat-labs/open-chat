@@ -16,6 +16,7 @@
     "dependencies": {
         "@dfinity/agent": "^1.2.0",
         "@dfinity/auth-client": "^1.2.0",
+        "@dfinity/identity": "^1.2.0",
         "openchat-agent": "*",
         "openchat-shared": "*"
     },

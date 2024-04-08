@@ -1,3 +1,3 @@
-mod add_canister;
-mod c2c_request_cycles;
-mod update_config;
+pub mod add_canister;
+pub mod c2c_request_cycles;
+pub mod update_config;

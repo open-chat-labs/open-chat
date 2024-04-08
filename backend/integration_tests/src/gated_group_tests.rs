@@ -43,7 +43,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
     let user2 = if is_diamond {
         client::register_diamond_user(env, canister_ids, *controller)
     } else {
-        client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index)
+        client::register_user(env, canister_ids)
     };
 
     let join_group_response = client::local_user_index::join_group(
@@ -82,7 +82,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 

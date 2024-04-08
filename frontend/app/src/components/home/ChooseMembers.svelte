@@ -4,7 +4,10 @@
 
     export let members: CandidateMember[];
     export let busy: boolean;
-    export let userLookup: (searchTerm: string, maxResults?: number) => Promise<UserSummary[]>;
+    export let userLookup: (
+        searchTerm: string,
+        maxResults?: number,
+    ) => Promise<[UserSummary[], UserSummary[]]>;
 
     $: selectedUsers = members.map((m) => m.user);
 

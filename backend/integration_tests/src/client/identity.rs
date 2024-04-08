@@ -33,6 +33,7 @@ pub mod happy_path {
                 public_key,
                 session_key,
                 max_time_to_live: None,
+                challenge_attempt: None,
             },
         );
 

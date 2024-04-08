@@ -190,6 +190,7 @@ import type {
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -216,6 +217,8 @@ import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 import { TranslationsClient } from "./translations/translations.client";
+import { IdentityClient } from "./identity/identity.client";
+import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -226,6 +229,7 @@ export class OpenChatAgent extends EventTarget {
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
+    private _identityClient: IdentityClient;
     private _ledgerClients: Record<string, LedgerClient>;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
@@ -252,6 +256,11 @@ export class OpenChatAgent extends EventTarget {
         this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
+        this._identityClient = IdentityClient.create(
+            identity,
+            config.identityCanister,
+            config.icUrl,
+        );
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this.translationsClient = new TranslationsClient(identity, config);
         this._ledgerClients = {};
@@ -3173,5 +3182,13 @@ export class OpenChatAgent extends EventTarget {
             .then((localUserIndex) => {
                 return cacheLocalUserIndexForUser(userId, localUserIndex);
             });
+    }
+
+    updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
+        return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
+    }
+
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {
+        return this._identityClient.setPrincipalMigrationJobEnabled(enabled);
     }
 }

@@ -4,7 +4,7 @@
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
     import type { OpenChat } from "openchat-client";
-    import { LEDGER_CANISTER_ICP } from "openchat-client";
+    import { LEDGER_CANISTER_CHAT } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Diamond from "../../icons/Diamond.svelte";
@@ -13,7 +13,7 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    let ledger: string = LEDGER_CANISTER_ICP;
+    let ledger: string = LEDGER_CANISTER_CHAT;
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;

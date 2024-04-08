@@ -28,6 +28,8 @@ then
     ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
 fi
 
+./scripts/download-canister-wasm-dfx.sh event_store
+
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications_index)

@@ -379,6 +379,7 @@ import type {
     RejectReason,
     JoinVideoCallResponse,
     AccessTokenType,
+    UpdateBtcBalanceResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -487,7 +488,7 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
-const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
@@ -510,6 +511,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
+    private _mostRecentSentMessageTimes: number[] = [];
 
     user = currentUser;
     anonUser = anonUser;
@@ -1501,7 +1503,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return false;
                 }
             } else {
-                return canSendGroupMessage(chat, mode, permission);
+                return canSendGroupMessage(this._liveState.user, chat, mode, permission);
             }
         });
     }
@@ -1522,7 +1524,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                 }
             } else {
-                return permittedMessagesInGroup(chat, mode);
+                return permittedMessagesInGroup(this._liveState.user, chat, mode);
             }
         }
 
@@ -3384,6 +3386,10 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
+        if (this.throttleSendMessage()) {
+            return;
+        }
+
         const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
@@ -3416,6 +3422,20 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
+    }
+
+    private throttleSendMessage(): boolean {
+        const nowInSecs = Math.floor(Date.now() / 1000);
+        const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
+
+        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter((t) => t >= nowInSecs - 60);
+
+        if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
+            return true;
+        }
+
+        this._mostRecentSentMessageTimes.push(nowInSecs);
+        return false;
     }
 
     sendMessageWithAttachment(
@@ -3882,7 +3902,7 @@ export class OpenChat extends OpenChatAgentWorker {
         level: Level,
         newGroup: boolean,
         canInviteUsers: boolean,
-    ): Promise<UserSummary[]> {
+    ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup
@@ -3897,7 +3917,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 channelMembers,
             );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
-                return Promise.resolve(communityMatches);
+                return Promise.resolve([communityMatches, []]);
             }
 
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3910,19 +3930,19 @@ export class OpenChat extends OpenChatAgentWorker {
                     keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
                 }
 
-                const matches = [...communityMatches];
+                const matches = [];
 
                 // Add the global matches to the results, but only if they are not already in the community matches
                 for (const match of globalMatches) {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some((m) => m.userId === match.userId)) {
+                    if (!communityMatches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
 
-                return matches;
+                return [communityMatches, matches];
             });
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3941,7 +3961,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
                     keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
                 }
-                return matches;
+                return [[], matches];
             });
         }
     }
@@ -5843,6 +5863,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .then((token) => this.getRoomAccessToken(token));
         });
+    }
+
+    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
+        return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
+    }
+
+    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
+            .then((_) => true)
+            .catch(() => false);
     }
 
     // **** Communities Stuff
