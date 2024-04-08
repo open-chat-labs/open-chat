@@ -66,6 +66,7 @@ import {
     activeUserIdFromEvent,
     doesMessageFailFilter,
     canStartVideoCalls,
+    buildBlobUrl,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -2806,12 +2807,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private buildBlobUrl(canisterId: string, blobId: bigint, blobType: "blobs" | "avatar"): string {
-        return `${this.config.blobUrlPattern
-            .replace("{canisterId}", canisterId)
-            .replace("{blobType}", blobType)}${blobId}`;
-    }
-
     // this is unavoidably duplicated from the agent
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
@@ -2822,7 +2817,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ? {
                   ...dataContent,
                   blobData: undefined,
-                  blobUrl: this.buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+                  blobUrl: buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, blobType),
               }
             : dataContent;
     }
