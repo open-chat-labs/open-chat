@@ -260,7 +260,6 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
-    pub legacy_principals_synced: bool,
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
 }
@@ -327,7 +326,6 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
-            legacy_principals_synced: false,
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
         };
@@ -416,7 +414,6 @@ impl Default for Data {
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
-            legacy_principals_synced: false,
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
         }
