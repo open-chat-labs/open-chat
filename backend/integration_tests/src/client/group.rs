@@ -43,7 +43,9 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation
+        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
+        MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId,
+        VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -348,7 +350,7 @@ pub mod happy_path {
                 initiator_username: user.username(),
                 initiator_display_name: None,
                 max_duration,
-                call_type: VideoCallType::PrivateVideoCall
+                call_type: VideoCallType::PrivateVideoCall,
             },
         );
 

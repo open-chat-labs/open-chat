@@ -312,7 +312,7 @@ pub mod happy_path {
                 initiator_display_name: None,
                 initiator_avatar_id: None,
                 max_duration,
-                call_type: VideoCallType::PrivateVideoCall
+                call_type: VideoCallType::PrivateVideoCall,
             },
         );
 
