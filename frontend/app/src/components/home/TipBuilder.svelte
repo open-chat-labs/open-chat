@@ -6,7 +6,6 @@
     import TokenInput from "./TokenInput.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type {
-        EnhancedTokenDetails,
         Message,
         OpenChat,
         PendingCryptocurrencyTransfer,
@@ -61,7 +60,6 @@
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
     $: valid =
-        exchangeRate > 0 &&
         draftAmount > 0n &&
         remainingBalance >= 0n &&
         error === undefined &&
@@ -189,10 +187,6 @@
         draftAmount = calculateAmount(centAmount, exchangeRate);
     }
 
-    function hasExchangeRate(token: EnhancedTokenDetails): boolean {
-        return $exchangeRatesLookup[token.symbol.toLowerCase()] !== undefined;
-    }
-
     function maxAmount(balance: bigint): bigint {
         return balance - transferFees;
     }
@@ -218,7 +212,7 @@
                 <div class="main-title">
                     <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
                     <div>
-                        <CryptoSelector bind:ledger filter={hasExchangeRate} />
+                        <CryptoSelector bind:ledger />
                     </div>
                 </div>
             </div>
