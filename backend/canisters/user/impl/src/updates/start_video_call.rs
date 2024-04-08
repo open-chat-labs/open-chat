@@ -23,7 +23,7 @@ fn start_video_call(args: Args) -> Response {
             return NotAuthorized;
         }
 
-        if let VideoCallType::Broadcast = args.call_type {
+        if matches!(args.call_type, VideoCallType::Broadcast) {
             return NotAuthorized;
         }
 

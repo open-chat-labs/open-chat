@@ -404,8 +404,9 @@ pub struct VideoCall {
     pub message_index: MessageIndex,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default)]
 pub enum VideoCallType {
     Broadcast,
+    #[default]
     Default,
 }
