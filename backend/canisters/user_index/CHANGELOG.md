@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Log error if any users have duplicate usernames or principals ([#5645](https://github.com/open-chat-labs/open-chat/pull/5645))
 
+### Fixed
+
+- Fix job to sync principals to Identity canister ([#5649](https://github.com/open-chat-labs/open-chat/pull/5649))
+
 ## [[2.0.1129](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1129-user_index)] - 2024-04-05
 
 ### Added
