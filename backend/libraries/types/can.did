@@ -1629,6 +1629,7 @@ type VideoCallContentInitial = record {
 };
 
 type VideoCallContent = record {
+    call_type: VideoCallType;
     ended : opt TimestampMillis;
     participants : vec CallParticipant;
 };
@@ -1757,3 +1758,8 @@ type AccessTokenType = variant {
     JoinVideoCall;
     MarkVideoCallAsEnded;
 };
+
+type VideoCallType = variant {
+    Broadcast;
+    Default;
+}
