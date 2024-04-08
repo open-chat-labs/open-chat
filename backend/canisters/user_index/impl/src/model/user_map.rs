@@ -18,6 +18,10 @@ pub struct UserMap {
     principal_to_user_id: HashMap<Principal, UserId>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
+    #[serde(skip)]
+    pub users_with_duplicate_usernames: Vec<(UserId, UserId)>,
+    #[serde(skip)]
+    pub users_with_duplicate_principals: Vec<(UserId, UserId)>,
     suspected_bots: BTreeSet<UserId>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
 }
@@ -330,8 +334,13 @@ impl From<UserMapTrimmed> for UserMap {
                 user_map.user_referrals.entry(referred_by).or_default().push(*user_id);
             }
 
-            user_map.username_to_user_id.insert(&user.username, *user_id);
-            user_map.principal_to_user_id.insert(user.principal, *user_id);
+            if let Some(other_user_id) = user_map.username_to_user_id.insert(&user.username, *user_id) {
+                user_map.users_with_duplicate_usernames.push((*user_id, other_user_id));
+            }
+
+            if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
+                user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
+            }
         }
 
         user_map
