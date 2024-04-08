@@ -5574,10 +5574,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
- "dataurl",
  "human_readable",
  "serde",
- "sha256",
  "types",
 ]
 
