@@ -250,7 +250,7 @@ fn commit(
 }
 
 fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
-    state.data.local_users.mark_registration_failed(&principal);
+    state.data.local_users.mark_registration_failed(principal);
 
     if let CreateAndInstallError::InstallFailed(id, ..) = error {
         state.data.canister_pool.push(*id);
