@@ -379,6 +379,7 @@ export type CurrentUserResponse = {
       'moderation_flags_enabled' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'principal_updates' : [] | [[number, number]],
       'suspension_details' : [] | [SuspensionDetails],
       'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],

@@ -121,6 +121,7 @@ export function anonymousUser(): CreatedUser {
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
+        principalUpdates: undefined,
     };
 }
 
@@ -139,6 +140,7 @@ export type CreatedUser = {
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
+    principalUpdates: [number, number] | undefined;
 };
 
 export type DiamondMembershipStatus =
