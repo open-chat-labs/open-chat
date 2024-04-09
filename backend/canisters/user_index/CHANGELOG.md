@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Add `principal_updates_pending` to `current_user` response ([#5657](https://github.com/open-chat-labs/open-chat/pull/5657))
+- Add `principal_updates` to `current_user` response ([#5657](https://github.com/open-chat-labs/open-chat/pull/5657))
 
 ## [[2.0.1134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1134-user_index)] - 2024-04-09
 
