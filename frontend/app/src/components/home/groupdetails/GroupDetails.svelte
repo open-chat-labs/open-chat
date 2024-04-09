@@ -36,7 +36,8 @@
     $: currentUser = client.user;
     $: canEdit = client.canEditGroupDetails(chat.id);
     $: canSend = client.canSendMessage(chat.id, "any");
-    $: canInvite = client.canInviteUsers(chat.id) && (chat.kind === "group_chat" || chat.public);
+    $: canInvite =
+        client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
     $: avatarSrc = client.groupAvatarUrl(chat);
 
     $: currentChatRules = client.currentChatRules;
