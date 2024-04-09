@@ -1585,7 +1585,10 @@ export type SendMessageResponse =
     | Offline
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
-    | DuplicateMessageId;
+    | DuplicateMessageId
+    | PinRequired 
+    | PinIncorrect
+    | TooManyFailedPinAttempts;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1687,6 +1690,20 @@ export type P2PSwapSetUpFailed = {
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
+};
+
+export type PinRequired = {
+    kind: "pin_required"; 
+};
+
+export type PinIncorrect = {
+    kind: "pin_incorrect"; 
+    next_retry_in_ms: bigint;
+};
+
+export type TooManyFailedPinAttempts = {
+    kind: "too_main_failed_pin_attempts"; 
+    next_retry_in_ms: bigint;
 };
 
 export type GateUpdatedEvent = {
@@ -2092,6 +2109,9 @@ export type AcceptP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
+    | PinRequired 
+    | PinIncorrect
+    | TooManyFailedPinAttempts
     | { kind: "internal_error"; text: string };
 
 export type CancelP2PSwapResponse =

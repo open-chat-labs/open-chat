@@ -2,11 +2,17 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AcceptP2PSwapArgs {
+  'pin' : [] | [string],
   'channel_id' : ChannelId,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type AcceptP2PSwapResponse = { 'UserNotInChannel' : null } |
+export type AcceptP2PSwapResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'UserNotInChannel' : null } |
+  { 'PinRequired' : null } |
   { 'ChannelNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : AcceptSwapSuccess } |
@@ -1942,6 +1948,7 @@ export interface StartVideoCallArgs {
   'initiator_username' : string,
   'channel_id' : ChannelId,
   'initiator' : UserId,
+  'max_duration' : [] | [Milliseconds],
   'initiator_display_name' : [] | [string],
   'message_id' : MessageId,
 }

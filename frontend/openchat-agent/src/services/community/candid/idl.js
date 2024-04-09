@@ -3,10 +3,12 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
+    'pin' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const Milliseconds = IDL.Nat64;
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -35,7 +37,10 @@ export const idlFactory = ({ IDL }) => {
     'Expired' : SwapStatusErrorExpired,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
+    'TooManyFailedPinAttempts' : Milliseconds,
+    'PinIncorrect' : Milliseconds,
     'UserNotInChannel' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
@@ -281,7 +286,6 @@ export const idlFactory = ({ IDL }) => {
     'issuer_origin' : IDL.Text,
     'credential_type' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -1632,6 +1636,7 @@ export const idlFactory = ({ IDL }) => {
     'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
     'initiator' : UserId,
+    'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
   });

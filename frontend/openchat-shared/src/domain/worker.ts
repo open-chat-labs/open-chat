@@ -402,6 +402,7 @@ type TipMessage = {
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
+    pin: string | undefined;
 };
 
 type CanSwap = {
@@ -430,6 +431,7 @@ type SwapTokens = {
     amountIn: bigint;
     minAmountOut: bigint;
     dex: DexId;
+    pin: string | undefined;
 };
 
 type TokenSwapStatus = {
@@ -550,6 +552,7 @@ type GroupMessagesByMessageIndex = {
 
 type WithdrawCrypto = {
     domain: PendingCryptocurrencyWithdrawal;
+    pin: string | undefined;
     kind: "withdrawCryptocurrency";
 };
 
@@ -726,6 +729,7 @@ type SendMessage = {
     rulesAccepted: number | undefined;
     communityRulesAccepted: number | undefined;
     messageFilterFailed: bigint | undefined;
+    pin: string | undefined;
     kind: "sendMessage";
 };
 
@@ -1363,6 +1367,7 @@ type ApproveTransfer = {
     ledger: string;
     amount: bigint;
     expiresIn: bigint | undefined;
+    pin: string | undefined;
     kind: "approveTransfer";
 };
 
@@ -1538,6 +1543,7 @@ type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    pin: string | undefined;
     kind: "acceptP2PSwap";
 };
 

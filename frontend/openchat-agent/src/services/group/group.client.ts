@@ -918,11 +918,13 @@ export class GroupClient extends CandidService {
     acceptP2PSwap(
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
+                pin: apiOptional(identity, pin),
             }),
             acceptP2PSwapResponse,
         );

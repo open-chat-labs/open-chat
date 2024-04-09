@@ -43,12 +43,17 @@
             }
             closeModals();
             joiningCommunity = true;
+
             return client
-                .joinCommunity($selectedCommunity)
+                .joinCommunity(
+                    $selectedCommunity,
+                    credential,
+                    undefined, // TODO: PIN NUMBER
+                )
                 .then((resp) => {
-                    if (resp === "gate_check_failed") {
+                    if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = true;
-                    } else if (resp === "failure") {
+                    } else if (resp.kind !== "success") {
                         toastStore.showFailureToast(i18nKey("communities.errors.joinFailed"));
                     }
                 })
