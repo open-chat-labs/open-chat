@@ -53,7 +53,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            tokens: self.data.tokens.get_all().iter().map(|t| t.into()).collect(),
+            tokens: self.data.tokens.iter().map(|t| t.into()).collect(),
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
