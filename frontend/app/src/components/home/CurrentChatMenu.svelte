@@ -87,9 +87,6 @@
 
     $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 
-    $: console.log("CanStartVideo: ", canStartVideoCalls);
-    $: console.log("CanStartOrJoinVideo: ", canStartOrJoinVideoCall);
-
     let hasUnreadPinned = false;
 
     $: {
