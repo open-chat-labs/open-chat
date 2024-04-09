@@ -216,6 +216,7 @@ type RegisterUserResponse = variant {
         user_id : UserId;
         icp_account : AccountIdentifier;
     };
+    RegistrationInProgress;
     AlreadyRegistered;
     UserLimitReached;
     UsernameInvalid;

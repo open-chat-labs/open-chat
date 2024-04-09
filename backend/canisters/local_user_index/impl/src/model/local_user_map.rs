@@ -1,16 +1,22 @@
+use candid::Principal;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{BuildVersion, CyclesTopUp, TimestampMillis, UserId};
+use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserMap {
     users: HashMap<UserId, LocalUser>,
+    #[serde(default)]
+    registration_in_progress: HashMap<Principal, TimestampMillis>,
 }
 
 impl LocalUserMap {
-    pub fn add(&mut self, user_id: UserId, wasm_version: BuildVersion, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: BuildVersion, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
+        self.registration_in_progress.remove(&principal);
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<&LocalUser> {
@@ -32,6 +38,24 @@ impl LocalUserMap {
         } else {
             false
         }
+    }
+
+    pub fn mark_registration_in_progress(&mut self, principal: Principal, now: TimestampMillis) -> bool {
+        match self.registration_in_progress.entry(principal) {
+            Vacant(e) => {
+                e.insert(now);
+                true
+            }
+            Occupied(mut e) if *e.get() < now.saturating_sub(5 * MINUTE_IN_MS) => {
+                e.insert(now);
+                true
+            }
+            Occupied(_) => false,
+        }
+    }
+
+    pub fn mark_registration_failed(&mut self, principal: &Principal) {
+        self.registration_in_progress.remove(principal);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
