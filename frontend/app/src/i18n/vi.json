@@ -209,6 +209,7 @@
         "visibility": "Hiển thị"
     },
     "communityDisplayNameRules": "chỉ trong cộng đồng này",
+    "communityMembers": "Thành viên cộng đồng",
     "communityTheme": "chủ đề cộng đồng",
     "confirmLeaveGroup": "Bạn có thực sự muốn rời khỏi {level} này không?",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt {level} này ở chế độ riêng tư không? Hiện tại thao tác này không thể đảo ngược!",
@@ -550,6 +551,7 @@
     "onlineNow": "Đang Online",
     "openChat": "OpenChat",
     "original": "Nguyên bản",
+    "otherUsers": "Người dùng khác",
     "ownedBy": "Thuộc sở hữu của @{username}",
     "owner": "Chủ",
     "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi {level}",

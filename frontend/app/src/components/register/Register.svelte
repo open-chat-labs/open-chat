@@ -84,6 +84,7 @@
                 createdUser = {
                     kind: "created_user",
                     username,
+                    dateCreated: BigInt(Date.now()),
                     displayName: undefined,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,

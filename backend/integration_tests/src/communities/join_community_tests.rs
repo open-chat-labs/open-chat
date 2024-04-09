@@ -214,7 +214,7 @@ fn default_channels_marked_as_read_after_joining() {
     let default2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let default3 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     for i in 0..3 {
         if i < 1 {
@@ -295,7 +295,7 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
 

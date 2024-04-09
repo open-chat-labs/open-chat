@@ -111,6 +111,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: r.user_id.toString(),
             username: r.username,
+            dateCreated: r.date_created,
             displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
             canisterUpgradeStatus:

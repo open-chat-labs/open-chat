@@ -209,6 +209,7 @@
         "visibility": "Visibilidad"
     },
     "communityDisplayNameRules": "solo dentro de esta comunidad",
+    "communityMembers": "Miembros de la comunidad",
     "communityTheme": "Tema de la comunidad",
     "confirmLeaveGroup": "¿De verdad quieres dejar este {level}?",
     "confirmMakeGroupPrivate": "¿Definitivamente quieres que este {level} sea privado? ¡Actualmente esta operación no se puede revertir!",
@@ -550,6 +551,7 @@
     "onlineNow": "En linea ahora",
     "openChat": "OpenChat",
     "original": "original",
+    "otherUsers": "Otros usuarios",
     "ownedBy": "Propiedad de @{username}",
     "owner": "dueño",
     "ownerCantLeave": "Debe agregar otro propietario antes de poder abandonar el {level}",

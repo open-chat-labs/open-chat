@@ -19,8 +19,8 @@ fn p2p_swap_in_direct_chat_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::icrc1::happy_path::transfer(
         env,
@@ -133,7 +133,7 @@ fn p2p_swap_in_group_succeeds() {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -238,8 +238,8 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 
@@ -362,7 +362,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -478,8 +478,8 @@ fn deposit_refunded_if_swap_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 

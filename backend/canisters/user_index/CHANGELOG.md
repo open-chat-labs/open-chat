@@ -5,9 +5,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1134-user_index)] - 2024-04-09
+
+### Changed
+
+- Log error if any users have duplicate usernames or principals ([#5645](https://github.com/open-chat-labs/open-chat/pull/5645))
+- Re-sync principals to Identity canister but excluding bot users ([#5650](https://github.com/open-chat-labs/open-chat/pull/5650))
+
+### Fixed
+
+- Fix job to sync principals to Identity canister ([#5649](https://github.com/open-chat-labs/open-chat/pull/5649))
+
+## [[2.0.1129](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1129-user_index)] - 2024-04-05
+
+### Added
+
+- Sync legacy principals to the Identity canister ([#5619](https://github.com/open-chat-labs/open-chat/pull/5619))
+
 ### Changed
 
 - Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Add `date_created` to `current_user` response ([#5635](https://github.com/open-chat-labs/open-chat/pull/5635))
 
 ## [[2.0.1111](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1111-user_index)] - 2024-03-20
 

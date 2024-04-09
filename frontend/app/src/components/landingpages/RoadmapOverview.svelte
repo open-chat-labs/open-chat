@@ -18,12 +18,25 @@
                 <div class="status">
                     <span class="complete">Complete</span>
                 </div>
-                <div class="title">Basic chat features</div>
+                <div class="title">Standard chat features</div>
                 <div class="detail">
-                    All of the basic features that you expect from a chat app: direct chats, public
-                    and private groups; attach files, images, giphs, emojis; translate, pin, edit
-                    and delete messages; send ICP; create polls; customise appearance; use on
-                    desktop or mobile - <Link path="features">and much more!</Link>
+                    All of the features you expect from a chat app: direct chats, public and private
+                    groups, communities and channels; attach files, images, gifs, emojis; translate,
+                    pin, edit and delete messages; video chats; notifications; inline and threaded
+                    replies; create polls; customise appearance; use on desktop or mobile - <Link
+                        path="features">and much more!</Link>
+                </div>
+            </div>
+
+            <div class="item">
+                <div class="status">
+                    <span class="complete">Complete</span>
+                </div>
+                <div class="title">Crypto native features</div>
+                <div class="detail">
+                    Send crypto tokens as chat messages (more tokens supported all the time); swap
+                    tokens by exchange or p2p; send and claim prize messages; tip messages; gate
+                    chats by token balance, token payment, staked tokens and more
                 </div>
             </div>
 
@@ -48,21 +61,6 @@
                     The SNS launch unlocks the potential to reward users with CHAT tokens to shape
                     the character of the system, to help build great communities and to supercharge
                     adoption.
-                </div>
-            </div>
-
-            <div class="item">
-                <div class="status">
-                    <div class="when">Q2</div>
-                    <div class="year">2023</div>
-                </div>
-                <div class="title">Integrations & Communities</div>
-                <div class="detail">
-                    Support communities with integrated chat or create your own (optionally private)
-                    community within OpenChat. A community can be thought of like a slack workspace
-                    or a discord server. You control who joins your community and you can create a
-                    rich set of private or public groups within it making use of all of the OpenChat
-                    features that you already know.
                 </div>
             </div>
 

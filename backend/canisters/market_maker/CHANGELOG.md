@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1128](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1128-market_maker)] - 2024-04-05
+
 ### Changed
 
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Persist latest bid and ask taken rather than dropping after each round ([#5624](https://github.com/open-chat-labs/open-chat/pull/5624))
 
 ## [[2.0.1048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1048-market_maker)] - 2024-02-05
 

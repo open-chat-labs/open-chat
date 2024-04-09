@@ -1573,6 +1573,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "updateBtcBalance":
+                executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
+                break;
+
+            case "setPrincipalMigrationJobEnabled":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPrincipalMigrationJobEnabled(payload.enabled).then(() => undefined),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

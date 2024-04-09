@@ -67,6 +67,12 @@
     "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
   },
+  "sign_in_with_ethereum": {
+    "ic": "2notu-qyaaa-aaaar-qaeha-cai"
+  },
+  "sign_in_with_solana": {
+    "ic": "2kpva-5aaaa-aaaar-qaehq-cai"
+  },
   "sns_governance": {
     "ic": "2jvtu-yqaaa-aaaaq-aaama-cai",
     "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai"

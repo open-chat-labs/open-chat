@@ -284,6 +284,21 @@ pub struct MembersAddedToDefaultChannel {
 }
 
 #[derive(Serialize)]
+pub struct GroupCreatedEventPayload {
+    pub public: bool,
+    pub gate: Option<String>,
+    pub rules_enabled: bool,
+}
+
+#[derive(Serialize)]
+pub struct CommunityCreatedEventPayload {
+    pub public: bool,
+    pub gate: Option<String>,
+    pub rules_enabled: bool,
+    pub channels: u32,
+}
+
+#[derive(Serialize)]
 pub struct VideoCallEndedEventPayload {
     pub chat_type: String,
     pub chat_id: String,
