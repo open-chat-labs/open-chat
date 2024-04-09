@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
 
+### Fixed
+
+- Prevent users registering twice with the same principal ([#5655](https://github.com/open-chat-labs/open-chat/pull/5655))
+
 ## [[2.0.1113](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1113-local_user_index)] - 2024-03-20
 
 ### Changed
