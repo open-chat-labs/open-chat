@@ -35,7 +35,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
-    'PinRequired' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
     'UserSuspended' : IDL.Null,

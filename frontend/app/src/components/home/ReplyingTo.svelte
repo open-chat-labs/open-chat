@@ -14,6 +14,7 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
+    export let timestamp: bigint;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -43,6 +44,7 @@
     <div class="reply-content">
         <ChatMessageContent
             {readonly}
+            {timestamp}
             messageContext={replyingTo.sourceContext}
             fill={false}
             failed={false}

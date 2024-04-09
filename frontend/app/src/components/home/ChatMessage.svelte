@@ -152,7 +152,11 @@
     $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
     $: canRevealBlocked = msg.content.kind === "blocked_content";
     $: deletedByMe = msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId;
-    $: permanentlyDeleted = deletedByMe && me && msg.content.kind === "deleted_content" && Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
+    $: permanentlyDeleted =
+        deletedByMe &&
+        me &&
+        msg.content.kind === "deleted_content" &&
+        Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
     $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
 
     onMount(() => {
@@ -528,6 +532,7 @@
                         {undeleting}
                         {intersecting}
                         {failed}
+                        {timestamp}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}

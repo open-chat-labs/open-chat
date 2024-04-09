@@ -37,7 +37,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInChannel' : IDL.Null,
-    'PinRequired' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,

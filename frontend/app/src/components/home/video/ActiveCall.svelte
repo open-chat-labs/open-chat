@@ -62,6 +62,7 @@
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
     let hostEnded = false;
+    let askedToSpeak = false;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -115,7 +116,7 @@
     export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
         if (chat === undefined) return;
 
-        const isPublic = chat.kind !== "direct_chat" && chat.public;
+        const isPublic = !client.isChatPrivate(chat);
 
         try {
             if ($activeVideoCall !== undefined) {
@@ -136,6 +137,7 @@
             // first we need to get access jwt from the oc backend
             const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
                 chat.id,
+                isPublic ? "broadcast" : "default",
                 accessType,
             );
 
@@ -260,6 +262,7 @@
             Object.entries(participants).map(([key, val]) => {
                 if (key !== "local") {
                     if (val.permissions.hasPresence && val.permissions.canAdmin) {
+                        askedToSpeak = true;
                         $activeVideoCall?.call?.sendAppMessage(
                             {
                                 kind: "ask_to_speak",
@@ -368,7 +371,7 @@
                             <HandFrontLeft
                                 title={$_("videoCall.askToSpeak")}
                                 size={$iconSize}
-                                color={"var(--icon-txt)"} />
+                                color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
                         </HoverIcon>
                     {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}

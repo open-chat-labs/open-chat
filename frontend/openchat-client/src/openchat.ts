@@ -1536,10 +1536,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(
-            chatId,
-            (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat),
-        );
+        return this.chatPredicate(chatId, (chat) => canStartVideoCalls(chat));
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
@@ -3428,7 +3425,9 @@ export class OpenChat extends OpenChatAgentWorker {
         const nowInSecs = Math.floor(Date.now() / 1000);
         const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
 
-        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter((t) => t >= nowInSecs - 60);
+        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter(
+            (t) => t >= nowInSecs - 60,
+        );
 
         if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
             return true;
@@ -5776,7 +5775,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private getRoomAccessToken(
         authToken: string,
-        roomType: "default" | "livestream",
+        roomType: "default" | "broadcast",
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
@@ -5876,6 +5875,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
+        roomType: "broadcast" | "default",
         accessTokenType: AccessTokenType,
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         const chat = this._liveState.allChats.get(chatId);
@@ -5883,8 +5883,6 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error(`Unknown chat: ${chatId}`);
         }
 
-        const roomType =
-            chat.kind === "direct_chat" ? "default" : chat.public ? "livestream" : "default";
         return this.getLocalUserIndex(chat).then((localUserIndex) => {
             return this.sendRequest({
                 kind: "getAccessToken",
