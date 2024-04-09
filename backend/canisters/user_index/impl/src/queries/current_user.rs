@@ -26,8 +26,6 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             suspended_by: d.suspended_by,
         });
 
-        let principal_updates_pending = state.data.user_principal_updates_queue.count_pending(&u.user_id);
-
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
@@ -45,7 +43,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             diamond_membership_details: u.diamond_membership_details.hydrate(now),
             diamond_membership_status: u.diamond_membership_details.status_full(now),
             moderation_flags_enabled: u.moderation_flags_enabled,
-            principal_updates_pending: Some(principal_updates_pending as u32),
+            principal_updates_progress: state.data.user_principal_updates_queue.progress(&u.user_id),
         })
     } else {
         UserNotFound

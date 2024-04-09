@@ -32,7 +32,7 @@ pub struct SuccessResult {
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
-    pub principal_updates_pending: Option<u32>,
+    pub principal_updates_progress: Option<(u32, u32)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

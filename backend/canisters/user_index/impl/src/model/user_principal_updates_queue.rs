@@ -5,18 +5,18 @@ use types::{CanisterId, UpdateUserPrincipalArgs, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipalUpdatesQueue {
-    counts_pending: HashMap<UserId, usize>,
+    #[serde(default)]
+    progress: HashMap<UserId, (u32, u32)>,
     queue: VecDeque<(CanisterId, UpdateUserPrincipalArgs)>,
 }
 
 impl UserPrincipalUpdatesQueue {
-    #[allow(dead_code)]
-    pub fn count_pending(&self, user_id: &UserId) -> usize {
-        self.counts_pending.get(user_id).copied().unwrap_or_default()
+    pub fn progress(&self, user_id: &UserId) -> Option<(u32, u32)> {
+        self.progress.get(user_id).copied()
     }
 
     pub fn push(&mut self, args: UpdateUserPrincipalArgs, canisters_to_notify: Vec<CanisterId>) {
-        self.counts_pending.insert(args.user_id, canisters_to_notify.len());
+        self.progress.insert(args.user_id, (0, canisters_to_notify.len() as u32));
 
         for canister_id in canisters_to_notify {
             self.queue.push_back((canister_id, args.clone()));
@@ -28,10 +28,10 @@ impl UserPrincipalUpdatesQueue {
     }
 
     pub fn mark_success(&mut self, user_id: UserId) {
-        if let Occupied(mut e) = self.counts_pending.entry(user_id) {
-            let value = e.get_mut();
-            *value = value.saturating_sub(1);
-            if *value == 0 {
+        if let Occupied(mut e) = self.progress.entry(user_id) {
+            let (complete, total) = e.get_mut();
+            *complete = complete.saturating_add(1);
+            if *complete == *total {
                 e.remove();
             }
         }

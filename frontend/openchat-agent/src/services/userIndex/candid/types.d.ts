@@ -380,7 +380,7 @@ export type CurrentUserResponse = {
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : [] | [SuspensionDetails],
-      'principal_updates_pending' : [] | [number],
+      'principal_updates_progress' : [] | [[number, number]],
       'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
     }

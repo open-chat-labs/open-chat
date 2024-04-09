@@ -87,7 +87,7 @@ export const idlFactory = ({ IDL }) => {
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : IDL.Opt(SuspensionDetails),
-      'principal_updates_pending' : IDL.Opt(IDL.Nat32),
+      'principal_updates_progress' : IDL.Opt(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
       'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
     }),
