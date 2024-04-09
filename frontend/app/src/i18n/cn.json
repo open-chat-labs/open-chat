@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} 想发言",
         "askToSpeak": "请求发言",
+        "broadcastCallInProgress": "此聊天中正在进行广播通话",
         "broadcastStartedBy": "{username} 发起了广播呼叫",
         "callFailed": "抱歉，我们无法开始视频通话",
         "chat": "聊天",

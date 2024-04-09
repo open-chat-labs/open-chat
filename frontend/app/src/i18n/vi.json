@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} muốn nói chuyện",
         "askToSpeak": "Yêu cầu nói chuyện",
+        "broadcastCallInProgress": "Một cuộc gọi quảng bá đang diễn ra trong cuộc trò chuyện này",
         "broadcastStartedBy": "Một cuộc gọi quảng bá đã được bắt đầu bởi {username}",
         "callFailed": "Rất tiếc, chúng tôi không thể bắt đầu cuộc gọi điện video",
         "chat": "Trò chuyện",

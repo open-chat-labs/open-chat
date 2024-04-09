@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} möchte sprechen",
         "askToSpeak": "Bitten Sie um ein Gespräch",
+        "broadcastCallInProgress": "In diesem Chat läuft gerade ein Broadcast-Anruf",
         "broadcastStartedBy": "Ein Broadcast-Anruf wurde von {username} gestartet",
         "callFailed": "Leider konnten wir den Videoanruf nicht starten",
         "chat": "Plaudern",

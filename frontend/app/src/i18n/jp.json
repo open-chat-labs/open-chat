@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} が話したい",
         "askToSpeak": "発言を依頼する",
+        "broadcastCallInProgress": "このチャットではブロードキャスト通話が進行中です",
         "broadcastStartedBy": "{username} によってブロードキャスト通話が開始されました",
         "callFailed": "申し訳ありませんが、ビデオ通話を開始できませんでした",
         "chat": "チャット",

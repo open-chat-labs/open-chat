@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} बात करना चाहेंगे",
         "askToSpeak": "बोलने के लिए कहें",
+        "broadcastCallInProgress": "इस चैट में एक प्रसारण कॉल चल रही है",
         "broadcastStartedBy": "{username} द्वारा एक प्रसारण कॉल शुरू किया गया",
         "callFailed": "क्षमा करें, हम वीडियो कॉल प्रारंभ करने में असमर्थ रहे",
         "chat": "बात करना",

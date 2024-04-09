@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} vorrebbe parlare",
         "askToSpeak": "Chiedi di parlare",
+        "broadcastCallInProgress": "In questa chat è in corso una chiamata broadcast",
         "broadcastStartedBy": "Una chiamata broadcast è stata avviata da {username}",
         "callFailed": "Spiacenti, non è stato possibile avviare la videochiamata",
         "chat": "Chiacchierata",

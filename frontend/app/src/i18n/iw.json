@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} רוצה לדבר",
         "askToSpeak": "בקשו לדבר",
+        "broadcastCallInProgress": "שיחת שידור מתבצעת בצ'אט זה",
         "broadcastStartedBy": "שיחת שידור התחילה על ידי {username}",
         "callFailed": "מצטערים, לא הצלחנו להתחיל את שיחת הווידאו",
         "chat": "לְשׂוֹחֵחַ",

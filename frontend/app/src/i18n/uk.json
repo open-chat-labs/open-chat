@@ -1261,6 +1261,7 @@
     "videoCall": {
         "accessRequest": "{username} хоче поговорити",
         "askToSpeak": "Попросіть висловитися",
+        "broadcastCallInProgress": "У цьому чаті триває трансляція виклику",
         "broadcastStartedBy": "{username} почав трансляцію виклику",
         "callFailed": "На жаль, не вдалося розпочати відеодзвінок",
         "chat": "Чат",

@@ -14,7 +14,7 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
-    export let timestamp: bigint;
+    export let timestamp: bigint | undefined = undefined;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
