@@ -152,7 +152,11 @@
     $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
     $: canRevealBlocked = msg.content.kind === "blocked_content";
     $: deletedByMe = msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId;
-    $: permanentlyDeleted = deletedByMe && me && msg.content.kind === "deleted_content" && Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
+    $: permanentlyDeleted =
+        deletedByMe &&
+        me &&
+        msg.content.kind === "deleted_content" &&
+        Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
     $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
 
     onMount(() => {
@@ -368,11 +372,19 @@
         tipping = undefined;
         const transfer = ev.detail;
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
-        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
-            if (resp.kind !== "success") {
-                toastStore.showFailureToast(i18nKey("tip.failure"));
-            }
-        });
+        client
+            .tipMessage(
+                messageContext,
+                msg.messageId,
+                transfer,
+                currentTip,
+                undefined, // TODO: PIN NUMBER
+            )
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    toastStore.showFailureToast(i18nKey("tip.failure"));
+                }
+            });
     }
 
     function reportMessage() {

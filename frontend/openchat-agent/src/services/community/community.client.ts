@@ -1278,12 +1278,14 @@ export class CommunityClient extends CandidService {
         channelId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.service.accept_p2p_swap({
                 channel_id: BigInt(channelId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
+                pin: apiOptional(identity, pin),
             }),
             acceptP2PSwapResponse,
         );
