@@ -6,7 +6,6 @@ use ic_cdk_macros::update;
 use types::EventIndex;
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
