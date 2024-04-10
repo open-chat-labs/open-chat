@@ -41,22 +41,20 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             Some(&mut state.data.event_store_client),
         ) {
             AddRemoveReactionResult::Success => {
-                if args.user_id != OPENCHAT_BOT_USER_ID {
-                    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
-                    state.push_user_canister_event(
-                        args.user_id.into(),
-                        UserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
-                            thread_root_message_id,
-                            message_id: args.message_id,
-                            reaction: args.reaction,
-                            added: true,
-                            username: state.data.username.value.clone(),
-                            display_name: state.data.display_name.value.clone(),
-                            user_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
-                        })),
-                    );
-                }
+                state.push_user_canister_event(
+                    args.user_id.into(),
+                    UserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
+                        thread_root_message_id,
+                        message_id: args.message_id,
+                        reaction: args.reaction,
+                        added: true,
+                        username: state.data.username.value.clone(),
+                        display_name: state.data.display_name.value.clone(),
+                        user_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+                    })),
+                );
                 Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
