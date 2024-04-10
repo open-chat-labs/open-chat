@@ -11,6 +11,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use chat_events::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -137,8 +138,10 @@ impl RuntimeState {
     }
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
-        self.data.user_canister_events_queue.push(canister_id, event);
-        jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+        if canister_id != OPENCHAT_BOT_USER_ID.into() {
+            self.data.user_canister_events_queue.push(canister_id, event);
+            jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
