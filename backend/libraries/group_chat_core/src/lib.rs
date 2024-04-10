@@ -18,7 +18,7 @@ use types::{
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
     TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
-    VideoCall,
+    VideoCall, VideoCallType,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -1562,6 +1562,14 @@ impl GroupChatCore {
         }
 
         result
+    }
+
+    pub fn can_start_video_call(&self, member: &GroupMemberInternal, is_diamond: bool, call_type: VideoCallType) -> bool {
+        if !is_diamond || !member.role.is_permitted(self.permissions.start_video_call) {
+            return false;
+        }
+
+        !self.is_public.value || matches!(call_type, VideoCallType::Broadcast)
     }
 
     pub fn follow_thread(
