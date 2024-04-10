@@ -381,7 +381,7 @@ import type {
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
-    ApproveAccessGatePaymentResponse,    
+    ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
 } from "openchat-shared";
@@ -1212,7 +1212,10 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary, pin: string | undefined): Promise<ApproveAccessGatePaymentResponse> {
+    async approveAccessGatePayment(
+        group: MultiUserChat | CommunitySummary,
+        pin: string | undefined,
+    ): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1235,7 +1238,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const token = this.getTokenDetailsForAccessGate(group.gate);
 
-        if (token === undefined) {        
+        if (token === undefined) {
             return CommonResponses.failure();
         }
 
@@ -1252,7 +1255,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this._logger.error("Unable to approve transfer", response.error);
                     return CommonResponses.failure();
                 }
-                
+
                 return response;
             })
             .catch(() => CommonResponses.failure());
@@ -1264,7 +1267,9 @@ export class OpenChat extends OpenChatAgentWorker {
         pin: string | undefined,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat, pin);
-        if (approveResponse.kind !== "success") { return approveResponse; }
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
+        }
 
         const localUserIndex =
             chat.kind === "group_chat"
@@ -2822,7 +2827,12 @@ export class OpenChat extends OpenChatAgentWorker {
             ? {
                   ...dataContent,
                   blobData: undefined,
-                  blobUrl: buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, blobType),
+                  blobUrl: buildBlobUrl(
+                      this.config.blobUrlPattern,
+                      ref.canisterId,
+                      ref.blobId,
+                      blobType,
+                  ),
               }
             : dataContent;
     }
@@ -3436,7 +3446,9 @@ export class OpenChat extends OpenChatAgentWorker {
         const nowInSecs = Math.floor(Date.now() / 1000);
         const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
 
-        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter((t) => t >= nowInSecs - 60);
+        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter(
+            (t) => t >= nowInSecs - 60,
+        );
 
         if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
             return true;
@@ -5486,13 +5498,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private updateExchangeRates(): Promise<void> {
         return this.sendRequest({ kind: "exchangeRates" })
-            .then((exchangeRates) => {
-                // Handle couple of special cases
-                exchangeRates["dkp"] = exchangeRates["sns1"];
-                exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
-
-                exchangeRatesLookupStore.set(exchangeRates);
-            })
+            .then((exchangeRates) => exchangeRatesLookupStore.set(exchangeRates))
             .catch(() => undefined);
     }
 
@@ -6005,8 +6011,10 @@ export class OpenChat extends OpenChatAgentWorker {
         credential: string | undefined,
         pin: string | undefined,
     ): Promise<ClientJoinCommunityResponse> {
-        let approveResponse = await this.approveAccessGatePayment(community, pin);
-        if (approveResponse.kind !== "success") { return approveResponse; }
+        const approveResponse = await this.approveAccessGatePayment(community, pin);
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
+        }
 
         return this.sendRequest({
             kind: "joinCommunity",
