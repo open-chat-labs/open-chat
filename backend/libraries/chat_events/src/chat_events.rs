@@ -151,7 +151,7 @@ impl ChatEvents {
             &mut self.main
         };
 
-        let is_video_call = matches!(args.content, MessageContentInternal::VideoCall(_));
+        let video_call_type = if let MessageContentInternal::VideoCall(vc) = &args.content { Some(vc.call_type) } else { None };
 
         if let Some(client) = event_store_client.as_mut() {
             let event_payload = MessageEventPayload {
@@ -217,12 +217,18 @@ impl ChatEvents {
             );
         }
 
-        if is_video_call {
+        if let Some(call_type) = video_call_type {
             if let Some(vc) = &self.video_call_in_progress.value {
                 self.end_video_call(vc.message_index.into(), args.now, event_store_client);
             }
 
-            self.video_call_in_progress = Timestamped::new(Some(VideoCall { message_index }), args.now);
+            self.video_call_in_progress = Timestamped::new(
+                Some(VideoCall {
+                    message_index,
+                    call_type,
+                }),
+                args.now,
+            );
         }
 
         EventWrapper {
