@@ -3,11 +3,17 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
+  'pin' : [] | [string],
   'channel_id' : ChannelId,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type AcceptP2PSwapResponse = { 'UserNotInChannel' : null } |
+export type AcceptP2PSwapResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'UserNotInChannel' : null } |
+  { 'PinRequired' : null } |
   { 'ChannelNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : AcceptSwapSuccess } |

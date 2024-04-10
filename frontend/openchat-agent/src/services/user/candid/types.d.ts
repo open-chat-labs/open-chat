@@ -3,10 +3,17 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
+  'pin' : [] | [string],
   'user_id' : UserId,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
-export type AcceptP2PSwapResponse = { 'ChatNotFound' : null } |
+export type AcceptP2PSwapResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'ChatNotFound' : null } |
   { 'Success' : AcceptSwapSuccess } |
   { 'UserSuspended' : null } |
   { 'StatusError' : SwapStatusError } |
@@ -62,12 +69,18 @@ export interface AddedToChannelNotification {
   'channel_avatar_id' : [] | [bigint],
 }
 export interface ApproveTransferArgs {
+  'pin' : [] | [string],
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
   'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
-export type ApproveTransferResponse = { 'ApproveError' : ICRC2_ApproveError } |
+export type ApproveTransferResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'ApproveError' : ICRC2_ApproveError } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface ArchiveUnarchiveChatsArgs {
@@ -699,7 +712,8 @@ export interface EventsByIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type EventsResponse = { 'ChatNotFound' : null } |
+export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
@@ -1145,6 +1159,7 @@ export interface IndexedNotification {
 }
 export type InitialStateResponse = {
     'Success' : {
+      'pin_number_settings' : [] | [PinNumberSettings],
       'communities' : CommunitiesInitial,
       'blocked_users' : Array<UserId>,
       'favourite_chats' : FavouriteChatsInitial,
@@ -1324,7 +1339,10 @@ export interface MessagesByMessageIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
+export type MessagesByMessageIndexResponse = {
+    'ThreadMessageNotFound' : null
+  } |
+  { 'ChatNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
@@ -1539,6 +1557,10 @@ export interface PermissionsChanged {
 export interface PinChatV2Request { 'chat' : ChatInList }
 export type PinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface PinNumberSettings {
+  'attempts_blocked_until' : [] | [TimestampMillis],
+  'length' : number,
+}
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -1691,6 +1713,7 @@ export interface ReportMessageArgs {
   'them' : UserId,
   'delete' : boolean,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type ReportMessageResponse = { 'AlreadyReported' : null } |
   { 'MessageNotFound' : null } |
@@ -1746,8 +1769,13 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
-export type SendMessageResponse = { 'TextTooLong' : number } |
+export type SendMessageResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1778,6 +1806,7 @@ export interface SendMessageSuccess {
   'message_index' : MessageIndex,
 }
 export interface SendMessageV2Args {
+  'pin' : [] | [string],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
   'recipient' : UserId,
@@ -1788,6 +1817,7 @@ export interface SendMessageV2Args {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface SendMessageWithTransferToChannelArgs {
+  'pin' : [] | [string],
   'channel_id' : ChannelId,
   'channel_rules_accepted' : [] | [Version],
   'community_id' : CommunityId,
@@ -1802,11 +1832,14 @@ export interface SendMessageWithTransferToChannelArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToChannelResponse = {
-    'Retrying' : [string, CompletedCryptoTransaction]
+    'TooManyFailedPinAttempts' : Milliseconds
   } |
+  { 'Retrying' : [string, CompletedCryptoTransaction] } |
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
+  { 'PinRequired' : null } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
   { 'TransferCannotBeZero' : null } |
   {
@@ -1829,6 +1862,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
+  'pin' : [] | [string],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
   'mentioned' : Array<User>,
@@ -1842,10 +1876,13 @@ export interface SendMessageWithTransferToGroupArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToGroupResponse = {
-    'Retrying' : [string, CompletedCryptoTransaction]
+    'TooManyFailedPinAttempts' : Milliseconds
   } |
+  { 'Retrying' : [string, CompletedCryptoTransaction] } |
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
@@ -1896,6 +1933,18 @@ export interface SetMessageReminderV2Args {
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface SetPinNumberArgs {
+  'new' : [] | [string],
+  'current' : [] | [string],
+}
+export type SetPinNumberResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'TooLong' : FieldTooLongResult } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'TooShort' : FieldTooShortResult } |
+  { 'PinRequired' : null } |
+  { 'Success' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1974,6 +2023,7 @@ export interface SwapStatusErrorCompleted {
 export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
 export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface SwapTokensArgs {
+  'pin' : [] | [string],
   'input_amount' : bigint,
   'min_output_amount' : bigint,
   'swap_id' : bigint,
@@ -1983,7 +2033,10 @@ export interface SwapTokensArgs {
     },
   'output_token' : TokenInfo,
 }
-export type SwapTokensResponse = { 'SwapFailed' : null } |
+export type SwapTokensResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'SwapFailed' : null } |
   { 'Success' : { 'amount_out' : bigint } } |
   { 'InternalError' : string };
 export interface Tally {
@@ -2027,6 +2080,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'pin' : [] | [string],
   'decimals' : number,
   'token' : Cryptocurrency,
   'chat' : Chat,
@@ -2036,8 +2090,11 @@ export interface TipMessageArgs {
   'amount' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type TipMessageResponse = { 'Retrying' : string } |
+export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
+  { 'Retrying' : string } |
+  { 'PinIncorrect' : Milliseconds } |
   { 'TransferNotToMessageSender' : null } |
+  { 'PinRequired' : null } |
   { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'ChatFrozen' : null } |
@@ -2106,6 +2163,9 @@ export interface UpdatedRules {
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
+      'pin_number_settings' : { 'NoChange' : null } |
+        { 'SetToNone' : null } |
+        { 'SetToSome' : PinNumberSettings },
       'communities' : CommunitiesUpdates,
       'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
@@ -2230,9 +2290,17 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
-export interface WithdrawCryptoArgs { 'withdrawal' : PendingCryptoTransaction }
-export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
+export interface WithdrawCryptoArgs {
+  'pin' : [] | [string],
+  'withdrawal' : PendingCryptoTransaction,
+}
+export type WithdrawCryptoResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
+  { 'PinRequired' : null } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
@@ -2333,6 +2401,7 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'set_pin_number' : ActorMethod<[SetPinNumberArgs], SetPinNumberResponse>,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse

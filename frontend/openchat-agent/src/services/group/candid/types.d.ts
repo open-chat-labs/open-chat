@@ -3,10 +3,16 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
+  'pin' : [] | [string],
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type AcceptP2PSwapResponse = { 'UserNotInGroup' : null } |
+export type AcceptP2PSwapResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'UserNotInGroup' : null } |
+  { 'PinRequired' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : AcceptSwapSuccess } |
   { 'UserSuspended' : null } |

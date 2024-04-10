@@ -1,3 +1,4 @@
+import type { PinIncorrect, PinRequired, TooManyFailedPinAttempts } from "../chat";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -120,6 +121,7 @@ export function anonymousUser(): CreatedUser {
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
+        principalUpdates: undefined,
     };
 }
 
@@ -138,6 +140,7 @@ export type CreatedUser = {
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
+    principalUpdates: [number, number] | undefined;
 };
 
 export type DiamondMembershipStatus =
@@ -332,6 +335,9 @@ export type SwapTokensResponse =
     | {
           kind: "swap_failed";
       }
+    | PinRequired 
+    | PinIncorrect
+    | TooManyFailedPinAttempts
     | InternalError;
 
 export type Result<T> =
@@ -361,6 +367,9 @@ export type TokenSwapStatusResponse =
 export type ApproveTransferResponse =
     | Success
     | { kind: "approve_error"; error: string }
+    | PinRequired 
+    | PinIncorrect
+    | TooManyFailedPinAttempts
     | InternalError;
 
 export type DiamondMembershipFees = {

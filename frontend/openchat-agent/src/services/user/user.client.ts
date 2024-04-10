@@ -538,10 +538,11 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        pin: string | undefined,        
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(chatId, event, messageFilterFailed, threadRootMessageIndex)
+        return this.sendMessageToBackend(chatId, event, messageFilterFailed, threadRootMessageIndex, pin)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -560,7 +561,8 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -580,6 +582,7 @@ export class UserClient extends CandidService {
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
+                pin: apiOptional(identity, pin),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
@@ -596,6 +599,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
@@ -606,6 +610,7 @@ export class UserClient extends CandidService {
             threadRootMessageIndex,
             rulesAccepted,
             messageFilterFailed,
+            pin,
         )
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
@@ -622,6 +627,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -639,6 +645,7 @@ export class UserClient extends CandidService {
                 event.event.repliesTo,
             ),
             message_filter_failed: apiOptional(identity, messageFilterFailed),
+            pin: apiOptional(identity, pin),
             correlation_id: generateUint64(),
         };
         return this.handleResponse(
@@ -673,6 +680,7 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
@@ -684,6 +692,7 @@ export class UserClient extends CandidService {
             communityRulesAccepted,
             channelRulesAccepted,
             messageFilterFailed,
+            pin,
         )
             .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
             .catch((err) => {
@@ -701,6 +710,7 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -720,6 +730,7 @@ export class UserClient extends CandidService {
             community_rules_accepted: apiOptional(identity, communityRulesAccepted),
             channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
             message_filter_failed: apiOptional(identity, messageFilterFailed),
+            pin: apiOptional(identity, pin),
         };
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_channel(req),
@@ -841,6 +852,7 @@ export class UserClient extends CandidService {
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
         decimals: number,
+        pin: string | undefined,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
@@ -856,6 +868,7 @@ export class UserClient extends CandidService {
                     identity,
                     messageContext.threadRootMessageIndex,
                 ),
+                pin: apiOptional(identity, pin),
             }),
             tipMessageResponse,
         );
@@ -997,8 +1010,9 @@ export class UserClient extends CandidService {
 
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
+        pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
-        const req = apiPendingCryptocurrencyWithdrawal(domain);
+        const req = apiPendingCryptocurrencyWithdrawal(domain, pin);
         return this.handleResponse(
             this.userService.withdraw_crypto_v2(req),
             withdrawCryptoResponse,
@@ -1151,14 +1165,16 @@ export class UserClient extends CandidService {
 
     reportMessage(
         chatId: DirectChatIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        deleteMessage: boolean,
+        deleteMessage: boolean,        
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
                 them: Principal.fromText(chatId.userId),
                 message_id: messageId,
                 delete: deleteMessage,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
             reportMessageResponse,
         );
@@ -1171,6 +1187,7 @@ export class UserClient extends CandidService {
         amountIn: bigint,
         minAmountOut: bigint,
         exchangeArgs: ExchangeTokenSwapArgs,
+        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
         return this.handleResponse(
             this.userService.swap_tokens({
@@ -1195,6 +1212,7 @@ export class UserClient extends CandidService {
                     },
                 },
                 min_output_amount: minAmountOut,
+                pin: apiOptional(identity, pin),
             }),
             swapTokensResponse,
         );
@@ -1216,6 +1234,7 @@ export class UserClient extends CandidService {
         ledger: string,
         amount: bigint,
         expiresIn: bigint | undefined,
+        pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
         return this.handleResponse(
             this.userService.approve_transfer({
@@ -1226,6 +1245,7 @@ export class UserClient extends CandidService {
                 ledger_canister_id: Principal.fromText(ledger),
                 amount,
                 expires_in: apiOptional(identity, expiresIn),
+                pin: apiOptional(identity, pin),
             }),
             approveTransferResponse,
         );
@@ -1241,11 +1261,13 @@ export class UserClient extends CandidService {
         );
     }
 
-    acceptP2PSwap(userId: string, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(userId: string, threadRootMessageIndex: number | undefined, messageId: bigint, pin: string | undefined): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.userService.accept_p2p_swap({
                 user_id: Principal.fromText(userId),
                 message_id: messageId,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                pin: apiOptional(identity, pin),
             }),
             acceptP2PSwapResponse,
         );

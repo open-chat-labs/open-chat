@@ -86,6 +86,7 @@ export const idlFactory = ({ IDL }) => {
       'moderation_flags_enabled' : IDL.Nat32,
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'principal_updates' : IDL.Opt(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
       'suspension_details' : IDL.Opt(SuspensionDetails),
       'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),

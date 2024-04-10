@@ -2,6 +2,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
+    'pin' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -34,7 +35,10 @@ export const idlFactory = ({ IDL }) => {
     'Expired' : SwapStatusErrorExpired,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
+    'TooManyFailedPinAttempts' : Milliseconds,
+    'PinIncorrect' : Milliseconds,
     'UserNotInGroup' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
     'UserSuspended' : IDL.Null,

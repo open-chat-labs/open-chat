@@ -405,6 +405,7 @@ export class OpenChatAgent extends EventTarget {
         rulesAccepted: number | undefined,
         communityRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -430,6 +431,7 @@ export class OpenChatAgent extends EventTarget {
                     communityRulesAccepted,
                     rulesAccepted,
                     messageFilterFailed,
+                    pin,
                 );
             }
             return this.sendChannelMessage(
@@ -460,6 +462,7 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     rulesAccepted,
                     messageFilterFailed,
+                    pin,
                 );
             }
             return this.sendGroupMessage(
@@ -479,6 +482,7 @@ export class OpenChatAgent extends EventTarget {
                 event,
                 messageFilterFailed,
                 threadRootMessageIndex,
+                pin,
             );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
@@ -553,13 +557,15 @@ export class OpenChatAgent extends EventTarget {
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(
             chatId,
             event,
             messageFilterFailed,
             threadRootMessageIndex,
+            pin,
         );
     }
 
@@ -2362,10 +2368,11 @@ export class OpenChatAgent extends EventTarget {
 
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
+        pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.withdrawCryptocurrency(domain);
+        return this.userClient.withdrawCryptocurrency(domain, pin);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
@@ -2970,7 +2977,7 @@ export class OpenChatAgent extends EventTarget {
                 deleteMessage,
             );
         } else {
-            return this.userClient.reportMessage(chatId, messageId, deleteMessage);
+            return this.userClient.reportMessage(chatId, threadRootMessageIndex, messageId, deleteMessage);
         }
     }
 
@@ -3034,6 +3041,7 @@ export class OpenChatAgent extends EventTarget {
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
+        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
         return this._dexesAgent
             .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
@@ -3061,6 +3069,7 @@ export class OpenChatAgent extends EventTarget {
                     amountIn,
                     minAmountOut,
                     exchangeArgs,
+                    pin,
                 );
             });
     }
@@ -3074,8 +3083,9 @@ export class OpenChatAgent extends EventTarget {
         ledger: string,
         amount: bigint,
         expiresIn: bigint | undefined,
+        pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn);
+        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn, pin);
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
@@ -3110,20 +3120,28 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
                 chatId.channelId,
                 threadRootMessageIndex,
                 messageId,
+                pin,
             );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).acceptP2PSwap(
                 threadRootMessageIndex,
                 messageId,
+                pin,
             );
         } else {
-            return this.userClient.acceptP2PSwap(chatId.userId, messageId);
+            return this.userClient.acceptP2PSwap(
+                chatId.userId, 
+                threadRootMessageIndex, 
+                messageId, 
+                pin,
+            );
         }
     }
 

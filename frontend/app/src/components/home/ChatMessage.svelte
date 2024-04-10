@@ -372,11 +372,19 @@
         tipping = undefined;
         const transfer = ev.detail;
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
-        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
-            if (resp.kind !== "success") {
-                toastStore.showFailureToast(i18nKey("tip.failure"));
-            }
-        });
+        client
+            .tipMessage(
+                messageContext,
+                msg.messageId,
+                transfer,
+                currentTip,
+                undefined, // TODO: PIN NUMBER
+            )
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    toastStore.showFailureToast(i18nKey("tip.failure"));
+                }
+            });
     }
 
     function reportMessage() {

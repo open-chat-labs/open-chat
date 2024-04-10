@@ -97,15 +97,18 @@
         error = undefined;
 
         client
-            .withdrawCryptocurrency({
-                kind: "pending",
-                ledger,
-                token: symbol,
-                to: targetAccount,
-                amountE8s: amountToSend,
-                feeE8s: transferFees,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-            })
+            .withdrawCryptocurrency(
+                {
+                    kind: "pending",
+                    ledger,
+                    token: symbol,
+                    to: targetAccount,
+                    amountE8s: amountToSend,
+                    feeE8s: transferFees,
+                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                },
+                undefined, // TODO: PIN NUMBER
+            )
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);

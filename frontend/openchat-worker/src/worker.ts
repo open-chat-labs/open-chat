@@ -535,6 +535,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rulesAccepted,
                         payload.communityRulesAccepted,
                         payload.messageFilterFailed,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -766,7 +767,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawCryptocurrency(payload.domain),
+                    agent.withdrawCryptocurrency(payload.domain, payload.pin),
                 );
                 break;
 
@@ -1014,6 +1015,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.ledger,
                         payload.amount,
                         payload.expiresIn,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1349,6 +1351,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.transfer,
                         payload.decimals,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1404,6 +1407,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.amountIn,
                         payload.minAmountOut,
                         payload.dex,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1480,6 +1484,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.threadRootMessageIndex,
                         payload.messageId,
+                        payload.pin,
                     ),
                 );
                 break;

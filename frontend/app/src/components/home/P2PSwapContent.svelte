@@ -163,6 +163,7 @@
                     messageContext.chatId,
                     messageContext.threadRootMessageIndex,
                     messageId,
+                    undefined, // TODO: PIN NUMBER
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
