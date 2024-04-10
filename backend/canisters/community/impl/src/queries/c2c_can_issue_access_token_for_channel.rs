@@ -3,6 +3,7 @@ use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query_msgpack;
 use community_canister::c2c_can_issue_access_token_for_channel::*;
+use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use types::{AccessTokenType, VideoCallType};
 
 #[query_msgpack(guard = "caller_is_local_user_index")]
@@ -20,10 +21,30 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
     };
 
     match args.access_type {
-        AccessTokenType::StartVideoCall => channel
-            .chat
-            .can_start_video_call(member, args.is_diamond, VideoCallType::Default),
-        AccessTokenType::StartVideoCallV2(vc) => channel.chat.can_start_video_call(member, args.is_diamond, vc.call_type),
+        AccessTokenType::StartVideoCall => can_start_video_call(
+            member,
+            args.is_diamond,
+            state.data.is_public,
+            VideoCallType::Default,
+            &channel.chat,
+        ),
+        AccessTokenType::StartVideoCallV2(vc) => {
+            can_start_video_call(member, args.is_diamond, state.data.is_public, vc.call_type, &channel.chat)
+        }
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
     }
+}
+
+fn can_start_video_call(
+    member: &GroupMemberInternal,
+    is_diamond: bool,
+    is_public_community: bool,
+    call_type: VideoCallType,
+    chat: &GroupChatCore,
+) -> bool {
+    if !is_diamond || !member.role.is_permitted(chat.permissions.start_video_call) {
+        return false;
+    }
+
+    !is_public_community || !chat.is_public.value || matches!(call_type, VideoCallType::Broadcast)
 }
