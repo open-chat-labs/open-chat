@@ -1266,6 +1266,7 @@
         "callFailed": "抱歉，我们无法开始视频通话",
         "chat": "聊天",
         "clickToJoin": "点击加入通话",
+        "denied": "主持人拒绝了你的发言请求",
         "duration": "{duration} 之后",
         "ended": "通话结束",
         "endedAt": "通话于 {time} 结束",

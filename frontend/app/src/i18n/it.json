@@ -1266,6 +1266,7 @@
         "callFailed": "Spiacenti, non è stato possibile avviare la videochiamata",
         "chat": "Chiacchierata",
         "clickToJoin": "Fare clic per partecipare alla chiamata",
+        "denied": "L'ospite ha rifiutato la tua richiesta di parlare",
         "duration": "dopo {duration}",
         "ended": "Chiamata terminata",
         "endedAt": "La chiamata è terminata alle {time}",

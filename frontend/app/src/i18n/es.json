@@ -1266,6 +1266,7 @@
         "callFailed": "Lo sentimos, no pudimos iniciar la videollamada.",
         "chat": "Charlar",
         "clickToJoin": "Haga clic para unirse a la llamada",
+        "denied": "El anfitrión rechazó tu solicitud de hablar.",
         "duration": "después de {duration}",
         "ended": "Llamada terminada",
         "endedAt": "La llamada finalizó en {time}",

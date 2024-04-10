@@ -1266,6 +1266,7 @@
         "callFailed": "Rất tiếc, chúng tôi không thể bắt đầu cuộc gọi điện video",
         "chat": "Trò chuyện",
         "clickToJoin": "Bấm để tham gia cuộc gọi",
+        "denied": "Người tổ chức đã từ chối yêu cầu phát biểu của bạn",
         "duration": "sau {duration}",
         "ended": "Cuộc gọi kết thúc",
         "endedAt": "Cuộc gọi kết thúc lúc {time}",

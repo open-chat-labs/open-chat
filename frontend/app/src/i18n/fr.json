@@ -1266,6 +1266,7 @@
         "callFailed": "Désolé, nous n'avons pas pu démarrer l'appel vidéo",
         "chat": "Chat",
         "clickToJoin": "Cliquez pour rejoindre l'appel",
+        "denied": "L'hôte a refusé votre demande de parole",
         "duration": "après {duration}",
         "ended": "Appel terminé",
         "endedAt": "Appel terminé à {time}",
