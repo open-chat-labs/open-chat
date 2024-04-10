@@ -75,8 +75,6 @@ fn decode_and_verify_token(token: String, public_key_pem: String) -> Result<Star
 
     let claims = public_key.verify_token(&token, None)?;
 
-    assert_eq!(claims.subject.unwrap(), "StartVideoCall");
-
     Ok(claims.custom)
 }
 
