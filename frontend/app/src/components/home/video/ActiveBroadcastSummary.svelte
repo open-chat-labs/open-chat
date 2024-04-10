@@ -1,15 +1,18 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, type OpenChat } from "openchat-client";
+    import { chatIdentifiersEqual, routeForMessage, type OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import Button from "../../Button.svelte";
     import { activeVideoCall } from "../../../stores/video";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: chatListScope = client.chatListScope;
     $: selectedChat = client.selectedChatStore;
+    $: selectedMessageContext = client.selectedMessageContext;
     $: hasCall = $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined;
     $: isPublic = $selectedChat !== undefined && !client.isChatPrivate($selectedChat);
     $: show = hasCall && isPublic;
@@ -23,10 +26,26 @@
             dispatch("startVideoCall", { chat: $selectedChat, join: true });
         }
     }
+
+    function goto() {
+        if (
+            $selectedChat?.videoCallInProgress !== undefined &&
+            $selectedMessageContext !== undefined
+        ) {
+            page(
+                routeForMessage(
+                    $chatListScope.kind,
+                    $selectedMessageContext,
+                    $selectedChat?.videoCallInProgress,
+                ),
+            );
+        }
+    }
 </script>
 
 {#if show}
-    <div class="active-broadcast">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div role="button" tabindex="0" on:click={goto} class="active-broadcast">
         <Translatable resourceKey={i18nKey("videoCall.broadcastCallInProgress")} />
         <Button on:click={join} tiny hollow>
             <Translatable resourceKey={i18nKey("videoCall.join")} />
@@ -36,6 +55,7 @@
 
 <style lang="scss">
     .active-broadcast {
+        cursor: pointer;
         position: absolute;
         display: flex;
         justify-content: space-between;
