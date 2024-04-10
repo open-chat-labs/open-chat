@@ -59,13 +59,14 @@ async fn sync_principals(identity_canister_id: CanisterId, principals: Vec<Princ
     let args = identity_canister::c2c_sync_legacy_user_principals::Args {
         principals: principals.clone(),
     };
-    if identity_canister_c2c_client::c2c_sync_legacy_user_principals(identity_canister_id, &args)
+    let success = identity_canister_c2c_client::c2c_sync_legacy_user_principals(identity_canister_id, &args)
         .await
-        .is_err()
-    {
-        mutate_state(|state| {
+        .is_ok();
+
+    mutate_state(|state| {
+        if !success {
             state.data.legacy_principals_sync_queue.extend(principals);
-            start_job_if_required(state);
-        });
-    }
+        }
+        start_job_if_required(state);
+    });
 }

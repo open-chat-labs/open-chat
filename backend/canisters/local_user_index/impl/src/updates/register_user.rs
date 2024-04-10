@@ -66,9 +66,7 @@ async fn register_user(args: Args) -> Response {
             })
         }
         Err(error) => {
-            if let CreateAndInstallError::InstallFailed(id, ..) = error {
-                mutate_state(|state| state.data.canister_pool.push(id));
-            }
+            mutate_state(|state| rollback(&caller, &error, state));
             InternalError(format!("{error:?}"))
         }
     }
@@ -86,10 +84,14 @@ struct PrepareOk {
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = state.env.caller();
-    let mut referral_code = None;
 
     if state.data.global_users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
+    }
+
+    let now = state.env.now();
+    if !state.data.local_users.mark_registration_in_progress(caller, now) {
+        return Err(RegistrationInProgress);
     }
 
     let is_from_identity_canister = validate_public_key(
@@ -104,8 +106,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(UserLimitReached);
     }
 
-    let now = state.env.now();
-
+    let mut referral_code = None;
     if let Some(code) = &args.referral_code {
         referral_code = match state.data.referral_codes.check(code, now) {
             Ok(r) => Some(r),
@@ -196,7 +197,7 @@ fn commit(
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
-    state.data.local_users.add(user_id, wasm_version, now);
+    state.data.local_users.add(user_id, principal, wasm_version, now);
     state.data.global_users.add(principal, user_id, false);
 
     state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
@@ -245,6 +246,14 @@ fn commit(
             )
         }
         None => {}
+    }
+}
+
+fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
+    state.data.local_users.mark_registration_failed(principal);
+
+    if let CreateAndInstallError::InstallFailed(id, ..) = error {
+        state.data.canister_pool.push(*id);
     }
 }
 

@@ -1278,7 +1278,7 @@ export function buildBlobUrl(
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobType)}${blobId}`;
+        .replace("{blobType}", blobType)}/${blobId}`;
 }
 
 export function buildIdenticonUrl(id: string): string {

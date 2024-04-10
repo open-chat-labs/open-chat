@@ -11,8 +11,9 @@ fn updates(args: Args) -> Response {
 
 fn updates_impl(args: Args, state: &RuntimeState) -> Response {
     let updates_since = args.since.unwrap_or_default();
+    let tokens_last_updated = state.data.tokens.last_updated();
     let last_updated = [
-        state.data.tokens.last_updated(),
+        tokens_last_updated,
         state.data.nervous_systems.last_updated(),
         state.data.message_filters.last_updated(),
     ]
@@ -23,7 +24,19 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
     if updates_since < last_updated {
         Success(SuccessResult {
             last_updated,
-            token_details: Some(state.data.tokens.get_all().to_vec()),
+            token_details: if tokens_last_updated > updates_since {
+                Some(
+                    state
+                        .data
+                        .tokens
+                        .iter()
+                        .filter(|t| t.last_updated > updates_since)
+                        .map(|t| t.clone().remove_logo_if_logo_id_set())
+                        .collect(),
+                )
+            } else {
+                None
+            },
             nervous_system_details: state
                 .data
                 .nervous_systems

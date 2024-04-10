@@ -112,8 +112,8 @@ impl Tokens {
         self.last_updated
     }
 
-    pub fn get_all(&self) -> &[TokenDetails] {
-        &self.tokens
+    pub fn iter(&self) -> impl Iterator<Item = &TokenDetails> {
+        self.tokens.iter()
     }
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
