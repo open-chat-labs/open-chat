@@ -1,7 +1,6 @@
 use crate::VideoCallType;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum AccessTokenType {
@@ -16,8 +15,12 @@ pub struct VideoCallAccessTokenArgs {
     pub call_type: VideoCallType,
 }
 
-impl fmt::Display for AccessTokenType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+impl AccessTokenType {
+    pub fn type_name(&self) -> &str {
+        match self {
+            AccessTokenType::StartVideoCall | AccessTokenType::StartVideoCallV2(_) => "StartVideoCall",
+            AccessTokenType::JoinVideoCall => "JoinVideoCall",
+            AccessTokenType::MarkVideoCallAsEnded => "MarkVideoCallAsEnded",
+        }
     }
 }
