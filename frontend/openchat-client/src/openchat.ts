@@ -425,6 +425,7 @@ import {
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
     NoMeetingToJoin,
+    featureRestricted,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -498,6 +499,7 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _userLocation: string | undefined;
     private _authClient: Promise<AuthClient>;
     private _identity: Identity | undefined;
     private _liveState: LiveState;
@@ -546,7 +548,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         getUserCountryCode()
             .then((country) => {
-                console.debug("GEO: User's country location is: ", country);
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
             })
             .catch((err) => {
                 console.warn("GEO: Unable to determine user's country location", err);
@@ -6322,8 +6325,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // **** End of Communities stuff
-
     diamondDurationToMs = diamondDurationToMs;
+    swapRestricted(): boolean {
+        return featureRestricted(this._userLocation, "swap");
+    }
 
     /**
      * Reactive state provided in the form of svelte stores
