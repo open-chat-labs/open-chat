@@ -9,9 +9,7 @@ use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
-use types::{
-    AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallClaims, VideoCallType,
-};
+use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallType};
 
 #[test]
 fn access_token_valid() {
