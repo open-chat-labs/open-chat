@@ -62,6 +62,7 @@
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
     let hostEnded = false;
+    let denied = false;
     let askedToSpeak = false;
 
     $: {
@@ -134,16 +135,18 @@
                 ? { kind: "join_video_call" }
                 : { kind: "start_video_call" };
 
+            const callType = isPublic ? "broadcast" : "default";
+
             // first we need to get access jwt from the oc backend
             const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
                 chat.id,
-                isPublic ? "broadcast" : "default",
+                callType,
                 accessType,
             );
 
             const call = daily.createFrame(iframeContainer, {
                 token,
-                activeSpeakerMode: $videoSpeakerView,
+                activeSpeakerMode: callType === "broadcast" ? true : $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
                 startVideoOff: !$videoCameraOn,
@@ -160,6 +163,13 @@
             call.on("app-message", (ev: InterCallMessage | undefined) => {
                 if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak") {
                     activeVideoCall.captureAccessRequest(ev.data);
+                }
+                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak_response") {
+                    const me = call.participants().local.session_id;
+                    if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                        askedToSpeak = false;
+                        denied = !ev.data.approved;
+                    }
                 }
             });
 
@@ -324,6 +334,23 @@
     </Overlay>
 {/if}
 
+{#if denied}
+    <Overlay>
+        <ModalContent hideHeader>
+            <div class="denied" slot="body">
+                <Translatable resourceKey={i18nKey("videoCall.denied")} />
+            </div>
+            <span slot="footer">
+                <ButtonGroup align={"center"}>
+                    <Button on:click={() => (denied = false)}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
+
 <div
     id="video-call-container"
     class="video-call-container"
@@ -402,7 +429,8 @@
         background-color: var(--daily-header);
     }
 
-    .host-ended {
+    .host-ended,
+    .denied {
         @include font(bold, normal, fs-130);
         text-align: center;
     }

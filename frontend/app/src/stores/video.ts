@@ -12,7 +12,7 @@ import { type ChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
-export type InterCallMessage = RequestToSpeakMessage;
+export type InterCallMessage = RequestToSpeakMessage | RequestToSpeakMessageResponse;
 
 export type RequestToSpeak = {
     kind: "ask_to_speak";
@@ -20,7 +20,15 @@ export type RequestToSpeak = {
     userId: string;
 };
 
+export type RequestToSpeakResponse = {
+    kind: "ask_to_speak_response";
+    participantId: string;
+    userId: string;
+    approved: boolean;
+};
+
 export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
+export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
 
 export type IncomingVideoCall = {
     chatId: ChatIdentifier;
@@ -72,6 +80,17 @@ export const activeVideoCall = {
     rejectAccessRequest: (req: RequestToSpeak) => {
         return activeStore.update((current) => {
             if (current === undefined) return undefined;
+            if (current.call) {
+                current.call.sendAppMessage(
+                    {
+                        kind: "ask_to_speak_response",
+                        participantId: req.participantId,
+                        userId: req.userId,
+                        approved: false,
+                    },
+                    req.participantId,
+                );
+            }
             return {
                 ...current,
                 accessRequests: current.accessRequests.filter(
@@ -90,6 +109,15 @@ export const activeVideoCall = {
                         canSend: true,
                     },
                 });
+                current.call.sendAppMessage(
+                    {
+                        kind: "ask_to_speak_response",
+                        participantId: req.participantId,
+                        userId: req.userId,
+                        approved: true,
+                    },
+                    req.participantId,
+                );
             }
             return {
                 ...current,

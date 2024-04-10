@@ -54,6 +54,12 @@
 {/if}
 
 <style lang="scss">
+    :global(.active-broadcast button.hollow) {
+        border-color: var(--notificationBar-txt);
+        color: var(--notificationBar-txt);
+        background-color: var(--notificationBar-bg);
+    }
+
     .active-broadcast {
         cursor: pointer;
         position: absolute;
@@ -66,6 +72,7 @@
         width: 100%;
         padding: $sp4;
         background-color: var(--notificationBar-bg);
+        color: var(--notificationBar-txt);
         @include box-shadow(2);
     }
 </style>
