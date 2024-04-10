@@ -72,7 +72,7 @@ mod tests {
     use candid::Principal;
     use p256_key_pair::P256KeyPair;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use types::{StringChat, VideoCallClaims};
+    use types::{StartVideoCallClaims, StringChat, VideoCallType};
 
     #[test]
     fn sign_and_encode_token_succeeds() {
@@ -88,9 +88,10 @@ mod tests {
             let claims = Claims::new(
                 now + 300_000, // Token valid for 5 mins from now
                 "StartVideoCall".to_string(),
-                VideoCallClaims {
+                StartVideoCallClaims {
                     user_id: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
                     chat_id: StringChat::Group("6nb6r-kyaaa-aaaar-asvgq-cai".to_string()),
+                    call_type: VideoCallType::Default,
                 },
             );
 

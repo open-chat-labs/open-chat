@@ -1756,6 +1756,9 @@ type VideoCallUpdates = variant {
 
 type AccessTokenType = variant {
     StartVideoCall;
+    StartVideoCallV2 : record {
+        call_type : VideoCallType;
+    };
     JoinVideoCall;
     MarkVideoCallAsEnded;
 };

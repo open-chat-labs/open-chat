@@ -1,4 +1,4 @@
-use crate::{Chat, UserId};
+use crate::{Chat, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -19,7 +19,14 @@ impl From<Chat> for StringChat {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct VideoCallClaims {
+pub struct JoinOrEndVideoCallClaims {
     pub user_id: UserId,
     pub chat_id: StringChat,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StartVideoCallClaims {
+    pub user_id: UserId,
+    pub chat_id: StringChat,
+    pub call_type: VideoCallType,
 }
