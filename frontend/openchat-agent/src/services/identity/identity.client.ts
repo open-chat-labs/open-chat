@@ -15,6 +15,7 @@ import {
     migrateLegacyPrincipalResponse,
     prepareDelegationResponse,
 } from "./mappers";
+import type { CreateIdentityArgs } from "./candid/types";
 
 export class IdentityClient extends CandidService {
     private service: IdentityService;
@@ -32,10 +33,11 @@ export class IdentityClient extends CandidService {
     }
 
     createIdentity(sessionKey: Uint8Array): Promise<CreateIdentityResponse> {
-        const args = {
+        const args: CreateIdentityArgs = {
             public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             session_key: sessionKey,
             max_time_to_live: [] as [] | [bigint],
+            challenge_attempt: [],
         };
         return this.handleResponse(
             this.service.create_identity(args),

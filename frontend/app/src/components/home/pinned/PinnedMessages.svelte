@@ -125,6 +125,7 @@
                 {#each dayGroup as message (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
+                        timestamp={message.timestamp}
                         user={$user}
                         senderId={message.event.sender}
                         msg={message.event}

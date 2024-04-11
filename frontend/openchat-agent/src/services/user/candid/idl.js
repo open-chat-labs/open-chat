@@ -354,9 +354,14 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'joined' : TimestampMillis,
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -969,11 +974,19 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
+  const EmptyArgs = IDL.Record({});
+  const GetBtcAddressResponse = IDL.Variant({
+    'Success' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
+  const GetCachedBtcAddressResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Text,
+  });
   const HotGroupExclusionsArgs = IDL.Record({});
   const HotGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Vec(ChatId),
   });
-  const EmptyArgs = IDL.Record({});
   const PinNumberSettings = IDL.Record({
     'attempts_blocked_until' : IDL.Opt(TimestampMillis),
     'length' : IDL.Nat8,
@@ -1008,7 +1021,10 @@ export const idlFactory = ({ IDL }) => {
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Bool,
   });
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
@@ -1298,6 +1314,16 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RetrieveBtcArgs = IDL.Record({
+    'address' : IDL.Text,
+    'amount' : IDL.Nat64,
+  });
+  const RetrieveBtcResponse = IDL.Variant({
+    'ApproveError' : IDL.Text,
+    'Success' : IDL.Nat64,
+    'RetrieveBtcError' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
   const SaveCryptoAccountResponse = IDL.Variant({
     'Invalid' : IDL.Null,
@@ -1532,6 +1558,7 @@ export const idlFactory = ({ IDL }) => {
     'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
+    'call_type' : VideoCallType,
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1867,6 +1894,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'get_btc_address' : IDL.Func([EmptyArgs], [GetBtcAddressResponse], []),
+    'get_cached_btc_address' : IDL.Func(
+        [EmptyArgs],
+        [GetCachedBtcAddressResponse],
+        ['query'],
+      ),
     'hot_group_exclusions' : IDL.Func(
         [HotGroupExclusionsArgs],
         [HotGroupExclusionsResponse],
@@ -1921,6 +1954,7 @@ export const idlFactory = ({ IDL }) => {
         [ReportMessageResponse],
         [],
       ),
+    'retrieve_btc' : IDL.Func([RetrieveBtcArgs], [RetrieveBtcResponse], []),
     'save_crypto_account' : IDL.Func(
         [NamedAccount],
         [SaveCryptoAccountResponse],

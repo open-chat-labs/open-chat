@@ -1,3 +1,4 @@
+import type { VideoCallType } from "./chat";
 import type { OptionUpdate } from "./optionUpdate";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
@@ -140,4 +141,5 @@ export type JoinVideoCall = {
 
 export type StartVideoCall = {
     kind: "start_video_call";
+    callType: VideoCallType;
 };

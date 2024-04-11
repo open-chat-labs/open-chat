@@ -70,7 +70,9 @@
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
     $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
+
     $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
+    $: isPublic = !client.isChatPrivate(selectedChatSummary);
 
     $: incall =
         $activeVideoCall !== undefined &&
@@ -79,7 +81,9 @@
 
     $: videoMenuText = videoCallInProgress
         ? i18nKey("videoCall.joinVideo")
-        : i18nKey("videoCall.startVideo");
+        : isPublic
+          ? i18nKey("videoCall.startBroadcast")
+          : i18nKey("videoCall.startVideo");
 
     $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 

@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
@@ -18,7 +19,9 @@ export type AccessTokenResponse = { 'NotAuthorized' : null } |
   { 'Success' : string } |
   { 'InternalError' : string };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null };
+  { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -1433,7 +1436,8 @@ export interface RegisterUserArgs {
   'public_key' : Uint8Array | number[],
   'referral_code' : [] | [string],
 }
-export type RegisterUserResponse = { 'UsernameTooShort' : number } |
+export type RegisterUserResponse = { 'RegistrationInProgress' : null } |
+  { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
   { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
@@ -1657,12 +1661,18 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
-export interface VideoCall { 'message_index' : MessageIndex }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : VideoCall };
@@ -1705,3 +1715,5 @@ export interface _SERVICE {
     ReportMessageResponse
   >,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -8,9 +8,15 @@ export const idlFactory = ({ IDL }) => {
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
     'Direct' : ChatId,
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
   const AccessTokenType = IDL.Variant({
     'JoinVideoCall' : IDL.Null,
     'StartVideoCall' : IDL.Null,
+    'StartVideoCallV2' : IDL.Record({ 'call_type' : VideoCallType }),
+    'MarkVideoCallAsEnded' : IDL.Null,
   });
   const AccessTokenArgs = IDL.Record({
     'chat' : Chat,
@@ -97,6 +103,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -708,7 +715,10 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
@@ -1129,6 +1139,7 @@ export const idlFactory = ({ IDL }) => {
     'referral_code' : IDL.Opt(IDL.Text),
   });
   const RegisterUserResponse = IDL.Variant({
+    'RegistrationInProgress' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
     'UsernameInvalid' : IDL.Null,
     'AlreadyRegistered' : IDL.Null,

@@ -7,12 +7,19 @@
         AvatarSize,
         chatIdentifiersEqual,
     } from "openchat-client";
-    import { activeVideoCall, microphone, camera, sharing } from "../../../stores/video";
+    import {
+        activeVideoCall,
+        microphone,
+        camera,
+        sharing,
+        hasPresence,
+    } from "../../../stores/video";
     import page from "page";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
+    import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import MicrophoneOff from "svelte-material-icons/MicrophoneOff.svelte";
     import Video from "svelte-material-icons/Video.svelte";
     import VideoOff from "svelte-material-icons/VideoOff.svelte";
@@ -25,6 +32,7 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     $: selectedChatId = client.selectedChatId;
     $: communities = client.communities;
@@ -34,6 +42,7 @@
         (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) ||
             (chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
                 $activeVideoCall.view === "minimised"));
+    $: chat = normaliseChatSummary($activeVideoCall?.chatId);
 
     function goToCall() {
         if ($activeVideoCall) {
@@ -44,7 +53,9 @@
         }
     }
 
-    $: chat = normaliseChatSummary($activeVideoCall?.chatId);
+    function askToSpeak() {
+        dispatch("askToSpeak");
+    }
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
         if (chatId) {
@@ -103,7 +114,7 @@
     }
 
     function hangup() {
-        activeVideoCall.endCall();
+        dispatch("hangup");
     }
 </script>
 
@@ -125,63 +136,81 @@
         {/if}
         <div class="details">
             <div class="actions">
-                <TooltipWrapper position={"top"} align={"middle"}>
-                    <div
-                        slot="target"
-                        role="button"
-                        tabindex="0"
-                        class="cam"
-                        on:click|stopPropagation={toggleCamera}>
-                        {#if $camera}
-                            <Video size={"1.6em"} color={"var(--txt)"} />
-                        {:else}
-                            <VideoOff size={"1.6em"} color={"var(--txt)"} />
-                        {/if}
-                    </div>
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {position} {align}>
-                            <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
-                <TooltipWrapper position={"top"} align={"middle"}>
-                    <div
-                        slot="target"
-                        role="button"
-                        tabindex="0"
-                        class="mic"
-                        on:click|stopPropagation={toggleMic}>
-                        {#if $microphone}
-                            <Microphone size={"1.6em"} color={"var(--txt)"} />
-                        {:else}
-                            <MicrophoneOff size={"1.6em"} color={"var(--txt)"} />
-                        {/if}
-                    </div>
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {position} {align}>
-                            <Translatable resourceKey={i18nKey("videoCall.toggleMic")} />
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
-                <TooltipWrapper position={"top"} align={"middle"}>
-                    <div
-                        slot="target"
-                        role="button"
-                        tabindex="0"
-                        class="mic"
-                        on:click|stopPropagation={toggleShare}>
-                        {#if $sharing}
-                            <MonitorOff size={"1.6em"} color={"var(--txt)"} />
-                        {:else}
-                            <MonitorShare size={"1.6em"} color={"var(--txt)"} />
-                        {/if}
-                    </div>
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {position} {align}>
-                            <Translatable resourceKey={i18nKey("videoCall.toggleShare")} />
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
+                {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
+                    <TooltipWrapper position={"top"} align={"middle"}>
+                        <div
+                            slot="target"
+                            role="button"
+                            tabindex="0"
+                            class="cam"
+                            on:click|stopPropagation={askToSpeak}>
+                            <HandFrontLeft size={"1.6em"} color={"var(--txt)"} />
+                        </div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {position} {align}>
+                                <Translatable resourceKey={i18nKey("videoCall.askToSpeak")} />
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                {:else}
+                    <TooltipWrapper position={"top"} align={"middle"}>
+                        <div
+                            slot="target"
+                            role="button"
+                            tabindex="0"
+                            class="cam"
+                            on:click|stopPropagation={toggleCamera}>
+                            {#if $camera}
+                                <Video size={"1.6em"} color={"var(--txt)"} />
+                            {:else}
+                                <VideoOff size={"1.6em"} color={"var(--txt)"} />
+                            {/if}
+                        </div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {position} {align}>
+                                <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                    <TooltipWrapper position={"top"} align={"middle"}>
+                        <div
+                            slot="target"
+                            role="button"
+                            tabindex="0"
+                            class="mic"
+                            on:click|stopPropagation={toggleMic}>
+                            {#if $microphone}
+                                <Microphone size={"1.6em"} color={"var(--txt)"} />
+                            {:else}
+                                <MicrophoneOff size={"1.6em"} color={"var(--txt)"} />
+                            {/if}
+                        </div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {position} {align}>
+                                <Translatable resourceKey={i18nKey("videoCall.toggleMic")} />
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                    <TooltipWrapper position={"top"} align={"middle"}>
+                        <div
+                            slot="target"
+                            role="button"
+                            tabindex="0"
+                            class="mic"
+                            on:click|stopPropagation={toggleShare}>
+                            {#if $sharing}
+                                <MonitorOff size={"1.6em"} color={"var(--txt)"} />
+                            {:else}
+                                <MonitorShare size={"1.6em"} color={"var(--txt)"} />
+                            {/if}
+                        </div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {position} {align}>
+                                <Translatable resourceKey={i18nKey("videoCall.toggleShare")} />
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                {/if}
                 <TooltipWrapper position={"top"} align={"middle"}>
                     <div
                         slot="target"

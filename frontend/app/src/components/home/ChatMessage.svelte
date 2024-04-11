@@ -540,6 +540,7 @@
                         {undeleting}
                         {intersecting}
                         {failed}
+                        {timestamp}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}

@@ -229,6 +229,7 @@ export type RegisterUserResponse =
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
     | { kind: "referral_code_expired" }
+    | { kind: "registration_in_progress" }
     | Offline;
 
 export type PinChatResponse = "success" | "failure" | "offline";
@@ -335,7 +336,7 @@ export type SwapTokensResponse =
     | {
           kind: "swap_failed";
       }
-    | PinRequired 
+    | PinRequired
     | PinIncorrect
     | TooManyFailedPinAttempts
     | InternalError;
@@ -367,7 +368,7 @@ export type TokenSwapStatusResponse =
 export type ApproveTransferResponse =
     | Success
     | { kind: "approve_error"; error: string }
-    | PinRequired 
+    | PinRequired
     | PinIncorrect
     | TooManyFailedPinAttempts
     | InternalError;
