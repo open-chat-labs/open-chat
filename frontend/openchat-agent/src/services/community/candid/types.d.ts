@@ -34,6 +34,7 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -2233,7 +2234,10 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
-export interface VideoCall { 'message_index' : MessageIndex }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],

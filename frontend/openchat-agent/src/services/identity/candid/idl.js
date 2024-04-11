@@ -10,6 +10,9 @@ export const idlFactory = ({ IDL }) => {
     'public_key' : PublicKey,
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
+    'challenge_attempt' : IDL.Opt(
+      IDL.Record({ 'key' : IDL.Nat32, 'chars' : IDL.Text })
+    ),
   });
   const TimestampNanoseconds = IDL.Nat64;
   const CreateIdentityResponse = IDL.Variant({
@@ -19,7 +22,14 @@ export const idlFactory = ({ IDL }) => {
       'user_key' : PublicKey,
       'expiration' : TimestampNanoseconds,
     }),
+    'ChallengeFailed' : IDL.Null,
+    'ChallengeRequired' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
+  });
+  const GenerateChallengeResponse = IDL.Variant({
+    'AlreadyRegistered' : IDL.Null,
+    'Throttled' : IDL.Null,
+    'Success' : IDL.Record({ 'key' : IDL.Nat32, 'png_base64' : IDL.Text }),
   });
   const GetDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
@@ -68,6 +78,11 @@ export const idlFactory = ({ IDL }) => {
     'create_identity' : IDL.Func(
         [CreateIdentityArgs],
         [CreateIdentityResponse],
+        [],
+      ),
+    'generate_challenge' : IDL.Func(
+        [IDL.Record({})],
+        [GenerateChallengeResponse],
         [],
       ),
     'get_delegation' : IDL.Func(

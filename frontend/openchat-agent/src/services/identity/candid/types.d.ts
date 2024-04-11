@@ -9,6 +9,7 @@ export interface CreateIdentityArgs {
   'public_key' : PublicKey,
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
+  'challenge_attempt' : [] | [{ 'key' : number, 'chars' : string }],
 }
 export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
   {
@@ -18,7 +19,12 @@ export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
       'expiration' : TimestampNanoseconds,
     }
   } |
+  { 'ChallengeFailed' : null } |
+  { 'ChallengeRequired' : null } |
   { 'PublicKeyInvalid' : string };
+export type GenerateChallengeResponse = { 'AlreadyRegistered' : null } |
+  { 'Throttled' : null } |
+  { 'Success' : { 'key' : number, 'png_base64' : string } };
 export interface GetDelegationArgs {
   'session_key' : PublicKey,
   'expiration' : TimestampNanoseconds,
@@ -49,6 +55,7 @@ export type TimestampNanoseconds = bigint;
 export interface _SERVICE {
   'check_auth_principal' : ActorMethod<[{}], CheckAuthPrincipalResponse>,
   'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
+  'generate_challenge' : ActorMethod<[{}], GenerateChallengeResponse>,
   'get_delegation' : ActorMethod<[GetDelegationArgs], GetDelegationResponse>,
   'migrate_legacy_principal' : ActorMethod<
     [{}],

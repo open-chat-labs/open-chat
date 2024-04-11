@@ -5799,7 +5799,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private getRoomAccessToken(
         authToken: string,
-        roomType: "default" | "broadcast",
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         // This will send the OC access JWT to the daily middleware service which will:
         // * validate the jwt
@@ -5816,7 +5815,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
-        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?room-type=${roomType}&initiator-username=${username}&initiator-displayname=${displayName}`;
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
         if (avatarId) {
             url += `&initiator-avatarid=${avatarId}`;
         }
@@ -5899,7 +5898,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
-        roomType: "broadcast" | "default",
         accessTokenType: AccessTokenType,
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
         const chat = this._liveState.allChats.get(chatId);
@@ -5921,7 +5919,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     console.log("TOKEN: ", token);
                     return token;
                 })
-                .then((token) => this.getRoomAccessToken(token, roomType));
+                .then((token) => this.getRoomAccessToken(token));
         });
     }
 

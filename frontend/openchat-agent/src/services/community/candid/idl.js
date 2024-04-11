@@ -205,7 +205,14 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -332,10 +339,6 @@ export const idlFactory = ({ IDL }) => {
   const CallParticipant = IDL.Record({
     'user_id' : UserId,
     'joined' : TimestampMillis,
-  });
-  const VideoCallType = IDL.Variant({
-    'Default' : IDL.Null,
-    'Broadcast' : IDL.Null,
   });
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),

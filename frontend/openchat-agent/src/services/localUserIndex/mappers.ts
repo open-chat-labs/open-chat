@@ -5,6 +5,7 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
+    VideoCallType,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
@@ -16,6 +17,7 @@ import type {
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
+    ApiVideoCallType,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
 import {
@@ -34,9 +36,17 @@ export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType 
             };
         case "start_video_call":
             return {
-                StartVideoCall: null,
+                StartVideoCallV2: {
+                    call_type: apiCallType(domain.callType),
+                },
             };
     }
+}
+
+export function apiCallType(domain: VideoCallType): ApiVideoCallType {
+    if (domain === "broadcast") return { Broadcast: null };
+    if (domain === "default") return { Default: null };
+    throw new UnsupportedValueError("Unexpected VideoCallType received", domain);
 }
 
 export function accessTokenResponse(candid: ApiAccessTokenResponse): string | undefined {
@@ -169,6 +179,9 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
     if ("ReferralCodeExpired" in candid) {
         return { kind: "referral_code_expired" };
+    }
+    if ("RegistrationInProgress" in candid) {
+        return { kind: "registration_in_progress" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);

@@ -20,6 +20,7 @@ export type AccessTokenResponse = { 'NotAuthorized' : null } |
   { 'InternalError' : string };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
   { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
@@ -1435,7 +1436,8 @@ export interface RegisterUserArgs {
   'public_key' : Uint8Array | number[],
   'referral_code' : [] | [string],
 }
-export type RegisterUserResponse = { 'UsernameTooShort' : number } |
+export type RegisterUserResponse = { 'RegistrationInProgress' : null } |
+  { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
   { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
@@ -1659,7 +1661,10 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
-export interface VideoCall { 'message_index' : MessageIndex }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],

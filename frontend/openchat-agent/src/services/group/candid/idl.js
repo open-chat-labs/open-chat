@@ -1225,7 +1225,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
