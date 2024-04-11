@@ -939,6 +939,11 @@
     },
     "reportBug": "Wenn Sie glauben, dass es sich hierbei um einen Fehler handelt, klicken Sie hier, um die vollständigen Details zu melden",
     "reset": "Zurücksetzen",
+    "restricted": {
+        "generic": "Um den örtlichen Gesetzen zu entsprechen, ist diese Funktion in Ihrer aktuellen Gerichtsbarkeit nicht zulässig.",
+        "swap": "Um die örtlichen Gesetze einzuhalten, ist der Token-Tausch in Ihrer aktuellen Gerichtsbarkeit nicht zulässig.",
+        "title": "Eingeschränkte Funktion"
+    },
     "restrictedContent": "Eingeschränkter Inhalt",
     "restrictedContentInfo": "Wählen Sie aus, ob Sie Gruppen und Communities sehen möchten, auf die die folgenden Moderationsflags angewendet wurden.",
     "retryMessage": "Nachricht erneut versuchen",
