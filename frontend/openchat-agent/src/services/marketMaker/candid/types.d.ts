@@ -25,4 +25,4 @@ export interface _SERVICE {
   'update_config' : ActorMethod<[UpdateConfigArgs], UpdateConfigResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

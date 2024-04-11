@@ -2050,4 +2050,4 @@ export interface _SERVICE {
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

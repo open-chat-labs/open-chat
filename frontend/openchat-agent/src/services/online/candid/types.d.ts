@@ -1513,4 +1513,4 @@ export interface _SERVICE {
   'mark_as_online' : ActorMethod<[MarkAsOnlineArgs], MarkAsOnlineResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

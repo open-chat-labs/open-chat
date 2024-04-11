@@ -1559,4 +1559,4 @@ export interface _SERVICE {
   'upload_chunk_v2' : ActorMethod<[UploadChunkArgs], UploadChunkResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

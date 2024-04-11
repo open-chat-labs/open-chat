@@ -1803,4 +1803,4 @@ export interface _SERVICE {
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
