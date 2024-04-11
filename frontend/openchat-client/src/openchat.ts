@@ -381,7 +381,7 @@ import type {
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
-    ApproveAccessGatePaymentResponse,    
+    ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
 } from "openchat-shared";
@@ -425,6 +425,7 @@ import {
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
     NoMeetingToJoin,
+    featureRestricted,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -498,6 +499,7 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _userLocation: string | undefined;
     private _authClient: Promise<AuthClient>;
     private _identity: Identity | undefined;
     private _liveState: LiveState;
@@ -546,7 +548,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         getUserCountryCode()
             .then((country) => {
-                console.debug("GEO: User's country location is: ", country);
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
             })
             .catch((err) => {
                 console.warn("GEO: Unable to determine user's country location", err);
@@ -1212,7 +1215,10 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary, pin: string | undefined): Promise<ApproveAccessGatePaymentResponse> {
+    async approveAccessGatePayment(
+        group: MultiUserChat | CommunitySummary,
+        pin: string | undefined,
+    ): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1235,7 +1241,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const token = this.getTokenDetailsForAccessGate(group.gate);
 
-        if (token === undefined) {        
+        if (token === undefined) {
             return CommonResponses.failure();
         }
 
@@ -1252,7 +1258,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this._logger.error("Unable to approve transfer", response.error);
                     return CommonResponses.failure();
                 }
-                
+
                 return response;
             })
             .catch(() => CommonResponses.failure());
@@ -1264,7 +1270,9 @@ export class OpenChat extends OpenChatAgentWorker {
         pin: string | undefined,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat, pin);
-        if (approveResponse.kind !== "success") { return approveResponse; }
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
+        }
 
         const localUserIndex =
             chat.kind === "group_chat"
@@ -2819,7 +2827,12 @@ export class OpenChat extends OpenChatAgentWorker {
             ? {
                   ...dataContent,
                   blobData: undefined,
-                  blobUrl: buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, blobType),
+                  blobUrl: buildBlobUrl(
+                      this.config.blobUrlPattern,
+                      ref.canisterId,
+                      ref.blobId,
+                      blobType,
+                  ),
               }
             : dataContent;
     }
@@ -5485,13 +5498,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private updateExchangeRates(): Promise<void> {
         return this.sendRequest({ kind: "exchangeRates" })
-            .then((exchangeRates) => {
-                // Handle couple of special cases
-                exchangeRates["dkp"] = exchangeRates["sns1"];
-                exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
-
-                exchangeRatesLookupStore.set(exchangeRates);
-            })
+            .then((exchangeRates) => exchangeRatesLookupStore.set(exchangeRates))
             .catch(() => undefined);
     }
 
@@ -6041,8 +6048,10 @@ export class OpenChat extends OpenChatAgentWorker {
         credential: string | undefined,
         pin: string | undefined,
     ): Promise<ClientJoinCommunityResponse> {
-        let approveResponse = await this.approveAccessGatePayment(community, pin);
-        if (approveResponse.kind !== "success") { return approveResponse; }
+        const approveResponse = await this.approveAccessGatePayment(community, pin);
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
+        }
 
         return this.sendRequest({
             kind: "joinCommunity",
@@ -6350,8 +6359,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // **** End of Communities stuff
-
     diamondDurationToMs = diamondDurationToMs;
+    swapRestricted(): boolean {
+        return featureRestricted(this._userLocation, "swap");
+    }
 
     /**
      * Reactive state provided in the form of svelte stores

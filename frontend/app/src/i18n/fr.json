@@ -939,6 +939,11 @@
     },
     "reportBug": "Si vous pensez qu'il s'agit d'un bug, cliquez ici pour signaler tous les détails",
     "reset": "Réinitialiser",
+    "restricted": {
+        "generic": "Afin de respecter les lois locales, cette fonctionnalité n'est pas autorisée dans votre juridiction actuelle.",
+        "swap": "Afin de respecter les lois locales, les échanges de jetons ne sont pas autorisés dans votre juridiction actuelle.",
+        "title": "Fonctionnalité restreinte"
+    },
     "restrictedContent": "Contenu restreint",
     "restrictedContentInfo": "Choisissez si vous souhaitez voir les groupes et les communautés auxquels les indicateurs de modération suivants ont été appliqués.",
     "retryMessage": "Réessayer le message",

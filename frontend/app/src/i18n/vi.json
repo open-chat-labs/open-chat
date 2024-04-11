@@ -939,6 +939,11 @@
     },
     "reportBug": "Nếu bạn cho rằng đây là lỗi, hãy nhấp vào đây để báo cáo chi tiết đầy đủ",
     "reset": "Cài lại",
+    "restricted": {
+        "generic": "Để tuân thủ luật pháp địa phương, tính năng này không được phép ở khu vực pháp lý hiện tại của bạn",
+        "swap": "Để tuân thủ luật pháp địa phương, việc hoán đổi token không được phép trong khu vực pháp lý hiện tại của bạn.",
+        "title": "Tính năng bị hạn chế"
+    },
     "restrictedContent": "Nội dung bị hạn chế",
     "restrictedContentInfo": "Chọn xem bạn có muốn xem các nhóm và cộng đồng đã áp dụng các cờ kiểm duyệt sau hay không.",
     "retryMessage": "Thử lại tin nhắn",

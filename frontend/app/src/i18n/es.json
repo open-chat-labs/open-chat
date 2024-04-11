@@ -939,6 +939,11 @@
     },
     "reportBug": "Si cree que se trata de un error, haga clic aquí para informar todos los detalles.",
     "reset": "Reiniciar",
+    "restricted": {
+        "generic": "Para cumplir con las leyes locales, esta función no está permitida en su jurisdicción actual.",
+        "swap": "Para cumplir con las leyes locales, no se permiten intercambios de tokens en su jurisdicción actual.",
+        "title": "Característica restringida"
+    },
     "restrictedContent": "Contenido restringido",
     "restrictedContentInfo": "Elija si desea ver grupos y comunidades a los que se les han aplicado las siguientes marcas de moderación.",
     "retryMessage": "Mensaje de reintento",

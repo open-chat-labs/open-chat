@@ -939,6 +939,11 @@
     },
     "reportBug": "如果您认为这是一个错误，请单击此处报告完整的详细信息",
     "reset": "重置",
+    "restricted": {
+        "generic": "为了遵守当地法律，您所在的司法辖区不允许使用此功能",
+        "swap": "为了遵守当地法律，您当前的管辖范围内不允许进行代币交换。",
+        "title": "受限功能"
+    },
     "restrictedContent": "受限内容",
     "restrictedContentInfo": "选择您是否希望查看已应用以下审核标志的群组和社区。",
     "retryMessage": "重试消息",

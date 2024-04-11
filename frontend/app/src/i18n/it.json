@@ -939,6 +939,11 @@
     },
     "reportBug": "Se pensi che si tratti di un bug, clicca qui per segnalare tutti i dettagli",
     "reset": "Ripristina",
+    "restricted": {
+        "generic": "Per rispettare le leggi locali, questa funzionalità non è consentita nella tua attuale giurisdizione",
+        "swap": "Al fine di rispettare le leggi locali, gli scambi di token non sono consentiti nella tua attuale giurisdizione.",
+        "title": "Funzionalità limitata"
+    },
     "restrictedContent": "Contenuto limitato",
     "restrictedContentInfo": "Scegli se desideri visualizzare i gruppi e le community a cui sono stati applicati i seguenti contrassegni di moderazione.",
     "retryMessage": "Riprova messaggio",

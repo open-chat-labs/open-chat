@@ -939,6 +939,11 @@
     },
     "reportBug": "If you think this is a bug, click here to report the full details",
     "reset": "Reset",
+    "restricted": {
+        "generic": "In order to comply with local laws, this feature is not permitted in your current jurisdiction",
+        "swap": "In order to comply with local laws, tokens swaps are not permitted in your current jurisdiction.",
+        "title": "Restricted feature"
+    },
     "restrictedContent": "Restricted Content",
     "restrictedContentInfo": "Choose whether you would like to see groups and communities that have had the following moderation flags applied.",
     "retryMessage": "Retry message",
