@@ -9,7 +9,7 @@ use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
-use types::{AccessTokenType, ChannelId, CommunityId, VideoCallClaims};
+use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallType};
 
 #[test]
 fn access_token_valid() {
@@ -43,7 +43,9 @@ fn access_token_valid() {
         canister_ids.local_user_index,
         community_id,
         channel_id,
-        AccessTokenType::StartVideoCall,
+        AccessTokenType::StartVideoCallV2(VideoCallAccessTokenArgs {
+            call_type: VideoCallType::Broadcast,
+        }),
     );
 
     println!("{token}");
@@ -68,7 +70,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-fn decode_and_verify_token(token: String, public_key_pem: String) -> Result<VideoCallClaims, Box<dyn Error>> {
+fn decode_and_verify_token(token: String, public_key_pem: String) -> Result<StartVideoCallClaims, Box<dyn Error>> {
     let public_key = ES256PublicKey::from_pem(&public_key_pem)?;
 
     let claims = public_key.verify_token(&token, None)?;

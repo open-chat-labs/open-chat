@@ -6,7 +6,11 @@ use jwt::Claims;
 use local_user_index_canister::access_token::{Response::*, *};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, UserId, VideoCallClaims};
+use serde::Serialize;
+use types::{
+    AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
+    VideoCallType,
+};
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 #[trace]
@@ -35,7 +39,31 @@ async fn access_token(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| build_token(user_id, args, state))
+    mutate_state(|state| match &args.token_type {
+        AccessTokenType::StartVideoCall => {
+            let custom_claims = StartVideoCallClaims {
+                user_id,
+                chat_id: args.chat.into(),
+                call_type: VideoCallType::Default,
+            };
+            build_token(args.token_type, custom_claims, state)
+        }
+        AccessTokenType::StartVideoCallV2(vc) => {
+            let custom_claims = StartVideoCallClaims {
+                user_id,
+                chat_id: args.chat.into(),
+                call_type: vc.call_type,
+            };
+            build_token(args.token_type, custom_claims, state)
+        }
+        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => {
+            let custom_claims = JoinOrEndVideoCallClaims {
+                user_id,
+                chat_id: args.chat.into(),
+            };
+            build_token(args.token_type, custom_claims, state)
+        }
+    })
 }
 
 fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
@@ -52,7 +80,7 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
         })
 }
 
-fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
+fn build_token<T: Serialize>(token_type: AccessTokenType, custom_claims: T, state: &mut RuntimeState) -> Response {
     let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() else {
         return InternalError("OC Secret not set".to_string());
     };
@@ -61,11 +89,8 @@ fn build_token(user_id: UserId, args: Args, state: &mut RuntimeState) -> Respons
 
     let claims = Claims::new(
         state.env.now() + 300_000, // Token valid for 5 mins from now
-        args.token_type.to_string(),
-        VideoCallClaims {
-            user_id,
-            chat_id: args.chat.into(),
-        },
+        token_type.type_name().to_string(),
+        custom_claims,
     );
 
     match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
