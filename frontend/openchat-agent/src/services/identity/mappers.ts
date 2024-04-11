@@ -31,6 +31,12 @@ export function createIdentityResponse(candid: ApiCreateIdentityResponse): Creat
     if ("PublicKeyInvalid" in candid) {
         return { kind: "public_key_invalid" };
     }
+    if ("ChallengeFailed" in candid) {
+        return { kind: "challenge_failed" };
+    }
+    if ("ChallengeRequired" in candid) {
+        return { kind: "challenge_required" };
+    }
     throw new UnsupportedValueError("Unexpected ApiCreateIdentityResponse type received", candid);
 }
 

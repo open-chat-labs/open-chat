@@ -44,6 +44,7 @@
     export let undeleting: boolean = false;
     export let intersecting: boolean;
     export let failed: boolean;
+    export let timestamp: bigint | undefined = undefined;
 </script>
 
 {#if content.kind === "text_content"}
@@ -53,7 +54,7 @@
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
 {:else if content.kind === "video_call_content"}
-    <VideoCallContent on:startVideoCall {messageIndex} {content} />
+    <VideoCallContent on:startVideoCall {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
     <AudioContent {edited} {content} />
 {:else if content.kind === "file_content"}

@@ -18,6 +18,7 @@
 
     export let content: VideoCallContent;
     export let messageIndex: number;
+    export let timestamp: bigint | undefined;
 
     $: selectedChat = client.selectedChatStore;
     $: communityMembers = client.currentCommunityMembers;
@@ -32,6 +33,12 @@
         $selectedChat.videoCallInProgress === messageIndex &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
     $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
+    $: duration =
+        content.ended !== undefined && timestamp !== undefined
+            ? i18nKey("videoCall.duration", {
+                  duration: client.formatDuration(Number(content.ended - timestamp)),
+              })
+            : undefined;
 
     function joinCall() {
         if (!incall && $selectedChat) {
@@ -48,7 +55,12 @@
 
 <div class="video-call">
     <p class="initiator">
-        <Translatable resourceKey={i18nKey("videoCall.startedBy", { username: displayName })} />
+        {#if content.callType === "broadcast"}
+            <Translatable
+                resourceKey={i18nKey("videoCall.broadcastStartedBy", { username: displayName })} />
+        {:else}
+            <Translatable resourceKey={i18nKey("videoCall.startedBy", { username: displayName })} />
+        {/if}
     </p>
     <div class="avatars">
         {#each [...content.participants].slice(0, 5) as participantId}
@@ -77,6 +89,11 @@
                               time: client.toShortTimeString(endedDate),
                           })
                         : i18nKey("videoCall.join")} />
+                {#if duration}
+                    <div class="duration">
+                        <Translatable resourceKey={duration} />
+                    </div>
+                {/if}
             </Button>
         {/if}
     </div>
@@ -110,7 +127,7 @@
     .avatars {
         display: inline-flex;
         gap: $sp2;
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
     }
 
     .extra {
@@ -122,5 +139,9 @@
         height: toRem(25);
         @include font-size(fs-60);
         background-color: rgba(0, 0, 0, 0.15);
+    }
+
+    .duration {
+        @include font(light, normal, fs-60);
     }
 </style>

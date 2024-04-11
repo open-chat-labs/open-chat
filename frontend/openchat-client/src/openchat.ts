@@ -425,6 +425,7 @@ import {
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
     NoMeetingToJoin,
+    featureRestricted,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -498,6 +499,7 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _userLocation: string | undefined;
     private _authClient: Promise<AuthClient>;
     private _identity: Identity | undefined;
     private _liveState: LiveState;
@@ -546,7 +548,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         getUserCountryCode()
             .then((country) => {
-                console.debug("GEO: User's country location is: ", country);
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
             })
             .catch((err) => {
                 console.warn("GEO: Unable to determine user's country location", err);
@@ -1547,10 +1550,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(
-            chatId,
-            (chat) => this.isChatPrivate(chat) && canStartVideoCalls(chat),
-        );
+        return this.chatPredicate(chatId, (chat) => canStartVideoCalls(chat));
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
@@ -5861,6 +5861,41 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    endVideoCallOnBridge(authToken: string) {
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+        return fetch(`${this.config.videoBridgeUrl}/room/end_meeting`, {
+            method: "POST",
+            headers: headers,
+        }).then((res) => {
+            if (!res.ok) {
+                console.error(`Unable to get end meeting: ${res.status}, ${res.statusText}`);
+            }
+        });
+    }
+
+    endVideoCall(chatId: ChatIdentifier) {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId,
+                accessTokenType: { kind: "join_video_call" }, // TODO - this should have it's own token type really
+                localUserIndex,
+            })
+                .then((token) => {
+                    if (token === undefined) {
+                        throw new Error("Didn't get an access token");
+                    }
+                    return token;
+                })
+                .then((token) => this.endVideoCallOnBridge(token));
+        });
+    }
+
     getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
@@ -5869,6 +5904,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
+
         return this.getLocalUserIndex(chat).then((localUserIndex) => {
             return this.sendRequest({
                 kind: "getAccessToken",
@@ -5881,7 +5917,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         throw new Error("Didn't get an access token");
                     }
                     console.log("TOKEN: ", token);
-                    performance.mark("oc_token");
                     return token;
                 })
                 .then((token) => this.getRoomAccessToken(token));
@@ -6322,8 +6357,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     // **** End of Communities stuff
-
     diamondDurationToMs = diamondDurationToMs;
+    swapRestricted(): boolean {
+        return featureRestricted(this._userLocation, "swap");
+    }
 
     /**
      * Reactive state provided in the form of svelte stores

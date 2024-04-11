@@ -21,6 +21,7 @@
     export let user: CreatedUser;
     export let senderId: string;
     export let msg: Message;
+    export let timestamp: bigint;
 
     let crypto = msg.content.kind === "crypto_content";
 
@@ -85,6 +86,7 @@
                 pinned
                 {senderId}
                 {fill}
+                {timestamp}
                 failed={false}
                 messageContext={{ chatId }}
                 edited={msg.edited}

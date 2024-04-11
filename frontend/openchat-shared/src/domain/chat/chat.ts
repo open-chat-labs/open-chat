@@ -75,7 +75,10 @@ export type VideoCallContent = {
     kind: "video_call_content";
     participants: VideoCallParticipant[];
     ended?: bigint;
+    callType: VideoCallType;
 };
+
+export type VideoCallType = "broadcast" | "default";
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";

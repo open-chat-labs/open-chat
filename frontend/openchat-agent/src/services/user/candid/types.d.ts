@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'pin' : [] | [string],
@@ -29,7 +30,9 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null };
+  { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -776,6 +779,10 @@ export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
+export type GetBtcAddressResponse = { 'Success' : string } |
+  { 'InternalError' : string };
+export type GetCachedBtcAddressResponse = { 'NotFound' : null } |
+  { 'Success' : string };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -1731,6 +1738,11 @@ export interface ReserveP2PSwapSuccess {
   'content' : P2PSwapContent,
   'created_by' : UserId,
 }
+export interface RetrieveBtcArgs { 'address' : string, 'amount' : bigint }
+export type RetrieveBtcResponse = { 'ApproveError' : string } |
+  { 'Success' : bigint } |
+  { 'RetrieveBtcError' : string } |
+  { 'InternalError' : string };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1973,6 +1985,7 @@ export interface StartVideoCallArgs {
   'max_duration' : [] | [Milliseconds],
   'initiator_display_name' : [] | [string],
   'message_id' : MessageId,
+  'call_type' : VideoCallType,
 }
 export type StartVideoCallResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
@@ -2264,12 +2277,18 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
-export interface VideoCall { 'message_index' : MessageIndex }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : VideoCall };
@@ -2340,6 +2359,11 @@ export interface _SERVICE {
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'get_btc_address' : ActorMethod<[EmptyArgs], GetBtcAddressResponse>,
+  'get_cached_btc_address' : ActorMethod<
+    [EmptyArgs],
+    GetCachedBtcAddressResponse
+  >,
   'hot_group_exclusions' : ActorMethod<
     [HotGroupExclusionsArgs],
     HotGroupExclusionsResponse
@@ -2366,6 +2390,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
+  'retrieve_btc' : ActorMethod<[RetrieveBtcArgs], RetrieveBtcResponse>,
   'save_crypto_account' : ActorMethod<
     [NamedAccount],
     SaveCryptoAccountResponse
@@ -2423,3 +2448,5 @@ export interface _SERVICE {
     WithdrawCryptoResponse
   >,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

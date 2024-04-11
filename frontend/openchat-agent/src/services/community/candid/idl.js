@@ -205,7 +205,14 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -336,6 +343,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -1639,6 +1647,7 @@ export const idlFactory = ({ IDL }) => {
     'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
+    'call_type' : VideoCallType,
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,

@@ -211,9 +211,14 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'joined' : TimestampMillis,
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
