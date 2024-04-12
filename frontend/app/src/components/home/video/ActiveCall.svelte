@@ -167,6 +167,9 @@
                     if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                         askedToSpeak = false;
                         denied = !ev.data.approved;
+                        if (ev.data.approved) {
+                            client.joinVideoCall(chat.id, BigInt(messageId));
+                        }
                     }
                 }
             });
@@ -211,7 +214,7 @@
 
             activeVideoCall.setCall(chat.id, call);
 
-            if (joining) {
+            if (joining && callType === "default") {
                 await client.joinVideoCall(chat.id, BigInt(messageId));
             }
         } catch (err) {
