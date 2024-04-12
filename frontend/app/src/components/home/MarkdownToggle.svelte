@@ -6,14 +6,15 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-
-    let on = false;
+    import { useBlockLevelMarkdown } from "../../stores/settings";
 </script>
 
 <div class="toggle">
     <TooltipWrapper position={"top"} align={"middle"}>
-        <div on:click={() => (on = !on)} slot="target">
-            {#if on}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div on:click={() => useBlockLevelMarkdown.toggle()} slot="target">
+            {#if $useBlockLevelMarkdown}
                 <Markdown size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
                 <MarkdownOutline size={$iconSize} color={"var(--icon-txt)"} />

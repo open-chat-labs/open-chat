@@ -74,7 +74,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = chat.id;
-    let md = false;
+    let containsMarkdown = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -121,7 +121,7 @@
                     inp.textContent = text;
                     // TODO - figure this out
                     // setCaretToEnd();
-                    md = containsMarkdown(text);
+                    containsMarkdown = detectMarkdown(text);
                 }
             }
         }
@@ -177,7 +177,7 @@
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
-        md = containsMarkdown(inputContent);
+        containsMarkdown = detectMarkdown(inputContent);
     }
 
     function uptoCaret(
@@ -504,17 +504,16 @@
         showEmojiSearch = false;
     }
 
-    function containsMarkdown(text: string | null) {
+    function detectMarkdown(text: string | null) {
         if (!text) return false;
 
-        // a few regexes to detect various block level markdown elements
+        // a few regexes to detect various block level markdown elements (possibly incomplete)
         const headerRegex = /^(?:\#{1,6}\s+)/m;
         const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
         const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
         const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
         const regexList = [headerRegex, tableRegex, bulletedListRegex, numberedListRegex];
         const result = regexList.some((regex) => regex.test(text));
-        console.log("Contains markdown: ", result);
         return result;
     }
 </script>
@@ -590,7 +589,7 @@
                         on:input={onInput}
                         on:keypress={keyPress} />
 
-                    {#if md}
+                    {#if containsMarkdown}
                         <MarkdownToggle />
                     {/if}
                 </div>
