@@ -923,6 +923,7 @@ export class CommunityClient extends CandidService {
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
                 .then((resp) => {

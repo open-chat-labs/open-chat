@@ -36,6 +36,7 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { translatable } from "../../actions/translatable";
     import MarkdownToggle from "./MarkdownToggle.svelte";
+    import { useBlockLevelMarkdown } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -113,6 +114,7 @@
                     restoreSelection();
                 }
                 previousEditingEvent = editingEvent;
+                containsMarkdown = detectMarkdown(inp.textContent);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
@@ -280,7 +282,7 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[], boolean] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
@@ -301,7 +303,7 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned];
+        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
     }
 
     /**

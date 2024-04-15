@@ -247,6 +247,7 @@ export function createMessage(
     userId: string,
     messageIndex: number,
     content: MessageContent,
+    blockLevelMarkdown: boolean,
     replyingTo: ReplyContext | undefined,
     forwarded: boolean,
 ): Message {
@@ -262,6 +263,7 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
+        blockLevelMarkdown,
     };
 }
 

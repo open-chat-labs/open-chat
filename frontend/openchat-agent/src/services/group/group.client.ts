@@ -439,7 +439,9 @@ export class GroupClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
+
             return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [

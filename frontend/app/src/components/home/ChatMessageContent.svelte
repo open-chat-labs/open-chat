@@ -45,10 +45,19 @@
     export let intersecting: boolean;
     export let failed: boolean;
     export let timestamp: bigint | undefined = undefined;
+    export let blockLevelMarkdown: boolean;
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} on:removePreview />
+    <TextContent
+        {blockLevelMarkdown}
+        {me}
+        {fill}
+        {truncate}
+        {pinned}
+        {content}
+        {edited}
+        on:removePreview />
 {:else if content.kind === "image_content"}
     <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}

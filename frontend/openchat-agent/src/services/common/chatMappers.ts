@@ -486,6 +486,7 @@ export function message(candid: ApiMessage): Message {
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
         thread: optional(candid.thread_summary, threadSummary),
+        blockLevelMarkdown: true,
     };
 }
 
@@ -2798,8 +2799,13 @@ export function acceptP2PSwapResponse(
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
     if ("PinRequired" in candid) return { kind: "pin_required" };
-    if ("PinIncorrect" in candid) return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
-    if ("TooManyFailedPinAttempts" in candid) return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+    if ("PinIncorrect" in candid)
+        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+    if ("TooManyFailedPinAttempts" in candid)
+        return {
+            kind: "too_main_failed_pin_attempts",
+            next_retry_in_ms: candid.TooManyFailedPinAttempts,
+        };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);

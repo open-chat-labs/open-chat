@@ -6,7 +6,6 @@ import type {
     ApiChatInList,
     ApiChatMessagesRead,
     ApiMarkReadArgs,
-    ApiSendMessageArgs,
     ApiSendMessageWithTransferToChannelArgs,
     ApiSendMessageWithTransferToGroupArgs,
     UserService,
@@ -539,10 +538,16 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
-        pin: string | undefined,        
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(chatId, event, messageFilterFailed, threadRootMessageIndex, pin)
+        return this.sendMessageToBackend(
+            chatId,
+            event,
+            messageFilterFailed,
+            threadRootMessageIndex,
+            pin,
+        )
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -571,7 +576,7 @@ export class UserClient extends CandidService {
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
-            const req: ApiSendMessageArgs = {
+            const req = {
                 content: apiMessageContent(newContent),
                 recipient: Principal.fromText(chatId.userId),
                 message_id: event.event.messageId,
@@ -584,6 +589,7 @@ export class UserClient extends CandidService {
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 pin: apiOptional(identity, pin),
                 correlation_id: generateUint64(),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
                 sendMessageResponse(resp, event.event.sender, chatId.userId),
@@ -1167,7 +1173,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        deleteMessage: boolean,        
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
@@ -1261,7 +1267,12 @@ export class UserClient extends CandidService {
         );
     }
 
-    acceptP2PSwap(userId: string, threadRootMessageIndex: number | undefined, messageId: bigint, pin: string | undefined): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        userId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        pin: string | undefined,
+    ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.userService.accept_p2p_swap({
                 user_id: Principal.fromText(userId),

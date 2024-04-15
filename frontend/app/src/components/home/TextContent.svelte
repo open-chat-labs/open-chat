@@ -20,6 +20,7 @@
     export let edited: boolean;
     export let fill: boolean;
     export let me: boolean;
+    export let blockLevelMarkdown: boolean;
 
     $: expanded = !$lowBandwidth && $renderPreviews;
     $: text = truncateText(content.text);
@@ -48,7 +49,7 @@
     }
 </script>
 
-<Markdown inline={false} suppressLinks={pinned} {text} />
+<Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
 {#if edited}
     <span class="edited-msg">({$_("edited")})</span>
 {/if}

@@ -95,7 +95,8 @@
                 {me}
                 {intersecting}
                 myUserId={user.userId}
-                content={msg.content} />
+                content={msg.content}
+                blockLevelMarkdown={msg.blockLevelMarkdown} />
         </div>
     </IntersectionObserver>
 </div>

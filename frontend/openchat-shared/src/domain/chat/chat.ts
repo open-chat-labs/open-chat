@@ -607,6 +607,7 @@ export type Message = {
     forwarded: boolean;
     deleted: boolean;
     thread?: ThreadSummary;
+    blockLevelMarkdown: boolean;
 };
 
 export type ThreadSummary = {
@@ -1589,7 +1590,7 @@ export type SendMessageResponse =
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
     | DuplicateMessageId
-    | PinRequired 
+    | PinRequired
     | PinIncorrect
     | TooManyFailedPinAttempts;
 
@@ -1696,16 +1697,16 @@ export type DuplicateMessageId = {
 };
 
 export type PinRequired = {
-    kind: "pin_required"; 
+    kind: "pin_required";
 };
 
 export type PinIncorrect = {
-    kind: "pin_incorrect"; 
+    kind: "pin_incorrect";
     next_retry_in_ms: bigint;
 };
 
 export type TooManyFailedPinAttempts = {
-    kind: "too_main_failed_pin_attempts"; 
+    kind: "too_main_failed_pin_attempts";
     next_retry_in_ms: bigint;
 };
 
@@ -2112,7 +2113,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
-    | PinRequired 
+    | PinRequired
     | PinIncorrect
     | TooManyFailedPinAttempts
     | { kind: "internal_error"; text: string };
