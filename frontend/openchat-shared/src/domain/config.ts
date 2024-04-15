@@ -18,6 +18,7 @@ export type AgentConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
+    signInWithEmailCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };

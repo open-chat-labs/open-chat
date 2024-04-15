@@ -6,6 +6,7 @@ export * from "./community";
 export * from "./crypto";
 export * from "./data";
 export * from "./dexes";
+export * from "./email";
 export * from "./error";
 export * from "./events";
 export * from "./faq";
