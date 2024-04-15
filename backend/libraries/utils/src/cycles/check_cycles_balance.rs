@@ -24,7 +24,7 @@ pub async fn send_low_balance_notification(canister_id: CanisterId) {
 }
 
 fn should_notify() -> bool {
-    let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
+    let cycles_balance = ic_cdk::api::canister_balance128();
     let freeze_threshold = get_approx_freeze_threshold_cycles();
 
     cycles_balance < max(2 * freeze_threshold, MIN_CYCLES_BALANCE)

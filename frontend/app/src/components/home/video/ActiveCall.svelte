@@ -291,10 +291,12 @@
 
     export function hangup() {
         if ($activeVideoCall?.call) {
-            const present = $activeVideoCall.call.participantCounts().present;
-            if (present === 1) {
-                // I must be the last person left in the call
-                client.endVideoCall($activeVideoCall.chatId);
+            if ($hasPresence) {
+                const present = $activeVideoCall.call.participantCounts().present;
+                if (present === 1) {
+                    // I must be the last person left in the call
+                    client.endVideoCall($activeVideoCall.chatId);
+                }
             }
 
             // this will trigger the left-meeting event which will in turn end the call
