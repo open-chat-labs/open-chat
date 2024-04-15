@@ -67,6 +67,9 @@
     "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
   },
+  "sign_in_with_email": {
+    "ic": "zi2i7-nqaaa-aaaar-qaemq-cai"
+  },
   "sign_in_with_ethereum": {
     "ic": "2notu-qyaaa-aaaar-qaeha-cai"
   },
