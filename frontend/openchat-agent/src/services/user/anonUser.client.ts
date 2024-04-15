@@ -239,6 +239,8 @@ export class AnonUserClient {
         _messageContext: MessageContext,
         _messageId: bigint,
         _transfer: PendingCryptocurrencyTransfer,
+        _decimals: number,
+        _pin: string | undefined,
     ): Promise<TipMessageResponse> {
         throw new AnonymousOperationError();
     }
@@ -365,6 +367,7 @@ export class AnonUserClient {
 
     reportMessage(
         _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
         _messageId: bigint,
         _deleteMessage: boolean,
     ): Promise<boolean> {
@@ -399,7 +402,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(_userId: string, _threadRootMessageIndex: number | undefined, _messageId: bigint, _pin: string | undefined): Promise<AcceptP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 

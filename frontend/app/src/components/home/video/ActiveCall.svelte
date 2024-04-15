@@ -6,6 +6,7 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
     import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
+    import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import {
         chatIdentifiersEqual,
         type ChatSummary,
@@ -15,7 +16,14 @@
         type AccessTokenType,
         NoMeetingToJoin,
     } from "openchat-client";
-    import { activeVideoCall, camera, microphone, sharing } from "../../../stores/video";
+    import {
+        activeVideoCall,
+        camera,
+        hasPresence,
+        microphone,
+        sharing,
+        type InterCallMessage,
+    } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import type { DailyThemeConfig } from "@daily-co/daily-js";
@@ -35,6 +43,11 @@
     import Typing from "../../Typing.svelte";
     import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
+    import Overlay from "../../Overlay.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import Button from "../../Button.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,6 +61,9 @@
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
+    let hostEnded = false;
+    let denied = false;
+    let askedToSpeak = false;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -101,13 +117,13 @@
     export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
         if (chat === undefined) return;
 
+        const isPublic = !client.isChatPrivate(chat);
+
         try {
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = { chat, join };
                 return;
             }
-
-            performance.mark("start");
 
             // close and threads we have open in the right panel
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
@@ -115,9 +131,10 @@
 
             activeVideoCall.joining(chat.id);
 
+            const callType = isPublic ? "broadcast" : "default";
             const accessType: AccessTokenType = join
                 ? { kind: "join_video_call" }
-                : { kind: "start_video_call" };
+                : { kind: "start_video_call", callType };
 
             // first we need to get access jwt from the oc backend
             const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
@@ -125,13 +142,9 @@
                 accessType,
             );
 
-            performance.mark("daily_token");
-            performance.measure("get_oc_token", "start", "oc_token");
-            performance.measure("get_daily_token", "oc_token", "daily_token");
-
             const call = daily.createFrame(iframeContainer, {
                 token,
-                activeSpeakerMode: $videoSpeakerView,
+                activeSpeakerMode: callType === "broadcast" ? true : $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
                 startVideoOff: !$videoCameraOn,
@@ -145,21 +158,46 @@
                 theme: getThemeConfig($currentTheme),
             });
 
-            performance.mark("daily_frame");
+            call.on("app-message", (ev: InterCallMessage | undefined) => {
+                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak") {
+                    activeVideoCall.captureAccessRequest(ev.data);
+                }
+                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak_response") {
+                    const me = call.participants().local.session_id;
+                    if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                        askedToSpeak = false;
+                        denied = !ev.data.approved;
+                    }
+                }
+            });
 
-            call.on("left-meeting", async () => {
+            // this only fires when *I* leave the meeting
+            call.on("left-meeting", () => {
+                // at this point I have already left the meeting and so participantCount will always report 0
+                // so we can't use it.
                 activeVideoCall.endCall();
+            });
+
+            // this fires when a remote participant leaves the meeting
+            call.on("participant-left", (ev) => {
+                // if the owner leaves, end the call
+                if (ev?.participant.owner && !ev.participant.local && isPublic) {
+                    hangup();
+                    hostEnded = true;
+                }
             });
 
             call.on("participant-updated", (ev) => {
                 if (ev?.participant.local) {
+                    console.log("Participant info: ", ev?.participant);
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
+                    hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
                     if (ev?.participant.user_name === $user.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
-                        activeVideoCall.endCall();
+                        hangup();
                     }
                 }
             });
@@ -171,20 +209,7 @@
 
             await call.join();
 
-            performance.mark("daily_joined");
-            performance.measure("get_daily_frame", "daily_token", "daily_frame");
-            performance.measure("get_daily_joined", "daily_frame", "daily_joined");
-
             activeVideoCall.setCall(chat.id, call);
-
-            performance.mark("end");
-            performance.measure("total", "start", "end");
-
-            console.log("OCToken: ", performance.getEntriesByName("get_oc_token"));
-            console.log("DailyToken: ", performance.getEntriesByName("get_daily_token"));
-            console.log("DailyFrame: ", performance.getEntriesByName("get_daily_frame"));
-            console.log("DailyJoined: ", performance.getEntriesByName("get_daily_joined"));
-            console.log("Total: ", performance.getEntriesByName("total"));
 
             if (joining) {
                 await client.joinVideoCall(chat.id, BigInt(messageId));
@@ -237,12 +262,46 @@
         }
     }
 
+    export function askToSpeak() {
+        // we need to send a message to all of the current admins on the call to and send our userId and our participantId
+        if ($activeVideoCall?.call) {
+            const participants = $activeVideoCall.call.participants();
+            const me = participants.local;
+            Object.entries(participants).map(([key, val]) => {
+                if (key !== "local") {
+                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
+                        askedToSpeak = true;
+                        $activeVideoCall?.call?.sendAppMessage(
+                            {
+                                kind: "ask_to_speak",
+                                participantId: me.session_id,
+                                userId: $user.userId,
+                            },
+                            val.session_id,
+                        );
+                    }
+                }
+            });
+        }
+    }
+
     function minimise() {
         activeVideoCall.setView("minimised");
     }
 
-    function hangup() {
-        activeVideoCall.endCall();
+    export function hangup() {
+        if ($activeVideoCall?.call) {
+            if ($hasPresence) {
+                const present = $activeVideoCall.call.participantCounts().present;
+                if (present === 1) {
+                    // I must be the last person left in the call
+                    client.endVideoCall($activeVideoCall.chatId);
+                }
+            }
+
+            // this will trigger the left-meeting event which will in turn end the call
+            $activeVideoCall.call.leave();
+        }
     }
 
     function clearSelection() {
@@ -256,6 +315,40 @@
 
 {#if confirmSwitchTo}
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
+{/if}
+
+{#if hostEnded}
+    <Overlay>
+        <ModalContent hideHeader>
+            <div class="host-ended" slot="body">
+                <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
+            </div>
+            <span slot="footer">
+                <ButtonGroup align={"center"}>
+                    <Button on:click={() => (hostEnded = false)}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
+
+{#if denied}
+    <Overlay>
+        <ModalContent hideHeader>
+            <div class="denied" slot="body">
+                <Translatable resourceKey={i18nKey("videoCall.denied")} />
+            </div>
+            <span slot="footer">
+                <ButtonGroup align={"center"}>
+                    <Button on:click={() => (denied = false)}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
 {/if}
 
 <div
@@ -300,6 +393,14 @@
                     {/if}
                 </div>
                 <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
+                    {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
+                        <HoverIcon on:click={askToSpeak}>
+                            <HandFrontLeft
+                                title={$_("videoCall.askToSpeak")}
+                                size={$iconSize}
+                                color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                        </HoverIcon>
+                    {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}
                         <ActiveCallThreadSummary
                             chatId={chat.chatId}
@@ -326,6 +427,12 @@
 <style lang="scss">
     :global(.video-call-container .section-header) {
         background-color: var(--daily-header);
+    }
+
+    .host-ended,
+    .denied {
+        @include font(bold, normal, fs-130);
+        text-align: center;
     }
 
     .video-call-container {

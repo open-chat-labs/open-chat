@@ -127,6 +127,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
+            principalUpdates: optional(r.principal_updates, identity),
         };
     }
 

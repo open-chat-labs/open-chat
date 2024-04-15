@@ -91,7 +91,7 @@
         swapId = undefined;
 
         client
-            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn - (BigInt(2) * detailsIn.transferFee))
+            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn - BigInt(2) * detailsIn.transferFee)
             .then((response) => {
                 if (response.length === 0) {
                     error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
@@ -145,7 +145,15 @@
 
         swapId = random128();
 
-        client.swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0]);
+        client.swapTokens(
+            swapId,
+            ledgerIn,
+            ledgerOut!,
+            amountIn,
+            minAmountOut,
+            bestQuote![0],
+            undefined, // TODO: PIN NUMBER
+        );
     }
 
     function dexName(dex: DexId): string {

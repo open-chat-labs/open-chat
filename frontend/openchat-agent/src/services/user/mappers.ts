@@ -448,6 +448,16 @@ export function sendMessageResponse(
     if ("DuplicateMessageId" in candid) {
         return { kind: "duplicate_message_id" };
     }
+    if ("PinRequired" in candid) {
+        return { kind: "pin_required" };
+    }
+    if ("PinIncorrect" in candid) {
+        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+    }
+    if ("TooManyFailedPinAttempts" in candid) {
+        return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -475,7 +485,7 @@ export async function getEventsResponse(
 
         return eventsSuccessResponse(candid.Success);
     }
-    if ("ChatNotFound" in candid) {
+    if ("ChatNotFound" in candid || "ThreadMessageNotFound" in candid) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDateV2" in candid) {
@@ -1110,6 +1120,24 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
             error: candid.InternalError,
         };
     }
+    if ("PinRequired" in candid) {
+        return { 
+            kind: "pin_required" 
+        };
+    }
+    if ("PinIncorrect" in candid) {
+        return { 
+            kind: "pin_incorrect", 
+            next_retry_in_ms: candid.PinIncorrect 
+        };
+    }
+    if ("TooManyFailedPinAttempts" in candid) {
+        return { 
+            kind: "too_main_failed_pin_attempts", 
+            next_retry_in_ms: candid.TooManyFailedPinAttempts 
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
 }
 
@@ -1175,5 +1203,15 @@ export function approveTransferResponse(
     if ("ApproveError" in candid) {
         return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
     }
+    if ("PinRequired" in candid) {
+        return { kind: "pin_required" };
+    }
+    if ("PinIncorrect" in candid) {
+        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+    }
+    if ("TooManyFailedPinAttempts" in candid) {
+        return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
 }

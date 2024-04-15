@@ -3,10 +3,12 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
+    'pin' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const Milliseconds = IDL.Nat64;
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -35,7 +37,10 @@ export const idlFactory = ({ IDL }) => {
     'Expired' : SwapStatusErrorExpired,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
+    'TooManyFailedPinAttempts' : Milliseconds,
+    'PinIncorrect' : Milliseconds,
     'UserNotInChannel' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
@@ -200,7 +205,14 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const VideoCall = IDL.Record({ 'message_index' : MessageIndex });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -281,7 +293,6 @@ export const idlFactory = ({ IDL }) => {
     'issuer_origin' : IDL.Text,
     'credential_type' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -332,6 +343,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -1632,8 +1644,10 @@ export const idlFactory = ({ IDL }) => {
     'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
     'initiator' : UserId,
+    'max_duration' : IDL.Opt(Milliseconds),
     'initiator_display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
+    'call_type' : VideoCallType,
   });
   const StartVideoCallResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,

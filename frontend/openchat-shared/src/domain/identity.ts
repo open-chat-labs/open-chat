@@ -12,6 +12,8 @@ export type CreateIdentityResponse =
           expiration: bigint;
       }
     | { kind: "already_registered" }
+    | { kind: "challenge_failed" }
+    | { kind: "challenge_required" }
     | { kind: "public_key_invalid" };
 
 export type CheckAuthPrincipalResponse =

@@ -96,6 +96,7 @@
                     isSuspectedBot: false,
                     diamondStatus: { kind: "inactive" },
                     moderationFlagsEnabled: 0,
+                    principalUpdates: undefined,
                 };
                 dispatch("createdUser", createdUser);
             }

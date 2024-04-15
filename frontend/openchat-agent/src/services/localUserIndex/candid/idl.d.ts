@@ -15,7 +15,8 @@ import {
     JoinChannelResponse,
     UserGroup,
     AccessTokenType,
-    AccessTokenResponse
+    AccessTokenResponse,
+    VideoCallType
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -32,7 +33,8 @@ export {
     JoinChannelResponse as ApiJoinChannelResponse,
     UserGroup as ApiUserGroup,
     AccessTokenResponse as ApiAccessTokenResponse,
-    AccessTokenType as ApiAccessTokenType
+    AccessTokenType as ApiAccessTokenType,
+    VideoCallType as ApiVideoCallType
 };
 
 export const idlFactory: IDL.InterfaceFactory;

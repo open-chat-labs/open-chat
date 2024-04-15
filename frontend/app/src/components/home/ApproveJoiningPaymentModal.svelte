@@ -76,11 +76,21 @@
         joining = true;
 
         const promise =
-            group.kind === "community" ? client.joinCommunity(group) : client.joinGroup(group);
+            group.kind === "community"
+                ? client.joinCommunity(
+                      group,
+                      undefined,
+                      undefined, // TODO: PIN NUMBER
+                  )
+                : client.joinGroup(
+                      group,
+                      undefined,
+                      undefined, // TODO: PIN NUMBER
+                  );
 
         promise
             .then((result) => {
-                switch (result) {
+                switch (result.kind) {
                     case "success":
                         error = undefined;
                         dispatch("joined");

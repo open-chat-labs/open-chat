@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
@@ -11,7 +12,9 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null };
+  { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -379,6 +382,7 @@ export type CurrentUserResponse = {
       'moderation_flags_enabled' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'principal_updates' : [] | [[number, number]],
       'suspension_details' : [] | [SuspensionDetails],
       'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
@@ -1682,12 +1686,18 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
-export interface VideoCall { 'message_index' : MessageIndex }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : VideoCall };
@@ -1792,3 +1802,5 @@ export interface _SERVICE {
   >,
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

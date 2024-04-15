@@ -74,6 +74,7 @@ import type {
     ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
     ApiVideoCallContent,
     ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
+    ApiVideoCallType,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -173,6 +174,7 @@ import type {
     GroupInviteCodeChange,
     VideoCallContent,
     JoinVideoCallResponse,
+    VideoCallType,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -660,7 +662,18 @@ function videoCallContent(candid: ApiVideoCallContent): VideoCallContent {
             userId: p.user_id.toString(),
             joined: p.joined,
         })),
+        callType: videoCallType(candid.call_type),
     };
+}
+
+function videoCallType(candid: ApiVideoCallType): VideoCallType {
+    if ("Default" in candid) {
+        return "default";
+    }
+    if ("Broadcast" in candid) {
+        return "broadcast";
+    }
+    throw new UnsupportedValueError("Unexpected ApiVideoCallTypye type received", candid);
 }
 
 function p2pSwapContent(candid: ApiP2PSwapContent): P2PSwapContent {
@@ -1810,6 +1823,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): Api
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal,
+    pin: string | undefined,
 ): WithdrawCryptoArgs {
     if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
         return {
@@ -1824,6 +1838,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     created: domain.createdAtNanos,
                 },
             },
+            pin: apiOptional(identity, pin),
         };
     } else {
         return {
@@ -1838,6 +1853,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     created: domain.createdAtNanos,
                 },
             },
+            pin: apiOptional(identity, pin),
         };
     }
 }
@@ -2780,6 +2796,10 @@ export function acceptP2PSwapResponse(
     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
+    if ("PinRequired" in candid) return { kind: "pin_required" };
+    if ("PinIncorrect" in candid) return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+    if ("TooManyFailedPinAttempts" in candid) return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);

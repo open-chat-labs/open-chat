@@ -823,14 +823,18 @@
         }
 
         return client
-            .joinGroup(group, credential)
+            .joinGroup(
+                group,
+                credential,
+                undefined, // TODO: PIN NUMBER
+            )
             .then((resp) => {
-                if (resp === "blocked") {
+                if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
-                } else if (resp === "gate_check_failed") {
+                } else if (resp.kind === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
-                } else if (resp === "failure") {
+                } else if (resp.kind !== "success") {
                     toastStore.showFailureToast(
                         i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
@@ -1099,7 +1103,9 @@
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:leaveGroup={triggerConfirm} />
+            on:leaveGroup={triggerConfirm}
+            on:askToSpeak
+            on:hangup />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel

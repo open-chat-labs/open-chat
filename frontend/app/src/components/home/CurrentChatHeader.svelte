@@ -27,6 +27,7 @@
     import Diamond from "../icons/Diamond.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -218,6 +219,8 @@
             on:showInviteGroupUsers
             on:leaveGroup />
     {/if}
+
+    <ActiveBroadcastSummary on:startVideoCall />
 </SectionHeader>
 
 <style lang="scss">
