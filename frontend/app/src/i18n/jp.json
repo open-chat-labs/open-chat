@@ -1075,6 +1075,7 @@
         "title": "ヒントを追加する"
     },
     "today": "今日",
+    "toggleBlockMarkdown": "ブロックレベルのマークダウンを切り替える",
     "toggleMuteNotificationsFailed": "通知の{operation}に失敗しました",
     "toggleMuteNotificationsSucceeded": "通知の{operation}に成功しました",
     "toggleTranslationEditMode": "翻訳修正の切り替え",

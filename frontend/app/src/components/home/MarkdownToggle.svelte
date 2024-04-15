@@ -22,7 +22,7 @@
         </div>
         <div let:position let:align slot="tooltip">
             <TooltipPopup {position} {align}>
-                <Translatable resourceKey={i18nKey("Toggle markdown")} />
+                <Translatable resourceKey={i18nKey("toggleBlockMarkdown")} />
             </TooltipPopup>
         </div>
     </TooltipWrapper>
