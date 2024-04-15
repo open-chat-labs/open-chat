@@ -189,7 +189,6 @@
 
             call.on("participant-updated", (ev) => {
                 if (ev?.participant.local) {
-                    console.log("Participant info: ", ev?.participant);
                     microphone.set(ev?.participant.tracks.audio.state !== "off");
                     camera.set(ev?.participant.tracks.video.state !== "off");
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
