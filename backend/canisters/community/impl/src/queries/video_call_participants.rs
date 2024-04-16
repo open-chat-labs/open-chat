@@ -19,7 +19,7 @@ fn video_call_participants_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     let Some(member) = channel.chat.members.get(&user_id) else {
-        return ChannelNotFound;
+        return UserNotInChannel;
     };
 
     if let Some(participants) = channel.chat.events.video_call_participants(
