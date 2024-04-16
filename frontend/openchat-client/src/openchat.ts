@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
+import { type Identity, SignIdentity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import DRange from "drange";
@@ -430,6 +430,8 @@ import {
     IdentityStorage,
     NoMeetingToJoin,
     featureRestricted,
+    buildDelegationIdentity,
+    toDer,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -600,6 +602,8 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private loadedAuthenticationIdentity(id: Identity) {
+        currentUser.set(anonymousUser());
+        chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
         this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
@@ -626,11 +630,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 identityProvider: this.buildAuthProviderUrl(authProvider),
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: this.config.iiDerivationOrigin,
-                onSuccess: () => {
-                    currentUser.set(anonymousUser());
-                    chatsInitialised.set(false);
-                    this.loadedAuthenticationIdentity(c.getIdentity());
-                },
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.identityState.set({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -5973,22 +5973,33 @@ export class OpenChat extends OpenChatAgentWorker {
     async signInWithEmailVerificationCode(
         email: string,
         code: string,
-        sessionKey: Uint8Array,
+        sessionKey: SignIdentity,
     ): Promise<SignInWithEmailVerificationCodeResponse> {
+        const sessionKeyDer = toDer(sessionKey);
         const submitCodeResponse = await this.sendRequest({
             kind: "submitEmailVerificationCode",
             email,
             code,
-            sessionKey,
+            sessionKey: sessionKeyDer,
         });
 
         if (submitCodeResponse.kind === "success") {
-            return await this.sendRequest({
+            const getDelegationResponse = await this.sendRequest({
                 kind: "getSignInWithEmailDelegation",
                 email,
-                sessionKey,
+                sessionKey: sessionKeyDer,
                 expiration: submitCodeResponse.expiration,
             });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    submitCodeResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
         } else {
             return submitCodeResponse;
         }

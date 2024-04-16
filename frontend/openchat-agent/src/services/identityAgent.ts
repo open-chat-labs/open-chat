@@ -1,7 +1,12 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { DerEncodedPublicKey, Identity, SignIdentity } from "@dfinity/agent";
-import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import type { CheckAuthPrincipalResponse, MigrateLegacyPrincipalResponse } from "openchat-shared";
+import type { Identity, SignIdentity } from "@dfinity/agent";
+import { DelegationIdentity } from "@dfinity/identity";
+import {
+    buildDelegationIdentity,
+    type CheckAuthPrincipalResponse,
+    type MigrateLegacyPrincipalResponse,
+    toDer,
+} from "openchat-shared";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
@@ -64,22 +69,11 @@ export class IdentityAgent {
             return undefined;
         }
 
-        const delegations = [
-            {
-                delegation: getDelegationResponse.delegation,
-                signature: getDelegationResponse.signature,
-            },
-        ];
-
-        const delegationChain = DelegationChain.fromDelegations(
-            delegations,
-            userKey.buffer as DerEncodedPublicKey,
+        return buildDelegationIdentity(
+            userKey,
+            sessionKey,
+            getDelegationResponse.delegation,
+            getDelegationResponse.signature,
         );
-
-        return DelegationIdentity.fromDelegation(sessionKey, delegationChain);
     }
-}
-
-function toDer(key: SignIdentity): Uint8Array {
-    return new Uint8Array(key.getPublicKey().toDer() as ArrayBuffer);
 }
