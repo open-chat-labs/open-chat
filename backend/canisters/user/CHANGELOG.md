@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1141](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1141-user)] - 2024-04-11
+
 ### Added
 
 - Add ability to deposit and withdraw BTC directly in your OC wallet ([#5617](https://github.com/open-chat-labs/open-chat/pull/5617))
