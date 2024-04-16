@@ -14,14 +14,15 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
-    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
-    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial,
-    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
-    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallPresence, VoteOperation,
+    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
+    VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -1607,13 +1608,24 @@ impl ChatEvents {
                 if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                     return if video_call.ended.is_none() {
                         if let Some(client) = event_store_client {
+                            let mut participants = 0;
+                            let mut hidden = 0;
+                            for p in video_call.participants.values() {
+                                if matches!(p.presence, VideoCallPresence::Hidden) {
+                                    hidden += 1;
+                                } else {
+                                    participants += 1;
+                                }
+                            }
+
                             client.push(
                                 EventBuilder::new("video_call_ended", now)
                                     .with_source(self.chat.canister_id().to_string(), true)
                                     .with_json_payload(&VideoCallEndedEventPayload {
                                         chat_type: self.chat.chat_type().to_string(),
                                         chat_id: self.anonymized_id.clone(),
-                                        participants: video_call.participants.len() as u32,
+                                        participants,
+                                        hidden,
                                         duration_secs: (now.saturating_sub(event.timestamp) / 1000) as u32,
                                     })
                                     .build(),
@@ -1646,8 +1658,15 @@ impl ChatEvents {
                     video_call
                         .participants
                         .entry(user_id)
-                        .and_modify(|e| e.presence = presence.clone())
-                        .or_insert(CallParticipantInternal { joined: now, presence });
+                        .and_modify(|e| {
+                            e.last_updated = Some(now);
+                            e.presence = presence.clone();
+                        })
+                        .or_insert(CallParticipantInternal {
+                            joined: now,
+                            last_updated: None,
+                            presence,
+                        });
 
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
@@ -1663,6 +1682,47 @@ impl ChatEvents {
 
     pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
         &self.video_call_in_progress
+    }
+
+    pub fn video_call_participants(
+        &self,
+        message_id: MessageId,
+        updated_since: TimestampMillis,
+        min_visible_event_index: EventIndex,
+    ) -> Option<VideoCallParticipants> {
+        let (message, _) = self.message_internal(min_visible_event_index, None, message_id.into())?;
+
+        if let MessageContentInternal::VideoCall(vc) = &message.content {
+            let mut participants = Vec::new();
+            let mut hidden = Vec::new();
+            let mut last_updated = 0;
+            for (u, p) in vc.participants.iter() {
+                let participant_last_updated = p.last_updated.unwrap_or(p.joined);
+                if participant_last_updated < updated_since {
+                    continue;
+                }
+
+                let participant = CallParticipant {
+                    user_id: *u,
+                    joined: p.joined,
+                };
+                if matches!(p.presence, VideoCallPresence::Hidden) {
+                    hidden.push(participant);
+                } else {
+                    participants.push(participant);
+                }
+                if participant_last_updated > last_updated {
+                    last_updated = participant_last_updated;
+                }
+            }
+            Some(VideoCallParticipants {
+                participants,
+                hidden,
+                last_updated,
+            })
+        } else {
+            None
+        }
     }
 
     fn events_list(

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `video_call_participants` endpoint ([#5684](https://github.com/open-chat-labs/open-chat/pull/5684))
+
 ### Changed
 
 - Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))

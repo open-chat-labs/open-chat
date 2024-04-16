@@ -1756,6 +1756,12 @@ type VideoCallUpdates = variant {
     SetToSome : VideoCall;
 };
 
+type VideoCallParticipants = record {
+    participants : vec CallParticipant;
+    hidden : vec CallParticipant;
+    last_updated : TimestampMillis;
+};
+
 type AccessTokenType = variant {
     StartVideoCall;
     StartVideoCallV2 : record {
@@ -1768,4 +1774,4 @@ type AccessTokenType = variant {
 type VideoCallType = variant {
     Broadcast;
     Default;
-}
+};
