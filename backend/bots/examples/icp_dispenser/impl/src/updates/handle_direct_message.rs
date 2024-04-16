@@ -45,6 +45,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_id: None,
             content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
             message_id: None,
+            block_level_markdown: None,
         }],
     })
 }

@@ -182,6 +182,8 @@ pub struct MessageInternal {
     pub thread_summary: Option<ThreadSummaryInternal>,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub forwarded: bool,
+    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
+    pub block_level_markdown: bool,
 }
 
 impl MessageInternal {
@@ -205,6 +207,7 @@ impl MessageInternal {
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
+            block_level_markdown: self.block_level_markdown,
         }
     }
 
@@ -618,6 +621,7 @@ mod tests {
             deleted_by: None,
             thread_summary: None,
             forwarded: false,
+            block_level_markdown: false,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
@@ -668,6 +672,7 @@ mod tests {
                 latest_event_timestamp: 1,
             }),
             forwarded: true,
+            block_level_markdown: false,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();

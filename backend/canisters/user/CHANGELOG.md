@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+
 ## [[2.0.1141](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1141-user)] - 2024-04-11
 
 ### Added

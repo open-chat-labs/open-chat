@@ -15,13 +15,13 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
-    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VoteOperation,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -42,6 +42,13 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn set_block_level_markdown(&mut self, cutoff: TimestampMillis) {
+        self.main.set_block_level_markdown(cutoff);
+        for thread in self.threads.values_mut() {
+            thread.set_block_level_markdown(cutoff);
+        }
+    }
+
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -114,19 +121,6 @@ impl ChatEvents {
         self.last_updated_timestamps.iter()
     }
 
-    pub fn iter_all_events(&self) -> impl Iterator<Item = (&EventWrapperInternal<ChatEventInternal>, bool)> {
-        self.main
-            .iter(None, true, EventIndex::default())
-            .map(|e| (e, false))
-            .chain(
-                self.threads
-                    .values()
-                    .flat_map(|t| t.iter(None, true, EventIndex::default()))
-                    .map(|e| (e, true)),
-            )
-            .filter_map(|(e, t)| if let EventOrExpiredRangeInternal::Event(ev) = e { Some((ev, t)) } else { None })
-    }
-
     pub fn push_message<R: Runtime + Send + 'static>(
         &mut self,
         args: PushMessageArgs,
@@ -172,6 +166,7 @@ impl ChatEvents {
             deleted_by: None,
             thread_summary: None,
             forwarded: args.forwarded,
+            block_level_markdown: args.block_level_markdown,
         };
 
         add_to_metrics(
@@ -798,6 +793,7 @@ impl ChatEvents {
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: true,
+                            block_level_markdown: false,
                             correlation_id: 0,
                             now,
                         },
@@ -1145,6 +1141,7 @@ impl ChatEvents {
                     }),
                     forwarded: false,
                     sender_is_bot: true,
+                    block_level_markdown: false,
                     correlation_id: 0,
                     now,
                 },
@@ -1778,6 +1775,7 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub sender_is_bot: bool,
+    pub block_level_markdown: bool,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }

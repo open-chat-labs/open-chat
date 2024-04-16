@@ -563,6 +563,7 @@ type Message = record {
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
+    block_level_markdown : bool;
 };
 
 type MessageEventWrapper = record {

@@ -58,6 +58,7 @@ mod process_pending_actions {
                         caption: None,
                     }),
                     message_id: None,
+                    block_level_markdown: None,
                 };
                 PendingAction::SendMessages(recipient, vec![message])
             }

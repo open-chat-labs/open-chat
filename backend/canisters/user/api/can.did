@@ -7,6 +7,7 @@ type SendMessageV2Args = record {
     content : MessageContentInitial;
     replies_to : opt ReplyContext;
     forwarding : bool;
+    block_level_markdown : bool;
     message_filter_failed : opt nat64;
     pin : opt text;
     correlation_id : nat64;
@@ -632,6 +633,7 @@ type SendMessageWithTransferToChannelArgs = record {
     sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
+    block_level_markdown : bool;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
@@ -676,6 +678,7 @@ type SendMessageWithTransferToGroupArgs = record {
     sender_display_name : opt text;
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
+    block_level_markdown : bool;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
     pin : opt text;

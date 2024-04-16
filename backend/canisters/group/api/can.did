@@ -9,6 +9,7 @@ type SendMessageV2Args = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    block_level_markdown : bool;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
     correlation_id : nat64;

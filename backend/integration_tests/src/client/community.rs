@@ -146,6 +146,7 @@ pub mod happy_path {
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
+                block_level_markdown: false,
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
                 message_filter_failed: None,
