@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
 - Store presence kind of each video call participant ([#5682](https://github.com/open-chat-labs/open-chat/pull/5682))
 
+### Fixed
+
+- Fix payments which are failing due to being too old ([#5681](https://github.com/open-chat-labs/open-chat/pull/5681))
+
 ## [[2.0.1139](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1139-community)] - 2024-04-10
 
 ### Changed
