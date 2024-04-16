@@ -68,13 +68,16 @@
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
   },
   "sign_in_with_email": {
-    "ic": "zi2i7-nqaaa-aaaar-qaemq-cai"
+    "ic": "zi2i7-nqaaa-aaaar-qaemq-cai",
+    "ic_test": "zi2i7-nqaaa-aaaar-qaemq-cai"
   },
   "sign_in_with_ethereum": {
-    "ic": "2notu-qyaaa-aaaar-qaeha-cai"
+    "ic": "2notu-qyaaa-aaaar-qaeha-cai",
+    "ic_test": "2notu-qyaaa-aaaar-qaeha-cai"
   },
   "sign_in_with_solana": {
-    "ic": "2kpva-5aaaa-aaaar-qaehq-cai"
+    "ic": "2kpva-5aaaa-aaaar-qaehq-cai",
+    "ic_test": "2kpva-5aaaa-aaaar-qaehq-cai"
   },
   "sns_governance": {
     "ic": "2jvtu-yqaaa-aaaaq-aaama-cai",
