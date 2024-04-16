@@ -16,16 +16,12 @@ pub struct Args {
     pub sender_display_name: Option<String>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
-    #[serde(default = "bool_true")]
+    #[serde(default)]
     pub block_level_markdown: bool,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
     pub pin: Option<String>,
-}
-
-fn bool_true() -> bool {
-    true
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
