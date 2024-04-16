@@ -39,6 +39,7 @@ async fn main() {
         }
         CanisterName::Registry => upgrade_registry_canister(identity, opts.url, opts.registry, opts.version).await,
         CanisterName::Translations => upgrade_translations_canister(identity, opts.url, opts.translations, opts.version).await,
+        CanisterName::SignInWithEmail => unimplemented!(),
         CanisterName::StorageBucket => {
             upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
