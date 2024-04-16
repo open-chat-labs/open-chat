@@ -1,0 +1,57 @@
+type Delegation = record { pubkey : vec nat8; expiration : nat64 };
+type EncryptedAwsEmailSenderConfig = record {
+  region : text;
+  secret_key_encrypted : text;
+  target_arn : text;
+  access_key_encrypted : text;
+};
+type EncryptedEmailSenderConfig = variant {
+  Aws : EncryptedAwsEmailSenderConfig;
+};
+type GenerateVerificationCodeArgs = record { email : text };
+type GenerateVerificationCodeResponse = variant {
+  Blocked : nat64;
+  EmailInvalid;
+  FailedToSendEmail : text;
+  Success;
+};
+type GetDelegationArgs = record {
+  session_key : vec nat8;
+  email : text;
+  expiration : nat64;
+};
+type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
+type InitArgs = record { test_mode : bool };
+type InitOrUpgradeArgs = variant { Upgrade : UpgradeArgs; Init : InitArgs };
+type SignedDelegation = record {
+  signature : vec nat8;
+  delegation : Delegation;
+};
+type SubmitVerificationCodeArgs = record {
+  session_key : vec nat8;
+  code : text;
+  email : text;
+  max_time_to_live : opt nat64;
+};
+type SubmitVerificationCodeResponse = variant {
+  NotFound;
+  Success : SubmitVerificationCodeSuccess;
+  IncorrectCode;
+};
+type SubmitVerificationCodeSuccess = record {
+  user_key : vec nat8;
+  expiration : nat64;
+};
+type UpgradeArgs = record {
+  email_sender_config : opt EncryptedEmailSenderConfig;
+};
+service : {
+  generate_verification_code : (GenerateVerificationCodeArgs) -> (
+      GenerateVerificationCodeResponse,
+    );
+  get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+  rsa_public_key : () -> (opt text) query;
+  submit_verification_code : (SubmitVerificationCodeArgs) -> (
+      SubmitVerificationCodeResponse,
+    );
+}

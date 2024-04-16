@@ -19,6 +19,7 @@ export type AgentConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
+    signInWithEmailCanister: string;
     groupInvite?: GroupInvite;
     logger: Logger;
 };

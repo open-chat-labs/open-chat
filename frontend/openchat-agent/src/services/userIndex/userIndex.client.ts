@@ -391,7 +391,7 @@ export class UserIndexClient extends CandidService {
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         const chatFees = fees.find((f) => f.token === "CHAT");
         const icpFees = fees.find((f) => f.token === "ICP");
-        
+
         if (chatFees === undefined || icpFees === undefined) {
             return Promise.resolve(false);
         }
@@ -409,8 +409,8 @@ export class UserIndexClient extends CandidService {
                     three_months: icpFees.threeMonths,
                     one_year: icpFees.oneYear,
                     lifetime: icpFees.lifetime,
-                }
-            }
+                },
+            },
         };
 
         return this.handleQueryResponse(
@@ -421,9 +421,10 @@ export class UserIndexClient extends CandidService {
 
     reportedMessages(userId: string | undefined): Promise<string> {
         return this.handleQueryResponse(
-            () => this.userIndexService.reported_messages({
-                user_id: userId !== undefined ? [Principal.fromText(userId)] : []
-            }),
+            () =>
+                this.userIndexService.reported_messages({
+                    user_id: userId !== undefined ? [Principal.fromText(userId)] : [],
+                }),
             (res) => res.Success.json,
         );
     }
