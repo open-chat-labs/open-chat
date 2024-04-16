@@ -151,6 +151,11 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
+import type { GetDelegationResponse } from "./identity";
+import type {
+    GenerateEmailVerificationCodeResponse,
+    SubmitEmailVerificationCodeResponse,
+} from "./email";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -337,7 +342,10 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
-    | SetPrincipalMigrationJobEnabled;
+    | SetPrincipalMigrationJobEnabled
+    | GenerateEmailVerificationsCode
+    | SubmitEmailVerificationsCode
+    | GetSignInWithEmailDelegation;
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -1128,6 +1136,25 @@ type SetPrincipalMigrationJobEnabled = {
     kind: "setPrincipalMigrationJobEnabled";
 };
 
+type GenerateEmailVerificationsCode = {
+    email: string;
+    kind: "generateEmailVerificationCode";
+};
+
+type SubmitEmailVerificationsCode = {
+    email: string;
+    code: string;
+    sessionKey: Uint8Array;
+    kind: "submitEmailVerificationCode";
+};
+
+type GetSignInWithEmailDelegation = {
+    email: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getSignInWithEmailDelegation";
+};
+
 /**
  * Worker error type
  */
@@ -1187,7 +1214,6 @@ export type WorkerResponseInner =
     | UnpinChatResponse
     | PinChatResponse
     | ArchiveChatResponse
-    | ArchiveChatResponse
     | ToggleMuteNotificationResponse
     | GroupChatSummary
     | StorageStatus
@@ -1202,7 +1228,6 @@ export type WorkerResponseInner =
     | UserLookup
     | UsersResponse
     | CurrentUserResponse
-    | EventsResponse<ChatEvent>
     | FreezeGroupResponse
     | UnfreezeGroupResponse
     | DeleteFrozenGroupResponse
@@ -1270,7 +1295,9 @@ export type WorkerResponseInner =
     | ProposedResponse
     | PendingDeploymentResponse
     | JoinVideoCallResponse
-    | UpdateBtcBalanceResponse;
+    | UpdateBtcBalanceResponse
+    | GenerateEmailVerificationCodeResponse
+    | SubmitEmailVerificationCodeResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1885,4 +1912,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateBtcBalanceResponse
     : T extends SetPrincipalMigrationJobEnabled
     ? void
+    : T extends GenerateEmailVerificationsCode
+    ? GenerateEmailVerificationCodeResponse
+    : T extends SubmitEmailVerificationsCode
+    ? SubmitEmailVerificationCodeResponse
+    : T extends GetSignInWithEmailDelegation
+    ? GetDelegationResponse
     : never;

@@ -42,19 +42,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn mark_video_call_ended_if_message_deleted<R: Runtime + Send + 'static>(&mut self, now: TimestampMillis) {
-        if let Some(message_index) = self.video_call_in_progress.value.as_ref().map(|v| v.message_index) {
-            let mark_ended = self
-                .main_events_reader()
-                .message_internal(message_index.into())
-                .map_or(true, |m| m.deleted_by.is_some());
-
-            if mark_ended {
-                self.end_video_call::<R>(message_index.into(), now, None);
-            }
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,

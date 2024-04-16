@@ -385,6 +385,8 @@ import type {
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
+    GenerateEmailVerificationCodeResponse,
+    SignInWithEmailVerificationCodeResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5957,6 +5959,34 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
             .then((_) => true)
             .catch(() => false);
+    }
+
+    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
+        return this.sendRequest({ kind: "generateEmailVerificationCode", email });
+    }
+
+    async signInWithEmailVerificationCode(
+        email: string,
+        code: string,
+        sessionKey: Uint8Array,
+    ): Promise<SignInWithEmailVerificationCodeResponse> {
+        const submitCodeResponse = await this.sendRequest({
+            kind: "submitEmailVerificationCode",
+            email,
+            code,
+            sessionKey,
+        });
+
+        if (submitCodeResponse.kind === "success") {
+            return await this.sendRequest({
+                kind: "getSignInWithEmailDelegation",
+                email,
+                sessionKey,
+                expiration: submitCodeResponse.expiration,
+            });
+        } else {
+            return submitCodeResponse;
+        }
     }
 
     // **** Communities Stuff

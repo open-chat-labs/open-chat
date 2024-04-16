@@ -1,9 +1,8 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use event_store_producer_cdk_runtime::CdkRuntime;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
@@ -23,11 +22,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        let now = state.env.now();
-        for chat in state.data.direct_chats.iter_mut() {
-            chat.events.mark_video_call_ended_if_message_deleted::<CdkRuntime>(now);
-        }
-    });
 }
