@@ -22,10 +22,11 @@ export type OpenChatConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
+    signInWithEmailCanister: string;
     i18nFormatter: MessageFormatter;
     logger: Logger;
     websiteVersion: string;
     rollbarApiKey: string;
     env: string;
-    groupInvite?: GroupInvite,
+    groupInvite?: GroupInvite;
 };

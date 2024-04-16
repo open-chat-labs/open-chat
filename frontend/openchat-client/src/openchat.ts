@@ -241,6 +241,7 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
+    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -384,6 +385,8 @@ import type {
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
+    GenerateEmailVerificationCodeResponse,
+    SignInWithEmailVerificationCodeResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -3733,9 +3736,27 @@ export class OpenChat extends OpenChatAgentWorker {
             ascending: false,
             threadRootMessageIndex,
             latestKnownUpdate: serverChat.lastUpdated,
-        }).catch(() => {
-            console.warn("Failed to load event from notification");
-        });
+        })
+            .then((resp) => {
+                if (resp === "events_failed") return resp;
+                if (!this.isChatPrivate(serverChat)) return resp;
+
+                const ev = resp.events.find((e) => e.index === eventIndex);
+                if (ev !== undefined) {
+                    if (
+                        ev.event.kind === "message" &&
+                        ev.event.content.kind === "video_call_content"
+                    ) {
+                        this.dispatchEvent(
+                            new RemoteVideoCallStartedEvent(chatId, ev.event.sender),
+                        );
+                    }
+                }
+                return resp;
+            })
+            .catch(() => {
+                console.warn("Failed to load event from notification");
+            });
     }
 
     private handleConfirmedMessageSentByOther(
@@ -5783,7 +5804,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
-            } else if (!chat.public) {
+            } else if (this.isChatPrivate(chat)) {
                 userIds = this._liveState.currentChatMembers
                     .map((m) => m.userId)
                     .filter((id) => id !== me);
@@ -5943,6 +5964,34 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
             .then((_) => true)
             .catch(() => false);
+    }
+
+    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
+        return this.sendRequest({ kind: "generateEmailVerificationCode", email });
+    }
+
+    async signInWithEmailVerificationCode(
+        email: string,
+        code: string,
+        sessionKey: Uint8Array,
+    ): Promise<SignInWithEmailVerificationCodeResponse> {
+        const submitCodeResponse = await this.sendRequest({
+            kind: "submitEmailVerificationCode",
+            email,
+            code,
+            sessionKey,
+        });
+
+        if (submitCodeResponse.kind === "success") {
+            return await this.sendRequest({
+                kind: "getSignInWithEmailDelegation",
+                email,
+                sessionKey,
+                expiration: submitCodeResponse.expiration,
+            });
+        } else {
+            return submitCodeResponse;
+        }
     }
 
     // **** Communities Stuff

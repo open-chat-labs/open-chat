@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1136-local_group_index)] - 2024-04-10
+
 ### Added
 
 - Push `group/community_created` events ([#5525](https://github.com/open-chat-labs/open-chat/pull/5525))
