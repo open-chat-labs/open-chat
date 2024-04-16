@@ -26,6 +26,7 @@ async fn main() {
         translations: opts.translations,
         event_relay: opts.event_relay,
         event_store: opts.event_store,
+        sign_in_with_email: opts.sign_in_with_email,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -104,6 +105,9 @@ struct Opts {
 
     #[arg(long)]
     event_store: CanisterId,
+
+    #[arg(long)]
+    sign_in_with_email: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,
