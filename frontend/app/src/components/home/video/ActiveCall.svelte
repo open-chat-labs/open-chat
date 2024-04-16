@@ -1,18 +1,11 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { rtlStore } from "../../../stores/rtl";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
-    import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
-    import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import {
         chatIdentifiersEqual,
         type ChatSummary,
         OpenChat,
         type ChatIdentifier,
-        AvatarSize,
         type AccessTokenType,
         NoMeetingToJoin,
     } from "openchat-client";
@@ -30,27 +23,19 @@
     import daily from "@daily-co/daily-js";
     import AreYouSure from "../../AreYouSure.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Avatar from "../../Avatar.svelte";
-    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import { filterRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Typing from "../../Typing.svelte";
-    import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
+    import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     $: selectedChat = client.selectedChatStore;
     $: communities = client.communities;
@@ -64,6 +49,7 @@
     let hostEnded = false;
     let denied = false;
     let askedToSpeak = false;
+    let activeCallHeader: ActiveCallHeader | undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -85,7 +71,6 @@
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
                             userId: chat.them,
-                            // TODO undo this as and when we can support threads in direct chats
                             messageIndex: undefined,
                         };
                     case "group_chat":
@@ -253,15 +238,8 @@
         return Promise.resolve();
     }
 
-    function toggleFullscreen() {
-        if ($activeVideoCall?.view === "default") {
-            activeVideoCall.setView("fullscreen");
-        } else if ($activeVideoCall?.view === "fullscreen") {
-            activeVideoCall.setView("default");
-        }
-    }
-
     export function askToSpeak() {
+        activeCallHeader?.askToSpeak();
         // we need to send a message to all of the current admins on the call to and send our userId and our participantId
         if ($activeVideoCall?.call) {
             const participants = $activeVideoCall.call.participants();
@@ -284,10 +262,6 @@
         }
     }
 
-    function minimise() {
-        activeVideoCall.setView("minimised");
-    }
-
     export function hangup() {
         if ($activeVideoCall?.call) {
             if ($hasPresence) {
@@ -301,10 +275,6 @@
             // this will trigger the left-meeting event which will in turn end the call
             $activeVideoCall.call.leave();
         }
-    }
-
-    function clearSelection() {
-        dispatch("clearSelection");
     }
 
     export function closeThread() {
@@ -358,67 +328,13 @@
         !(threadOpen && $mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
-        <SectionHeader shadow flush>
-            <div class="header">
-                {#if $mobileWidth}
-                    <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
-                        <HoverIcon>
-                            {#if $rtlStore}
-                                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                            {:else}
-                                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                            {/if}
-                        </HoverIcon>
-                    </div>
-                {/if}
-                <div class="details">
-                    {#if $activeVideoCall?.status === "joining"}
-                        <div class="joining">
-                            <FancyLoader loop />
-                        </div>
-                    {:else}
-                        <div class="avatar">
-                            <Avatar
-                                statusBorder={"var(--section-bg)"}
-                                url={chat.avatarUrl}
-                                showStatus
-                                userId={chat.userId?.userId}
-                                size={AvatarSize.Default} />
-                        </div>
-                    {/if}
-                    <h2 class="name">{chat.name}</h2>
-                    {#if $activeVideoCall?.status === "joining"}
-                        <Typing />
-                    {/if}
-                </div>
-                <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-                    {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
-                        <HoverIcon on:click={askToSpeak}>
-                            <HandFrontLeft
-                                title={$_("videoCall.askToSpeak")}
-                                size={$iconSize}
-                                color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                        </HoverIcon>
-                    {/if}
-                    {#if chat.chatId && chat.messageIndex !== undefined}
-                        <ActiveCallThreadSummary
-                            chatId={chat.chatId}
-                            messageIndex={chat.messageIndex} />
-                    {/if}
-                    <HoverIcon on:click={minimise}>
-                        <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                    {#if !$mobileWidth}
-                        <HoverIcon on:click={toggleFullscreen}>
-                            <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    {/if}
-                    <HoverIcon title={$_("videoCall.leave")} on:click={hangup}>
-                        <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
-                    </HoverIcon>
-                </div>
-            </div>
-        </SectionHeader>
+        <ActiveCallHeader
+            bind:this={activeCallHeader}
+            on:clearSelection
+            on:hangup={hangup}
+            on:showParticipants
+            {chat}
+            {askedToSpeak} />
     {/if}
     <div class="iframe-container" bind:this={iframeContainer}></div>
 </div>
@@ -447,40 +363,5 @@
 
     .iframe-container {
         height: 100%;
-    }
-
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: $sp3;
-        width: 100%;
-
-        .details {
-            display: flex;
-            align-items: center;
-            gap: $sp4;
-            flex: auto;
-
-            .joining {
-                width: toRem(48);
-                height: toRem(48);
-            }
-        }
-
-        .name {
-            @include font(book, normal, fs-120);
-            @include ellipsis();
-        }
-
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: $sp3;
-
-            &.joining {
-                pointer-events: none;
-            }
-        }
     }
 </style>

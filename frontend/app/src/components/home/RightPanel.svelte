@@ -35,6 +35,7 @@
     import Resizable from "../Resizable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
+    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -368,6 +369,8 @@
             on:editGroup
             on:chatWith
             on:showGroupMembers />
+    {:else if lastState.kind === "call_participants_panel"}
+        <ActiveCallParticipants chatId={lastState.chatId} messageIndex={lastState.messageIndex} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         <InviteUsers
             {level}

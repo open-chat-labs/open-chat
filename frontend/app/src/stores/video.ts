@@ -43,6 +43,7 @@ export type ActiveVideoCall = {
     call?: DailyCall;
     view: VideoCallView;
     threadOpen: boolean;
+    participantsOpen: boolean;
     accessRequests: RequestToSpeak[];
 };
 
@@ -64,6 +65,7 @@ export const activeVideoCall = {
             call,
             view: "default",
             threadOpen: false,
+            participantsOpen: false,
             accessRequests: [],
         });
     },
@@ -144,6 +146,18 @@ export const activeVideoCall = {
                 : {
                       ...current,
                       threadOpen,
+                      participantsOpen: false,
+                  };
+        });
+    },
+    participantsOpen: (participantsOpen: boolean) => {
+        return activeStore.update((current) => {
+            return current === undefined
+                ? undefined
+                : {
+                      ...current,
+                      participantsOpen,
+                      threadOpen: false,
                   };
         });
     },
@@ -169,6 +183,7 @@ export const activeVideoCall = {
             chatId,
             view: "default",
             threadOpen: false,
+            participantsOpen: false,
             accessRequests: [],
         });
     },
