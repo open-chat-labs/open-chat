@@ -641,7 +641,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 50);
+        assert_eq!(message_bytes_len, 53);
         assert_eq!(event_bytes_len, message_bytes_len + 12);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
@@ -692,7 +692,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 199);
+        assert_eq!(message_bytes_len, 202);
         assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
