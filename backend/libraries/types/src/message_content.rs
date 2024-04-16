@@ -572,6 +572,8 @@ pub struct VideoCallContent {
     pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
+    #[serde(default)]
+    pub hidden_participants: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
