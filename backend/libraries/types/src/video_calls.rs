@@ -1,3 +1,4 @@
+use crate::{CallParticipant, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -7,4 +8,11 @@ pub enum VideoCallPresence {
     Default,
     Owner,
     Hidden,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct VideoCallParticipants {
+    pub participants: Vec<CallParticipant>,
+    pub hidden: Vec<CallParticipant>,
+    pub last_updated: TimestampMillis,
 }

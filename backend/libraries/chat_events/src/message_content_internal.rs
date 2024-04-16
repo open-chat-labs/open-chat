@@ -1035,6 +1035,7 @@ impl From<VideoCallContentCombined> for VideoCallContentInternal {
                             p.user_id,
                             CallParticipantInternal {
                                 joined: p.joined,
+                                last_updated: None,
                                 presence: VideoCallPresence::Default,
                             },
                         )
@@ -1051,6 +1052,8 @@ impl From<VideoCallContentCombined> for VideoCallContentInternal {
 pub struct CallParticipantInternal {
     #[serde(rename = "j")]
     pub joined: TimestampMillis,
+    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    pub last_updated: Option<TimestampMillis>,
     #[serde(rename = "p", default, skip_serializing_if = "is_default")]
     pub presence: VideoCallPresence,
 }

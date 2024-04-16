@@ -84,6 +84,7 @@ pub fn handle_start_video_call(
                 sender,
                 CallParticipantInternal {
                     joined: now,
+                    last_updated: None,
                     presence: VideoCallPresence::Owner,
                 },
             )]

@@ -939,9 +939,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.10.3"
+version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "182543fbc03b4ad0bfc384e6b68346e0b0aad0b11d075b71b4fcaa5d07f8862c"
+checksum = "818394610ed32d9e4c81025f97c8580698b69542527efde18514cf9ad1f8f5f0"
 dependencies = [
  "anyhow",
  "binread",
@@ -962,9 +962,9 @@ dependencies = [
 
 [[package]]
 name = "candid_derive"
-version = "0.6.5"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "970c220da8aa2fa6f7ef5dbbf3ea5b620a59eb3ac107cfb95ae8c6eebdfb7a08"
+checksum = "3de398570c386726e7a59d9887b68763c481477f9a043fb998a2e09d428df1a9"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -1043,6 +1043,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sign_in_with_email_canister",
  "storage_index_canister",
  "tokio",
  "translations_canister",
@@ -3065,7 +3066,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.5",
  "tokio",
  "tower-service",
  "tracing",
@@ -6352,6 +6353,16 @@ name = "shell-words"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+
+[[package]]
+name = "sign_in_with_email_canister"
+version = "0.1.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=9d92f66d729a436f36886173f73a1df9259e42a3#9d92f66d729a436f36886173f73a1df9259e42a3"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
 
 [[package]]
 name = "signal-hook-registry"

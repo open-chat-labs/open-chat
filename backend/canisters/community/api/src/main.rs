@@ -22,6 +22,7 @@ fn main() {
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);
     generate_candid_method!(community, thread_previews, query);
+    generate_candid_method!(community, video_call_participants, query);
 
     generate_candid_method!(community, accept_p2p_swap, update);
     generate_candid_method!(community, add_members_to_channel, update);
