@@ -191,6 +191,9 @@ import type {
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
+    GenerateEmailVerificationCodeResponse,
+    SubmitEmailVerificationCodeResponse,
+    GetDelegationResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -219,6 +222,7 @@ import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 import { TranslationsClient } from "./translations/translations.client";
 import { IdentityClient } from "./identity/identity.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
+import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -235,6 +239,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _icpcoinsClient: ICPCoinsClient;
+    private _signInWithEmailClient;
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
@@ -263,6 +268,7 @@ export class OpenChatAgent extends EventTarget {
         );
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this.translationsClient = new TranslationsClient(identity, config);
+        this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -2977,7 +2983,12 @@ export class OpenChatAgent extends EventTarget {
                 deleteMessage,
             );
         } else {
-            return this.userClient.reportMessage(chatId, threadRootMessageIndex, messageId, deleteMessage);
+            return this.userClient.reportMessage(
+                chatId,
+                threadRootMessageIndex,
+                messageId,
+                deleteMessage,
+            );
         }
     }
 
@@ -3137,9 +3148,9 @@ export class OpenChatAgent extends EventTarget {
             );
         } else {
             return this.userClient.acceptP2PSwap(
-                chatId.userId, 
-                threadRootMessageIndex, 
-                messageId, 
+                chatId.userId,
+                threadRootMessageIndex,
+                messageId,
                 pin,
             );
         }
@@ -3208,5 +3219,25 @@ export class OpenChatAgent extends EventTarget {
 
     setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {
         return this._identityClient.setPrincipalMigrationJobEnabled(enabled);
+    }
+
+    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
+        return this._signInWithEmailClient.generateVerificationCode(email);
+    }
+
+    submitEmailVerificationCode(
+        email: string,
+        code: string,
+        sessionKey: Uint8Array,
+    ): Promise<SubmitEmailVerificationCodeResponse> {
+        return this._signInWithEmailClient.submitVerificationCode(email, code, sessionKey);
+    }
+
+    getSignInByEmailDelegation(
+        email: string,
+        sessionKey: Uint8Array,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        return this._signInWithEmailClient.getDelegation(email, sessionKey, expiration);
     }
 }

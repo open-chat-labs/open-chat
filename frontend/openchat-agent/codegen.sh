@@ -38,23 +38,14 @@ didc bind ../../backend/canisters/storage_bucket/api/can.did -t js > ./src/servi
 didc bind ../../backend/canisters/storage_index/api/can.did -t ts > ./src/services/storageIndex/candid/types.d.ts
 didc bind ../../backend/canisters/storage_index/api/can.did -t js > ./src/services/storageIndex/candid/idl.js
 
+didc bind ../../backend/canisters/translations/api/can.did -t ts > ./src/services/translations/candid/types.d.ts
+didc bind ../../backend/canisters/translations/api/can.did -t js > ./src/services/translations/candid/idl.js
+
 didc bind ../../backend/canisters/user/api/can.did -t ts > ./src/services/user/candid/types.d.ts
 didc bind ../../backend/canisters/user/api/can.did -t js > ./src/services/user/candid/idl.js
 
 didc bind ../../backend/canisters/user_index/api/can.did -t ts > ./src/services/userIndex/candid/types.d.ts
 didc bind ../../backend/canisters/user_index/api/can.did -t js > ./src/services/userIndex/candid/idl.js
-
-didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
-didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
-
-didc bind ./src/services/ledgerIndex/candid/can.did -t ts > ./src/services/ledgerIndex/candid/types.d.ts
-didc bind ./src/services/ledgerIndex/candid/can.did -t js > ./src/services/ledgerIndex/candid/idl.js
-
-didc bind ./src/services/nnsGovernance/candid/can.did -t ts > ./src/services/nnsGovernance/candid/types.d.ts
-didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nnsGovernance/candid/idl.js
-
-didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
-didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t ts > ./src/services/dexes/icpSwap/index/candid/types.d.ts
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t js > ./src/services/dexes/icpSwap/index/candid/idl.js
@@ -65,9 +56,20 @@ didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t js > ./src/service
 didc bind ./src/services/icpcoins/candid/can.did -t ts > ./src/services/icpcoins/candid/types.d.ts
 didc bind ./src/services/icpcoins/candid/can.did -t js > ./src/services/icpcoins/candid/idl.js
 
-didc bind ../../backend/canisters/translations/api/can.did -t ts > ./src/services/translations/candid/types.d.ts
-didc bind ../../backend/canisters/translations/api/can.did -t js > ./src/services/translations/candid/idl.js
+didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
+didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
 
+didc bind ./src/services/ledgerIndex/candid/can.did -t ts > ./src/services/ledgerIndex/candid/types.d.ts
+didc bind ./src/services/ledgerIndex/candid/can.did -t js > ./src/services/ledgerIndex/candid/idl.js
+
+didc bind ./src/services/nnsGovernance/candid/can.did -t ts > ./src/services/nnsGovernance/candid/types.d.ts
+didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nnsGovernance/candid/idl.js
+
+didc bind ./src/services/signInWithEmail/candid/can.did -t ts > ./src/services/signInWithEmail/candid/types.d.ts
+didc bind ./src/services/signInWithEmail/candid/can.did -t js > ./src/services/signInWithEmail/candid/idl.js
+
+didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
+didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 
 SEARCH='const Notification'
 REPLACE='import { IDL } from "@dfinity\/candid"\n\nexport const Notification'
