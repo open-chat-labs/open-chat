@@ -9,6 +9,7 @@ type SendMessageV2Args = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    block_level_markdown : bool;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
     correlation_id : nat64;
@@ -546,6 +547,17 @@ type DeletedMessageResponse = variant {
     MessageHardDeleted;
 };
 
+type VideoCallParticipantsArgs = record {
+    message_id : MessageId;
+    updated_since : opt TimestampMillis;
+};
+
+type VideoCallParticipantsResponse = variant {
+    Success : VideoCallParticipants;
+    VideoCallNotFound;
+    CallerNotInGroup;
+};
+
 type SearchMessagesArgs = record {
     search_term : text;
     max_results : nat8;
@@ -730,6 +742,7 @@ service : {
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
     deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
+    video_call_participants : (VideoCallParticipantsArgs) -> (VideoCallParticipantsResponse) query;
 
     search_messages : (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 

@@ -83,6 +83,7 @@ fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryp
             replies_to: None,
             forwarded: false,
             sender_is_bot: true,
+            block_level_markdown: false,
             correlation_id: 0,
             now: state.env.now(),
         },

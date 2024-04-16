@@ -43,6 +43,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
                 state.data.proposals_bot_user_id,
+                args.block_level_markdown,
                 &mut state.data.event_store_client,
                 now,
             );
@@ -81,6 +82,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
                 state.data.proposals_bot_user_id,
+                args.block_level_markdown,
                 &mut state.data.event_store_client,
                 now,
             );

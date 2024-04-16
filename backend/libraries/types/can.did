@@ -563,6 +563,7 @@ type Message = record {
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
+    block_level_markdown : bool;
 };
 
 type MessageEventWrapper = record {
@@ -1632,6 +1633,7 @@ type VideoCallContent = record {
     call_type : VideoCallType;
     ended : opt TimestampMillis;
     participants : vec CallParticipant;
+    hidden_participants : nat32;
 };
 
 type CallParticipant = record {
@@ -1754,6 +1756,12 @@ type VideoCallUpdates = variant {
     SetToSome : VideoCall;
 };
 
+type VideoCallParticipants = record {
+    participants : vec CallParticipant;
+    hidden : vec CallParticipant;
+    last_updated : TimestampMillis;
+};
+
 type AccessTokenType = variant {
     StartVideoCall;
     StartVideoCallV2 : record {
@@ -1766,4 +1774,4 @@ type AccessTokenType = variant {
 type VideoCallType = variant {
     Broadcast;
     Default;
-}
+};

@@ -5,7 +5,7 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
     CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
     CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
     GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
@@ -15,7 +15,7 @@ use types::{
     PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoCallContent,
-    VideoContent, VoteOperation,
+    VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -53,7 +53,7 @@ pub enum MessageContentInternal {
     #[serde(rename = "p2p")]
     P2PSwap(P2PSwapContent),
     #[serde(rename = "vc")]
-    VideoCall(VideoCallContent),
+    VideoCall(VideoCallContentInternal),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
 }
@@ -97,7 +97,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
             MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.clone()),
-            MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.clone()),
+            MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
     }
@@ -972,6 +972,90 @@ impl From<ReportedMessage> for ReportedMessageInternal {
     fn from(value: ReportedMessage) -> Self {
         ReportedMessageInternal { reports: value.reports }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "VideoCallContentCombined")]
+pub struct VideoCallContentInternal {
+    #[serde(rename = "t", alias = "call_type", default, skip_serializing_if = "is_default")]
+    pub call_type: VideoCallType,
+    #[serde(rename = "e", alias = "ended", default, skip_serializing_if = "is_default")]
+    pub ended: Option<TimestampMillis>,
+    #[serde(rename = "p", default)]
+    pub participants: HashMap<UserId, CallParticipantInternal>,
+}
+
+impl VideoCallContentInternal {
+    fn hydrate(&self) -> VideoCallContent {
+        let mut participants = Vec::new();
+        let mut hidden_participants = 0;
+        for (user_id, participant) in self.participants.iter() {
+            if matches!(participant.presence, VideoCallPresence::Hidden) {
+                hidden_participants += 1;
+            } else {
+                participants.push(CallParticipant {
+                    joined: participant.joined,
+                    user_id: *user_id,
+                });
+            }
+        }
+
+        VideoCallContent {
+            call_type: self.call_type,
+            ended: self.ended,
+            participants,
+            hidden_participants,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallContentCombined {
+    #[serde(alias = "t")]
+    pub call_type: VideoCallType,
+    #[serde(alias = "e")]
+    pub ended: Option<TimestampMillis>,
+    #[serde(rename = "p", default)]
+    pub participants: HashMap<UserId, CallParticipantInternal>,
+    #[serde(rename = "participants", default)]
+    pub participants_previous: Vec<CallParticipant>,
+}
+
+impl From<VideoCallContentCombined> for VideoCallContentInternal {
+    fn from(value: VideoCallContentCombined) -> Self {
+        VideoCallContentInternal {
+            call_type: value.call_type,
+            ended: value.ended,
+            participants: if value.participants.is_empty() {
+                value
+                    .participants_previous
+                    .into_iter()
+                    .map(|p| {
+                        (
+                            p.user_id,
+                            CallParticipantInternal {
+                                joined: p.joined,
+                                last_updated: None,
+                                presence: VideoCallPresence::Default,
+                            },
+                        )
+                    })
+                    .collect()
+            } else {
+                value.participants
+            },
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CallParticipantInternal {
+    #[serde(rename = "j")]
+    pub joined: TimestampMillis,
+    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    pub last_updated: Option<TimestampMillis>,
+    #[serde(rename = "p", default, skip_serializing_if = "is_default")]
+    pub presence: VideoCallPresence,
 }
 
 impl MessageContentInternalSubtype for ReportedMessageInternal {

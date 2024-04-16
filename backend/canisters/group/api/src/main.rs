@@ -17,6 +17,7 @@ fn main() {
     generate_candid_method!(group, selected_updates_v2, query);
     generate_candid_method!(group, summary, query);
     generate_candid_method!(group, summary_updates, query);
+    generate_candid_method!(group, video_call_participants, query);
 
     generate_candid_method!(group, accept_p2p_swap, update);
     generate_candid_method!(group, add_reaction, update);

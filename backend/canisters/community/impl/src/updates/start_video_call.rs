@@ -3,11 +3,11 @@ use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::MessageContentInternal;
+use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
-use types::{CallParticipant, ChannelMessageNotification, Notification, UserId, VideoCallContent, VideoCallType};
+use types::{ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -40,13 +40,19 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         sender,
         None,
         args.message_id,
-        MessageContentInternal::VideoCall(VideoCallContent {
+        MessageContentInternal::VideoCall(VideoCallContentInternal {
             call_type: args.call_type,
             ended: None,
-            participants: vec![CallParticipant {
-                user_id: sender,
-                joined: now,
-            }],
+            participants: [(
+                sender,
+                CallParticipantInternal {
+                    joined: now,
+                    last_updated: None,
+                    presence: VideoCallPresence::Owner,
+                },
+            )]
+            .into_iter()
+            .collect(),
         }),
         None,
         Vec::new(),
@@ -54,6 +60,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         false,
         state.data.proposals_bot_user_id,
+        false,
         &mut state.data.event_store_client,
         now,
     ) {
