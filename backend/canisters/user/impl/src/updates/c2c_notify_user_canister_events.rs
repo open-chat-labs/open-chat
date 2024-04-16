@@ -120,6 +120,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
                 mentioned: Vec::new(),
+                block_level_markdown: message.block_level_markdown,
                 now,
             },
             state,

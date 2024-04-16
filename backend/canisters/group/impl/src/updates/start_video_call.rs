@@ -50,6 +50,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
         false,
         state.data.proposals_bot_user_id,
+        false,
         &mut state.data.event_store_client,
         now,
     ) {

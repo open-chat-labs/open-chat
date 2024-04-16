@@ -16,9 +16,15 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
+    #[serde(default = "bool_true")]
+    pub block_level_markdown: bool,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -200,7 +200,13 @@ pub struct SendMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
+    #[serde(default = "bool_true")]
+    pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

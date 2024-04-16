@@ -11,6 +11,8 @@ pub struct Args {
     pub replies_to: Option<user_canister::C2CReplyContext>,
     pub forwarding: bool,
     #[serde(default)]
+    pub block_level_markdown: bool,
+    #[serde(default)]
     pub correlation_id: u64,
 }
 
@@ -36,6 +38,7 @@ impl Args {
             content: args.content.hydrate(None),
             replies_to: args.replies_to,
             forwarding: args.forwarding,
+            block_level_markdown: args.block_level_markdown,
             correlation_id: 0,
         }
     }

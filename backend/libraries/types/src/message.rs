@@ -15,6 +15,12 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
+    #[serde(default = "bool_true")]
+    pub block_level_markdown: bool,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

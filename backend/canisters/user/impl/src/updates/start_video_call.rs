@@ -89,6 +89,7 @@ pub fn handle_start_video_call(
         replies_to: None,
         forwarded: false,
         sender_is_bot: true,
+        block_level_markdown: false,
         correlation_id: 0,
         now,
     };

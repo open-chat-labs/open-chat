@@ -172,6 +172,7 @@ impl ChatEvents {
             deleted_by: None,
             thread_summary: None,
             forwarded: args.forwarded,
+            block_level_markdown: args.block_level_markdown,
         };
 
         add_to_metrics(
@@ -798,6 +799,7 @@ impl ChatEvents {
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: true,
+                            block_level_markdown: false,
                             correlation_id: 0,
                             now,
                         },
@@ -1145,6 +1147,7 @@ impl ChatEvents {
                     }),
                     forwarded: false,
                     sender_is_bot: true,
+                    block_level_markdown: false,
                     correlation_id: 0,
                     now,
                 },
@@ -1778,6 +1781,7 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub sender_is_bot: bool,
+    pub block_level_markdown: bool,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }
