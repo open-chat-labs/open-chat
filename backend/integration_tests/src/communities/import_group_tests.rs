@@ -203,6 +203,7 @@ fn pending_prizes_transferred_to_community() {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,

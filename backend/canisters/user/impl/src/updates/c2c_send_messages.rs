@@ -53,6 +53,7 @@ async fn c2c_handle_bot_messages(
                     push_message_sent_event: true,
                     mentioned: Vec::new(),
                     mute_notification: false,
+                    block_level_markdown: message.block_level_markdown.unwrap_or_default(),
                     now,
                 },
                 state,
@@ -77,6 +78,7 @@ pub(crate) struct HandleMessageArgs {
     pub push_message_sent_event: bool,
     pub mute_notification: bool,
     pub mentioned: Vec<User>,
+    pub block_level_markdown: bool,
     pub now: TimestampMillis,
 }
 
@@ -138,6 +140,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         replies_to,
         forwarded: args.forwarding,
         sender_is_bot: args.is_bot,
+        block_level_markdown: args.block_level_markdown,
         correlation_id: 0,
         now: args.now,
     };

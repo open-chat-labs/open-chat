@@ -126,6 +126,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
             pin: match test_case {
                 1 => Some("1000".to_string()),

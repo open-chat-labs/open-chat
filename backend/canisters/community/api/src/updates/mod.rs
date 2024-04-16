@@ -47,6 +47,7 @@ pub mod report_message;
 pub mod reset_invite_code;
 pub mod send_message;
 pub mod set_member_display_name;
+pub mod set_video_call_presence;
 pub mod start_video_call;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;

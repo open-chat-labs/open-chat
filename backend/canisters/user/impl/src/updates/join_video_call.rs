@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::JoinVideoCallResult;
+use chat_events::SetVideoCallPresenceResult;
 use ic_cdk_macros::update;
-use types::{EventIndex, UserId};
+use types::{EventIndex, UserId, VideoCallPresence};
 use user_canister::{
     join_video_call::{Response::*, *},
     JoinVideoCall, UserCanisterEvent,
@@ -30,11 +30,14 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
         let my_user_id: UserId = state.env.canister_id().into();
 
-        match chat
-            .events
-            .join_video_call(my_user_id, args.message_id, EventIndex::default(), now)
-        {
-            JoinVideoCallResult::Success => {
+        match chat.events.set_video_call_presence(
+            my_user_id,
+            args.message_id,
+            VideoCallPresence::Default,
+            EventIndex::default(),
+            now,
+        ) {
+            SetVideoCallPresenceResult::Success => {
                 state.push_user_canister_event(
                     args.user_id.into(),
                     UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
@@ -44,9 +47,8 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                 Success
             }
-            JoinVideoCallResult::MessageNotFound => MessageNotFound,
-            JoinVideoCallResult::AlreadyEnded => AlreadyEnded,
-            JoinVideoCallResult::AlreadyJoined => Success,
+            SetVideoCallPresenceResult::MessageNotFound => MessageNotFound,
+            SetVideoCallPresenceResult::AlreadyEnded => AlreadyEnded,
         }
     } else {
         ChatNotFound

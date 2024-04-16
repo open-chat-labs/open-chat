@@ -921,6 +921,7 @@ export class CommunityClient extends CandidService {
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
+                block_level_markdown: true,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
             };

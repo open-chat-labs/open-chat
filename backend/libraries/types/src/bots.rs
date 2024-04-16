@@ -6,6 +6,6 @@ use serde::{Deserialize, Serialize};
 pub struct BotMessage {
     pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
-    #[serde(default)]
     pub message_id: Option<MessageId>,
+    pub block_level_markdown: Option<bool>,
 }

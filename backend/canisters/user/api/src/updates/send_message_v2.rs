@@ -13,6 +13,8 @@ pub struct Args {
     pub content: MessageContentInitial,
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,
+    #[serde(default)]
+    pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
     pub pin: Option<String>,
     pub correlation_id: u64,

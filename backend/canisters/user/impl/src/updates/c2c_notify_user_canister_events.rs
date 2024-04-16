@@ -10,7 +10,7 @@ use chat_events::{
 };
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId};
+use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 use utils::time::MINUTE_IN_MS;
@@ -76,8 +76,13 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.events
-                    .join_video_call(caller_user_id, c.message_id, EventIndex::default(), state.env.now());
+                chat.events.set_video_call_presence(
+                    caller_user_id,
+                    c.message_id,
+                    VideoCallPresence::Default,
+                    EventIndex::default(),
+                    state.env.now(),
+                );
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
@@ -120,6 +125,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),
                 mentioned: Vec::new(),
+                block_level_markdown: message.block_level_markdown,
                 now,
             },
             state,

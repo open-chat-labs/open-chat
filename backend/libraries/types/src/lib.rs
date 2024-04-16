@@ -69,6 +69,7 @@ mod user_groups;
 mod user_summary;
 mod version;
 mod versioned;
+mod video_calls;
 
 pub use access_tokens::*;
 pub use avatar::*;
@@ -136,6 +137,7 @@ pub use user_groups::*;
 pub use user_summary::*;
 pub use version::*;
 pub use versioned::*;
+pub use video_calls::*;
 
 pub type AccessorId = Principal;
 pub type CanisterId = Principal;

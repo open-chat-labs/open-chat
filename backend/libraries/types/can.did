@@ -563,6 +563,7 @@ type Message = record {
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
+    block_level_markdown : bool;
 };
 
 type MessageEventWrapper = record {
@@ -1632,6 +1633,7 @@ type VideoCallContent = record {
     call_type : VideoCallType;
     ended : opt TimestampMillis;
     participants : vec CallParticipant;
+    hidden_participants : nat32;
 };
 
 type CallParticipant = record {

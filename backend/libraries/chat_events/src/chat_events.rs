@@ -14,14 +14,14 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
-    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VoteOperation,
+    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
+    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial,
+    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallPresence, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -42,6 +42,13 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn set_block_level_markdown(&mut self, cutoff: TimestampMillis) {
+        self.main.set_block_level_markdown(cutoff);
+        for thread in self.threads.values_mut() {
+            thread.set_block_level_markdown(cutoff);
+        }
+    }
+
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -114,19 +121,6 @@ impl ChatEvents {
         self.last_updated_timestamps.iter()
     }
 
-    pub fn iter_all_events(&self) -> impl Iterator<Item = (&EventWrapperInternal<ChatEventInternal>, bool)> {
-        self.main
-            .iter(None, true, EventIndex::default())
-            .map(|e| (e, false))
-            .chain(
-                self.threads
-                    .values()
-                    .flat_map(|t| t.iter(None, true, EventIndex::default()))
-                    .map(|e| (e, true)),
-            )
-            .filter_map(|(e, t)| if let EventOrExpiredRangeInternal::Event(ev) = e { Some((ev, t)) } else { None })
-    }
-
     pub fn push_message<R: Runtime + Send + 'static>(
         &mut self,
         args: PushMessageArgs,
@@ -172,6 +166,7 @@ impl ChatEvents {
             deleted_by: None,
             thread_summary: None,
             forwarded: args.forwarded,
+            block_level_markdown: args.block_level_markdown,
         };
 
         add_to_metrics(
@@ -798,6 +793,7 @@ impl ChatEvents {
                             replies_to: None,
                             forwarded: false,
                             sender_is_bot: true,
+                            block_level_markdown: false,
                             correlation_id: 0,
                             now,
                         },
@@ -1145,6 +1141,7 @@ impl ChatEvents {
                     }),
                     forwarded: false,
                     sender_is_bot: true,
+                    block_level_markdown: false,
                     correlation_id: 0,
                     now,
                 },
@@ -1635,31 +1632,33 @@ impl ChatEvents {
         EndVideoCallResult::MessageNotFound
     }
 
-    pub fn join_video_call(
+    pub fn set_video_call_presence(
         &mut self,
         user_id: UserId,
         message_id: MessageId,
+        presence: VideoCallPresence,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> JoinVideoCallResult {
+    ) -> SetVideoCallPresenceResult {
         if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_id.into()) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                 return if video_call.ended.is_none() {
-                    if video_call.participants.iter().any(|p| p.user_id == user_id) {
-                        JoinVideoCallResult::AlreadyJoined
-                    } else {
-                        video_call.participants.push(CallParticipant { user_id, joined: now });
-                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    video_call
+                        .participants
+                        .entry(user_id)
+                        .and_modify(|e| e.presence = presence.clone())
+                        .or_insert(CallParticipantInternal { joined: now, presence });
 
-                        JoinVideoCallResult::Success
-                    }
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+
+                    SetVideoCallPresenceResult::Success
                 } else {
-                    JoinVideoCallResult::AlreadyEnded
+                    SetVideoCallPresenceResult::AlreadyEnded
                 };
             }
         }
 
-        JoinVideoCallResult::MessageNotFound
+        SetVideoCallPresenceResult::MessageNotFound
     }
 
     pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
@@ -1778,6 +1777,7 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub sender_is_bot: bool,
+    pub block_level_markdown: bool,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }
@@ -1974,10 +1974,9 @@ impl From<MessageId> for EventKey {
     }
 }
 
-pub enum JoinVideoCallResult {
+pub enum SetVideoCallPresenceResult {
     Success,
     MessageNotFound,
-    AlreadyJoined,
     AlreadyEnded,
 }
 
