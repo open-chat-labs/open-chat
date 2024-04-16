@@ -1670,6 +1670,7 @@ export interface SendMessageSuccess {
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
+  'block_level_markdown' : boolean,
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
   'forwarding' : boolean,

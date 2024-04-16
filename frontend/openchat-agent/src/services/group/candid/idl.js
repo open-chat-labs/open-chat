@@ -1175,6 +1175,7 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
     'message_filter_failed' : IDL.Opt(IDL.Nat64),
+    'block_level_markdown' : IDL.Bool,
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
     'forwarding' : IDL.Bool,
