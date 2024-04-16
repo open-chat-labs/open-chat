@@ -2,12 +2,12 @@ use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, PushMessageArgs};
+use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CallParticipant, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification,
-    UserId, VideoCallContent, VideoCallType,
+    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, UserId,
+    VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -77,13 +77,18 @@ pub fn handle_start_video_call(
         thread_root_message_index: None,
         message_id,
         sender,
-        content: MessageContentInternal::VideoCall(VideoCallContent {
+        content: MessageContentInternal::VideoCall(VideoCallContentInternal {
             call_type: VideoCallType::Default,
-            participants: vec![CallParticipant {
-                user_id: sender,
-                joined: now,
-            }],
             ended: None,
+            participants: [(
+                sender,
+                CallParticipantInternal {
+                    joined: now,
+                    presence: VideoCallPresence::Owner,
+                },
+            )]
+            .into_iter()
+            .collect(),
         }),
         mentioned: Vec::new(),
         replies_to: None,

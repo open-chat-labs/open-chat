@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, MessageId};
+use types::{ChannelId, MessageId, VideoCallPresence};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,14 +8,14 @@ pub struct Args {
     pub message_id: MessageId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    MessageNotFound,
-    AlreadyEnded,
-    CommunityFrozen,
-    UserNotInCommunity,
-    UserSuspended,
-    ChannelNotFound,
-    UserNotInChannel,
+pub type Response = crate::set_video_call_presence::Response;
+
+impl From<Args> for crate::set_video_call_presence::Args {
+    fn from(value: Args) -> Self {
+        crate::set_video_call_presence::Args {
+            channel_id: value.channel_id,
+            message_id: value.message_id,
+            presence: VideoCallPresence::Default,
+        }
+    }
 }

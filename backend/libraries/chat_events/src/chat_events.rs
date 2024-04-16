@@ -14,14 +14,14 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
-    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
-    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload,
-    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
-    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VoteOperation,
+    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
+    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial,
+    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload, P2PSwapContent,
+    P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallPresence, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -1632,31 +1632,33 @@ impl ChatEvents {
         EndVideoCallResult::MessageNotFound
     }
 
-    pub fn join_video_call(
+    pub fn set_video_call_presence(
         &mut self,
         user_id: UserId,
         message_id: MessageId,
+        presence: VideoCallPresence,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> JoinVideoCallResult {
+    ) -> SetVideoCallPresenceResult {
         if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_id.into()) {
             if let MessageContentInternal::VideoCall(video_call) = &mut message.content {
                 return if video_call.ended.is_none() {
-                    if video_call.participants.iter().any(|p| p.user_id == user_id) {
-                        JoinVideoCallResult::AlreadyJoined
-                    } else {
-                        video_call.participants.push(CallParticipant { user_id, joined: now });
-                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    video_call
+                        .participants
+                        .entry(user_id)
+                        .and_modify(|e| e.presence = presence.clone())
+                        .or_insert(CallParticipantInternal { joined: now, presence });
 
-                        JoinVideoCallResult::Success
-                    }
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+
+                    SetVideoCallPresenceResult::Success
                 } else {
-                    JoinVideoCallResult::AlreadyEnded
+                    SetVideoCallPresenceResult::AlreadyEnded
                 };
             }
         }
 
-        JoinVideoCallResult::MessageNotFound
+        SetVideoCallPresenceResult::MessageNotFound
     }
 
     pub fn video_call_in_progress(&self) -> &Timestamped<Option<VideoCall>> {
@@ -1972,10 +1974,9 @@ impl From<MessageId> for EventKey {
     }
 }
 
-pub enum JoinVideoCallResult {
+pub enum SetVideoCallPresenceResult {
     Success,
     MessageNotFound,
-    AlreadyJoined,
     AlreadyEnded,
 }
 
