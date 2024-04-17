@@ -176,12 +176,10 @@
                 )
                 .then((response) => {
                     if (response.kind === "success") {
-                        return optionallyInviteUsers(response.id)
-                            .then(() => {
-                                toastStore.showSuccessToast(i18nKey("communities.created"));
-                                dispatch("close");
-                                page(`/community/${response.id}`);
-                            })
+                        toastStore.showSuccessToast(i18nKey("communities.created"));
+                        dispatch("close");
+                        page(`/community/${response.id}`);
+                        optionallyInviteUsers(response.id)
                             .catch((_err) => {
                                 toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                                 step = 0;
