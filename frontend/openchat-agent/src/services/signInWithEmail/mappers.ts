@@ -57,8 +57,7 @@ export function submitVerificationCodeResponse(
     }
     if ("NotFound" in candid) {
         return {
-            kind: "error",
-            error: "Not found",
+            kind: "not_found",
         };
     }
     throw new UnsupportedValueError(

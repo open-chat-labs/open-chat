@@ -23,7 +23,10 @@ export type MigrateLegacyPrincipalResponse =
     | { kind: "not_found" }
     | { kind: "internal_error"; error: string };
 
-export type PrepareDelegationResponse = PrepareDelegationSuccess | { kind: "error"; error: string };
+export type PrepareDelegationResponse =
+    | PrepareDelegationSuccess
+    | { kind: "not_found" }
+    | { kind: "error"; error: string };
 
 export type PrepareDelegationSuccess = {
     kind: "success";
@@ -37,6 +40,7 @@ export type GetDelegationResponse =
           delegation: Delegation;
           signature: Signature;
       }
+    | { kind: "not_found" }
     | { kind: "error"; error: string };
 
 export type SiwePrepareLoginResponse =
