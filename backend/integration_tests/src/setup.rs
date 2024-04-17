@@ -92,6 +92,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let translations_canister_id = create_canister(env, controller);
     let event_relay_canister_id = create_canister(env, controller);
     let event_store_canister_id = create_canister(env, controller);
+    let sign_in_with_email_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -193,6 +194,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         cycles_dispenser_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
+        sign_in_with_email_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };

@@ -25,9 +25,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         Err(error) => return PublicKeyInvalid(error),
     };
 
-    // Internet Identity already has a Captcha so we can skip the check for
-    // identities originating from the Internet Identity canister
-    if originating_canister != state.data.internet_identity_canister_id {
+    if state.data.requires_captcha(originating_canister) {
         let Some(attempt) = args.challenge_attempt else {
             return ChallengeRequired;
         };

@@ -118,6 +118,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
+        sign_in_with_email_canister_id: canister_ids.sign_in_with_email,
         wasm_version: version,
         test_mode,
     };
