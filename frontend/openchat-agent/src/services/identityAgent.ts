@@ -34,12 +34,16 @@ export class IdentityAgent {
         );
 
         if (createIdentityResponse.kind === "success") {
-            return this.getDelegation(
+            const delegation = await this.getDelegation(
                 createIdentityResponse.userKey,
                 sessionKey,
                 sessionKeyDer,
                 createIdentityResponse.expiration,
             );
+            if (delegation === undefined) {
+                throw new Error("Delegation not found, this should never happen");
+            }
+            return delegation;
         }
         return createIdentityResponse.kind;
     }
