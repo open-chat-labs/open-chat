@@ -1586,7 +1586,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.loginWithWallet(
+                    agent.getDelegationWithWallet(
                         payload.token,
                         payload.address,
                         payload.sessionKey,
