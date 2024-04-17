@@ -3101,7 +3101,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         threadRootMessageIndex,
                     });
                 }
-                if (unconfirmed.delete(context, messageId)) {
+                if (unconfirmed.contains(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
