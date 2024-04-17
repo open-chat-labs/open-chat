@@ -1610,6 +1610,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getSignInByEmailDelegation":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getSignInByEmailDelegation(
+                        payload.email,
+                        payload.sessionKey,
+                        payload.expiration,
+                    ),
+                );
+                break;
+
             case "siwePrepareLogin":
                 executeThenReply(payload, correlationId, agent.siwePrepareLogin(payload.address));
                 break;
