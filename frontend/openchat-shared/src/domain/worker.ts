@@ -1187,7 +1187,7 @@ type GetDelegationWithWallet = {
     address: string;
     sessionKey: Uint8Array;
     expiration: bigint;
-    kind: "siwePrepareLogin";
+    kind: "getDelegationWithWallet";
 };
 
 /**
