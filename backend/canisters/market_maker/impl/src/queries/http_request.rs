@@ -1,11 +1,8 @@
-use crate::{read_state, CanisterBalances, RuntimeState};
+use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, build_response, encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
-use serde::Serialize;
-use std::collections::BTreeMap;
 use std::io::Write;
-use std::str::FromStr;
-use types::{CanisterId, HttpRequest, HttpResponse, TimestampMillis};
+use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -34,15 +31,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_balance_history(state: &RuntimeState) -> HttpResponse {
-        let balances: Vec<_> = state
-            .data
-            .balance_history
-            .iter()
-            .take(500)
-            .map(BalancesWithProduct::from)
-            .collect();
-
-        build_json_response(&balances)
+        build_json_response(&state.data.balance_history)
     }
 
     match extract_route(&request.url) {
@@ -52,25 +41,5 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Other(p, _) if p == "orders" => read_state(get_order_logs),
         Route::Other(p, _) if p == "balance_history" => read_state(get_balance_history),
         _ => HttpResponse::not_found(),
-    }
-}
-
-#[derive(Serialize)]
-struct BalancesWithProduct {
-    pub timestamp: TimestampMillis,
-    pub balances: BTreeMap<CanisterId, u128>,
-    pub product_trimmed: u32,
-}
-
-impl From<&CanisterBalances> for BalancesWithProduct {
-    fn from(value: &CanisterBalances) -> Self {
-        let product: u128 = value.balances.values().product();
-        let product_trimmed = u32::from_str(&product.to_string()[..6]).unwrap();
-
-        BalancesWithProduct {
-            timestamp: value.timestamp,
-            balances: value.balances.clone(),
-            product_trimmed,
-        }
     }
 }
