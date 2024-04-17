@@ -182,7 +182,6 @@
                         optionallyInviteUsers(response.id)
                             .catch((_err) => {
                                 toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                                step = 0;
                             });
                     } else {
                         toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
