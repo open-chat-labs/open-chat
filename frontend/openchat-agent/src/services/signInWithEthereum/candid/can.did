@@ -1,0 +1,53 @@
+type Address = text;
+type CanisterPublicKey = PublicKey;
+type Delegation = record {
+  pubkey : PublicKey;
+  targets : opt vec principal;
+  expiration : Timestamp;
+};
+type GetAddressResponse = variant { Ok : Address; Err : text };
+type GetDelegationResponse = variant { Ok : SignedDelegation; Err : text };
+type GetPrincipalResponse = variant { Ok : Principal; Err : text };
+type LoginDetails = record {
+  user_canister_pubkey : CanisterPublicKey;
+  expiration : Timestamp;
+};
+type LoginResponse = variant { Ok : LoginDetails; Err : text };
+type PrepareLoginResponse = variant { Ok : SiweMessage; Err : text };
+type Principal = vec nat8;
+type PublicKey = vec nat8;
+type RuntimeFeature = variant {
+  IncludeUriInSeed;
+  DisableEthToPrincipalMapping;
+  DisablePrincipalToEthMapping;
+};
+type SessionKey = PublicKey;
+type SettingsInput = record {
+  uri : text;
+  runtime_features : opt vec RuntimeFeature;
+  domain : text;
+  statement : opt text;
+  scheme : opt text;
+  salt : text;
+  session_expires_in : opt nat64;
+  targets : opt vec text;
+  chain_id : opt nat;
+  sign_in_expires_in : opt nat64;
+};
+type SignedDelegation = record {
+  signature : vec nat8;
+  delegation : Delegation;
+};
+type SiweMessage = text;
+type SiweSignature = text;
+type Timestamp = nat64;
+service : {
+  get_address : (Principal) -> (GetAddressResponse) query;
+  get_caller_address : () -> (GetAddressResponse) query;
+  get_principal : (Address) -> (GetPrincipalResponse) query;
+  siwe_get_delegation : (Address, SessionKey, Timestamp) -> (
+      GetDelegationResponse,
+    ) query;
+  siwe_login : (SiweSignature, Address, SessionKey) -> (LoginResponse);
+  siwe_prepare_login : (Address) -> (PrepareLoginResponse);
+}

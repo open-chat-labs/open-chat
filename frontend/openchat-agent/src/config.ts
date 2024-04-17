@@ -20,6 +20,7 @@ export type AgentConfig = {
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;
+    signInWithEthereumCanister: string;
     groupInvite?: GroupInvite;
     logger: Logger;
 };

@@ -6,11 +6,7 @@ export type HasIdentity = {
 };
 
 export type CreateIdentityResponse =
-    | {
-          kind: "success";
-          userKey: Uint8Array;
-          expiration: bigint;
-      }
+    | PrepareDelegationSuccess
     | { kind: "already_registered" }
     | { kind: "challenge_failed" }
     | { kind: "challenge_required" }
@@ -27,13 +23,13 @@ export type MigrateLegacyPrincipalResponse =
     | { kind: "not_found" }
     | { kind: "internal_error"; error: string };
 
-export type PrepareDelegationResponse =
-    | {
-          kind: "success";
-          userKey: Uint8Array;
-          expiration: bigint;
-      }
-    | { kind: "not_found" };
+export type PrepareDelegationResponse = PrepareDelegationSuccess | { kind: "error"; error: string };
+
+export type PrepareDelegationSuccess = {
+    kind: "success";
+    userKey: Uint8Array;
+    expiration: bigint;
+};
 
 export type GetDelegationResponse =
     | {
@@ -41,4 +37,8 @@ export type GetDelegationResponse =
           delegation: Delegation;
           signature: Signature;
       }
-    | { kind: "not_found" };
+    | { kind: "error"; error: string };
+
+export type SiwePrepareLoginResponse =
+    | { kind: "success"; siweMessage: string }
+    | { kind: "error"; error: string };

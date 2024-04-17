@@ -19,6 +19,7 @@ export type AgentConfig = {
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;
+    signInWithEthereumCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };

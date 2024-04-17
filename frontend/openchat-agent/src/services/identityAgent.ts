@@ -60,7 +60,7 @@ export class IdentityAgent {
             expiration,
         );
 
-        if (getDelegationResponse.kind === "not_found") {
+        if (getDelegationResponse.kind === "error") {
             return undefined;
         }
 

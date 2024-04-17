@@ -1,4 +1,4 @@
-import type { GetDelegationResponse } from "./identity";
+import type { GetDelegationResponse, PrepareDelegationResponse } from "./identity";
 
 export type GenerateEmailVerificationCodeResponse =
     | { kind: "success" }
@@ -6,11 +6,8 @@ export type GenerateEmailVerificationCodeResponse =
     | { kind: "blocked"; until: bigint }
     | { kind: "failed_to_send_email"; error: string };
 
-export type SignInWithEmailVerificationCodeResponse =
-    | GetDelegationResponse
-    | { kind: "incorrect_code" };
+export type SignInWithEmailVerificationCodeResponse = GetDelegationResponse | IncorrectCode;
 
-export type SubmitEmailVerificationCodeResponse =
-    | { kind: "success"; userKey: Uint8Array; expiration: bigint }
-    | { kind: "incorrect_code" }
-    | { kind: "not_found" };
+export type SubmitEmailVerificationCodeResponse = PrepareDelegationResponse | IncorrectCode;
+
+export type IncorrectCode = { kind: "incorrect_code" };
