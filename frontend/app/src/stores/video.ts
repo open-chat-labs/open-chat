@@ -108,9 +108,14 @@ export const activeVideoCall = {
                 current.call.updateParticipant(req.participantId, {
                     updatePermissions: {
                         hasPresence: true,
-                        canSend: true,
+                        canSend: new Set(["audio"]),
                     },
                 });
+                setTimeout(() => {
+                    current?.call?.updateParticipant(req.participantId, {
+                        setAudio: true,
+                    });
+                }, 100);
                 current.call.sendAppMessage(
                     {
                         kind: "ask_to_speak_response",

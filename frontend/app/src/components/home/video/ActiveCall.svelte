@@ -179,6 +179,7 @@
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                     hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
+                    console.log("ParticipantUpdated: ", ev);
                     if (ev?.participant.user_name === $user.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
                         hangup();
