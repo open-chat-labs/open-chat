@@ -65,6 +65,8 @@ export class OpenChatAgentWorker extends EventTarget {
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
+                    signInWithEthereumCanister: this.config.signInWithEthereumCanister,
+                    signInWithSolanaCanister: this.config.signInWithSolanaCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
