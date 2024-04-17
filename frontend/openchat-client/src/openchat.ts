@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import { type Identity, SignIdentity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
+import { type Identity } from "@dfinity/agent";
+import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -81,11 +81,7 @@ import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import {
-    idbAuthClientStore,
-    lsAuthClientStore,
-    selectedAuthProviderStore,
-} from "./stores/authProviders";
+import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
@@ -435,6 +431,7 @@ import {
     featureRestricted,
     buildDelegationIdentity,
     toDer,
+    storeIdentity,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -495,6 +492,7 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -510,6 +508,7 @@ const MAX_INT32 = Math.pow(2, 31) - 1;
 export class OpenChat extends OpenChatAgentWorker {
     private _ocIdentityStorage: IdentityStorage;
     private _userLocation: string | undefined;
+    private _authClientStorage: AuthClientStorage = new IdbStorage();
     private _authClient: Promise<AuthClient>;
     private _authPrincipal: string | undefined;
     private _ocIdentity: Identity | undefined;
@@ -572,7 +571,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 disableIdle: true,
                 disableDefaultIdleCallback: true,
             },
-            storage: idbAuthClientStore,
+            storage: this._authClientStorage,
         });
 
         this._authClient
@@ -891,10 +890,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const identity = ls != null || idb != null;
-        return this._liveState.userCreated && identity;
+        const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
+        return this._liveState.userCreated && identity !== null;
     }
 
     unreadThreadMessageCount(
@@ -5976,7 +5973,7 @@ export class OpenChat extends OpenChatAgentWorker {
     async signInWithEmailVerificationCode(
         email: string,
         code: string,
-        sessionKey: SignIdentity,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<SignInWithEmailVerificationCodeResponse> {
         const sessionKeyDer = toDer(sessionKey);
         const submitCodeResponse = await this.sendRequest({
@@ -6000,6 +5997,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     getDelegationResponse.delegation,
                     getDelegationResponse.signature,
                 );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
                 this.loadedAuthenticationIdentity(identity);
             }
             return getDelegationResponse;
@@ -6026,24 +6024,36 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        sessionKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<GetDelegationResponse> {
+        const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
             kind: "loginWithWallet",
             token,
             address,
             signature,
-            sessionKey,
+            sessionKey: sessionKeyDer,
         });
 
         if (loginResponse.kind === "success") {
-            return await this.sendRequest({
+            const getDelegationResponse = await this.sendRequest({
                 kind: "getDelegationWithWallet",
                 token,
                 address,
-                sessionKey,
+                sessionKey: sessionKeyDer,
                 expiration: loginResponse.expiration,
             });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    loginResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
         } else {
             return loginResponse;
         }

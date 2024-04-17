@@ -19,12 +19,20 @@ export class IdentityStorage {
     }
 
     async set(key: ECDSAKeyIdentity, chain: DelegationChain): Promise<void> {
-        await this.storage.set(KEY_STORAGE_KEY, key.getKeyPair());
-        await this.storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(chain.toJSON()));
+        await storeIdentity(this.storage, key, chain);
     }
 
     async remove(): Promise<void> {
         await this.storage.remove(KEY_STORAGE_KEY);
         await this.storage.remove(KEY_STORAGE_DELEGATION);
     }
+}
+
+export async function storeIdentity(
+    storage: AuthClientStorage,
+    key: ECDSAKeyIdentity,
+    chain: DelegationChain,
+): Promise<void> {
+    await storage.set(KEY_STORAGE_KEY, key.getKeyPair());
+    await storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(chain.toJSON()));
 }

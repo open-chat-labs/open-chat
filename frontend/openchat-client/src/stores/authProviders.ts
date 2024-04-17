@@ -2,7 +2,6 @@ import { AuthProvider } from "openchat-shared";
 import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 import { enumFromStringValue } from "../utils/enums";
-import { IdbStorage, LocalStorage } from "@dfinity/auth-client";
 
 export const selectedAuthProviderStore = createStore();
 
@@ -33,6 +32,3 @@ function createStore() {
         set: (authProvider: AuthProvider): void => _set(authProvider),
     };
 }
-
-export const idbAuthClientStore = new IdbStorage();
-export const lsAuthClientStore = new LocalStorage();
