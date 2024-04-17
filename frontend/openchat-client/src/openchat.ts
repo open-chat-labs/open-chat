@@ -3093,9 +3093,11 @@ export class OpenChat extends OpenChatAgentWorker {
         const now = BigInt(Date.now());
         const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
+        // To ensure we keep the chat summary up to date, if these events are in the main event list, check if there is
+        // now a new latest message and if so, mark it as a local chat summary update.
         let latestMessageIndex =
             threadRootMessageIndex === undefined
-                ? this._liveState.serverChatSummaries.get(chatId)?.latestMessageIndex
+                ? this._liveState.serverChatSummaries.get(chatId)?.latestMessageIndex ?? -1
                 : undefined;
         let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
