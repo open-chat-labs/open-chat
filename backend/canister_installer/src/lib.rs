@@ -42,6 +42,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
         set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
         set_controllers(management_canister, &canister_ids.event_store, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_email, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -255,6 +256,10 @@ async fn install_service_canisters_impl(
         time_granularity: None,
     };
 
+    let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
+    let sign_in_with_email_init_args =
+        sign_in_with_email_canister::InitOrUpgradeArgs::Init(sign_in_with_email_canister::InitArgs { test_mode });
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -354,6 +359,14 @@ async fn install_service_canisters_impl(
             &event_store_canister_wasm.module,
             event_store_init_args,
         ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.sign_in_with_email,
+        &sign_in_with_email_wasm.module,
+        sign_in_with_email_init_args,
     )
     .await;
 

@@ -245,10 +245,8 @@
                         });
                     step = 0;
                 } else if (!hideInviteUsers) {
-                    return optionallyInviteUsers(resp.canisterId)
-                        .then(() => {
-                            onGroupCreated(resp.canisterId);
-                        })
+                    onGroupCreated(resp.canisterId);
+                    optionallyInviteUsers(resp.canisterId)
                         .catch((_err) => {
                             toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                             step = 0;

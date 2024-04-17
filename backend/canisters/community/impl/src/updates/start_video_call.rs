@@ -47,6 +47,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
                 sender,
                 CallParticipantInternal {
                     joined: now,
+                    last_updated: None,
                     presence: VideoCallPresence::Owner,
                 },
             )]
