@@ -44,6 +44,7 @@ import type {
     OptionUpdate,
     GovernanceProposalsSubtype,
     CreatedUser,
+    ChannelSummary,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -292,10 +293,10 @@ function mentionsFromMessages(
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary(
-    chat: GroupChatSummary,
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
+    chat: T,
     unconfirmed: UnconfirmedMessages,
-): GroupChatSummary {
+): T {
     if (chat.membership === undefined) return chat;
     return {
         ...chat,
@@ -501,7 +502,7 @@ export function mergeUnconfirmedIntoSummary(
         }
     }
 
-    if (chatSummary.kind === "group_chat") {
+    if (chatSummary.kind !== "direct_chat") {
         if (unconfirmedMessages !== undefined) {
             chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
         }
