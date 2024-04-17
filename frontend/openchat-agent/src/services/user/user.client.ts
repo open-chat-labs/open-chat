@@ -586,7 +586,6 @@ export class UserClient extends CandidService {
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                block_level_markdown: true,
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 pin: apiOptional(identity, pin),
                 correlation_id: generateUint64(),
