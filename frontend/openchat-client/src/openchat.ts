@@ -387,6 +387,9 @@ import type {
     ClientJoinCommunityResponse,
     GenerateEmailVerificationCodeResponse,
     SignInWithEmailVerificationCodeResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    GetDelegationResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -3102,7 +3105,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         threadRootMessageIndex,
                     });
                 }
-                if (unconfirmed.delete(context, messageId)) {
+                if (unconfirmed.contains(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
@@ -5986,6 +5989,47 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         } else {
             return submitCodeResponse;
+        }
+    }
+
+    siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
+        return this.sendRequest({
+            kind: "siwePrepareLogin",
+            address,
+        });
+    }
+
+    siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
+        return this.sendRequest({
+            kind: "siwsPrepareLogin",
+            address,
+        });
+    }
+
+    async signInWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        signature: string,
+        sessionKey: Uint8Array,
+    ): Promise<GetDelegationResponse> {
+        const loginResponse = await this.sendRequest({
+            kind: "loginWithWallet",
+            token,
+            address,
+            signature,
+            sessionKey,
+        });
+
+        if (loginResponse.kind === "success") {
+            return await this.sendRequest({
+                kind: "getDelegationWithWallet",
+                token,
+                address,
+                sessionKey,
+                expiration: loginResponse.expiration,
+            });
+        } else {
+            return loginResponse;
         }
     }
 

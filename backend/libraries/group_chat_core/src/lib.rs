@@ -542,6 +542,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
@@ -576,6 +577,7 @@ impl GroupChatCore {
             rules_accepted,
             suppressed,
             proposals_bot_user_id,
+            block_level_markdown,
             event_store_client,
             now,
         )
@@ -593,6 +595,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
@@ -640,6 +643,7 @@ impl GroupChatCore {
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             sender_is_bot,
+            block_level_markdown,
             correlation_id: 0,
             now,
         };

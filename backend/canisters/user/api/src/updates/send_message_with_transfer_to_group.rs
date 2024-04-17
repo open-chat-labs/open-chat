@@ -15,6 +15,8 @@ pub struct Args {
     pub sender_display_name: Option<String>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
+    #[serde(default)]
+    pub block_level_markdown: bool,
     pub correlation_id: u64,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,

@@ -20,6 +20,19 @@ pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEven
 }
 
 impl<M: EventsMap> ChatEventsList<M> {
+    pub(crate) fn set_block_level_markdown(&mut self, cutoff: TimestampMillis) {
+        for event_index in self.message_event_indexes.iter().rev().copied() {
+            if let Some(event) = self.events_map.get_mut(event_index) {
+                if event.timestamp < cutoff {
+                    return;
+                }
+                if let ChatEventInternal::Message(m) = &mut event.event {
+                    m.block_level_markdown = true;
+                }
+            }
+        }
+    }
+
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
@@ -763,6 +776,7 @@ mod tests {
                     now,
                     forwarded: false,
                     sender_is_bot: false,
+                    block_level_markdown: false,
                     correlation_id: i,
                 },
                 None,

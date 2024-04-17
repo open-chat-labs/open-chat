@@ -41,6 +41,8 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_relay
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_store
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_email
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_ethereum
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_solana
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -57,4 +59,4 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     true \
 
 ./scripts/deploy-test-ledger.sh $IDENTITY
-./scripts/mint-test-tokens.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY
+./scripts/mint-test-tokens.sh "dmalx-m4aaa-aaaaa-qaanq-cai" $IDENTITY

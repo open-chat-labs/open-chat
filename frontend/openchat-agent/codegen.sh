@@ -68,6 +68,12 @@ didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nns
 didc bind ./src/services/signInWithEmail/candid/can.did -t ts > ./src/services/signInWithEmail/candid/types.d.ts
 didc bind ./src/services/signInWithEmail/candid/can.did -t js > ./src/services/signInWithEmail/candid/idl.js
 
+didc bind ./src/services/signInWithEthereum/candid/can.did -t ts > ./src/services/signInWithEthereum/candid/types.d.ts
+didc bind ./src/services/signInWithEthereum/candid/can.did -t js > ./src/services/signInWithEthereum/candid/idl.js
+
+didc bind ./src/services/signInWithSolana/candid/can.did -t ts > ./src/services/signInWithSolana/candid/types.d.ts
+didc bind ./src/services/signInWithSolana/candid/can.did -t js > ./src/services/signInWithSolana/candid/idl.js
+
 didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
 didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 

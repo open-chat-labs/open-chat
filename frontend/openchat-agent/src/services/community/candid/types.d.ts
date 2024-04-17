@@ -1887,6 +1887,7 @@ export interface SendMessageArgs {
   'channel_rules_accepted' : [] | [Version],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
+  'block_level_markdown' : boolean,
   'community_rules_accepted' : [] | [Version],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],

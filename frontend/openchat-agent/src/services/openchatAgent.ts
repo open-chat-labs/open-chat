@@ -194,6 +194,9 @@ import type {
     GenerateEmailVerificationCodeResponse,
     SubmitEmailVerificationCodeResponse,
     GetDelegationResponse,
+    PrepareDelegationResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -223,6 +226,8 @@ import { TranslationsClient } from "./translations/translations.client";
 import { IdentityClient } from "./identity/identity.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
+import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
+import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -239,7 +244,9 @@ export class OpenChatAgent extends EventTarget {
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _icpcoinsClient: ICPCoinsClient;
-    private _signInWithEmailClient;
+    private _signInWithEmailClient: SignInWithEmailClient;
+    private _signInWithEthereumClient: SignInWithEthereumClient;
+    private _signInWithSolanaClient: SignInWithSolanaClient;
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
@@ -269,6 +276,8 @@ export class OpenChatAgent extends EventTarget {
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this.translationsClient = new TranslationsClient(identity, config);
         this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
+        this._signInWithEthereumClient = SignInWithEthereumClient.create(identity, config);
+        this._signInWithSolanaClient = SignInWithSolanaClient.create(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -3239,5 +3248,45 @@ export class OpenChatAgent extends EventTarget {
         expiration: bigint,
     ): Promise<GetDelegationResponse> {
         return this._signInWithEmailClient.getDelegation(email, sessionKey, expiration);
+    }
+
+    siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
+        return this._signInWithEthereumClient.prepareLogin(address);
+    }
+
+    siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
+        return this._signInWithSolanaClient.prepareLogin(address);
+    }
+
+    loginWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        signature: string,
+        sessionKey: Uint8Array,
+    ): Promise<PrepareDelegationResponse> {
+        switch (token) {
+            case "eth":
+                return this._signInWithEthereumClient.login(signature, address, sessionKey);
+            case "sol":
+                return this._signInWithSolanaClient.login(signature, address, sessionKey);
+        }
+    }
+
+    getDelegationWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        sessionKey: Uint8Array,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        switch (token) {
+            case "eth":
+                return this._signInWithEthereumClient.getDelegation(
+                    address,
+                    sessionKey,
+                    expiration,
+                );
+            case "sol":
+                return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
+        }
     }
 }

@@ -163,6 +163,7 @@ pub(crate) fn send_message_with_reply(
         push_message_sent_event: true,
         mute_notification,
         mentioned,
+        block_level_markdown: false,
         now: state.env.now(),
     };
 

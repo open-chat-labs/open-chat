@@ -67,6 +67,7 @@ pub mod happy_path {
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
+                block_level_markdown: false,
                 message_filter_failed: None,
                 pin: None,
                 correlation_id: 0,

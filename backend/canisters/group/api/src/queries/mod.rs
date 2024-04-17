@@ -21,3 +21,4 @@ pub mod selected_updates_v2;
 pub mod summary;
 pub mod summary_updates;
 pub mod thread_previews;
+pub mod video_call_participants;

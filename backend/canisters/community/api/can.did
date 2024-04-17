@@ -280,6 +280,20 @@ type ThreadPreviewsResponse = variant {
     ReplicaNotUpToDate : TimestampMillis;
 };
 
+type VideoCallParticipantsArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    updated_since : opt TimestampMillis;
+};
+
+type VideoCallParticipantsResponse = variant {
+    Success : VideoCallParticipants;
+    VideoCallNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChannelNotFound;
+};
+
 type AcceptP2PSwapArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
@@ -810,6 +824,7 @@ type SendMessageArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    block_level_markdown : bool;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
@@ -1051,6 +1066,7 @@ service : {
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
+    video_call_participants : (VideoCallParticipantsArgs) -> (VideoCallParticipantsResponse) query;
 
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);

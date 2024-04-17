@@ -406,7 +406,7 @@ pub struct VideoCall {
     pub call_type: VideoCallType,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default, Eq, PartialEq)]
 pub enum VideoCallType {
     Broadcast,
     #[default]
