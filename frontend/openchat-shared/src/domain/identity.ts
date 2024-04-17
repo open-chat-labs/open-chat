@@ -63,3 +63,10 @@ export type SiwsMessage = {
     nonce: string;
     expirationTime: bigint;
 };
+
+export type ChallengeAttempt = { key: number; chars: string };
+export type CreateOpenChatIdentityError =
+    | "already_registered"
+    | "challenge_failed"
+    | "challenge_required"
+    | "public_key_invalid";
