@@ -1610,11 +1610,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getSignInByEmailDelegation":
+            case "getSignInWithEmailDelegation":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getSignInByEmailDelegation(
+                    agent.getSignInWithEmailDelegation(
                         payload.email,
                         payload.sessionKey,
                         payload.expiration,
