@@ -3093,6 +3093,12 @@ export class OpenChat extends OpenChatAgentWorker {
         const now = BigInt(Date.now());
         const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
+        let latestMessageIndex =
+            threadRootMessageIndex === undefined
+                ? this._liveState.serverChatSummaries.get(chatId)?.latestMessageIndex
+                : undefined;
+        let newLatestMessage: EventWrapper<Message> | undefined = undefined;
+
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { messageIndex, messageId } = event.event;
@@ -3104,7 +3110,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         threadRootMessageIndex,
                     });
                 }
-                if (unconfirmed.contains(context, messageId)) {
+                if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
@@ -3113,6 +3119,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     !messagesRead.isRead(context, messageIndex, messageId)
                 ) {
                     messagesRead.markMessageRead(context, messageIndex, messageId);
+                }
+                if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
+                    newLatestMessage = event as EventWrapper<Message>;
+                    latestMessageIndex = messageIndex;
                 }
             }
             if (event.timestamp > recentlyActiveCutOff) {
@@ -3127,6 +3137,9 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
+            if (newLatestMessage !== undefined) {
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
+            }
             const selectedThreadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
                 const threadRootEvent = newEvents.find(

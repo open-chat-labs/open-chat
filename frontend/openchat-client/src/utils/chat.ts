@@ -364,9 +364,22 @@ export function mergeLocalSummaryUpdates(
             const current = merged.get(chatId);
             const updated = localUpdate.updated;
             if (current !== undefined) {
+                const latestMessage =
+                    (updated.latestMessage?.timestamp ?? BigInt(-1)) >
+                    (current.latestMessage?.timestamp ?? BigInt(-1))
+                        ? updated.latestMessage
+                        : current.latestMessage;
+                const latestEventIndex = Math.max(
+                    latestMessage?.index ?? 0,
+                    current.latestEventIndex,
+                );
+
                 if (updated.kind === undefined) {
                     merged.set(chatId, {
                         ...current,
+                        latestMessage,
+                        latestMessageIndex: latestMessage?.event.messageIndex,
+                        latestEventIndex,
                         membership: {
                             ...current.membership,
                             notificationsMuted:
@@ -379,6 +392,9 @@ export function mergeLocalSummaryUpdates(
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
                     merged.set(chatId, {
                         ...current,
+                        latestMessage,
+                        latestMessageIndex: latestMessage?.event.messageIndex,
+                        latestEventIndex,
                         name: updated.name ?? current.name,
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
