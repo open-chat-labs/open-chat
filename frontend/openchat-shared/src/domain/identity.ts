@@ -1,5 +1,6 @@
 import { Delegation } from "@dfinity/identity";
 import type { Signature } from "@dfinity/agent";
+import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 
 export type HasIdentity = {
     id: string;
@@ -46,3 +47,19 @@ export type GetDelegationResponse =
 export type SiwePrepareLoginResponse =
     | { kind: "success"; siweMessage: string }
     | { kind: "error"; error: string };
+
+export type SiwsPrepareLoginResponse =
+    | { kind: "success"; siwsMessage: SiwsMessage }
+    | { kind: "error"; error: string };
+
+export type SiwsMessage = {
+    uri: string;
+    issuedAt: bigint;
+    domain: string;
+    statement: string;
+    version: number;
+    chainId: string;
+    address: Address;
+    nonce: string;
+    expirationTime: bigint;
+};

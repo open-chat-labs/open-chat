@@ -21,6 +21,7 @@ export type AgentConfig = {
     marketMakerCanister: string;
     signInWithEmailCanister: string;
     signInWithEthereumCanister: string;
+    signInWithSolanaCanister: string;
     groupInvite?: GroupInvite;
     logger: Logger;
 };

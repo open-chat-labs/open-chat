@@ -54,6 +54,7 @@ if (dfxNetwork) {
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
         process.env.SIGN_IN_WITH_EMAIL_CANISTER = canisters.sign_in_with_email[dfxNetwork];
         process.env.SIGN_IN_WITH_ETHEREUM_CANISTER = canisters.sign_in_with_ethereum[dfxNetwork];
+        process.env.SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
 
         console.log("TranslationsCanisterId: ", process.env.TRANSLATIONS_CANISTER);
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
@@ -67,6 +68,7 @@ if (dfxNetwork) {
         console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
         console.log("SignInWithEmail: ", process.env.SIGN_IN_WITH_EMAIL_CANISTER);
         console.log("SignInWithEthereum: ", process.env.SIGN_IN_WITH_ETHEREUM_CANISTER);
+        console.log("SignInWithSolana: ", process.env.SIGN_IN_WITH_SOLANA_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -258,6 +260,7 @@ export default {
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
             "process.env.SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_EMAIL_CANISTER),
             "process.env.SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_ETHEREUM_CANISTER),
+            "process.env.SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_SOLANA_CANISTER),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
