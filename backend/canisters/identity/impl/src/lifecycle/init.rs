@@ -18,6 +18,7 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.internet_identity_canister_id,
+        args.sign_in_with_email_canister_id,
         args.test_mode,
     );
 
