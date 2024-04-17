@@ -151,7 +151,12 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
-import type { GetDelegationResponse } from "./identity";
+import type {
+    GetDelegationResponse,
+    PrepareDelegationResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+} from "./identity";
 import type {
     GenerateEmailVerificationCodeResponse,
     SubmitEmailVerificationCodeResponse,
@@ -345,7 +350,11 @@ export type WorkerRequest =
     | SetPrincipalMigrationJobEnabled
     | GenerateEmailVerificationsCode
     | SubmitEmailVerificationsCode
-    | GetSignInWithEmailDelegation;
+    | GetSignInWithEmailDelegation
+    | SiwePrepareLogin
+    | SiwsPrepareLogin
+    | LoginWithWallet
+    | GetDelegationWithWallet;
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -1155,6 +1164,32 @@ type GetSignInWithEmailDelegation = {
     kind: "getSignInWithEmailDelegation";
 };
 
+type SiwePrepareLogin = {
+    address: string;
+    kind: "siwePrepareLogin";
+};
+
+type SiwsPrepareLogin = {
+    address: string;
+    kind: "siwsPrepareLogin";
+};
+
+type LoginWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    signature: string;
+    sessionKey: Uint8Array;
+    kind: "loginWithWallet";
+};
+
+type GetDelegationWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getDelegationWithWallet";
+};
+
 /**
  * Worker error type
  */
@@ -1297,7 +1332,9 @@ export type WorkerResponseInner =
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
     | GenerateEmailVerificationCodeResponse
-    | SubmitEmailVerificationCodeResponse;
+    | SubmitEmailVerificationCodeResponse
+    | SiwePrepareLoginResponse
+    | SiwsPrepareLoginResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1917,5 +1954,13 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends SubmitEmailVerificationsCode
     ? SubmitEmailVerificationCodeResponse
     : T extends GetSignInWithEmailDelegation
+    ? GetDelegationResponse
+    : T extends SiwePrepareLogin
+    ? SiwePrepareLoginResponse
+    : T extends SiwsPrepareLogin
+    ? SiwsPrepareLoginResponse
+    : T extends LoginWithWallet
+    ? PrepareDelegationResponse
+    : T extends GetDelegationWithWallet
     ? GetDelegationResponse
     : never;

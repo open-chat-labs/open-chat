@@ -11,19 +11,17 @@ import {
     type GetDelegationResponse,
     type MigrateLegacyPrincipalResponse,
     type PrepareDelegationResponse,
+    type PrepareDelegationSuccess,
     UnsupportedValueError,
 } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
+import type { PublicKey, SignedDelegation } from "./candid/types";
 
 export function createIdentityResponse(candid: ApiCreateIdentityResponse): CreateIdentityResponse {
     if ("Success" in candid) {
-        return {
-            kind: "success",
-            userKey: consolidateBytes(candid.Success.user_key),
-            expiration: candid.Success.expiration,
-        };
+        return prepareDelegationSuccess(candid.Success);
     }
     if ("AlreadyRegistered" in candid) {
         return { kind: "already_registered" };
@@ -83,11 +81,7 @@ export function prepareDelegationResponse(
     candid: ApiPrepareDelegationResponse,
 ): PrepareDelegationResponse {
     if ("Success" in candid) {
-        return {
-            kind: "success",
-            userKey: consolidateBytes(candid.Success.user_key),
-            expiration: candid.Success.expiration,
-        };
+        return prepareDelegationSuccess(candid.Success);
     }
     if ("NotFound" in candid) {
         return { kind: "not_found" };
@@ -100,17 +94,32 @@ export function prepareDelegationResponse(
 
 export function getDelegationResponse(candid: ApiGetDelegationResponse): GetDelegationResponse {
     if ("Success" in candid) {
-        return {
-            kind: "success",
-            delegation: new Delegation(
-                consolidateBytes(candid.Success.delegation.pubkey),
-                candid.Success.delegation.expiration,
-            ),
-            signature: consolidateBytes(candid.Success.signature) as unknown as Signature,
-        };
+        return signedDelegation(candid.Success);
     }
     if ("NotFound" in candid) {
         return { kind: "not_found" };
     }
     throw new UnsupportedValueError("Unexpected ApiGetDelegationResponse type received", candid);
+}
+
+export function signedDelegation(signedDelegation: SignedDelegation): GetDelegationResponse {
+    return {
+        kind: "success",
+        delegation: new Delegation(
+            consolidateBytes(signedDelegation.delegation.pubkey),
+            signedDelegation.delegation.expiration,
+        ),
+        signature: consolidateBytes(signedDelegation.signature) as unknown as Signature,
+    };
+}
+
+function prepareDelegationSuccess(candid: {
+    user_key: PublicKey;
+    expiration: bigint;
+}): PrepareDelegationSuccess {
+    return {
+        kind: "success",
+        userKey: consolidateBytes(candid.user_key),
+        expiration: candid.expiration,
+    };
 }
