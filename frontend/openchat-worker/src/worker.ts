@@ -1541,6 +1541,60 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "generateEmailVerificationCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.generateEmailVerificationCode(payload.email),
+                );
+                break;
+
+            case "submitEmailVerificationCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.submitEmailVerificationCode(
+                        payload.email,
+                        payload.code,
+                        payload.sessionKey,
+                    ),
+                );
+                break;
+
+            case "siwePrepareLogin":
+                executeThenReply(payload, correlationId, agent.siwePrepareLogin(payload.address));
+                break;
+
+            case "siwsPrepareLogin":
+                executeThenReply(payload, correlationId, agent.siwsPrepareLogin(payload.address));
+                break;
+
+            case "loginWithWallet":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.loginWithWallet(
+                        payload.token,
+                        payload.address,
+                        payload.signature,
+                        payload.sessionKey,
+                    ),
+                );
+                break;
+
+            case "getDelegationWithWallet":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.loginWithWallet(
+                        payload.token,
+                        payload.address,
+                        payload.sessionKey,
+                        payload.expiration,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
