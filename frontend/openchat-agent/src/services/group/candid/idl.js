@@ -598,6 +598,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
+    'block_level_markdown' : IDL.Opt(IDL.Bool),
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
