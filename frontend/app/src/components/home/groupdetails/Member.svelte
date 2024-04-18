@@ -45,7 +45,7 @@
         canRemoveMember ||
         canBlockUser;
 
-    //$: ownerText = $_("owner");
+    $: ownerText = $_("owner");
     $: adminText = $_("admin");
     $: moderatorText = $_("moderator");
     $: memberText = $_("member");
@@ -84,7 +84,7 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        <!-- {#if canPromoteToOwner}
+                        {#if canPromoteToOwner}
                             <MenuItem on:click={() => changeRole("owner")}>
                                 <AccountPlusOutline
                                     size={$iconSize}
@@ -95,7 +95,7 @@
                                         resourceKey={i18nKey("promoteTo", { role: ownerText })} />
                                 </div>
                             </MenuItem>
-                        {/if} -->
+                        {/if}
                         {#if canPromoteToAdmin}
                             <MenuItem on:click={() => changeRole("admin")}>
                                 <AccountPlusOutline

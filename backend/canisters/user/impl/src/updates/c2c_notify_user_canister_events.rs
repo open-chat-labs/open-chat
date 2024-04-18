@@ -145,6 +145,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
                 thread_root_message_index,
                 message_id: args.message_id,
                 content: args.content.into(),
+                block_level_markdown: args.block_level_markdown,
                 now,
             },
             None,

@@ -684,6 +684,7 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserBlocked' : null };
 export interface EditMessageV2Args {
   'content' : MessageContentInitial,
+  'block_level_markdown' : [] | [boolean],
   'user_id' : UserId,
   'correlation_id' : bigint,
   'message_id' : MessageId,
