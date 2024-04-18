@@ -67,7 +67,7 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
 
             const identity = shouldGetIdentity
                 ? await identityAgent.getOpenChatIdentity(sessionKey)
-                : await identityAgent.createOpenChatIdentity(sessionKey);
+                : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
 
             if (identity !== undefined) {
                 await ocIdentityStorage.set(sessionKey, identity.getDelegation());
