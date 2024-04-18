@@ -49,8 +49,6 @@ export type ActiveVideoCall = {
     accessRequests: RequestToSpeak[];
 };
 
-// there are now several ways that we can be notified of an incoming call so we want to be sure that if we decline via one mechanism we are not prompted a second time via another
-
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
 export const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 
