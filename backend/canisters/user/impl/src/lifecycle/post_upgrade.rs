@@ -38,7 +38,7 @@ fn post_upgrade(args: Args) {
             && state.data.group_chats.len() == 0
             && state.data.communities.len() == 0
         {
-            ic_cdk_timers::set_timer(Duration::ZERO, || mark_user_canister_empty());
+            ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
         }
     });
 }
