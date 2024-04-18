@@ -69,6 +69,7 @@ type EditMessageV2Args = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     content : MessageContentInitial;
+    block_level_markdown : opt bool;
     correlation_id : nat64;
 };
 
