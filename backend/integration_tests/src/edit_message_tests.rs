@@ -3,7 +3,7 @@ use crate::rng::random_message_id;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
-use types::{ChatEvent, MessageContentInitial, MessageId, MessageIndex, ReplyContext, TextContent, UserId};
+use types::{ChatEvent, MessageContentInitial, TextContent};
 
 #[test]
 fn edit_message_succeeds() {
