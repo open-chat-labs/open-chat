@@ -1010,6 +1010,7 @@ export const idlFactory = ({ IDL }) => {
   const EditMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
     'content' : MessageContentInitial,
+    'block_level_markdown' : IDL.Opt(IDL.Bool),
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
