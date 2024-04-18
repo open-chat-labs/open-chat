@@ -30,9 +30,12 @@ export type RequestToSpeakResponse = {
 export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
 
+const previousCalls = new Set<bigint>();
+
 export type IncomingVideoCall = {
     chatId: ChatIdentifier;
     userId: string;
+    messageId: bigint;
 };
 
 export type VideoCallView = "fullscreen" | "minimised" | "default";
@@ -46,14 +49,31 @@ export type ActiveVideoCall = {
     accessRequests: RequestToSpeak[];
 };
 
+// there are now several ways that we can be notified of an incoming call so we want to be sure that if we decline via one mechanism we are not prompted a second time via another
+
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
-export const incomingVideoCall = writable<IncomingVideoCall | undefined>(undefined);
+export const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
 export const hasPresence = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
 export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
+
+export const incomingVideoCall = {
+    subscribe: incomingStore.subscribe,
+    set: (call: IncomingVideoCall | undefined) => {
+        if (call === undefined) {
+            incomingStore.set(undefined);
+        } else {
+            // only register an incoming call if we have not already done so. This prevents us ringing twice via a different mechanism for the same call.
+            if (!previousCalls.has(call.messageId)) {
+                incomingStore.set(call);
+                previousCalls.add(call.messageId);
+            }
+        }
+    },
+};
 
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
