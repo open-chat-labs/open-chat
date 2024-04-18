@@ -1,7 +1,12 @@
 import { IdentityClient } from "./identity/identity.client";
 import type { DerEncodedPublicKey, Identity, SignIdentity } from "@dfinity/agent";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import type { CheckAuthPrincipalResponse, MigrateLegacyPrincipalResponse } from "openchat-shared";
+import type {
+    ChallengeAttempt,
+    CheckAuthPrincipalResponse,
+    CreateOpenChatIdentityError,
+    MigrateLegacyPrincipalResponse,
+} from "openchat-shared";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
@@ -20,18 +25,27 @@ export class IdentityAgent {
 
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
-    ): Promise<DelegationIdentity | undefined> {
+        challengeAttempt: ChallengeAttempt | undefined,
+    ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
         const sessionKeyDer = toDer(sessionKey);
-        const createIdentityResponse = await this._identityClient.createIdentity(sessionKeyDer);
+        const createIdentityResponse = await this._identityClient.createIdentity(
+            sessionKeyDer,
+            challengeAttempt,
+        );
 
-        return createIdentityResponse.kind === "success"
-            ? this.getDelegation(
-                  createIdentityResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  createIdentityResponse.expiration,
-              )
-            : undefined;
+        if (createIdentityResponse.kind === "success") {
+            const delegation = await this.getDelegation(
+                createIdentityResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                createIdentityResponse.expiration,
+            );
+            if (delegation === undefined) {
+                throw new Error("Delegation not found, this should never happen");
+            }
+            return delegation;
+        }
+        return createIdentityResponse.kind;
     }
 
     async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {

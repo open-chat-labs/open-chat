@@ -237,15 +237,22 @@ impl ChatEvents {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
                     let existing_text = message.content.text();
                     let new_text = args.content.text();
+                    let block_level_markdown_update =
+                        args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
 
-                    if new_text != existing_text {
+                    if new_text != existing_text || block_level_markdown_update.is_some() {
                         let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
-                            != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
+                            != existing_text.map(|t| t.replace("#LINK_REMOVED", ""))
+                            || block_level_markdown_update.is_some();
 
                         let old_length = message.content.text_length();
                         message.content = args.content.into();
 
                         if edited {
+                            if let Some(block_level_markdown) = block_level_markdown_update {
+                                message.block_level_markdown = block_level_markdown;
+                            }
+
                             let already_edited = message.last_edited.is_some();
                             message.last_edited = Some(args.now);
 
@@ -1848,6 +1855,7 @@ pub struct EditMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInitial,
+    pub block_level_markdown: Option<bool>,
     pub now: TimestampMillis,
 }
 

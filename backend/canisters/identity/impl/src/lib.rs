@@ -87,6 +87,8 @@ struct Data {
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
+    #[serde(default = "sign_in_with_email_canister_id")]
+    sign_in_with_email_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
     #[serde(skip)]
@@ -98,12 +100,17 @@ struct Data {
     test_mode: bool,
 }
 
+fn sign_in_with_email_canister_id() -> CanisterId {
+    CanisterId::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
+}
+
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
+        sign_in_with_email_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -111,6 +118,7 @@ impl Data {
             user_index_canister_id,
             cycles_dispenser_canister_id,
             internet_identity_canister_id,
+            sign_in_with_email_canister_id,
             user_principals: UserPrincipals::default(),
             legacy_principals: HashSet::default(),
             signature_map: SignatureMap::default(),
@@ -140,6 +148,14 @@ impl Data {
     pub fn update_root_hash(&mut self) {
         let prefixed_root_hash = ic_certification::labeled_hash(LABEL_SIG, &self.signature_map.root_hash());
         set_certified_data(&prefixed_root_hash[..]);
+    }
+
+    // Internet Identity already has a Captcha and if users have to verify their email that is
+    // enough of a barrier against bots, so we can skip the captcha for identities originating
+    // from the InternetIdentity canister and the SignInWithEmail canister.
+    pub fn requires_captcha(&self, originating_canister_id: CanisterId) -> bool {
+        originating_canister_id != self.internet_identity_canister_id
+            && originating_canister_id != self.sign_in_with_email_canister_id
     }
 }
 

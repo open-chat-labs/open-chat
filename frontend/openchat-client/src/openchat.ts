@@ -716,7 +716,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -787,6 +786,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this.user.set(user);
+        this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
 
@@ -3094,6 +3094,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const now = BigInt(Date.now());
         const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
+        // To ensure we keep the chat summary up to date, if these events are in the main event list, check if there is
+        // now a new latest message and if so, mark it as a local chat summary update.
+        let latestMessageIndex =
+            threadRootMessageIndex === undefined
+                ? this._liveState.serverChatSummaries.get(chatId)?.latestMessageIndex ?? -1
+                : undefined;
+        let newLatestMessage: EventWrapper<Message> | undefined = undefined;
+
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { messageIndex, messageId } = event.event;
@@ -3105,7 +3113,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         threadRootMessageIndex,
                     });
                 }
-                if (unconfirmed.contains(context, messageId)) {
+                if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
                 // If the message was sent by the current user, mark it as read
@@ -3114,6 +3122,10 @@ export class OpenChat extends OpenChatAgentWorker {
                     !messagesRead.isRead(context, messageIndex, messageId)
                 ) {
                     messagesRead.markMessageRead(context, messageIndex, messageId);
+                }
+                if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
+                    newLatestMessage = event as EventWrapper<Message>;
+                    latestMessageIndex = messageIndex;
                 }
             }
             if (event.timestamp > recentlyActiveCutOff) {
@@ -3128,6 +3140,9 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
+            if (newLatestMessage !== undefined) {
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
+            }
             const selectedThreadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
                 const threadRootEvent = newEvents.find(
@@ -3746,7 +3761,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         ev.event.content.kind === "video_call_content"
                     ) {
                         this.dispatchEvent(
-                            new RemoteVideoCallStartedEvent(chatId, ev.event.sender),
+                            new RemoteVideoCallStartedEvent(
+                                chatId,
+                                ev.event.sender,
+                                ev.event.messageId,
+                            ),
                         );
                     }
                 }
@@ -5795,7 +5814,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    async ringOtherUsers() {
+    async ringOtherUsers(messageId: bigint) {
         const chat = this._liveState.selectedChat;
         let userIds: string[] = [];
         const me = this._liveState.user.userId;
@@ -5823,6 +5842,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     kind: "remote_video_call_started",
                     id: chat.id,
                     userId: me,
+                    messageId,
                 });
             }
         }

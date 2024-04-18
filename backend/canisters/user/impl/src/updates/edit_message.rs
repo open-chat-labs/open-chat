@@ -33,6 +33,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_index: None,
             message_id: args.message_id,
             content: args.content.clone(),
+            block_level_markdown: args.block_level_markdown,
             now,
         };
 
@@ -50,6 +51,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             thread_root_message_id,
                             message_id: args.message_id,
                             content: args.content.into(),
+                            block_level_markdown: args.block_level_markdown,
                         })),
                     );
                 }

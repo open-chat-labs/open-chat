@@ -215,6 +215,8 @@ impl RuntimeState {
             },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             user_principal_updates_queue: self.data.user_principal_updates_queue.len() as u32,
+            empty_users: self.data.empty_users.iter().take(100).copied().collect(),
+            empty_users_length: self.data.empty_users.len(),
         }
     }
 }
@@ -262,6 +264,8 @@ struct Data {
     pub diamond_membership_fees: DiamondMembershipFees,
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
+    #[serde(default)]
+    pub empty_users: HashSet<UserId>,
 }
 
 impl Data {
@@ -328,6 +332,7 @@ impl Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
+            empty_users: HashSet::new(),
         };
 
         // Register the ProposalsBot
@@ -416,6 +421,7 @@ impl Default for Data {
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
+            empty_users: HashSet::new(),
         }
     }
 }
@@ -454,6 +460,8 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
     pub oc_public_key: String,
     pub user_principal_updates_queue: u32,
+    pub empty_users: Vec<UserId>,
+    pub empty_users_length: usize,
 }
 
 #[derive(Serialize, Debug, Default)]

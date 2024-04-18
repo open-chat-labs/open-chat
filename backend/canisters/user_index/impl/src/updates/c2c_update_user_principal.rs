@@ -12,8 +12,24 @@ use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 #[update_msgpack(guard = "caller_is_identity_canister")]
 #[trace]
 async fn c2c_update_user_principal(args: Args) -> Response {
-    let user_id = read_state(|state| get_user_id(&args, state));
+    let user_ids = read_state(|state| get_user_ids(&args, state));
 
+    let futures = user_ids.into_iter().map(|u| update_user_principal(u, &args));
+
+    let responses = futures::future::join_all(futures).await;
+
+    let mut response = Success;
+    for r in responses {
+        if matches!(response, InternalError(_)) {
+            response = r;
+            break;
+        }
+        response = r;
+    }
+    response
+}
+
+async fn update_user_principal(user_id: UserId, args: &Args) -> Response {
     match user_canister_c2c_client::c2c_update_user_principal(
         user_id.into(),
         &user_canister::c2c_update_user_principal::Args {
@@ -35,8 +51,15 @@ async fn c2c_update_user_principal(args: Args) -> Response {
     }
 }
 
-fn get_user_id(args: &Args, state: &RuntimeState) -> UserId {
-    state.data.users.get_by_principal(&args.old_principal).unwrap().user_id
+// Due to a previous bug there are a few users with duplicate principals, so we should migrate them all
+fn get_user_ids(args: &Args, state: &RuntimeState) -> Vec<UserId> {
+    state
+        .data
+        .users
+        .iter()
+        .filter(|u| u.principal == args.old_principal)
+        .map(|u| u.user_id)
+        .collect()
 }
 
 fn commit(

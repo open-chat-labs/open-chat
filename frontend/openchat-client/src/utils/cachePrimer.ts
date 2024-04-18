@@ -1,4 +1,10 @@
-import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
+import type {
+    ChatEvent,
+    ChatSummary,
+    CreatedUser,
+    EventsResponse,
+    IndexRange,
+} from "openchat-shared";
 import {
     ChatMap,
     compareChats,
@@ -14,12 +20,17 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
+import { RemoteVideoCallStartedEvent } from "../events";
 
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
 
-    constructor(private api: OpenChat) {
+    constructor(
+        private api: OpenChat,
+        private user: CreatedUser,
+        private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
+    ) {
         debug("initialized");
     }
 
@@ -101,14 +112,37 @@ export class CachePrimer {
         firstUnreadMessage: number,
     ): Promise<EventsResponse<ChatEvent>> {
         const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
-        return await this.api.sendRequest({
-            kind: "chatEventsWindow",
-            eventIndexRange: [minVisible, chat.latestEventIndex],
-            chatId: chat.id,
-            messageIndex: firstUnreadMessage,
-            threadRootMessageIndex: undefined,
-            latestKnownUpdate: chat.lastUpdated,
-        });
+        return await this.api
+            .sendRequest({
+                kind: "chatEventsWindow",
+                eventIndexRange: [minVisible, chat.latestEventIndex],
+                chatId: chat.id,
+                messageIndex: firstUnreadMessage,
+                threadRootMessageIndex: undefined,
+                latestKnownUpdate: chat.lastUpdated,
+            })
+            .then((resp) => {
+                if (resp !== "events_failed") {
+                    resp.events.forEach((e) => {
+                        if (
+                            e.event.kind === "message" &&
+                            e.event.sender !== this.user.userId &&
+                            e.event.content.kind === "video_call_content" &&
+                            e.event.content.callType === "default" &&
+                            e.event.content.ended === undefined
+                        ) {
+                            this.onVideoStart(
+                                new RemoteVideoCallStartedEvent(
+                                    chat.id,
+                                    e.event.sender,
+                                    e.event.messageId,
+                                ),
+                            );
+                        }
+                    });
+                }
+                return resp;
+            });
     }
 
     private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
