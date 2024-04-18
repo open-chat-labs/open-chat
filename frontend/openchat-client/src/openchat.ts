@@ -3047,6 +3047,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageContext,
             { ...msg.content },
             [],
+            true,
             rulesAccepted,
             communityRulesAccepted,
             pin,
