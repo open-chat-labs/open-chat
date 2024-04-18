@@ -386,7 +386,7 @@ export class GroupClient extends CandidService {
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
-                        block_level_markdown: [],
+                        block_level_markdown: [] as [] | [boolean],
                         correlation_id: generateUint64(),
                     }),
                     editMessageResponse,
