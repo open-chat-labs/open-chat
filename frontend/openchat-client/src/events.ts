@@ -30,9 +30,10 @@ export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "ad
 export class RemoteVideoCallStartedEvent extends CustomEvent<{
     chatId: ChatIdentifier;
     userId: string;
+    messageId: bigint;
 }> {
-    constructor(chatId: ChatIdentifier, userId: string) {
-        super("openchat_event", { detail: { chatId, userId } });
+    constructor(chatId: ChatIdentifier, userId: string, messageId: bigint) {
+        super("openchat_event", { detail: { chatId, userId, messageId } });
     }
 }
 
