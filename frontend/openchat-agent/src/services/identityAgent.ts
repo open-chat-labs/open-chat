@@ -3,6 +3,7 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { DelegationIdentity } from "@dfinity/identity";
 import {
     buildDelegationIdentity,
+    type ChallengeAttempt,
     type CheckAuthPrincipalResponse,
     type CreateOpenChatIdentityError,
     type MigrateLegacyPrincipalResponse,
