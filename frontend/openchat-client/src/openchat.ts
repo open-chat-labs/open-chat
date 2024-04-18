@@ -885,8 +885,8 @@ export class OpenChat extends OpenChatAgentWorker {
     async logout(): Promise<void> {
         await Promise.all([
             this._ocIdentityStorage.remove(),
-            this._authClient.then((c) => c.logout({ returnTo: "/" })),
-        ]);
+            this._authClient.then((c) => c.logout()),
+        ]).=> window.location.replace("/"));
     }
 
     async previouslySignedIn(): Promise<boolean> {
