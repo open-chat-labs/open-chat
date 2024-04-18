@@ -80,6 +80,34 @@ pub mod happy_path {
         }
     }
 
+    pub fn edit_text_message(
+        env: &mut PocketIc,
+        sender: &User,
+        user_id: UserId,
+        message_id: MessageId,
+        text: impl ToString,
+        block_level_markdown: Option<bool>,
+    ) {
+        let response = super::edit_message_v2(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::edit_message_v2::Args {
+                user_id,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+                block_level_markdown,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            user_canister::edit_message_v2::Response::Success => {}
+            response => panic!("'edit_message_v2' error: {response:?}"),
+        }
+    }
+
     pub fn create_group(
         env: &mut PocketIc,
         sender: &User,
