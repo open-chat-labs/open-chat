@@ -716,7 +716,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -787,6 +786,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this.user.set(user);
+        this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
 
@@ -3754,7 +3754,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         ev.event.content.kind === "video_call_content"
                     ) {
                         this.dispatchEvent(
-                            new RemoteVideoCallStartedEvent(chatId, ev.event.sender),
+                            new RemoteVideoCallStartedEvent(
+                                chatId,
+                                ev.event.sender,
+                                ev.event.messageId,
+                            ),
                         );
                     }
                 }
@@ -5803,7 +5807,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    async ringOtherUsers() {
+    async ringOtherUsers(messageId: bigint) {
         const chat = this._liveState.selectedChat;
         let userIds: string[] = [];
         const me = this._liveState.user.userId;
@@ -5831,6 +5835,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     kind: "remote_video_call_started",
                     id: chat.id,
                     userId: me,
+                    messageId,
                 });
             }
         }
