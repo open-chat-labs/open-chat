@@ -33,6 +33,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content,
+            block_level_markdown: args.block_level_markdown,
             now,
         };
 

@@ -594,6 +594,7 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null };
 export interface EditMessageV2Args {
   'content' : MessageContentInitial,
+  'block_level_markdown' : [] | [boolean],
   'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],

@@ -711,6 +711,7 @@ export type Duration = bigint;
 export interface EditMessageArgs {
   'channel_id' : ChannelId,
   'content' : MessageContentInitial,
+  'block_level_markdown' : [] | [boolean],
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }

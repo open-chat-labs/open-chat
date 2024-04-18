@@ -7,6 +7,7 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInitial,
+    pub block_level_markdown: Option<bool>,
     pub correlation_id: u64,
 }
 
