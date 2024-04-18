@@ -33,10 +33,12 @@ fn post_upgrade(args: Args) {
             chat.events.set_block_level_markdown(1710152259000);
         }
 
-        if state.data.user_created + SIX_MONTHS < state.env.now() {
-            if state.data.direct_chats.len() <= 1 && state.data.group_chats.len() == 0 && state.data.communities.len() == 0 {
-                ic_cdk_timers::set_timer(Duration::ZERO, || mark_user_canister_empty());
-            }
+        if state.data.user_created + SIX_MONTHS < state.env.now()
+            && state.data.direct_chats.len() <= 1
+            && state.data.group_chats.len() == 0
+            && state.data.communities.len() == 0
+        {
+            ic_cdk_timers::set_timer(Duration::ZERO, || mark_user_canister_empty());
         }
     });
 }
