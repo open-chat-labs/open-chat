@@ -19,6 +19,7 @@ type WebRtcMessageCommon = {
 
 export type RemoteVideoCallStarted = WebRtcMessageCommon & {
     kind: "remote_video_call_started";
+    messageId: bigint;
 };
 
 export type CurrentUserTyping = WebRtcMessageCommon & {
