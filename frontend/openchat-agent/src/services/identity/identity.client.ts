@@ -2,6 +2,7 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
+    ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
     GetDelegationResponse,
@@ -16,6 +17,8 @@ import {
     prepareDelegationResponse,
 } from "./mappers";
 import type { CreateIdentityArgs } from "./candid/types";
+import { apiOptional } from "../common/chatMappers";
+import { identity } from "../../utils/mapping";
 
 export class IdentityClient extends CandidService {
     private service: IdentityService;
@@ -32,12 +35,15 @@ export class IdentityClient extends CandidService {
         return new IdentityClient(identity, identityCanister, icUrl);
     }
 
-    createIdentity(sessionKey: Uint8Array): Promise<CreateIdentityResponse> {
+    createIdentity(
+        sessionKey: Uint8Array,
+        challengeAttempt: ChallengeAttempt | undefined,
+    ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
             public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             session_key: sessionKey,
             max_time_to_live: [] as [] | [bigint],
-            challenge_attempt: [],
+            challenge_attempt: apiOptional(identity, challengeAttempt),
         };
         return this.handleResponse(
             this.service.create_identity(args),

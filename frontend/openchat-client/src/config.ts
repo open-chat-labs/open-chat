@@ -23,6 +23,8 @@ export type OpenChatConfig = {
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;
+    signInWithEthereumCanister: string;
+    signInWithSolanaCanister: string;
     i18nFormatter: MessageFormatter;
     logger: Logger;
     websiteVersion: string;
