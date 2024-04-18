@@ -69,7 +69,7 @@ impl Default for FireAndForgetHandler {
 }
 
 impl FireAndForgetHandler {
-    pub fn send(&self, canister_id: CanisterId, method_name: String, payload: Vec<u8>) {
+    pub fn send(&self, canister_id: CanisterId, method_name: impl Into<String>, payload: Vec<u8>) {
         let mut handler = self.inner.lock().unwrap();
         let id = handler.next_id;
         handler.next_id += 1;
@@ -77,7 +77,7 @@ impl FireAndForgetHandler {
         let call = C2cCall {
             id,
             canister_id,
-            method_name,
+            method_name: method_name.into(),
             payload,
             attempt: 0,
         };
