@@ -1,6 +1,6 @@
 import { AnonymousIdentity, type Identity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
@@ -69,7 +69,7 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
                 ? await identityAgent.getOpenChatIdentity(sessionKey)
                 : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
 
-            if (identity instanceof DelegationIdentity) {
+            if (identity !== undefined && typeof identity !== "string") {
                 await ocIdentityStorage.set(sessionKey, identity.getDelegation());
                 return (await ocIdentityStorage.get()) ?? new AnonymousIdentity();
             }
