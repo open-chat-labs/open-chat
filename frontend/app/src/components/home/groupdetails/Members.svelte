@@ -37,7 +37,6 @@
     let userGroups: UserGroups | undefined;
 
     $: user = client.user;
-    $: platformModerator = client.platformModerator;
     $: userId = $user.userId;
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
@@ -55,6 +54,9 @@
     $: showBlocked = publicCollection && blockedUsers.length > 0;
     $: showInvited = !publicCollection && invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
+    //$: platformModerator = client.platformModerator;
+    //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
+    $: canPromoteMyselfToOwner = false;
 
     let searchTerm = "";
     let id = collection.id;
@@ -213,7 +215,7 @@
             <Member
                 me
                 member={me}
-                canPromoteToOwner={me.role !== "owner" && $platformModerator}
+                canPromoteToOwner={canPromoteMyselfToOwner}
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
