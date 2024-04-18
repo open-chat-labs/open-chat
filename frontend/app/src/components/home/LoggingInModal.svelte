@@ -8,6 +8,7 @@
     import { Pincode, PincodeInput } from "svelte-pincode";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -37,6 +38,8 @@
     $: visibleOptions = options.filter((o) => o.visible);
     $: emailInvalid = !isEmailValid(email);
     $: codeInvalid = !isCodeValid(verificationCode);
+
+    $: console.log("Email", email, emailInvalid);
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -109,8 +112,8 @@
         options = [...options];
     }
 
-    function isEmailValid(_email: string): boolean {
-        return true;
+    function isEmailValid(email: string): boolean {
+        return email.length > 0;
     }
 
     function isCodeValid(code: string[]): boolean {
@@ -212,34 +215,41 @@
             <div class="options">
                 {#each visibleOptions as option, i}
                     <div class="option">
-                        <div class="icon center">
-                            {#if option.provider === AuthProvider.II}
-                                <InternetIdentityLogo />
-                            {:else if option.provider === AuthProvider.EMAIL}
-                                <EmailIcon size={"1.7em"} color={"var(--txt)"} />
-                            {:else if option.provider === AuthProvider.NFID}
-                                <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                            {/if}
-                        </div>
-
                         {#if option.provider === AuthProvider.EMAIL}
                             <div class="email">
-                                <Input
-                                    bind:value={email}
-                                    invalid={emailInvalid}
-                                    minlength={10}
-                                    maxlength={50}
-                                    placeholder={i18nKey("loginDialog.emailPlaceholder")} />
-                            </div>
-                            <Button tiny on:click={() => login(option.provider)}>
-                                <div class="center">
-                                    <SendIcon size={"1.5em"} viewBox="0 -1 24 24" />
+                                <div class="email-icon icon">
+                                    <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
                                 </div>
-                            </Button>
+                                <div class="email-txt">
+                                    <Input
+                                        bind:value={email}
+                                        minlength={10}
+                                        maxlength={200}
+                                        on:enter={() => login(option.provider)}
+                                        placeholder={i18nKey("loginDialog.emailPlaceholder")} />
+                                </div>
+                                <Button
+                                    disabled={emailInvalid}
+                                    tiny
+                                    on:click={() => login(option.provider)}>
+                                    <div class="center">
+                                        <SendIcon size={"1.5em"} />
+                                    </div>
+                                </Button>
+                            </div>
                         {:else}
-                            <Button fill on:click={() => login(option.provider)}>
-                                {providerName(option.provider)}
-                            </Button>
+                            <div class="other">
+                                <div class="icon center">
+                                    {#if option.provider === AuthProvider.II}
+                                        <InternetIdentityLogo />
+                                    {:else if option.provider === AuthProvider.NFID}
+                                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                                    {/if}
+                                </div>
+                                <Button fill on:click={() => login(option.provider)}>
+                                    {providerName(option.provider)}
+                                </Button>
+                            </div>
                         {/if}
                     </div>
                     {#if i < visibleOptions.length - 1}
@@ -249,8 +259,6 @@
                                 <div>or</div>
                                 <div class="line" />
                             </div>
-                        {:else}
-                            <div class="hr" />
                         {/if}
                     {/if}
                 {/each}
@@ -275,7 +283,7 @@
                     <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
                 </div>
                 <div class="code">
-                    <Pincode bind:code={verificationCode}>
+                    <Pincode on:complete={submitCode} bind:code={verificationCode}>
                         <PincodeInput />
                         <PincodeInput />
                         <PincodeInput />
@@ -295,9 +303,19 @@
             {/if}
         {/if}
     </div>
-    <div class="footer" slot="footer">
+    <div class="footer login-modal" slot="footer">
         <ButtonGroup>
             {#if state === "confirming"}
+                <Button
+                    cls="refresh-code"
+                    disabled={emailInvalid}
+                    hollow
+                    tiny
+                    on:click={() => login(AuthProvider.EMAIL)}>
+                    <div class="center">
+                        <Refresh size={"1.5em"} color={"var(--icon-txt)"} />
+                    </div>
+                </Button>
                 <Button secondary on:click={clearCode} disabled={busy}>
                     <Translatable resourceKey={i18nKey("loginDialog.clearCode")} />
                 </Button>
@@ -313,8 +331,38 @@
 </ModalContent>
 
 <style lang="scss">
+    $height: 45px;
+
+    :global(.login-modal.footer .refresh-code) {
+        min-width: 50px;
+        width: 50px;
+        padding: 0;
+    }
+
     :global(.login .email .input-wrapper) {
         margin-bottom: 0;
+    }
+
+    :global(.login .other button) {
+        border-radius: 0 $sp2 $sp2 0;
+    }
+
+    :global(.login .email button) {
+        height: $height;
+        width: 50px;
+        padding: 0 $sp3 !important;
+        border-radius: 0 $sp2 $sp2 0;
+    }
+
+    :global(.login .email .input-wrapper input) {
+        border-radius: 0;
+        box-shadow: none;
+        border-right: 1px solid var(--bd);
+        height: $height;
+    }
+
+    :global(.login .email [data-lastpass-icon-root]) {
+        display: none;
     }
 
     :global(.login .error) {
@@ -351,6 +399,7 @@
 
     .loader {
         width: 100px;
+        margin-bottom: $sp4;
     }
 
     .code {
@@ -359,28 +408,47 @@
 
     .options {
         display: flex;
-        gap: $sp3;
+        gap: $sp4;
         flex-direction: column;
         align-items: center;
-        margin-bottom: $sp4;
+        margin-bottom: $sp5;
 
         .option {
             width: 100%;
             max-width: 440px;
             display: flex;
-            // border: var(--bw) solid var(--bd);
-            // border-radius: var(--button-rd);
             align-items: center;
-            // padding: 6px 12px;
             gap: 12px;
 
             .email {
                 flex: 1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                .email-txt {
+                    flex: auto;
+                }
+            }
+
+            .other {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex: auto;
             }
         }
 
         .icon {
-            width: 40px;
+            flex: 0 0 60px;
+            width: 60px;
+            height: $height;
+            border-radius: $sp2 0 0 $sp2;
+            border-right: 1px solid var(--bd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--input-bg);
 
             .nfid-img {
                 width: 40px;
@@ -401,15 +469,11 @@
             }
         }
 
-        .hr {
-            border-top: var(--bw) solid var(--bd);
-            height: 1px;
-            width: 70%;
-            margin: 5px 0;
-        }
-
         .more {
             margin-top: $sp3;
         }
+    }
+
+    .email {
     }
 </style>
