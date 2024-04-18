@@ -370,6 +370,7 @@ export class CommunityClient extends CandidService {
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
+                        block_level_markdown: [],
                     }),
                     editMessageResponse,
                 );

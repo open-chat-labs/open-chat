@@ -525,6 +525,7 @@ export class UserClient extends CandidService {
                     user_id: Principal.fromText(recipientId),
                     thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     message_id: message.messageId,
+                    block_level_markdown: [],
                     correlation_id: generateUint64(),
                 };
                 return this.handleResponse(
