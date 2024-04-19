@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Mark which user accounts are more than 6 month old and have no chats ([#5696](https://github.com/open-chat-labs/open-chat/pull/5696))
+
 ### Changed
 
 - Add `principal_updates` to `current_user` response ([#5657](https://github.com/open-chat-labs/open-chat/pull/5657))
 - Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Cater for old bug which caused a few users to have duplicate principals ([#5694](https://github.com/open-chat-labs/open-chat/pull/5694))
 
 ## [[2.0.1134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1134-user_index)] - 2024-04-09
 

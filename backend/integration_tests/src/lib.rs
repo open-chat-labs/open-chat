@@ -16,6 +16,7 @@ mod delete_group_tests;
 mod delete_message_tests;
 mod diamond_membership_tests;
 mod disappearing_message_tests;
+mod edit_message_tests;
 mod env;
 mod escrow_tests;
 mod fire_and_forget_handler_tests;

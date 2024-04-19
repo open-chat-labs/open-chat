@@ -189,7 +189,7 @@
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
-                client.ringOtherUsers();
+                client.ringOtherUsers(messageId);
             }
 
             await call.join();

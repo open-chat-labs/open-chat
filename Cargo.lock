@@ -6356,8 +6356,8 @@ checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=9d92f66d729a436f36886173f73a1df9259e42a3#9d92f66d729a436f36886173f73a1df9259e42a3"
+version = "0.2.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.2.0#36ac9a20159ef70268f811824c2970d456d0a002"
 dependencies = [
  "candid",
  "serde",

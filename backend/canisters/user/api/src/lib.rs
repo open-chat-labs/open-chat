@@ -222,6 +222,7 @@ pub struct EditMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub content: MessageContent,
+    pub block_level_markdown: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
