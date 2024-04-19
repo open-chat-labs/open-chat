@@ -1650,6 +1650,7 @@ export const idlFactory = ({ IDL }) => {
     'Owner' : IDL.Null,
   });
   const SetVideoCallPresenceArgs = IDL.Record({
+    'channel_id' : ChannelId,
     'messaage_id' : MessageId,
     'presence' : VideoCallPresence,
   });

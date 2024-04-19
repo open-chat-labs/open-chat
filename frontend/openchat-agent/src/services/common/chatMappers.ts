@@ -75,6 +75,8 @@ import type {
     ApiVideoCallContent,
     ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
     ApiVideoCallType,
+    ApiVideoCallPresence,
+    ApiSetVideoCallPresenceResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -175,6 +177,8 @@ import type {
     VideoCallContent,
     JoinVideoCallResponse,
     VideoCallType,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -2798,8 +2802,13 @@ export function acceptP2PSwapResponse(
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
     if ("PinRequired" in candid) return { kind: "pin_required" };
-    if ("PinIncorrect" in candid) return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
-    if ("TooManyFailedPinAttempts" in candid) return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+    if ("PinIncorrect" in candid)
+        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+    if ("TooManyFailedPinAttempts" in candid)
+        return {
+            kind: "too_main_failed_pin_attempts",
+            next_retry_in_ms: candid.TooManyFailedPinAttempts,
+        };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
@@ -2842,5 +2851,24 @@ export function joinVideoCallResponse(
         return "ended";
     }
     console.warn("JoinVideoCall failed with ", candid);
+    return "failure";
+}
+
+export function apiVideoCallPresence(domain: VideoCallPresence): ApiVideoCallPresence {
+    switch (domain) {
+        case "default":
+            return { Default: null };
+        case "hidden":
+            return { Hidden: null };
+        case "owner":
+            return { Owner: null };
+    }
+}
+
+export function setVideoCallPresence(
+    candid: ApiSetVideoCallPresenceResponse,
+): SetVideoCallPresenceResponse {
+    if ("Success" in candid) return "success";
+    console.warn("SetVideoCallPresence failed with: ", candid);
     return "failure";
 }

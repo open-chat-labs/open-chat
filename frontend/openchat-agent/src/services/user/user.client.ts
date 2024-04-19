@@ -74,6 +74,8 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -141,6 +143,8 @@ import {
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
+    setVideoCallPresence,
+    apiVideoCallPresence,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -1312,6 +1316,19 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.local_user_index({}),
             (resp) => resp.Success.toString(),
+        );
+    }
+
+    setVideoCallPresence(
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        return this.handleResponse(
+            this.userService.set_video_call_presence({
+                messaage_id: messageId,
+                presence: apiVideoCallPresence(presence),
+            }),
+            setVideoCallPresence,
         );
     }
 }

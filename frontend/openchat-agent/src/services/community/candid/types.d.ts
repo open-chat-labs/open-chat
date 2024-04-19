@@ -1928,6 +1928,7 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'CommunityFrozen' : null } |
   { 'DisplayNameTooShort' : number };
 export interface SetVideoCallPresenceArgs {
+  'channel_id' : ChannelId,
   'messaage_id' : MessageId,
   'presence' : VideoCallPresence,
 }

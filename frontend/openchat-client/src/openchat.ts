@@ -390,6 +390,7 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
+    VideoCallPresence,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5245,6 +5246,21 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId,
             messageId,
         });
+    }
+
+    setVideoCallPresence(
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "setVideoCallPresence",
+            chatId,
+            messageId,
+            presence,
+        })
+            .then((resp) => resp === "success")
+            .catch((_) => false);
     }
 
     private overwriteUserInStore(

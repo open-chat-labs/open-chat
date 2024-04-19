@@ -48,6 +48,8 @@ import type {
     ToggleMuteNotificationResponse,
     AcceptP2PSwapResponse,
     JoinVideoCallResponse,
+    SetVideoCallPresenceResponse,
+    VideoCallPresence,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -117,6 +119,8 @@ import {
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
+    apiVideoCallPresence,
+    setVideoCallPresence,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -951,6 +955,19 @@ export class GroupClient extends CandidService {
                 message_id: messageId,
             }),
             joinVideoCallResponse,
+        );
+    }
+
+    setVideoCallPresence(
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        return this.handleResponse(
+            this.groupService.set_video_call_presence({
+                messaage_id: messageId,
+                presence: apiVideoCallPresence(presence),
+            }),
+            setVideoCallPresence,
         );
     }
 }

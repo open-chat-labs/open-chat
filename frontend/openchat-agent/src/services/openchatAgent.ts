@@ -197,6 +197,8 @@ import type {
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3196,6 +3198,24 @@ export class OpenChatAgent extends EventTarget {
             return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
         } else {
             return this.userClient.joinVideoCall(chatId.userId, messageId);
+        }
+    }
+
+    setVideoCallPresence(
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).setVideoCallPresence(
+                chatId.channelId,
+                messageId,
+                presence,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).setVideoCallPresence(messageId, presence);
+        } else {
+            return this.userClient.setVideoCallPresence(messageId, presence);
         }
     }
 

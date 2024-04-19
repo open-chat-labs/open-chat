@@ -66,6 +66,8 @@ import {
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
+    apiVideoCallPresence,
+    setVideoCallPresence,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -132,6 +134,8 @@ import type {
     OptionalChatPermissions,
     AcceptP2PSwapResponse,
     JoinVideoCallResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -1315,6 +1319,21 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(channelId),
             }),
             joinVideoCallResponse,
+        );
+    }
+
+    setVideoCallPresence(
+        channelId: string,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        return this.handleResponse(
+            this.service.set_video_call_presence({
+                channel_id: BigInt(channelId),
+                messaage_id: messageId,
+                presence: apiVideoCallPresence(presence),
+            }),
+            setVideoCallPresence,
         );
     }
 }
