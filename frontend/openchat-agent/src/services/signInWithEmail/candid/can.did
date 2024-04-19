@@ -21,6 +21,10 @@ type GetDelegationArgs = record {
   expiration : nat64;
 };
 type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
+type IncorrectCode = record {
+  blocked_duration : opt nat64;
+  attempts_remaining : nat32;
+};
 type InitArgs = record { test_mode : bool };
 type InitOrUpgradeArgs = variant { Upgrade : UpgradeArgs; Init : InitArgs };
 type SignedDelegation = record {
@@ -36,7 +40,7 @@ type SubmitVerificationCodeArgs = record {
 type SubmitVerificationCodeResponse = variant {
   NotFound;
   Success : SubmitVerificationCodeSuccess;
-  IncorrectCode;
+  IncorrectCode : IncorrectCode;
 };
 type SubmitVerificationCodeSuccess = record {
   user_key : vec nat8;

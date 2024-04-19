@@ -33,10 +33,14 @@ export const idlFactory = ({ IDL }) => {
     'user_key' : IDL.Vec(IDL.Nat8),
     'expiration' : IDL.Nat64,
   });
+  const IncorrectCode = IDL.Record({
+    'blocked_duration' : IDL.Opt(IDL.Nat64),
+    'attempts_remaining' : IDL.Nat32,
+  });
   const SubmitVerificationCodeResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : SubmitVerificationCodeSuccess,
-    'IncorrectCode' : IDL.Null,
+    'IncorrectCode' : IncorrectCode,
   });
   return IDL.Service({
     'generate_verification_code' : IDL.Func(
