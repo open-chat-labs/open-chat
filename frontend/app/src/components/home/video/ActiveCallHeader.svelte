@@ -129,10 +129,10 @@
                         color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
                 </HoverIcon>
             {/if}
-            {#if chat.chatId && chat.messageIndex !== undefined}
+            {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
                 <ActiveCallParticipantsToggle
-                    chatId={chat.chatId}
-                    messageIndex={chat.messageIndex} />
+                    chatId={$activeVideoCall.chatId}
+                    messageId={$activeVideoCall.messageId} />
             {/if}
             {#if chat.chatId && chat.messageIndex !== undefined}
                 <ActiveCallThreadSummary chatId={chat.chatId} messageIndex={chat.messageIndex} />

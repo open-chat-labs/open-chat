@@ -48,6 +48,7 @@ export type ActiveVideoCall = {
     threadOpen: boolean;
     participantsOpen: boolean;
     accessRequests: RequestToSpeak[];
+    messageId?: bigint;
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
@@ -76,6 +77,15 @@ export const incomingVideoCall = {
 
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
+    setMessageId: (messageId: bigint) => {
+        return activeStore.update((current) => {
+            if (current === undefined) return undefined;
+            return {
+                ...current,
+                messageId,
+            };
+        });
+    },
     setCall: (chatId: ChatIdentifier, call: DailyCall) => {
         return activeStore.set({
             status: "joined",

@@ -1,15 +1,34 @@
 <script lang="ts">
-    import type { ChatIdentifier } from "openchat-client";
+    import type { MultiUserChatIdentifier, OpenChat, VideoCallParticipants } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { popRightPanelHistory } from "../../../stores/rightPanel";
     import { activeVideoCall } from "../../../stores/video";
 
-    export let chatId: ChatIdentifier;
-    export let messageIndex: number;
-
     const dispatch = createEventDispatcher();
+
+    const client = getContext<OpenChat>("client");
+
+    export let chatId: MultiUserChatIdentifier;
+    export let messageId: bigint;
+
+    let updatesSince = 0n;
+    let videoParticipants: VideoCallParticipants = {
+        participants: [],
+        hidden: [],
+        lastUpdated: 0n,
+    };
+
+    onMount(refresh);
+
+    function refresh() {
+        client.videoCallParticipants(chatId, messageId, updatesSince).then((res) => {
+            videoParticipants = res;
+            updatesSince = BigInt(Date.now());
+            console.log("VideoParticants: ", videoParticipants);
+        });
+    }
 
     function close() {
         dispatch("close");

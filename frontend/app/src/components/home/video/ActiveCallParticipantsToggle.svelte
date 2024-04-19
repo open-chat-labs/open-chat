@@ -2,13 +2,13 @@
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
-    import type { ChatIdentifier } from "openchat-client";
+    import type { MultiUserChatIdentifier } from "openchat-client";
     import { popRightPanelHistory, rightPanelHistory } from "../../../stores/rightPanel";
     import { activeVideoCall } from "../../../stores/video";
     import { iconSize } from "../../../stores/iconSize";
 
-    export let chatId: ChatIdentifier;
-    export let messageIndex: number;
+    export let chatId: MultiUserChatIdentifier;
+    export let messageId: bigint;
 
     $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;
 
@@ -20,7 +20,7 @@
                 {
                     kind: "call_participants_panel",
                     chatId,
-                    messageIndex,
+                    messageId,
                 },
             ]);
         }

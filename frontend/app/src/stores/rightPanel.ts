@@ -1,4 +1,4 @@
-import type { ChatSummary, ChatPermissions, ChatIdentifier } from "openchat-client";
+import type { ChatSummary, ChatPermissions, MultiUserChatIdentifier } from "openchat-client";
 import { writable } from "svelte/store";
 
 export type RightPanelState =
@@ -57,8 +57,8 @@ export type ShowCommunityMembers = {
 
 export type CallParticipantsPanel = {
     kind: "call_participants_panel";
-    chatId: ChatIdentifier;
-    messageIndex: number;
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
 };
 
 export type ShowPinnedPanel = {

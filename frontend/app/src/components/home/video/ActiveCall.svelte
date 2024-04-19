@@ -126,6 +126,7 @@
                 chat.id,
                 accessType,
             );
+            activeVideoCall.setMessageId(messageId);
 
             const call = daily.createFrame(iframeContainer, {
                 token,
@@ -152,6 +153,9 @@
                     if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                         askedToSpeak = false;
                         denied = !ev.data.approved;
+                        if (ev.data.approved) {
+                            client.setVideoCallPresence(chat.id, BigInt(messageId), "default");
+                        }
                     }
                 }
             });
@@ -197,7 +201,11 @@
             activeVideoCall.setCall(chat.id, call);
 
             if (joining) {
-                await client.joinVideoCall(chat.id, BigInt(messageId));
+                await client.setVideoCallPresence(
+                    chat.id,
+                    BigInt(messageId),
+                    callType === "broadcast" ? "hidden" : "default",
+                );
             }
         } catch (err) {
             if (err instanceof NoMeetingToJoin) {

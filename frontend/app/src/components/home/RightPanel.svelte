@@ -370,7 +370,7 @@
             on:chatWith
             on:showGroupMembers />
     {:else if lastState.kind === "call_participants_panel"}
-        <ActiveCallParticipants chatId={lastState.chatId} messageIndex={lastState.messageIndex} />
+        <ActiveCallParticipants chatId={lastState.chatId} messageId={lastState.messageId} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         <InviteUsers
             {level}
