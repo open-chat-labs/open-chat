@@ -24,6 +24,7 @@
     import UserGroups from "../communities/details/UserGroups.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { trimLeadingAtSymbol } from "../../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -58,12 +59,13 @@
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
 
-    let searchTerm = "";
+    let searchTermEntered = "";
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
     let selectedTab: "users" | "groups" = "users";
 
+    $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
 
     $: {
@@ -107,7 +109,7 @@
     }
 
     function matchesSearch(searchTermLower: string, user: UserSummary): boolean {
-        if (searchTerm === "") return true;
+        if (searchTermLower === "") return true;
         if (user.username === undefined) return true;
         return (
             user.username.toLowerCase().includes(searchTermLower) ||
@@ -186,7 +188,7 @@
         <Search
             on:searchEntered={() => membersList.reset()}
             searching={false}
-            bind:searchTerm
+            bind:searchTerm={searchTermEntered}
             placeholder={i18nKey("search")} />
     </div>
 
