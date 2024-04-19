@@ -679,6 +679,7 @@ export type LocalMessageUpdates = {
     threadSummary?: Partial<ThreadSummary>;
     tips?: TipsReceived;
     hiddenMessageRevealed?: boolean;
+    blockLevelMarkdown?: boolean;
     lastUpdated: number;
 };
 
