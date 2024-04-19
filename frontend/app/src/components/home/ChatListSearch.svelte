@@ -8,6 +8,7 @@
         UserSummary,
     } from "openchat-client";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { trimLeadingAtSymbol } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,6 +57,10 @@
     async function performSearch(ev: CustomEvent<string>) {
         searchResultsAvailable = false;
         searchTerm = ev.detail;
+
+        if ($chatListScope.kind === "direct_chat") {
+            searchTerm = trimLeadingAtSymbol(searchTerm);
+        }
 
         if (searchTerm !== "") {
             try {
