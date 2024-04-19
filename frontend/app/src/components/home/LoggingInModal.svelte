@@ -17,15 +17,11 @@
     import { configKeys } from "../../utils/config";
     import { ECDSAKeyIdentity } from "@dfinity/identity";
 
-    type Option = {
-        provider: AuthProvider;
-        visible: boolean;
-    };
-
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let state: "idle" | "confirming" | "logging-in" | "error" = "idle";
+    let state: "options" | "email" | "logging-in" = "options";
+    let mode: "signin" | "signup" = "signin";
     let email = "";
     let verificationCode: string[] = [];
     let errorMessage: string | undefined = undefined;
@@ -34,12 +30,9 @@
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
-    $: options = buildOptions($selectedAuthProviderStore);
-    $: visibleOptions = options.filter((o) => o.visible);
+    $: options = buildOptions($selectedAuthProviderStore, mode);
     $: emailInvalid = !isEmailValid(email);
     $: codeInvalid = !isCodeValid(verificationCode);
-
-    $: console.log("Email", email, emailInvalid);
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -63,53 +56,37 @@
         dispatch("close");
     }
 
-    function buildOptions(selected: AuthProvider | undefined): Option[] {
+    function buildOptions(
+        selected: AuthProvider | undefined,
+        mode: "signin" | "signup",
+    ): AuthProvider[] {
         let options = [];
         const supportsII = "PublicKeyCredential" in window;
 
         if (supportsII) {
-            options.push({
-                provider: AuthProvider.II,
-                visible: true,
-            });
+            options.push(AuthProvider.II);
         }
 
-        options.push({
-            provider: AuthProvider.EMAIL,
-            visible: true,
-        });
+        options.push(AuthProvider.EMAIL);
 
-        options.push({
-            provider: AuthProvider.NFID,
-            visible: false,
-        });
+        if (mode === "signin") {
+            options.push(AuthProvider.NFID);
+        }
 
         if (selected !== undefined) {
-            let i = options.findIndex((o) => o.provider === selected);
+            let i = options.findIndex((p) => p === selected);
 
             if (i >= 0) {
-                for (const o of options) {
-                    o.visible = false;
-                }
-
                 if (selected === AuthProvider.EMAIL) {
                     email = localStorage.getItem(configKeys.selectedAuthEmail) ?? "";
                 }
 
                 options.splice(i, 1);
-                options.splice(0, 0, { provider: selected, visible: true });
+                options.splice(0, 0, selected);
             }
         }
 
         return options;
-    }
-
-    function showMore() {
-        for (const o of options) {
-            o.visible = true;
-        }
-
-        options = [...options];
     }
 
     function isEmailValid(email: string): boolean {
@@ -126,6 +103,7 @@
         }
 
         selectedAuthProviderStore.set(provider);
+        errorMessage = undefined;
         state = "logging-in";
 
         if (provider === AuthProvider.EMAIL) {
@@ -134,7 +112,7 @@
                 .then((response) => {
                     if (response.kind === "success") {
                         localStorage.setItem(configKeys.selectedAuthEmail, email);
-                        state = "confirming";
+                        state = "email";
                         errorMessage = undefined;
                     } else {
                         switch (response.kind) {
@@ -148,12 +126,11 @@
                                 errorMessage = "failedToSendEmail";
                                 break;
                         }
-
-                        state = "error";
                     }
                 })
-                .catch(() => {
-                    state = "idle";
+                .catch((e) => {
+                    console.log("error generating code", e);
+                    state = "options";
                 });
         } else {
             client.login();
@@ -162,6 +139,14 @@
 
     function clearCode() {
         verificationCode = ["", "", "", "", "", ""];
+    }
+
+    function onPinComplete() {
+        if (errorMessage !== undefined) {
+            return;
+        }
+
+        submitCode();
     }
 
     function submitCode() {
@@ -189,32 +174,43 @@
 
     function resetDialog() {
         clearCode();
-        state = "idle";
+        state = "options";
     }
 
     function providerName(provider: AuthProvider): string {
-        return provider === AuthProvider.NFID ? "NFID" : provider;
+        return provider === AuthProvider.NFID ? "NFID (Legacy)" : provider;
+    }
+
+    function toggleMode() {
+        mode = mode === "signin" ? "signup" : "signin";
     }
 </script>
 
-<ModalContent hideFooter={state !== "error" && state !== "confirming"} on:close={cancel} closeIcon>
-    <div class="header" slot="header">
-        <Translatable
-            resourceKey={i18nKey(
-                state === "confirming" ? "loginDialog.enterCode" : "loginDialog.title",
-            )} />
+<ModalContent hideFooter={state !== "email"} on:close={cancel} closeIcon>
+    <div class="header login" slot="header">
+        <div class="logo-img">
+            <FancyLoader loop={state === "logging-in"} />
+        </div>
+        <div>
+            <Translatable
+                resourceKey={i18nKey(
+                    state === "email"
+                        ? "loginDialog.enterCode"
+                        : mode === "signin"
+                          ? "loginDialog.title"
+                          : "loginDialog.signupTitle",
+                )} />
+        </div>
+        <div class="strapline">
+            <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
+        </div>
     </div>
     <div class="login" slot="body">
-        {#if state === "idle"}
-            {#if $selectedAuthProviderStore === undefined}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("loginDialog.chooseAuth")} />
-                </div>
-            {/if}
+        {#if state === "options"}
             <div class="options">
-                {#each visibleOptions as option, i}
+                {#each options as provider}
                     <div class="option">
-                        {#if option.provider === AuthProvider.EMAIL}
+                        {#if provider === AuthProvider.EMAIL}
                             <div class="email">
                                 <div class="email-icon icon">
                                     <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
@@ -224,13 +220,17 @@
                                         bind:value={email}
                                         minlength={10}
                                         maxlength={200}
-                                        on:enter={() => login(option.provider)}
-                                        placeholder={i18nKey("loginDialog.emailPlaceholder")} />
+                                        on:enter={() => login(provider)}
+                                        placeholder={i18nKey(
+                                            mode === "signin"
+                                                ? "loginDialog.signinEmailPlaceholder"
+                                                : "loginDialog.signupEmailPlaceholder",
+                                        )} />
                                 </div>
                                 <Button
                                     disabled={emailInvalid}
                                     tiny
-                                    on:click={() => login(option.provider)}>
+                                    on:click={() => login(provider)}>
                                     <div class="center">
                                         <SendIcon size={"1.5em"} />
                                     </div>
@@ -239,59 +239,55 @@
                         {:else}
                             <div class="other">
                                 <div class="icon center">
-                                    {#if option.provider === AuthProvider.II}
+                                    {#if provider === AuthProvider.II}
                                         <InternetIdentityLogo />
-                                    {:else if option.provider === AuthProvider.NFID}
+                                    {:else if provider === AuthProvider.NFID}
                                         <img class="nfid-img" src="/assets/nfid.svg" alt="" />
                                     {/if}
                                 </div>
-                                <Button fill on:click={() => login(option.provider)}>
-                                    {providerName(option.provider)}
+                                <Button fill on:click={() => login(provider)}>
+                                    <Translatable
+                                        resourceKey={i18nKey(
+                                            mode === "signin"
+                                                ? "loginDialog.signinWith"
+                                                : "loginDialog.signupWith",
+                                            { provider: providerName(provider) },
+                                        )} />
                                 </Button>
                             </div>
                         {/if}
                     </div>
-                    {#if i < visibleOptions.length - 1}
-                        {#if visibleOptions.length < options.length}
-                            <div class="or">
-                                <div class="line" />
-                                <div>or</div>
-                                <div class="line" />
-                            </div>
-                        {/if}
-                    {/if}
                 {/each}
 
-                {#if visibleOptions.length < options.length}
+                <div class="change-mode">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
+                        )} />
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-missing-attribute -->
-                    <a class="more" role="button" tabindex="0" on:click={showMore}>
-                        <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
+                    <a class="mode-toggle" role="button" tabindex="0" on:click={toggleMode}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
+                            )} />
                     </a>
-                {/if}
-            </div>
-        {:else if state === "logging-in"}
-            <div class="center">
-                <div class="loader">
-                    <FancyLoader />
                 </div>
             </div>
-        {:else}
-            {#if state === "confirming"}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
-                </div>
-                <div class="code">
-                    <Pincode bind:code={verificationCode}>
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                    </Pincode>
-                </div>
-            {/if}
+        {:else if state === "email"}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
+            </div>
+            <div class="code">
+                <Pincode on:complete={onPinComplete} bind:code={verificationCode}>
+                    <PincodeInput />
+                    <PincodeInput />
+                    <PincodeInput />
+                    <PincodeInput />
+                    <PincodeInput />
+                    <PincodeInput />
+                </Pincode>
+            </div>
 
             {#if errorMessage !== undefined}
                 <div class="center">
@@ -304,7 +300,7 @@
     </div>
     <div class="footer login-modal" slot="footer">
         <ButtonGroup>
-            {#if state === "confirming"}
+            {#if state === "email"}
                 <Button
                     cls="refresh-code"
                     disabled={emailInvalid}
@@ -321,9 +317,9 @@
                 <Button on:click={submitCode} disabled={codeInvalid || busy} loading={busy}>
                     <Translatable resourceKey={i18nKey("loginDialog.submitCode")} />
                 </Button>
-            {:else if state === "error"}
+                <!-- {:else if state === "error"}
                 <Button on:click={resetDialog}
-                    ><Translatable resourceKey={i18nKey("loginDialog.back")} /></Button>
+                    ><Translatable resourceKey={i18nKey("loginDialog.back")} /></Button> -->
             {/if}
         </ButtonGroup>
     </div>
@@ -380,7 +376,25 @@
     }
 
     .header {
-        text-align: center;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: $sp3;
+
+        .logo-img {
+            height: 56px;
+            width: 56px;
+
+            @include mobile() {
+                height: 40px;
+                width: 40px;
+            }
+        }
+
+        .strapline {
+            @include font(light, normal, fs-80);
+            color: var(--txt-light);
+        }
     }
 
     .login {
@@ -396,11 +410,6 @@
         align-items: center;
     }
 
-    .loader {
-        width: 100px;
-        margin-bottom: $sp4;
-    }
-
     .code {
         text-align: center;
     }
@@ -410,7 +419,8 @@
         gap: $sp4;
         flex-direction: column;
         align-items: center;
-        margin-bottom: $sp5;
+        margin-bottom: $sp3;
+        width: 100%;
 
         .option {
             width: 100%;
@@ -454,25 +464,8 @@
             }
         }
 
-        .or {
-            display: flex;
-            gap: $sp4;
-            margin: 6px 0 2px 0;
-            color: var(--txt-light);
-
-            .line {
-                border-top: var(--bw) solid var(--bd);
-                position: relative;
-                top: 13px;
-                width: 120px;
-            }
+        .change-mode {
+            margin-top: $sp4;
         }
-
-        .more {
-            margin-top: $sp3;
-        }
-    }
-
-    .email {
     }
 </style>
