@@ -67,6 +67,7 @@ import type {
     JoinVideoCallResponse,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -357,7 +358,15 @@ export type WorkerRequest =
     | SiwsPrepareLogin
     | LoginWithWallet
     | GetDelegationWithWallet
-    | SetVideoCallPresence;
+    | SetVideoCallPresence
+    | VideoCallParticipants;
+
+type VideoCallParticipants = {
+    kind: "videoCallParticipants";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    updatesSince?: bigint;
+};
 
 type SetVideoCallPresence = {
     kind: "setVideoCallPresence";
@@ -1345,7 +1354,8 @@ export type WorkerResponseInner =
     | SubmitEmailVerificationCodeResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
-    | SetVideoCallPresenceResponse;
+    | SetVideoCallPresenceResponse
+    | VideoCallParticipantsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1954,6 +1964,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? JoinVideoCallResponse
     : T extends SetVideoCallPresence
     ? SetVideoCallPresenceResponse
+    : T extends VideoCallParticipants
+    ? VideoCallParticipantsResponse
     : T extends GetAccessToken
     ? string | undefined
     : T extends GetLocalUserIndexForUser

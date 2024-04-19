@@ -1509,6 +1509,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "videoCallParticipants":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.videoCallParticipants(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.updatesSince,
+                    ),
+                );
+                break;
+
             case "setVideoCallPresence":
                 executeThenReply(
                     payload,

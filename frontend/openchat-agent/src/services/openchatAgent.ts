@@ -199,6 +199,7 @@ import type {
     SiwsPrepareLoginResponse,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3185,6 +3186,26 @@ export class OpenChatAgent extends EventTarget {
             );
         } else {
             return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+        }
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince?: bigint,
+    ): Promise<VideoCallParticipantsResponse> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).videoCallParticipants(
+                    chatId.channelId,
+                    messageId,
+                    updatesSince,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).videoCallParticipants(
+                    messageId,
+                    updatesSince,
+                );
         }
     }
 

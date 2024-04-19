@@ -68,6 +68,7 @@ import {
     joinVideoCallResponse,
     apiVideoCallPresence,
     setVideoCallPresence,
+    videoCallParticipantsResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -136,6 +137,7 @@ import type {
     JoinVideoCallResponse,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -1334,6 +1336,22 @@ export class CommunityClient extends CandidService {
                 presence: apiVideoCallPresence(presence),
             }),
             setVideoCallPresence,
+        );
+    }
+
+    videoCallParticipants(
+        channelId: string,
+        messageId: bigint,
+        updatesSince?: bigint,
+    ): Promise<VideoCallParticipantsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.video_call_participants({
+                    channel_id: BigInt(channelId),
+                    message_id: messageId,
+                    updated_since: apiOptional(identity, updatesSince),
+                }),
+            videoCallParticipantsResponse,
         );
     }
 }

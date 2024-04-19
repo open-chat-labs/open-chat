@@ -391,6 +391,7 @@ import type {
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
     VideoCallPresence,
+    VideoCallParticipants,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5261,6 +5262,35 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => resp === "success")
             .catch((_) => false);
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince: bigint,
+    ): Promise<VideoCallParticipants> {
+        return this.sendRequest({
+            kind: "videoCallParticipants",
+            chatId,
+            messageId,
+            updatesSince,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    return resp;
+                } else {
+                    return {
+                        participants: [],
+                        hidden: [],
+                        lastUpdated: updatesSince,
+                    };
+                }
+            })
+            .catch((_) => ({
+                participants: [],
+                hidden: [],
+                lastUpdated: updatesSince,
+            }));
     }
 
     private overwriteUserInStore(

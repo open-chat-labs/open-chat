@@ -50,6 +50,7 @@ import type {
     JoinVideoCallResponse,
     SetVideoCallPresenceResponse,
     VideoCallPresence,
+    VideoCallParticipantsResponse,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -121,6 +122,7 @@ import {
     joinVideoCallResponse,
     apiVideoCallPresence,
     setVideoCallPresence,
+    videoCallParticipantsResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -968,6 +970,20 @@ export class GroupClient extends CandidService {
                 presence: apiVideoCallPresence(presence),
             }),
             setVideoCallPresence,
+        );
+    }
+
+    videoCallParticipants(
+        messageId: bigint,
+        updatesSince?: bigint,
+    ): Promise<VideoCallParticipantsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.groupService.video_call_participants({
+                    message_id: messageId,
+                    updated_since: apiOptional(identity, updatesSince),
+                }),
+            videoCallParticipantsResponse,
         );
     }
 }
