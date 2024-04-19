@@ -486,7 +486,7 @@ export function message(candid: ApiMessage): Message {
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
         thread: optional(candid.thread_summary, threadSummary),
-        blockLevelMarkdown: true,
+        blockLevelMarkdown: candid.block_level_markdown,
     };
 }
 

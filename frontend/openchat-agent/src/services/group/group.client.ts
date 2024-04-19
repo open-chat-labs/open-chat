@@ -394,7 +394,6 @@ export class GroupClient extends CandidService {
                         blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                     correlation_id: generateUint64(),
                 };
-                console.log("EditMessageArgs: ", args);
                 return this.handleResponse(
                     this.groupService.edit_message_v2(args),
                     editMessageResponse,
