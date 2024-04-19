@@ -1254,6 +1254,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1926,6 +1927,16 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'DisplayNameTooShort' : number };
+export interface SetVideoCallPresenceArgs {
+  'messaage_id' : MessageId,
+  'presence' : VideoCallPresence,
+}
+export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
+  { 'AlreadyEnded' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2243,9 +2254,28 @@ export interface VideoCall {
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
   'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export interface VideoCallParticipantsArgs {
+  'channel_id' : ChannelId,
+  'updated_since' : [] | [TimestampMillis],
+  'message_id' : MessageId,
+}
+export type VideoCallParticipantsResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'VideoCallNotFound' : null } |
+  { 'Success' : VideoCallParticipants } |
+  { 'UserNotInCommunity' : null };
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2370,6 +2400,10 @@ export interface _SERVICE {
     [SetMemberDisplayNameArgs],
     SetMemberDisplayNameResponse
   >,
+  'set_video_call_presence' : ActorMethod<
+    [SetVideoCallPresenceArgs],
+    SetVideoCallPresenceResponse
+  >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse
@@ -2396,6 +2430,10 @@ export interface _SERVICE {
   'update_user_group' : ActorMethod<
     [UpdateUserGroupArgs],
     UpdateUserGroupResponse
+  >,
+  'video_call_participants' : ActorMethod<
+    [VideoCallParticipantsArgs],
+    VideoCallParticipantsResponse
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

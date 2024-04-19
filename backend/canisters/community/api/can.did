@@ -1046,6 +1046,21 @@ type UnfollowThreadResponse = variant {
     CommunityFrozen;
 };
 
+type SetVideoCallPresenceArgs = record {
+    messaage_id: MessageId;
+    presence: VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    GroupFrozen;
+    UserNotInGroup;
+    UserSuspended;
+};
+
+
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
     channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
@@ -1111,4 +1126,5 @@ service : {
     update_user_group : (UpdateUserGroupArgs) -> (UpdateUserGroupResponse);
     follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
     unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 };

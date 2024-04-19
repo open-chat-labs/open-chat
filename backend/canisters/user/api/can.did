@@ -1134,6 +1134,21 @@ type RetrieveBtcResponse = variant {
     InternalError : text;
 };
 
+type SetVideoCallPresenceArgs = record {
+    messaage_id: MessageId;
+    presence: VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    GroupFrozen;
+    UserNotInGroup;
+    UserSuspended;
+};
+
+
 service : {
     send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
     edit_message_v2 : (EditMessageV2Args) -> (EditMessageResponse);
@@ -1200,4 +1215,5 @@ service : {
     get_cached_btc_address : (EmptyArgs) -> (GetCachedBtcAddressResponse) query;
     get_btc_address : (EmptyArgs) -> (GetBtcAddressResponse);
     retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 };

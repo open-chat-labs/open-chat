@@ -1084,6 +1084,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1682,6 +1683,16 @@ export interface SendMessageV2Args {
   'replies_to' : [] | [GroupReplyContext],
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface SetVideoCallPresenceArgs {
+  'messaage_id' : MessageId,
+  'presence' : VideoCallPresence,
+}
+export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
+  { 'AlreadyEnded' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1939,9 +1950,25 @@ export interface VideoCall {
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
   'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export interface VideoCallParticipantsArgs {
+  'updated_since' : [] | [TimestampMillis],
+  'message_id' : MessageId,
+}
+export type VideoCallParticipantsResponse = { 'CallerNotInGroup' : null } |
+  { 'VideoCallNotFound' : null } |
+  { 'Success' : VideoCallParticipants };
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2031,6 +2058,10 @@ export interface _SERVICE {
     SelectedUpdatesV2Response
   >,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
+  'set_video_call_presence' : ActorMethod<
+    [SetVideoCallPresenceArgs],
+    SetVideoCallPresenceResponse
+  >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse
@@ -2050,6 +2081,10 @@ export interface _SERVICE {
   'unfollow_thread' : ActorMethod<[UnfollowThreadArgs], UnfollowThreadResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
+  'video_call_participants' : ActorMethod<
+    [VideoCallParticipantsArgs],
+    VideoCallParticipantsResponse
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

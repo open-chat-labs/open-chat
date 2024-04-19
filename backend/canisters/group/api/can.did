@@ -470,6 +470,20 @@ type SelectedUpdatesV2Response = variant {
     CallerNotInGroup;
 };
 
+type SetVideoCallPresenceArgs = record {
+    messaage_id: MessageId;
+    presence: VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    GroupFrozen;
+    UserNotInGroup;
+    UserSuspended;
+};
+
 type EventsArgs = record {
     thread_root_message_index : opt MessageIndex;
     start_index : EventIndex;
@@ -735,6 +749,7 @@ service : {
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates_v2 : (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

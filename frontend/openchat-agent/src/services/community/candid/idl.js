@@ -343,6 +343,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'hidden_participants' : IDL.Nat32,
     'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
@@ -715,6 +716,7 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'block_level_markdown' : IDL.Bool,
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),
@@ -1642,6 +1644,23 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
   });
+  const VideoCallPresence = IDL.Variant({
+    'Default' : IDL.Null,
+    'Hidden' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const SetVideoCallPresenceArgs = IDL.Record({
+    'messaage_id' : MessageId,
+    'presence' : VideoCallPresence,
+  });
+  const SetVideoCallPresenceResponse = IDL.Variant({
+    'GroupFrozen' : IDL.Null,
+    'AlreadyEnded' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
@@ -1958,6 +1977,23 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
   });
+  const VideoCallParticipantsArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'updated_since' : IDL.Opt(TimestampMillis),
+    'message_id' : MessageId,
+  });
+  const VideoCallParticipants = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'hidden' : IDL.Vec(CallParticipant),
+    'last_updated' : TimestampMillis,
+  });
+  const VideoCallParticipantsResponse = IDL.Variant({
+    'UserNotInChannel' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'VideoCallNotFound' : IDL.Null,
+    'Success' : VideoCallParticipants,
+    'UserNotInCommunity' : IDL.Null,
+  });
   return IDL.Service({
     'accept_p2p_swap' : IDL.Func(
         [AcceptP2PSwapArgs],
@@ -2145,6 +2181,11 @@ export const idlFactory = ({ IDL }) => {
         [SetMemberDisplayNameResponse],
         [],
       ),
+    'set_video_call_presence' : IDL.Func(
+        [SetVideoCallPresenceArgs],
+        [SetVideoCallPresenceResponse],
+        [],
+      ),
     'start_video_call' : IDL.Func(
         [StartVideoCallArgs],
         [StartVideoCallResponse],
@@ -2192,6 +2233,11 @@ export const idlFactory = ({ IDL }) => {
         [UpdateUserGroupArgs],
         [UpdateUserGroupResponse],
         [],
+      ),
+    'video_call_participants' : IDL.Func(
+        [VideoCallParticipantsArgs],
+        [VideoCallParticipantsResponse],
+        ['query'],
       ),
   });
 };

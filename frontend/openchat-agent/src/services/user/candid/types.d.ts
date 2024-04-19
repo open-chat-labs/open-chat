@@ -1239,6 +1239,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1959,6 +1960,16 @@ export type SetPinNumberResponse = {
   { 'TooShort' : FieldTooShortResult } |
   { 'PinRequired' : null } |
   { 'Success' : null };
+export interface SetVideoCallPresenceArgs {
+  'messaage_id' : MessageId,
+  'presence' : VideoCallPresence,
+}
+export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
+  { 'AlreadyEnded' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2288,9 +2299,18 @@ export interface VideoCall {
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
   'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2425,6 +2445,10 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'set_pin_number' : ActorMethod<[SetPinNumberArgs], SetPinNumberResponse>,
+  'set_video_call_presence' : ActorMethod<
+    [SetVideoCallPresenceArgs],
+    SetVideoCallPresenceResponse
+  >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse
