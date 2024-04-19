@@ -592,7 +592,7 @@
                         on:keypress={keyPress} />
 
                     {#if containsMarkdown}
-                        <MarkdownToggle />
+                        <MarkdownToggle {editingEvent} />
                     {/if}
                 </div>
             {/key}

@@ -3636,17 +3636,23 @@ export class OpenChat extends OpenChatAgentWorker {
             const msg = {
                 ...editingEvent.event,
                 edited: true,
-                blockLevelMarkdown,
                 content: this.getMessageContent(textContent ?? undefined, attachment),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
             draftMessagesStore.delete(messageContext);
+
+            const updatedBlockLevelMarkdown =
+                msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
+            if (updatedBlockLevelMarkdown !== undefined) {
+                localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
+            }
 
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
                 threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                blockLevelMarkdown: updatedBlockLevelMarkdown,
             })
                 .then((resp) => {
                     if (resp !== "success") {

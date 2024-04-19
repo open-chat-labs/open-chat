@@ -1519,6 +1519,10 @@ function mergeLocalUpdates(
         }
     }
 
+    if (localUpdates?.blockLevelMarkdown !== undefined) {
+        message.blockLevelMarkdown = localUpdates.blockLevelMarkdown;
+    }
+
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
         message.content = {
             ...message.content,

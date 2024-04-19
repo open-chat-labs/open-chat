@@ -127,6 +127,7 @@ import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { EditMessageV2Args } from "./candid/types";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -377,18 +378,25 @@ export class GroupClient extends CandidService {
         );
     }
 
-    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
+    editMessage(
+        message: Message,
+        threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
+    ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
+                const args: EditMessageV2Args = {
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                    content: apiMessageContent(content ?? message.content),
+                    message_id: message.messageId,
+                    block_level_markdown:
+                        blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
+                    correlation_id: generateUint64(),
+                };
+                console.log("EditMessageArgs: ", args);
                 return this.handleResponse(
-                    this.groupService.edit_message_v2({
-                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                        content: apiMessageContent(content ?? message.content),
-                        message_id: message.messageId,
-                        block_level_markdown: [] as [] | [boolean],
-                        correlation_id: generateUint64(),
-                    }),
+                    this.groupService.edit_message_v2(args),
                     editMessageResponse,
                 );
             });

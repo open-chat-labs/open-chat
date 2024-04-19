@@ -7,14 +7,25 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { useBlockLevelMarkdown } from "../../stores/settings";
+    import type { EventWrapper, Message } from "openchat-client";
+
+    export let editingEvent: EventWrapper<Message> | undefined;
+
+    let enabled =
+        editingEvent === undefined ? $useBlockLevelMarkdown : editingEvent.event.blockLevelMarkdown;
+
+    function toggle() {
+        enabled = !enabled;
+        useBlockLevelMarkdown.set(enabled);
+    }
 </script>
 
 <div class="toggle">
     <TooltipWrapper position={"top"} align={"middle"}>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div on:click={() => useBlockLevelMarkdown.toggle()} slot="target">
-            {#if $useBlockLevelMarkdown}
+        <div on:click={toggle} slot="target">
+            {#if enabled}
                 <Markdown size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
                 <MarkdownOutline size={$iconSize} color={"var(--icon-txt)"} />
