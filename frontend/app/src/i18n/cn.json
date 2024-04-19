@@ -497,7 +497,7 @@
         "enterCode": "输入验证码",
         "enterCodeInfo": "我们已将 6 位数代码发送至您的电子邮箱。请在此处输入该代码以登录。",
         "failedToSendEmail": "我们目前无法发送电子邮件。请稍后重试。",
-        "incorrectCode": "代码不正确。您最多可以尝试 3 次。",
+        "incorrectCode": "代码不正确。您有 3 次机会来纠正它。",
         "invalidEmail": "该电子邮件地址无效。",
         "providerChanged": "看起来您之前曾使用 {previous} 提供商登录过。请仔细检查您这次是否要使用 {next}？",
         "showMore": "展示更多",

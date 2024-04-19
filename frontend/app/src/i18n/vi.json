@@ -497,7 +497,7 @@
         "enterCode": "Nhập mã xác thực",
         "enterCodeInfo": "Chúng tôi đã gửi mã gồm 6 chữ số tới email của bạn. Vui lòng nhập nó vào đây để đăng nhập.",
         "failedToSendEmail": "Chúng tôi không thể gửi email vào lúc này. Vui lòng thử lại sau.",
-        "incorrectCode": "Mã không chính xác. Tổng cộng bạn có thể thử tối đa 3 lần.",
+        "incorrectCode": "Mã không chính xác. Bạn có 3 lần thử để làm đúng.",
         "invalidEmail": "Địa chỉ email không hợp lệ.",
         "providerChanged": "Có vẻ như trước đây bạn đã đăng nhập bằng nhà cung cấp {previous}. Vui lòng kiểm tra kỹ xem bạn có muốn sử dụng {next} lần này không?",
         "showMore": "Cho xem nhiều hơn",

@@ -497,7 +497,7 @@
         "enterCode": "Inserisci il codice di convalida",
         "enterCodeInfo": "Abbiamo inviato un codice di 6 cifre alla tua email. Inseriscilo qui per accedere.",
         "failedToSendEmail": "Non è stato possibile inviare l'e-mail in questo momento. Per favore riprova più tardi.",
-        "incorrectCode": "Il codice non è corretto. Puoi provare fino a 3 volte in totale.",
+        "incorrectCode": "Il codice non è corretto. Hai 3 tentativi per farlo bene.",
         "invalidEmail": "L'indirizzo email non è valido.",
         "providerChanged": "Sembra che tu abbia già effettuato l'accesso con il provider {previous}. Per favore ricontrolla che desideri utilizzare {next} questa volta?",
         "showMore": "Mostra di più",

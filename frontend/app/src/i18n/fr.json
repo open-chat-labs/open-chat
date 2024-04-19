@@ -497,7 +497,7 @@
         "enterCode": "Entrer le code de validation",
         "enterCodeInfo": "Nous avons envoyé un code à 6 chiffres à votre email. Veuillez le saisir ici pour vous connecter.",
         "failedToSendEmail": "Nous n'avons pas pu envoyer l'e-mail pour le moment. Veuillez réessayer plus tard.",
-        "incorrectCode": "Le code est incorrect. Vous pouvez essayer jusqu'à 3 fois au total.",
+        "incorrectCode": "Le code est incorrect. Vous disposez de 3 tentatives pour y parvenir.",
         "invalidEmail": "L'adresse mail est invalide.",
         "providerChanged": "Il semble que vous vous soyez déjà connecté avec le fournisseur {previous}. Veuillez vérifier que vous souhaitez utiliser {next} cette fois ?",
         "showMore": "Montre plus",

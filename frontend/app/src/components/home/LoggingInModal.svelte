@@ -180,8 +180,7 @@
                     if (response.kind === "incorrect_code") {
                         errorMessage = "incorrectCode";
                     } else if (response.kind === "not_found") {
-                        state = "error";
-                        errorMessage = "codeExpired";
+                        errorMessage = "codeBlocked";
                     }
                 })
                 .finally(() => (busy = false));
@@ -283,7 +282,7 @@
                     <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
                 </div>
                 <div class="code">
-                    <Pincode on:complete={submitCode} bind:code={verificationCode}>
+                    <Pincode bind:code={verificationCode}>
                         <PincodeInput />
                         <PincodeInput />
                         <PincodeInput />

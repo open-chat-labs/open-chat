@@ -497,7 +497,7 @@
         "enterCode": "Validierungscode eingeben",
         "enterCodeInfo": "Wir haben Ihnen einen 6-stelligen Code an Ihre E-Mail-Adresse gesendet. Bitte geben Sie ihn hier ein, um sich anzumelden.",
         "failedToSendEmail": "Wir konnten die E-Mail derzeit nicht versenden. Bitte versuchen Sie es später noch einmal.",
-        "incorrectCode": "Der Code ist falsch. Du kannst es insgesamt bis zu 3 Mal versuchen.",
+        "incorrectCode": "Der Code ist falsch. Sie haben 3 Versuche, ihn richtig einzugeben.",
         "invalidEmail": "Die e-mail Adresse ist ungültig.",
         "providerChanged": "Es sieht so aus, als hätten Sie sich zuvor mit dem Anbieter {previous} angemeldet. Bitte überprüfen Sie noch einmal, ob Sie dieses Mal {next} verwenden möchten.",
         "showMore": "Zeig mehr",
