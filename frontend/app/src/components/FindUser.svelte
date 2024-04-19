@@ -11,6 +11,7 @@
     import { translatable } from "../actions/translatable";
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
+    import { trimLeadingAtSymbol } from "../utils/user";
 
     export let mode: "add" | "edit";
     export let enabled = true;
@@ -61,7 +62,7 @@
     }
 
     function onInput() {
-        debounce(inp.value);
+        debounce(trimLeadingAtSymbol(inp.value));
     }
 
     function clearFilter() {
