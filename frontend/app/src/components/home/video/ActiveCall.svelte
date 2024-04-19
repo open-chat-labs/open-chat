@@ -126,7 +126,6 @@
                 chat.id,
                 accessType,
             );
-            activeVideoCall.setMessageId(messageId);
 
             const call = daily.createFrame(iframeContainer, {
                 token,
@@ -198,7 +197,7 @@
 
             await call.join();
 
-            activeVideoCall.setCall(chat.id, call);
+            activeVideoCall.setCall(chat.id, BigInt(messageId), call);
 
             if (joining) {
                 await client.setVideoCallPresence(

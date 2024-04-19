@@ -471,7 +471,7 @@ type SelectedUpdatesV2Response = variant {
 };
 
 type SetVideoCallPresenceArgs = record {
-    messaage_id: MessageId;
+    message_id: MessageId;
     presence: VideoCallPresence;
 };
 

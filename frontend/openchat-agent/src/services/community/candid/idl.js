@@ -1651,8 +1651,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const SetVideoCallPresenceArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'messaage_id' : MessageId,
     'presence' : VideoCallPresence,
+    'message_id' : MessageId,
   });
   const SetVideoCallPresenceResponse = IDL.Variant({
     'GroupFrozen' : IDL.Null,

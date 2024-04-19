@@ -1332,7 +1332,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(
             this.service.set_video_call_presence({
                 channel_id: BigInt(channelId),
-                messaage_id: messageId,
+                message_id: messageId,
                 presence: apiVideoCallPresence(presence),
             }),
             setVideoCallPresence,

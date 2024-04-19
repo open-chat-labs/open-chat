@@ -1684,8 +1684,8 @@ export interface SendMessageV2Args {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface SetVideoCallPresenceArgs {
-  'messaage_id' : MessageId,
   'presence' : VideoCallPresence,
+  'message_id' : MessageId,
 }
 export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
   { 'AlreadyEnded' : null } |

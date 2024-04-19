@@ -2889,7 +2889,7 @@ export function videoCallParticipantsResponse(
         return {
             kind: "success",
             participants: candid.Success.participants.map(videoCallParticipant),
-            hidden: candid.Success.participants.map(videoCallParticipant),
+            hidden: candid.Success.hidden.map(videoCallParticipant),
             lastUpdated: candid.Success.last_updated,
         };
     }

@@ -1048,7 +1048,7 @@ type UnfollowThreadResponse = variant {
 
 type SetVideoCallPresenceArgs = record {
     channel_id : ChannelId;
-    messaage_id: MessageId;
+    message_id: MessageId;
     presence: VideoCallPresence;
 };
 

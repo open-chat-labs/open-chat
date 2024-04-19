@@ -966,7 +966,7 @@ export class GroupClient extends CandidService {
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.groupService.set_video_call_presence({
-                messaage_id: messageId,
+                message_id: messageId,
                 presence: apiVideoCallPresence(presence),
             }),
             setVideoCallPresence,
@@ -977,6 +977,7 @@ export class GroupClient extends CandidService {
         messageId: bigint,
         updatesSince?: bigint,
     ): Promise<VideoCallParticipantsResponse> {
+        console.log("VideoCallParticipants: ", messageId, updatesSince, typeof messageId);
         return this.handleQueryResponse(
             () =>
                 this.groupService.video_call_participants({

@@ -1325,7 +1325,7 @@ export class UserClient extends CandidService {
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.userService.set_video_call_presence({
-                messaage_id: messageId,
+                message_id: messageId,
                 presence: apiVideoCallPresence(presence),
             }),
             setVideoCallPresence,

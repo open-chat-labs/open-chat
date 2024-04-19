@@ -77,16 +77,7 @@ export const incomingVideoCall = {
 
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
-    setMessageId: (messageId: bigint) => {
-        return activeStore.update((current) => {
-            if (current === undefined) return undefined;
-            return {
-                ...current,
-                messageId,
-            };
-        });
-    },
-    setCall: (chatId: ChatIdentifier, call: DailyCall) => {
+    setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
         return activeStore.set({
             status: "joined",
             chatId,
@@ -95,6 +86,7 @@ export const activeVideoCall = {
             threadOpen: false,
             participantsOpen: false,
             accessRequests: [],
+            messageId,
         });
     },
     setView: (view: VideoCallView) => {
