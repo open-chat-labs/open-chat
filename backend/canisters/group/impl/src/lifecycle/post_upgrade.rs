@@ -9,7 +9,7 @@ use ic_cdk_macros::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::PendingCryptoTransaction;
+use types::{GroupPermissionRole, PendingCryptoTransaction};
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
 #[post_upgrade]
@@ -52,6 +52,22 @@ fn post_upgrade(args: Args) {
                     }
                 }
             }
+        }
+
+        // TODO: One time only - remove after release
+        let now = state.env.now();
+        if !state.data.chat.is_public.value {
+            state.data.chat.permissions.update(
+                |ps| {
+                    if matches!(ps.start_video_call, GroupPermissionRole::Admins) {
+                        ps.start_video_call = GroupPermissionRole::Members;
+                        true
+                    } else {
+                        false
+                    }
+                },
+                now,
+            );
         }
     });
 }
