@@ -44,8 +44,6 @@
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
-    $: console.log("ActiveVideoCall: ", $activeVideoCall);
-
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
     let hostEnded = false;
@@ -151,6 +149,7 @@
                 }
                 if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak_response") {
                     const me = call.participants().local.session_id;
+                    console.log("AppMessage", ev);
                     if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                         askedToSpeak = false;
                         denied = !ev.data.approved;
@@ -178,11 +177,9 @@
             });
 
             call.on("joined-meeting", (ev) => {
-                console.log("JoinedMeeting is this happening: ", ev);
                 const me = ev?.participants?.local;
                 if (!me) return;
                 if (me.owner) {
-                    console.log("Setting owner to true");
                     activeVideoCall.isOwner(true);
                 }
             });
@@ -194,7 +191,6 @@
                     sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
                     hasPresence.set(ev?.participant.permissions.hasPresence);
                 } else {
-                    console.log("ParticipantUpdated: ", ev);
                     if (ev?.participant.user_name === $user.username) {
                         // this means that I have joined the call from somewhere else e.g. another device
                         hangup();

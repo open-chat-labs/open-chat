@@ -35,12 +35,9 @@
 
     onMount(refresh);
 
-    // TODO figure out how to get this to react and get called at the right interval. Probably the best way would be to use the Daily
-    // participant updated event but that might cause some sort of race condition and not be 100% reliable
     function refresh() {
         client.videoCallParticipants(chatId, messageId, updatesSince).then((res) => {
             videoParticipants = res;
-            console.log("VideoCallParticipants: ", videoParticipants);
             updatesSince = BigInt(Date.now());
         });
     }
@@ -53,6 +50,35 @@
 
     function selectTab(tab: "presenters" | "viewers") {
         selectedTab = tab;
+    }
+
+    function findParticipantId(userId: string): string | undefined {
+        if ($activeVideoCall?.call) {
+            const participants = $activeVideoCall.call.participants();
+            const p = Object.values(participants).find((v) => v.user_id === userId);
+            if (p !== undefined) {
+                return p.session_id;
+            }
+        }
+    }
+
+    function demote(ev: CustomEvent<string>) {
+        if ($activeVideoCall?.call) {
+            const participantId = findParticipantId(ev.detail);
+            if (participantId) {
+                $activeVideoCall.call.updateParticipant(participantId, {
+                    updatePermissions: {
+                        hasPresence: false,
+                        canSend: [],
+                    },
+                });
+
+                // TODO - we need to also update the presence in OC for this user *before* we refresh
+                // TODO - and we probably need to optionally trigger refresh when participant-updated is called
+                // not sure how we're going to wire that up though
+                refresh();
+            }
+        }
     }
 </script>
 
@@ -89,6 +115,7 @@
     {#each videoParticipants.participants as participant}
         <ActiveCallParticipant
             {isOwner}
+            on:demote={demote}
             presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
             {participant} />
     {/each}

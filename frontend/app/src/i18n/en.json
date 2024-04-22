@@ -1271,6 +1271,7 @@
         "callFailed": "Sorry, we were unable to start the video call",
         "chat": "Chat",
         "clickToJoin": "Click to join the call",
+        "demoteToHidden": "Revert to hidden",
         "denied": "The host declined your request to speak",
         "duration": "after {duration}",
         "ended": "Call ended",
