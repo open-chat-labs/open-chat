@@ -36,6 +36,11 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         state.data.chat.events.set_block_level_markdown(1710152259000);
+        state
+            .data
+            .chat
+            .events
+            .mark_video_call_ended_if_message_deleted(state.env.now());
 
         for (_, job) in state.data.timer_jobs.iter() {
             if let Some(TimerJob::MakeTransfer(j)) = job.borrow_mut().as_mut() {

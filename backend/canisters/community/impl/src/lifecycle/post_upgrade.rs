@@ -42,8 +42,10 @@ fn post_upgrade(args: Args) {
     });
 
     mutate_state(|state| {
+        let now = state.env.now();
         for channel in state.data.channels.iter_mut() {
             channel.chat.events.set_block_level_markdown(1710152259000);
+            channel.chat.events.mark_video_call_ended_if_message_deleted(now);
         }
 
         for (_, job) in state.data.timer_jobs.iter() {
