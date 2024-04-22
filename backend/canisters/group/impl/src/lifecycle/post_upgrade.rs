@@ -58,8 +58,12 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
         state.data.chat.permissions.update(
             |ps| {
-                ps.start_video_call = GroupPermissionRole::Members;
-                true
+                if matches!(ps.start_video_call, GroupPermissionRole::Admins) {
+                    ps.start_video_call = GroupPermissionRole::Members;
+                    true
+                } else {
+                    false
+                }
             },
             now,
         );
