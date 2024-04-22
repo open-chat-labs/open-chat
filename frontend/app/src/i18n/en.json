@@ -1284,6 +1284,7 @@
         "leaveVideo": "Leave video call",
         "noMeetingToJoin": "Sorry but the meeting you are trying to join has ended",
         "participants": "Participants",
+        "presenters": "Presenters ({count})",
         "remoteStart": "A video call has been started by {name}",
         "showParticipants": "Show participants",
         "startBroadcast": "Start broadcast",
@@ -1292,7 +1293,8 @@
         "switchCall": "You are already in a video call. Would you like to switch to this one?",
         "toggleCam": "Toggle your camera",
         "toggleMic": "Toggle your microphone",
-        "toggleShare": "Toggle desktop sharing"
+        "toggleShare": "Toggle desktop sharing",
+        "viewers": "Viewers ({count})"
     },
     "viewer": "viewer",
     "wallet": "Wallet",

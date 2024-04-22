@@ -85,17 +85,13 @@ function updateCall(fn: (call: ActiveVideoCall) => ActiveVideoCall) {
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
-        return activeStore.set({
-            status: "joined",
+        return updateCall((current) => ({
+            ...current,
             chatId,
             call,
-            view: "default",
-            threadOpen: false,
-            participantsOpen: false,
-            accessRequests: [],
             messageId,
-            isOwner: false,
-        });
+            status: "joined",
+        }));
     },
     setView: (view: VideoCallView) => {
         return updateCall((current) => ({ ...current, view }));

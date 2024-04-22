@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ArrowUpBoldOutline from "svelte-material-icons/ArrowUpBoldOutline.svelte";
     import ArrowDownBoldOutline from "svelte-material-icons/ArrowDownBoldOutline.svelte";
     import MicrophoneOff from "svelte-material-icons/MicrophoneOff.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -18,19 +17,7 @@
     export let presence: VideoCallPresence;
     export let isOwner: boolean;
 
-    /* 
-
-    hidden users 
-    - promote to presenter
-
-    presenters 
-    - change to hidden 
-    - mute user (switch off their mic)
-    */
-
-    function promote() {
-        console.log("Promote this user to presenter");
-    }
+    $: showMenu = isOwner && presence === "default";
 
     function demote() {
         console.log("demote this user to hidden");
@@ -42,7 +29,7 @@
 </script>
 
 <User user={participant}>
-    {#if isOwner}
+    {#if showMenu}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>
                 <span slot="icon">
@@ -52,43 +39,30 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        {#if presence === "hidden"}
-                            <MenuItem on:click={() => promote()}>
-                                <ArrowUpBoldOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable
-                                        resourceKey={i18nKey("videoCall.promoteToPresenter")} />
-                                </div>
-                            </MenuItem>
-                        {/if}
-                        {#if presence === "default"}
-                            <MenuItem on:click={() => demote()}>
-                                <ArrowDownBoldOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable
-                                        resourceKey={i18nKey("videoCall.demoteToHidden")} />
-                                </div>
-                            </MenuItem>
-                            <MenuItem on:click={() => mute()}>
-                                <MicrophoneOff
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable
-                                        resourceKey={i18nKey("videoCall.muteParticipant")} />
-                                </div>
-                            </MenuItem>
-                        {/if}
+                        <MenuItem on:click={() => demote()}>
+                            <ArrowDownBoldOutline
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("videoCall.demoteToHidden")} />
+                            </div>
+                        </MenuItem>
+                        <MenuItem on:click={() => mute()}>
+                            <MicrophoneOff
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("videoCall.muteParticipant")} />
+                            </div>
+                        </MenuItem>
                     </Menu>
                 </span>
             </MenuIcon>
         </span>
     {/if}
 </User>
+
+<pre>{isOwner}</pre>
+<pre>{presence}</pre>
