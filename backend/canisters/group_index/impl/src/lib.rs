@@ -69,7 +69,8 @@ impl RuntimeState {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -296,7 +297,8 @@ impl Default for Data {
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
