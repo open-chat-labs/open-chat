@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow members to make video calls in existing private chats ([#5714](https://github.com/open-chat-labs/open-chat/pull/5714))
 - Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
 - Include both heap and stable memory in cycles balance check ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Support blocking users who are no longer in the community ([#5719](https://github.com/open-chat-labs/open-chat/pull/5719))
 
 ### Fixed
 
