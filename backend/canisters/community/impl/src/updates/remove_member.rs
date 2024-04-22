@@ -8,7 +8,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, MembersRemoved, UserId, UsersBlocked};
+use types::{CanisterId, CommunityRole, MembersRemoved, UserId, UsersBlocked};
 use user_canister::c2c_remove_from_community;
 
 #[update]
@@ -41,7 +41,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // If the user is an owner of the community then call the local_user_index
     // to check whether they are a "platform moderator" in which case this removal
     // is not authorized
-    if prepare_result.is_user_an_owner {
+    if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
             Ok(user) if !user.is_platform_moderator => (),
             Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
@@ -58,7 +58,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
 struct PrepareResult {
     removed_by: UserId,
     local_user_index_canister_id: CanisterId,
-    is_user_an_owner: bool,
+    is_user_to_remove_an_owner: bool,
 }
 
 fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -74,32 +74,30 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<Prepare
         } else if member.user_id == user_id {
             Err(CannotRemoveSelf)
         } else {
-            // Check if the caller is authorized to remove the user
-            let is_user_an_owner = match state.data.members.get_by_user_id(&user_id) {
+            let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
+                Some(member_to_remove) => member_to_remove.role.clone(),
                 None if block => {
                     if state.data.members.is_blocked(&user_id) {
                         return Err(Success);
                     }
-                    false
+                    CommunityRole::Member
                 }
                 None => return Err(TargetUserNotInCommunity),
-                Some(member_to_remove) => {
-                    if member
-                        .role
-                        .can_remove_members_with_role(member_to_remove.role, &state.data.permissions)
-                    {
-                        member.role.is_owner()
-                    } else {
-                        return Err(NotAuthorized);
-                    }
-                }
             };
 
-            Ok(PrepareResult {
-                removed_by: member.user_id,
-                local_user_index_canister_id: state.data.local_user_index_canister_id,
-                is_user_an_owner,
-            })
+            // Check if the caller is authorized to remove the user
+            if member
+                .role
+                .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
+            {
+                Ok(PrepareResult {
+                    removed_by: member.user_id,
+                    local_user_index_canister_id: state.data.local_user_index_canister_id,
+                    is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+                })
+            } else {
+                return Err(NotAuthorized);
+            }
         }
     } else {
         Err(UserNotInCommunity)
