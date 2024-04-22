@@ -17,7 +17,6 @@ use user_index_canister_c2c_client::LookupUserError;
 async fn top_up_neuron(args: Args) -> Response {
     let PrepareResult {
         caller,
-        this_canister_id,
         user_index_canister_id,
         ledger_canister_id,
         sns_neuron_id,
@@ -32,14 +31,13 @@ async fn top_up_neuron(args: Args) -> Response {
         _ => return Unauthorized,
     }
 
-    top_up_neuron_impl(&args, this_canister_id, ledger_canister_id, sns_neuron_id)
+    top_up_neuron_impl(&args, ledger_canister_id, sns_neuron_id)
         .await
         .unwrap_or_else(|error| InternalError(format!("{error:?}")))
 }
 
 struct PrepareResult {
     caller: Principal,
-    this_canister_id: CanisterId,
     user_index_canister_id: CanisterId,
     ledger_canister_id: CanisterId,
     sns_neuron_id: SnsNeuronId,
@@ -50,7 +48,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
         if let Some(sns_neuron_id) = ns.neuron_for_submitting_proposals() {
             return Ok(PrepareResult {
                 caller: state.env.caller(),
-                this_canister_id: state.env.canister_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 ledger_canister_id: ns.ledger_canister_id(),
                 sns_neuron_id,
@@ -60,12 +57,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
     Err(GovernanceCanisterNotSupported)
 }
 
-async fn top_up_neuron_impl(
-    args: &Args,
-    this_canister_id: CanisterId,
-    ledger_canister_id: CanisterId,
-    sns_neuron_id: SnsNeuronId,
-) -> CallResult<Response> {
+async fn top_up_neuron_impl(args: &Args, ledger_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> CallResult<Response> {
     if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
         ledger_canister_id,
         &TransferArg {
