@@ -20,6 +20,7 @@
     import Legend from "../../../Legend.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import { trimLeadingAtSymbol } from "../../../../utils/user";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -34,7 +35,11 @@
     let added: Set<string> = new Set();
     let removed: Set<string> = new Set();
     let searchVirtualList: VirtualList;
+    let searchTermEntered = "";
+    let usersDirty = false;
+    let saving = false;
 
+    $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
     $: groupUsers = [...userGroup.members]
         .map((m) => communityUsers[m])
@@ -48,10 +53,6 @@
         trimmedName.length <= MAX_LENGTH &&
         trimmedName.indexOf(" ") < 0;
     $: valid = nameValid && userGroup.members.size > 0;
-
-    let searchTerm = "";
-    let usersDirty = false;
-    let saving = false;
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -115,7 +116,7 @@
     }
 
     function addUserToGroup(user: UserSummary) {
-        searchTerm = "";
+        searchTermEntered = "";
         added.add(user.userId);
         removed.delete(user.userId);
         changeUsers(() => userGroup.members.add(user.userId));
@@ -155,7 +156,7 @@
                 on:searchEntered={() => searchVirtualList?.reset()}
                 fill
                 searching={false}
-                bind:searchTerm
+                bind:searchTerm={searchTermEntered}
                 placeholder={i18nKey("searchUsersPlaceholder")} />
         </div>
         {#if matchedUsers.length > 0}
