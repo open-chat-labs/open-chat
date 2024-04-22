@@ -22,7 +22,7 @@ type GetDelegationArgs = record {
 };
 type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
 type IncorrectCode = record {
-  blocked_until : opt nat64;
+  blocked_duration : opt nat64;
   attempts_remaining : nat32;
 };
 type InitArgs = record { test_mode : bool };

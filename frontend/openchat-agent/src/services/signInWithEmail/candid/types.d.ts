@@ -27,7 +27,7 @@ export interface GetDelegationArgs {
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
 export interface IncorrectCode {
-  'blocked_until' : [] | [bigint],
+  'blocked_duration' : [] | [bigint],
   'attempts_remaining' : number,
 }
 export interface InitArgs { 'test_mode' : boolean }

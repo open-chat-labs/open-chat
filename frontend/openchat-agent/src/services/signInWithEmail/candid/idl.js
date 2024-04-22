@@ -34,7 +34,7 @@ export const idlFactory = ({ IDL }) => {
     'expiration' : IDL.Nat64,
   });
   const IncorrectCode = IDL.Record({
-    'blocked_until' : IDL.Opt(IDL.Nat64),
+    'blocked_duration' : IDL.Opt(IDL.Nat64),
     'attempts_remaining' : IDL.Nat32,
   });
   const SubmitVerificationCodeResponse = IDL.Variant({
