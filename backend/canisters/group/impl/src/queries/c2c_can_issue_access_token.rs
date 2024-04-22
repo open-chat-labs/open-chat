@@ -17,21 +17,14 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
     };
 
     match args.access_type {
-        AccessTokenType::StartVideoCall => {
-            can_start_video_call(member, args.is_diamond, VideoCallType::Default, &state.data.chat)
-        }
-        AccessTokenType::StartVideoCallV2(vc) => can_start_video_call(member, args.is_diamond, vc.call_type, &state.data.chat),
+        AccessTokenType::StartVideoCall => can_start_video_call(member, VideoCallType::Default, &state.data.chat),
+        AccessTokenType::StartVideoCallV2(vc) => can_start_video_call(member, vc.call_type, &state.data.chat),
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
     }
 }
 
-fn can_start_video_call(
-    member: &GroupMemberInternal,
-    is_diamond: bool,
-    call_type: VideoCallType,
-    chat: &GroupChatCore,
-) -> bool {
-    if !is_diamond || !member.role.is_permitted(chat.permissions.start_video_call) {
+fn can_start_video_call(member: &GroupMemberInternal, call_type: VideoCallType, chat: &GroupChatCore) -> bool {
+    if !member.role.is_permitted(chat.permissions.start_video_call) {
         return false;
     }
 
