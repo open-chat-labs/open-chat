@@ -33,7 +33,7 @@ async fn remove_member(args: Args) -> Response {
 
 async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // Check the caller can remove the user
-    let prepare_result = match read_state(|state| prepare(user_id, state)) {
+    let prepare_result = match read_state(|state| prepare(user_id, block, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -61,7 +61,7 @@ struct PrepareResult {
     is_user_an_owner: bool,
 }
 
-fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
@@ -76,6 +76,12 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
         } else {
             // Check if the caller is authorized to remove the user
             let is_user_an_owner = match state.data.members.get_by_user_id(&user_id) {
+                None if block => {
+                    if state.data.members.is_blocked(&user_id) {
+                        return Err(Success);
+                    }
+                    false
+                }
                 None => return Err(TargetUserNotInCommunity),
                 Some(member_to_remove) => {
                     if member
@@ -104,43 +110,44 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let now = state.env.now();
 
     // Remove the user from the community
-    state.data.members.remove(&user_id, now).expect("user must be a member");
+    let removed = state.data.members.remove(&user_id, now).is_some();
 
     // Remove the user from each group they are a member of
     state.data.channels.leave_all_channels(user_id, now);
 
-    if block {
-        // Also block the user
-        state.data.members.block(user_id);
-    }
+    let blocked = block && state.data.members.block(user_id);
 
     // Push relevant event
-    let event = if block {
+    let event = if blocked {
         let event = UsersBlocked {
             user_ids: vec![user_id],
             blocked_by: removed_by,
         };
         CommunityEventInternal::UsersBlocked(Box::new(event))
-    } else {
+    } else if removed {
         let event = MembersRemoved {
             user_ids: vec![user_id],
             removed_by,
         };
         CommunityEventInternal::MembersRemoved(Box::new(event))
+    } else {
+        return;
     };
     state.data.events.push_event(event, now);
 
     handle_activity_notification(state);
 
-    // Fire-and-forget call to notify the user canister
-    remove_membership_from_user_canister(
-        user_id,
-        removed_by,
-        block,
-        state.data.name.clone(),
-        state.data.is_public,
-        &mut state.data.fire_and_forget_handler,
-    );
+    if removed {
+        // Fire-and-forget call to notify the user canister
+        remove_membership_from_user_canister(
+            user_id,
+            removed_by,
+            block,
+            state.data.name.clone(),
+            state.data.is_public,
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
 }
 
 fn remove_membership_from_user_canister(
