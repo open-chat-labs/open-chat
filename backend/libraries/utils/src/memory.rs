@@ -18,6 +18,7 @@ pub fn heap() -> u64 {
 pub fn stable() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {
+        const UPPER_LIMIT_WASM_SIZE_BYTES: u64 = 3 * 1024 * 1024; // 3MB
         UPPER_LIMIT_WASM_SIZE_BYTES + (ic_cdk::api::stable::stable64_size() * 65536)
     }
 
