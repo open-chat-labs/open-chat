@@ -68,7 +68,7 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
             Err(CannotRemoveSelf)
         } else {
             let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
-                Some(member_to_remove) => member_to_remove.role.value.clone(),
+                Some(member_to_remove) => member_to_remove.role.value,
                 None if block => {
                     if state.data.chat.members.is_blocked(&user_to_remove) {
                         return Err(Success);

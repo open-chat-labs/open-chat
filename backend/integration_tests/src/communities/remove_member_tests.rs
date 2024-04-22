@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, env, CanisterIds, TestEnv, User};
+use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
