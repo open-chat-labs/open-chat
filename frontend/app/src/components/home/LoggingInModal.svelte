@@ -1,6 +1,7 @@
 <script lang="ts">
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
+    import { _ } from "svelte-i18n";
     import { AuthProvider, type OpenChat } from "openchat-client";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -13,7 +14,6 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
     import Input from "../Input.svelte";
     import { configKeys } from "../../utils/config";
     import { ECDSAKeyIdentity } from "@dfinity/identity";
@@ -39,7 +39,7 @@
     $: resetCodeReady = blockedUntil !== undefined ? $now500 >= Number(blockedUntil) : true;
     $: timeRemaining = resetCodeReady
         ? undefined
-        : client.formatTimeRemaining($now500, Number(blockedUntil));
+        : client.formatTimeRemaining($now500, Number(blockedUntil), true);
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -109,6 +109,9 @@
             return;
         }
 
+        clearCode();
+
+        localStorage.setItem(configKeys.selectedAuthEmail, email);
         selectedAuthProviderStore.set(provider);
         errorMessage = undefined;
         blockedUntil = undefined;
@@ -120,13 +123,13 @@
                 .generateEmailVerificationCode(email)
                 .then((response) => {
                     if (response.kind === "success") {
-                        localStorage.setItem(configKeys.selectedAuthEmail, email);
                         state = "enter-code";
                         errorMessage = undefined;
                     } else {
                         switch (response.kind) {
                             case "email_invalid":
                                 errorMessage = "invalidEmail";
+                                localStorage.setItem(configKeys.selectedAuthEmail, "");
                                 break;
                             case "blocked":
                                 errorMessage = "codeBlocked";
@@ -215,18 +218,20 @@
         <div class="logo-img">
             <FancyLoader loop={state === "logging-in"} />
         </div>
-        <div>
-            <Translatable
-                resourceKey={i18nKey(
-                    state === "enter-code"
-                        ? "loginDialog.enterCode"
-                        : mode === "signin"
-                          ? "loginDialog.title"
-                          : "loginDialog.signupTitle",
-                )} />
-        </div>
-        <div class="strapline">
-            <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
+        <div class="title">
+            <div>
+                <Translatable
+                    resourceKey={i18nKey(
+                        state === "enter-code"
+                            ? "loginDialog.enterCode"
+                            : mode === "signin"
+                              ? "loginDialog.title"
+                              : "loginDialog.signupTitle",
+                    )} />
+            </div>
+            <div class="strapline">
+                <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
+            </div>
         </div>
     </div>
     <div class="login" slot="body">
@@ -290,7 +295,7 @@
                         )} />
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-missing-attribute -->
-                    <a class="mode-toggle" role="button" tabindex="0" on:click={toggleMode}>
+                    <a role="button" tabindex="0" on:click={toggleMode}>
                         <Translatable
                             resourceKey={i18nKey(
                                 mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
@@ -316,41 +321,46 @@
             {/if}
             {#if errorMessage !== undefined && !(errorMessage === "codeBlocked" && resetCodeReady)}
                 <div class="center">
-                    <ErrorMessage>
+                    <div>
                         <Translatable
                             resourceKey={i18nKey("loginDialog." + errorMessage, {
                                 n: attemptsRemaining,
                             })} />
-                        {#if errorMessage === "codeBlocked"}
-                            {#if resetCodeReady}
-                                <div>
-                                    <Translatable
-                                        resourceKey={i18nKey("loginDialog.resetCodeReady")} />
-                                </div>
-                            {:else}
-                                <div class="time-left">{timeRemaining}</div>
-                            {/if}
+                        {#if errorMessage === "codeBlocked" && !resetCodeReady}
+                            <pre>{timeRemaining}</pre>
                         {/if}
-                    </ErrorMessage>
+                    </div>
+                </div>
+            {/if}
+            {#if state === "code-generation-failed" && resetCodeReady}
+                <div>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-missing-attribute -->
+                    <a
+                        class="send-code"
+                        role="button"
+                        tabindex="0"
+                        on:click={() => login(AuthProvider.EMAIL)}>
+                        <Translatable resourceKey={i18nKey("loginDialog.resetCodeReady")} />
+                    </a>
                 </div>
             {/if}
         {/if}
     </div>
     <div class="footer login-modal" slot="footer">
         <ButtonGroup>
-            {#if state === "enter-code" || (state === "code-generation-failed" && resetCodeReady)}
+            {#if state === "enter-code"}
                 <Button
                     cls="refresh-code"
                     disabled={emailInvalid}
                     hollow
                     tiny
+                    title={$_("loginDialog.refreshTitle")}
                     on:click={() => login(AuthProvider.EMAIL)}>
                     <div class="center">
                         <RefreshIcon size={"1.5em"} color={"var(--icon-txt)"} />
                     </div>
                 </Button>
-            {/if}
-            {#if state === "enter-code"}
                 <Button secondary on:click={clearCode} disabled={busy}>
                     <Translatable resourceKey={i18nKey("loginDialog.clearCode")} />
                 </Button>
@@ -415,17 +425,6 @@
         min-width: auto;
     }
 
-    :global(.login h4.error) {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .time-left {
-        width: 90px;
-        text-align: left;
-    }
-
     .header {
         display: flex;
         align-items: center;
@@ -433,6 +432,7 @@
         gap: $sp3;
 
         .logo-img {
+            margin-top: $sp3;
             height: 56px;
             width: 56px;
 
@@ -445,6 +445,13 @@
         .strapline {
             @include font(light, normal, fs-80);
             color: var(--txt-light);
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: $sp2;
         }
     }
 
@@ -463,6 +470,10 @@
 
     .code {
         text-align: center;
+    }
+
+    .send-code:hover {
+        text-decoration: underline;
     }
 
     .options {

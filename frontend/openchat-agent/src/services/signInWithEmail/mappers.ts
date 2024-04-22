@@ -7,7 +7,7 @@ import {
     type SubmitEmailVerificationCodeResponse,
     UnsupportedValueError,
 } from "openchat-shared";
-import { consolidateBytes, identity, optional } from "../../utils/mapping";
+import { consolidateBytes, optional } from "../../utils/mapping";
 
 export function generateVerificationCodeResponse(
     candid: ApiGenerateVerificationCodeResponse,
@@ -25,7 +25,7 @@ export function generateVerificationCodeResponse(
     if ("Blocked" in candid) {
         return {
             kind: "blocked",
-            until: candid.Blocked,
+            until: durationToTimestamp(candid.Blocked),
         };
     }
     if ("FailedToSendEmail" in candid) {
@@ -53,7 +53,7 @@ export function submitVerificationCodeResponse(
     if ("IncorrectCode" in candid) {
         return {
             kind: "incorrect_code",
-            blockedUntil: optional(candid.IncorrectCode.blocked_until, identity),
+            blockedUntil: optional(candid.IncorrectCode.blocked_duration, durationToTimestamp),
             attemptsRemaining: candid.IncorrectCode.attempts_remaining,
         };
     }
@@ -66,4 +66,8 @@ export function submitVerificationCodeResponse(
         "Unexpected ApiSubmitVerificationCodeResponse type received",
         candid,
     );
+}
+
+function durationToTimestamp(duration: bigint): bigint {
+    return BigInt(Date.now() + Number(duration));
 }
