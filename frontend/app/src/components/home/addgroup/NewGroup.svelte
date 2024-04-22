@@ -73,6 +73,12 @@
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
 
+    $: {
+        if (candidateGroup.public) {
+            candidateGroup.permissions.startVideoCall = "admin";
+        }
+    }
+
     function getSteps(
         editing: boolean,
         detailsValid: boolean,
@@ -246,11 +252,10 @@
                     step = 0;
                 } else if (!hideInviteUsers) {
                     onGroupCreated(resp.canisterId);
-                    optionallyInviteUsers(resp.canisterId)
-                        .catch((_err) => {
-                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                            step = 0;
-                        });
+                    optionallyInviteUsers(resp.canisterId).catch((_err) => {
+                        toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
+                        step = 0;
+                    });
                 } else {
                     onGroupCreated(resp.canisterId);
                 }
