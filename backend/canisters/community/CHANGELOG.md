@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix payments which are failing due to being too old ([#5681](https://github.com/open-chat-labs/open-chat/pull/5681))
+- One time job to mark video calls ended if message deleted ([#5714](https://github.com/open-chat-labs/open-chat/pull/5714))
 
 ## [[2.0.1139](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1139-community)] - 2024-04-10
 
