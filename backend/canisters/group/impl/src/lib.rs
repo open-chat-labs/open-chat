@@ -366,7 +366,8 @@ impl RuntimeState {
             .event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -648,7 +649,8 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,

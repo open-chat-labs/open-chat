@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
 ## [[2.0.1128](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1128-market_maker)] - 2024-04-05
 
 ### Changed
