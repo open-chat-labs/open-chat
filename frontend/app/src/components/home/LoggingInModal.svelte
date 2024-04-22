@@ -29,6 +29,7 @@
     let busy = false;
     let blockedUntil: Date | undefined = undefined;
     let attemptsRemaining: number | undefined = undefined;
+    let showMore = false;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -40,6 +41,7 @@
     $: timeRemaining = resetCodeReady
         ? undefined
         : client.formatTimeRemaining($now500, Number(blockedUntil), true);
+    $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -70,14 +72,14 @@
         let options = [];
         const supportsII = "PublicKeyCredential" in window;
 
-        if (supportsII) {
-            options.push(AuthProvider.II);
-        }
-
         options.push(AuthProvider.EMAIL);
 
-        if (mode === "signin") {
-            options.push(AuthProvider.NFID);
+        if (supportsII) {
+            options.push(AuthProvider.II);
+
+            if (mode === "signin") {
+                options.push(AuthProvider.NFID);
+            }
         }
 
         if (selected !== undefined) {
@@ -237,56 +239,66 @@
     <div class="login" slot="body">
         {#if state === "options"}
             <div class="options">
-                {#each options as provider}
-                    <div class="option">
-                        {#if provider === AuthProvider.EMAIL}
-                            <div class="email">
-                                <div class="email-icon icon">
-                                    <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
-                                </div>
-                                <div class="email-txt">
-                                    <Input
-                                        bind:value={email}
-                                        minlength={10}
-                                        maxlength={200}
-                                        on:enter={() => login(provider)}
-                                        placeholder={i18nKey(
-                                            mode === "signin"
-                                                ? "loginDialog.signinEmailPlaceholder"
-                                                : "loginDialog.signupEmailPlaceholder",
-                                        )} />
-                                </div>
-                                <Button
-                                    disabled={emailInvalid}
-                                    tiny
-                                    on:click={() => login(provider)}>
-                                    <div class="center">
-                                        <SendIcon size={"1.5em"} />
+                {#each options as provider, i}
+                    {#if showAllOptions || i === 0}
+                        <div class="option">
+                            {#if provider === AuthProvider.EMAIL}
+                                <div class="email">
+                                    <div class="email-icon icon">
+                                        <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
                                     </div>
-                                </Button>
-                            </div>
-                        {:else}
-                            <div class="other">
-                                <div class="icon center">
-                                    {#if provider === AuthProvider.II}
-                                        <InternetIdentityLogo />
-                                    {:else if provider === AuthProvider.NFID}
-                                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                                    {/if}
+                                    <div class="email-txt">
+                                        <Input
+                                            bind:value={email}
+                                            minlength={10}
+                                            maxlength={200}
+                                            on:enter={() => login(provider)}
+                                            placeholder={i18nKey(
+                                                mode === "signin"
+                                                    ? "loginDialog.signinEmailPlaceholder"
+                                                    : "loginDialog.signupEmailPlaceholder",
+                                            )} />
+                                    </div>
+                                    <Button
+                                        disabled={emailInvalid}
+                                        tiny
+                                        on:click={() => login(provider)}>
+                                        <div class="center">
+                                            <SendIcon size={"1.5em"} />
+                                        </div>
+                                    </Button>
                                 </div>
-                                <Button fill on:click={() => login(provider)}>
-                                    <Translatable
-                                        resourceKey={i18nKey(
-                                            mode === "signin"
-                                                ? "loginDialog.signinWith"
-                                                : "loginDialog.signupWith",
-                                            { provider: providerName(provider) },
-                                        )} />
-                                </Button>
-                            </div>
-                        {/if}
-                    </div>
+                            {:else}
+                                <div class="other">
+                                    <div class="icon center">
+                                        {#if provider === AuthProvider.II}
+                                            <InternetIdentityLogo />
+                                        {:else if provider === AuthProvider.NFID}
+                                            <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                                        {/if}
+                                    </div>
+                                    <Button fill on:click={() => login(provider)}>
+                                        <Translatable
+                                            resourceKey={i18nKey(
+                                                mode === "signin"
+                                                    ? "loginDialog.signinWith"
+                                                    : "loginDialog.signupWith",
+                                                { provider: providerName(provider) },
+                                            )} />
+                                    </Button>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
                 {/each}
+
+                {#if !showAllOptions}
+                    <div class="more">
+                        <a role="button" tabindex="0" on:click={() => (showMore = true)}>
+                            <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
+                        </a>
+                    </div>
+                {/if}
 
                 <div class="change-mode">
                     <Translatable
@@ -472,7 +484,7 @@
         text-align: center;
     }
 
-    .send-code:hover {
+    a:hover {
         text-decoration: underline;
     }
 
