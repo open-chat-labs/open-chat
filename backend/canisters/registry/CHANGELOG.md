@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1143-registry)] - 2024-04-19
+
 ### Changed
 
 - Avoid returning `logo` if `logo_id` is set ([#5653](https://github.com/open-chat-labs/open-chat/pull/5653))
+
+### Fixed
+
+- Fix incorrect `min_dissolve_delay_to_vote` values ([#5701](https://github.com/open-chat-labs/open-chat/pull/5701))
 
 ## [[2.0.1122](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1122-registry)] - 2024-03-26
 
