@@ -4,7 +4,7 @@
 
 <section>
     <p>
-        Setting a new benchmark of environmental responsibility in the tech industry. OpenChat
+        Setting a new benchmark of environmental responsibility in the tech industry, OpenChat
         becomes the first DAO to integrate IC Footprint 2.0 — a sustainability protocol that
         harnesses the power of ICP smart contracts. <ExternalLink
             href="https://owqnd-biaaa-aaaak-qidaq-cai.icp0.io/dashboard/projects/eq6en-6jqla-fbu5s-daskr-h6hx2-376n5-iqabl-qgrng-gfqmv-n3yjr-mqe,2fq7c-slacv-26cgz-vzbx2-2jrcs-5edph-i5s2j-tck77-c3rlz-iobzx-mqe"
