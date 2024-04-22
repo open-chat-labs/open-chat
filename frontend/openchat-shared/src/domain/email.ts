@@ -10,4 +10,8 @@ export type SignInWithEmailVerificationCodeResponse = GetDelegationResponse | In
 
 export type SubmitEmailVerificationCodeResponse = PrepareDelegationResponse | IncorrectCode;
 
-export type IncorrectCode = { kind: "incorrect_code" };
+export type IncorrectCode = { 
+    kind: "incorrect_code",
+    blockedUntil: bigint | undefined,
+    attemptsRemaining: number,
+};

@@ -490,13 +490,14 @@
     "loginDialog": {
         "back": "Back",
         "clearCode": "Clear",
-        "codeBlocked": "Too many failed attempts. Please try again later.",
+        "codeBlocked": "Too many failed attempts. Please try again in:",
         "codeExpired": "The code has now expired.",
         "enterCode": "Enter validation code",
+        "notFound": "Code not found. Please try again.",
         "enterCodeInfo": "Please enter the 6-digit code we sent to your email.",
         "failedToSendEmail": "We could not send the email at this time. Please try again later.",
         "haveAccount": "Already have an account?",
-        "incorrectCode": "The code is incorrect. You have 3 attempts to get it right.",
+        "incorrectCode": "The code is incorrect. You have {n} attempt(s) left.",
         "invalidEmail": "The email address is invalid.",
         "noAccount": "Do not have an account?",
         "showMore": "Show more",
@@ -509,7 +510,8 @@
         "signupWith": "Sign up with {provider}",
         "strapline": "Where Web3 communicates",
         "submitCode": "Submit",
-        "title": "Sign in to OpenChat"
+        "title": "Sign in to OpenChat",
+        "resetCodeReady": "A new verification code can now be sent"
     },
     "logout": "Sign out",
     "lowBandwidth": "Low bandwidth",
@@ -1058,7 +1060,7 @@
         "title": "Please switch to our new domain"
     },
     "tapForReferralLink": "Tap to copy your personal referral link",
-    "tapToLogin": "Guest mode - tap here to log in",
+    "tapToLogin": "Guest mode - tap here to sign in",
     "tellMeMore": "More information",
     "theInternetComputer": "The Internet Computer",
     "theme": {

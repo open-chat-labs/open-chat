@@ -8,7 +8,8 @@
     import { Pincode, PincodeInput } from "svelte-pincode";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
+    import { now500 } from "../../stores/time";
+    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -20,12 +21,14 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let state: "options" | "email" | "logging-in" = "options";
+    let state: "options" | "logging-in" | "code-generation-failed" | "enter-code" = "options";
     let mode: "signin" | "signup" = "signin";
     let email = "";
     let verificationCode: string[] = [];
     let errorMessage: string | undefined = undefined;
     let busy = false;
+    let blockedUntil: Date | undefined = undefined;
+    let attemptsRemaining: number | undefined = undefined;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -33,6 +36,10 @@
     $: options = buildOptions($selectedAuthProviderStore, mode);
     $: emailInvalid = !isEmailValid(email);
     $: codeInvalid = !isCodeValid(verificationCode);
+    $: resetCodeReady = blockedUntil !== undefined ? $now500 >= Number(blockedUntil) : true;
+    $: timeRemaining = resetCodeReady
+        ? undefined
+        : client.formatTimeRemaining($now500, Number(blockedUntil));
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -104,6 +111,8 @@
 
         selectedAuthProviderStore.set(provider);
         errorMessage = undefined;
+        blockedUntil = undefined;
+        attemptsRemaining = undefined;
         state = "logging-in";
 
         if (provider === AuthProvider.EMAIL) {
@@ -112,7 +121,7 @@
                 .then((response) => {
                     if (response.kind === "success") {
                         localStorage.setItem(configKeys.selectedAuthEmail, email);
-                        state = "email";
+                        state = "enter-code";
                         errorMessage = undefined;
                     } else {
                         switch (response.kind) {
@@ -121,11 +130,14 @@
                                 break;
                             case "blocked":
                                 errorMessage = "codeBlocked";
+                                blockedUntil = new Date(Number(response.until));
                                 break;
                             case "failed_to_send_email":
                                 errorMessage = "failedToSendEmail";
                                 break;
                         }
+
+                        state = "code-generation-failed";
                     }
                 })
                 .catch((e) => {
@@ -155,17 +167,26 @@
         }
 
         busy = true;
-
-        const code = verificationCode.join("");
+        errorMessage = undefined;
+        blockedUntil = undefined;
+        attemptsRemaining = undefined;
 
         ECDSAKeyIdentity.generate().then((sessionKey) => {
             client
-                .signInWithEmailVerificationCode(email, code, sessionKey)
+                .signInWithEmailVerificationCode(email, verificationCode.join(""), sessionKey)
                 .then((response) => {
                     if (response.kind === "incorrect_code") {
-                        errorMessage = "incorrectCode";
+                        if (response.blockedUntil !== undefined) {
+                            errorMessage = "codeBlocked";
+                            blockedUntil = new Date(Number(response.blockedUntil));
+                            state = "code-generation-failed";
+                        } else {
+                            errorMessage = "incorrectCode";
+                            attemptsRemaining = response.attemptsRemaining;
+                        }
                     } else if (response.kind === "not_found") {
-                        errorMessage = "codeBlocked";
+                        errorMessage = "notFound";
+                        state = "code-generation-failed";
                     }
                 })
                 .finally(() => (busy = false));
@@ -186,7 +207,10 @@
     }
 </script>
 
-<ModalContent hideFooter={state !== "email"} on:close={cancel} closeIcon>
+<ModalContent
+    hideFooter={state !== "enter-code" && state !== "code-generation-failed"}
+    on:close={cancel}
+    closeIcon>
     <div class="header login" slot="header">
         <div class="logo-img">
             <FancyLoader loop={state === "logging-in"} />
@@ -194,7 +218,7 @@
         <div>
             <Translatable
                 resourceKey={i18nKey(
-                    state === "email"
+                    state === "enter-code"
                         ? "loginDialog.enterCode"
                         : mode === "signin"
                           ? "loginDialog.title"
@@ -274,25 +298,39 @@
                     </a>
                 </div>
             </div>
-        {:else if state === "email"}
-            <div class="info">
-                <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
-            </div>
-            <div class="code">
-                <Pincode on:complete={onPinComplete} bind:code={verificationCode}>
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                </Pincode>
-            </div>
-
-            {#if errorMessage !== undefined}
+        {:else if state !== "logging-in"}
+            {#if state === "enter-code"}
+                <div class="info">
+                    <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
+                </div>
+                <div class="code">
+                    <Pincode on:complete={onPinComplete} bind:code={verificationCode}>
+                        <PincodeInput />
+                        <PincodeInput />
+                        <PincodeInput />
+                        <PincodeInput />
+                        <PincodeInput />
+                        <PincodeInput />
+                    </Pincode>
+                </div>
+            {/if}
+            {#if errorMessage !== undefined && !(errorMessage === "codeBlocked" && resetCodeReady)}
                 <div class="center">
                     <ErrorMessage>
-                        <Translatable resourceKey={i18nKey("loginDialog." + errorMessage)} />
+                        <Translatable
+                            resourceKey={i18nKey("loginDialog." + errorMessage, {
+                                n: attemptsRemaining,
+                            })} />
+                        {#if errorMessage === "codeBlocked"}
+                            {#if resetCodeReady}
+                                <div>
+                                    <Translatable
+                                        resourceKey={i18nKey("loginDialog.resetCodeReady")} />
+                                </div>
+                            {:else}
+                                <div class="time-left">{timeRemaining}</div>
+                            {/if}
+                        {/if}
                     </ErrorMessage>
                 </div>
             {/if}
@@ -300,7 +338,7 @@
     </div>
     <div class="footer login-modal" slot="footer">
         <ButtonGroup>
-            {#if state === "email"}
+            {#if state === "enter-code" || (state === "code-generation-failed" && resetCodeReady)}
                 <Button
                     cls="refresh-code"
                     disabled={emailInvalid}
@@ -308,18 +346,20 @@
                     tiny
                     on:click={() => login(AuthProvider.EMAIL)}>
                     <div class="center">
-                        <Refresh size={"1.5em"} color={"var(--icon-txt)"} />
+                        <RefreshIcon size={"1.5em"} color={"var(--icon-txt)"} />
                     </div>
                 </Button>
+            {/if}
+            {#if state === "enter-code"}
                 <Button secondary on:click={clearCode} disabled={busy}>
                     <Translatable resourceKey={i18nKey("loginDialog.clearCode")} />
                 </Button>
                 <Button on:click={submitCode} disabled={codeInvalid || busy} loading={busy}>
                     <Translatable resourceKey={i18nKey("loginDialog.submitCode")} />
                 </Button>
-                <!-- {:else if state === "error"}
+            {:else if state === "code-generation-failed"}
                 <Button on:click={resetDialog}
-                    ><Translatable resourceKey={i18nKey("loginDialog.back")} /></Button> -->
+                    ><Translatable resourceKey={i18nKey("loginDialog.back")} /></Button>
             {/if}
         </ButtonGroup>
     </div>
@@ -373,6 +413,17 @@
         padding: $sp2 $sp4;
         min-height: 45px;
         min-width: auto;
+    }
+
+    :global(.login h4.error) {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .time-left {
+        width: 90px;
+        text-align: left;
     }
 
     .header {

@@ -7,7 +7,7 @@ import {
     type SubmitEmailVerificationCodeResponse,
     UnsupportedValueError,
 } from "openchat-shared";
-import { consolidateBytes } from "../../utils/mapping";
+import { consolidateBytes, identity, optional } from "../../utils/mapping";
 
 export function generateVerificationCodeResponse(
     candid: ApiGenerateVerificationCodeResponse,
@@ -53,6 +53,8 @@ export function submitVerificationCodeResponse(
     if ("IncorrectCode" in candid) {
         return {
             kind: "incorrect_code",
+            blockedUntil: optional(candid.IncorrectCode.blocked_until, identity),
+            attemptsRemaining: candid.IncorrectCode.attempts_remaining,
         };
     }
     if ("NotFound" in candid) {

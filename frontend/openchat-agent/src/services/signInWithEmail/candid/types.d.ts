@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface Delegation {
   'pubkey' : Uint8Array | number[],
@@ -27,6 +26,10 @@ export interface GetDelegationArgs {
 }
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
+export interface IncorrectCode {
+  'blocked_until' : [] | [bigint],
+  'attempts_remaining' : number,
+}
 export interface InitArgs { 'test_mode' : boolean }
 export type InitOrUpgradeArgs = { 'Upgrade' : UpgradeArgs } |
   { 'Init' : InitArgs };
@@ -42,7 +45,7 @@ export interface SubmitVerificationCodeArgs {
 }
 export type SubmitVerificationCodeResponse = { 'NotFound' : null } |
   { 'Success' : SubmitVerificationCodeSuccess } |
-  { 'IncorrectCode' : null };
+  { 'IncorrectCode' : IncorrectCode };
 export interface SubmitVerificationCodeSuccess {
   'user_key' : Uint8Array | number[],
   'expiration' : bigint,
@@ -62,5 +65,3 @@ export interface _SERVICE {
     SubmitVerificationCodeResponse
   >,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
