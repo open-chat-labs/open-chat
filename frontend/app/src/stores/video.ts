@@ -49,6 +49,7 @@ export type ActiveVideoCall = {
     participantsOpen: boolean;
     accessRequests: RequestToSpeak[];
     messageId?: bigint;
+    isOwner: boolean;
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
@@ -75,6 +76,12 @@ export const incomingVideoCall = {
     },
 };
 
+function updateCall(fn: (call: ActiveVideoCall) => ActiveVideoCall) {
+    activeStore.update((current) => {
+        return current === undefined ? undefined : fn(current);
+    });
+}
+
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
@@ -87,21 +94,14 @@ export const activeVideoCall = {
             participantsOpen: false,
             accessRequests: [],
             messageId,
+            isOwner: false,
         });
     },
     setView: (view: VideoCallView) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      view,
-                  };
-        });
+        return updateCall((current) => ({ ...current, view }));
     },
     rejectAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            if (current === undefined) return undefined;
+        return updateCall((current) => {
             if (current.call) {
                 current.call.sendAppMessage(
                     {
@@ -122,8 +122,7 @@ export const activeVideoCall = {
         });
     },
     approveAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            if (current === undefined) return undefined;
+        return updateCall((current) => {
             if (current.call) {
                 current.call.updateParticipant(req.participantId, {
                     updatePermissions: {
@@ -155,36 +154,30 @@ export const activeVideoCall = {
         });
     },
     captureAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      accessRequests: [...current.accessRequests, req],
-                  };
-        });
+        return updateCall((current) => ({
+            ...current,
+            accessRequests: [...current.accessRequests, req],
+        }));
     },
     threadOpen: (threadOpen: boolean) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      threadOpen,
-                      participantsOpen: false,
-                  };
-        });
+        return updateCall((current) => ({
+            ...current,
+            threadOpen,
+            participantsOpen: false,
+        }));
+    },
+    isOwner: (isOwner: boolean) => {
+        return updateCall((current) => ({
+            ...current,
+            isOwner,
+        }));
     },
     participantsOpen: (participantsOpen: boolean) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      participantsOpen,
-                      threadOpen: false,
-                  };
-        });
+        return updateCall((current) => ({
+            ...current,
+            participantsOpen,
+            threadOpen: false,
+        }));
     },
     endCall: () => {
         return activeStore.update((current) => {
@@ -210,6 +203,7 @@ export const activeVideoCall = {
             threadOpen: false,
             participantsOpen: false,
             accessRequests: [],
+            isOwner: false,
         });
     },
 };

@@ -44,6 +44,8 @@
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
 
+    $: console.log("ActiveVideoCall: ", $activeVideoCall);
+
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
     let hostEnded = false;
@@ -172,6 +174,16 @@
                 if (ev?.participant.owner && !ev.participant.local && isPublic) {
                     hangup();
                     hostEnded = true;
+                }
+            });
+
+            call.on("joined-meeting", (ev) => {
+                console.log("JoinedMeeting is this happening: ", ev);
+                const me = ev?.participants?.local;
+                if (!me) return;
+                if (me.owner) {
+                    console.log("Setting owner to true");
+                    activeVideoCall.isOwner(true);
                 }
             });
 

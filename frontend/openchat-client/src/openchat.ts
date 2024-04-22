@@ -392,6 +392,7 @@ import type {
     GetDelegationResponse,
     VideoCallPresence,
     VideoCallParticipants,
+    VideoCallParticipant,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5264,20 +5265,50 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((_) => false);
     }
 
+    private mapVideoCallParticipants(
+        users: UserSummary[],
+        participant: VideoCallParticipant,
+    ): UserSummary[] {
+        if (this._liveState.userStore[participant.userId]) {
+            users.push(this._liveState.userStore[participant.userId]);
+        }
+        return users;
+    }
+
     videoCallParticipants(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         updatesSince: bigint,
-    ): Promise<VideoCallParticipants> {
+    ): Promise<{
+        participants: UserSummary[];
+        hidden: UserSummary[];
+        lastUpdated: bigint;
+    }> {
         return this.sendRequest({
             kind: "videoCallParticipants",
             chatId,
             messageId,
             updatesSince,
         })
-            .then((resp) => {
+            .then(async (resp) => {
                 if (resp.kind === "success") {
-                    return resp;
+                    const allUserIds = [
+                        ...resp.participants.map((u) => u.userId),
+                        ...resp.hidden.map((u) => u.userId),
+                    ];
+                    await this.getMissingUsers(allUserIds);
+
+                    return {
+                        participants: resp.participants.reduce<UserSummary[]>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            [],
+                        ),
+                        hidden: resp.hidden.reduce<UserSummary[]>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            [],
+                        ),
+                        lastUpdated: resp.lastUpdated,
+                    };
                 } else {
                     return {
                         participants: [],

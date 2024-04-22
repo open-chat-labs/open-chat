@@ -977,7 +977,6 @@ export class GroupClient extends CandidService {
         messageId: bigint,
         updatesSince?: bigint,
     ): Promise<VideoCallParticipantsResponse> {
-        console.log("VideoCallParticipants: ", messageId, updatesSince, typeof messageId);
         return this.handleQueryResponse(
             () =>
                 this.groupService.video_call_participants({

@@ -59,6 +59,7 @@ export type CallParticipantsPanel = {
     kind: "call_participants_panel";
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
+    isOwner: boolean;
 };
 
 export type ShowPinnedPanel = {
