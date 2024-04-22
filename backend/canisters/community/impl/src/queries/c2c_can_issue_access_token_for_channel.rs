@@ -21,15 +21,11 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
     };
 
     match args.access_type {
-        AccessTokenType::StartVideoCall => can_start_video_call(
-            member,
-            args.is_diamond,
-            state.data.is_public,
-            VideoCallType::Default,
-            &channel.chat,
-        ),
+        AccessTokenType::StartVideoCall => {
+            can_start_video_call(member, state.data.is_public, VideoCallType::Default, &channel.chat)
+        }
         AccessTokenType::StartVideoCallV2(vc) => {
-            can_start_video_call(member, args.is_diamond, state.data.is_public, vc.call_type, &channel.chat)
+            can_start_video_call(member, state.data.is_public, vc.call_type, &channel.chat)
         }
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
     }
@@ -37,12 +33,11 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
 
 fn can_start_video_call(
     member: &GroupMemberInternal,
-    is_diamond: bool,
     is_public_community: bool,
     call_type: VideoCallType,
     chat: &GroupChatCore,
 ) -> bool {
-    if !is_diamond || !member.role.is_permitted(chat.permissions.start_video_call) {
+    if !member.role.is_permitted(chat.permissions.start_video_call) {
         return false;
     }
 
