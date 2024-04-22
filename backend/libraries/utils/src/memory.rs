@@ -1,5 +1,5 @@
 pub fn total() -> u64 {
-    heap() + stable()
+    heap() + stable() + wasm_storage()
 }
 
 pub fn heap() -> u64 {
@@ -18,8 +18,7 @@ pub fn heap() -> u64 {
 pub fn stable() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {
-        const UPPER_LIMIT_WASM_SIZE_BYTES: u64 = 3 * 1024 * 1024; // 3MB
-        UPPER_LIMIT_WASM_SIZE_BYTES + (ic_cdk::api::stable::stable64_size() * 65536)
+        ic_cdk::api::stable::stable64_size() * 65536
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -27,4 +26,9 @@ pub fn stable() -> u64 {
         // This branch won't actually ever be taken
         1024 * 1024 * 100 // 100Mb
     }
+}
+
+fn wasm_storage() -> u64 {
+    const UPPER_LIMIT_WASM_SIZE_BYTES: u64 = 3 * 1024 * 1024; // 3MB
+    UPPER_LIMIT_WASM_SIZE_BYTES
 }
