@@ -56,16 +56,18 @@ fn post_upgrade(args: Args) {
 
         // TODO: One time only - remove after release
         let now = state.env.now();
-        state.data.chat.permissions.update(
-            |ps| {
-                if matches!(ps.start_video_call, GroupPermissionRole::Admins) {
-                    ps.start_video_call = GroupPermissionRole::Members;
-                    true
-                } else {
-                    false
-                }
-            },
-            now,
-        );
+        if !state.data.chat.is_public.value {
+            state.data.chat.permissions.update(
+                |ps| {
+                    if matches!(ps.start_video_call, GroupPermissionRole::Admins) {
+                        ps.start_video_call = GroupPermissionRole::Members;
+                        true
+                    } else {
+                        false
+                    }
+                },
+                now,
+            );
+        }
     });
 }
