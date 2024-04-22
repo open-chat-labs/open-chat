@@ -949,7 +949,7 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
-                startVideoCall: "admin",
+                startVideoCall: "member",
                 messagePermissions: {
                     default: "member",
                     p2pSwap: "none",
