@@ -1075,6 +1075,7 @@
         "title": "Порада"
     },
     "today": "Сьогодні",
+    "toggleBlockMarkdown": "Перемкнути позначку рівня блоку",
     "toggleMuteNotificationsFailed": "Сповіщення не можуть бути {operation}",
     "toggleMuteNotificationsSucceeded": "Сповіщення успішно {operation}",
     "toggleTranslationEditMode": "Перемкнути виправлення перекладу",

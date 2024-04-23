@@ -1084,6 +1084,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1939,9 +1940,22 @@ export interface VideoCall {
 export interface VideoCallContent {
   'participants' : Array<CallParticipant>,
   'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
   'call_type' : VideoCallType,
 }
 export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export interface VideoCallParticipantsArgs {
+  'updated_since' : [] | [TimestampMillis],
+  'message_id' : MessageId,
+}
+export type VideoCallParticipantsResponse = { 'CallerNotInGroup' : null } |
+  { 'VideoCallNotFound' : null } |
+  { 'Success' : VideoCallParticipants };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2050,6 +2064,10 @@ export interface _SERVICE {
   'unfollow_thread' : ActorMethod<[UnfollowThreadArgs], UnfollowThreadResponse>,
   'unpin_message' : ActorMethod<[UnpinMessageArgs], UnpinMessageResponse>,
   'update_group_v2' : ActorMethod<[UpdateGroupV2Args], UpdateGroupV2Response>,
+  'video_call_participants' : ActorMethod<
+    [VideoCallParticipantsArgs],
+    VideoCallParticipantsResponse
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -218,6 +218,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'hidden_participants' : IDL.Nat32,
     'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
@@ -589,6 +590,7 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'block_level_markdown' : IDL.Bool,
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),

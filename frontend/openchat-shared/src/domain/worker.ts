@@ -736,6 +736,7 @@ type EditMessage = {
     msg: Message;
     threadRootMessageIndex?: number;
     kind: "editMessage";
+    blockLevelMarkdown?: boolean;
 };
 
 type SendMessage = {

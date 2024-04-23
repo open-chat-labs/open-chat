@@ -194,7 +194,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), undefined);
+            sendMessageWithAttachment(randomSentence(), false, undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -202,14 +202,15 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
         if (!canSendAny) return;
-        let [text, mentioned] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
+                    blockLevelMarkdown,
                     $currentChatAttachment,
                     $currentChatEditingEvent,
                 )
@@ -219,16 +220,22 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, $currentChatAttachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, $currentChatAttachment, mentioned);
         }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
+        dispatch("sendMessageWithAttachment", {
+            textContent,
+            attachment,
+            mentioned,
+            blockLevelMarkdown,
+        });
     }
 
     function forwardMessage(msg: Message) {

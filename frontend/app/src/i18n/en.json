@@ -1075,6 +1075,7 @@
         "title": "Tip"
     },
     "today": "Today",
+    "toggleBlockMarkdown": "Toggle block level markdown",
     "toggleMuteNotificationsFailed": "Notifications could not be {operation}",
     "toggleMuteNotificationsSucceeded": "Notifications successfully {operation}",
     "toggleTranslationEditMode": "Toggle translation corrections",

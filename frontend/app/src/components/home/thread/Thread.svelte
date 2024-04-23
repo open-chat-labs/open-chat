@@ -95,7 +95,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), undefined);
+            sendMessageWithAttachment(randomSentence(), false, undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -103,19 +103,25 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
         if (!canSendAny) return;
-        let [text, mentioned] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = ev.detail;
         if ($editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
+                .editMessageWithAttachment(
+                    messageContext,
+                    text,
+                    blockLevelMarkdown,
+                    $attachment,
+                    $editingEvent,
+                )
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, $attachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, $attachment, mentioned);
         }
     }
 
@@ -125,10 +131,16 @@
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
+        dispatch("sendMessageWithAttachment", {
+            textContent,
+            attachment,
+            mentioned,
+            blockLevelMarkdown,
+        });
     }
 
     function cancelReply() {
