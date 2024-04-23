@@ -6,7 +6,6 @@ import type {
     ApiChatInList,
     ApiChatMessagesRead,
     ApiMarkReadArgs,
-    ApiSendMessageArgs,
     ApiSendMessageWithTransferToChannelArgs,
     ApiSendMessageWithTransferToGroupArgs,
     UserService,
@@ -152,6 +151,7 @@ import { identity, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
+import type { EditMessageV2Args } from "./candid/types";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -520,17 +520,19 @@ export class UserClient extends CandidService {
         recipientId: string,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [this.userId, recipientId])
             .then((content) => {
-                const req = {
+                const req: EditMessageV2Args = {
                     content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
                     thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     message_id: message.messageId,
-                    block_level_markdown: [] as [] | [boolean],
                     correlation_id: generateUint64(),
+                    block_level_markdown:
+                        blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                 };
                 return this.handleResponse(
                     this.userService.edit_message_v2(req),
@@ -582,7 +584,7 @@ export class UserClient extends CandidService {
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
-            const req: ApiSendMessageArgs = {
+            const req = {
                 content: apiMessageContent(newContent),
                 recipient: Principal.fromText(chatId.userId),
                 message_id: event.event.messageId,
@@ -592,10 +594,10 @@ export class UserClient extends CandidService {
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                block_level_markdown: true,
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 pin: apiOptional(identity, pin),
                 correlation_id: generateUint64(),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
                 sendMessageResponse(resp, event.event.sender, chatId.userId),

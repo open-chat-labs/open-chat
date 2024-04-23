@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1148](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1148-identity)] - 2024-04-23
+
 ### Changed
 
 - Skip Captcha for SignInWithEmail identities ([#5692](https://github.com/open-chat-labs/open-chat/pull/5692))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
 
 ## [[2.0.1133](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1133-identity)] - 2024-04-09
 

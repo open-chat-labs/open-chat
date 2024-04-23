@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1147](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1147-proposals_bot)] - 2024-04-23
+
 ### Changed
 
 - Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Add ability to top up neurons for submitting proposals ([#5712](https://github.com/open-chat-labs/open-chat/pull/5712))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
 
 ## [[2.0.1124](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1124-proposals_bot)] - 2024-03-26
 

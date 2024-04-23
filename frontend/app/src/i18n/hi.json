@@ -1075,6 +1075,7 @@
         "title": "बख्शीश"
     },
     "today": "आज",
+    "toggleBlockMarkdown": "ब्लॉक स्तर मार्कडाउन टॉगल करें",
     "toggleMuteNotificationsFailed": "सूचनाएं {operation} नहीं हो सकीं",
     "toggleMuteNotificationsSucceeded": "सूचनाएं सफलतापूर्वक {operation}",
     "toggleTranslationEditMode": "अनुवाद सुधार टॉगल करें",

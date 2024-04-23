@@ -66,7 +66,8 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -87,7 +88,6 @@ struct Data {
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
-    #[serde(default = "sign_in_with_email_canister_id")]
     sign_in_with_email_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
@@ -98,10 +98,6 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-}
-
-fn sign_in_with_email_canister_id() -> CanisterId {
-    CanisterId::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
 }
 
 impl Data {
@@ -171,7 +167,8 @@ fn delegation_signature_msg_hash(d: &Delegation) -> Hash {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,

@@ -402,7 +402,6 @@ pub struct UpdatedRules {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCall {
     pub message_index: MessageIndex,
-    #[serde(default)]
     pub call_type: VideoCallType,
 }
 

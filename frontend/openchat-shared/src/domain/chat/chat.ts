@@ -607,6 +607,7 @@ export type Message = {
     forwarded: boolean;
     deleted: boolean;
     thread?: ThreadSummary;
+    blockLevelMarkdown: boolean;
 };
 
 export type ThreadSummary = {
@@ -678,6 +679,7 @@ export type LocalMessageUpdates = {
     threadSummary?: Partial<ThreadSummary>;
     tips?: TipsReceived;
     hiddenMessageRevealed?: boolean;
+    blockLevelMarkdown?: boolean;
     lastUpdated: number;
 };
 

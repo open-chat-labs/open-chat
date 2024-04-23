@@ -29,6 +29,7 @@ export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUser
 export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSection, false);
 export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroupsDismissed, false);
 export const browseChannels = createLsBoolStore(configKeys.browseChannels, true);
+export const useBlockLevelMarkdown = createLsBoolStore(configKeys.useBlockLevelMarkdown, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

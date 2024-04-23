@@ -35,6 +35,8 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { translatable } from "../../actions/translatable";
+    import MarkdownToggle from "./MarkdownToggle.svelte";
+    import { useBlockLevelMarkdown } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -73,6 +75,7 @@
     let messageActions: MessageActions;
     let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = chat.id;
+    let containsMarkdown = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -111,6 +114,7 @@
                     restoreSelection();
                 }
                 previousEditingEvent = editingEvent;
+                containsMarkdown = detectMarkdown(inp.textContent);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
@@ -119,6 +123,7 @@
                     inp.textContent = text;
                     // TODO - figure this out
                     // setCaretToEnd();
+                    containsMarkdown = detectMarkdown(text);
                 }
             }
         }
@@ -174,6 +179,7 @@
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
+        containsMarkdown = detectMarkdown(inputContent);
     }
 
     function uptoCaret(
@@ -276,7 +282,7 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[], boolean] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
@@ -297,7 +303,7 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned];
+        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
     }
 
     /**
@@ -499,6 +505,19 @@
         replaceTextWith(ev.detail);
         showEmojiSearch = false;
     }
+
+    function detectMarkdown(text: string | null) {
+        if (!text) return false;
+
+        // a few regexes to detect various block level markdown elements (possibly incomplete)
+        const headerRegex = /^(?:\#{1,6}\s+)/m;
+        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
+        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
+        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
+        const regexList = [headerRegex, tableRegex, bulletedListRegex, numberedListRegex];
+        const result = regexList.some((regex) => regex.test(text));
+        return result;
+    }
 </script>
 
 {#if showMentionPicker}
@@ -571,6 +590,10 @@
                         on:drop={onDrop}
                         on:input={onInput}
                         on:keypress={keyPress} />
+
+                    {#if containsMarkdown}
+                        <MarkdownToggle {editingEvent} />
+                    {/if}
                 </div>
             {/key}
         {:else}

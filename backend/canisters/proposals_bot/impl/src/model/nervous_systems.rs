@@ -460,6 +460,10 @@ impl NervousSystem {
     pub fn proposal_rejection_fee(&self) -> u64 {
         self.proposal_rejection_fee
     }
+
+    pub fn neuron_for_submitting_proposals(&self) -> Option<SnsNeuronId> {
+        self.neuron_id_for_submitting_proposals
+    }
 }
 
 impl From<&NervousSystem> for NervousSystemMetrics {

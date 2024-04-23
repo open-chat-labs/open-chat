@@ -133,6 +133,7 @@ import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { EditMessageV2Args } from "./candid/types";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -383,18 +384,24 @@ export class GroupClient extends CandidService {
         );
     }
 
-    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
+    editMessage(
+        message: Message,
+        threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
+    ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
+                const args: EditMessageV2Args = {
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                    content: apiMessageContent(content ?? message.content),
+                    message_id: message.messageId,
+                    block_level_markdown:
+                        blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
+                    correlation_id: generateUint64(),
+                };
                 return this.handleResponse(
-                    this.groupService.edit_message_v2({
-                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                        content: apiMessageContent(content ?? message.content),
-                        message_id: message.messageId,
-                        block_level_markdown: [] as [] | [boolean],
-                        correlation_id: generateUint64(),
-                    }),
+                    this.groupService.edit_message_v2(args),
                     editMessageResponse,
                 );
             });
@@ -443,11 +450,12 @@ export class GroupClient extends CandidService {
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
-                block_level_markdown: true,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
+
             return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [

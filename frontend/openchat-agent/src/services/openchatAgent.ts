@@ -402,16 +402,32 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         msg: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         if (offline()) return Promise.resolve("failure");
 
         switch (chatId.kind) {
             case "direct_chat":
-                return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
+                return this.editDirectMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
             case "group_chat":
-                return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+                return this.editGroupMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
             case "channel":
-                return this.editChannelMessage(chatId, msg, threadRootMessageIndex);
+                return this.editChannelMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
         }
     }
 
@@ -555,19 +571,26 @@ export class OpenChatAgent extends EventTarget {
         chatId: GroupChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
-        return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
+        return this.getGroupClient(chatId.groupId).editMessage(
+            message,
+            threadRootMessageIndex,
+            blockLevelMarkdown,
+        );
     }
 
     private editChannelMessage(
         chatId: ChannelIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return this.communityClient(chatId.communityId).editMessage(
             chatId,
             message,
             threadRootMessageIndex,
+            blockLevelMarkdown,
         );
     }
 
@@ -591,8 +614,14 @@ export class OpenChatAgent extends EventTarget {
         recipientId: DirectChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
-        return this.userClient.editMessage(recipientId.userId, message, threadRootMessageIndex);
+        return this.userClient.editMessage(
+            recipientId.userId,
+            message,
+            threadRootMessageIndex,
+            blockLevelMarkdown,
+        );
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
