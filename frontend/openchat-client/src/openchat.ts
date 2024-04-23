@@ -5280,11 +5280,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private mapVideoCallParticipants(
-        users: UserSummary[],
+        users: Record<string, UserSummary>,
         participant: VideoCallParticipant,
-    ): UserSummary[] {
+    ): Record<string, UserSummary> {
         if (this._liveState.userStore[participant.userId]) {
-            users.push(this._liveState.userStore[participant.userId]);
+            users[participant.userId] = this._liveState.userStore[participant.userId];
         }
         return users;
     }
@@ -5294,8 +5294,8 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint,
         updatesSince: bigint,
     ): Promise<{
-        participants: UserSummary[];
-        hidden: UserSummary[];
+        participants: Record<string, UserSummary>;
+        hidden: Record<string, UserSummary>;
         lastUpdated: bigint;
     }> {
         return this.sendRequest({
@@ -5313,27 +5313,27 @@ export class OpenChat extends OpenChatAgentWorker {
                     await this.getMissingUsers(allUserIds);
 
                     return {
-                        participants: resp.participants.reduce<UserSummary[]>(
+                        participants: resp.participants.reduce<Record<string, UserSummary>>(
                             (u, p) => this.mapVideoCallParticipants(u, p),
-                            [],
+                            {},
                         ),
-                        hidden: resp.hidden.reduce<UserSummary[]>(
+                        hidden: resp.hidden.reduce<Record<string, UserSummary>>(
                             (u, p) => this.mapVideoCallParticipants(u, p),
-                            [],
+                            {},
                         ),
                         lastUpdated: resp.lastUpdated,
                     };
                 } else {
                     return {
-                        participants: [],
-                        hidden: [],
+                        participants: {},
+                        hidden: {},
                         lastUpdated: updatesSince,
                     };
                 }
             })
             .catch((_) => ({
-                participants: [],
-                hidden: [],
+                participants: {},
+                hidden: {},
                 lastUpdated: updatesSince,
             }));
     }

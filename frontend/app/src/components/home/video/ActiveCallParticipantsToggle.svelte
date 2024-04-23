@@ -13,8 +13,6 @@
     $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;
     $: isOwner = $activeVideoCall?.isOwner ?? false;
 
-    $: console.log("IsOwner: ", isOwner);
-
     function toggleParticipants() {
         if (participantsOpen) {
             popRightPanelHistory();

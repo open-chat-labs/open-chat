@@ -17,8 +17,8 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     type MappedParticipants = {
-        participants: UserSummary[];
-        hidden: UserSummary[];
+        participants: Record<string, UserSummary>;
+        hidden: Record<string, UserSummary>;
         lastUpdated: bigint;
     };
 
@@ -29,15 +29,24 @@
     export let messageId: bigint;
     export let isOwner: boolean;
 
+    let demoted = new Set<string>();
+
     $: user = client.user;
 
     let selectedTab: "presenters" | "viewers" = "presenters";
-    let updatesSince = 0n;
     let videoParticipants: MappedParticipants = {
-        participants: [],
-        hidden: [],
+        participants: {},
+        hidden: {},
         lastUpdated: 0n,
     };
+
+    $: participants = Object.values(videoParticipants.participants).filter(
+        (u) => !demoted.has(u.userId),
+    );
+    $: hidden = [
+        ...Object.values(videoParticipants.hidden),
+        ...Object.values(videoParticipants.participants).filter((u) => demoted.has(u.userId)),
+    ];
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
@@ -59,9 +68,10 @@
     }
 
     function refresh() {
-        client.videoCallParticipants(chatId, messageId, updatesSince).then((res) => {
+        client.videoCallParticipants(chatId, messageId, 0n).then((res) => {
             videoParticipants = res;
-            updatesSince = BigInt(Date.now());
+            Object.values(videoParticipants.hidden).forEach((h) => demoted.delete(h.userId));
+            demoted = demoted;
         });
     }
 
@@ -76,6 +86,8 @@
     }
 
     function demote(ev: CustomEvent<string>) {
+        demoted.add(ev.detail);
+        demoted = demoted;
         activeVideoCall.demote(ev.detail);
     }
 </script>
@@ -92,7 +104,7 @@
         class="tab">
         <Translatable
             resourceKey={i18nKey("videoCall.presenters", {
-                count: videoParticipants.participants.length,
+                count: participants.length,
             })} />
     </div>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -104,13 +116,13 @@
         class="tab">
         <Translatable
             resourceKey={i18nKey("videoCall.viewers", {
-                count: videoParticipants.hidden.length,
+                count: hidden.length,
             })} />
     </div>
 </div>
 
 {#if selectedTab === "presenters"}
-    {#each videoParticipants.participants as participant}
+    {#each participants as participant}
         <ActiveCallParticipant
             {isOwner}
             on:demote={demote}
@@ -120,7 +132,7 @@
 {/if}
 
 {#if selectedTab === "viewers"}
-    <VirtualList keyFn={(user) => user.userId} items={videoParticipants.hidden} let:item>
+    <VirtualList keyFn={(user) => user.userId} items={hidden} let:item>
         <ActiveCallParticipant {isOwner} presence={"hidden"} participant={item} />
     </VirtualList>
 {/if}
