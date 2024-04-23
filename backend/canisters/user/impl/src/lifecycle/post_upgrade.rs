@@ -40,6 +40,11 @@ fn post_upgrade(args: Args) {
         {
             ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
         }
+
+        let now = state.env.now();
+        for chat in state.data.direct_chats.iter_mut() {
+            chat.events.mark_video_call_ended_if_message_deleted(now);
+        }
     });
 }
 
