@@ -593,7 +593,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.editMessage(payload.chatId, payload.msg, payload.threadRootMessageIndex),
+                    agent.editMessage(
+                        payload.chatId,
+                        payload.msg,
+                        payload.threadRootMessageIndex,
+                        payload.blockLevelMarkdown,
+                    ),
                 );
                 break;
 

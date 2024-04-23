@@ -1075,6 +1075,7 @@
         "title": "Thêm một mẹo"
     },
     "today": "Hôm nay",
+    "toggleBlockMarkdown": "Chuyển đổi đánh dấu cấp độ khối",
     "toggleMuteNotificationsFailed": "Thông báo không được phép {operation}",
     "toggleMuteNotificationsSucceeded": "Thông báo đã được {operation}",
     "toggleTranslationEditMode": "Chuyển đổi sửa bản dịch",

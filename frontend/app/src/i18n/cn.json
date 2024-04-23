@@ -1075,6 +1075,7 @@
         "title": "添加打赏"
     },
     "today": "今天",
+    "toggleBlockMarkdown": "切换块级别 markdown",
     "toggleMuteNotificationsFailed": "推送通知失败 {operation}",
     "toggleMuteNotificationsSucceeded": "推送通知成功 {operation}",
     "toggleTranslationEditMode": "切换翻译更正",

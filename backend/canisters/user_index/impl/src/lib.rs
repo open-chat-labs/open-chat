@@ -265,7 +265,6 @@ struct Data {
     pub diamond_membership_fees: DiamondMembershipFees,
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
-    #[serde(default)]
     pub empty_users: HashSet<UserId>,
 }
 

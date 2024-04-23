@@ -48,6 +48,7 @@
             messageContext={replyingTo.sourceContext}
             fill={false}
             failed={false}
+            blockLevelMarkdown={false}
             {me}
             intersecting={true}
             messageId={replyingTo.messageId}

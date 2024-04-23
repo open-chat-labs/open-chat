@@ -200,7 +200,6 @@ pub struct SendMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
-    #[serde(default)]
     pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
 }

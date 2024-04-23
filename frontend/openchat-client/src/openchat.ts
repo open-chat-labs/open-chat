@@ -3055,6 +3055,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendMessageWithContent(
             messageContext,
             { ...msg.content },
+            msg.blockLevelMarkdown,
             [],
             true,
             rulesAccepted,
@@ -3421,6 +3422,7 @@ export class OpenChat extends OpenChatAgentWorker {
     sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
+        blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
         rulesAccepted: number | undefined = undefined,
@@ -3448,6 +3450,7 @@ export class OpenChat extends OpenChatAgentWorker {
             this._liveState.user.userId,
             nextMessageIndex,
             content,
+            blockLevelMarkdown,
             draftMessage?.replyingTo,
             forwarded,
         );
@@ -3491,6 +3494,7 @@ export class OpenChat extends OpenChatAgentWorker {
     sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
@@ -3500,6 +3504,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendMessageWithContent(
             messageContext,
             this.getMessageContent(textContent, attachment),
+            blockLevelMarkdown,
             mentioned,
             false,
             rulesAccepted,
@@ -3621,6 +3626,7 @@ export class OpenChat extends OpenChatAgentWorker {
     editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
     ): Promise<boolean> {
@@ -3644,11 +3650,18 @@ export class OpenChat extends OpenChatAgentWorker {
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
             draftMessagesStore.delete(messageContext);
 
+            const updatedBlockLevelMarkdown =
+                msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
+            if (updatedBlockLevelMarkdown !== undefined) {
+                localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
+            }
+
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
                 threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                blockLevelMarkdown: updatedBlockLevelMarkdown,
             })
                 .then((resp) => {
                     if (resp !== "success") {
