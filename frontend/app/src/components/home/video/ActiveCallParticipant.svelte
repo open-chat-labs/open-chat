@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MicrophoneOff from "svelte-material-icons/MicrophoneOff.svelte";
+    import AccountCancel from "svelte-material-icons/AccountCancel.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -25,8 +25,8 @@
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div on:click|stopPropagation={demote}>
-            <HoverIcon>
-                <MicrophoneOff size={$iconSize} color={"var(--icon-txt)"} />
+            <HoverIcon title={$_("videoCall.demoteToHidden")}>
+                <AccountCancel size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
     {/if}

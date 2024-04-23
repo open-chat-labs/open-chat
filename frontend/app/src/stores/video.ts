@@ -185,7 +185,7 @@ export const activeVideoCall = {
                 current.call.updateParticipant(req.participantId, {
                     updatePermissions: {
                         hasPresence: true,
-                        canSend: new Set(["audio"]),
+                        canSend: new Set(["audio", "video"]),
                     },
                 });
                 setTimeout(() => {
