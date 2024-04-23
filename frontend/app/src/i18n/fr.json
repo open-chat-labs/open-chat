@@ -1098,6 +1098,7 @@
         "title": "Ajouter un conseil"
     },
     "today": "Aujourd'hui",
+    "toggleBlockMarkdown": "Basculer la réduction du niveau de bloc",
     "toggleMuteNotificationsFailed": "Les notifications ne peuvent pas être {operation}",
     "toggleMuteNotificationsSucceeded": "Notifications réussies {operation}",
     "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction",

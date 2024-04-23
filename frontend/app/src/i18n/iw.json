@@ -1098,6 +1098,7 @@
         "title": "הוסף טיפ"
     },
     "today": "היום",
+    "toggleBlockMarkdown": "החלף את הסימון ברמת הבלוק",
     "toggleMuteNotificationsFailed": "ההתראות לא יכלו להיות {operation}",
     "toggleMuteNotificationsSucceeded": "הודעות בהצלחה {operation}",
     "toggleTranslationEditMode": "החלף את תיקוני התרגום",

@@ -1098,6 +1098,7 @@
         "title": "Añadir una propina"
     },
     "today": "Hoy",
+    "toggleBlockMarkdown": "Alternar reducción de nivel de bloque",
     "toggleMuteNotificationsFailed": "Notificaciones {operation} sin éxito",
     "toggleMuteNotificationsSucceeded": "Notificaciones {operation} con éxito",
     "toggleTranslationEditMode": "Alternar correcciones de traducción",

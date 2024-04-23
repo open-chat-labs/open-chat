@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1151](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1151-event_relay)] - 2024-04-23
+
 ### Changed
 
 - Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))

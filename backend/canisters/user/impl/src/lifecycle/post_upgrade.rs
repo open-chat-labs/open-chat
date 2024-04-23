@@ -29,21 +29,12 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        for chat in state.data.direct_chats.iter_mut() {
-            chat.events.set_block_level_markdown(1710152259000);
-        }
-
         if state.data.user_created + SIX_MONTHS < state.env.now()
             && state.data.direct_chats.len() <= 1
             && state.data.group_chats.len() == 0
             && state.data.communities.len() == 0
         {
             ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
-        }
-
-        let now = state.env.now();
-        for chat in state.data.direct_chats.iter_mut() {
-            chat.events.mark_video_call_ended_if_message_deleted(now);
         }
     });
 }

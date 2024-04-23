@@ -1098,6 +1098,7 @@
         "title": "Aggiungi un suggerimento"
     },
     "today": "Oggi",
+    "toggleBlockMarkdown": "Attiva/disattiva la riduzione del livello di blocco",
     "toggleMuteNotificationsFailed": "Le notifiche non possono essere {operation}",
     "toggleMuteNotificationsSucceeded": "Notifiche riuscite {operation}",
     "toggleTranslationEditMode": "Attiva/disattiva le correzioni di traduzione",

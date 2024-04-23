@@ -975,11 +975,10 @@ impl From<ReportedMessage> for ReportedMessageInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "VideoCallContentCombined")]
 pub struct VideoCallContentInternal {
-    #[serde(rename = "t", alias = "call_type", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub call_type: VideoCallType,
-    #[serde(rename = "e", alias = "ended", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "e", default, skip_serializing_if = "is_default")]
     pub ended: Option<TimestampMillis>,
     #[serde(rename = "p", default)]
     pub participants: HashMap<UserId, CallParticipantInternal>,
@@ -1005,45 +1004,6 @@ impl VideoCallContentInternal {
             ended: self.ended,
             participants,
             hidden_participants,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct VideoCallContentCombined {
-    #[serde(alias = "t")]
-    pub call_type: VideoCallType,
-    #[serde(alias = "e")]
-    pub ended: Option<TimestampMillis>,
-    #[serde(rename = "p", default)]
-    pub participants: HashMap<UserId, CallParticipantInternal>,
-    #[serde(rename = "participants", default)]
-    pub participants_previous: Vec<CallParticipant>,
-}
-
-impl From<VideoCallContentCombined> for VideoCallContentInternal {
-    fn from(value: VideoCallContentCombined) -> Self {
-        VideoCallContentInternal {
-            call_type: value.call_type,
-            ended: value.ended,
-            participants: if value.participants.is_empty() {
-                value
-                    .participants_previous
-                    .into_iter()
-                    .map(|p| {
-                        (
-                            p.user_id,
-                            CallParticipantInternal {
-                                joined: p.joined,
-                                last_updated: None,
-                                presence: VideoCallPresence::Default,
-                            },
-                        )
-                    })
-                    .collect()
-            } else {
-                value.participants
-            },
         }
     }
 }

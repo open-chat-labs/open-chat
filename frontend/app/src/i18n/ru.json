@@ -1098,6 +1098,7 @@
         "title": "Добавить совет"
     },
     "today": "Сегодня",
+    "toggleBlockMarkdown": "Переключить уценку уровня блока",
     "toggleMuteNotificationsFailed": "Уведомления не могут быть {operation}",
     "toggleMuteNotificationsSucceeded": "Уведомления успешно {operation}",
     "toggleTranslationEditMode": "Переключить исправления перевода",

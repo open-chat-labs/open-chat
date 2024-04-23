@@ -43,6 +43,11 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
             hiddenMessageRevealed: true,
         }));
     }
+    setBlockLevelMarkdown(messageId: bigint, blockLevelMarkdown: boolean): void {
+        this.applyUpdate(messageId, (_) => ({
+            blockLevelMarkdown,
+        }));
+    }
     markContentEdited(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({ editedContent: content, linkRemoved: false }));
     }

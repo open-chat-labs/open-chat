@@ -8,7 +8,6 @@ use utils::time::MINUTE_IN_MS;
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserMap {
     users: HashMap<UserId, LocalUser>,
-    #[serde(default)]
     registration_in_progress: HashMap<Principal, TimestampMillis>,
 }
 

@@ -1098,6 +1098,7 @@
         "title": "Fügen Sie einen Tipp hinzu"
     },
     "today": "Heute",
+    "toggleBlockMarkdown": "Markdown auf Blockebene umschalten",
     "toggleMuteNotificationsFailed": "Benachrichtigungen konnten nicht {operation} sein",
     "toggleMuteNotificationsSucceeded": "Benachrichtigungen erfolgreich {operation}",
     "toggleTranslationEditMode": "Übersetzungskorrekturen umschalten",

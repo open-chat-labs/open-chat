@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1146](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1146-user_index)] - 2024-04-23
+
 ### Added
 
 - Mark which user accounts are more than 6 month old and have no chats ([#5696](https://github.com/open-chat-labs/open-chat/pull/5696))
