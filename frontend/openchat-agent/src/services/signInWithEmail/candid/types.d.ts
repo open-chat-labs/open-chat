@@ -27,6 +27,10 @@ export interface GetDelegationArgs {
 }
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
+export interface IncorrectCode {
+  'blocked_duration' : [] | [bigint],
+  'attempts_remaining' : number,
+}
 export interface InitArgs { 'test_mode' : boolean }
 export type InitOrUpgradeArgs = { 'Upgrade' : UpgradeArgs } |
   { 'Init' : InitArgs };
@@ -42,7 +46,7 @@ export interface SubmitVerificationCodeArgs {
 }
 export type SubmitVerificationCodeResponse = { 'NotFound' : null } |
   { 'Success' : SubmitVerificationCodeSuccess } |
-  { 'IncorrectCode' : null };
+  { 'IncorrectCode' : IncorrectCode };
 export interface SubmitVerificationCodeSuccess {
   'user_key' : Uint8Array | number[],
   'expiration' : bigint,
