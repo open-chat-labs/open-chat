@@ -217,6 +217,16 @@
         if ($identityState.kind === "logged_in" && $user.principalUpdates !== undefined) {
             modal = ModalType.IdentityMigration;
         }
+
+        if (
+            modal === ModalType.IdentityMigration &&
+            ($identityState.kind !== "logged_in" || $user.principalUpdates === undefined)
+        ) {
+            console.log(
+                "The migration has completed so we are closing the migration progress modal",
+            );
+            modal = ModalType.None;
+        }
     }
 
     $: {
@@ -1219,8 +1229,6 @@
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
-        {:else if modal === ModalType.IdentityMigration}
-            <IdentityMigrationModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
@@ -1230,6 +1238,12 @@
         <Register
             on:logout={() => client.logout()}
             on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{/if}
+
+{#if modal === ModalType.IdentityMigration}
+    <Overlay>
+        <IdentityMigrationModal />
     </Overlay>
 {/if}
 

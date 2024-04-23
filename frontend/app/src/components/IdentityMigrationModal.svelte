@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
     import ModalContent from "./ModalContent.svelte";
@@ -7,20 +7,12 @@
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     $: user = client.user;
-    $: identityState = client.identityState;
     $: percent =
         $user.principalUpdates !== undefined
             ? (100 * $user.principalUpdates[0]) / $user.principalUpdates[1]
             : 100;
-
-    $: {
-        if ($identityState.kind !== "logged_in" || $user.principalUpdates === undefined) {
-            dispatch("close");
-        }
-    }
 </script>
 
 <ModalContent>
