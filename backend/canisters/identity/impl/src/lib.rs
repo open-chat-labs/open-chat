@@ -88,7 +88,6 @@ struct Data {
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
-    #[serde(default = "sign_in_with_email_canister_id")]
     sign_in_with_email_canister_id: CanisterId,
     user_principals: UserPrincipals,
     legacy_principals: HashSet<Principal>,
@@ -99,10 +98,6 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-}
-
-fn sign_in_with_email_canister_id() -> CanisterId {
-    CanisterId::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
 }
 
 impl Data {
