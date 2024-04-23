@@ -19,7 +19,7 @@
     <div class="body" slot="body">
         <Translatable resourceKey={i18nKey("identityMigrationMessage")} />
         <div class="progress">
-            <Progress size={"30px"} {percent} />
+            <Progress {percent} />
         </div>
     </div>
 </ModalContent>
