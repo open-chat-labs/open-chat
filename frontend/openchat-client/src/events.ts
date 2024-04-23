@@ -33,7 +33,7 @@ export class RemoteVideoCallStartedEvent extends CustomEvent<{
     messageId: bigint;
 }> {
     constructor(chatId: ChatIdentifier, userId: string, messageId: bigint) {
-        super("openchat_event", { detail: { chatId, userId, messageId } });
+        super("openchat_event", { detail: { chatId, userId, messageId: BigInt(messageId) } });
     }
 }
 
