@@ -95,6 +95,7 @@
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
+    import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -158,6 +159,7 @@
         Registering,
         LoggingIn,
         NotFound,
+        IdentityMigration,
     }
 
     let modal = ModalType.None;
@@ -211,6 +213,9 @@
         if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
+        }
+        if ($identityState.kind === "logged_in" && $user.principalUpdates !== undefined) {
+            modal = ModalType.IdentityMigration;
         }
     }
 
@@ -1214,6 +1219,8 @@
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
+        {:else if modal === ModalType.IdentityMigration}
+            <IdentityMigrationModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
