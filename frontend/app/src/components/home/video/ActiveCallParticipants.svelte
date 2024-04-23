@@ -1,5 +1,11 @@
 <script lang="ts">
-    import type { MultiUserChatIdentifier, OpenChat, UserSummary } from "openchat-client";
+    import {
+        VideoCallMessageUpdated,
+        type MultiUserChatIdentifier,
+        type OpenChat,
+        type UserSummary,
+        chatIdentifiersEqual,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
@@ -33,7 +39,24 @@
         lastUpdated: 0n,
     };
 
-    onMount(refresh);
+    onMount(() => {
+        client.addEventListener("openchat_event", clientEvent);
+        refresh();
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
+    });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof VideoCallMessageUpdated) {
+            if (
+                chatIdentifiersEqual(chatId, ev.detail.chatId) &&
+                messageId === ev.detail.messageId
+            ) {
+                refresh();
+            }
+        }
+    }
 
     function refresh() {
         client.videoCallParticipants(chatId, messageId, updatesSince).then((res) => {
@@ -52,33 +75,8 @@
         selectedTab = tab;
     }
 
-    function findParticipantId(userId: string): string | undefined {
-        if ($activeVideoCall?.call) {
-            const participants = $activeVideoCall.call.participants();
-            const p = Object.values(participants).find((v) => v.user_id === userId);
-            if (p !== undefined) {
-                return p.session_id;
-            }
-        }
-    }
-
     function demote(ev: CustomEvent<string>) {
-        if ($activeVideoCall?.call) {
-            const participantId = findParticipantId(ev.detail);
-            if (participantId) {
-                $activeVideoCall.call.updateParticipant(participantId, {
-                    updatePermissions: {
-                        hasPresence: false,
-                        canSend: [],
-                    },
-                });
-
-                // TODO - we need to also update the presence in OC for this user *before* we refresh
-                // TODO - and we probably need to optionally trigger refresh when participant-updated is called
-                // not sure how we're going to wire that up though
-                refresh();
-            }
-        }
+        activeVideoCall.demote(ev.detail);
     }
 </script>
 

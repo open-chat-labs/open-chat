@@ -49,7 +49,6 @@
     let hostEnded = false;
     let denied = false;
     let askedToSpeak = false;
-    let activeCallHeader: ActiveCallHeader | undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -144,17 +143,25 @@
             });
 
             call.on("app-message", (ev: InterCallMessage | undefined) => {
-                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak") {
-                    activeVideoCall.captureAccessRequest(ev.data);
-                }
-                if (ev && ev.action === "app-message" && ev.data.kind === "ask_to_speak_response") {
-                    const me = call.participants().local.session_id;
-                    console.log("AppMessage", ev);
-                    if (ev.data.participantId === me && $user.userId === ev.data.userId) {
-                        askedToSpeak = false;
-                        denied = !ev.data.approved;
-                        if (ev.data.approved) {
-                            client.setVideoCallPresence(chat.id, BigInt(messageId), "default");
+                if (ev && ev.action === "app-message") {
+                    if (ev.data.kind === "ask_to_speak") {
+                        activeVideoCall.captureAccessRequest(ev.data);
+                    }
+                    if (ev.data.kind === "demote_participant") {
+                        const me = call.participants().local.session_id;
+                        if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                            askedToSpeak = false;
+                            client.setVideoCallPresence(chat.id, BigInt(messageId), "hidden");
+                        }
+                    }
+                    if (ev.data.kind === "ask_to_speak_response") {
+                        const me = call.participants().local.session_id;
+                        if (ev.data.participantId === me && $user.userId === ev.data.userId) {
+                            askedToSpeak = false;
+                            denied = !ev.data.approved;
+                            if (ev.data.approved) {
+                                client.setVideoCallPresence(chat.id, BigInt(messageId), "default");
+                            }
                         }
                     }
                 }
@@ -255,27 +262,8 @@
     }
 
     export function askToSpeak() {
-        activeCallHeader?.askToSpeak();
-        // we need to send a message to all of the current admins on the call to and send our userId and our participantId
-        if ($activeVideoCall?.call) {
-            const participants = $activeVideoCall.call.participants();
-            const me = participants.local;
-            Object.entries(participants).map(([key, val]) => {
-                if (key !== "local") {
-                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
-                        askedToSpeak = true;
-                        $activeVideoCall?.call?.sendAppMessage(
-                            {
-                                kind: "ask_to_speak",
-                                participantId: me.session_id,
-                                userId: $user.userId,
-                            },
-                            val.session_id,
-                        );
-                    }
-                }
-            });
-        }
+        activeVideoCall.askToSpeak($user.userId);
+        askedToSpeak = true;
     }
 
     export function hangup() {
@@ -345,10 +333,10 @@
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
-            bind:this={activeCallHeader}
             on:clearSelection
             on:hangup={hangup}
             on:showParticipants
+            on:askToSpeak={askToSpeak}
             {chat}
             {askedToSpeak} />
     {/if}

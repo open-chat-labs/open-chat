@@ -9,13 +9,22 @@ import {
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
 import { type ChatIdentifier } from "openchat-client";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
-export type InterCallMessage = RequestToSpeakMessage | RequestToSpeakMessageResponse;
+export type InterCallMessage =
+    | RequestToSpeakMessage
+    | RequestToSpeakMessageResponse
+    | DemoteParticipantMessage;
 
 export type RequestToSpeak = {
     kind: "ask_to_speak";
+    participantId: string;
+    userId: string;
+};
+
+export type DemoteParticipant = {
+    kind: "demote_participant";
     participantId: string;
     userId: string;
 };
@@ -29,6 +38,7 @@ export type RequestToSpeakResponse = {
 
 export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
+export type DemoteParticipantMessage = DailyEventObjectAppMessage<DemoteParticipant>;
 
 const previousCalls = new Set<bigint>();
 
@@ -82,6 +92,14 @@ function updateCall(fn: (call: ActiveVideoCall) => ActiveVideoCall) {
     });
 }
 
+function findParticipantId(call: DailyCall, userId: string): string | undefined {
+    const participants = call.participants();
+    const p = Object.values(participants).find((v) => v.user_id === userId);
+    if (p !== undefined) {
+        return p.session_id;
+    }
+}
+
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
@@ -95,6 +113,50 @@ export const activeVideoCall = {
     },
     setView: (view: VideoCallView) => {
         return updateCall((current) => ({ ...current, view }));
+    },
+
+    askToSpeak: (userId: string) => {
+        const current = get(activeStore);
+        if (current?.call) {
+            const participants = current.call.participants();
+            const me = participants.local;
+            Object.entries(participants).map(([key, val]) => {
+                if (key !== "local") {
+                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
+                        current.call?.sendAppMessage(
+                            {
+                                kind: "ask_to_speak",
+                                participantId: me.session_id,
+                                userId,
+                            },
+                            val.session_id,
+                        );
+                    }
+                }
+            });
+        }
+    },
+    demote: (userId: string) => {
+        const current = get(activeStore);
+        if (current?.call) {
+            const participantId = findParticipantId(current.call, userId);
+            if (participantId) {
+                current.call.updateParticipant(participantId, {
+                    updatePermissions: {
+                        hasPresence: false,
+                        canSend: [],
+                    },
+                });
+                current.call.sendAppMessage(
+                    {
+                        kind: "demote_participant",
+                        participantId: participantId,
+                        userId: userId,
+                    },
+                    participantId,
+                );
+            }
+        }
     },
     rejectAccessRequest: (req: RequestToSpeak) => {
         return updateCall((current) => {

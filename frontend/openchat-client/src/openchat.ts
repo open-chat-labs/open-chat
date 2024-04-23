@@ -250,6 +250,7 @@ import {
     ThreadSelected,
     UserLoggedIn,
     UserSuspensionChanged,
+    VideoCallMessageUpdated,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -391,7 +392,6 @@ import type {
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
     VideoCallPresence,
-    VideoCallParticipants,
     VideoCallParticipant,
 } from "openchat-shared";
 import {
@@ -2895,7 +2895,21 @@ export class OpenChat extends OpenChatAgentWorker {
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
                         }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
-                  ).then((resp) => this.handleEventsResponse(serverChat, resp));
+                  ).then((resp) => {
+                      if (resp !== "events_failed") {
+                          resp.events.forEach((e) => {
+                              if (
+                                  e.event.kind === "message" &&
+                                  e.event.content.kind === "video_call_content"
+                              ) {
+                                  this.dispatchEvent(
+                                      new VideoCallMessageUpdated(serverChat.id, e.event.messageId),
+                                  );
+                              }
+                          });
+                      }
+                      return this.handleEventsResponse(serverChat, resp);
+                  });
 
         const threadEventPromise =
             currentThreadEvents.length === 0

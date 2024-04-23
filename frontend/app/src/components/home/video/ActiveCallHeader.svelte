@@ -10,15 +10,10 @@
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import SectionHeader from "../../SectionHeader.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Typing from "../../Typing.svelte";
-    import {
-        AvatarSize,
-        OpenChat,
-        type ChatIdentifier,
-        type DirectChatIdentifier,
-    } from "openchat-client";
+    import { AvatarSize, type ChatIdentifier, type DirectChatIdentifier } from "openchat-client";
     import { activeVideoCall, hasPresence } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Avatar from "../../Avatar.svelte";
@@ -34,12 +29,9 @@
     };
 
     const dispatch = createEventDispatcher();
-    const client = getContext<OpenChat>("client");
 
     export let askedToSpeak: boolean;
     export let chat: Chat;
-
-    $: user = client.user;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -58,26 +50,7 @@
     }
 
     export function askToSpeak() {
-        // we need to send a message to all of the current admins on the call to and send our userId and our participantId
-        if ($activeVideoCall?.call) {
-            const participants = $activeVideoCall.call.participants();
-            const me = participants.local;
-            Object.entries(participants).map(([key, val]) => {
-                if (key !== "local") {
-                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
-                        askedToSpeak = true;
-                        $activeVideoCall?.call?.sendAppMessage(
-                            {
-                                kind: "ask_to_speak",
-                                participantId: me.session_id,
-                                userId: $user.userId,
-                            },
-                            val.session_id,
-                        );
-                    }
-                }
-            });
-        }
+        dispatch("askToSpeak");
     }
 </script>
 
