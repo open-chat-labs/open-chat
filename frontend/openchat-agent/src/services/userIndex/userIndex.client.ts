@@ -47,7 +47,7 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { identity } from "../../utils/mapping";
+import { identity, optional } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     setCachedCurrentUser,
@@ -93,6 +93,17 @@ export class UserIndexClient extends CandidService {
                 reject(err);
             }
         });
+    }
+
+    getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.current_user({}),
+            (res) => {
+                if ("Success" in res) {
+                    return optional(res.Success.principal_updates, identity)
+                }
+            }
+        );
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
