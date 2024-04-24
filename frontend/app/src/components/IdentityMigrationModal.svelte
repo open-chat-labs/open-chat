@@ -45,4 +45,8 @@
         align-items: center;
         gap: $sp4;
     }
+
+    .progress {
+        width: 100%;
+    }
 </style>
