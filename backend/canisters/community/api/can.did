@@ -1048,19 +1048,20 @@ type UnfollowThreadResponse = variant {
 
 type SetVideoCallPresenceArgs = record {
     channel_id : ChannelId;
-    message_id: MessageId;
-    presence: VideoCallPresence;
+    message_id : MessageId;
+    presence : VideoCallPresence;
 };
 
 type SetVideoCallPresenceResponse = variant {
     Success;
     MessageNotFound;
     AlreadyEnded;
-    GroupFrozen;
-    UserNotInGroup;
+    CommunityFrozen;
+    UserNotInCommunity;
     UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
 };
-
 
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;

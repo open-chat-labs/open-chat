@@ -471,8 +471,8 @@ type SelectedUpdatesV2Response = variant {
 };
 
 type SetVideoCallPresenceArgs = record {
-    message_id: MessageId;
-    presence: VideoCallPresence;
+    message_id : MessageId;
+    presence : VideoCallPresence;
 };
 
 type SetVideoCallPresenceResponse = variant {
@@ -740,6 +740,7 @@ service : {
     follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
     unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 
     // Video call operator only
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
@@ -749,7 +750,6 @@ service : {
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates_v2 : (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
-    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
