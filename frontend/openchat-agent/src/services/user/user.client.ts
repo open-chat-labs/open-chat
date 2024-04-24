@@ -73,8 +73,6 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
-    VideoCallPresence,
-    SetVideoCallPresenceResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -142,8 +140,6 @@ import {
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
-    setVideoCallPresence,
-    apiVideoCallPresence,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
