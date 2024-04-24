@@ -3252,20 +3252,22 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setVideoCallPresence(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageId: bigint,
         presence: VideoCallPresence,
     ): Promise<SetVideoCallPresenceResponse> {
-        if (chatId.kind === "channel") {
-            return this.communityClient(chatId.communityId).setVideoCallPresence(
-                chatId.channelId,
-                messageId,
-                presence,
-            );
-        } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).setVideoCallPresence(messageId, presence);
-        } else {
-            return this.userClient.setVideoCallPresence(messageId, presence);
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).setVideoCallPresence(
+                    chatId.channelId,
+                    messageId,
+                    presence,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).setVideoCallPresence(
+                    messageId,
+                    presence,
+                );
         }
     }
 

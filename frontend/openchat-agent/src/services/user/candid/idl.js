@@ -1557,23 +1557,6 @@ export const idlFactory = ({ IDL }) => {
     'PinRequired' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const VideoCallPresence = IDL.Variant({
-    'Default' : IDL.Null,
-    'Hidden' : IDL.Null,
-    'Owner' : IDL.Null,
-  });
-  const SetVideoCallPresenceArgs = IDL.Record({
-    'presence' : VideoCallPresence,
-    'message_id' : MessageId,
-  });
-  const SetVideoCallPresenceResponse = IDL.Variant({
-    'GroupFrozen' : IDL.Null,
-    'AlreadyEnded' : IDL.Null,
-    'UserNotInGroup' : IDL.Null,
-    'MessageNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-  });
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,
     'initiator' : UserId,
@@ -2022,11 +2005,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'set_pin_number' : IDL.Func([SetPinNumberArgs], [SetPinNumberResponse], []),
-    'set_video_call_presence' : IDL.Func(
-        [SetVideoCallPresenceArgs],
-        [SetVideoCallPresenceResponse],
-        [],
-      ),
     'start_video_call' : IDL.Func(
         [StartVideoCallArgs],
         [StartVideoCallResponse],

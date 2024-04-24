@@ -143,6 +143,8 @@
             });
 
             call.on("app-message", (ev: InterCallMessage | undefined) => {
+                if (chat.id.kind === "direct_chat") return;
+
                 if (ev && ev.action === "app-message") {
                     if (ev.data.kind === "ask_to_speak") {
                         activeVideoCall.captureAccessRequest(ev.data);
@@ -215,11 +217,17 @@
             activeVideoCall.setCall(chat.id, BigInt(messageId), call);
 
             if (joining) {
-                await client.setVideoCallPresence(
-                    chat.id,
-                    BigInt(messageId),
-                    callType === "broadcast" ? "hidden" : "default",
-                );
+                switch (chat.id.kind) {
+                    case "direct_chat":
+                        await client.joinVideoCall(chat.id, BigInt(messageId));
+                        break;
+                    default:
+                        await client.setVideoCallPresence(
+                            chat.id,
+                            BigInt(messageId),
+                            callType === "broadcast" ? "hidden" : "default",
+                        );
+                }
             }
         } catch (err) {
             if (err instanceof NoMeetingToJoin) {

@@ -1655,12 +1655,14 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
   });
   const SetVideoCallPresenceResponse = IDL.Variant({
-    'GroupFrozen' : IDL.Null,
     'AlreadyEnded' : IDL.Null,
-    'UserNotInGroup' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
     'MessageNotFound' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
     'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
   });
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,

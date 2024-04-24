@@ -5278,7 +5278,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setVideoCallPresence(
-        chatId: ChatIdentifier,
+        chatId: MultiUserChatIdentifier,
         messageId: bigint,
         presence: VideoCallPresence,
     ): Promise<boolean> {

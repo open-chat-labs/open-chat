@@ -370,7 +370,7 @@ type VideoCallParticipants = {
 
 type SetVideoCallPresence = {
     kind: "setVideoCallPresence";
-    chatId: ChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageId: bigint;
     presence: VideoCallPresence;
 };

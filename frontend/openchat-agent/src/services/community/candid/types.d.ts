@@ -1932,12 +1932,14 @@ export interface SetVideoCallPresenceArgs {
   'presence' : VideoCallPresence,
   'message_id' : MessageId,
 }
-export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
-  { 'AlreadyEnded' : null } |
-  { 'UserNotInGroup' : null } |
+export type SetVideoCallPresenceResponse = { 'AlreadyEnded' : null } |
+  { 'UserNotInChannel' : null } |
   { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
   { 'Success' : null } |
-  { 'UserSuspended' : null };
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],

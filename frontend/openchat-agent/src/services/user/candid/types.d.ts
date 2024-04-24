@@ -1960,16 +1960,6 @@ export type SetPinNumberResponse = {
   { 'TooShort' : FieldTooShortResult } |
   { 'PinRequired' : null } |
   { 'Success' : null };
-export interface SetVideoCallPresenceArgs {
-  'presence' : VideoCallPresence,
-  'message_id' : MessageId,
-}
-export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
-  { 'AlreadyEnded' : null } |
-  { 'UserNotInGroup' : null } |
-  { 'MessageNotFound' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2445,10 +2435,6 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'set_pin_number' : ActorMethod<[SetPinNumberArgs], SetPinNumberResponse>,
-  'set_video_call_presence' : ActorMethod<
-    [SetVideoCallPresenceArgs],
-    SetVideoCallPresenceResponse
-  >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse
