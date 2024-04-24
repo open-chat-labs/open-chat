@@ -443,6 +443,7 @@
     "hotGroups": "ホットグループ",
     "hours": "時間",
     "howToBuyToken": "{token}の購入についてサポートが必要ですか？",
+    "identityMigrationMessage": "アカウントが新しいシステムにアップグレードされるまでお待ちください。これにより、デバイスにアクセスできなくなった場合に備えたオプションのメール回復など、今後さらに多くのサインイン オプションをサポートできるようになります。",
     "inheritSystem": "システムテーマを適用",
     "insufficientFunds": "上記のアカウントに、要求されたストレージをカバーするために少なくとも{amount} ICPの残高があることを確認してから、[更新]ボタンをクリックしてください。",
     "insufficientStorage": "ストレージ不足",
@@ -1098,6 +1099,7 @@
         "title": "ヒントを追加する"
     },
     "today": "今日",
+    "toggleBlockMarkdown": "ブロックレベルのマークダウンを切り替える",
     "toggleMuteNotificationsFailed": "通知の{operation}に失敗しました",
     "toggleMuteNotificationsSucceeded": "通知の{operation}に成功しました",
     "toggleTranslationEditMode": "翻訳修正の切り替え",

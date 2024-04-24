@@ -443,6 +443,7 @@
     "hotGroups": "Groupes chauds",
     "hours": "Heures",
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
+    "identityMigrationMessage": "Veuillez patienter pendant que votre compte est mis à niveau vers notre nouveau système. Cela nous permettra de prendre en charge de nombreuses autres options de connexion à l'avenir, y compris la récupération facultative des e-mails au cas où vous perdriez l'accès à votre appareil.",
     "inheritSystem": "Hériter du thème système",
     "insufficientFunds": "Veuillez vous assurer que le compte ci-dessus a un solde d'au moins {amount} ICP pour couvrir le stockage demandé, puis appuyez sur le bouton \"Actualiser\".",
     "insufficientStorage": "Espace insuffisant",
@@ -1098,6 +1099,7 @@
         "title": "Ajouter un conseil"
     },
     "today": "Aujourd'hui",
+    "toggleBlockMarkdown": "Basculer la réduction du niveau de bloc",
     "toggleMuteNotificationsFailed": "Les notifications ne peuvent pas être {operation}",
     "toggleMuteNotificationsSucceeded": "Notifications réussies {operation}",
     "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction",

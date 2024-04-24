@@ -547,6 +547,7 @@
                         content={msg.content}
                         edited={msg.edited}
                         height={mediaCalculatedHeight}
+                        blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview
                         on:registerVote={registerVote}
                         on:goToMessageIndex

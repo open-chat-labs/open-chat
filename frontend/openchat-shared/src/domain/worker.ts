@@ -235,6 +235,7 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
+    | IdentityMigrationProgress
     | SetGroupInvite
     | SetCommunityInvite
     | SearchGroupChat
@@ -736,6 +737,7 @@ type EditMessage = {
     msg: Message;
     threadRootMessageIndex?: number;
     kind: "editMessage";
+    blockLevelMarkdown?: boolean;
 };
 
 type SendMessage = {
@@ -959,6 +961,10 @@ type Init = Omit<AgentConfig, "logger"> & {
 
 type CurrentUser = {
     kind: "getCurrentUser";
+};
+
+type IdentityMigrationProgress = {
+    kind: "getIdentityMigrationProgress";
 };
 
 type MarkMessagesRead = {
@@ -1208,6 +1214,7 @@ export type WorkerResponseInner =
     | string
     | string[]
     | undefined
+    | [number, number]
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1649,6 +1656,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? CurrentUserResponse
     : T extends CreateUserClient
     ? void
+    : T extends IdentityMigrationProgress
+    ? [number, number] | undefined
     : T extends GetAllCachedUsers
     ? UserLookup
     : T extends LastOnline

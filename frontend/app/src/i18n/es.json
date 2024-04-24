@@ -443,6 +443,7 @@
     "hotGroups": "Grupos calientes",
     "hours": "Horas",
     "howToBuyToken": "Necesito ayuda para comprar {token}",
+    "identityMigrationMessage": "Espere mientras su cuenta se actualiza a nuestro nuevo sistema. Esto nos permitirá admitir muchas más opciones de inicio de sesión en el futuro, incluida la recuperación de correo electrónico opcional en caso de que pierda el acceso a su dispositivo.",
     "inheritSystem": "Heredar tema del sistema",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
     "insufficientStorage": "Espacio insuficiente",
@@ -1098,6 +1099,7 @@
         "title": "Añadir una propina"
     },
     "today": "Hoy",
+    "toggleBlockMarkdown": "Alternar reducción de nivel de bloque",
     "toggleMuteNotificationsFailed": "Notificaciones {operation} sin éxito",
     "toggleMuteNotificationsSucceeded": "Notificaciones {operation} con éxito",
     "toggleTranslationEditMode": "Alternar correcciones de traducción",

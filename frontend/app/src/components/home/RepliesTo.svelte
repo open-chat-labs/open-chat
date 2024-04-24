@@ -80,6 +80,7 @@
                     edited={repliesTo.edited}
                     fill={false}
                     failed={false}
+                    blockLevelMarkdown={false}
                     truncate
                     reply
                     myUserId={$currentUser.userId}
