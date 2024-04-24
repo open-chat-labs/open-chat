@@ -444,7 +444,7 @@
     "hotGroups": "Hot groups",
     "hours": "Hours",
     "howToBuyToken": "I need help buying {token}",
-    "identityMigrationMessage": "Please wait while you account is upgraded to our new system which will support many more sign-in options going forwards. It will also allow us to provide (coming soon) an optional recovery email in case you lose access to your device.",
+    "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",
     "insufficientFunds": "Please ensure that the account above has a balance of at least {amount} ICP to cover the requested storage, then hit the \"Refresh\" button.",
     "insufficientStorage": "Insufficient storage",
