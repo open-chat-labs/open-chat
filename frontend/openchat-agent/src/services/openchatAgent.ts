@@ -3271,7 +3271,7 @@ export class OpenChatAgent extends EventTarget {
         return this._signInWithEmailClient.submitVerificationCode(email, code, sessionKey);
     }
 
-    getSignInByEmailDelegation(
+    getSignInWithEmailDelegation(
         email: string,
         sessionKey: Uint8Array,
         expiration: bigint,
