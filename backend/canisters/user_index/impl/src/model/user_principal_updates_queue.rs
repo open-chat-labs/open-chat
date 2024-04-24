@@ -5,7 +5,6 @@ use types::{CanisterId, UpdateUserPrincipalArgs, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipalUpdatesQueue {
-    #[serde(default)]
     progress: HashMap<UserId, (u32, u32)>,
     queue: VecDeque<(CanisterId, UpdateUserPrincipalArgs)>,
 }

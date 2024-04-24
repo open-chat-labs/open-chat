@@ -280,6 +280,7 @@ export const idlFactory = ({ IDL }) => {
   const VideoCallContent = IDL.Record({
     'participants' : IDL.Vec(CallParticipant),
     'ended' : IDL.Opt(TimestampMillis),
+    'hidden_participants' : IDL.Nat32,
     'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
@@ -692,6 +693,7 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'block_level_markdown' : IDL.Bool,
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),
@@ -1557,6 +1559,20 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
   });
+  const VideoCallParticipantsArgs = IDL.Record({
+    'updated_since' : IDL.Opt(TimestampMillis),
+    'message_id' : MessageId,
+  });
+  const VideoCallParticipants = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'hidden' : IDL.Vec(CallParticipant),
+    'last_updated' : TimestampMillis,
+  });
+  const VideoCallParticipantsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'VideoCallNotFound' : IDL.Null,
+    'Success' : VideoCallParticipants,
+  });
   return IDL.Service({
     'accept_p2p_swap' : IDL.Func(
         [AcceptP2PSwapArgs],
@@ -1731,6 +1747,11 @@ export const idlFactory = ({ IDL }) => {
         [UpdateGroupV2Args],
         [UpdateGroupV2Response],
         [],
+      ),
+    'video_call_participants' : IDL.Func(
+        [VideoCallParticipantsArgs],
+        [VideoCallParticipantsResponse],
+        ['query'],
       ),
   });
 };

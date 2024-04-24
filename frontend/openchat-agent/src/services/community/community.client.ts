@@ -360,6 +360,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         message: Message,
         threadRootMessageIndex: number | undefined,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [chatId.communityId])
@@ -370,7 +371,8 @@ export class CommunityClient extends CandidService {
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
-                        block_level_markdown: [] as [] | [boolean],
+                        block_level_markdown:
+                            blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                     }),
                     editMessageResponse,
                 );
@@ -922,9 +924,9 @@ export class CommunityClient extends CandidService {
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
-                block_level_markdown: true,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
+                block_level_markdown: event.event.blockLevelMarkdown,
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
                 .then((resp) => {

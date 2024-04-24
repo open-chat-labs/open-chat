@@ -444,6 +444,7 @@
     "hotGroups": "热门群聊",
     "hours": "小时",
     "howToBuyToken": "我需要购买 {token} 的帮助",
+    "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",
     "insufficientFunds": "请确保上述帐户的余额至少为 {amount} ICP 以支付请求的存储空间，然后点击“刷新”按钮。",
     "insufficientStorage": "存储空间不足",
@@ -1075,6 +1076,7 @@
         "title": "添加打赏"
     },
     "today": "今天",
+    "toggleBlockMarkdown": "切换块级别 markdown",
     "toggleMuteNotificationsFailed": "推送通知失败 {operation}",
     "toggleMuteNotificationsSucceeded": "推送通知成功 {operation}",
     "toggleTranslationEditMode": "切换翻译更正",

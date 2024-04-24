@@ -22,6 +22,7 @@
         textContent: string | undefined;
         mentioned: User[];
         attachment: AttachmentContent | undefined;
+        blockLevelMarkdown: boolean;
     };
 
     type ConfirmedSendMessageWithContent = {
@@ -64,6 +65,7 @@
             client.sendMessageWithContent(
                 messageContext,
                 ev.detail.content,
+                false,
                 undefined,
                 undefined,
                 undefined,
@@ -78,14 +80,16 @@
             textContent: string | undefined;
             attachment: AttachmentContent | undefined;
             mentioned: User[];
+            blockLevelMarkdown: boolean;
         }>,
     ) {
-        const { textContent, attachment, mentioned } = ev.detail;
+        const { textContent, attachment, mentioned, blockLevelMarkdown } = ev.detail;
         if (client.rulesNeedAccepting()) {
             showAcceptRulesModal = true;
             sendMessageContext = {
                 kind: "send_message",
                 textContent,
+                blockLevelMarkdown,
                 mentioned,
                 attachment,
             };
@@ -93,6 +97,7 @@
             client.sendMessageWithAttachment(
                 messageContext,
                 textContent,
+                blockLevelMarkdown,
                 attachment,
                 mentioned,
                 undefined,
@@ -160,6 +165,7 @@
                     client.sendMessageWithAttachment(
                         messageContext,
                         sendMessageContext.textContent,
+                        sendMessageContext.blockLevelMarkdown,
                         sendMessageContext.attachment,
                         sendMessageContext.mentioned,
                         chatRulesVersion,
@@ -173,6 +179,7 @@
                     client.sendMessageWithContent(
                         messageContext,
                         sendMessageContext.content,
+                        false,
                         sendMessageContext.mentioned,
                         false,
                         chatRulesVersion,

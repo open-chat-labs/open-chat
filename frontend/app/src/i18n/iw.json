@@ -444,6 +444,7 @@
     "hotGroups": "קבוצות לוהטות",
     "hours": "שעה (ות",
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
+    "identityMigrationMessage": "אנא המתן בזמן שחשבונך ישודרג למערכת החדשה שלנו. זה יאפשר לנו לתמוך באפשרויות כניסה רבות נוספות בעתיד, כולל שחזור דוא\"ל אופציונלי למקרה שתאבד את הגישה למכשיר שלך.",
     "inheritSystem": "יורש את נושא המערכת",
     "insufficientFunds": "אנא ודא שלחשבון למעלה יש יתרה של לפחות {amount} ICP לכיסוי האחסון המבוקש, ולאחר מכן לחץ על הלחצן \"רענן\".",
     "insufficientStorage": "אין מספיק שטח אחסון",
@@ -1075,6 +1076,7 @@
         "title": "הוסף טיפ"
     },
     "today": "היום",
+    "toggleBlockMarkdown": "החלף את הסימון ברמת הבלוק",
     "toggleMuteNotificationsFailed": "ההתראות לא יכלו להיות {operation}",
     "toggleMuteNotificationsSucceeded": "הודעות בהצלחה {operation}",
     "toggleTranslationEditMode": "החלף את תיקוני התרגום",

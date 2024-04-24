@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
+import { type Identity } from "@dfinity/agent";
+import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -81,11 +81,7 @@ import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import {
-    idbAuthClientStore,
-    lsAuthClientStore,
-    selectedAuthProviderStore,
-} from "./stores/authProviders";
+import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
@@ -430,8 +426,12 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    IdentityStorage,
     NoMeetingToJoin,
     featureRestricted,
+    buildDelegationIdentity,
+    toDer,
+    storeIdentity,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -492,6 +492,7 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -505,9 +506,12 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _ocIdentityStorage: IdentityStorage;
     private _userLocation: string | undefined;
+    private _authClientStorage: AuthClientStorage = new IdbStorage();
     private _authClient: Promise<AuthClient>;
-    private _identity: Identity | undefined;
+    private _authPrincipal: string | undefined;
+    private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
@@ -561,15 +565,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.warn("GEO: Unable to determine user's country location", err);
             });
 
+        this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
                 disableDefaultIdleCallback: true,
             },
-            storage: idbAuthClientStore,
+            storage: this._authClientStorage,
         });
 
-        this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+        this._authClient
+            .then((c) => c.getIdentity())
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -596,9 +603,11 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
-    private loadedIdentity(id: Identity) {
-        this._identity = id;
+    private loadedAuthenticationIdentity(id: Identity) {
+        currentUser.set(anonymousUser());
+        chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
+        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
         this.loadUser(anon);
     }
@@ -623,11 +632,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 identityProvider: this.buildAuthProviderUrl(authProvider),
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: this.config.iiDerivationOrigin,
-                onSuccess: () => {
-                    currentUser.set(anonymousUser());
-                    chatsInitialised.set(false);
-                    this.loadedIdentity(c.getIdentity());
-                },
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.identityState.set({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -718,6 +723,10 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadUser(anon: boolean = false) {
         await this.connectToWorker();
 
+        if (!anon) {
+            this._ocIdentity = await this._ocIdentityStorage.get();
+        }
+
         this.startRegistryPoller();
         this.startExchangeRatePoller();
 
@@ -725,7 +734,7 @@ export class OpenChat extends OpenChatAgentWorker {
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
 
-        if (anon) {
+        if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
@@ -782,19 +791,18 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        if (this._identity === undefined) {
-            throw new Error("onCreatedUser called before the user's identity has been established");
-        }
         this.user.set(user);
         this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
-        const id = this._identity;
+        const id = this._ocIdentity;
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
         this.startOnlinePoller();
         startSwCheckPoller();
-        this.startSession(id).then(() => this.logout());
+        if (id !== undefined) {
+            this.startSession(id).then(() => this.logout());
+        }
         this.startChatsPoller();
         this.startUserUpdatePoller();
         initNotificationStores();
@@ -873,18 +881,17 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    logout(): Promise<void> {
-        return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.replace("/"));
-        });
+    async logout(): Promise<void> {
+        await Promise.all([
+            this._ocIdentityStorage.remove(),
+            this._authClient.then((c) => c.logout()),
+        ]).then(() => window.location.replace("/"));
     }
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const identity = ls != null || idb != null;
-        return this._liveState.userCreated && identity;
+        const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
+        return this._liveState.userCreated && identity !== null;
     }
 
     unreadThreadMessageCount(
@@ -1209,11 +1216,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
-        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
+        if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
+            return Promise.resolve(undefined);
+        }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._identity!.getPrincipal().toString(),
+            this._authPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.credentialType,
             gate.credential.credentialArguments,
@@ -3046,6 +3055,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendMessageWithContent(
             messageContext,
             { ...msg.content },
+            msg.blockLevelMarkdown,
             [],
             true,
             rulesAccepted,
@@ -3412,6 +3422,7 @@ export class OpenChat extends OpenChatAgentWorker {
     sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
+        blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
         rulesAccepted: number | undefined = undefined,
@@ -3439,6 +3450,7 @@ export class OpenChat extends OpenChatAgentWorker {
             this._liveState.user.userId,
             nextMessageIndex,
             content,
+            blockLevelMarkdown,
             draftMessage?.replyingTo,
             forwarded,
         );
@@ -3482,6 +3494,7 @@ export class OpenChat extends OpenChatAgentWorker {
     sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
@@ -3491,6 +3504,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendMessageWithContent(
             messageContext,
             this.getMessageContent(textContent, attachment),
+            blockLevelMarkdown,
             mentioned,
             false,
             rulesAccepted,
@@ -3612,6 +3626,7 @@ export class OpenChat extends OpenChatAgentWorker {
     editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
     ): Promise<boolean> {
@@ -3635,11 +3650,18 @@ export class OpenChat extends OpenChatAgentWorker {
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
             draftMessagesStore.delete(messageContext);
 
+            const updatedBlockLevelMarkdown =
+                msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
+            if (updatedBlockLevelMarkdown !== undefined) {
+                localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
+            }
+
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
                 threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                blockLevelMarkdown: updatedBlockLevelMarkdown,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -4114,6 +4136,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 })
                 .catch(reject);
         });
+    }
+
+    getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
+        return this.sendRequest({ kind: "getIdentityMigrationProgress" });
     }
 
     getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
@@ -5984,22 +6010,34 @@ export class OpenChat extends OpenChatAgentWorker {
     async signInWithEmailVerificationCode(
         email: string,
         code: string,
-        sessionKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<SignInWithEmailVerificationCodeResponse> {
+        const sessionKeyDer = toDer(sessionKey);
         const submitCodeResponse = await this.sendRequest({
             kind: "submitEmailVerificationCode",
             email,
             code,
-            sessionKey,
+            sessionKey: sessionKeyDer,
         });
 
         if (submitCodeResponse.kind === "success") {
-            return await this.sendRequest({
+            const getDelegationResponse = await this.sendRequest({
                 kind: "getSignInWithEmailDelegation",
                 email,
-                sessionKey,
+                sessionKey: sessionKeyDer,
                 expiration: submitCodeResponse.expiration,
             });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    submitCodeResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
         } else {
             return submitCodeResponse;
         }
@@ -6023,24 +6061,36 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        sessionKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<GetDelegationResponse> {
+        const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
             kind: "loginWithWallet",
             token,
             address,
             signature,
-            sessionKey,
+            sessionKey: sessionKeyDer,
         });
 
         if (loginResponse.kind === "success") {
-            return await this.sendRequest({
+            const getDelegationResponse = await this.sendRequest({
                 kind: "getDelegationWithWallet",
                 token,
                 address,
-                sessionKey,
+                sessionKey: sessionKeyDer,
                 expiration: loginResponse.expiration,
             });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    loginResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
         } else {
             return loginResponse;
         }

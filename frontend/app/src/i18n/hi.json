@@ -444,6 +444,7 @@
     "hotGroups": "गर्म समूह",
     "hours": "घंटे",
     "howToBuyToken": "मुझे {token} खरीदने में मदद चाहिए",
+    "identityMigrationMessage": "कृपया अपने खाते को हमारे नए सिस्टम में अपग्रेड होने तक प्रतीक्षा करें। इससे हमें आगे चलकर कई और साइन-इन विकल्पों का समर्थन करने की अनुमति मिलेगी, जिसमें आपके डिवाइस तक पहुंच खोने की स्थिति में वैकल्पिक ईमेल रिकवरी भी शामिल है।",
     "inheritSystem": "इनहेरिट सिस्टम थीम",
     "insufficientFunds": "कृपया सुनिश्चित करें कि उपरोक्त खाते में अनुरोधित भंडारण को कवर करने के लिए कम से कम {amount} ICP का संतुलन है, फिर \"ताज़ा करें\" बटन दबाएं।",
     "insufficientStorage": "अपर्याप्त संग्रहण",
@@ -1075,6 +1076,7 @@
         "title": "बख्शीश"
     },
     "today": "आज",
+    "toggleBlockMarkdown": "ब्लॉक स्तर मार्कडाउन टॉगल करें",
     "toggleMuteNotificationsFailed": "सूचनाएं {operation} नहीं हो सकीं",
     "toggleMuteNotificationsSucceeded": "सूचनाएं सफलतापूर्वक {operation}",
     "toggleTranslationEditMode": "अनुवाद सुधार टॉगल करें",

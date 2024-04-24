@@ -248,6 +248,7 @@ export function createMessage(
     userId: string,
     messageIndex: number,
     content: MessageContent,
+    blockLevelMarkdown: boolean,
     replyingTo: ReplyContext | undefined,
     forwarded: boolean,
 ): Message {
@@ -263,6 +264,7 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
+        blockLevelMarkdown,
     };
 }
 
@@ -1515,6 +1517,10 @@ function mergeLocalUpdates(
                 message.content.prizesPending += 1;
             }
         }
+    }
+
+    if (localUpdates?.blockLevelMarkdown !== undefined) {
+        message.blockLevelMarkdown = localUpdates.blockLevelMarkdown;
     }
 
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
