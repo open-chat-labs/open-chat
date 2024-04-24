@@ -232,14 +232,10 @@
     }
 
     function startVideoCall() {
-        if ($isDiamond || videoCallInProgress) {
-            dispatch("startVideoCall", {
-                chat: selectedChatSummary,
-                join: videoCallInProgress,
-            });
-        } else {
-            dispatch("upgrade");
-        }
+        dispatch("startVideoCall", {
+            chat: selectedChatSummary,
+            join: videoCallInProgress,
+        });
     }
 </script>
 
