@@ -72,6 +72,8 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            user_principals: self.data.user_principals.user_principals_count(),
+            auth_principals: self.data.user_principals.auth_principals_count(),
             legacy_principals: self.data.legacy_principals.len() as u32,
             principal_migration_job_enabled: self.data.principal_migration_job_enabled,
             canister_ids: CanisterIds {
@@ -172,6 +174,8 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
+    pub user_principals: u32,
+    pub auth_principals: u32,
     pub legacy_principals: u32,
     pub principal_migration_job_enabled: bool,
     pub canister_ids: CanisterIds,
