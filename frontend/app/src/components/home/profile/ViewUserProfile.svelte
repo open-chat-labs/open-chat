@@ -21,6 +21,7 @@
     import Diamond from "../../icons/Diamond.svelte";
     import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import ProfileRole from "./ProfileRole.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -311,6 +312,7 @@
                         {/if}
                     {/if}
                 </div>
+                <ProfileRole community={$selectedCommunity} chat={$selectedChat} />
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>

@@ -612,6 +612,7 @@
         "createPolls": "create polls",
         "createPrivateChannel": "create private channels",
         "createPublicChannel": "create public channels",
+        "currentRole": "{level} role",
         "deleteMessages": "delete messages",
         "general": "General",
         "inviteUsers": "invite users",
