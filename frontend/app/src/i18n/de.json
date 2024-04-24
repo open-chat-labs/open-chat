@@ -444,6 +444,7 @@
     "hotGroups": "Heiße Gruppen",
     "hours": "Std",
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
+    "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",
     "insufficientFunds": "Bitte stellen Sie sicher, dass das oben genannte Konto über ein Guthaben von mindestens {amount} ICP verfügt, um den angeforderten Speicherplatz zu bezahlen, und klicken Sie dann auf die Schaltfläche „Aktualisieren“.",
     "insufficientStorage": "Unzureichender Speicherplatz",
