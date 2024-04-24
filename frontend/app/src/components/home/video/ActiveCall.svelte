@@ -43,6 +43,7 @@
     $: user = client.user;
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
+    $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;
 
     let iframeContainer: HTMLDivElement;
     let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
@@ -338,6 +339,7 @@
     class:visible={$activeVideoCall &&
         $activeVideoCall.view !== "minimised" &&
         !(threadOpen && $mobileWidth) &&
+        !(participantsOpen && $mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
