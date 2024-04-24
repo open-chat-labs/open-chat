@@ -4138,6 +4138,10 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
+        return this.sendRequest({ kind: "getIdentityMigrationProgress" });
+    }
+
     getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
         const user = this._liveState.userStore[userId];
         return this.getDisplayName(user, communityMembers);
