@@ -869,6 +869,23 @@ type SetMemberDisplayNameResponse = variant {
     DisplayNameTooLong : nat16;
 };
 
+type SetVideoCallPresenceArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    presence : VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+};
+
 type StartVideoCallArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
@@ -1046,23 +1063,6 @@ type UnfollowThreadResponse = variant {
     CommunityFrozen;
 };
 
-type SetVideoCallPresenceArgs = record {
-    channel_id : ChannelId;
-    message_id : MessageId;
-    presence : VideoCallPresence;
-};
-
-type SetVideoCallPresenceResponse = variant {
-    Success;
-    MessageNotFound;
-    AlreadyEnded;
-    CommunityFrozen;
-    UserNotInCommunity;
-    UserSuspended;
-    ChannelNotFound;
-    UserNotInChannel;
-};
-
 service : {
     channel_summary : (ChannelSummaryArgs) -> (ChannelSummaryResponse) query;
     channel_summary_updates : (ChannelSummaryUpdatesArgs) -> (ChannelSummaryUpdatesResponse) query;
@@ -1118,6 +1118,7 @@ service : {
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
@@ -1128,5 +1129,4 @@ service : {
     update_user_group : (UpdateUserGroupArgs) -> (UpdateUserGroupResponse);
     follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
     unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
-    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 };
