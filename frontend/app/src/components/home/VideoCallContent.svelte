@@ -19,14 +19,12 @@
     export let content: VideoCallContent;
     export let messageIndex: number;
     export let timestamp: bigint | undefined;
+    export let senderId: string;
 
     $: selectedChat = client.selectedChatStore;
     $: communityMembers = client.currentCommunityMembers;
     $: userStore = client.userStore;
-    $: initiator = content.participants[0];
-    $: displayName = initiator
-        ? client.getDisplayNameById(initiator.userId, $communityMembers)
-        : $_("unknownUser");
+    $: displayName = client.getDisplayNameById(senderId, $communityMembers);
     $: incall =
         $activeVideoCall !== undefined &&
         $selectedChat !== undefined &&

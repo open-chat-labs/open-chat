@@ -51,7 +51,10 @@
             if (callContainer) {
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
-                    if (layout.rightPanel !== "floating" && call.threadOpen) {
+                    if (
+                        layout.rightPanel !== "floating" &&
+                        (call.threadOpen || call.participantsOpen)
+                    ) {
                         width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
