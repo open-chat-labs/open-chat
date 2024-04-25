@@ -16,9 +16,6 @@
     const client = getContext<OpenChat>("client");
 
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
-    $: unreadCount = 0;
-
-    $: console.log("Thread unread: ", unreadCount);
 
     function toggleThread() {
         if (threadOpen) {

@@ -869,6 +869,23 @@ type SetMemberDisplayNameResponse = variant {
     DisplayNameTooLong : nat16;
 };
 
+type SetVideoCallPresenceArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    presence : VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+};
+
 type StartVideoCallArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
@@ -1101,6 +1118,7 @@ service : {
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
