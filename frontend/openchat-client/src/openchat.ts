@@ -803,13 +803,16 @@ export class OpenChat extends OpenChatAgentWorker {
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
-        this.startChatsPoller();
-        this.startUserUpdatePoller();
 
-        if (user.principalUpdates !== undefined) {
-            const unsubscribe = this.user.subscribe((u) => {
+        if (user.principalUpdates === undefined) {
+            this.startChatsPoller();
+            this.startUserUpdatePoller();
+        } else {
+            const unsubscribe = this.user.subscribe(async (u) => {
                 if (u.principalUpdates === undefined) {
-                    this.connectToWorker();
+                    await this.connectToWorker();
+                    this.startChatsPoller();
+                    this.startUserUpdatePoller();
                     unsubscribe();
                 }
             });
