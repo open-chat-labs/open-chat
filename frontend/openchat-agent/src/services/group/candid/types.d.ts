@@ -1683,6 +1683,16 @@ export interface SendMessageV2Args {
   'replies_to' : [] | [GroupReplyContext],
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface SetVideoCallPresenceArgs {
+  'presence' : VideoCallPresence,
+  'message_id' : MessageId,
+}
+export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
+  { 'AlreadyEnded' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1956,6 +1966,9 @@ export interface VideoCallParticipantsArgs {
 export type VideoCallParticipantsResponse = { 'CallerNotInGroup' : null } |
   { 'VideoCallNotFound' : null } |
   { 'Success' : VideoCallParticipants };
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2045,6 +2058,10 @@ export interface _SERVICE {
     SelectedUpdatesV2Response
   >,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
+  'set_video_call_presence' : ActorMethod<
+    [SetVideoCallPresenceArgs],
+    SetVideoCallPresenceResponse
+  >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],
     StartVideoCallResponse

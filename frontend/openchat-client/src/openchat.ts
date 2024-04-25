@@ -246,6 +246,7 @@ import {
     ThreadSelected,
     UserLoggedIn,
     UserSuspensionChanged,
+    VideoCallMessageUpdated,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -386,6 +387,8 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
+    VideoCallPresence,
+    VideoCallParticipant,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -798,19 +801,39 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
-        this.startOnlinePoller();
         startSwCheckPoller();
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
-        this.startChatsPoller();
-        this.startUserUpdatePoller();
-        initNotificationStores();
-        this.sendRequest({ kind: "getUserStorageLimits" })
-            .then(storageStore.set)
-            .catch((err) => {
-                console.warn("Unable to retrieve user storage limits", err);
+
+        if (user.principalUpdates === undefined) {
+            this.startOnlinePoller();
+            this.startChatsPoller();
+            this.startUserUpdatePoller();
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
+        } else {
+            chatsLoading.set(false);
+            const unsubscribe = this.user.subscribe(async (u) => {
+                if (u.principalUpdates === undefined) {
+                    await this.connectToWorker();
+                    this.sendRequest({ kind: "createUserClient", userId: user.userId });
+                    this.startOnlinePoller();
+                    this.startChatsPoller();
+                    this.startUserUpdatePoller();
+                    this.sendRequest({ kind: "getUserStorageLimits" })
+                        .then(storageStore.set)
+                        .catch((err) => {
+                            console.warn("Unable to retrieve user storage limits", err);
+                        });
+                    unsubscribe();
+                }
             });
+        }
+        initNotificationStores();
         if (!this._liveState.anonUser) {
             this.identityState.set({ kind: "logged_in" });
             this.initWebRtc();
@@ -2901,7 +2924,21 @@ export class OpenChat extends OpenChatAgentWorker {
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
                         }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
-                  ).then((resp) => this.handleEventsResponse(serverChat, resp));
+                  ).then((resp) => {
+                      if (resp !== "events_failed") {
+                          resp.events.forEach((e) => {
+                              if (
+                                  e.event.kind === "message" &&
+                                  e.event.content.kind === "video_call_content"
+                              ) {
+                                  this.dispatchEvent(
+                                      new VideoCallMessageUpdated(serverChat.id, e.event.messageId),
+                                  );
+                              }
+                          });
+                      }
+                      return this.handleEventsResponse(serverChat, resp);
+                  });
 
         const threadEventPromise =
             currentThreadEvents.length === 0
@@ -5271,6 +5308,80 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId,
             messageId,
         });
+    }
+
+    setVideoCallPresence(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "setVideoCallPresence",
+            chatId,
+            messageId,
+            presence,
+        })
+            .then((resp) => resp === "success")
+            .catch((_) => false);
+    }
+
+    private mapVideoCallParticipants(
+        users: Record<string, UserSummary>,
+        participant: VideoCallParticipant,
+    ): Record<string, UserSummary> {
+        if (this._liveState.userStore[participant.userId]) {
+            users[participant.userId] = this._liveState.userStore[participant.userId];
+        }
+        return users;
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince: bigint,
+    ): Promise<{
+        participants: Record<string, UserSummary>;
+        hidden: Record<string, UserSummary>;
+        lastUpdated: bigint;
+    }> {
+        return this.sendRequest({
+            kind: "videoCallParticipants",
+            chatId,
+            messageId,
+            updatesSince,
+        })
+            .then(async (resp) => {
+                if (resp.kind === "success") {
+                    const allUserIds = [
+                        ...resp.participants.map((u) => u.userId),
+                        ...resp.hidden.map((u) => u.userId),
+                    ];
+                    await this.getMissingUsers(allUserIds);
+
+                    return {
+                        participants: resp.participants.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        hidden: resp.hidden.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        lastUpdated: resp.lastUpdated,
+                    };
+                } else {
+                    return {
+                        participants: {},
+                        hidden: {},
+                        lastUpdated: updatesSince,
+                    };
+                }
+            })
+            .catch((_) => ({
+                participants: {},
+                hidden: {},
+                lastUpdated: updatesSince,
+            }));
     }
 
     private overwriteUserInStore(
