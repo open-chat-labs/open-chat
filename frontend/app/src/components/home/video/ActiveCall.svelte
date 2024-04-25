@@ -25,7 +25,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import { filterRightPanelHistory } from "../../../stores/rightPanel";
+    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import Overlay from "../../Overlay.svelte";
@@ -114,9 +114,10 @@
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
 
-            activeVideoCall.joining(chat.id);
-
             const callType = isPublic ? "broadcast" : "default";
+
+            activeVideoCall.joining(chat.id, callType);
+
             const accessType: AccessTokenType = join
                 ? { kind: "join_video_call" }
                 : { kind: "start_video_call", callType };
@@ -287,6 +288,7 @@
 
             // this will trigger the left-meeting event which will in turn end the call
             $activeVideoCall.call.leave();
+            popRightPanelHistory();
         }
     }
 

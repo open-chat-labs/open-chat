@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import type { UserSummary, VideoCallPresence } from "openchat-shared";
+    import type { UserSummary, VideoCallPresence, VideoCallType } from "openchat-shared";
     import User from "../../home/groupdetails/User.svelte";
     import { createEventDispatcher } from "svelte";
 
@@ -12,8 +12,9 @@
     export let participant: UserSummary;
     export let presence: VideoCallPresence;
     export let isOwner: boolean;
+    export let callType: VideoCallType;
 
-    $: showMenu = isOwner && presence === "default";
+    $: showMenu = isOwner && presence === "default" && callType === "broadcast";
 
     function demote() {
         dispatch("demote", participant.userId);

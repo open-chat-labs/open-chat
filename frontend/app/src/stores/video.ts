@@ -8,7 +8,7 @@ import {
     type DailyEventObjectAppMessage,
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
-import { type ChatIdentifier } from "openchat-client";
+import { type ChatIdentifier, type VideoCallType } from "openchat-client";
 import { get, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
@@ -60,6 +60,7 @@ export type ActiveVideoCall = {
     accessRequests: RequestToSpeak[];
     messageId?: bigint;
     isOwner: boolean;
+    callType: VideoCallType;
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
@@ -253,7 +254,7 @@ export const activeVideoCall = {
             return current;
         });
     },
-    joining: (chatId: ChatIdentifier) => {
+    joining: (chatId: ChatIdentifier, callType: VideoCallType) => {
         return activeStore.set({
             status: "joining",
             chatId,
@@ -262,6 +263,7 @@ export const activeVideoCall = {
             participantsOpen: false,
             accessRequests: [],
             isOwner: false,
+            callType,
         });
     },
 };

@@ -15,6 +15,7 @@
     import VirtualList from "../../VirtualList.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
 
     type MappedParticipants = {
         participants: Record<string, UserSummary>;
@@ -30,6 +31,7 @@
     export let isOwner: boolean;
 
     let demoted = new Set<string>();
+    let loading = false;
 
     $: user = client.user;
 
@@ -50,7 +52,7 @@
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
-        refresh();
+        refresh(true);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
         };
@@ -67,12 +69,16 @@
         }
     }
 
-    function refresh() {
-        client.videoCallParticipants(chatId, messageId, 0n).then((res) => {
-            videoParticipants = res;
-            Object.values(videoParticipants.hidden).forEach((h) => demoted.delete(h.userId));
-            demoted = demoted;
-        });
+    function refresh(initialising: boolean = false) {
+        loading = initialising;
+        client
+            .videoCallParticipants(chatId, messageId, 0n)
+            .then((res) => {
+                videoParticipants = res;
+                Object.values(videoParticipants.hidden).forEach((h) => demoted.delete(h.userId));
+                demoted = demoted;
+            })
+            .finally(() => (loading = false));
     }
 
     function close() {
@@ -94,47 +100,62 @@
 
 <ActiveCallParticipantsHeader on:close={close} />
 
-<div class="tabs">
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => selectTab("presenters")}
-        class:selected={selectedTab === "presenters"}
-        class="tab">
-        <Translatable
-            resourceKey={i18nKey("videoCall.presenters", {
-                count: participants.length,
-            })} />
-    </div>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => selectTab("viewers")}
-        class:selected={selectedTab === "viewers"}
-        class="tab">
-        <Translatable
-            resourceKey={i18nKey("videoCall.viewers", {
-                count: hidden.length,
-            })} />
-    </div>
-</div>
+{#if $activeVideoCall !== undefined}
+    {#if loading}
+        <div class="loader">
+            <FancyLoader loop />
+        </div>
+    {:else}
+        {#if $activeVideoCall?.callType === "broadcast"}
+            <div class="tabs">
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => selectTab("presenters")}
+                    class:selected={selectedTab === "presenters"}
+                    class="tab">
+                    <Translatable
+                        resourceKey={i18nKey("videoCall.presenters", {
+                            count: participants.length,
+                        })} />
+                </div>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => selectTab("viewers")}
+                    class:selected={selectedTab === "viewers"}
+                    class="tab">
+                    <Translatable
+                        resourceKey={i18nKey("videoCall.viewers", {
+                            count: hidden.length,
+                        })} />
+                </div>
+            </div>
+        {/if}
 
-{#if selectedTab === "presenters"}
-    {#each participants as participant}
-        <ActiveCallParticipant
-            {isOwner}
-            on:demote={demote}
-            presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
-            {participant} />
-    {/each}
-{/if}
+        {#if selectedTab === "presenters"}
+            {#each participants as participant}
+                <ActiveCallParticipant
+                    {isOwner}
+                    callType={$activeVideoCall.callType}
+                    on:demote={demote}
+                    presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
+                    {participant} />
+            {/each}
+        {/if}
 
-{#if selectedTab === "viewers"}
-    <VirtualList keyFn={(user) => user.userId} items={hidden} let:item>
-        <ActiveCallParticipant {isOwner} presence={"hidden"} participant={item} />
-    </VirtualList>
+        {#if selectedTab === "viewers"}
+            <VirtualList keyFn={(user) => user.userId} items={hidden} let:item>
+                <ActiveCallParticipant
+                    callType={$activeVideoCall.callType}
+                    {isOwner}
+                    presence={"hidden"}
+                    participant={item} />
+            </VirtualList>
+        {/if}
+    {/if}
 {/if}
 
 <style lang="scss">
@@ -162,5 +183,9 @@
                 border-bottom: 3px solid var(--txt);
             }
         }
+    }
+    .loader {
+        width: 80px;
+        margin: auto auto;
     }
 </style>
