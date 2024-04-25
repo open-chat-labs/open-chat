@@ -312,7 +312,11 @@
                         {/if}
                     {/if}
                 </div>
-                <ProfileRole community={$selectedCommunity} chat={$selectedChat} />
+                <ProfileRole
+                    {userId}
+                    communityMembers={$communityMembers}
+                    community={$selectedCommunity}
+                    chat={$selectedChat} />
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
