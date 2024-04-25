@@ -47,7 +47,7 @@ impl UserMap {
         }
     }
 
-    #[warn(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments)]
     pub fn register(
         &mut self,
         principal: Principal,
