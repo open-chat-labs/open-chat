@@ -807,22 +807,27 @@ export class OpenChat extends OpenChatAgentWorker {
         if (user.principalUpdates === undefined) {
             this.startChatsPoller();
             this.startUserUpdatePoller();
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
         } else {
             const unsubscribe = this.user.subscribe(async (u) => {
                 if (u.principalUpdates === undefined) {
                     await this.connectToWorker();
                     this.startChatsPoller();
                     this.startUserUpdatePoller();
+                    this.sendRequest({ kind: "getUserStorageLimits" })
+                        .then(storageStore.set)
+                        .catch((err) => {
+                            console.warn("Unable to retrieve user storage limits", err);
+                        });
                     unsubscribe();
                 }
             });
         }
         initNotificationStores();
-        this.sendRequest({ kind: "getUserStorageLimits" })
-            .then(storageStore.set)
-            .catch((err) => {
-                console.warn("Unable to retrieve user storage limits", err);
-            });
         if (!this._liveState.anonUser) {
             this.identityState.set({ kind: "logged_in" });
             this.initWebRtc();
