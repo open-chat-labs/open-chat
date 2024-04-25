@@ -813,6 +813,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
         } else {
+            chatsLoading.set(false);
             const unsubscribe = this.user.subscribe(async (u) => {
                 if (u.principalUpdates === undefined) {
                     await this.connectToWorker();
