@@ -798,13 +798,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
-        this.startOnlinePoller();
         startSwCheckPoller();
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
 
         if (user.principalUpdates === undefined) {
+            this.startOnlinePoller();
             this.startChatsPoller();
             this.startUserUpdatePoller();
             this.sendRequest({ kind: "getUserStorageLimits" })
@@ -816,6 +816,8 @@ export class OpenChat extends OpenChatAgentWorker {
             const unsubscribe = this.user.subscribe(async (u) => {
                 if (u.principalUpdates === undefined) {
                     await this.connectToWorker();
+                    this.sendRequest({ kind: "createUserClient", userId: user.userId });
+                    this.startOnlinePoller();
                     this.startChatsPoller();
                     this.startUserUpdatePoller();
                     this.sendRequest({ kind: "getUserStorageLimits" })
