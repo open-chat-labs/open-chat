@@ -31,6 +31,7 @@ fn post_upgrade(args: Args) {
         "3skqk-iqaaa-aaaaf-aaa3q-cai",
         "27eue-hyaaa-aaaaf-aaa4a-cai",
         "2yfsq-kaaaa-aaaaf-aaa4q-cai",
+        "bsmg2-yyaaa-aaaaf-aaj4q-cai",
     ];
 
     mutate_state(|state| {
