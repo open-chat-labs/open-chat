@@ -801,19 +801,39 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
-        this.startOnlinePoller();
         startSwCheckPoller();
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
-        this.startChatsPoller();
-        this.startUserUpdatePoller();
-        initNotificationStores();
-        this.sendRequest({ kind: "getUserStorageLimits" })
-            .then(storageStore.set)
-            .catch((err) => {
-                console.warn("Unable to retrieve user storage limits", err);
+
+        if (user.principalUpdates === undefined) {
+            this.startOnlinePoller();
+            this.startChatsPoller();
+            this.startUserUpdatePoller();
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
+        } else {
+            chatsLoading.set(false);
+            const unsubscribe = this.user.subscribe(async (u) => {
+                if (u.principalUpdates === undefined) {
+                    await this.connectToWorker();
+                    this.sendRequest({ kind: "createUserClient", userId: user.userId });
+                    this.startOnlinePoller();
+                    this.startChatsPoller();
+                    this.startUserUpdatePoller();
+                    this.sendRequest({ kind: "getUserStorageLimits" })
+                        .then(storageStore.set)
+                        .catch((err) => {
+                            console.warn("Unable to retrieve user storage limits", err);
+                        });
+                    unsubscribe();
+                }
             });
+        }
+        initNotificationStores();
         if (!this._liveState.anonUser) {
             this.identityState.set({ kind: "logged_in" });
             this.initWebRtc();
