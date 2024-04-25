@@ -39,9 +39,10 @@ fn post_upgrade(args: Args) {
             .into_iter()
             .map(|s| UserId::from(Principal::from_text(s).unwrap()))
         {
-            let mut user = state.data.users.get_by_user_id(&user_id).unwrap().clone();
-            user.principal_migrated = true;
-            state.data.users.update(user, now);
+            if let Some(mut user) = state.data.users.get_by_user_id(&user_id).cloned() {
+                user.principal_migrated = true;
+                state.data.users.update(user, now);
+            }
         }
     })
 }
