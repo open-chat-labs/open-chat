@@ -803,9 +803,16 @@ export class OpenChat extends OpenChatAgentWorker {
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
-        if (user.principalUpdates === undefined) {
-            this.startChatsPoller();
-            this.startUserUpdatePoller();
+        this.startChatsPoller();
+        this.startUserUpdatePoller();
+
+        if (user.principalUpdates !== undefined) {
+            const unsubscribe = this.user.subscribe((u) => {
+                if (u.principalUpdates === undefined) {
+                    this.connectToWorker();
+                    unsubscribe();
+                }
+            });
         }
         initNotificationStores();
         this.sendRequest({ kind: "getUserStorageLimits" })
@@ -4140,13 +4147,8 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    async getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
-        const response = await this.sendRequest({ kind: "getIdentityMigrationProgress" });
-        if (response === undefined) {
-            await this.connectToWorker();
-            this.startChatsPoller();
-            this.startUserUpdatePoller();
-        }
+    getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
+        return this.sendRequest({ kind: "getIdentityMigrationProgress" });
     }
 
     getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
