@@ -59,6 +59,7 @@
     $: currentCommunityBlockedUsers = client.currentCommunityBlockedUsers;
     $: selectedCommunity = client.selectedCommunity;
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: displayName = client.getDisplayName(
         {
             userId,
@@ -314,6 +315,7 @@
                 </div>
                 <ProfileRole
                     {userId}
+                    chatMembers={$chatMembersMap}
                     communityMembers={$communityMembers}
                     community={$selectedCommunity}
                     chat={$selectedChat} />

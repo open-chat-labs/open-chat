@@ -133,6 +133,7 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
+    currentChatMembersMap,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -2823,6 +2824,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }).catch(() => "failure");
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "membersMap",
+                    resp.members.reduce((all, m) => {
+                        all.set(m.userId, m);
+                        return all;
+                    }, new Map()),
+                );
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
@@ -6545,6 +6554,7 @@ export class OpenChat extends OpenChatAgentWorker {
     typing = typing;
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
+    currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
     currentChatInvitedUsers = currentChatInvitedUsers;
     chatStateStore = chatStateStore;

@@ -1248,6 +1248,7 @@ export type GroupChatDetails = {
  */
 export type ChatSpecificState = {
     members: Member[];
+    membersMap: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
