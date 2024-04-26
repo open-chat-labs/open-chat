@@ -875,9 +875,9 @@ impl PrizeContentInternal {
     }
 
     pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
-        let unclaimed = self.prizes_remaining.iter().sum::<u128>();
+        let fee = self.transaction.fee();
+        let unclaimed = self.prizes_remaining.iter().map(|p| p + fee).sum::<u128>();
         if unclaimed > 0 {
-            let fee = self.transaction.fee();
             Some(create_pending_transaction(
                 self.transaction.token(),
                 self.transaction.ledger_canister_id(),
