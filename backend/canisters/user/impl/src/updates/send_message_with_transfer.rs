@@ -303,7 +303,7 @@ fn prepare(
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
-                    let total_prizes = if c.prizes.is_empty() {
+                    let total_prizes = if !c.prizes_v2.is_empty() {
                         c.prizes_v2.iter().sum::<u128>()
                     } else {
                         c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128
