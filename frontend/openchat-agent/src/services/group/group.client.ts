@@ -255,12 +255,14 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
             this.db,
             eventIndexRange,
             { chatId: this.chatId, threadRootMessageIndex },
             messageIndex,
+            maxEvents,
         );
 
         if (totalMiss || missing.size >= MAX_MISSING) {
@@ -274,7 +276,27 @@ export class GroupClient extends CandidService {
                 messageIndex,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+                maxEvents,
+            )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
+                .catch((err) => {
+                    if (err instanceof ResponseTooLargeError && maxEvents >= 10) {
+                        const reducedMaxEvents = Math.floor(maxEvents / 2);
+                        console.log(
+                            "Response size too large, trying again with maxEvents of ",
+                            reducedMaxEvents,
+                        );
+                        return this.chatEventsWindow(
+                            eventIndexRange,
+                            messageIndex,
+                            threadRootMessageIndex,
+                            latestKnownUpdate,
+                            reducedMaxEvents,
+                        );
+                    } else {
+                        throw err;
+                    }
+                });
         } else {
             return this.handleMissingEvents(
                 [cachedEvents, missing],
@@ -288,12 +310,11 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxMessages: number = MAX_MESSAGES,
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            max_messages: maxMessages,
+            max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             mid_point: messageIndex,
             latest_known_update: apiOptional(identity, latestKnownUpdate),
@@ -303,18 +324,7 @@ export class GroupClient extends CandidService {
             () => this.groupService.events_window(args),
             (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
-        ).catch((err) => {
-            if (err instanceof ResponseTooLargeError && maxMessages >= 10) {
-                return this.chatEventsWindowFromBackend(
-                    messageIndex,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                    Math.floor(maxMessages / 2),
-                );
-            } else {
-                throw err;
-            }
-        });
+        );
     }
 
     async chatEvents(
@@ -323,7 +333,6 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxMessages: number = MAX_MESSAGES,
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
@@ -332,7 +341,6 @@ export class GroupClient extends CandidService {
             { chatId: this.chatId, threadRootMessageIndex },
             startIndex,
             ascending,
-            maxMessages,
             maxEvents,
         );
 
@@ -345,16 +353,15 @@ export class GroupClient extends CandidService {
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-                maxMessages,
                 maxEvents,
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .catch((err) => {
-                    if (err instanceof ResponseTooLargeError && maxMessages >= 10) {
-                        const reducedMaxMessages = Math.floor(maxMessages / 2);
+                    if (err instanceof ResponseTooLargeError && maxEvents >= 10) {
+                        const reducedMaxEvents = Math.floor(maxEvents / 2);
                         console.log(
-                            "Response size too large, trying again with maxMessages of ",
-                            reducedMaxMessages,
+                            "Response size too large, trying again with maxEvents of ",
+                            reducedMaxEvents,
                         );
                         return this.chatEvents(
                             eventIndexRange,
@@ -362,7 +369,7 @@ export class GroupClient extends CandidService {
                             ascending,
                             threadRootMessageIndex,
                             latestKnownUpdate,
-                            reducedMaxMessages,
+                            reducedMaxEvents,
                         );
                     } else {
                         throw err;
@@ -382,12 +389,11 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxMessages: number = MAX_MESSAGES,
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            max_messages: maxMessages,
+            max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             ascending,
             start_index: startIndex,
