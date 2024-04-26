@@ -24,6 +24,7 @@ pub struct UserMap {
     pub users_with_duplicate_principals: Vec<(UserId, UserId)>,
     suspected_bots: BTreeSet<UserId>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
+    user_id_to_principal_backup: HashMap<UserId, Principal>,
 }
 
 impl UserMap {
@@ -67,6 +68,8 @@ impl UserMap {
         if let Some(ref_by) = referred_by {
             self.user_referrals.entry(ref_by).or_default().push(user_id);
         }
+
+        self.user_id_to_principal_backup.insert(user_id, principal);
     }
 
     pub fn update(&mut self, mut user: User, now: TimestampMillis) -> UpdateUserResult {
@@ -322,6 +325,8 @@ pub enum UpdateUserResult {
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
     suspected_bots: BTreeSet<UserId>,
+    #[serde(default)]
+    user_id_to_principal_backup: HashMap<UserId, Principal>,
 }
 
 impl From<UserMapTrimmed> for UserMap {
@@ -329,8 +334,11 @@ impl From<UserMapTrimmed> for UserMap {
         let mut user_map = UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
+            user_id_to_principal_backup: value.user_id_to_principal_backup,
             ..Default::default()
         };
+
+        let populate_backup = user_map.user_id_to_principal_backup.is_empty();
 
         for (user_id, user) in user_map.users.iter() {
             if let Some(referred_by) = user.referred_by {
@@ -343,6 +351,10 @@ impl From<UserMapTrimmed> for UserMap {
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
+            }
+
+            if populate_backup {
+                user_map.user_id_to_principal_backup.insert(*user_id, user.principal);
             }
         }
 
