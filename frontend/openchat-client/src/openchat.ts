@@ -5315,22 +5315,14 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint,
         presence: VideoCallPresence,
     ): Promise<boolean> {
-        console.log("VC: About to set videoCall presence: ", chatId, messageId, presence);
         return this.sendRequest({
             kind: "setVideoCallPresence",
             chatId,
             messageId,
             presence,
         })
-            .then((resp) => {
-                console.log("VC: SetVideoCallPresenceResponse: ", resp);
-                return resp;
-            })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                console.log("VC: SetVideoCallPresence failed with ", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     private mapVideoCallParticipants(

@@ -194,20 +194,14 @@ export const activeVideoCall = {
         });
     },
     approveAccessRequest: (req: RequestToSpeak) => {
-        console.log("VC: about to approve request to speak");
         return updateCall((current) => {
             if (current.call) {
-                console.log("VC: updating participant: ", req.participantId);
                 updateParticipant(current.call, req.participantId, {
                     updatePermissions: {
                         hasPresence: true,
                         canSend: new Set(["audio", "video"]),
                     },
                 }).then((call) => {
-                    console.log(
-                        "VC: sending ask_to_speak_response to participant",
-                        req.participantId,
-                    );
                     call.sendAppMessage(
                         {
                             kind: "ask_to_speak_response",
@@ -228,7 +222,6 @@ export const activeVideoCall = {
         });
     },
     captureAccessRequest: (req: RequestToSpeak) => {
-        console.log("VC: captured a request to speak: ", req);
         return updateCall((current) => ({
             ...current,
             accessRequests: [...current.accessRequests, req],

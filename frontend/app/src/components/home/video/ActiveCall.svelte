@@ -159,14 +159,7 @@
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
-                        console.log("VC: received ask_to_speak_response", ev.data);
                         const me = call.participants().local.session_id;
-                        console.log(
-                            "VC: does ask_to_speak_response match my details",
-                            ev.data,
-                            me,
-                            $user.userId,
-                        );
                         if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                             askedToSpeak = false;
                             denied = !ev.data.approved;
