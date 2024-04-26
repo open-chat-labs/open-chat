@@ -6,6 +6,7 @@
 import {
     type DailyCall,
     type DailyEventObjectAppMessage,
+    type DailyParticipantUpdateOptions,
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
 import { type ChatIdentifier, type VideoCallType } from "openchat-client";
@@ -101,6 +102,17 @@ function findParticipantId(call: DailyCall, userId: string): string | undefined 
     }
 }
 
+function updateParticipant(
+    call: DailyCall,
+    participantId: string,
+    options: DailyParticipantUpdateOptions,
+): Promise<DailyCall> {
+    return new Promise((resolve) => {
+        call.updateParticipant(participantId, options);
+        window.setTimeout(() => resolve(call), 500);
+    });
+}
+
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
@@ -142,20 +154,21 @@ export const activeVideoCall = {
         if (current?.call) {
             const participantId = findParticipantId(current.call, userId);
             if (participantId) {
-                current.call.updateParticipant(participantId, {
+                updateParticipant(current.call, participantId, {
                     updatePermissions: {
                         hasPresence: false,
                         canSend: [],
                     },
+                }).then((call) => {
+                    call.sendAppMessage(
+                        {
+                            kind: "demote_participant",
+                            participantId: participantId,
+                            userId: userId,
+                        },
+                        participantId,
+                    );
                 });
-                current.call.sendAppMessage(
-                    {
-                        kind: "demote_participant",
-                        participantId: participantId,
-                        userId: userId,
-                    },
-                    participantId,
-                );
             }
         }
     },
@@ -181,28 +194,30 @@ export const activeVideoCall = {
         });
     },
     approveAccessRequest: (req: RequestToSpeak) => {
+        console.log("VC: about to approve request to speak");
         return updateCall((current) => {
             if (current.call) {
-                current.call.updateParticipant(req.participantId, {
+                console.log("VC: updating participant: ", req.participantId);
+                updateParticipant(current.call, req.participantId, {
                     updatePermissions: {
                         hasPresence: true,
                         canSend: new Set(["audio", "video"]),
                     },
+                }).then((call) => {
+                    console.log(
+                        "VC: sending ask_to_speak_response to participant",
+                        req.participantId,
+                    );
+                    call.sendAppMessage(
+                        {
+                            kind: "ask_to_speak_response",
+                            participantId: req.participantId,
+                            userId: req.userId,
+                            approved: true,
+                        },
+                        req.participantId,
+                    );
                 });
-                setTimeout(() => {
-                    current?.call?.updateParticipant(req.participantId, {
-                        setAudio: true,
-                    });
-                }, 100);
-                current.call.sendAppMessage(
-                    {
-                        kind: "ask_to_speak_response",
-                        participantId: req.participantId,
-                        userId: req.userId,
-                        approved: true,
-                    },
-                    req.participantId,
-                );
             }
             return {
                 ...current,
@@ -213,6 +228,7 @@ export const activeVideoCall = {
         });
     },
     captureAccessRequest: (req: RequestToSpeak) => {
+        console.log("VC: captured a request to speak: ", req);
         return updateCall((current) => ({
             ...current,
             accessRequests: [...current.accessRequests, req],
