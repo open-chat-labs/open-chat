@@ -1,4 +1,5 @@
 import type { Identity } from "@dfinity/agent";
+import { ResponseTooLargeError } from "openchat-shared";
 import {
     getTimeUntilSessionExpiryMs,
     HttpError,
@@ -24,6 +25,18 @@ export class ReplicaNotUpToDateError extends Error {
     }
 }
 
+function responseTooLarge(error: Error): ResponseTooLargeError | undefined {
+    const regex = /application payload size \((\d+)\) cannot be larger than (\d+)/;
+    const match = error.message.match(regex);
+
+    if (match) {
+        const size = parseInt(match[1]);
+        const maxSize = parseInt(match[2]);
+        return new ResponseTooLargeError(error, size, maxSize);
+    }
+    return undefined;
+}
+
 export function toCanisterResponseError(
     error: Error,
     identity: Identity,
@@ -37,6 +50,11 @@ export function toCanisterResponseError(
     if (error.message.includes("DestinationInvalid")) {
         // this will allow us to short-circuit the retry mechanism in this circumstance
         return new DestinationInvalidError(error);
+    }
+
+    const tooLarge = responseTooLarge(error);
+    if (tooLarge) {
+        return tooLarge;
     }
 
     const statusLine = error.message

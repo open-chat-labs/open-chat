@@ -134,6 +134,7 @@ import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import type { CancelP2PSwapResponse } from "openchat-shared";
 import type { EditMessageV2Args } from "./candid/types";
+import { ResponseTooLargeError } from "openchat-shared";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -287,11 +288,13 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+        maxMessages: number = MAX_MESSAGES,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            max_messages: MAX_MESSAGES,
-            max_events: MAX_EVENTS,
+            max_messages: maxMessages,
+            max_events: maxEvents,
             mid_point: messageIndex,
             latest_known_update: apiOptional(identity, latestKnownUpdate),
             latest_client_event_index: [] as [] | [number],
@@ -300,7 +303,18 @@ export class GroupClient extends CandidService {
             () => this.groupService.events_window(args),
             (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
-        );
+        ).catch((err) => {
+            if (err instanceof ResponseTooLargeError && maxMessages >= 10) {
+                return this.chatEventsWindowFromBackend(
+                    messageIndex,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                    Math.floor(maxMessages / 2),
+                );
+            } else {
+                throw err;
+            }
+        });
     }
 
     async chatEvents(
@@ -309,6 +323,8 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+        maxMessages: number = MAX_MESSAGES,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
@@ -316,6 +332,8 @@ export class GroupClient extends CandidService {
             { chatId: this.chatId, threadRootMessageIndex },
             startIndex,
             ascending,
+            maxMessages,
+            maxEvents,
         );
 
         // we may or may not have all of the requested events
@@ -327,7 +345,29 @@ export class GroupClient extends CandidService {
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+                maxMessages,
+                maxEvents,
+            )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
+                .catch((err) => {
+                    if (err instanceof ResponseTooLargeError && maxMessages >= 10) {
+                        const reducedMaxMessages = Math.floor(maxMessages / 2);
+                        console.log(
+                            "Response size too large, trying again with maxMessages of ",
+                            reducedMaxMessages,
+                        );
+                        return this.chatEvents(
+                            eventIndexRange,
+                            startIndex,
+                            ascending,
+                            threadRootMessageIndex,
+                            latestKnownUpdate,
+                            reducedMaxMessages,
+                        );
+                    } else {
+                        throw err;
+                    }
+                });
         } else {
             return this.handleMissingEvents(
                 [cachedEvents, missing],
@@ -342,11 +382,13 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+        maxMessages: number = MAX_MESSAGES,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            max_messages: MAX_MESSAGES,
-            max_events: MAX_EVENTS,
+            max_messages: maxMessages,
+            max_events: maxEvents,
             ascending,
             start_index: startIndex,
             latest_known_update: apiOptional(identity, latestKnownUpdate),

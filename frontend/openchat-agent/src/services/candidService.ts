@@ -3,6 +3,7 @@ import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError, offline } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
+import { ResponseTooLargeError } from "openchat-shared";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -59,6 +60,7 @@ export abstract class CandidService {
                     Object.getOwnPropertyNames(responseErr),
                 )}, args: ${JSON.stringify(args)}`;
                 if (
+                    !(responseErr instanceof ResponseTooLargeError) &&
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof AuthError) &&
