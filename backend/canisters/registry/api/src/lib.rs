@@ -21,6 +21,8 @@ pub struct TokenDetails {
     pub symbol: String,
     pub decimals: u8,
     pub fee: u128,
+    #[serde(default)]
+    pub fee_percentage_basis_points: u32,
     pub logo: String,
     pub logo_id: Option<u128>,
     pub info_url: String,

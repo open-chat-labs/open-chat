@@ -21,6 +21,7 @@ type TokenDetails = record {
     symbol : text;
     decimals : nat8;
     fee : nat;
+    fee_percentage_basis_points : nat32;
     logo : text;
     logo_id : opt nat;
     info_url : text;

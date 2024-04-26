@@ -36,6 +36,7 @@ impl Tokens {
                 symbol,
                 decimals,
                 fee,
+                fee_percentage_basis_points: 0,
                 logo,
                 logo_id,
                 info_url,
@@ -103,6 +104,20 @@ impl Tokens {
         if let Some(token) = self.get_mut(ledger_canister_id) {
             if token.enabled != enabled {
                 token.enabled = enabled;
+                token.last_updated = now;
+            }
+        }
+    }
+
+    pub fn set_fee_percentage(
+        &mut self,
+        ledger_canister_id: CanisterId,
+        fee_percentage_basis_points: u32,
+        now: TimestampMillis,
+    ) {
+        if let Some(token) = self.get_mut(ledger_canister_id) {
+            if token.fee_percentage_basis_points != fee_percentage_basis_points {
+                token.fee_percentage_basis_points = fee_percentage_basis_points;
                 token.last_updated = now;
             }
         }
