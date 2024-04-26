@@ -302,12 +302,16 @@ fn prepare(
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
-                    let total_prize = c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128;
-                    let prize_fees = c.prizes.len() as u128 * t.fee();
-                    let total_amount_to_send = total_prize + prize_fees;
+                    let total_prizes = if c.prizes.is_empty() {
+                        c.prizes_v2.iter().sum::<u128>()
+                    } else {
+                        c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128
+                    };
+                    let total_fees = c.prizes.len() as u128 * t.fee();
+                    let total_amount_to_send = total_prizes + total_fees;
 
                     if t.units() != total_amount_to_send {
-                        return InvalidRequest("Transaction amount must equal total prize + prize fees".to_string());
+                        return InvalidRequest("Transaction amount must equal total prizes + total fees".to_string());
                     }
 
                     t.clone().set_memo(&MEMO_PRIZE)

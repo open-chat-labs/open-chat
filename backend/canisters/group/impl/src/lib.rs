@@ -303,7 +303,7 @@ impl RuntimeState {
         for (message_id, prize_message) in pending_prize_messages {
             let ledger = prize_message.transaction.ledger_canister_id();
             let fee = prize_message.transaction.fee();
-            let amount: u128 = prize_message.prizes_remaining.iter().map(|p| p.e8s() as u128 + fee).sum();
+            let amount: u128 = prize_message.prizes_remaining.iter().map(|p| p + fee).sum();
 
             match transfers_required.entry(ledger) {
                 Vacant(e) => {
