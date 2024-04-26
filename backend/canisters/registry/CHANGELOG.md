@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support tokens with fees which are a percentage of the transfer value ([#5728](https://github.com/open-chat-labs/open-chat/pull/5728))
+
 ### Changed
 
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
