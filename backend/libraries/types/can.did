@@ -1417,7 +1417,7 @@ type MessageIndexRange = record {
 
 type PrizeContentInitial = record {
     prizes : vec Tokens;
-    prizes_v2 : nat;
+    prizes_v2 : vec nat;
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
     caption : opt text;
