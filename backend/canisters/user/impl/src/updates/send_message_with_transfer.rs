@@ -8,6 +8,7 @@ use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
+use std::cmp::max;
 use types::{
     icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId, MessageIndex,
     Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
@@ -307,7 +308,7 @@ fn prepare(
                     } else {
                         c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128
                     };
-                    let total_fees = c.prizes.len() as u128 * t.fee();
+                    let total_fees = max(c.prizes.len(), c.prizes_v2.len()) as u128 * t.fee();
                     let total_amount_to_send = total_prizes + total_fees;
 
                     if t.units() != total_amount_to_send {
