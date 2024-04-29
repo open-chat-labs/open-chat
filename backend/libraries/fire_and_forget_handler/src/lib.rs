@@ -1,4 +1,5 @@
 use canister_client::make_c2c_call_raw;
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
@@ -45,13 +46,18 @@ async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandl
         let calls = handler.canisters.entry(call.canister_id).or_default();
         calls.in_progress.retain(|id| *id != call.id);
 
-        if result.is_err() && call.attempt < 50 {
-            call.attempt += 1;
-            let now = now_millis();
-            let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
-            calls.queue.insert((due, call.id), call);
-        } else if calls.in_progress.is_empty() && calls.queue.is_empty() {
-            handler.canisters.remove(&call.canister_id);
+        match result {
+            Err((code, _)) if code != RejectionCode::DestinationInvalid && call.attempt < 50 => {
+                call.attempt += 1;
+                let now = now_millis();
+                let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
+                calls.queue.insert((due, call.id), call);
+            }
+            _ => {
+                if calls.in_progress.is_empty() && calls.queue.is_empty() {
+                    handler.canisters.remove(&call.canister_id);
+                }
+            }
         }
     }
 
