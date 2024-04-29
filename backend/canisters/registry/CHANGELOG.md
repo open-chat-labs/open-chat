@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Only allow tokens which are compatible with the ICRC1 standard ([#5733](https://github.com/open-chat-labs/open-chat/pull/5733))
 
 ## [[2.0.1143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1143-registry)] - 2024-04-19
 

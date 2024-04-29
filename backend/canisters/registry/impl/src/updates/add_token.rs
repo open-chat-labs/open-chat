@@ -50,7 +50,7 @@ async fn add_token_impl(
         Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    if !validate_icrc1_compatibility(&metadata) {
+    if !check_icrc1_compatibility(&metadata) {
         return InvalidRequest("Token is not compatible with the ICRC1 standard".to_string());
     }
 
@@ -179,7 +179,7 @@ async fn get_logo(
     Ok(logo.or(governance_logo))
 }
 
-fn validate_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
+fn check_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
     for (k, v) in metadata {
         if k == "icrc1:transfer_fee_rate" || k == "icrc1:burn_fee" || k == "icrc1:burn_fee_rate" {
             match v {
