@@ -728,6 +728,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (!anon) {
             this._ocIdentity = await this._ocIdentityStorage.get();
+        } else {
+            await this._ocIdentityStorage.remove();
         }
 
         this.startRegistryPoller();
