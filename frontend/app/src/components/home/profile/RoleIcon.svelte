@@ -8,17 +8,19 @@
     export let popup: boolean = false;
 </script>
 
-{#if popup}
-    <TooltipWrapper position="top" align="middle">
-        <div slot="target" class={`icon ${roleType} ${role}`}></div>
-        <div let:position let:align slot="tooltip">
-            <TooltipPopup {position} {align}>
-                {role?.toUpperCase()}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-{:else}
-    <div class={`icon ${roleType} ${role}`}></div>
+{#if role !== undefined && role !== "none" && role !== "member"}
+    {#if popup}
+        <TooltipWrapper position="top" align="middle">
+            <div slot="target" class={`icon ${roleType} ${role}`}></div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    {`${roleType.toUpperCase()} ${role?.toUpperCase()}`}
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else}
+        <div class={`icon ${roleType} ${role}`}></div>
+    {/if}
 {/if}
 
 <style lang="scss">
