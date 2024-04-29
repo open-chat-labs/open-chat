@@ -184,25 +184,29 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
     try {
         if (kind === "init") {
-            getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
-                console.debug(
-                    "anon: init worker",
-                    id.getPrincipal().toString(),
-                    id?.getPrincipal().isAnonymous(),
-                );
-                logger = inititaliseLogger(
-                    payload.rollbarApiKey,
-                    payload.websiteVersion,
-                    payload.env,
-                );
-                logger?.debug("WORKER: constructing agent instance");
-                agent = new OpenChatAgent(id, {
-                    ...payload,
-                    logger,
-                });
-                agent.addEventListener("openchat_event", handleAgentEvent);
-                sendResponse(correlationId, undefined);
-            });
+            executeThenReply(
+                payload,
+                correlationId,
+                getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
+                    console.debug(
+                        "anon: init worker",
+                        id.getPrincipal().toString(),
+                        id?.getPrincipal().isAnonymous(),
+                    );
+                    logger = inititaliseLogger(
+                        payload.rollbarApiKey,
+                        payload.websiteVersion,
+                        payload.env,
+                    );
+                    logger?.debug("WORKER: constructing agent instance");
+                    agent = new OpenChatAgent(id, {
+                        ...payload,
+                        logger,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return undefined;
+                }),
+            );
         }
 
         if (!agent) {
