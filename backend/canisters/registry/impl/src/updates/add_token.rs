@@ -1,6 +1,5 @@
 use crate::guards::caller_is_governance_principal;
 use crate::mutate_state;
-use candid::{Int, Nat};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use futures::try_join;
@@ -183,8 +182,8 @@ fn check_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
     for (k, v) in metadata {
         if k == "icrc1:transfer_fee_rate" || k == "icrc1:burn_fee" || k == "icrc1:burn_fee_rate" {
             match v {
-                MetadataValue::Nat(x) if *x > Nat::from(0u32) => return false,
-                MetadataValue::Int(x) if *x > Int::from(0i32) => return false,
+                MetadataValue::Nat(x) if *x > 0u32 => return false,
+                MetadataValue::Int(x) if *x > 0i32 => return false,
                 _ => {}
             }
         }
