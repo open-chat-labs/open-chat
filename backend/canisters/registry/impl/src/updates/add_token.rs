@@ -182,8 +182,8 @@ fn check_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
     for (k, v) in metadata {
         if k == "icrc1:transfer_fee_rate" || k == "icrc1:burn_fee" || k == "icrc1:burn_fee_rate" {
             match v {
-                MetadataValue::Nat(x) if *x > 0u32 => return false,
-                MetadataValue::Int(x) if *x > 0i32 => return false,
+                MetadataValue::Nat(x) if *x > 0u128 => return false,
+                MetadataValue::Int(x) if *x > 0i128 => return false,
                 _ => {}
             }
         }
