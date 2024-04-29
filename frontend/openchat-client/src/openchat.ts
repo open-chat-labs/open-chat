@@ -5324,7 +5324,7 @@ export class OpenChat extends OpenChatAgentWorker {
             presence,
         })
             .then((resp) => resp === "success")
-            .catch((_) => false);
+            .catch(() => false);
     }
 
     private mapVideoCallParticipants(
