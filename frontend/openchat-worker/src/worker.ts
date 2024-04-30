@@ -33,12 +33,14 @@ const authClient = AuthClient.create({
 const ocIdentityStorage = new IdentityStorage();
 
 async function getIdentity(identityCanister: string, icUrl: string): Promise<Identity> {
-    const ocIdentity = await ocIdentityStorage.get();
-    if (ocIdentity !== undefined) {
-        return ocIdentity;
-    }
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
-    if (!authProviderIdentity.getPrincipal().isAnonymous()) {
+    const authPrincipal = authProviderIdentity.getPrincipal();
+    if (!authPrincipal.isAnonymous()) {
+        const authPrincipalString = authPrincipal.toString();
+        const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
+        if (ocIdentity !== undefined) {
+            return ocIdentity;
+        }
         const identityAgent = new IdentityAgent(
             authProviderIdentity as SignIdentity,
             identityCanister,
@@ -70,8 +72,14 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
                 : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
 
             if (identity !== undefined && typeof identity !== "string") {
-                await ocIdentityStorage.set(sessionKey, identity.getDelegation());
-                return (await ocIdentityStorage.get()) ?? new AnonymousIdentity();
+                await ocIdentityStorage.set(
+                    authPrincipalString,
+                    sessionKey,
+                    identity.getDelegation(),
+                );
+                return (
+                    (await ocIdentityStorage.get(authPrincipalString)) ?? new AnonymousIdentity()
+                );
             }
         }
     }
