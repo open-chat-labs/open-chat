@@ -1223,7 +1223,6 @@
         "giphys": "giphys",
         "groupMsg": "最大 10 個の公開グループを作成し、グループ アクセスを制御するには、Diamond ユーザーである必要があります",
         "insufficientFunds": "{token} アカウントに少なくとも {amount} が含まれていることを確認してください",
-        "joinVideoCalls": "ビデオ通話に参加する",
         "lifetime": "ずっと",
         "lifetimeMessage": "あなたは永久ダイヤモンド会員です",
         "maxMessageLength": "メッセージの最大長は {number} 文字です",
@@ -1244,12 +1243,12 @@
         "publicGroups": "公開グループ",
         "reactions": "リアクション",
         "reminders": "リマインダー",
-        "startVideoCalls": "ビデオ通話をする",
         "storage": "ストレージ容量",
         "textMessages": "テキストメッセージ",
         "threeMonths": "3ヶ月",
         "translations": "翻訳",
-        "upgradeSuccess": "お支払いは正常に完了しました"
+        "upgradeSuccess": "お支払いは正常に完了しました",
+        "videoCalls": "ビデオ通話"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "ストレージのアップグレード",

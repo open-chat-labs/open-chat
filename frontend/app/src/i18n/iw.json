@@ -1223,7 +1223,6 @@
         "giphys": "Giphys",
         "groupMsg": "כדי ליצור עד 10 קבוצות ציבוריות וכדי לשלוט בגישה לקבוצה, עליך להיות משתמש Diamond",
         "insufficientFunds": "אנא ודא שחשבון {token} שלך מכיל לפחות {amount}",
-        "joinVideoCalls": "הצטרף לשיחות וידאו",
         "lifetime": "לכל החיים",
         "lifetimeMessage": "יש לך חברות Diamond לכל החיים.",
         "maxMessageLength": "אורך הודעה מרבי של {number} תווים",
@@ -1244,12 +1243,12 @@
         "publicGroups": "קבוצות ציבוריות",
         "reactions": "תגובות",
         "reminders": "תזכורות",
-        "startVideoCalls": "בצע שיחות וידאו",
         "storage": "אִחסוּן",
         "textMessages": "הודעות טקסט",
         "threeMonths": "שלושה חודשים",
         "translations": "תרגומים",
-        "upgradeSuccess": "התשלום שלך בוצע בהצלחה"
+        "upgradeSuccess": "התשלום שלך בוצע בהצלחה",
+        "videoCalls": "שיחות וידאו"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "שדרוג אחסון",

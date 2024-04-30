@@ -1223,7 +1223,6 @@
         "giphys": "Гифиз",
         "groupMsg": "Чтобы создать до 10 общедоступных групп и управлять доступом к группам, вы должны быть пользователем Diamond.",
         "insufficientFunds": "Пожалуйста, убедитесь, что ваша учетная запись {token} содержит как минимум {amount}",
-        "joinVideoCalls": "Присоединяйтесь к видеозвонкам",
         "lifetime": "Продолжительность жизни",
         "lifetimeMessage": "У вас есть пожизненное членство Diamond.",
         "maxMessageLength": "Максимальная длина сообщения {number} символов",
@@ -1244,12 +1243,12 @@
         "publicGroups": "Публичные группы",
         "reactions": "Реакции",
         "reminders": "Напоминания",
-        "startVideoCalls": "Совершать видеозвонки",
         "storage": "Хранилище",
         "textMessages": "Текстовые сообщения",
         "threeMonths": "Три месяца",
         "translations": "Переводы",
-        "upgradeSuccess": "Ваш платеж успешно произведен"
+        "upgradeSuccess": "Ваш платеж успешно произведен",
+        "videoCalls": "Видеозвонки"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Обновление хранилища",
