@@ -1223,7 +1223,6 @@
         "giphys": "giphys",
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "insufficientFunds": "Asegúrese de que su cuenta {token} contenga al menos {amount}",
-        "joinVideoCalls": "Unirse a videollamadas",
         "lifetime": "Toda la vida",
         "lifetimeMessage": "Tienes membresía Diamond vitalicia.",
         "maxMessageLength": "Longitud máxima del mensaje de {number} caracteres",
@@ -1244,12 +1243,12 @@
         "publicGroups": "Grupos públicos",
         "reactions": "reacciones",
         "reminders": "Recordatorios",
-        "startVideoCalls": "hacer videollamadas",
         "storage": "Almacenamiento",
         "textMessages": "Mensajes de texto",
         "threeMonths": "Tres meses",
         "translations": "Traducciones",
-        "upgradeSuccess": "Su pago se ha realizado con éxito"
+        "upgradeSuccess": "Su pago se ha realizado con éxito",
+        "videoCalls": "Videollamadas"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Mejorar almacenamiento",

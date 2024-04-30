@@ -1223,7 +1223,6 @@
         "giphys": "动图",
         "groupMsg": "要创建最多 10 个公共组并控制组访问权限，您必须是 Diamond 用户",
         "insufficientFunds": "请确保您的 {token} 帐户至少包含 {amount}",
-        "joinVideoCalls": "加入视频通话",
         "lifetime": "永久会员",
         "lifetimeMessage": "您拥有终身钻石会员资格。",
         "maxMessageLength": "{number} 个字符的最大消息长度",
@@ -1244,12 +1243,12 @@
         "publicGroups": "公开群聊",
         "reactions": "反应",
         "reminders": "提醒事项",
-        "startVideoCalls": "进行视频通话",
         "storage": "存储",
         "textMessages": "短信",
         "threeMonths": "三个月",
         "translations": "翻译",
-        "upgradeSuccess": "您的付款已成功完成"
+        "upgradeSuccess": "您的付款已成功完成",
+        "videoCalls": "视频通话"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "升级存储",

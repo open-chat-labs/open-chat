@@ -1223,7 +1223,6 @@
         "giphys": "giphys",
         "groupMsg": "Để tạo tối đa 10 nhóm công khai và kiểm soát quyền truy cập nhóm, bạn phải là người dùng Kim cương",
         "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản {token} của bạn chứa ít nhất {amount}",
-        "joinVideoCalls": "Tham gia cuộc gọi video",
         "lifetime": "Cả đời",
         "lifetimeMessage": "Bạn có tư cách thành viên Kim cương trọn đời.",
         "maxMessageLength": "Độ dài tối đa của tin nhắn là {number} ký tự",
@@ -1244,12 +1243,12 @@
         "publicGroups": "nhóm công cộng",
         "reactions": "phản ứng",
         "reminders": "nhắc nhở",
-        "startVideoCalls": "Thực hiện cuộc gọi video",
         "storage": "Kho",
         "textMessages": "Tin nhắn",
         "threeMonths": "Ba tháng",
         "translations": "bản dịch",
-        "upgradeSuccess": "Thanh toán của bạn đã được thực hiện thành công"
+        "upgradeSuccess": "Thanh toán của bạn đã được thực hiện thành công",
+        "videoCalls": "Cuộc gọi video"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Nâng cấp lưu trữ",

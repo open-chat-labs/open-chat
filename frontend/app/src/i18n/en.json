@@ -1223,7 +1223,6 @@
         "giphys": "Giphys",
         "groupMsg": "To create up to 10 public groups and to control group access, you must be a Diamond user",
         "insufficientFunds": "Please ensure that your {token} account contains at least {amount}",
-        "joinVideoCalls": "Join video calls",
         "lifetime": "Lifetime",
         "lifetimeMessage": "You have lifetime Diamond membership.",
         "maxMessageLength": "Maximum message length of {number} characters",
@@ -1244,12 +1243,12 @@
         "publicGroups": "Public groups",
         "reactions": "Reactions",
         "reminders": "Reminders",
-        "startVideoCalls": "Make video calls",
         "storage": "Storage",
         "textMessages": "Text messages",
         "threeMonths": "Three months",
         "translations": "Translations",
-        "upgradeSuccess": "Your payment has been made successfully"
+        "upgradeSuccess": "Your payment has been made successfully",
+        "videoCalls": "Video calls"
     },
     "upgradeByTransfer": "ICP",
     "upgradeStorage": "Upgrade Storage",
