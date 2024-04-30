@@ -1775,3 +1775,9 @@ type VideoCallType = variant {
     Broadcast;
     Default;
 };
+
+type VideoCallPresence = variant {
+    Default;
+    Owner;
+    Hidden;
+}

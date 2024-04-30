@@ -96,6 +96,7 @@ impl User {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
+        migrated: bool,
     ) -> User {
         User {
             principal,
@@ -116,7 +117,7 @@ impl User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            principal_migrated: false,
+            principal_migrated: migrated,
         }
     }
 

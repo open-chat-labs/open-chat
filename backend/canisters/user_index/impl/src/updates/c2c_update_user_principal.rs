@@ -75,6 +75,7 @@ fn commit(
         return Success;
     };
     user.principal = new_principal;
+    user.principal_migrated = true;
 
     assert!(matches!(state.data.users.update(user, now), UpdateUserResult::Success));
 

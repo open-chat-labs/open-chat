@@ -2298,6 +2298,9 @@ export interface VideoCallParticipants {
   'hidden' : Array<CallParticipant>,
   'last_updated' : TimestampMillis,
 }
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
