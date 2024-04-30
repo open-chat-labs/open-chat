@@ -370,10 +370,6 @@
         width: 320px;
         padding: $sp4 $sp5 0 $sp5;
 
-        // @include mobile() {
-        //     padding: $sp3 $sp4 0 $sp4;
-        // }
-
         .avatar {
             padding: 0 0 $sp4 0;
         }
