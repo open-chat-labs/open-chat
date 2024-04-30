@@ -57,6 +57,8 @@
     import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import WithRole from "./profile/WithRole.svelte";
+    import RoleIcon from "./profile/RoleIcon.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -145,6 +147,7 @@
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
@@ -497,6 +500,20 @@
                                     {senderDisplayName}
                                 </h4>
                                 <Diamond status={sender?.diamondStatus} />
+                                {#if sender && multiUserChat}
+                                    <WithRole
+                                        userId={sender.userId}
+                                        chatMembers={$chatMembersMap}
+                                        communityMembers={$communityMembers}
+                                        let:chatRole
+                                        let:communityRole>
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={chatType === "channel" ? "channel" : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    </WithRole>
+                                {/if}
                             </Link>
                             {#if senderTyping}
                                 <span class="typing">
@@ -713,6 +730,12 @@
         :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
             background-color: var(--icon-hv);
         }
+    }
+
+    :global(.message .sender .never) {
+        display: flex;
+        gap: $sp2;
+        align-items: center;
     }
 
     :global(.message .loading) {

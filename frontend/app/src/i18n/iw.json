@@ -613,6 +613,7 @@
         "createPolls": "ליצור סקרים",
         "createPrivateChannel": "ליצור ערוצים פרטיים",
         "createPublicChannel": "ליצור ערוצים ציבוריים",
+        "currentRole": "{level} {role}",
         "deleteMessages": "מחק הודעות",
         "general": "כללי",
         "inviteUsers": "להזמין משתמשים",

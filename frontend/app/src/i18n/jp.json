@@ -613,6 +613,7 @@
         "createPolls": "投票を作成する",
         "createPrivateChannel": "プライベートチャンネルを作成する",
         "createPublicChannel": "パブリックチャンネルを作成する",
+        "currentRole": "{level} {role}",
         "deleteMessages": "メッセージの消去",
         "general": "一般",
         "inviteUsers": "ユーザーの招待",
