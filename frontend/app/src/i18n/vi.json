@@ -613,6 +613,7 @@
         "createPolls": "tạo các cuộc thăm dò",
         "createPrivateChannel": "tạo kênh riêng",
         "createPublicChannel": "tạo các kênh công cộng",
+        "currentRole": "{level} {role}",
         "deleteMessages": "xóa tin nhắn",
         "general": "Tổng quan",
         "inviteUsers": "mời người dùng",
