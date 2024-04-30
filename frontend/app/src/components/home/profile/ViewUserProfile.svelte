@@ -313,12 +313,14 @@
                         {/if}
                     {/if}
                 </div>
-                <ProfileRole
-                    {userId}
-                    chatMembers={$chatMembersMap}
-                    communityMembers={$communityMembers}
-                    community={$selectedCommunity}
-                    chat={$selectedChat} />
+                {#if $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
+                    <ProfileRole
+                        {userId}
+                        chatMembers={$chatMembersMap}
+                        communityMembers={$communityMembers}
+                        community={$selectedCommunity}
+                        chat={$selectedChat} />
+                {/if}
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
@@ -425,7 +427,6 @@
         width: 250px;
 
         .handle {
-            display: inline;
             overflow-wrap: anywhere;
 
             .username {

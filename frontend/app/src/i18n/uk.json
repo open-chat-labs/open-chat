@@ -613,6 +613,7 @@
         "createPolls": "створювати опитування",
         "createPrivateChannel": "створити приватні канали",
         "createPublicChannel": "створити публічні канали",
+        "currentRole": "{level} {role}",
         "deleteMessages": "видалити повідомлення",
         "general": "Загальний",
         "inviteUsers": "запросити користувачів",

@@ -613,6 +613,7 @@
         "createPolls": "पोल बनाएं",
         "createPrivateChannel": "निजी चैनल बनाएं",
         "createPublicChannel": "सार्वजनिक चैनल बनाएं",
+        "currentRole": "{level} {role}",
         "deleteMessages": "संदेश हटाएं",
         "general": "सामान्य",
         "inviteUsers": "उपयोगकर्ताओं को आमंत्रित करें",

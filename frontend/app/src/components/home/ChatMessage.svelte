@@ -500,15 +500,18 @@
                                     {senderDisplayName}
                                 </h4>
                                 <Diamond status={sender?.diamondStatus} />
-                                {#if sender}
+                                {#if sender && multiUserChat}
                                     <WithRole
                                         userId={sender.userId}
                                         chatMembers={$chatMembersMap}
                                         communityMembers={$communityMembers}
                                         let:chatRole
                                         let:communityRole>
-                                        <RoleIcon popup roleType="community" role={communityRole} />
-                                        <RoleIcon popup roleType="chat" role={chatRole} />
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={chatType === "channel" ? "channel" : "group"}
+                                            popup
+                                            role={chatRole} />
                                     </WithRole>
                                 {/if}
                             </Link>

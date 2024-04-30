@@ -613,6 +613,7 @@
         "createPolls": "crear encuestas",
         "createPrivateChannel": "crear canales privados",
         "createPublicChannel": "crear canales públicos",
+        "currentRole": "{level} {role}",
         "deleteMessages": "eliminar mensajes",
         "general": "General",
         "inviteUsers": "invitar a los usuarios",

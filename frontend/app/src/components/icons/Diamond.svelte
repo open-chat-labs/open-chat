@@ -2,6 +2,8 @@
     import type { DiamondMembershipStatus } from "openchat-client";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let size = "0.9em";
     export let width = size;
@@ -17,8 +19,23 @@
     };
 
     $: colour = status === "lifetime" || show === "gold" ? 42 : 210;
-
     $: colours = deriveColours(colour);
+    $: statusName = getStatusName(status);
+
+    function getStatusName(
+        status: DiamondMembershipStatus["kind"] | undefined,
+    ): ResourceKey | undefined {
+        if (status === undefined) return undefined;
+
+        switch (status) {
+            case "lifetime":
+                return i18nKey("upgrade.lifetime");
+            case "active":
+                return i18nKey("upgrade.diamond");
+            default:
+                return i18nKey(status);
+        }
+    }
 
     function deriveColours(hue: number): Colours {
         return {
@@ -69,12 +86,18 @@
                 </g>
             </g>
         </svg>
-        <div let:position let:align slot="tooltip">
-            {#if status !== undefined}
+        <div let:position let:align slot="tooltip" class="tooltip">
+            {#if statusName !== undefined}
                 <TooltipPopup {position} {align}>
-                    {status?.toUpperCase()}
+                    <Translatable resourceKey={statusName} />
                 </TooltipPopup>
             {/if}
         </div>
     </TooltipWrapper>
 {/if}
+
+<style lang="scss">
+    .tooltip {
+        text-transform: uppercase;
+    }
+</style>

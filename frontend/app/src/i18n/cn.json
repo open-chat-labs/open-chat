@@ -613,6 +613,7 @@
         "createPolls": "创建民意调查",
         "createPrivateChannel": "创建私人频道",
         "createPublicChannel": "创建公共频道",
+        "currentRole": "{XYZ} {XYZ}",
         "deleteMessages": "删除消息",
         "general": "一般的",
         "inviteUsers": "邀请用户",
