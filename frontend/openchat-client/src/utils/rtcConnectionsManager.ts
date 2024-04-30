@@ -63,9 +63,9 @@ export class RtcConnectionsManager {
             const connectionId = this.getMyConnectionId(me);
 
             this._peer = new Peer(connectionId, {
-                host: "localhost",
-                port: 9000,
-                secure: false,
+                // host: "localhost",
+                // port: 9000,
+                // secure: false,
                 config: {
                     iceServers,
                 },
