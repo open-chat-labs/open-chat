@@ -79,6 +79,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
         members: [],
+        membersMap: new Map(),
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         pinnedMessages: new Set<number>(),
@@ -136,6 +137,12 @@ export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "mem
     chatStateStore,
     "members",
     () => [],
+);
+
+export const currentChatMembersMap = createDerivedPropStore<ChatSpecificState, "membersMap">(
+    chatStateStore,
+    "membersMap",
+    () => new Map(),
 );
 
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(

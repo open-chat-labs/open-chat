@@ -613,6 +613,7 @@
         "createPolls": "создавать опросы",
         "createPrivateChannel": "создавать приватные каналы",
         "createPublicChannel": "создавать публичные каналы",
+        "currentRole": "{level} {role}",
         "deleteMessages": "удалять сообщения",
         "general": "Общий",
         "inviteUsers": "пригласить пользователей",
