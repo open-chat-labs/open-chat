@@ -733,7 +733,7 @@
     }
 
     :global(.message .sender .never) {
-        display: flex;
+        display: inline-flex;
         gap: $sp2;
         align-items: center;
     }
