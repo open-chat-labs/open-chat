@@ -5969,9 +5969,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             if (userIds.length > 0) {
                 await Promise.all(
-                    userIds
-                        .filter((id) => !rtcConnectionsManager.exists(id))
-                        .map((id) =>
+                    userIds.map((id) =>
                             rtcConnectionsManager.create(
                                 this._liveState.user.userId,
                                 id,
