@@ -1,95 +1,40 @@
 <script lang="ts">
+    import XL from "./ExternalLink.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Headline from "./Headline.svelte";
-    import Link from "./Link.svelte";
+
+    function x(id: string): string {
+        return `https://twitter.com/OpenChat/status/${id}`;
+    }
 </script>
 
 <div class="roadmap">
-    <Headline>OpenChat Roadmap</Headline>
+    <Headline>Roadmap</Headline>
 
-    <CollapsibleCard transition={false} first open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle complete">Complete</div>
-            <div class="title">SNS Launch</div>
-        </div>
-        <div class="body">
-            <p>
-                When the OpenChat SNS was created control of OpenChat was handed from the core dev
-                team to the SNS. The <em>decentralization swap</em> initiated by NNS proposal decentralized
-                the governance of OpenChat by distributing the CHAT utility token to the wider community.
-                This has also raise an endowment to fund the ongoing development and growth of OpenChat.
-            </p>
-            <p>
-                This was a crucial step in the decentralisation journey. With this in place the
-                system is now not under any centralised control. We, the developement team, are here
-                to provide direction and to implement the roadmap but we are only able to make
-                changes to the system via an approved SNS proposal voted upon by those who have
-                demonstrated their commitment to the long term future of OpenChat by staking their
-                CHAT tokens.
-            </p>
-            <p>
-                Those users are invested in the future of the system through the voting rewards they
-                receive. This way, we have enlisted an army of powerful advocates and we can be
-                confident that the proposals the community approves will be in the long term
-                interest of OpenChat as a whole.
-            </p>
-        </div>
-    </CollapsibleCard>
+    <p>
+        Here is a summary of the past, present and future development of OpenChat. Looking forwards
+        we don't have a fixed roadmap, preferring to keep flexible, and as such it is subject to
+        change at any point.
+    </p>
 
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
-            <div class="date subtitle complete">Continuous</div>
-            <div class="title">User Rewards</div>
+            <div class="date subtitle">
+                <div class="year">2020</div>
+                <div class="quarter">DEC</div>
+            </div>
+            <div class="title">Development started</div>
         </div>
         <div class="body">
             <p>
-                The SNS launch unlocks the potential to reward users with CHAT tokens. This allows
-                community leaders to shape the character of the system, to help build <em>great</em>
-                communities and to supercharge adoption.
+                Before the Internet Computer mainnet launched and before the grants programme
+                existed, DFINITY contracted a small team of software developers, consisting of Matt
+                Grogan and Hamish Peebles, to build a dapp on the Internet Computer.
             </p>
             <p>
-                It will become really important to empower community leaders to build, promote and
-                maintain their communities through tokenisation. User rewards can facilitate the
-                building of powerful community based moderation systems; adoption can be driven by
-                rewarding users for creating great content and sharing it with friends and family.
-            </p>
-            <p>
-                Rewards can and will be used in all sorts of creative ways only made possible by the
-                unique way that OpenChat is governed.
-            </p>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle complete">Complete</div>
-            <div class="title">Communities</div>
-        </div>
-        <div class="body">
-            <p>
-                By building the capability to integrate with 3rd party dApps, each with their own
-                community, we also unlock the potential to introduce the concept of <em
-                    >communities</em>
-                to the OpenChat dApp itself. Currently OpenChat is open to all. Any user or public group
-                can be found by simply searching. For many scenarios this is perfectly fine.
-            </p>
-            <p>
-                However, sometimes it would be nice to collect a number of groups together where
-                they have something in common. That commonality or <em>community</em> could be
-                anything: perhaps they all use the same language, or they all relate to a particular
-                area of interest, or they all relate to a particular <em>project</em>. In this
-                sense, communities are a bit like Discord servers.
-            </p>
-            <p>
-                Furthermore, a community may wish to restict and control its membership creating <em
-                    >private</em>
-                communities. We see this as an important step for the future monetization of OpenChat
-                as it enables us to easily support its use as an internal communication tool
-                <em>within a corporate setting.</em> In that sense, communities can also be thought of
-                like Slack workspaces.
-            </p>
-            <p>
-                <Link path="blog/communities_released">Read more</Link>
+                The remit was broad. It could be any dapp, but it needed to be ambitious and show
+                what was possible on the Internet Computer. Quite quickly the team chose to build an
+                instant messaging app and OpenChat was born!
             </p>
         </div>
     </CollapsibleCard>
@@ -97,41 +42,552 @@
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
-                <div class="quarter">Q3</div>
-                <div class="year">2023</div>
+                <div class="year">2021</div>
+                <div class="quarter">Q1-4</div>
             </div>
+            <div class="title">Test version launched</div>
+        </div>
+        <div class="body">
+            <p>
+                On May 7th the Internet Computer mainnet launched and, on June 3rd, the <XL
+                    href={x("1400560603391987721")}>OpenChat test version launched</XL
+                >. It consisted of one canister and the design was quite primitive but it can still
+                be found
+                <XL href="https://7e6iv-biaaa-aaaaf-aaada-cai.ic0.app">here</XL> (fix needed for the
+                sign-in coming soon).
+            </p>
+            <p>
+                Around the same time, Julian Jelfs joined to become the 3rd member of the OpenChat
+                team, and started building a new version of the website in Svelte, whilst the others
+                began desiging and and building the new backend system. It consisted of a user index
+                canister, a group index canister, 1 canister per user, 1 canister per group, and
+                some other miscellaneous canisters. Together the team spent most of the rest of the
+                year building the long term version of OpenChat but also made some improvements to
+                the test version:
+            </p>
+            <ul>
+                <li>
+                    <XL href={x("1409468345242505219")}
+                        >Private chat history optionally visible to new joiners</XL>
+                </li>
+                <li>
+                    <XL href={x("1412719705589227524")}
+                        >Block users - prevent users from DMing you</XL>
+                </li>
+                <li>
+                    <XL href={x("1439682958047293442")}
+                        >OpenChat team wins first DFINITY hackathon with PrivIC</XL>
+                </li>
+                <li><XL href={x("1442447454985674753")}>Push notifications on Android</XL></li>
+                <li>
+                    <XL href={x("1443676254541070337")}>Option to mute notifications per chat</XL>
+                </li>
+                <li><XL href={x("1443890265903730707")}>Mark all messages read</XL></li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2022</div>
+                <div class="quarter">Q1</div>
+            </div>
+            <div class="title">Main version launched</div>
+        </div>
+        <div class="body">
+            <p>
+                On Jan 14th, <XL href={x("1482014849479716871")}>OpenChat officially launched</XL>
+                with a redesigned website and some new features: searchable public groups, group avatars,
+                message reactions, voice and video messages, message deletion, changing username, and
+                drag & drop or paste into message box.
+            </p>
+            <p>This was followed up by:</p>
+            <ul>
+                <li>
+                    <XL href={x("1485711784954769413")}>Clickable @mentions and inline markdown</XL>
+                </li>
+                <li>
+                    <XL href={x("1487025329248079872")}
+                        >View/edit your own profile, FAQ, roadmap, multi-language support</XL>
+                </li>
+                <li><XL href={x("1488903198366650378")}>View user profiles</XL></li>
+                <li><XL href={x("1496800276245893123")}>Pin messages in groups</XL></li>
+                <li><XL href={x("1499414982978646020")}>Create polls</XL></li>
+                <li><XL href={x("1499735315887632384")}>Custom group permissions by role</XL></li>
+                <li><XL href={x("1503720630734270466")}>Click/tap to zoom images</XL></li>
+                <li><XL href={x("1504491087427248130")}>Send ICP in chat messages</XL></li>
+                <li><XL href={x("1504842883882496000")}>Search messages in selected chat</XL></li>
+                <li>
+                    <XL href={x("1507296066194006019")}>Send ICP as a message within groups</XL>
+                </li>
+                <li>
+                    <XL href={x("1507390403603050500")}
+                        >OpenChat enabled as a share target on compatible devices</XL>
+                </li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2022</div>
+                <div class="quarter">Q2</div>
+            </div>
+            <div class="title">Edit message, forwarding, translations</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li><XL href={x("1512114949480456197")}>Send giphy messages</XL></li>
+                <li><XL href={x("1522152787022389249")}>On demand message translation</XL></li>
+                <li><XL href={x("1524043440434171906")}>Edit messages</XL></li>
+                <li><XL href={x("1531270838045093888")}>Invite link for private groups</XL></li>
+                <li>
+                    <XL href={x("1531270838045093888")}>Three column layout for larger screens</XL>
+                </li>
+                <li><XL href={x("1531270838045093888")}>OpenChatBot to notify users</XL></li>
+                <li><XL href={x("1535305502745321474")}>Message forwarding</XL></li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2022</div>
+                <div class="quarter">Q3</div>
+            </div>
+            <div class="title">Threads and proposals</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li><XL href={x("1542920057831002113")}>Pin chats</XL></li>
+                <li><XL href={x("1554426885031006209")}>Reply to a message in a thread</XL></li>
+                <li>
+                    <XL href={x("1555600823576576001")}
+                        >View, discuss, and vote on NNS and SNS proposals within OpenChat</XL>
+                </li>
+                <li><XL href={x("1564574439257395201")}>Tweet previews</XL></li>
+                <li><XL href={x("1565751401208324099")}>Sign-in with NFID</XL></li>
+                <li><XL href={x("1573359592943353856")}>Asset caching</XL></li>
+                <li><XL href={x("1575458674134450176")}>Group owners can set rules</XL></li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2022</div>
+                <div class="quarter">Q4</div>
+            </div>
+            <div class="title">Redesign plus prep for SNS launch</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li><XL href={x("1577324722257264641")}>OpenChat goes open source</XL></li>
+                <li><XL href={x("1580590323327434753")}>OpenChat whitepaper published</XL></li>
+                <li><XL href={x("1590040124041359361")}>Professional website redesign</XL></li>
+                <li><XL href={x("1592565875789660160")}>SNS1 airdrop to 2000 OC OGs</XL></li>
+                <li><XL href={x("1592804695554535425")}>System architecture published</XL></li>
+                <li><XL href={x("1597562858484924416")}>Professional app redesign</XL></li>
+                <li><XL href={x("1597589887787892736")}>Search group messages by @username</XL></li>
+                <li><XL href={x("1597589887787892736")}>Undelete messages you have deleted</XL></li>
+                <li>
+                    <XL href={x("1597589887787892736")}
+                        >Platform moderators can suspend user accounts and groups</XL>
+                </li>
+                <li><XL href={x("1601267654148620288")}>Custom themes</XL></li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2023</div>
+                <div class="quarter">Q1</div>
+            </div>
+            <div class="title">SNS DAO launched</div>
+        </div>
+        <div class="body">
+            <p>
+                When the OpenChat SNS was created, control of OpenChat was handed from the core dev
+                team to the SNS. The decentralization swap, initiated by NNS proposal, decentralized
+                the governance of OpenChat by distributing the CHAT utility token to the wider
+                community. This also raise an endowment to fund the ongoing development and growth
+                of OpenChat.
+            </p>
+            <p>
+                This was a crucial step in the decentralisation journey. With this in place the
+                system is now not under any centralised control. The developement team are here to
+                provide direction and to implement the roadmap but are only able to make changes to
+                the system via an approved SNS proposal voted on by those who have demonstrated
+                their commitment to the long term future of OpenChat by staking their CHAT tokens.
+            </p>
+            <p>
+                Those users are invested in the future of the system through the voting rewards they
+                receive. This way, OpenChat has enlisted an army of powerful advocates and we can be
+                confident that the proposals the community approves will be in the long term
+                interest of OpenChat as a whole.
+            </p>
+            <ul>
+                <li><XL href={x("1613137952502054913")}>Scale horizontally to 2nd subnet</XL></li>
+                <li>
+                    <XL href={x("1618174498309812225")}
+                        >Support for ICRC-1 fungible token standard</XL>
+                </li>
+                <li><XL href={x("1623739037029638148")}>Diamond membership</XL></li>
+                <li><XL href={x("1623741108000854019")}>Rolling file storage for all users</XL></li>
+                <li><XL href={x("1623799209987014657")}>Send ckBTC as chat messages</XL></li>
+                <li><XL href={x("1624034867468959747")}>ckBTC giveaway with prize messages</XL></li>
+                <li>
+                    <XL href={x("1627685470762156036")}
+                        >Proposal to allow DFINITY agents to create OpenChat SNS canisters</XL>
+                </li>
+                <li>
+                    <XL href={x("1629223644650930181")}>OpenChat SNS created in dormant mode</XL>
+                </li>
+                <li>
+                    <XL href={x("1631216322435592194")}
+                        >NNS proposal to launch the decentralization swap passed</XL>
+                </li>
+                <li>
+                    <XL href={x("1631642541954154497")}
+                        >OpenChat decentralization swap completed</XL>
+                </li>
+                <li>
+                    <XL href={x("1636935550753198084")}>CHAT/ICP liquidity added to ICPSwap</XL>
+                </li>
+                <li>
+                    <XL href={x("1640013861032951809")}
+                        >CHAT/ICP liquidity added to Infinity Swap</XL>
+                </li>
+                <li>
+                    <XL href={x("1641779183662641152")}
+                        >OC DAO controlled canister market making on ICDex</XL>
+                </li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2023</div>
+                <div class="quarter">Q2</div>
+            </div>
+            <div class="title">CHAT airdrop</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li>
+                    <XL href={x("1647226037141479425")}
+                        >Airdrop of 1M CHAT to participating users</XL>
+                </li>
+                <li>
+                    <XL href={x("1648373664872579072")}
+                        >Access gates for Diamond members and SNS neuron holders</XL>
+                </li>
+                <li><XL href={x("1648374267933868034")}>Message reminders</XL></li>
+                <li><XL href={x("1648686766721835008")}>Referral rewards</XL></li>
+                <li><XL href={x("1659487606541828096")}>OpenChat Labs Ltd</XL></li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2023</div>
+                <div class="quarter">Q3</div>
+            </div>
+            <div class="title">Communities</div>
+        </div>
+        <div class="body">
+            <p>
+                Communities allow chats and users to be grouped together according to some common
+                factor. Perhaps they all use the same language, or they all relate to a particular
+                area of interest, or a particular project. In this sense, communities are a bit like
+                Discord servers.
+            </p>
+            <p>
+                Furthermore, a community may wish to restict and control its membership creating
+                private communities. This as an important step for the future monetization of
+                OpenChat as it can be used as an internal communication tool within a corporate
+                setting. In that sense, communities can also be thought of like Slack workspaces.
+            </p>
+            <ul>
+                <li><XL href={x("1686744703994052608")}>Communities released</XL></li>
+                <li><XL href={x("1691402008039669760")}>Link previews</XL></li>
+                <li>Automatic wallet support for SNS tokens</li>
+                <li><XL href={x("1695044139497214260")}>IFrame based OpenChat integration</XL></li>
+                <li><XL href={x("1696452607907147965")}>Meme Fighter integration</XL></li>
+                <li><XL href={x("1699504687861334305")}>Display names</XL></li>
+                <li><XL href={x("1707773095694446672")}>Message tipping</XL></li>
+                <li>
+                    <XL href={x("1707774965213209023")}
+                        >Mention @everyone and custom @usergroups</XL>
+                </li>
+                <li>Follow/un-follow threads</li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2023</div>
+                <div class="quarter">Q4</div>
+            </div>
+            <div class="title">Swaps, disappearing messages</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li><XL href={x("1712121536461619511")}>Make SNS proposals in OpenChat</XL></li>
+                <li><XL href={x("1712128651079078356")}>Send and claim prize messages</XL></li>
+                <li><XL href={x("1712410519787725254")}>OpenChat meme competition</XL></li>
+                <li><XL href={x("1715379590019928235")}>Halloween theme</XL></li>
+                <li><XL href={x("1712121536461619511")}>Make SNS proposals for other SNSs</XL></li>
+                <li><XL href={x("1715383274283905112")}>More miscellaneous features</XL></li>
+                <li>View transactions in wallet</li>
+                <li>Automatically get up-to-date exchange rates from ICPCoins</li>
+                <li>Optionally show token balances in USD or ICP + show total wallet value</li>
+                <li>
+                    <XL href="https://twitter.com/OpenFPL_DAO/status/1725067760760140217"
+                        >OpenChat sponsors OpenFPL paying for kids football kits</XL>
+                </li>
+                <li><XL href={x("1725124141294997676")}>Configure disappearing messages</XL></li>
+                <li>Fine grained message/thread permissions</li>
+                <li>
+                    <XL href={x("1725156479135617396")}
+                        >Partner with Modclub for content moderation</XL>
+                </li>
+                <li>
+                    <XL href={x("1725198075205951977")}
+                        >Anonymous mode (no need to sign-in to view public chats)</XL>
+                </li>
+                <li><XL href={x("1725207447093072185")}>Stake 60% ICP treasury as neurons</XL></li>
+                <li>
+                    <XL href={x("1729886570269090076")}>Community/channel/group payment gates</XL>
+                </li>
+                <li><XL href={x("1732860417708343365")}>Swap directly from OpenChat wallet</XL></li>
+                <li><XL href={x("1733040851582960055")}>Lifetime (Gold) diamond membership</XL></li>
+                <li>Continued advancing iframe based integrations of OpenChat into other dApps</li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2024</div>
+                <div class="quarter">Q1</div>
+            </div>
+            <div class="title">Voice and video calls</div>
+        </div>
+        <div class="body">
+            <p>
+                We are pleased to introduce the first phase of video and voice chat support in
+                OpenChat. This is the final remaining big piece of core chat app functionality and
+                has always been an important milestone.
+            </p>
+            <ul>
+                <li>
+                    <XL href={x("1750920544097010089")}
+                        >P2P/OTC trades via secure escrow canister</XL>
+                </li>
+                <li><XL href={x("1755894524457468209")}>Crowd sourced translation system</XL></li>
+                <li>Events aggregation system (number of messages, reactions, DAUs, etc)</li>
+                <li><XL href={x("1762898467666411944")}>Token Terminal integration</XL></li>
+                <li><XL href={x("1768326238563607003")}>Voice & Video calls</XL></li>
+                <li>Removed default service worker and greatly enhanced Offline mode</li>
+                <li><XL href={x("1771129208397332673")}>Recruited a Chief Growth Officer</XL></li>
+                <li>
+                    <XL href="https://twitter.com/HelixMarkets/status/1772715541880275217"
+                        >Buy CHAT with USDC on Helix Markets</XL>
+                </li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2024</div>
+                <div class="quarter">Q2</div>
+            </div>
+            <div class="title">Tokenisation and Growth</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li>
+                    <XL href={x("1782434609554170024")}
+                        >Launched real-time carbon footprint dashboard</XL>
+                </li>
+                <li>
+                    <XL href={x("1783066249674543120")}
+                        >Point based reward scheme called CHIT to tie in with quarterly CHAT
+                        airdrops</XL>
+                </li>
+                <li>
+                    <XL
+                        href="/community/dgegb-daaaa-aaaar-arlhq-cai/channel/213879932851725513516678778767199309579/863"
+                        >List on various centralized exchanges</XL>
+                </li>
+                <li>
+                    <XL
+                        href="/community/dgegb-daaaa-aaaar-arlhq-cai/channel/213879932851725513516678778767199309579/830"
+                        >Incorporate OpenChat DAO as a LLC in Marshall Islands</XL>
+                </li>
+                <li>
+                    A new identity layer allowing users to sign in with Email, Ethereum, Solana,
+                    Google, Plug etc
+                </li>
+                <li>PIN Number verification for token transfers</li>
+                <li>Large scale video & audio live spaces</li>
+                <li>Improved integration options for third party bots e.g. ELNA.ai etc</li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2024</div>
+                <div class="quarter">Q3,4</div>
+            </div>
+            <div class="title">NFTs, contacts, profile pages, personas</div>
+        </div>
+        <div class="body">
+            <p>Here is a non-exhaustive list of more features we expect to build this year.</p>
+            <h4>NFTs</h4>
+            <p>
+                It is expected the ICRC NFT proposals
+                <XL href="https://github.com/dfinity/ICRC/blob/icrc_7_and_37/ICRCs/ICRC-7/ICRC-7.md"
+                    >ICRC-7</XL>
+                and
+                <XL
+                    href="https://github.com/dfinity/ICRC/blob/icrc_7_and_37/ICRCs/ICRC-37/ICRC-37.md"
+                    >ICRC-37</XL>
+                will <XL
+                    href="https://forum.dfinity.org/t/nft-standards-icrc-7-and-icrc-37-ready-for-nns-vote/29618"
+                    >soon be approved</XL>
+                at which point we can start to bring NFT functionality to OpenChat.
+            </p>
+            <ul class="inset">
+                <li>Hold NFTs in your wallet</li>
+                <li>Send/receive NFTs as messages</li>
+                <li>Verified NFT avatars</li>
+                <li>Gate group/community/channel membership by NFT collection</li>
+                <li>Display NFTs in your profile</li>
+                <li>Buy/sell NFTs</li>
+                <li>Bitcoin Rune integration(?)</li>
+            </ul>
+            <h4>Contacts/friends</h4>
+            <p>Each user would have a list of contacts.</p>
+            <ul class="inset">
+                <li>import contacts from phone or google etc</li>
+                <li>invite contacts to become OpenChat users</li>
+                <li>invite users to become contacts</li>
+                <li>
+                    optionally various profile/contact information made available only to contacts
+                </li>
+                <li>optionally only allow DMs from contacts</li>
+                <li>verifiable contact information (using verified credentials)</li>
+                <li>build a social graph to help spot mercenary/farming behaviour</li>
+            </ul>
+            <h4>User profile pages</h4>
+            <p>
+                Users could have a publicly (or not) addressable profile page including the
+                following:
+            </p>
+            <ul class="inset">
+                <li>avatar</li>
+                <li>status / bio</li>
+                <li>contact info + socials</li>
+                <li>badges / achievements</li>
+                <li>public group/community membership</li>
+                <li>public message board</li>
+                <li>user's posts</li>
+            </ul>
+            <h4>Personas</h4>
+            <p>
+                Create multiple personas on OpenChat each with their own canister but tied to the
+                same account. Easily swap between personas without signing up/in again. This helps
+                you remain anonymous where you want to be or explore different sides of your
+                personality!
+            </p>
+            <h4>More</h4>
+            <ul class="inset">
+                <li>OpenChat on Utopia (aka the _Intranet_ Computer)</li>
+                <li>Tag groups and communities and search/filter by tag</li>
+                <li>Gallery view for chats showing all images</li>
+                <li>Events calendar for a community</li>
+                <li>Custom emojis, stickers</li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle future">Future</div>
             <div class="title">Integrations</div>
         </div>
         <div class="body">
+            <h4>Integate OpenChat into other apps</h4>
             <p>
                 We are keen to provide chat functionality as a service to other dApps in the
-                Internet Computer ecosystem.
+                Internet Computer ecosystem. Having spoken to lots of IC builders we know the
+                appetite is there! OpenChat has already been integrated into a bunch of IC dapps
+                using iframes but we would like to also build the apis, libraries and UI components
+                to allow deeper and more seamless integrations.
             </p>
+            <h4>Integrate chats apps into OpenChat</h4>
             <p>
-                We are currently consulting with many builders in the community to find out how they
-                would like to integrate OpenChat functionality in the future. The appetite is
-                certainly there! We will likely start with simple direct chat functionality before
-                later offering groups and other more advanced features.
+                To help and encourage existing communities to migrate from other chat platforms we
+                could provide the ability to import the users and messages into an OpenChat
+                community. Going a step further we can imagine mirroring chats such that messages
+                posted in the other app appear in OpenChat and vice-versa. Some obvious candidates
+                would be Discord, Slack, Telegram, and Matrix.
             </p>
+            <h4>Integrate IC apps into OpenChat</h4>
             <p>
-                The OpenChat team will build the apis, libraries and UI components required to make
-                chat integration as seamless as possible.
+                Host virtual spaces/worlds in channels provided by Yuku or Cubetopia. Or have blog
+                channels provided by Nuance.
             </p>
+            <h4>AI integrations</h4>
+            <p>
+                AI chatbot channels, AI assistant (content authoring, scheduling, planning), AI help
+                and support, AI user/content rating (help spot mercenary/farming behaviour)
+            </p>
+            <h4>Webhooks</h4>
+            <p>Use webhooks to integrate useful 3rd party functionality into OpenChat</p>
+            <h4>Bots and mini-apps</h4>
+            <p>Support for 3rd party bots and mini app integrations (think WeChat)</p>
         </div>
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
-            <div class="title">Voice & Video</div>
+            <div class="title">End to end encryption</div>
         </div>
         <div class="body">
             <p>
-                Many (web2) apps in this space offer voice and video calling and we aim to do the
-                same. There are certainly challenges in doing this in a way that is both reliable
-                and meaningfully decentralized. This is why this function is so often delegated to a
-                centralised web2 partner. It is likely to require an incremental approach and a fair
-                amount of R&D.
+                Currently, while the Internet Computer does provide very strong security guarantees,
+                there is still a hypothetical risk that a rogue node provider could gain access to
+                ingress messages and node memory.
+            </p>
+            <p>
+                As such we will develop opt-in end-to-end encryption which will come with some
+                necessary restrictions such as not being able to search your message history.
+            </p>
+            <p>
+                We are currently blocked by the availability of
+                <XL href="https://internetcomputer.org/docs/current/references/vetkeys-overview"
+                    >vetKeys</XL> on the Internet Computer, expected later this year.
             </p>
         </div>
     </CollapsibleCard>
@@ -139,7 +595,7 @@
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
-            <div class="title">Native Apps</div>
+            <div class="title">Native apps</div>
         </div>
         <div class="body">
             <p>
@@ -171,65 +627,44 @@
     <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
-            <div class="title">End to end encryption</div>
+            <div class="title">Blue sky thinking</div>
         </div>
         <div class="body">
             <p>
-                Currently, while the Internet Computer does provide very strong security guarantees,
-                there is still a hypothetical risk that a rogue node provider could gain access to
-                ingress messages and node memory.
+                The list of ways OpenChat could be extended and enhanced is virtually endless. Here
+                are a few more ideas.
             </p>
+            <h4>Like/dislike messages</h4>
             <p>
-                As such we will develop opt-in end-to-end encryption which will of course come with
-                some restrictions such as not being able to search your message history.
+                Chat is chronologically ordered. If we were to introduce the ability to like/dislike
+                posts we could start offering alternative ways to view messages such as by
+                popularity and/or in a tree view. Think Reddit.
             </p>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">Other Features</div>
-        </div>
-        <div class="body">
+            <h4>Following</h4>
             <p>
-                As we are governed by the SNS, we are obliged to listen to our users along the way
-                as we develop the larger features described above and so our roadmap will always be
-                fluid.
+                We could further expand OpenChat by allowing users to follow each other and
+                subscribe to feeds. Think Twitter/X.
             </p>
+            <h4>Job boards</h4>
             <p>
-                We will continuously dedicate ourselves to performance and usability and there are
-                many other smaller features that we would like to work on.
+                A DAO member recently <XL
+                    href="/community/dgegb-daaaa-aaaar-arlhq-cai/channel/309853277321768416862922950227002295881/150"
+                    >floated the idea</XL>
+                that OpenChat could host a "world beating Web3 version of Upwork or Fiverr".
             </p>
-            <p>Some smaller feature ideas:</p>
-            <ul class="list blurb">
-                <li>Send additional tokens as messages, such as ckBTC, ckETH, etc</li>
-                <li>Tag groups and search/filter by tag</li>
-                <li>Optionally sync with phone contacts and invite contacts</li>
-                <li>Link previews</li>
-                <li>Profile badges for reputation and achievements</li>
-                <li>Tag messages (eg star) and search/filter by tag</li>
-                <li>Verified NFT avatars</li>
-                <li>NFT gated groups and communities</li>
-                <li>Disappearing messages</li>
-                <li>Organise events with calendar</li>
-                <li>Custom emojis, stickers</li>
-                <li>
-                    Broadcast groups
-                    <ul>
-                        <li>stream video 1-many</li>
-                        <li>
-                            broadcast group roles (owner, admin, moderator, participant, viewer)
-                        </li>
-                        <li>viewers can tip using cycles</li>
-                    </ul>
-                </li>
-            </ul>
         </div>
     </CollapsibleCard>
 </div>
 
 <style lang="scss">
+    :global(.roadmap .icon) {
+        display: none;
+    }
+
+    :global(.roadmap .card.open .title) {
+        white-space: unset;
+    }
+
     .roadmap {
         text-align: left;
         @include lp-content-padding();
@@ -240,8 +675,18 @@
         }
     }
 
-    .list {
+    ul {
         @include bullet_list();
+    }
+
+    ul.inset {
+        margin-left: 3rem;
+    }
+
+    h4 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
     }
 
     .body {
@@ -254,12 +699,12 @@
         }
     }
 
-    .body p,
-    .body li {
+    p,
+    li {
         @include font(book, normal, fs-100, 28);
     }
 
-    .body p {
+    p {
         margin-bottom: toRem(24);
     }
 
@@ -267,7 +712,9 @@
         display: flex;
         align-items: center;
         flex: auto;
+        gap: $sp2;
         color: var(--landing-txt);
+        width: 90%;
         @include font(medium, normal, fs-160, 38);
 
         @include mobile() {
@@ -285,6 +732,7 @@
 
     .title {
         flex: auto;
+        @include ellipsis();
     }
 
     .date {
@@ -293,18 +741,16 @@
         gap: toRem(15);
         @include font(bold, normal, fs-160, 38);
 
-        .quarter,
-        &.complete {
+        .year {
             color: #23a2ee;
         }
 
-        .year {
+        .quarter {
             @include font(book, normal, fs-100, 28);
             color: var(--landing-txt-light);
         }
 
-        &.future,
-        &.complete {
+        &.future {
             @include font(book, normal, fs-100, 38);
             font-weight: 500;
         }
@@ -313,7 +759,7 @@
             gap: toRem(8);
             @include font(medium, normal, fs-110, 24);
 
-            .year {
+            .quarter {
                 @include font(book, normal, fs-80, 28);
             }
         }

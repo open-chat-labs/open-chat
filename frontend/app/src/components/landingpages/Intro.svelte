@@ -22,7 +22,7 @@
             </div>
             <h1>OpenChat</h1>
         </div>
-        <h2 class="title">A decentralized chat app governed by the people for the people</h2>
+        <h2 class="title">Where web3 communicates</h2>
         <p class="blurb">
             OpenChat is a fully featured chat application running end-to-end on the <a
                 href="https://internetcomputer.org/"
@@ -117,12 +117,12 @@
     }
     .title {
         grid-area: title;
-        @include font(medium, normal, fs-230, 68);
+        @include font(medium, normal, fs-180);
         margin-top: 0;
         margin-bottom: toRem(10);
 
         @include mobile() {
-            @include font(medium, normal, fs-180, 42);
+            @include font(medium, normal, fs-230);
         }
     }
 
