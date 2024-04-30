@@ -398,8 +398,10 @@
         incomingVideoCall.set(undefined);
         const chat = client.lookupChatSummary(ev.detail);
         if (chat) {
-            page(routeForChatIdentifier("none", chat.id));
-            videoCallElement?.startOrJoinVideoCall(chat, true);
+            if (chat.videoCallInProgress !== undefined) {
+                page(routeForChatIdentifier("none", chat.id));
+                videoCallElement?.startOrJoinVideoCall(chat, true);
+            }
         }
     }
 
@@ -425,7 +427,6 @@
 <VideoCallAccessRequests />
 
 <IncomingCall on:joinVideoCall={joinVideoCall} />
-
 
 <Witch background />
 

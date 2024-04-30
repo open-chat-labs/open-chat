@@ -2150,3 +2150,15 @@ export type CancelP2PSwapResponse =
     | { kind: "internal_error"; text: string };
 
 export type JoinVideoCallResponse = "success" | "failure" | "ended";
+
+export type VideoCallPresence = "default" | "owner" | "hidden";
+
+export type SetVideoCallPresenceResponse = "success" | "failure";
+
+export type VideoCallParticipants = {
+    participants: VideoCallParticipant[];
+    hidden: VideoCallParticipant[];
+    lastUpdated: bigint;
+};
+
+export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);

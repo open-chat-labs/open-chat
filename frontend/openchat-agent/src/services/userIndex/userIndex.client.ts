@@ -84,7 +84,10 @@ export class UserIndexClient extends CandidService {
                         () => this.userIndexService.current_user({}),
                         currentUserResponse,
                     );
-                    if (liveUser.kind === "created_user") {
+                    if (
+                        liveUser.kind === "created_user" &&
+                        liveUser.principalUpdates === undefined
+                    ) {
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -100,9 +103,9 @@ export class UserIndexClient extends CandidService {
             () => this.userIndexService.current_user({}),
             (res) => {
                 if ("Success" in res) {
-                    return optional(res.Success.principal_updates, identity)
+                    return optional(res.Success.principal_updates, identity);
                 }
-            }
+            },
         );
     }
 

@@ -65,6 +65,9 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -355,7 +358,23 @@ export type WorkerRequest =
     | SiwePrepareLogin
     | SiwsPrepareLogin
     | LoginWithWallet
-    | GetDelegationWithWallet;
+    | GetDelegationWithWallet
+    | SetVideoCallPresence
+    | VideoCallParticipants;
+
+type VideoCallParticipants = {
+    kind: "videoCallParticipants";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    updatesSince?: bigint;
+};
+
+type SetVideoCallPresence = {
+    kind: "setVideoCallPresence";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    presence: VideoCallPresence;
+};
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -1341,7 +1360,9 @@ export type WorkerResponseInner =
     | GenerateEmailVerificationCodeResponse
     | SubmitEmailVerificationCodeResponse
     | SiwePrepareLoginResponse
-    | SiwsPrepareLoginResponse;
+    | SiwsPrepareLoginResponse
+    | SetVideoCallPresenceResponse
+    | VideoCallParticipantsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1950,6 +1971,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? CancelP2PSwapResponse
     : T extends JoinVideoCall
     ? JoinVideoCallResponse
+    : T extends SetVideoCallPresence
+    ? SetVideoCallPresenceResponse
+    : T extends VideoCallParticipants
+    ? VideoCallParticipantsResponse
     : T extends GetAccessToken
     ? string | undefined
     : T extends GetLocalUserIndexForUser
