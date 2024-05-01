@@ -159,6 +159,8 @@ impl RuntimeState {
             created: self.data.user_created,
             direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
             event_store_client_info: self.data.event_store_client.info(),
+            video_call_operators: self.data.video_call_operators.clone(),
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -168,7 +170,6 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
-            video_call_operators: self.data.video_call_operators.clone(),
         }
     }
 }
@@ -328,8 +329,9 @@ pub struct Metrics {
     pub created: TimestampMillis,
     pub direct_chat_metrics: ChatMetrics,
     pub event_store_client_info: EventStoreClientInfo,
-    pub canister_ids: CanisterIds,
     pub video_call_operators: Vec<Principal>,
+    pub timer_jobs: u32,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {
