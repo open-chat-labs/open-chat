@@ -22,6 +22,11 @@
             hoverImageUrl={"/assets/team/julian.jpg"}
             name={"Julian"}
             blurb={`Julian has been dabbling in software engineering for the last 25 years or so. He has a varied industry background from defence to risk management, from e-commerce to education technology and from travel to chat. He has developed a penchant for functional front ends. He holds a masters degree in Politics, Philosophy & Economics from the University of Oxford and likes things to be just so.`} />
+        <TeamCard
+            imageUrl={"/assets/team/steffen2.png"}
+            hoverImageUrl={"/assets/team/steffen.jpeg"}
+            name={"Steffen"}
+            blurb={`With extensive expertise spanning founder coaching, life coaching, management consulting, innovation management, and startup marketing, Steffen brings a wealth of knowledge to the table. As a seasoned professional, he excels in guiding entrepreneurs, fostering personal growth, and providing strategic insights for effective management.`} />
     </div>
 </Section>
 
@@ -32,8 +37,8 @@
 
     .team {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: toRem(80);
+        grid-template-columns: repeat(4, 1fr);
+        gap: toRem(50);
 
         @include mobile() {
             grid-template-columns: 1fr;
