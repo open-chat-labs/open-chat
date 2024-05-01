@@ -1,5 +1,4 @@
 use canister_client::make_c2c_call_raw;
-use ic_cdk::api::call::RejectionCode;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
@@ -7,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
+use utils::canister::should_retry_failed_c2c_call;
 use utils::time::{now_millis, SECOND_IN_MS};
 
 fn start_job_if_required(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
@@ -47,7 +47,7 @@ async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandl
         calls.in_progress.retain(|id| *id != call.id);
 
         match result {
-            Err((code, _)) if code != RejectionCode::DestinationInvalid && call.attempt < 50 => {
+            Err((code, msg)) if should_retry_failed_c2c_call(code, &msg) && call.attempt < 50 => {
                 call.attempt += 1;
                 let now = now_millis();
                 let due = now + (u64::from(call.attempt) * SECOND_IN_MS);

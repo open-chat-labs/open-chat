@@ -1,11 +1,11 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use escrow_canister::SwapStatusChange;
-use ic_cdk::api::call::RejectionCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
+use utils::canister::should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -55,8 +55,8 @@ fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, SwapStatusChange)> 
 async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusChange) {
     let swap_id = notification.swap_id;
 
-    if let Err((code, _)) = c2c_notify_p2p_swap_status_change(canister_id, &notification).await {
-        if code != RejectionCode::DestinationInvalid {
+    if let Err((code, msg)) = c2c_notify_p2p_swap_status_change(canister_id, &notification).await {
+        if should_retry_failed_c2c_call(code, &msg) {
             mutate_state(|state| {
                 state.data.notify_status_change_queue.push(swap_id);
                 start_job_if_required(state);
