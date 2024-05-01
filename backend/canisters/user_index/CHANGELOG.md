@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
 - Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
 - Add ability to debug user principal migrations ([#5750](https://github.com/open-chat-labs/open-chat/pull/5750))
+- Top up user canister with cycles if required during principal update ([#5753](https://github.com/open-chat-labs/open-chat/pull/5753))
 
 ## [[2.0.1156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1156-user_index)] - 2024-04-26
 

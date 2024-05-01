@@ -5,16 +5,19 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::Event;
-use types::{CanisterId, UpdateUserPrincipalArgs, UserId};
+use types::{CanisterId, Cycles, UpdateUserPrincipalArgs, UserId};
 use user_index_canister::c2c_update_user_principal::{Response::*, *};
+use utils::canister::deposit_cycles;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
+
+const B: Cycles = 1_000_000_000;
 
 #[update_msgpack(guard = "caller_is_identity_canister")]
 #[trace]
 async fn c2c_update_user_principal(args: Args) -> Response {
     let user_ids = read_state(|state| get_user_ids(&args, state));
 
-    let futures = user_ids.into_iter().map(|u| update_user_principal(u, &args));
+    let futures = user_ids.into_iter().map(|u| update_user_principal_with_retry(u, &args));
 
     let responses = futures::future::join_all(futures).await;
 
@@ -26,6 +29,19 @@ async fn c2c_update_user_principal(args: Args) -> Response {
         }
         response = r;
     }
+    response
+}
+
+async fn update_user_principal_with_retry(user_id: UserId, args: &Args) -> Response {
+    let response = update_user_principal(user_id, args).await;
+
+    if let InternalError(error) = &response {
+        if error.contains("out of cycles") {
+            deposit_cycles(user_id.into(), 100 * B).await.unwrap();
+            return update_user_principal(user_id, args).await;
+        }
+    }
+
     response
 }
 
