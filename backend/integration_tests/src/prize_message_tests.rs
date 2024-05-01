@@ -14,8 +14,9 @@ use types::{
 };
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
-#[test]
-fn prize_messages_can_be_claimed_successfully() {
+#[test_case(true)]
+#[test_case(false)]
+fn prize_messages_can_be_claimed_successfully(v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -48,7 +49,8 @@ fn prize_messages_can_be_claimed_successfully() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: prizes.iter().copied().map(Tokens::from_e8s).collect(),
+                prizes: if v2 { Vec::new() } else { prizes.iter().copied().map(Tokens::from_e8s).collect() },
+                prizes_v2: if v2 { prizes.into_iter().map(u128::from).collect() } else { Vec::new() },
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
@@ -105,9 +107,11 @@ fn prize_messages_can_be_claimed_successfully() {
     }
 }
 
-#[test_case(false)]
-#[test_case(true)]
-fn unclaimed_prizes_get_refunded(delete_message: bool) {
+#[test_case(false, true)]
+#[test_case(true, true)]
+#[test_case(false, false)]
+#[test_case(true, false)]
+fn unclaimed_prizes_get_refunded(delete_message: bool, v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -138,7 +142,8 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: prizes.iter().copied().map(Tokens::from_e8s).collect(),
+                prizes: if v2 { Vec::new() } else { prizes.iter().copied().map(Tokens::from_e8s).collect() },
+                prizes_v2: if v2 { prizes.into_iter().map(u128::from).collect() } else { Vec::new() },
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,

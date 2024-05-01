@@ -486,6 +486,7 @@ pub struct CryptoContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
     pub prizes: Vec<Tokens>,
+    pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
