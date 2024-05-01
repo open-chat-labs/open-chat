@@ -1,3 +1,4 @@
+use ic_cdk::api::call::RejectionCode;
 use std::cmp::Ordering;
 use types::BuildVersion;
 
@@ -26,6 +27,13 @@ pub use raw_rand::*;
 pub use start::*;
 pub use stop::*;
 pub use update_settings::*;
+pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str) -> bool {
+    match rejection_code {
+        RejectionCode::DestinationInvalid => false,
+        RejectionCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
+        _ => true,
+    }
+}
 
 pub fn should_perform_upgrade(current: BuildVersion, next: BuildVersion, test_mode: bool) -> bool {
     match current.cmp(&next) {
