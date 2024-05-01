@@ -5,6 +5,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
 use user_canister::UserCanisterEvent;
+use utils::canister::should_retry_failed_c2c_call;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -61,15 +62,14 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserCanisterEvent>)>) {
 
 async fn push_events(canister_id: CanisterId, events: Vec<UserCanisterEvent>) {
     let args = user_canister::c2c_notify_user_canister_events::Args { events: events.clone() };
-    if user_canister_c2c_client::c2c_notify_user_canister_events(canister_id, &args)
-        .await
-        .is_err()
-    {
-        mutate_state(|state| {
-            state
-                .data
-                .user_canister_events_queue
-                .mark_sync_failed_for_canister(canister_id, events);
-        });
+    if let Err((code, msg)) = user_canister_c2c_client::c2c_notify_user_canister_events(canister_id, &args).await {
+        if should_retry_failed_c2c_call(code, &msg) {
+            mutate_state(|state| {
+                state
+                    .data
+                    .user_canister_events_queue
+                    .requeue_failed_events(canister_id, events);
+            });
+        }
     }
 }

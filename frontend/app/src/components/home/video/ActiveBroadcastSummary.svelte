@@ -15,7 +15,7 @@
     $: selectedMessageContext = client.selectedMessageContext;
     $: hasCall = $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined;
     $: isPublic = $selectedChat !== undefined && !client.isChatPrivate($selectedChat);
-    $: show = hasCall && isPublic;
+    $: show = hasCall && isPublic && !incall;
     $: incall =
         $activeVideoCall !== undefined &&
         $selectedChat !== undefined &&

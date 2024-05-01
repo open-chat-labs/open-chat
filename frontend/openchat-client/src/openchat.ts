@@ -133,6 +133,7 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
+    currentChatMembersMap,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -612,7 +613,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const anon = id.getPrincipal().isAnonymous();
         this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
-        this.loadUser(anon);
+        this.loadUser();
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -723,11 +724,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadUser(anon: boolean = false) {
+    private async loadUser() {
         await this.connectToWorker();
 
-        if (!anon) {
-            this._ocIdentity = await this._ocIdentityStorage.get();
+        if (this._authPrincipal !== undefined) {
+            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        } else {
+            await this._ocIdentityStorage.remove();
         }
 
         this.startRegistryPoller();
@@ -2846,6 +2849,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }).catch(() => "failure");
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "membersMap",
+                    resp.members.reduce((all, m) => {
+                        all.set(m.userId, m);
+                        return all;
+                    }, new Map()),
+                );
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
@@ -5322,7 +5333,7 @@ export class OpenChat extends OpenChatAgentWorker {
             presence,
         })
             .then((resp) => resp === "success")
-            .catch((_) => false);
+            .catch(() => false);
     }
 
     private mapVideoCallParticipants(
@@ -5958,9 +5969,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             if (userIds.length > 0) {
                 await Promise.all(
-                    userIds
-                        .filter((id) => !rtcConnectionsManager.exists(id))
-                        .map((id) =>
+                    userIds.map((id) =>
                             rtcConnectionsManager.create(
                                 this._liveState.user.userId,
                                 id,
@@ -6656,6 +6665,7 @@ export class OpenChat extends OpenChatAgentWorker {
     typing = typing;
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
+    currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
     currentChatInvitedUsers = currentChatInvitedUsers;
     chatStateStore = chatStateStore;

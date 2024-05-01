@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add ability to debug user principal migrations ([#5750](https://github.com/open-chat-labs/open-chat/pull/5750))
+
+## [[2.0.1155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1155-identity)] - 2024-04-28
+
+### Changed
+
 - Add `user_principals` and `auth_principals` to metrics ([#5723](https://github.com/open-chat-labs/open-chat/pull/5723))
 
 ## [[2.0.1148](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1148-identity)] - 2024-04-23
