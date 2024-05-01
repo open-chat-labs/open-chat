@@ -140,8 +140,9 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     }
 }
 
-#[test]
-fn send_prize_in_channel() {
+#[test_case(true)]
+#[test_case(false)]
+fn send_prize_in_channel(v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -159,8 +160,8 @@ fn send_prize_in_channel() {
 
     let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
-    let prizes = vec![Tokens::from_e8s(100000)];
-    let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+    let prizes = vec![100000];
+    let total = prizes.iter().map(|p| p + fee).sum::<u128>();
 
     let transfer_to: CanisterId = community_id.into();
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -183,7 +184,8 @@ fn send_prize_in_channel() {
                     now_nanos(env),
                 )),
                 caption: None,
-                prizes,
+                prizes: if v2 { Vec::new() } else { prizes.iter().map(|p| Tokens::from_e8s(*p as u64)).collect() },
+                prizes_v2: if v2 { prizes } else { Vec::new() },
                 end_date: now_millis(env) + 1000,
                 diamond_only: false,
             }),

@@ -1,4 +1,5 @@
 use crate::{read_state, RuntimeState};
+use candid::Principal;
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use std::collections::BTreeMap;
@@ -40,12 +41,24 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&grouped)
     }
 
+    fn debug_principal_migration(principal_str: &str, state: &RuntimeState) -> HttpResponse {
+        let principal = Principal::from_text(principal_str).unwrap();
+        if let Some(user) = state.data.users.get(&principal) {
+            build_json_response(&(user.user_id, user.principal, user.principal_migrated))
+        } else {
+            HttpResponse::not_found()
+        }
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, _) if path == "bots" => read_state(get_bot_users),
         Route::Other(path, _) if path == "new_users_per_day" => read_state(get_new_users_per_day),
+        Route::Other(path, qs) if path == "debug_principal_migration" => {
+            read_state(|state| debug_principal_migration(qs.get("user_id").unwrap(), state))
+        }
         _ => HttpResponse::not_found(),
     }
 }
