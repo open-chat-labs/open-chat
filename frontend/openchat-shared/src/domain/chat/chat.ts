@@ -957,6 +957,7 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    pinNumberSettings: PinNumberSettings | undefined;
 };
 
 export type CurrentChatState = {
@@ -1105,6 +1106,17 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    pinNumberSettings: PinNumberSettings | undefined;
+};
+
+export type PinNumberSettings = {
+    length: number,
+    attemptsBlockedUntil: bigint | undefined,
+};
+
+export type PinNumberResolver = {
+    resolve: (pin: string) => void;
+    message: string | undefined;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -1119,6 +1131,7 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
 };
 
 export type DirectChatsUpdates = {
@@ -1706,12 +1719,12 @@ export type PinRequired = {
 
 export type PinIncorrect = {
     kind: "pin_incorrect";
-    next_retry_in_ms: bigint;
+    nextRetryAt: bigint;
 };
 
 export type TooManyFailedPinAttempts = {
     kind: "too_main_failed_pin_attempts";
-    next_retry_in_ms: bigint;
+    nextRetryAt: bigint;
 };
 
 export type GateUpdatedEvent = {
@@ -2162,3 +2175,11 @@ export type VideoCallParticipants = {
 };
 
 export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);
+
+export type SetPinNumberResponse =
+    | Success
+    | PinRequired
+    | PinIncorrect
+    | TooManyFailedPinAttempts
+    | { kind: "too_short"; minLength: number }
+    | { kind: "too_long"; maxLength: number };

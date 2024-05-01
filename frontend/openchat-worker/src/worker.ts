@@ -1697,6 +1697,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "setPinNumber":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPinNumber(
+                        payload.currentPin,
+                        payload.newPin,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

@@ -3,6 +3,7 @@ import {
     bigintToBytes,
     bytesToBigint,
     bytesToHexString,
+    durationToTimestamp,
     hexStringToBytes,
     identity,
     optional,
@@ -78,6 +79,7 @@ import type {
     ApiVideoCallPresence,
     ApiSetVideoCallPresenceResponse,
     ApiCallParticipant,
+    ApiSetPinNumberResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -274,6 +276,7 @@ import type {
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
+import type { SetPinNumberResponse } from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -2813,11 +2816,11 @@ export function acceptP2PSwapResponse(
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
     if ("PinRequired" in candid) return { kind: "pin_required" };
     if ("PinIncorrect" in candid)
-        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+        return { kind: "pin_incorrect", nextRetryAt: durationToTimestamp(candid.PinIncorrect) };
     if ("TooManyFailedPinAttempts" in candid)
         return {
             kind: "too_main_failed_pin_attempts",
-            next_retry_in_ms: candid.TooManyFailedPinAttempts,
+            nextRetryAt: durationToTimestamp(candid.TooManyFailedPinAttempts),
         };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
@@ -2896,4 +2899,27 @@ export function videoCallParticipantsResponse(
     }
     console.warn("VideoCallParticipants failed with: ", candid);
     return CommonResponses.failure();
+}
+
+export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNumberResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    if ("PinRequired" in candid) {
+        return { kind: "pin_required" };
+    }
+    if ("PinIncorrect" in candid) {
+        return { kind: "pin_incorrect", nextRetryAt: durationToTimestamp(candid.PinIncorrect) };
+    }
+    if ("TooManyFailedPinAttempts" in candid) {
+        return { kind: "too_main_failed_pin_attempts", nextRetryAt: durationToTimestamp(candid.TooManyFailedPinAttempts) };
+    }
+    if ("TooShort" in candid) {
+        return { kind: "too_short", minLength: candid.TooShort.min_length };
+    }
+    if ("TooLong" in candid) {
+        return { kind: "too_long", maxLength: candid.TooLong.max_length };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
 }

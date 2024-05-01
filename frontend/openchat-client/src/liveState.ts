@@ -64,6 +64,8 @@ import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores
 import { offlineStore } from "./stores/network";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { locale } from "svelte-i18n";
+import type { PinNumberSettings, PinNumberResolver } from "openchat-shared";
+import { capturePinNumberStore, pinNumberSettingsStore } from "./stores/pinNumber";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -117,6 +119,8 @@ export class LiveState {
     platformModerator!: boolean;
     offlineStore!: boolean;
     locale!: string;
+    pinNumberSettings!: PinNumberSettings | undefined;
+    capturePinNumber!: PinNumberResolver | undefined;
 
     constructor() {
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
@@ -170,5 +174,7 @@ export class LiveState {
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));
+        pinNumberSettingsStore.subscribe((data) => (this.pinNumberSettings = data));
+        capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));
     }
 }

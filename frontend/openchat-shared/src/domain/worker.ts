@@ -68,6 +68,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    SetPinNumberResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -360,7 +361,8 @@ export type WorkerRequest =
     | LoginWithWallet
     | GetDelegationWithWallet
     | SetVideoCallPresence
-    | VideoCallParticipants;
+    | VideoCallParticipants
+    | SetPinNumber;
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -1362,7 +1364,8 @@ export type WorkerResponseInner =
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
     | SetVideoCallPresenceResponse
-    | VideoCallParticipantsResponse;
+    | VideoCallParticipantsResponse
+    | SetPinNumberResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1644,6 +1647,12 @@ type CancelP2PSwap = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     kind: "cancelP2PSwap";
+};
+
+type SetPinNumber = {
+    currentPin: string | undefined;
+    newPin: string | undefined;
+    kind: "setPinNumber";
 };
 
 // prettier-ignore
@@ -1997,4 +2006,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? PrepareDelegationResponse
     : T extends GetDelegationWithWallet
     ? GetDelegationResponse
+    : T extends SetPinNumber
+    ? SetPinNumberResponse
     : never;

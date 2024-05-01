@@ -96,6 +96,7 @@
     import NotFound from "../NotFound.svelte";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
+    import PinNumberModal from "./PinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -202,6 +203,7 @@
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: offlineStore = client.offlineStore;
+    $: pinNumberStore = client.capturePinNumberStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -1190,7 +1192,17 @@
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
-{#if modal !== ModalType.None}
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{:else if modal === ModalType.IdentityMigration}
+    <Overlay>
+        <IdentityMigrationModal />
+    </Overlay>
+{:else if modal !== ModalType.None}
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
@@ -1239,20 +1251,6 @@
     </Overlay>
 {/if}
 
-{#if modal === ModalType.Registering}
-    <Overlay>
-        <Register
-            on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
-    </Overlay>
-{/if}
-
-{#if modal === ModalType.IdentityMigration}
-    <Overlay>
-        <IdentityMigrationModal />
-    </Overlay>
-{/if}
-
 {#if $currentTheme.logo}
     <BackgroundLogo
         width={`${bgHeight}px`}
@@ -1266,6 +1264,12 @@
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+{#if $pinNumberStore !== undefined}
+    <Overlay>
+        <PinNumberModal />
+    </Overlay>
+{/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 

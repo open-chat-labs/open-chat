@@ -231,6 +231,8 @@ import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberSettings } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -1522,6 +1524,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedChannels: ChannelIdentifier[];
         let favouriteChats: ChatIdentifier[];
         let suspensionChanged = undefined;
+        let pinNumberSettings: PinNumberSettings | undefined;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1548,6 +1551,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
+            pinNumberSettings = userResponse.pinNumberSettings;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1569,6 +1573,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = current.pinnedChannels;
             favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
+            pinNumberSettings = current.pinNumberSettings;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1597,6 +1602,7 @@ export class OpenChatAgent extends EventTarget {
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 suspensionChanged = userResponse.suspended;
                 latestUserCanisterUpdates = userResponse.timestamp;
+                pinNumberSettings = applyOptionUpdate(pinNumberSettings, userResponse.pinNumberSettings);
                 anyUpdates = true;
             }
         }
@@ -1747,6 +1753,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats,
             pinnedChannels,
             favouriteChats,
+            pinNumberSettings,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -3364,5 +3371,9 @@ export class OpenChatAgent extends EventTarget {
             case "sol":
                 return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
         }
+	}
+
+    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+        return this.userClient.setPinNumber(currentPin, newPin);
     }
 }

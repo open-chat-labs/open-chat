@@ -497,6 +497,9 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { capturePinNumberStore, pinNumberSettingsStore } from "./stores/pinNumber";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberSettings } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -5138,6 +5141,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
+            pinNumberSettingsStore.set(chatsResponse.state.pinNumberSettings);
+
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
@@ -6645,6 +6650,44 @@ export class OpenChat extends OpenChatAgentWorker {
         return featureRestricted(this._userLocation, "swap");
     }
 
+    async setPinNumber(newPin: string | undefined): Promise<SetPinNumberResponse> {
+        let currentPin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberSettings !== undefined) {
+            currentPin = await this.promptForCurrentPin("pinNumber.enterCurrentPinInfo");
+        }
+
+        const resp = await this.sendRequest({ kind: "setPinNumber", currentPin, newPin });
+
+        if (resp.kind === "success") {
+            pinNumberSettingsStore.update((_) => ( newPin !== undefined 
+                ? { length: newPin.length, attemptsBlockedUntil: undefined }
+                : undefined));    
+        } else if (resp.kind === "pin_incorrect") {
+            pinNumberSettingsStore.update((state: PinNumberSettings | undefined) => {
+                return { length: state?.length ?? 6, attemptsBlockedUntil: resp.nextRetryAt > 0 ? resp.nextRetryAt : undefined };
+            });
+        } else if (resp.kind === "too_main_failed_pin_attempts") {
+            pinNumberSettingsStore.update((state: PinNumberSettings | undefined) => {
+                return { length: state?.length ?? 6, attemptsBlockedUntil: resp.nextRetryAt };
+            });
+        }
+
+        return resp;
+    }
+
+    private promptForCurrentPin(message: string | undefined): Promise<string> {
+        return new Promise((resolve, _) => {
+            capturePinNumberStore.set({
+                resolve: (pin) => {
+                    capturePinNumberStore.set(undefined);
+                    resolve(pin);
+                },
+                message,
+            });
+        });
+    }    
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -6715,6 +6758,8 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
+    pinNumberSettingsStore = pinNumberSettingsStore;
+    capturePinNumberStore = capturePinNumberStore;
 
     // current community stores
     chatListScope = chatListScopeStore;

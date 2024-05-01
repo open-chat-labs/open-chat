@@ -10,7 +10,7 @@
     export let value: string | number = "";
     export let autofocus: boolean = false;
     export let placeholder: ResourceKey | undefined = undefined;
-    export let type: "text" | "number" = "text";
+    export let type: "text" | "number" | "password" = "text";
     export let minlength: number = 0;
     export let maxlength: number = Number.MAX_VALUE;
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";

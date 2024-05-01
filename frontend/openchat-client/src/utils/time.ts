@@ -72,9 +72,16 @@ export function formatDuration(ms: number): string {
     return result;
 }
 
-export function formatTimeRemaining(now: number, deadline: number): string {
+export function formatTimeRemaining(now: number, deadline: number, excludeDays: boolean = false): string {
     const { days, hours, minutes, seconds } = startsIn(now, deadline);
-    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+    let text = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+    if (!excludeDays) {
+        text = `${pad(days)}:` + text;
+    }
+
+    return text;
 }
 
 const defaultFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });

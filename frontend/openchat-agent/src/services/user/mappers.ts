@@ -61,6 +61,7 @@ import type {
     ApiSwapTokensResponse,
     ApiTokenSwapStatusResponse,
     ApiApproveTransferResponse,
+    ApiPinNumberSettings,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -129,6 +130,7 @@ import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat
 import {
     bytesToBigint,
     bytesToHexString,
+    durationToTimestamp,
     hexStringToBytes,
     identity,
     optional,
@@ -154,6 +156,7 @@ import type {
     ProposalToSubmitAction,
     ReportMessageResponse,
 } from "./candid/types";
+import type { PinNumberSettings } from "openchat-shared";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -452,10 +455,10 @@ export function sendMessageResponse(
         return { kind: "pin_required" };
     }
     if ("PinIncorrect" in candid) {
-        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+        return { kind: "pin_incorrect", nextRetryAt: durationToTimestamp(candid.PinIncorrect) };
     }
     if ("TooManyFailedPinAttempts" in candid) {
-        return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+        return { kind: "too_main_failed_pin_attempts", nextRetryAt: durationToTimestamp(candid.TooManyFailedPinAttempts) };
     }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
@@ -604,9 +607,17 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
             suspended: result.suspended,
+            pinNumberSettings: optional(result.pin_number_settings, pinNumberSettings),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
+    return {
+        length: candid.length,
+        attemptsBlockedUntil: optional(candid.attempts_blocked_until, identity),    
+    };
 }
 
 export function userCanisterChannelSummaryUpdates(
@@ -702,6 +713,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
             directChats: directChatsUpdates(candid.Success.direct_chats),
             suspended: optional(candid.Success.suspended, identity),
+            pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
         };
     }
 
@@ -1128,13 +1140,13 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
     if ("PinIncorrect" in candid) {
         return { 
             kind: "pin_incorrect", 
-            next_retry_in_ms: candid.PinIncorrect 
+            nextRetryAt: durationToTimestamp(candid.PinIncorrect) 
         };
     }
     if ("TooManyFailedPinAttempts" in candid) {
         return { 
             kind: "too_main_failed_pin_attempts", 
-            next_retry_in_ms: candid.TooManyFailedPinAttempts 
+            nextRetryAt: durationToTimestamp(candid.TooManyFailedPinAttempts)
         };
     }
 
@@ -1207,10 +1219,10 @@ export function approveTransferResponse(
         return { kind: "pin_required" };
     }
     if ("PinIncorrect" in candid) {
-        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
+        return { kind: "pin_incorrect", nextRetryAt: durationToTimestamp(candid.PinIncorrect) };
     }
     if ("TooManyFailedPinAttempts" in candid) {
-        return { kind: "too_main_failed_pin_attempts", next_retry_in_ms: candid.TooManyFailedPinAttempts };
+        return { kind: "too_main_failed_pin_attempts", nextRetryAt: durationToTimestamp(candid.TooManyFailedPinAttempts) };
     }
 
     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
