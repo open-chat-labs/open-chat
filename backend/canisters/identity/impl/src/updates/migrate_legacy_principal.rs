@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use identity_canister::migrate_legacy_principal::{Response::*, *};
 use types::{CanisterId, Milliseconds};
+use user_index_canister::c2c_update_user_principal;
 
 #[update]
 #[trace]
@@ -30,12 +31,15 @@ pub(crate) async fn migrate_legacy_principal_impl(principal: Option<Principal>) 
     )
     .await
     {
+        Ok(c2c_update_user_principal::Response::InternalError(error)) => ResponseWithPause {
+            response: InternalError(error),
+            pause: None,
+        },
         Ok(response) => {
             mutate_state(|state| state.data.legacy_principals.remove(&old_principal));
-
             ResponseWithPause {
                 response: Success(SuccessResult { new_principal }),
-                pause: if let user_index_canister::c2c_update_user_principal::Response::SuccessPause(pause) = response {
+                pause: if let c2c_update_user_principal::Response::SuccessPause(pause) = response {
                     Some(pause)
                 } else {
                     None
