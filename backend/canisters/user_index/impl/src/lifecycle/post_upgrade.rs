@@ -27,23 +27,23 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    let already_migrated = vec![
-        "3skqk-iqaaa-aaaaf-aaa3q-cai",
-        "27eue-hyaaa-aaaaf-aaa4a-cai",
-        "2yfsq-kaaaa-aaaaf-aaa4q-cai",
-        "bsmg2-yyaaa-aaaaf-aaj4q-cai",
-    ];
+    let failed_migrations: Vec<_> = [
+        "zx4ws-zqaaa-aaaar-adsuq-cai",
+        "reinb-hiaaa-aaaaf-atafq-cai",
+        "zpwzy-wyaaa-aaaaf-bdezq-cai",
+        "st3dj-diaaa-aaaaf-azwfq-cai",
+        "txwm3-2iaaa-aaaaf-azwdq-cai",
+    ]
+    .into_iter()
+    .map(|str| UserId::from(Principal::from_text(str).unwrap()))
+    .collect();
 
     mutate_state(|state| {
-        let now = state.env.now();
-        for user_id in already_migrated
-            .into_iter()
-            .map(|s| UserId::from(Principal::from_text(s).unwrap()))
-        {
-            if let Some(mut user) = state.data.users.get_by_user_id(&user_id).cloned() {
-                user.principal_migrated = true;
-                state.data.users.update(user, now);
+        for user_id in failed_migrations {
+            if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+                state.data.legacy_principals_sync_queue.push_back(user.principal);
             }
         }
-    })
+        crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+    });
 }
