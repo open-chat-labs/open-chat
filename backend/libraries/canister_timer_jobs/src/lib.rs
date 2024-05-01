@@ -71,6 +71,14 @@ impl<J> TimerJobs<J> {
     pub fn iter(&self) -> impl Iterator<Item = &(TimestampMillis, JobWrapper<J>)> {
         self.jobs.values()
     }
+
+    pub fn len(&self) -> usize {
+        self.jobs.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.jobs.is_empty()
+    }
 }
 
 pub trait Job: 'static {

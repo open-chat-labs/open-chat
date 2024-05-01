@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1155-identity)] - 2024-04-28
+
 ### Changed
 
 - Add `user_principals` and `auth_principals` to metrics ([#5723](https://github.com/open-chat-labs/open-chat/pull/5723))

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Ensure all new users register via the Identity canister ([#5748](https://github.com/open-chat-labs/open-chat/pull/5748))
+
 ## [[2.0.1145](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1145-local_user_index)] - 2024-04-23
 
 ### Changed
