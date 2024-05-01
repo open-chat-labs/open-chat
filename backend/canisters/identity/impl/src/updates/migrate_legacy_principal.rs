@@ -75,8 +75,12 @@ fn prepare(old_principal: Option<Principal>, state: &mut RuntimeState) -> Result
             new_principal,
             user_index_canister_id: state.data.user_index_canister_id,
         })
-    } else if state.data.user_principals.get_by_auth_principal(&old_principal).is_some() {
-        Err(AlreadyMigrated)
+    } else if let Some(user) = state.data.user_principals.get_by_auth_principal(&old_principal) {
+        Ok(PrepareResult {
+            old_principal,
+            new_principal: user.principal,
+            user_index_canister_id: state.data.user_index_canister_id,
+        })
     } else {
         Err(NotFound)
     }
