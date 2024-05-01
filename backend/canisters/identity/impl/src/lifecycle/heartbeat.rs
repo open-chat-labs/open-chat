@@ -1,5 +1,5 @@
 use crate::updates::migrate_legacy_principal::migrate_legacy_principal_impl;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_macros::heartbeat;
 use std::cell::{Cell, RefCell};
@@ -20,7 +20,7 @@ mod migrate_legacy_principals {
     use super::*;
 
     pub fn run() {
-        if let Some(next) = mutate_state(get_next) {
+        if let Some(next) = read_state(get_next) {
             ic_cdk::spawn(run_async(next));
         }
     }
@@ -36,7 +36,7 @@ mod migrate_legacy_principals {
         IN_PROGRESS.with_borrow_mut(|i| i.remove(&principal));
     }
 
-    fn get_next(state: &mut RuntimeState) -> Option<Principal> {
+    fn get_next(state: &RuntimeState) -> Option<Principal> {
         if !state.data.principal_migration_job_enabled || state.data.legacy_principals.is_empty() {
             return None;
         }
