@@ -1631,23 +1631,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "generateEmailVerificationCode":
+            case "generateMagicLink":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.generateEmailVerificationCode(payload.email),
-                );
-                break;
-
-            case "submitEmailVerificationCode":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.submitEmailVerificationCode(
-                        payload.email,
-                        payload.code,
-                        payload.sessionKey,
-                    ),
+                    agent.generateMagicLink(payload.email, payload.sessionKey),
                 );
                 break;
 

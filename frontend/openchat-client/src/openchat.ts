@@ -383,8 +383,7 @@ import type {
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
-    GenerateEmailVerificationCodeResponse,
-    SignInWithEmailVerificationCodeResponse,
+    GenerateMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
@@ -5970,12 +5969,12 @@ export class OpenChat extends OpenChatAgentWorker {
             if (userIds.length > 0) {
                 await Promise.all(
                     userIds.map((id) =>
-                            rtcConnectionsManager.create(
-                                this._liveState.user.userId,
-                                id,
-                                this.config.meteredApiKey,
-                            ),
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
                         ),
+                    ),
                 );
                 this.sendRtcMessage(userIds, {
                     kind: "remote_video_call_started",
@@ -6123,44 +6122,38 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        return this.sendRequest({ kind: "generateEmailVerificationCode", email });
+    generateMagicLink(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+    ): Promise<GenerateMagicLinkResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
     }
 
-    async signInWithEmailVerificationCode(
+    async getSignInWithEmailDelegation(
         email: string,
-        code: string,
+        userKey: Uint8Array,
         sessionKey: ECDSAKeyIdentity,
-    ): Promise<SignInWithEmailVerificationCodeResponse> {
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
         const sessionKeyDer = toDer(sessionKey);
-        const submitCodeResponse = await this.sendRequest({
-            kind: "submitEmailVerificationCode",
+        const getDelegationResponse = await this.sendRequest({
+            kind: "getSignInWithEmailDelegation",
             email,
-            code,
             sessionKey: sessionKeyDer,
+            expiration,
         });
-
-        if (submitCodeResponse.kind === "success") {
-            const getDelegationResponse = await this.sendRequest({
-                kind: "getSignInWithEmailDelegation",
-                email,
-                sessionKey: sessionKeyDer,
-                expiration: submitCodeResponse.expiration,
-            });
-            if (getDelegationResponse.kind === "success") {
-                const identity = buildDelegationIdentity(
-                    submitCodeResponse.userKey,
-                    sessionKey,
-                    getDelegationResponse.delegation,
-                    getDelegationResponse.signature,
-                );
-                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-                this.loadedAuthenticationIdentity(identity);
-            }
-            return getDelegationResponse;
-        } else {
-            return submitCodeResponse;
+        if (getDelegationResponse.kind === "success") {
+            const identity = buildDelegationIdentity(
+                userKey,
+                sessionKey,
+                getDelegationResponse.delegation,
+                getDelegationResponse.signature,
+            );
+            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+            this.loadedAuthenticationIdentity(identity);
         }
+        return getDelegationResponse;
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
