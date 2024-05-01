@@ -4,7 +4,6 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::CallResult;
 use local_user_index_canister::Event;
 use types::{CanisterId, Cycles, UpdateUserPrincipalArgs, UserId};
 use user_index_canister::c2c_update_user_principal::{Response::*, *};
