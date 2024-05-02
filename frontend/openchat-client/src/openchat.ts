@@ -5970,12 +5970,12 @@ export class OpenChat extends OpenChatAgentWorker {
             if (userIds.length > 0) {
                 await Promise.all(
                     userIds.map((id) =>
-                            rtcConnectionsManager.create(
-                                this._liveState.user.userId,
-                                id,
-                                this.config.meteredApiKey,
-                            ),
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
                         ),
+                    ),
                 );
                 this.sendRtcMessage(userIds, {
                     kind: "remote_video_call_started",

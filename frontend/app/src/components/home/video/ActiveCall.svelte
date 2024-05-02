@@ -264,8 +264,7 @@
         if (confirmed && confirmSwitchTo) {
             activeVideoCall.endCall();
             const { chat, join } = confirmSwitchTo;
-            confirmSwitchTo = undefined;
-            return startOrJoinVideoCall(chat, join);
+            window.setTimeout(() => startOrJoinVideoCall(chat, join), 100);
         }
         confirmSwitchTo = undefined;
         return Promise.resolve();
