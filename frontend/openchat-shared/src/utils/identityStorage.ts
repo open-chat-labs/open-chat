@@ -6,21 +6,19 @@ const KEY_STORAGE_KEY = "identity";
 const KEY_STORAGE_DELEGATION = "delegation";
 
 export class IdentityStorage {
-    private storage: AuthClientStorage = new IdbStorage({ dbName: "oc-auth-db" });
+    private storage = new IdbStorage({ dbName: "oc-auth-db" });
 
     async get(authPrincipal: string): Promise<DelegationIdentity | undefined> {
-        const storedAuthPrincipal = (await this.storage.get(KEY_STORAGE_AUTH_PRINCIPAL)) as
-            | string
-            | null;
+        const storedAuthPrincipal = await this.storage.get<string>(KEY_STORAGE_AUTH_PRINCIPAL);
         if (storedAuthPrincipal == null) return undefined;
         if (storedAuthPrincipal !== authPrincipal) {
             this.remove();
             return undefined;
         }
 
-        const key = (await this.storage.get(KEY_STORAGE_KEY)) as CryptoKeyPair | null;
+        const key = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
         if (key == null) return undefined;
-        const chain = (await this.storage.get(KEY_STORAGE_DELEGATION)) as string | null;
+        const chain = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
         if (chain == null) return undefined;
 
         const id = await ECDSAKeyIdentity.fromKeyPair(key);
