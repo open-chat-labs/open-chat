@@ -1764,6 +1764,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
+        prizes_v2: domain.prizes,
     };
 }
 
