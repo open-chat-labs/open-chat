@@ -1260,6 +1260,7 @@ export interface PrizeContent {
   'winners' : Array<UserId>,
 }
 export interface PrizeContentInitial {
+  'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
   'prizes' : Array<Tokens>,
