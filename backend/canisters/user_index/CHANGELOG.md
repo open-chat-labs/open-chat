@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Handle case where users have duplicate principals ([#5765](https://github.com/open-chat-labs/open-chat/pull/5765))
+
+## [[2.0.1163](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1163-user_index)] - 2024-05-02
+
 ### Fixed
 
 - Retry principal migrations which failed ([#5758](https://github.com/open-chat-labs/open-chat/pull/5758))

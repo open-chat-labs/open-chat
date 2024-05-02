@@ -31,7 +31,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         user_to_update.username = username.clone();
         let user_id = user.user_id;
         let now = state.env.now();
-        match state.data.users.update(user_to_update, now) {
+        match state.data.users.update(user_to_update, now, false) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
 

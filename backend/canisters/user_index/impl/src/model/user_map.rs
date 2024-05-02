@@ -72,7 +72,7 @@ impl UserMap {
         self.user_id_to_principal_backup.insert(user_id, principal);
     }
 
-    pub fn update(&mut self, mut user: User, now: TimestampMillis) -> UpdateUserResult {
+    pub fn update(&mut self, mut user: User, now: TimestampMillis, ignore_principal_clash: bool) -> UpdateUserResult {
         let user_id = user.user_id;
 
         if let Some(previous) = self.users.get(&user_id) {
@@ -84,7 +84,7 @@ impl UserMap {
             let username = &user.username;
             let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
 
-            if principal_changed && self.principal_to_user_id.contains_key(&principal) {
+            if principal_changed && self.principal_to_user_id.contains_key(&principal) && !ignore_principal_clash {
                 return UpdateUserResult::PrincipalTaken;
             }
 
@@ -309,7 +309,7 @@ impl UserMap {
             false,
             false,
         );
-        self.update(user, date_created);
+        self.update(user, date_created, false);
     }
 }
 
@@ -427,7 +427,7 @@ mod tests {
             let mut updated = original.clone();
             updated.username = username2.clone();
 
-            assert!(matches!(user_map.update(updated, 3), UpdateUserResult::Success));
+            assert!(matches!(user_map.update(updated, 3, false), UpdateUserResult::Success));
 
             assert_eq!(user_map.users.keys().collect_vec(), vec!(&user_id));
             assert_eq!(user_map.username_to_user_id.len(), 1);
@@ -471,7 +471,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(user_map.update(updated, 3), UpdateUserResult::UsernameTaken));
+        assert!(matches!(user_map.update(updated, 3, false), UpdateUserResult::UsernameTaken));
     }
 
     #[test]
@@ -495,6 +495,6 @@ mod tests {
         user_map.add_test_user(original);
         updated.username = "ABC".to_string();
 
-        assert!(matches!(user_map.update(updated, 2), UpdateUserResult::Success));
+        assert!(matches!(user_map.update(updated, 2, false), UpdateUserResult::Success));
     }
 }
