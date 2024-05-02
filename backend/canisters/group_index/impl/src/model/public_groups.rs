@@ -3,7 +3,7 @@ use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{self, Ordering};
+use std::cmp;
 use std::collections::HashMap;
 use types::{
     AccessGate, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary,
@@ -287,23 +287,5 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
         private_group_info.mark_active(public_group_info.marked_active_until);
         private_group_info.set_frozen(public_group_info.frozen);
         private_group_info
-    }
-}
-
-#[derive(PartialEq, Eq, Debug)]
-struct WeightedGroup {
-    chat_id: ChatId,
-    weighting: u64,
-}
-
-impl PartialOrd for WeightedGroup {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for WeightedGroup {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.weighting.cmp(&other.weighting)
     }
 }
