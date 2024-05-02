@@ -15,7 +15,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.76.0
           override: true
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
@@ -31,7 +31,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.76.0
           override: true
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v2
@@ -54,7 +54,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.76.0
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
@@ -73,7 +73,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.76.0
           override: true
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
