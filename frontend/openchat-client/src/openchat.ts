@@ -6017,8 +6017,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 return res.json();
             }
             if (res.status === 401) {
-                const msg = c;
-                ("Auth failed trying to obtain room access token. Might be something wrong with your JWT.");
+                const msg =
+                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
                 console.error(msg);
                 throw new Error(msg);
             }
