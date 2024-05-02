@@ -5970,12 +5970,12 @@ export class OpenChat extends OpenChatAgentWorker {
             if (userIds.length > 0) {
                 await Promise.all(
                     userIds.map((id) =>
-                            rtcConnectionsManager.create(
-                                this._liveState.user.userId,
-                                id,
-                                this.config.meteredApiKey,
-                            ),
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
                         ),
+                    ),
                 );
                 this.sendRtcMessage(userIds, {
                     kind: "remote_video_call_started",
@@ -6017,8 +6017,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 return res.json();
             }
             if (res.status === 401) {
-                const msg =
-                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
+                const msg = c;
+                ("Auth failed trying to obtain room access token. Might be something wrong with your JWT.");
                 console.error(msg);
                 throw new Error(msg);
             }
