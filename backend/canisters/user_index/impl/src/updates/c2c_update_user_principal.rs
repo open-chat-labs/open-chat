@@ -93,7 +93,7 @@ fn commit(
     user.principal = new_principal;
     user.principal_migrated = true;
 
-    assert!(matches!(state.data.users.update(user, now), UpdateUserResult::Success));
+    assert!(matches!(state.data.users.update(user, now, true), UpdateUserResult::Success));
 
     canisters_to_notify.push(state.data.notifications_index_canister_id);
     canisters_to_notify.push(state.data.storage_index_canister_id);
