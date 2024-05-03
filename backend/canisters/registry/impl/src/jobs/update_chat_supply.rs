@@ -64,7 +64,10 @@ async fn run_async() {
 
     let circulating_supply = total_supply.saturating_sub(treasury_balance).saturating_sub(vesting);
 
-    mutate_state(|state| state.data.circulating_supply = Timestamped::new(circulating_supply, now));
+    mutate_state(|state| {
+        state.data.total_supply = Timestamped::new(total_supply, now);
+        state.data.circulating_supply = Timestamped::new(circulating_supply, now);
+    });
 }
 
 fn compute_distribution_subaccount_bytes(principal_id: Principal, nonce: u64) -> [u8; 32] {

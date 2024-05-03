@@ -59,6 +59,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         }
     }
 
+    fn get_total_supply(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.data.total_supply.value)
+    }
+
     fn get_circulating_supply(state: &RuntimeState) -> HttpResponse {
         build_json_response(&state.data.circulating_supply.value)
     }
@@ -68,6 +72,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, qs) if path == "logo" => read_state(|state| get_logo(qs, state)),
+        Route::Other(path, _) if path == "total_supply" => read_state(get_total_supply),
         Route::Other(path, _) if path == "circulating_supply" => read_state(get_circulating_supply),
         _ => HttpResponse::not_found(),
     }

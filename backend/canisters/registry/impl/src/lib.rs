@@ -79,6 +79,8 @@ struct Data {
     failed_sns_launches: HashSet<CanisterId>,
     message_filters: MessageFilters,
     #[serde(default)]
+    total_supply: Timestamped<u128>,
+    #[serde(default)]
     circulating_supply: Timestamped<u128>,
     rng_seed: [u8; 32],
     test_mode: bool,
@@ -103,6 +105,7 @@ impl Data {
             nervous_systems: NervousSystems::default(),
             failed_sns_launches: HashSet::new(),
             message_filters: MessageFilters::default(),
+            total_supply: Timestamped::default(),
             circulating_supply: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
