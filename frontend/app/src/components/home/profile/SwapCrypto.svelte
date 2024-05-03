@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { DexId, OpenChat } from "openchat-client";
+    import type { DexId, OpenChat, PinNumberFailures, ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
@@ -15,8 +15,9 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { now500 } from "../../../stores/time";
 
     export let ledgerIn: string;
 
@@ -38,6 +39,7 @@
     let message: string | undefined = undefined;
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
+    let pinNumberErrorResponse: PinNumberFailures | undefined = undefined;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
@@ -67,6 +69,11 @@
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
 
     $: primaryButtonText = getPrimaryButtonText(state, result);
+
+    $: pinNumberError =
+        pinNumberErrorResponse !== undefined
+            ? client.pinNumberErrorMessage(pinNumberErrorResponse, $now500)
+            : undefined;
 
     onMount(() => loadSwaps(ledgerIn));
 
@@ -139,21 +146,24 @@
         if (!valid) return;
 
         busy = true;
-        message = undefined;
         error = undefined;
         result = undefined;
+        pinNumberErrorResponse = undefined;
 
         swapId = random128();
 
-        client.swapTokens(
-            swapId,
-            ledgerIn,
-            ledgerOut!,
-            amountIn,
-            minAmountOut,
-            bestQuote![0],
-            undefined, // TODO: PIN NUMBER
-        );
+        client
+            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0])
+            .then((resp) => {
+                if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberErrorResponse = resp;
+                    busy = false;
+                }
+            });
     }
 
     function dexName(dex: DexId): string {
@@ -264,12 +274,18 @@
             </div>
         {/if}
 
-        {#if message !== undefined}
+        {#if message !== undefined && state === "swap" && !swapping}
             <Markdown inline={false} text={message} />
         {/if}
 
-        {#if error !== undefined}
-            <ErrorMessage>{error}</ErrorMessage>
+        {#if error !== undefined || pinNumberError !== undefined}
+            <ErrorMessage>
+                {#if pinNumberError !== undefined}
+                    <Translatable resourceKey={pinNumberError} />
+                {:else}
+                    {error}
+                {/if}
+            </ErrorMessage>
         {/if}
     </form>
     <span slot="footer">

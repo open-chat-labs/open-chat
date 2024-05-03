@@ -140,6 +140,7 @@ import {
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
+    setPinNumberResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -148,6 +149,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
 import type { EditMessageV2Args } from "./candid/types";
+import type { SetPinNumberResponse } from "openchat-shared";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -1315,5 +1317,15 @@ export class UserClient extends CandidService {
             () => this.userService.local_user_index({}),
             (resp) => resp.Success.toString(),
         );
+    }
+
+    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+        return this.handleResponse(
+            this.userService.set_pin_number({
+                current: apiOptional(identity, currentPin),
+                new: apiOptional(identity, newPin),
+            }),
+            setPinNumberResponse,
+        );        
     }
 }

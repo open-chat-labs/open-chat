@@ -2,23 +2,35 @@
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ModalContent from "../../ModalContent.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
+    import CogIcon from "svelte-material-icons/CogOutline.svelte";
+    import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
     import Accounts from "./Accounts.svelte";
     import Button from "../../Button.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import Translatable from "../../Translatable.svelte";
+    import WalletSettings from "./WalletSettings.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
     let showZeroBalance = false;
     let zeroCount = 0;
+    let showWalletSettings = false;
 </script>
 
-<ModalContent closeIcon on:close>
+{#if showWalletSettings}
+    <WalletSettings on:close={() => (showWalletSettings = false)} />
+{/if}
+
+<ModalContent on:close>
     <div class="header" slot="header">
-        <Wallet size={"1.2em"} color={"var(--txt)"} />
-        <Translatable resourceKey={i18nKey("wallet")} />
+        <div class="title">
+            <WalletIcon size={"1.2em"} color={"var(--txt)"} />
+            <Translatable resourceKey={i18nKey("wallet")} />
+        </div>
+        <div class="settings" on:click={() => (showWalletSettings = true)}>
+            <CogIcon color={"var(--txt)"} />
+        </div>
     </div>
     <div slot="body">
         <Accounts bind:showZeroBalance bind:zeroCount />
@@ -49,8 +61,14 @@
 <style lang="scss">
     .header {
         display: flex;
-        align-items: center;
+        justify-content: space-between;
         gap: $sp3;
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: $sp3;
+        }
     }
 
     .footer {

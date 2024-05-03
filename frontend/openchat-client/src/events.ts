@@ -1,3 +1,4 @@
+import type { SendMessageResponse } from "openchat-shared";
 import type { ChatIdentifier, EventWrapper, Message, MessageContext } from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
@@ -6,9 +7,9 @@ export class LoadedNewMessages extends CustomEvent<MessageContext> {
     }
 }
 
-export class SendMessageFailed extends CustomEvent<boolean> {
-    constructor(alert: boolean) {
-        super("openchat_event", { detail: alert });
+export class SendMessageFailed extends CustomEvent<{alert: boolean, response?: SendMessageResponse}> {
+    constructor(alert: boolean, response?: SendMessageResponse) {
+        super("openchat_event", { detail: { alert, response }});
     }
 }
 

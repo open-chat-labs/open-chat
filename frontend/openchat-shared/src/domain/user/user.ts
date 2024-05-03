@@ -1,4 +1,4 @@
-import type { PinIncorrect, PinRequired, TooManyFailedPinAttempts } from "../chat";
+import type { PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -336,9 +336,7 @@ export type SwapTokensResponse =
     | {
           kind: "swap_failed";
       }
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts
+    | PinNumberFailures
     | InternalError;
 
 export type Result<T> =
@@ -368,9 +366,7 @@ export type TokenSwapStatusResponse =
 export type ApproveTransferResponse =
     | Success
     | { kind: "approve_error"; error: string }
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts
+    | PinNumberFailures
     | InternalError;
 
 export type DiamondMembershipFees = {

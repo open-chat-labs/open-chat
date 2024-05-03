@@ -12,7 +12,6 @@ export { OPENCHAT_BOT_USER_ID } from "./stores/user";
 export { immutableStore } from "./stores/immutable";
 export type { Dimensions } from "./utils/media";
 export { toRecord } from "./utils/list";
-export type { MessageFormatter, InterpolationValues } from "./utils/i18n";
 export { createMapStore } from "./stores/mapStore";
 export { createSetStore } from "./stores/setStore";
 export type { GlobalState, CombinedUnreadCounts, UnreadCounts } from "./stores/global";

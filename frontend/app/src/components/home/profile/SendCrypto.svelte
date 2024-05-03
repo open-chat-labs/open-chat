@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { NamedAccount, OpenChat } from "openchat-client";
+    import type { NamedAccount, OpenChat, PinNumberFailures, ResourceKey } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
@@ -18,7 +18,8 @@
     import Button from "../../Button.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { now500 } from "../../../stores/time";
     import Translatable from "../../Translatable.svelte";
 
     export let ledger: string;
@@ -26,6 +27,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    let pinError: PinNumberFailures | undefined = undefined;
     let error: ResourceKey | undefined = undefined;
     let amountToSend: bigint;
     let busy = false;
@@ -60,6 +62,10 @@
 
     $: remainingBalance =
         amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance;
+
+    $: errorMessage =
+        error ??
+        (pinError !== undefined ? client.pinNumberErrorMessage(pinError, $now500) : undefined);
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -97,18 +103,15 @@
         error = undefined;
 
         client
-            .withdrawCryptocurrency(
-                {
-                    kind: "pending",
-                    ledger,
-                    token: symbol,
-                    to: targetAccount,
-                    amountE8s: amountToSend,
-                    feeE8s: transferFees,
-                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                },
-                undefined, // TODO: PIN NUMBER
-            )
+            .withdrawCryptocurrency({
+                kind: "pending",
+                ledger,
+                token: symbol,
+                to: targetAccount,
+                amountE8s: amountToSend,
+                feeE8s: transferFees,
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+            })
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);
@@ -124,6 +127,12 @@
                         dispatch("close");
                         targetAccount = "";
                     }
+                } else if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinError = resp;
                 } else {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
@@ -204,8 +213,8 @@
             {/if}
         {/if}
 
-        {#if error !== undefined}
-            <ErrorMessage>{error}</ErrorMessage>
+        {#if errorMessage !== undefined}
+            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
         {/if}
     </form>
     <span slot="footer">

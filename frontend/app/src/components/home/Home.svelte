@@ -30,6 +30,8 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
+        ResourceKey,
+        PinNumberFailures,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -92,10 +94,11 @@
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
+    import PinNumberModal from "./PinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -202,6 +205,7 @@
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: offlineStore = client.offlineStore;
+    $: pinNumberStore = client.capturePinNumberStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -257,8 +261,15 @@
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail) {
-                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
+            if (ev.detail.alert) {
+                const resp = ev.detail.response;
+
+                let pinError;
+                if (resp !== undefined) {
+                    pinError = client.pinNumberErrorMessage(resp as PinNumberFailures);
+                }
+
+                toastStore.showFailureToast(pinError ?? i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
@@ -844,11 +855,7 @@
         }
 
         return client
-            .joinGroup(
-                group,
-                credential,
-                undefined, // TODO: PIN NUMBER
-            )
+            .joinGroup(group, credential)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
@@ -856,8 +863,10 @@
                 } else if (resp.kind === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
                 } else if (resp.kind !== "success") {
+                    let pinError = client.pinNumberErrorMessage(resp as PinNumberFailures);
+
                     toastStore.showFailureToast(
-                        i18nKey("joinGroupFailed", undefined, group.level, true),
+                        pinError ?? i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
                     joining = undefined;
                 } else if (select) {
@@ -1190,7 +1199,17 @@
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
-{#if modal !== ModalType.None}
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{:else if modal === ModalType.IdentityMigration}
+    <Overlay>
+        <IdentityMigrationModal />
+    </Overlay>
+{:else if modal !== ModalType.None}
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
@@ -1239,20 +1258,6 @@
     </Overlay>
 {/if}
 
-{#if modal === ModalType.Registering}
-    <Overlay>
-        <Register
-            on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
-    </Overlay>
-{/if}
-
-{#if modal === ModalType.IdentityMigration}
-    <Overlay>
-        <IdentityMigrationModal />
-    </Overlay>
-{/if}
-
 {#if $currentTheme.logo}
     <BackgroundLogo
         width={`${bgHeight}px`}
@@ -1266,6 +1271,12 @@
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+{#if $pinNumberStore !== undefined}
+    <Overlay>
+        <PinNumberModal />
+    </Overlay>
+{/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 

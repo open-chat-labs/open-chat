@@ -62,16 +62,7 @@
                 mentioned: [],
             };
         } else {
-            client.sendMessageWithContent(
-                messageContext,
-                ev.detail.content,
-                false,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined, // TODO: PIN NUMBER
-            );
+            client.sendMessageWithContent(messageContext, ev.detail.content, false);
         }
     }
 
@@ -100,9 +91,6 @@
                 blockLevelMarkdown,
                 attachment,
                 mentioned,
-                undefined,
-                undefined,
-                undefined, // TODO: PIN NUMBER
             );
         }
     }
@@ -117,13 +105,7 @@
                 msg: ev.detail,
             };
         } else {
-            client.forwardMessage(
-                messageContext,
-                ev.detail,
-                undefined,
-                undefined,
-                undefined, // TODO: PIN NUMBER
-            );
+            client.forwardMessage(messageContext, ev.detail);
         }
     }
 
@@ -135,13 +117,7 @@
                 event: ev.detail,
             };
         } else {
-            client.retrySendMessage(
-                messageContext,
-                ev.detail,
-                undefined,
-                undefined,
-                undefined, // TODO: PIN NUMBER
-            );
+            client.retrySendMessage(messageContext, ev.detail);
         }
     }
 
@@ -170,7 +146,6 @@
                         sendMessageContext.mentioned,
                         chatRulesVersion,
                         communityRulesVersion,
-                        undefined, // TODO: PIN NUMBER
                     );
                     break;
                 }
@@ -184,7 +159,6 @@
                         false,
                         chatRulesVersion,
                         communityRulesVersion,
-                        undefined, // TODO: PIN NUMBER
                     );
                     break;
 
@@ -194,7 +168,6 @@
                         sendMessageContext.msg,
                         chatRulesVersion,
                         communityRulesVersion,
-                        undefined, // TODO: PIN NUMBER
                     );
                     break;
                 }
@@ -204,7 +177,6 @@
                         sendMessageContext.event,
                         chatRulesVersion,
                         communityRulesVersion,
-                        undefined, // TODO: PIN NUMBER
                     );
                     break;
                 }

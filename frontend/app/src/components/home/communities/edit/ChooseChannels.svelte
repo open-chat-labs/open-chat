@@ -1,13 +1,13 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
-    import type { DefaultChannel } from "openchat-client";
+    import type { DefaultChannel, ResourceKey } from "openchat-client";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import Input from "../../../Input.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
     import EditableChannel from "./EditableChannel.svelte";
     import ErrorMessage from "../../../ErrorMessage.svelte";
-    import { i18nKey, type ResourceKey } from "../../../../i18n/i18n";
+    import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
 
     const MIN_CHANNEL_LENGTH = 3;

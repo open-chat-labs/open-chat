@@ -8,7 +8,7 @@
 
 <style lang="scss">
     .error {
-        @include font(bold, normal, fs-80);
+        @include font(book, normal, fs-80);
         color: var(--error);
         margin-bottom: $sp3;
     }

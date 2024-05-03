@@ -156,6 +156,8 @@ import {
     VideoCallType,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
+    SetPinNumberResponse,
+    PinNumberSettings,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -313,7 +315,9 @@ export {
     JoinVideoCallResponse as ApiJoinVideoCallResponse,
     VideoCallType as ApiVideoCallType,
     VideoCallPresence as ApiVideoCallPresence,
-    SetVideoCallPresenceResponse as ApiSetVideoCallPresenceResponse
+    SetVideoCallPresenceResponse as ApiSetVideoCallPresenceResponse,
+    SetPinNumberResponse as ApiSetPinNumberResponse,
+    PinNumberSettings as ApiPinNumberSettings,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

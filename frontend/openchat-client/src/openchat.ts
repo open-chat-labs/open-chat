@@ -252,7 +252,6 @@ import {
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
-import type { MessageFormatter } from "./utils/i18n";
 import { indexIsInRanges } from "./utils/range";
 import { OpenChatAgentWorker } from "./agentWorker";
 import type {
@@ -498,6 +497,10 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberFailures, MessageFormatter, ResourceKey } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1257,10 +1260,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(
-        group: MultiUserChat | CommunitySummary,
-        pin: string | undefined,
-    ): Promise<ApproveAccessGatePaymentResponse> {
+    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1270,7 +1270,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         kind: "community",
                         communityId: group.id.communityId,
                     })!,
-                    pin,
                 );
             } else {
                 return CommonResponses.success();
@@ -1285,6 +1284,12 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (token === undefined) {
             return CommonResponses.failure();
+        }
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
         return this.sendRequest({
@@ -1306,12 +1311,8 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(
-        chat: MultiUserChat,
-        credential: string | undefined,
-        pin: string | undefined,
-    ): Promise<ClientJoinGroupResponse> {
-        const approveResponse = await this.approveAccessGatePayment(chat, pin);
+    async joinGroup(chat: MultiUserChat, credential: string | undefined): Promise<ClientJoinGroupResponse> {
+        const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }
@@ -3099,7 +3100,6 @@ export class OpenChat extends OpenChatAgentWorker {
         msg: Message,
         rulesAccepted: number | undefined = undefined,
         communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): void {
         this.sendMessageWithContent(
             messageContext,
@@ -3109,7 +3109,6 @@ export class OpenChat extends OpenChatAgentWorker {
             true,
             rulesAccepted,
             communityRulesAccepted,
-            pin,
         );
     }
 
@@ -3266,7 +3265,6 @@ export class OpenChat extends OpenChatAgentWorker {
         event: EventWrapper<Message>,
         rulesAccepted: number | undefined = undefined,
         communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -3305,7 +3303,6 @@ export class OpenChat extends OpenChatAgentWorker {
             [],
             rulesAccepted,
             communityRulesAccepted,
-            pin,
         );
     }
 
@@ -3316,9 +3313,14 @@ export class OpenChat extends OpenChatAgentWorker {
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
         communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired && this.isTransfer(eventWrapper.event.content)) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
 
         const canRetry = this.canRetryMessage(eventWrapper.event.content);
 
@@ -3391,6 +3393,17 @@ export class OpenChat extends OpenChatAgentWorker {
                     undefined,
                 );
             });
+    }
+
+    private isTransfer(content: MessageContent): boolean {
+        switch (content.kind) {
+            case "prize_content_initial":
+            case "p2p_swap_content_initial":
+            case "crypto_content":
+                return true;
+        }
+
+        return false;
     }
 
     private canRetryMessage(content: MessageContent): boolean {
@@ -3476,7 +3489,6 @@ export class OpenChat extends OpenChatAgentWorker {
         forwarded: boolean = false,
         rulesAccepted: number | undefined = undefined,
         communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): void {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -3518,7 +3530,6 @@ export class OpenChat extends OpenChatAgentWorker {
             mentioned,
             rulesAccepted,
             communityRulesAccepted,
-            pin,
         );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
@@ -3548,7 +3559,6 @@ export class OpenChat extends OpenChatAgentWorker {
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
         communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): void {
         return this.sendMessageWithContent(
             messageContext,
@@ -3558,7 +3568,6 @@ export class OpenChat extends OpenChatAgentWorker {
             false,
             rulesAccepted,
             communityRulesAccepted,
-            pin,
         );
     }
 
@@ -3592,7 +3601,7 @@ export class OpenChat extends OpenChatAgentWorker {
             console.error("Error sending message", JSON.stringify(response));
         }
 
-        this.dispatchEvent(new SendMessageFailed(!canRetry));
+        this.dispatchEvent(new SendMessageFailed(!canRetry, response));
     }
 
     private postSendMessage(
@@ -4688,10 +4697,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getBio", userId });
     }
 
-    withdrawCryptocurrency(
-        domain: PendingCryptocurrencyWithdrawal,
-        pin: string | undefined,
-    ): Promise<WithdrawCryptocurrencyResponse> {
+    async withdrawCryptocurrency(domain: PendingCryptocurrencyWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin });
     }
 
@@ -5139,6 +5151,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
+            pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
@@ -5257,16 +5271,22 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    acceptP2PSwap(
+    async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: this._liveState.user.userId,
         });
+
         return this.sendRequest({
             kind: "acceptP2PSwap",
             chatId,
@@ -5274,7 +5294,8 @@ export class OpenChat extends OpenChatAgentWorker {
             messageId,
             pin,
         })
-            .then((resp) => {
+            .then((resp) => {                
+                // TODO: THIS DOESN'T WORK FOR PIN FAILURE
                 localMessageUpdates.setP2PSwapStatus(
                     messageId,
                     mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
@@ -5584,16 +5605,21 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    tipMessage(
+    async tipMessage(
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
         currentTip: bigint,
-        pin: string | undefined,
     ): Promise<TipMessageResponse> {
         const chat = this._liveState.chatSummaries.get(messageContext.chatId);
         if (chat === undefined) {
             return Promise.resolve({ kind: "failure" });
+        }
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
         const userId = this._liveState.user.userId;
@@ -5851,15 +5877,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    swapTokens(
+    async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
         outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
-        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         const lookup = get(cryptoLookup);
 
         return this.sendRequest(
@@ -6325,12 +6356,8 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => undefined);
     }
 
-    async joinCommunity(
-        community: CommunitySummary,
-        credential: string | undefined,
-        pin: string | undefined,
-    ): Promise<ClientJoinCommunityResponse> {
-        const approveResponse = await this.approveAccessGatePayment(community, pin);
+    async joinCommunity(community: CommunitySummary, credential: string | undefined): Promise<ClientJoinCommunityResponse> {
+        const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }
@@ -6340,7 +6367,6 @@ export class OpenChat extends OpenChatAgentWorker {
             id: community.id,
             localUserIndex: community.localUserIndex,
             credential,
-            pin,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -6646,6 +6672,70 @@ export class OpenChat extends OpenChatAgentWorker {
         return featureRestricted(this._userLocation, "swap");
     }
 
+    async setPinNumber(newPin: string | undefined): Promise<SetPinNumberResponse> {
+        let currentPin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            currentPin = await this.promptForCurrentPin("pinNumber.enterCurrentPinInfo");
+        }
+
+        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin });
+    }
+
+    private promptForCurrentPin(message: string | undefined): Promise<string> {
+        return new Promise((resolve, _) => {
+            capturePinNumberStore.set({
+                resolve: (pin) => {
+                    capturePinNumberStore.set(undefined);
+                    resolve(pin);
+                },
+                message,
+            });
+        });
+    }    
+
+    pinNumberErrorMessage(resp: PinNumberFailures, now: number = 0): ResourceKey | undefined {
+        let error;
+        let nextRetryAt: bigint | undefined;
+
+        now = Math.max(now, Date.now());
+
+        if (resp.kind === "pin_incorrect") {
+            if (resp.nextRetryAt > now) {
+                error = "pinIncorrectTryLater";
+                nextRetryAt = resp.nextRetryAt;
+            } else {
+                error = "pinIncorrect";
+            }
+        } else if (resp.kind === "pin_required") {
+            error = "pinRequired";
+        } else if (resp.kind === "too_main_failed_pin_attempts") {
+            error = "tooManyFailedAttempts";
+            nextRetryAt = resp.nextRetryAt;
+            if (resp.nextRetryAt <= now) {
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+
+        const duration = nextRetryAt !== undefined 
+            ? this.formatTimeRemaining(
+                now,
+                Number(nextRetryAt),
+                true,
+            )
+            : "";
+
+        return {
+            kind: "resource_key",
+            key: "pinNumber." + error,
+            params: { duration },
+            level: undefined,
+            lowercase: false,
+        };
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -6717,6 +6807,8 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
+    pinNumberRequiredStore = pinNumberRequiredStore;
+    capturePinNumberStore = capturePinNumberStore;
 
     // current community stores
     chatListScope = chatListScopeStore;

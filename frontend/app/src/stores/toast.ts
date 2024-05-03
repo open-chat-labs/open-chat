@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { ResourceKey } from "../i18n/i18n";
+import type { ResourceKey } from "openchat-client";
 
 export enum ToastType {
     Success,

@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import { emptyUnreadCounts } from "openchat-client";
     import UnreadCount from "../UnreadCount.svelte";
-    import type { ResourceKey } from "../../../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
 

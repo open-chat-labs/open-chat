@@ -98,11 +98,11 @@
 
     function showSwap(ledger: string) {
         selectedLedger = ledger;
-        if (client.swapRestricted()) {
-            manageMode = "restricted";
-        } else {
-            manageMode = "swap";
-        }
+        // if (client.swapRestricted()) {
+        //     manageMode = "restricted";
+        // } else {
+        manageMode = "swap";
+        //}
     }
 
     function showTransactions(token: { ledger: string; urlFormat: string }) {
