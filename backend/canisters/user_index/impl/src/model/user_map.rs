@@ -5,6 +5,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
+use tracing::info;
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
@@ -84,8 +85,13 @@ impl UserMap {
             let username = &user.username;
             let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
 
-            if principal_changed && self.principal_to_user_id.contains_key(&principal) && !ignore_principal_clash {
-                return UpdateUserResult::PrincipalTaken;
+            if principal_changed {
+                if let Some(other) = self.principal_to_user_id.get(&principal) {
+                    if !ignore_principal_clash {
+                        return UpdateUserResult::PrincipalTaken;
+                    }
+                    info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
+                }
             }
 
             if username_case_insensitive_changed && self.does_username_exist(username) {
