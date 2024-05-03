@@ -16,6 +16,12 @@ pub fn build_json_response<T: Serialize>(body: &T) -> HttpResponse {
     build_response(bytes, "application/json")
 }
 
+pub fn build_text_response(text: impl Into<String>) -> HttpResponse {
+    let body = text.into().into_bytes();
+
+    build_response(body, "application/text")
+}
+
 pub fn build_response(body: Vec<u8>, content_type: impl Into<String>) -> HttpResponse {
     HttpResponse {
         status_code: 200,
