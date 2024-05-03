@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use dataurl::DataUrl;
-use http_request::{build_json_response, build_text_response, encode_logs, extract_route, Route};
+use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
@@ -60,7 +60,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_circulating_supply(state: &RuntimeState) -> HttpResponse {
-        build_text_response(&state.data.circulating_supply.value)
+        build_json_response(&state.data.circulating_supply.value)
     }
 
     match extract_route(&request.url) {
