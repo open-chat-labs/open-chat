@@ -26,4 +26,5 @@ export const configKeys = {
     selectedAuthProvider: "openchat_selected_auth_provider",
     userCreated: "openchat_user_created",
     softDisabled: "openchat_softdisabled",
+    hideBlocked: "openchat_hideblocked",
 };
