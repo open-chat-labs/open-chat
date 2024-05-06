@@ -16,8 +16,7 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let caller = state.env.caller();
-    // Only allow deleting empty users for now
-    if user.principal != caller || !state.data.empty_users.contains(&args.user_id) {
+    if user.principal != caller {
         return NotAuthorized;
     }
 
