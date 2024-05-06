@@ -26,6 +26,7 @@ pub struct UserMap {
     suspected_bots: BTreeSet<UserId>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
+    deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
 impl UserMap {
@@ -143,6 +144,21 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
+    }
+
+    pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let Some(user) = self.users.remove(&user_id) {
+            if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
+                self.principal_to_user_id.remove(&user.principal);
+            }
+            if self.username_to_user_id.get(&user.username) == Some(&user_id) {
+                self.username_to_user_id.remove(&user.username);
+            }
+            self.deleted_users.insert(user_id, now);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
@@ -333,6 +349,8 @@ struct UserMapTrimmed {
     suspected_bots: BTreeSet<UserId>,
     #[serde(default)]
     user_id_to_principal_backup: HashMap<UserId, Principal>,
+    #[serde(default)]
+    deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
 impl From<UserMapTrimmed> for UserMap {
@@ -341,6 +359,7 @@ impl From<UserMapTrimmed> for UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
             user_id_to_principal_backup: value.user_id_to_principal_backup,
+            deleted_users: value.deleted_users,
             ..Default::default()
         };
 
