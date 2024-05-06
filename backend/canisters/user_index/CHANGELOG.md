@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
+
 ## [[2.0.1164](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1164-user_index)] - 2024-05-03
 
 ### Changed
