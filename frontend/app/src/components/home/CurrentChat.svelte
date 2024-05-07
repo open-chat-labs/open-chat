@@ -315,15 +315,14 @@
         {chat}
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         draftAmount={0n}
-        on:sendMessageWithContent={sendMessageWithContent}
         on:close={() => (creatingPrizeMessage = false)} />
 {/if}
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        {messageContext}
         on:upgrade
-        on:sendMessageWithContent={sendMessageWithContent}
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 

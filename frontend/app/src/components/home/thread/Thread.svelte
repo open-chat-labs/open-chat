@@ -268,8 +268,8 @@
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        {messageContext}
         on:upgrade
-        on:sendMessageWithContent={sendMessageWithContent}
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
@@ -285,7 +285,6 @@
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
-        on:sendMessageWithContent={sendMessageWithContent}
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
