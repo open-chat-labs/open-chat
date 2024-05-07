@@ -16,7 +16,7 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let caller = state.env.caller();
-    if user.principal != caller {
+    if caller != user.principal && caller.into() != user.user_id {
         return NotAuthorized;
     }
 
