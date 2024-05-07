@@ -2,6 +2,7 @@ use dataurl::DataUrl;
 use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
+use tracing::info;
 use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -73,6 +74,7 @@ impl Tokens {
             }
             token.last_updated = now;
             self.last_updated = now;
+            info!(%ledger_canister_id = args.ledger_canister_id, "Token details updated");
             true
         } else {
             false

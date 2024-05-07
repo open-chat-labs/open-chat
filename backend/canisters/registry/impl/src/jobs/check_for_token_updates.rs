@@ -28,21 +28,21 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (
             let mut args = registry_canister::update_token::Args::new(ledger_canister_id);
             for (name, value) in metadata {
                 match name.as_str() {
-                    "icrc1_logo" => {
+                    "icrc1:logo" => {
                         if let MetadataValue::Text(logo) = value {
                             if logo != token.logo {
                                 args.logo = Some(logo);
                             }
                         }
                     }
-                    "icrc1_name" => {
+                    "icrc1:name" => {
                         if let MetadataValue::Text(name) = value {
                             if name != token.name {
                                 args.name = Some(name);
                             }
                         }
                     }
-                    "icrc1_symbol" => {
+                    "icrc1:symbol" => {
                         if let MetadataValue::Text(symbol) = value {
                             if symbol != token.symbol {
                                 args.symbol = Some(symbol);
