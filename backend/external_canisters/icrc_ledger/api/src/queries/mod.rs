@@ -5,3 +5,4 @@ pub mod icrc1_metadata;
 pub mod icrc1_name;
 pub mod icrc1_supported_standards;
 pub mod icrc1_symbol;
+pub mod icrc1_total_supply;

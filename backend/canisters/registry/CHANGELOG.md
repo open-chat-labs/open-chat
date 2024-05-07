@@ -8,7 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Return total and circulating supply amounts as CHATs rather than e8s ([#5773](https://github.com/open-chat-labs/open-chat/pull/5773))
+
+## [[2.0.1165](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1165-registry)] - 2024-05-06
+
+### Changed
+
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Calculate and expose total supply and circulating supply ([#5771](https://github.com/open-chat-labs/open-chat/pull/5771))
 
 ## [[2.0.1143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1143-registry)] - 2024-04-19
 
