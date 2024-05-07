@@ -69,6 +69,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     SetPinNumberResponse,
+    AcceptedRules,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -766,8 +767,7 @@ type SendMessage = {
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    rulesAccepted: number | undefined;
-    communityRulesAccepted: number | undefined;
+    acceptedRules: AcceptedRules | undefined;
     messageFilterFailed: bigint | undefined;
     pin: string | undefined;
     kind: "sendMessage";

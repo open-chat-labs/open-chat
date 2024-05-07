@@ -99,6 +99,7 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
+    import AcceptRulesModal from "./AcceptRulesModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -206,6 +207,7 @@
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: offlineStore = client.offlineStore;
     $: pinNumberStore = client.capturePinNumberStore;
+    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -1275,6 +1277,10 @@
 {#if $pinNumberStore !== undefined}
     <Overlay>
         <PinNumberModal />
+    </Overlay>
+{:else if $rulesAcceptanceStore !== undefined}
+    <Overlay>
+        <AcceptRulesModal />
     </Overlay>
 {/if}
 

@@ -144,9 +144,9 @@ export function isCaptionedContent(content: MessageContent): content is Captione
 
 export function isTransfer(content: MessageContent): boolean {
     return (
-        content.kind !== "crypto_content" &&
-        content.kind !== "prize_content_initial" &&
-        content.kind !== "p2p_swap_content_initial"
+        content.kind === "crypto_content" ||
+        content.kind === "prize_content_initial" ||
+        content.kind === "p2p_swap_content_initial"
     );
 }
 
@@ -1136,6 +1136,15 @@ export type PinNumberResolver = {
     resolve: (pin: string) => void;
     message: string | undefined;
 };
+
+export type RulesAcceptanceResolver = {
+    resolve: (accepted: boolean) => void;
+};
+
+export type AcceptedRules = {
+    chat: number | undefined;
+    community: number | undefined;
+}
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 

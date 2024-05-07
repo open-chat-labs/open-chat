@@ -200,6 +200,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    AcceptedRules,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -438,8 +439,7 @@ export class OpenChatAgent extends EventTarget {
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        acceptedRules: AcceptedRules | undefined,
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
@@ -464,8 +464,8 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    communityRulesAccepted,
-                    rulesAccepted,
+                    acceptedRules?.community,
+                    acceptedRules?.chat,
                     messageFilterFailed,
                     pin,
                 );
@@ -477,8 +477,8 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                communityRulesAccepted,
-                rulesAccepted,
+                acceptedRules?.community,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
@@ -496,7 +496,7 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    rulesAccepted,
+                    acceptedRules?.chat,
                     messageFilterFailed,
                     pin,
                 );
@@ -508,7 +508,7 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                rulesAccepted,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
