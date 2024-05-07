@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Automatically update token names, symbols and logos ([#5780](https://github.com/open-chat-labs/open-chat/pull/5780))
+
 ### Changed
 
 - Return total and circulating supply amounts as CHATs rather than e8s ([#5773](https://github.com/open-chat-labs/open-chat/pull/5773))
