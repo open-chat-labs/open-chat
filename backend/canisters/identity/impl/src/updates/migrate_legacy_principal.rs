@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use identity_canister::migrate_legacy_principal::{Response::*, *};
 use types::{CanisterId, Milliseconds};
+use user_index_canister::c2c_update_user_principal;
 
 #[update]
 #[trace]
@@ -30,12 +31,15 @@ pub(crate) async fn migrate_legacy_principal_impl(principal: Option<Principal>) 
     )
     .await
     {
+        Ok(c2c_update_user_principal::Response::InternalError(error)) => ResponseWithPause {
+            response: InternalError(error),
+            pause: None,
+        },
         Ok(response) => {
             mutate_state(|state| state.data.legacy_principals.remove(&old_principal));
-
             ResponseWithPause {
                 response: Success(SuccessResult { new_principal }),
-                pause: if let user_index_canister::c2c_update_user_principal::Response::SuccessPause(pause) = response {
+                pause: if let c2c_update_user_principal::Response::SuccessPause(pause) = response {
                     Some(pause)
                 } else {
                     None
@@ -75,8 +79,12 @@ fn prepare(old_principal: Option<Principal>, state: &mut RuntimeState) -> Result
             new_principal,
             user_index_canister_id: state.data.user_index_canister_id,
         })
-    } else if state.data.user_principals.get_by_auth_principal(&old_principal).is_some() {
-        Err(AlreadyMigrated)
+    } else if let Some(user) = state.data.user_principals.get_by_auth_principal(&old_principal) {
+        Ok(PrepareResult {
+            old_principal,
+            new_principal: user.principal,
+            user_index_canister_id: state.data.user_index_canister_id,
+        })
     } else {
         Err(NotFound)
     }

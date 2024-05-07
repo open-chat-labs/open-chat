@@ -6,18 +6,10 @@ use icdex_canister::deposit::Token0OrToken1;
 use icdex_client::ICDexClient;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, TokenInfo};
+use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order};
 
 #[async_trait]
 impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
-    fn quote_token(&self) -> &TokenInfo {
-        self.quote_token()
-    }
-
-    fn base_token(&self) -> &TokenInfo {
-        self.base_token()
-    }
-
     async fn latest_price(&self) -> CallResult<u64> {
         self.latest_price().await
     }

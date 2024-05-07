@@ -1,13 +1,11 @@
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
-use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, MarketState, Order, TokenInfo};
+use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, MarketState, Order};
 
 pub mod icdex;
 
 #[async_trait]
 pub trait Exchange: Send + Sync {
-    fn quote_token(&self) -> &TokenInfo;
-    fn base_token(&self) -> &TokenInfo;
     async fn latest_price(&self) -> CallResult<u64>;
     async fn my_open_orders(&self) -> CallResult<Vec<Order>>;
     async fn orderbook(&self) -> CallResult<AggregatedOrders>;

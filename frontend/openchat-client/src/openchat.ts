@@ -134,6 +134,7 @@ import {
     focusThreadMessageIndex,
     selectedMessageContext,
     currentChatMembersMap,
+    hideMessagesFromDirectBlocked,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -6661,6 +6662,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
     currentChatInvitedUsers = currentChatInvitedUsers;
+    hideMessagesFromDirectBlocked = hideMessagesFromDirectBlocked;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;

@@ -16,6 +16,10 @@ fn create_identity(args: Args) -> Response {
 fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
+    if state.data.legacy_principals.contains(&caller) {
+        panic!()
+    }
+
     if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
         return AlreadyRegistered;
     }

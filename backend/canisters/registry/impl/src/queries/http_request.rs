@@ -6,6 +6,7 @@ use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use std::str::FromStr;
 use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, TimestampMillis};
+use utils::format::format_to_decimal_places;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -59,11 +60,36 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         }
     }
 
+    fn get_total_supply(state: &RuntimeState) -> HttpResponse {
+        build_chat_amount_response(state.data.total_supply.value)
+    }
+
+    fn get_circulating_supply(state: &RuntimeState) -> HttpResponse {
+        build_chat_amount_response(state.data.circulating_supply.value)
+    }
+
+    fn build_chat_amount_response(e8s: u128) -> HttpResponse {
+        let formatted = format_to_decimal_places(e8s as f64 / 100_000_000.0, 8);
+        let body = formatted.into_bytes();
+
+        HttpResponse {
+            status_code: 200,
+            headers: vec![
+                HeaderField("content-type".to_string(), "application/json".to_string()),
+                HeaderField("content-length".to_string(), body.len().to_string()),
+            ],
+            body: ByteBuf::from(body),
+            streaming_strategy: None,
+        }
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, qs) if path == "logo" => read_state(|state| get_logo(qs, state)),
+        Route::Other(path, _) if path == "total_supply" => read_state(get_total_supply),
+        Route::Other(path, _) if path == "circulating_supply" => read_state(get_circulating_supply),
         _ => HttpResponse::not_found(),
     }
 }

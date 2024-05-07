@@ -17,6 +17,7 @@ generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
+generate_update_call!(delete_user);
 generate_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
 generate_update_call!(set_display_name);

@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1161](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1161-identity)] - 2024-05-02
+
+### Fixed
+
+- Fix handling of error case when migrating user principal ([#5757](https://github.com/open-chat-labs/open-chat/pull/5757))
+
+## [[2.0.1159](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1159-identity)] - 2024-05-01
+
+### Changed
+
+- Prevent users from creating new identities from legacy principals ([#5751](https://github.com/open-chat-labs/open-chat/pull/5751))
+
+### Fixed
+
+- Retry principal migration if it failed first time ([#5755](https://github.com/open-chat-labs/open-chat/pull/5755))
+
 ## [[2.0.1155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1155-identity)] - 2024-04-28
 
 ### Changed

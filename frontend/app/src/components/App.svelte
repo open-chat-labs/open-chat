@@ -398,10 +398,8 @@
         incomingVideoCall.set(undefined);
         const chat = client.lookupChatSummary(ev.detail);
         if (chat) {
-            if (chat.videoCallInProgress !== undefined) {
-                page(routeForChatIdentifier("none", chat.id));
-                videoCallElement?.startOrJoinVideoCall(chat, true);
-            }
+            page(routeForChatIdentifier("none", chat.id));
+            videoCallElement?.startOrJoinVideoCall(chat, true);
         }
     }
 

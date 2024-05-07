@@ -436,6 +436,7 @@
     },
     "here": "qui",
     "hideAuthProviders": "Nascondi opzioni",
+    "hideBlocked": "Nascondi i messaggi degli utenti che ho bloccato",
     "historyOffInfo": "I nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫",
     "historyOnInfo": "La cronologia completa della chat sarà visibile ai nuovi iscritti. Attento ora! 🤐",
     "historyVisible": "cronologia chat visibile",

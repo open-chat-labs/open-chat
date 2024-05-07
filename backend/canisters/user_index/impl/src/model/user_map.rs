@@ -5,6 +5,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
+use tracing::info;
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
@@ -25,6 +26,7 @@ pub struct UserMap {
     suspected_bots: BTreeSet<UserId>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
+    deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
 impl UserMap {
@@ -72,7 +74,7 @@ impl UserMap {
         self.user_id_to_principal_backup.insert(user_id, principal);
     }
 
-    pub fn update(&mut self, mut user: User, now: TimestampMillis) -> UpdateUserResult {
+    pub fn update(&mut self, mut user: User, now: TimestampMillis, ignore_principal_clash: bool) -> UpdateUserResult {
         let user_id = user.user_id;
 
         if let Some(previous) = self.users.get(&user_id) {
@@ -84,8 +86,13 @@ impl UserMap {
             let username = &user.username;
             let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
 
-            if principal_changed && self.principal_to_user_id.contains_key(&principal) {
-                return UpdateUserResult::PrincipalTaken;
+            if principal_changed {
+                if let Some(other) = self.principal_to_user_id.get(&principal) {
+                    if !ignore_principal_clash {
+                        return UpdateUserResult::PrincipalTaken;
+                    }
+                    info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
+                }
             }
 
             if username_case_insensitive_changed && self.does_username_exist(username) {
@@ -137,6 +144,21 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
+    }
+
+    pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let Some(user) = self.users.remove(&user_id) {
+            if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
+                self.principal_to_user_id.remove(&user.principal);
+            }
+            if self.username_to_user_id.get(&user.username) == Some(&user_id) {
+                self.username_to_user_id.remove(&user.username);
+            }
+            self.deleted_users.insert(user_id, now);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
@@ -309,7 +331,7 @@ impl UserMap {
             false,
             false,
         );
-        self.update(user, date_created);
+        self.update(user, date_created, false);
     }
 }
 
@@ -327,6 +349,8 @@ struct UserMapTrimmed {
     suspected_bots: BTreeSet<UserId>,
     #[serde(default)]
     user_id_to_principal_backup: HashMap<UserId, Principal>,
+    #[serde(default)]
+    deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
 impl From<UserMapTrimmed> for UserMap {
@@ -335,6 +359,7 @@ impl From<UserMapTrimmed> for UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
             user_id_to_principal_backup: value.user_id_to_principal_backup,
+            deleted_users: value.deleted_users,
             ..Default::default()
         };
 
@@ -427,7 +452,7 @@ mod tests {
             let mut updated = original.clone();
             updated.username = username2.clone();
 
-            assert!(matches!(user_map.update(updated, 3), UpdateUserResult::Success));
+            assert!(matches!(user_map.update(updated, 3, false), UpdateUserResult::Success));
 
             assert_eq!(user_map.users.keys().collect_vec(), vec!(&user_id));
             assert_eq!(user_map.username_to_user_id.len(), 1);
@@ -471,7 +496,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(user_map.update(updated, 3), UpdateUserResult::UsernameTaken));
+        assert!(matches!(user_map.update(updated, 3, false), UpdateUserResult::UsernameTaken));
     }
 
     #[test]
@@ -495,6 +520,6 @@ mod tests {
         user_map.add_test_user(original);
         updated.username = "ABC".to_string();
 
-        assert!(matches!(user_map.update(updated, 2), UpdateUserResult::Success));
+        assert!(matches!(user_map.update(updated, 2, false), UpdateUserResult::Success));
     }
 }

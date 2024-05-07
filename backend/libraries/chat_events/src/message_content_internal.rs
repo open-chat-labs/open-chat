@@ -801,7 +801,28 @@ impl MessageContentInternalSubtype for ProposalContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "PrizeContentInternalCombined")]
 pub struct PrizeContentInternal {
+    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
+    pub prizes_remaining: Vec<u128>,
+    #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
+    pub reservations: HashSet<UserId>,
+    #[serde(rename = "w")]
+    pub winners: HashSet<UserId>,
+    #[serde(rename = "t")]
+    pub transaction: CompletedCryptoTransaction,
+    #[serde(rename = "e")]
+    pub end_date: TimestampMillis,
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
+    pub diamond_only: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInternalCombined {
+    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
+    pub prizes_remaining_v2: Vec<u128>,
     #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
     pub prizes_remaining: Vec<Tokens>,
     #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
@@ -818,10 +839,32 @@ pub struct PrizeContentInternal {
     pub diamond_only: bool,
 }
 
+impl From<PrizeContentInternalCombined> for PrizeContentInternal {
+    fn from(value: PrizeContentInternalCombined) -> Self {
+        PrizeContentInternal {
+            prizes_remaining: if value.prizes_remaining.is_empty() {
+                value.prizes_remaining_v2
+            } else {
+                value.prizes_remaining.into_iter().map(|t| t.e8s() as u128).collect()
+            },
+            reservations: value.reservations,
+            winners: value.winners,
+            transaction: value.transaction,
+            end_date: value.end_date,
+            caption: value.caption,
+            diamond_only: value.diamond_only,
+        }
+    }
+}
+
 impl PrizeContentInternal {
     pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransaction) -> PrizeContentInternal {
         PrizeContentInternal {
-            prizes_remaining: content.prizes,
+            prizes_remaining: if content.prizes.is_empty() {
+                content.prizes_v2
+            } else {
+                content.prizes.into_iter().map(|t| t.e8s() as u128).collect()
+            },
             reservations: HashSet::new(),
             winners: HashSet::new(),
             transaction,
@@ -833,7 +876,7 @@ impl PrizeContentInternal {
 
     pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
         let fee = self.transaction.fee();
-        let unclaimed = self.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+        let unclaimed = self.prizes_remaining.iter().map(|p| p + fee).sum::<u128>();
         if unclaimed > 0 {
             Some(create_pending_transaction(
                 self.transaction.token(),

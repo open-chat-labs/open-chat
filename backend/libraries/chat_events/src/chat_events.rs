@@ -3,7 +3,6 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::*;
 use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -774,7 +773,7 @@ impl ChatEvents {
                 content.reservations.insert(user_id);
                 self.last_updated_timestamps.mark_updated(None, event_index, now);
 
-                return ReservePrizeResult::Success(token, ledger_canister_id, amount.e8s() as u128, fee);
+                return ReservePrizeResult::Success(token, ledger_canister_id, amount, fee);
             }
         }
 
@@ -835,7 +834,7 @@ impl ChatEvents {
         &mut self,
         message_id: MessageId,
         user_id: UserId,
-        amount: Tokens,
+        amount: u128,
         now: TimestampMillis,
     ) -> UnreservePrizeResult {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
@@ -881,10 +880,9 @@ impl ChatEvents {
         {
             if !prize_content.prizes_remaining.is_empty() {
                 let last = prize_content.prizes_remaining.remove(0);
-                prize_content.prizes_remaining.insert(
-                    0,
-                    Tokens::from_e8s(last.e8s().saturating_sub(prize_content.transaction.fee() as u64)),
-                );
+                prize_content
+                    .prizes_remaining
+                    .insert(0, last.saturating_sub(prize_content.transaction.fee()));
                 return true;
             }
         }

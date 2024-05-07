@@ -5,10 +5,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
+
+## [[2.0.1164](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1164-user_index)] - 2024-05-03
+
+### Changed
+
+- Handle case where users have duplicate principals ([#5765](https://github.com/open-chat-labs/open-chat/pull/5765))
+- Log user Ids whenever there is a principal clash ([#5766](https://github.com/open-chat-labs/open-chat/pull/5766))
+
+## [[2.0.1163](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1163-user_index)] - 2024-05-02
+
+### Fixed
+
+- Retry principal migrations which failed ([#5758](https://github.com/open-chat-labs/open-chat/pull/5758))
+
+## [[2.0.1160](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1160-user_index)] - 2024-05-01
+
 ### Changed
 
 - Make backup of UserId -> Principal map ([#5727](https://github.com/open-chat-labs/open-chat/pull/5727))
 - Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+- Top up user canister with cycles if required during principal update ([#5753](https://github.com/open-chat-labs/open-chat/pull/5753))
 
 ## [[2.0.1156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1156-user_index)] - 2024-04-26
 
