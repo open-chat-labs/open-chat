@@ -1,12 +1,8 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEmailService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type {
-    GenerateEmailVerificationCodeResponse,
-    GetDelegationResponse,
-    SubmitEmailVerificationCodeResponse,
-} from "openchat-shared";
-import { generateVerificationCodeResponse, submitVerificationCodeResponse } from "./mappers";
+import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
+import { generateMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
 import type { AgentConfig } from "../../config";
 
@@ -29,29 +25,11 @@ export class SignInWithEmailClient extends CandidService {
         return new SignInWithEmailClient(identity, config);
     }
 
-    generateVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        const args = { email };
+    generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
+        const args = { email, session_key: sessionKey, max_time_to_live: [] as [] | [bigint] };
         return this.handleResponse(
-            this.service.generate_verification_code(args),
-            generateVerificationCodeResponse,
-            args,
-        );
-    }
-
-    submitVerificationCode(
-        email: string,
-        code: string,
-        sessionKey: Uint8Array,
-    ): Promise<SubmitEmailVerificationCodeResponse> {
-        const args = {
-            email,
-            code,
-            session_key: sessionKey,
-            max_time_to_live: [] as [] | [bigint],
-        };
-        return this.handleResponse(
-            this.service.submit_verification_code(args),
-            submitVerificationCodeResponse,
+            this.service.generate_magic_link(args),
+            generateMagicLinkResponse,
             args,
         );
     }

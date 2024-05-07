@@ -191,8 +191,7 @@ import type {
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
-    GenerateEmailVerificationCodeResponse,
-    SubmitEmailVerificationCodeResponse,
+    GenerateMagicLinkResponse,
     GetDelegationResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
@@ -3306,16 +3305,8 @@ export class OpenChatAgent extends EventTarget {
         return this._identityClient.setPrincipalMigrationJobEnabled(enabled);
     }
 
-    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        return this._signInWithEmailClient.generateVerificationCode(email);
-    }
-
-    submitEmailVerificationCode(
-        email: string,
-        code: string,
-        sessionKey: Uint8Array,
-    ): Promise<SubmitEmailVerificationCodeResponse> {
-        return this._signInWithEmailClient.submitVerificationCode(email, code, sessionKey);
+    generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
+        return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
     }
 
     getSignInWithEmailDelegation(
