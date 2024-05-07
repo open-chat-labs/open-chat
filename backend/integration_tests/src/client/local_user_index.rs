@@ -17,18 +17,12 @@ generate_update_call!(register_user);
 generate_update_call!(report_message_v2);
 
 pub mod happy_path {
-    use crate::rng::random_internet_identity_principal;
     use crate::utils::principal_to_username;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use serde_bytes::ByteBuf;
     use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
-
-    pub fn register_legacy_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
-        let (principal, public_key) = random_internet_identity_principal();
-        register_user_with_referrer(env, principal, canister_id, public_key, None)
-    }
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: ByteBuf) -> User {
         register_user_with_referrer(env, principal, canister_id, public_key, None)

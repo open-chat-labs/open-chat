@@ -171,10 +171,10 @@ dataurl = "0.1.2"
 dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.1.0" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.1.0" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.1.0" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.1.0" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.3.0" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.3.0" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.3.0" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.3.0" }
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"

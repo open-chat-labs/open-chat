@@ -154,7 +154,7 @@ export function makeRtcConnections(
 
     userIds
         .map((u) => lookup[u])
-        .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
+        .filter((user) => user.kind === "user")
         .map((user) => user.userId)
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);

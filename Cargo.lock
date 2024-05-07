@@ -2243,8 +2243,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_canister"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.1.0#5920411b06df7f93b8affd5ec924a0ad759dad26"
+version = "0.3.0"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
 dependencies = [
  "candid",
  "serde",
@@ -2254,7 +2254,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.1.0#5920411b06df7f93b8affd5ec924a0ad759dad26"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2265,7 +2265,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer_cdk_runtime"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.1.0#5920411b06df7f93b8affd5ec924a0ad759dad26"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
@@ -2280,7 +2280,7 @@ dependencies = [
 [[package]]
 name = "event_store_utils"
 version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.1.0#5920411b06df7f93b8affd5ec924a0ad759dad26"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
 dependencies = [
  "serde",
 ]

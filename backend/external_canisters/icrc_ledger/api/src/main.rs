@@ -8,6 +8,7 @@ fn main() {
     generate_candid_method_no_args!(icrc_ledger, icrc1_name, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_supported_standards, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_symbol, query);
+    generate_candid_method_no_args!(icrc_ledger, icrc1_total_supply, query);
 
     generate_candid_method!(icrc_ledger, icrc1_transfer, update);
     generate_candid_method!(icrc_ledger, icrc2_approve, update);

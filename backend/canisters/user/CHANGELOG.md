@@ -7,7 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Support prize messages with 128bit prize amounts ([#5729](https://github.com/open-chat-labs/open-chat/pull/5729))
 - Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Expose count of timer jobs in metrics ([#5744](https://github.com/open-chat-labs/open-chat/pull/5744))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+
+### Fixed
+
+- Remove dangling references to deleted chats ([#5774](https://github.com/open-chat-labs/open-chat/pull/5774))
+- Add missing pin check to c2c_accept_p2p_swap ([#5777](https://github.com/open-chat-labs/open-chat/pull/5777))
 
 ## [[2.0.1154](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1154-user)] - 2024-04-23
 
