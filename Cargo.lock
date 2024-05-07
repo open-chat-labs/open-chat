@@ -704,6 +704,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
+name = "base64"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
 name = "base64-simd"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6357,10 +6363,13 @@ checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.4.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=9388997e9f2e54ef222642d9b8ee09edcf27f172#9388997e9f2e54ef222642d9b8ee09edcf27f172"
+version = "0.5.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.5.0#53703e72063528a27dc02dce67528aa63239442e"
 dependencies = [
+ "base64 0.22.1",
  "candid",
+ "rand_core 0.6.4",
+ "rsa 0.9.6",
  "serde",
  "serde_bytes",
 ]
@@ -7038,8 +7047,8 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=9388997e9f2e54ef222642d9b8ee09edcf27f172#9388997e9f2e54ef222642d9b8ee09edcf27f172"
+version = "0.5.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.5.0#53703e72063528a27dc02dce67528aa63239442e"
 dependencies = [
  "rand 0.8.5",
  "rsa 0.9.6",
