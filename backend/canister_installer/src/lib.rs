@@ -258,8 +258,7 @@ async fn install_service_canisters_impl(
     };
 
     let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
-    let sign_in_with_email_init_args =
-        sign_in_with_email_canister::InitOrUpgradeArgs::Init(sign_in_with_email_canister::InitArgs { test_mode });
+    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
 
     futures::future::join5(
         install_wasm(

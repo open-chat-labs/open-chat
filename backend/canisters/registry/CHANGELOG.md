@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Automatically update token names, symbols and logos ([#5780](https://github.com/open-chat-labs/open-chat/pull/5780))
+
 ### Changed
 
+- Only allow tokens which are compatible with the ICRC1 standard ([#5733](https://github.com/open-chat-labs/open-chat/pull/5733))
 - Return total and circulating supply amounts as CHATs rather than e8s ([#5773](https://github.com/open-chat-labs/open-chat/pull/5773))
+- Update NAUT ledger canister ([#5779](https://github.com/open-chat-labs/open-chat/pull/5779))
 
 ## [[2.0.1165](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1165-registry)] - 2024-05-06
 
