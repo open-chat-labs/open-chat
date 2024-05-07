@@ -74,7 +74,7 @@ impl Tokens {
             }
             token.last_updated = now;
             self.last_updated = now;
-            info!(%ledger_canister_id = args.ledger_canister_id, "Token details updated");
+            info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
             true
         } else {
             false
