@@ -500,7 +500,7 @@ import { ECDSAKeyIdentity } from "@dfinity/identity";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter, ResourceKey } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+import { canRetryMessage, isTransfer } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -3318,11 +3318,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
         let pin: string | undefined = undefined;
 
-        if (this._liveState.pinNumberRequired && this.isTransfer(eventWrapper.event.content)) {
+        if (this._liveState.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
             pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const canRetry = this.canRetryMessage(eventWrapper.event.content);
+        const canRetry = canRetryMessage(eventWrapper.event.content);
 
         const messageFilterFailed = doesMessageFailFilter(
             eventWrapper.event,
@@ -3393,26 +3393,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     undefined,
                 );
             });
-    }
-
-    private isTransfer(content: MessageContent): boolean {
-        switch (content.kind) {
-            case "prize_content_initial":
-            case "p2p_swap_content_initial":
-            case "crypto_content":
-                return true;
-        }
-
-        return false;
-    }
-
-    private canRetryMessage(content: MessageContent): boolean {
-        return (
-            content.kind !== "poll_content" &&
-            content.kind !== "crypto_content" &&
-            content.kind !== "prize_content_initial" &&
-            content.kind !== "p2p_swap_content_initial"
-        );
     }
 
     rulesNeedAccepting(): boolean {

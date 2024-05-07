@@ -33,6 +33,7 @@ import type {
     TransferSuccess,
 } from "openchat-shared";
 import {
+    canRetryMessage,
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
@@ -599,6 +600,10 @@ export async function recordFailedMessage<T extends Message>(
     event: EventWrapper<T>,
     threadRootMessageIndex?: number,
 ): Promise<void> {
+    if (!canRetryMessage(event.event.content)) {
+        return;
+    }
+
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);

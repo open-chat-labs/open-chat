@@ -142,6 +142,23 @@ export function isCaptionedContent(content: MessageContent): content is Captione
     }
 }
 
+export function isTransfer(content: MessageContent): boolean {
+    return (
+        content.kind !== "crypto_content" &&
+        content.kind !== "prize_content_initial" &&
+        content.kind !== "p2p_swap_content_initial"
+    );
+}
+
+export function canRetryMessage(content: MessageContent): boolean {
+    return (
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content" &&
+        content.kind !== "prize_content_initial" &&
+        content.kind !== "p2p_swap_content_initial"
+    );
+}
+
 export type IndexRange = [number, number];
 
 export interface PlaceholderContent {

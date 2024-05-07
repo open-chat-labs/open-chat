@@ -148,7 +148,9 @@
     <div slot="body">
         <Markdown text={approvalMessage + " " + distributionMessage} />
         {#if errorMessage !== undefined}
-            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            <div class="error">
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            </div>
         {/if}
         {#if insufficientFunds}
             <AccountInfo ledger={gate.ledgerCanister} user={$user} />
@@ -193,5 +195,9 @@
 
     p {
         margin-bottom: $sp4;
+    }
+
+    .error {
+        margin-top: $sp4;
     }
 </style>
