@@ -7,6 +7,7 @@ use utils::time::SECOND_IN_MS;
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     AddUserToSatoshiDice(AddUserToSatoshiDice),
+    DeleteUser(DeleteUserJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -15,10 +16,17 @@ pub struct AddUserToSatoshiDice {
     pub attempt: usize,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DeleteUserJob {
+    pub user_id: UserId,
+    pub attempt: usize,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::AddUserToSatoshiDice(job) => job.execute(),
+            TimerJob::DeleteUser(job) => job.execute(),
         }
     }
 }
@@ -45,6 +53,28 @@ impl Job for AddUserToSatoshiDice {
                     let now = state.env.now();
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice {
+                            user_id,
+                            attempt: attempt + 1,
+                        }),
+                        now + 10 * SECOND_IN_MS,
+                        now,
+                    );
+                })
+            }
+        }
+    }
+}
+
+impl Job for DeleteUserJob {
+    fn execute(self) {
+        ic_cdk::spawn(delete_user(self.user_id, self.attempt));
+
+        async fn delete_user(user_id: UserId, attempt: usize) {
+            if utils::canister::uninstall(user_id.into()).await.is_err() && attempt < 50 {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteUser(DeleteUserJob {
                             user_id,
                             attempt: attempt + 1,
                         }),
