@@ -151,6 +151,7 @@ pub struct TokenMetrics {
     transaction_url_format: String,
     supported_standards: Vec<String>,
     added: TimestampMillis,
+    enabled: bool,
     last_updated: TimestampMillis,
 }
 
@@ -169,6 +170,7 @@ impl From<&TokenDetails> for TokenMetrics {
             transaction_url_format: value.transaction_url_format.clone(),
             supported_standards: value.supported_standards.clone(),
             added: value.added,
+            enabled: value.enabled,
             last_updated: value.last_updated,
         }
     }
