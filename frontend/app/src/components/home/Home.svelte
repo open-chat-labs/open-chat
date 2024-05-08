@@ -99,7 +99,6 @@
     import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     type ViewProfileConfig = {
         userId: string;
