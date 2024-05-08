@@ -27,6 +27,7 @@ export type CryptocurrencyDetails = {
     transactionUrlFormat: string;
     supportedStandards: string[];
     added: bigint;
+    enabled: boolean;
     lastUpdated: bigint;
 };
 
