@@ -160,10 +160,7 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
 } from "./identity";
-import type {
-    GenerateEmailVerificationCodeResponse,
-    SubmitEmailVerificationCodeResponse,
-} from "./email";
+import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -352,8 +349,7 @@ export type WorkerRequest =
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
     | SetPrincipalMigrationJobEnabled
-    | GenerateEmailVerificationsCode
-    | SubmitEmailVerificationsCode
+    | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
     | SiwsPrepareLogin
@@ -1170,16 +1166,10 @@ type SetPrincipalMigrationJobEnabled = {
     kind: "setPrincipalMigrationJobEnabled";
 };
 
-type GenerateEmailVerificationsCode = {
+type GenerateMagicLink = {
     email: string;
-    kind: "generateEmailVerificationCode";
-};
-
-type SubmitEmailVerificationsCode = {
-    email: string;
-    code: string;
     sessionKey: Uint8Array;
-    kind: "submitEmailVerificationCode";
+    kind: "generateMagicLink";
 };
 
 type GetSignInWithEmailDelegation = {
@@ -1357,8 +1347,7 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
-    | GenerateEmailVerificationCodeResponse
-    | SubmitEmailVerificationCodeResponse
+    | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
     | SetVideoCallPresenceResponse
@@ -1983,10 +1972,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateBtcBalanceResponse
     : T extends SetPrincipalMigrationJobEnabled
     ? void
-    : T extends GenerateEmailVerificationsCode
-    ? GenerateEmailVerificationCodeResponse
-    : T extends SubmitEmailVerificationsCode
-    ? SubmitEmailVerificationCodeResponse
+    : T extends GenerateMagicLink
+    ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation
     ? GetDelegationResponse
     : T extends SiwePrepareLogin

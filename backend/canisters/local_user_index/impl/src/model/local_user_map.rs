@@ -30,6 +30,10 @@ impl LocalUserMap {
         self.users.contains_key(user_id)
     }
 
+    pub fn remove(&mut self, user_id: &UserId) -> bool {
+        self.users.remove(user_id).is_some()
+    }
+
     pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
             user.mark_cycles_top_up(top_up);

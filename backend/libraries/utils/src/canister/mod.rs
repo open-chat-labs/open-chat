@@ -13,6 +13,7 @@ mod pool;
 mod raw_rand;
 mod start;
 mod stop;
+mod uninstall;
 mod update_settings;
 
 pub use canisters_requiring_upgrade::*;
@@ -26,7 +27,9 @@ pub use pool::*;
 pub use raw_rand::*;
 pub use start::*;
 pub use stop::*;
+pub use uninstall::*;
 pub use update_settings::*;
+
 pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str) -> bool {
     match rejection_code {
         RejectionCode::DestinationInvalid => false,
