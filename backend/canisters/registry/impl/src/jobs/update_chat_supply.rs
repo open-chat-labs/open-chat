@@ -11,6 +11,7 @@ use utils::time::HOUR_IN_MS;
 const ONE_CHAT: u128 = 100_000_000;
 const SNS_CREATED: TimestampMillis = 1_677_260_000_000;
 const ONE_YEAR: Milliseconds = 31_536_000_000;
+const SIX_MONTHS: Milliseconds = ONE_YEAR / 2;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);
@@ -57,6 +58,24 @@ async fn run_async() {
 
                 if now < SNS_CREATED + ONE_YEAR {
                     vesting += 3_000_000 * ONE_CHAT;
+                }
+            }
+        }
+    }
+
+    // The Dfinity Foundation also received 4 neurons, each with a stake of 2M CHAT, with vesting periods of 6, 12, 18
+    // and 24 months years. These tokens are excluded from the circulating supply until they vest.
+    if now < SNS_CREATED + (4 * SIX_MONTHS) {
+        vesting += 2_000_000 * ONE_CHAT;
+
+        if now < SNS_CREATED + (3 * SIX_MONTHS) {
+            vesting += 2_000_000 * ONE_CHAT;
+
+            if now < SNS_CREATED + (2 * SIX_MONTHS) {
+                vesting += 2_000_000 * ONE_CHAT;
+
+                if now < SNS_CREATED + SIX_MONTHS {
+                    vesting += 2_000_000 * ONE_CHAT;
                 }
             }
         }
