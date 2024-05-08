@@ -99,6 +99,7 @@
                                 <Button
                                     small
                                     loading={clearing}
+                                    disabled={setting || clearing}
                                     on:click={() => (showWarning = true)}
                                     ><Translatable
                                         resourceKey={i18nKey("pinNumber.clear")} /></Button>

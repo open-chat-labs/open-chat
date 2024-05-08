@@ -6661,7 +6661,13 @@ export class OpenChat extends OpenChatAgentWorker {
             currentPin = await this.promptForCurrentPin("pinNumber.enterCurrentPinInfo");
         }
 
-        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin });
+        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+            if (resp.kind === "success") {
+                this.pinNumberRequiredStore.set(newPin !== undefined);
+            }
+            
+            return resp;
+        });
     }
 
     private promptForCurrentPin(message: string | undefined): Promise<string> {
