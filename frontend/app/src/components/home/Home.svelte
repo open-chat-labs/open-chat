@@ -1274,13 +1274,11 @@
 
 <EditLabel />
 
-{#if $pinNumberStore !== undefined}
+{#if $rulesAcceptanceStore !== undefined}
+    <AcceptRulesModal />
+{:else if $pinNumberStore !== undefined}
     <Overlay>
         <PinNumberModal />
-    </Overlay>
-{:else if $rulesAcceptanceStore !== undefined}
-    <Overlay>
-        <AcceptRulesModal />
     </Overlay>
 {/if}
 

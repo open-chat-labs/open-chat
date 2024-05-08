@@ -3294,6 +3294,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageContext,
             retryEvent,
             [],
+            true,
         );
     }
 
@@ -3302,11 +3303,11 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
+        retrying: boolean
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
         let acceptedRules: AcceptedRules | undefined = undefined;
-
         if (this.rulesNeedAccepting()) {
             acceptedRules = await this.promptForRuleAcceptance();
             if (acceptedRules === undefined) {
@@ -3318,6 +3319,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (this._liveState.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
             pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        if (!retrying) {
+            this.postSendMessage(chat, eventWrapper, threadRootMessageIndex);
         }
 
         const canRetry = canRetryMessage(eventWrapper.event.content);
@@ -3360,6 +3365,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (msg.repliesTo !== undefined) {
                         // double counting here which I think is OK since we are limited to string events
                         trackEvent("replied_to_message");
+                    }
+
+                    if (acceptedRules?.chat !== undefined) {
+                        this.markChatRulesAcceptedLocally(true);
+                    }
+                    if (acceptedRules?.community !== undefined) {
+                        this.markCommunityRulesAcceptedLocally(true);
                     }
                 } else {
                     if (resp.kind == "rules_not_accepted") {
@@ -3462,7 +3474,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return undefined;
     }
 
-    sendMessageWithContent(
+    async sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
         blockLevelMarkdown: boolean,
@@ -3502,16 +3514,13 @@ export class OpenChat extends OpenChatAgentWorker {
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
         };
 
-        const resp = this.sendMessageCommon(
+        return this.sendMessageCommon(
             chat,
             messageContext,
             event,
             mentioned,
+            false,
         );
-
-        this.postSendMessage(chat, event, threadRootMessageIndex);
-
-        return resp;
     }
 
     private throttleSendMessage(): boolean {
@@ -6665,7 +6674,7 @@ export class OpenChat extends OpenChatAgentWorker {
             if (resp.kind === "success") {
                 this.pinNumberRequiredStore.set(newPin !== undefined);
             }
-            
+
             return resp;
         });
     }
@@ -6688,7 +6697,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 resolve: (accepted: boolean) => {
                     let acceptedRules: AcceptedRules | undefined = undefined;
 
-                    if (accepted !== undefined) {
+                    if (accepted) {
                         acceptedRules = {
                             chat: undefined,
                             community: undefined,
@@ -6696,12 +6705,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
                         if (this._liveState.currentChatRules?.enabled ?? false) {
                             acceptedRules.chat = this._liveState.currentChatRules?.version;
-                            this.markChatRulesAcceptedLocally(true);
                         }
 
                         if (this._liveState.currentCommunityRules?.enabled ?? false) {
                             acceptedRules.community = this._liveState.currentChatRules?.version;
-                            this.markCommunityRulesAcceptedLocally(true);
                         }         
                     }
                     
