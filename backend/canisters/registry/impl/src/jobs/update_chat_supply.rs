@@ -65,14 +65,18 @@ async fn run_async() {
 
     // The Dfinity Foundation also received 4 neurons, each with a stake of 2M CHAT, with vesting periods of 6, 12, 18
     // and 24 months years. These tokens are excluded from the circulating supply until they vest.
-    if now < SNS_CREATED + (3 * SIX_MONTHS) {
+    if now < SNS_CREATED + (4 * SIX_MONTHS) {
         vesting += 2_000_000 * ONE_CHAT;
 
-        if now < SNS_CREATED + (2 * SIX_MONTHS) {
+        if now < SNS_CREATED + (3 * SIX_MONTHS) {
             vesting += 2_000_000 * ONE_CHAT;
 
-            if now < SNS_CREATED + SIX_MONTHS {
+            if now < SNS_CREATED + (2 * SIX_MONTHS) {
                 vesting += 2_000_000 * ONE_CHAT;
+
+                if now < SNS_CREATED + SIX_MONTHS {
+                    vesting += 2_000_000 * ONE_CHAT;
+                }
             }
         }
     }
