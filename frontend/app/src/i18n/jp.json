@@ -687,6 +687,7 @@
         "clearWarning": "PIN を消去すると、OpenChat にサインインしたまま、デバイスにアクセスできるすべてのユーザーがウォレット転送を実行できるようになります。続行しますか?",
         "enterCurrentPinInfo": "変更（またはクリア）するには、現在の PIN 番号を入力する必要があります。",
         "enterPin": "ピン番号を入力してください",
+        "enterPinInfo": "ウォレットからトークンを転送するには、PIN 番号を入力する必要があります。",
         "forgotten": "ピンを忘れましたか?",
         "info": "PIN 番号を設定すると、OpenChat ウォレットのセキュリティをさらに強化できます。ウォレットからトークンを転送する前に、PIN 番号を入力するよう求められます。",
         "invalid": "PINは数字でなければなりません",
@@ -694,7 +695,7 @@
         "newPinSuccess": "ピン番号設定",
         "pinIncorrect": "ピンが間違っています - もう一度お試しください",
         "pinIncorrectTryLater": "ピンが正しくありません - {duration} でもう一度お試しください",
-        "pinRequired": "予期しないエラーが発生しました - もう一度お試しください",
+        "pinRequired": "ピンが必要です - もう一度お試しください",
         "title": "ピン番号",
         "tooManyFailedAttempts": "失敗した回数が多すぎます。{duration} でもう一度お試しください。"
     },

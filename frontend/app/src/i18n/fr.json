@@ -687,6 +687,7 @@
         "clearWarning": "Si vous effacez votre code PIN, toute personne ayant accès à votre appareil pourra effectuer des transferts de portefeuille pendant que vous restez connecté à OpenChat. Voulez-vous continuer?",
         "enterCurrentPinInfo": "Vous devez saisir votre code PIN actuel pour le modifier (ou l'effacer).",
         "enterPin": "Entrez votre code PIN",
+        "enterPinInfo": "Vous devez saisir votre code PIN pour transférer des jetons hors de votre portefeuille.",
         "forgotten": "Vous avez oublié votre code PIN ?",
         "info": "Vous pouvez définir un code PIN pour ajouter une couche de sécurité supplémentaire à votre portefeuille OpenChat. Avant d'effectuer un transfert de jetons depuis votre portefeuille, vous serez invité à saisir votre code PIN.",
         "invalid": "Votre code PIN doit être un numéro",
@@ -694,7 +695,7 @@
         "newPinSuccess": "Jeu de numéros de broche",
         "pinIncorrect": "Épingle incorrecte – veuillez réessayer",
         "pinIncorrectTryLater": "Épingle incorrecte – veuillez réessayer dans {duration}",
-        "pinRequired": "Erreur inattendue – veuillez réessayer",
+        "pinRequired": "Épingle requis - veuillez réessayer",
         "title": "Code PIN",
         "tooManyFailedAttempts": "Trop de tentatives ont échoué : veuillez réessayer dans {duration}"
     },

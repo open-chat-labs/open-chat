@@ -687,6 +687,7 @@
         "clearWarning": "Si borra su PIN, cualquier persona que tenga acceso a su dispositivo podrá realizar transferencias de billetera mientras usted permanezca conectado a OpenChat. ¿Quieres continuar?",
         "enterCurrentPinInfo": "Debe ingresar su número PIN actual para cambiarlo (o borrarlo).",
         "enterPin": "Introduce tu número pin",
+        "enterPinInfo": "Debe ingresar su número PIN para transferir tokens desde su billetera.",
         "forgotten": "¿Olvidaste tu pin?",
         "info": "Puede establecer un número PIN para agregar una capa adicional de seguridad a su billetera OpenChat. Antes de realizar cualquier transferencia de tokens desde su billetera, se le pedirá que ingrese su PIN.",
         "invalid": "Tu pin debe ser un número",
@@ -694,7 +695,7 @@
         "newPinSuccess": "Conjunto de números PIN",
         "pinIncorrect": "Pin incorrecto. Inténtalo de nuevo.",
         "pinIncorrectTryLater": "Pin incorrecto: inténtelo de nuevo en {duration}",
-        "pinRequired": "Error inesperado: inténtelo de nuevo",
+        "pinRequired": "Se requiere pin. Inténtalo de nuevo.",
         "title": "Número de PIN",
         "tooManyFailedAttempts": "Demasiados intentos fallidos: inténtelo de nuevo en {duration}"
     },

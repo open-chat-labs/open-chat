@@ -687,6 +687,7 @@
         "clearWarning": "Wenn Sie Ihre PIN löschen, kann jeder mit Zugriff auf Ihr Gerät Wallet-Überweisungen vornehmen, während Sie bei OpenChat angemeldet bleiben. Möchten Sie fortfahren?",
         "enterCurrentPinInfo": "Um sie zu ändern (oder zu löschen), müssen Sie Ihre aktuelle PIN-Nummer eingeben.",
         "enterPin": "Geben Sie Ihre PIN-Nummer ein",
+        "enterPinInfo": "Sie müssen Ihre PIN-Nummer eingeben, um Token aus Ihrem Wallet zu übertragen.",
         "forgotten": "PIN vergessen?",
         "info": "Sie können eine PIN-Nummer festlegen, um Ihrem OpenChat-Wallet eine zusätzliche Sicherheitsebene hinzuzufügen. Bevor Sie Token-Überweisungen aus Ihrem Wallet vornehmen, werden Sie aufgefordert, Ihre PIN einzugeben.",
         "invalid": "Ihre PIN muss eine Zahl sein",
@@ -694,7 +695,7 @@
         "newPinSuccess": "Pin-Nummer festgelegt",
         "pinIncorrect": "Falsche PIN – bitte versuchen Sie es erneut",
         "pinIncorrectTryLater": "Falsche PIN – bitte versuchen Sie es in {duration} noch einmal",
-        "pinRequired": "Unerwarteter Fehler – bitte versuchen Sie es erneut",
+        "pinRequired": "PIN erforderlich – bitte versuchen Sie es erneut",
         "title": "PIN Nummer",
         "tooManyFailedAttempts": "Zu viele Fehlversuche – bitte versuchen Sie es in {duration} erneut"
     },
