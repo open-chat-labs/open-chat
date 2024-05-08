@@ -3,6 +3,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore } from "../../stores/layout";
+    import BottomNav from "./nav/BottomNav.svelte";
 </script>
 
 <section
@@ -28,6 +29,10 @@
             on:askToSpeak
             on:hangup
             on:newChannel />
+
+        {#if $layoutStore.showBottomNav}
+            <BottomNav on:profile />
+        {/if}
     </div>
 </section>
 
