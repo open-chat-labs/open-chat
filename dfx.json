@@ -128,8 +128,8 @@
     },
     "sign_in_with_email": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.5.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.5.0/sign_in_with_email.wasm.gz"
+      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.6.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.6.0/sign_in_with_email.wasm.gz"
     },
     "sign_in_with_ethereum": {
       "type": "custom",
