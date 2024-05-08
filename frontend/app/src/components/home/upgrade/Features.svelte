@@ -93,6 +93,16 @@
     </Feature>
 
     <Feature {landing}>
+        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.videoCalls")} /></div>
+        <div slot="free">
+            <Minus size={"1em"} color={"var(--menu-warn)"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.notifications")} /></div>
         <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeNotifications")} /></div>
         <div slot="diamond">
@@ -172,26 +182,6 @@
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.translations")} /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.startVideoCalls")} /></div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.joinVideoCalls")} /></div>
-        <div slot="free">
-            <Check size={"1em"} color={"limegreen"} />
         </div>
         <div slot="diamond">
             <Check size={"1em"} color={"limegreen"} />

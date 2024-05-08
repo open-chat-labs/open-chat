@@ -33,12 +33,14 @@ const authClient = AuthClient.create({
 const ocIdentityStorage = new IdentityStorage();
 
 async function getIdentity(identityCanister: string, icUrl: string): Promise<Identity> {
-    const ocIdentity = await ocIdentityStorage.get();
-    if (ocIdentity !== undefined) {
-        return ocIdentity;
-    }
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
-    if (!authProviderIdentity.getPrincipal().isAnonymous()) {
+    const authPrincipal = authProviderIdentity.getPrincipal();
+    if (!authPrincipal.isAnonymous()) {
+        const authPrincipalString = authPrincipal.toString();
+        const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
+        if (ocIdentity !== undefined) {
+            return ocIdentity;
+        }
         const identityAgent = new IdentityAgent(
             authProviderIdentity as SignIdentity,
             identityCanister,
@@ -70,8 +72,14 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
                 : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
 
             if (identity !== undefined && typeof identity !== "string") {
-                await ocIdentityStorage.set(sessionKey, identity.getDelegation());
-                return (await ocIdentityStorage.get()) ?? new AnonymousIdentity();
+                await ocIdentityStorage.set(
+                    authPrincipalString,
+                    sessionKey,
+                    identity.getDelegation(),
+                );
+                return (
+                    (await ocIdentityStorage.get(authPrincipalString)) ?? new AnonymousIdentity()
+                );
             }
         }
     }
@@ -184,25 +192,29 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
     try {
         if (kind === "init") {
-            getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
-                console.debug(
-                    "anon: init worker",
-                    id.getPrincipal().toString(),
-                    id?.getPrincipal().isAnonymous(),
-                );
-                logger = inititaliseLogger(
-                    payload.rollbarApiKey,
-                    payload.websiteVersion,
-                    payload.env,
-                );
-                logger?.debug("WORKER: constructing agent instance");
-                agent = new OpenChatAgent(id, {
-                    ...payload,
-                    logger,
-                });
-                agent.addEventListener("openchat_event", handleAgentEvent);
-                sendResponse(correlationId, undefined);
-            });
+            executeThenReply(
+                payload,
+                correlationId,
+                getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
+                    console.debug(
+                        "anon: init worker",
+                        id.getPrincipal().toString(),
+                        id?.getPrincipal().isAnonymous(),
+                    );
+                    logger = inititaliseLogger(
+                        payload.rollbarApiKey,
+                        payload.websiteVersion,
+                        payload.env,
+                    );
+                    logger?.debug("WORKER: constructing agent instance");
+                    agent = new OpenChatAgent(id, {
+                        ...payload,
+                        logger,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return undefined;
+                }),
+            );
         }
 
         if (!agent) {
@@ -1567,6 +1579,26 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "videoCallParticipants":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.videoCallParticipants(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.updatesSince,
+                    ),
+                );
+                break;
+
+            case "setVideoCallPresence":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setVideoCallPresence(payload.chatId, payload.messageId, payload.presence),
+                );
+                break;
+
             case "getAccessToken":
                 executeThenReply(
                     payload,
@@ -1599,23 +1631,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "generateEmailVerificationCode":
+            case "generateMagicLink":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.generateEmailVerificationCode(payload.email),
-                );
-                break;
-
-            case "submitEmailVerificationCode":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.submitEmailVerificationCode(
-                        payload.email,
-                        payload.code,
-                        payload.sessionKey,
-                    ),
+                    agent.generateMagicLink(payload.email, payload.sessionKey),
                 );
                 break;
 

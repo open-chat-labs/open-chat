@@ -64,4 +64,12 @@ impl UserPrincipals {
                 })
         })
     }
+
+    pub fn user_principals_count(&self) -> u32 {
+        self.user_principals.len() as u32
+    }
+
+    pub fn auth_principals_count(&self) -> u32 {
+        self.auth_principals.len() as u32
+    }
 }

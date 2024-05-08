@@ -58,6 +58,9 @@ import { communityPreviewsStore, currentCommunityBlockedUsers } from "./communit
 import { translationStore } from "./translation";
 import { messageFiltersStore } from "./messageFilters";
 import { draftMessagesStore } from "./draftMessages";
+import { blockedUsers } from "./blockedUsers";
+import { createLsBoolStore } from "./localStorageSetting";
+import { configKeys } from "../utils/config";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -79,6 +82,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
         members: [],
+        membersMap: new Map(),
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
         pinnedMessages: new Set<number>(),
@@ -138,6 +142,12 @@ export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "mem
     () => [],
 );
 
+export const currentChatMembersMap = createDerivedPropStore<ChatSpecificState, "membersMap">(
+    chatStateStore,
+    "membersMap",
+    () => new Map(),
+);
+
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,
     "blockedUsers",
@@ -160,10 +170,19 @@ export const expiredEventRangesStore = createDerivedPropStore<
     "expiredEventRanges"
 >(chatStateStore, "expiredEventRanges", () => new DRange());
 
+export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
+
 const currentChatBlockedOrSuspendedUsers = derived(
-    [currentChatBlockedUsers, currentCommunityBlockedUsers, suspendedUsers],
-    ([chatBlocked, communityBlocked, suspended]) => {
-        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended]);
+    [
+        currentChatBlockedUsers,
+        currentCommunityBlockedUsers,
+        suspendedUsers,
+        blockedUsers,
+        hideMessagesFromDirectBlocked,
+    ],
+    ([chatBlocked, communityBlocked, suspended, directBlocked, hideBlocked]) => {
+        const direct = hideBlocked ? directBlocked : [];
+        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended, ...direct]);
     },
 );
 

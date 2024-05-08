@@ -4,7 +4,6 @@ use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
-use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_CLAIM;
@@ -35,9 +34,9 @@ async fn claim_prize(args: Args) -> Response {
             }
         }
         Err(failed_transaction) => {
-            let e8s = failed_transaction.units() as u64;
+            let amount = failed_transaction.units();
             // Rollback the prize reservation
-            let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, Tokens::from_e8s(e8s), state));
+            let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, amount, state));
             TransferFailed(error_message, failed_transaction)
         }
     }
@@ -127,7 +126,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
     }
 }
 
-fn rollback(args: Args, user_id: UserId, amount: Tokens, state: &mut RuntimeState) -> String {
+fn rollback(args: Args, user_id: UserId, amount: u128, state: &mut RuntimeState) -> String {
     let channel = match state.data.channels.get_mut(&args.channel_id) {
         Some(c) => c,
         None => return "ChannelNotFound".to_string(),

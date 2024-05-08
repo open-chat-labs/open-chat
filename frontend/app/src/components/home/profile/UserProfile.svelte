@@ -76,6 +76,7 @@
     let view: "global" | "communities" = "global";
     let selectedCommunityId = "";
 
+    $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
     $: identityState = client.identityState;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -426,6 +427,12 @@
                         on:change={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
+                    <Toggle
+                        id={"hide-blocked"}
+                        small
+                        on:change={() => hideMessagesFromDirectBlocked.toggle()}
+                        label={i18nKey("hideBlocked")}
+                        checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
             </div>
             <div class="video">

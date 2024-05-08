@@ -27,4 +27,5 @@ export const configKeys = {
     selectedAuthEmail: "openchat_selected_auth_email",
     userCreated: "openchat_user_created",
     softDisabled: "openchat_softdisabled",
+    hideBlocked: "openchat_hideblocked",
 };

@@ -16,28 +16,30 @@
 
 <div class="wrapper" style={introStyle}>
     <div class="intro">
-        <div class="name">
-            <div class="logo-img">
-                <FancyLoader loop={false} />
+        <div class="text-wrapper">
+            <div class="text">
+                <div class="name">
+                    <div class="logo-img">
+                        <FancyLoader loop={false} />
+                    </div>
+                    <h1>OpenChat</h1>
+                </div>
+                <h2 class="title">Where web3 communicates</h2>
+                <p class="blurb">
+                    OpenChat is a fully featured chat application running end-to-end on the <a
+                        href="https://internetcomputer.org/"
+                        target="_blank">
+                        Internet Computer
+                    </a> blockchain.
+                </p>
+                <div class="launch">
+                    <Launch />
+                </div>
             </div>
-            <h1>OpenChat</h1>
-        </div>
-        <h2 class="title">A decentralized chat app governed by the people for the people</h2>
-        <p class="blurb">
-            OpenChat is a fully featured chat application running end-to-end on the <a
-                href="https://internetcomputer.org/"
-                target="_blank">
-                Internet Computer
-            </a> blockchain.
-        </p>
-        <div class="launch">
-            <Launch />
-        </div>
-        <div class="powered-by">
-            {#if $mobileWidth}
-                <OnChainAlt />
-            {:else}
-                <OnChain />
+            {#if !$mobileWidth}
+                <div>
+                    <OnChain />
+                </div>
             {/if}
         </div>
         <div class="image-wrapper-wrapper">
@@ -52,11 +54,18 @@
             </div>
         </div>
     </div>
+    {#if $mobileWidth}
+        <div class="powered-by">
+            <OnChainAlt />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
     .wrapper {
         display: flex;
+        flex-direction: column;
+        gap: $sp3;
         justify-content: center;
         align-items: center;
     }
@@ -70,39 +79,37 @@
         }
     }
     .intro {
-        position: relative;
-        display: grid;
-        grid-template-columns: 3fr 2fr;
+        display: flex;
         justify-content: center;
-        align-items: center;
-        column-gap: toRem(100);
-        row-gap: toRem(20);
+        align-items: stretch;
+        flex-direction: row;
+        gap: toRem(100);
 
-        grid-template-areas:
-            "name image"
-            "title image"
-            "blurb image"
-            "launch image"
-            "powered-by image";
+        .text-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: toRem(20);
+        }
+
+        .text {
+            display: flex;
+            flex-direction: column;
+            gap: toRem(20);
+            @include mobile() {
+                margin-top: 0;
+                margin-bottom: $sp4;
+            }
+        }
 
         @include mobile() {
             margin-top: toRem(80);
             margin-bottom: 0;
-            grid-template-columns: 6fr 1fr;
-            column-gap: 0;
-
-            grid-template-areas:
-                "name name"
-                "title title"
-                "blurb ."
-                "launch launch"
-                "image image"
-                "powered-by .";
+            display: block;
         }
     }
 
     .name {
-        grid-area: name;
         display: flex;
         align-items: center;
         gap: toRem(8);
@@ -116,18 +123,16 @@
         }
     }
     .title {
-        grid-area: title;
-        @include font(medium, normal, fs-230, 68);
+        @include font(medium, normal, fs-180);
         margin-top: 0;
         margin-bottom: toRem(10);
 
         @include mobile() {
-            @include font(medium, normal, fs-180, 42);
+            @include font(medium, normal, fs-230);
         }
     }
 
     .blurb {
-        grid-area: blurb;
         color: var(--landing-txt-light);
         margin-bottom: toRem(24);
         @include font(book, normal, fs-120, 28);
@@ -137,20 +142,7 @@
         }
     }
 
-    .powered-by {
-        grid-area: powered-by;
-        position: absolute;
-        bottom: 0;
-        height: toRem(30);
-        @include z-index("powered-by");
-
-        @include mobile() {
-            bottom: toRem(50);
-        }
-    }
-
     .launch {
-        grid-area: launch;
         display: flex;
         gap: toRem(24);
         align-items: center;
@@ -160,7 +152,8 @@
     }
 
     .image-wrapper-wrapper {
-        grid-area: image;
+        min-width: 270px;
+        max-width: 390px;
         @include mobile() {
             border-radius: toRem(18);
             height: toRem(420);
@@ -169,7 +162,7 @@
     }
 
     .image-wrapper {
-        padding: toRem(40);
+        padding-right: toRem(30);
         position: relative;
 
         @include mobile() {
@@ -212,5 +205,11 @@
         @include mobile() {
             border: toRem(3) solid var(--landing-phone-bd);
         }
+    }
+
+    .powered-by {
+        position: relative;
+        align-self: flex-start;
+        top: -$sp6;
     }
 </style>

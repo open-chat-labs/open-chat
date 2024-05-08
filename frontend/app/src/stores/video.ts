@@ -6,16 +6,26 @@
 import {
     type DailyCall,
     type DailyEventObjectAppMessage,
+    type DailyParticipantUpdateOptions,
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
-import { type ChatIdentifier } from "openchat-client";
-import { writable } from "svelte/store";
+import { type ChatIdentifier, type VideoCallType } from "openchat-client";
+import { get, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
-export type InterCallMessage = RequestToSpeakMessage | RequestToSpeakMessageResponse;
+export type InterCallMessage =
+    | RequestToSpeakMessage
+    | RequestToSpeakMessageResponse
+    | DemoteParticipantMessage;
 
 export type RequestToSpeak = {
     kind: "ask_to_speak";
+    participantId: string;
+    userId: string;
+};
+
+export type DemoteParticipant = {
+    kind: "demote_participant";
     participantId: string;
     userId: string;
 };
@@ -29,6 +39,7 @@ export type RequestToSpeakResponse = {
 
 export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
+export type DemoteParticipantMessage = DailyEventObjectAppMessage<DemoteParticipant>;
 
 const previousCalls = new Set<bigint>();
 
@@ -46,7 +57,11 @@ export type ActiveVideoCall = {
     call?: DailyCall;
     view: VideoCallView;
     threadOpen: boolean;
+    participantsOpen: boolean;
     accessRequests: RequestToSpeak[];
+    messageId?: bigint;
+    isOwner: boolean;
+    callType: VideoCallType;
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
@@ -73,31 +88,92 @@ export const incomingVideoCall = {
     },
 };
 
+function updateCall(fn: (call: ActiveVideoCall) => ActiveVideoCall) {
+    activeStore.update((current) => {
+        return current === undefined ? undefined : fn(current);
+    });
+}
+
+function findParticipantId(call: DailyCall, userId: string): string | undefined {
+    const participants = call.participants();
+    const p = Object.values(participants).find((v) => v.user_id === userId);
+    if (p !== undefined) {
+        return p.session_id;
+    }
+}
+
+function updateParticipant(
+    call: DailyCall,
+    participantId: string,
+    options: DailyParticipantUpdateOptions,
+): Promise<DailyCall> {
+    return new Promise((resolve) => {
+        call.updateParticipant(participantId, options);
+        window.setTimeout(() => resolve(call), 500);
+    });
+}
+
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
-    setCall: (chatId: ChatIdentifier, call: DailyCall) => {
-        return activeStore.set({
-            status: "joined",
+    setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
+        return updateCall((current) => ({
+            ...current,
             chatId,
             call,
-            view: "default",
-            threadOpen: false,
-            accessRequests: [],
-        });
+            messageId,
+            status: "joined",
+        }));
     },
     setView: (view: VideoCallView) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      view,
-                  };
-        });
+        return updateCall((current) => ({ ...current, view }));
+    },
+
+    askToSpeak: (userId: string) => {
+        const current = get(activeStore);
+        if (current?.call) {
+            const participants = current.call.participants();
+            const me = participants.local;
+            Object.entries(participants).map(([key, val]) => {
+                if (key !== "local") {
+                    if (val.permissions.hasPresence && val.permissions.canAdmin) {
+                        current.call?.sendAppMessage(
+                            {
+                                kind: "ask_to_speak",
+                                participantId: me.session_id,
+                                userId,
+                            },
+                            val.session_id,
+                        );
+                    }
+                }
+            });
+        }
+    },
+    demote: (userId: string) => {
+        const current = get(activeStore);
+        if (current?.call) {
+            const participantId = findParticipantId(current.call, userId);
+            if (participantId) {
+                updateParticipant(current.call, participantId, {
+                    updatePermissions: {
+                        hasPresence: false,
+                        canSend: [],
+                    },
+                }).then((call) => {
+                    call.sendAppMessage(
+                        {
+                            kind: "demote_participant",
+                            participantId: participantId,
+                            userId: userId,
+                        },
+                        participantId,
+                    );
+                });
+            }
+        }
     },
     rejectAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            if (current === undefined) return undefined;
+        return updateCall((current) => {
             if (current.call) {
                 current.call.sendAppMessage(
                     {
@@ -118,24 +194,24 @@ export const activeVideoCall = {
         });
     },
     approveAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            if (current === undefined) return undefined;
+        return updateCall((current) => {
             if (current.call) {
-                current.call.updateParticipant(req.participantId, {
+                updateParticipant(current.call, req.participantId, {
                     updatePermissions: {
                         hasPresence: true,
-                        canSend: true,
+                        canSend: new Set(["audio", "video"]),
                     },
+                }).then((call) => {
+                    call.sendAppMessage(
+                        {
+                            kind: "ask_to_speak_response",
+                            participantId: req.participantId,
+                            userId: req.userId,
+                            approved: true,
+                        },
+                        req.participantId,
+                    );
                 });
-                current.call.sendAppMessage(
-                    {
-                        kind: "ask_to_speak_response",
-                        participantId: req.participantId,
-                        userId: req.userId,
-                        approved: true,
-                    },
-                    req.participantId,
-                );
             }
             return {
                 ...current,
@@ -146,24 +222,30 @@ export const activeVideoCall = {
         });
     },
     captureAccessRequest: (req: RequestToSpeak) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      accessRequests: [...current.accessRequests, req],
-                  };
-        });
+        return updateCall((current) => ({
+            ...current,
+            accessRequests: [...current.accessRequests, req],
+        }));
     },
     threadOpen: (threadOpen: boolean) => {
-        return activeStore.update((current) => {
-            return current === undefined
-                ? undefined
-                : {
-                      ...current,
-                      threadOpen,
-                  };
-        });
+        return updateCall((current) => ({
+            ...current,
+            threadOpen,
+            participantsOpen: false,
+        }));
+    },
+    isOwner: (isOwner: boolean) => {
+        return updateCall((current) => ({
+            ...current,
+            isOwner,
+        }));
+    },
+    participantsOpen: (participantsOpen: boolean) => {
+        return updateCall((current) => ({
+            ...current,
+            participantsOpen,
+            threadOpen: false,
+        }));
     },
     endCall: () => {
         return activeStore.update((current) => {
@@ -181,13 +263,16 @@ export const activeVideoCall = {
             return current;
         });
     },
-    joining: (chatId: ChatIdentifier) => {
+    joining: (chatId: ChatIdentifier, callType: VideoCallType) => {
         return activeStore.set({
             status: "joining",
             chatId,
             view: "default",
             threadOpen: false,
+            participantsOpen: false,
             accessRequests: [],
+            isOwner: false,
+            callType,
         });
     },
 };

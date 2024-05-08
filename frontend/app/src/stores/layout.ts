@@ -16,6 +16,7 @@ type RightPanelState = "hidden" | "floating" | "inline";
 
 export type Layout = {
     showNav: boolean;
+    showBottomNav: boolean;
     showMiddle: boolean;
     showLeft: boolean;
     rightPanel: RightPanelState;
@@ -44,6 +45,7 @@ export const layoutStore: Readable<Layout> = derived(
                         $pathParams.kind === "admin_route") &&
                         !showRight));
             return {
+                showBottomNav: showNav,
                 showNav,
                 showMiddle,
                 showLeft,
@@ -57,6 +59,7 @@ export const layoutStore: Readable<Layout> = derived(
                 $pathParams.kind !== "communities_route" && $pathParams.kind !== "admin_route";
 
             return {
+                showBottomNav: false,
                 showNav: !$disableLeftNav,
                 showMiddle: true,
                 showLeft,

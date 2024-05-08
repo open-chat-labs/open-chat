@@ -51,7 +51,10 @@
             if (callContainer) {
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
-                    if (layout.rightPanel !== "floating" && call.threadOpen) {
+                    if (
+                        layout.rightPanel !== "floating" &&
+                        (call.threadOpen || call.participantsOpen)
+                    ) {
                         width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
@@ -89,7 +92,7 @@
     {#if $pathParams.kind === "explore_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities on:upgrade on:createCommunity />
+        <ExploreCommunities on:profile on:upgrade on:createCommunity />
     {:else if $pathParams.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">

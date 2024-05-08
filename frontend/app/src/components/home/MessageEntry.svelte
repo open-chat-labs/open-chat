@@ -514,7 +514,16 @@
         const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
         const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
         const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
-        const regexList = [headerRegex, tableRegex, bulletedListRegex, numberedListRegex];
+        const blockquoteRegex = /^(?:\s*>)/m;
+        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
+        const regexList = [
+            headerRegex,
+            tableRegex,
+            bulletedListRegex,
+            numberedListRegex,
+            blockquoteRegex,
+            codeBlockRegex,
+        ];
         const result = regexList.some((regex) => regex.test(text));
         return result;
     }

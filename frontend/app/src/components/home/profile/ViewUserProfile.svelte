@@ -21,6 +21,7 @@
     import Diamond from "../../icons/Diamond.svelte";
     import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import ProfileRole from "./ProfileRole.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -58,6 +59,7 @@
     $: currentCommunityBlockedUsers = client.currentCommunityBlockedUsers;
     $: selectedCommunity = client.selectedCommunity;
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: displayName = client.getDisplayName(
         {
             userId,
@@ -311,6 +313,14 @@
                         {/if}
                     {/if}
                 </div>
+                {#if $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
+                    <ProfileRole
+                        {userId}
+                        chatMembers={$chatMembersMap}
+                        communityMembers={$communityMembers}
+                        community={$selectedCommunity}
+                        chat={$selectedChat} />
+                {/if}
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
@@ -360,10 +370,6 @@
         width: 320px;
         padding: $sp4 $sp5 0 $sp5;
 
-        @include mobile() {
-            padding: $sp3 $sp4 0 $sp4;
-        }
-
         .avatar {
             padding: 0 0 $sp4 0;
         }
@@ -402,8 +408,7 @@
             @include mobile() {
                 .left,
                 .right {
-                    @include font(light, normal, fs-80);
-                    justify-self: center;
+                    @include font(light, normal, fs-90);
                 }
             }
 
@@ -418,7 +423,6 @@
         width: 250px;
 
         .handle {
-            display: inline;
             overflow-wrap: anywhere;
 
             .username {

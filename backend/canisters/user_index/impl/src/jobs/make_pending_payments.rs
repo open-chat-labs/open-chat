@@ -5,7 +5,6 @@ use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
-use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
@@ -106,10 +105,4 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
         user_id,
         LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
     );
-}
-
-#[derive(Serialize)]
-struct Link {
-    url: String,
-    caption: String,
 }

@@ -426,7 +426,6 @@
 
 <IncomingCall on:joinVideoCall={joinVideoCall} />
 
-
 <Witch background />
 
 {#if isCanisterUrl}

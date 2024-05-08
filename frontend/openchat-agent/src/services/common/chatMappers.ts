@@ -75,6 +75,9 @@ import type {
     ApiVideoCallContent,
     ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
     ApiVideoCallType,
+    ApiVideoCallPresence,
+    ApiSetVideoCallPresenceResponse,
+    ApiCallParticipant,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -175,6 +178,10 @@ import type {
     VideoCallContent,
     JoinVideoCallResponse,
     VideoCallType,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
+    VideoCallParticipant,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -224,6 +231,7 @@ import type {
     ApiAcceptP2PSwapResponse as ApiGroupAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiGroupCancelP2PSwapResponse,
     ApiJoinVideoCallResponse as ApiJoinGroupVideoCallResponse,
+    ApiVideoCallParticipantsResponse as ApiGroupVideoCallParticipantsResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -261,6 +269,7 @@ import type {
     ApiAcceptP2PSwapResponse as ApiCommunityAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
     ApiJoinVideoCallResponse as ApiJoinChannelVideoCallResponse,
+    ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -659,11 +668,15 @@ function videoCallContent(candid: ApiVideoCallContent): VideoCallContent {
     return {
         kind: "video_call_content",
         ended: optional(candid.ended, identity),
-        participants: candid.participants.map((p) => ({
-            userId: p.user_id.toString(),
-            joined: p.joined,
-        })),
+        participants: candid.participants.map(videoCallParticipant),
         callType: videoCallType(candid.call_type),
+    };
+}
+
+function videoCallParticipant(candid: ApiCallParticipant): VideoCallParticipant {
+    return {
+        userId: candid.user_id.toString(),
+        joined: candid.joined,
     };
 }
 
@@ -1751,6 +1764,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
+        prizes_v2: domain.prizes,
     };
 }
 
@@ -2849,4 +2863,38 @@ export function joinVideoCallResponse(
     }
     console.warn("JoinVideoCall failed with ", candid);
     return "failure";
+}
+
+export function apiVideoCallPresence(domain: VideoCallPresence): ApiVideoCallPresence {
+    switch (domain) {
+        case "default":
+            return { Default: null };
+        case "hidden":
+            return { Hidden: null };
+        case "owner":
+            return { Owner: null };
+    }
+}
+
+export function setVideoCallPresence(
+    candid: ApiSetVideoCallPresenceResponse,
+): SetVideoCallPresenceResponse {
+    if ("Success" in candid) return "success";
+    console.warn("SetVideoCallPresence failed with: ", candid);
+    return "failure";
+}
+
+export function videoCallParticipantsResponse(
+    candid: ApiGroupVideoCallParticipantsResponse | ApiChannelVideoCallParticipantsResponse,
+): VideoCallParticipantsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            participants: candid.Success.participants.map(videoCallParticipant),
+            hidden: candid.Success.hidden.map(videoCallParticipant),
+            lastUpdated: candid.Success.last_updated,
+        };
+    }
+    console.warn("VideoCallParticipants failed with: ", candid);
+    return CommonResponses.failure();
 }

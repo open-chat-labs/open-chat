@@ -986,6 +986,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_in' : Milliseconds,
   });
   const PrizeContentInitial = IDL.Record({
+    'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
     'prizes' : IDL.Vec(Tokens),
@@ -1644,6 +1645,26 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
   });
+  const VideoCallPresence = IDL.Variant({
+    'Default' : IDL.Null,
+    'Hidden' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const SetVideoCallPresenceArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'presence' : VideoCallPresence,
+    'message_id' : MessageId,
+  });
+  const SetVideoCallPresenceResponse = IDL.Variant({
+    'AlreadyEnded' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+  });
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,
     'channel_id' : ChannelId,
@@ -2162,6 +2183,11 @@ export const idlFactory = ({ IDL }) => {
     'set_member_display_name' : IDL.Func(
         [SetMemberDisplayNameArgs],
         [SetMemberDisplayNameResponse],
+        [],
+      ),
+    'set_video_call_presence' : IDL.Func(
+        [SetVideoCallPresenceArgs],
+        [SetVideoCallPresenceResponse],
         [],
       ),
     'start_video_call' : IDL.Func(

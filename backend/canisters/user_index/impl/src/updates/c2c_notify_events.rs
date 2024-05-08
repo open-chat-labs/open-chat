@@ -118,10 +118,15 @@ fn process_new_user(
         }
     };
 
-    state
-        .data
-        .users
-        .register(caller, user_id, username.clone(), now, referred_by, false);
+    state.data.users.register(
+        caller,
+        user_id,
+        username.clone(),
+        now,
+        referred_by,
+        false,
+        is_from_identity_canister,
+    );
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
