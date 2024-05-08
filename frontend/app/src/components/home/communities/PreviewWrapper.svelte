@@ -3,7 +3,7 @@
     import Overlay from "../../Overlay.svelte";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import type { OpenChat, PinNumberFailures } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import InitiateCredentialCheck from "../InitiateCredentialCheck.svelte";
     import ApproveJoiningPaymentModal from "../ApproveJoiningPaymentModal.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -50,11 +50,7 @@
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = true;
                     } else if (resp.kind !== "success") {
-                        let pinError = client.pinNumberErrorMessage(resp as PinNumberFailures);
-
-                        toastStore.showFailureToast(
-                            pinError ?? i18nKey("communities.errors.joinFailed"),
-                        );
+                        toastStore.showFailureToast(i18nKey("communities.errors.joinFailed"));
                     }
                 })
                 .finally(() => (joiningCommunity = false));

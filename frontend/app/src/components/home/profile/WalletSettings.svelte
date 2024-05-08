@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat, PinNumberFailures } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -10,24 +10,20 @@
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { now500 } from "../../../stores/time";
     import { i18nKey } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
 
     let newPinArray: string[] = [];
     let setting = false;
     let clearing = false;
-    let errorResponse: PinNumberFailures | undefined = undefined;
     let showWarning = false;
 
     $: pinNumberRequiredStore = client.pinNumberRequiredStore;
     $: hasPin = $pinNumberRequiredStore;
     $: pinValid = isPinValid(newPinArray);
-    $: errorMessage =
-        errorResponse !== undefined
-            ? client.pinNumberErrorMessage(errorResponse, $now500)
-            : undefined;
+    $: errorMessage = $pinNumberErrorMessageStore;
 
     function isPinValid(pin: string[]): boolean {
         return pin.filter((c) => /^[0-9]$/.test(c)).length === 6;
@@ -53,8 +49,6 @@
             setting = true;
         }
 
-        errorResponse = undefined;
-
         return client
             .setPinNumber(newPin)
             .then((resp) => {
@@ -68,12 +62,6 @@
                           : "clearPinSuccess";
 
                     toastStore.showSuccessToast(i18nKey("pinNumber." + message));
-                } else if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    errorResponse = resp;
                 }
             })
             .finally(() => {

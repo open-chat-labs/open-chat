@@ -497,10 +497,10 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
-import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
+import { capturePinNumberStore, pinNumberFailureStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
-import type { PinNumberFailures, MessageFormatter, ResourceKey } from "openchat-shared";
+import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1305,8 +1305,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (response.kind === "approve_error" || response.kind === "internal_error") {
                     this._logger.error("Unable to approve transfer", response.error);
                     return CommonResponses.failure();
+                } else if (
+                    response.kind === "pin_incorrect" ||
+                    response.kind === "pin_required" ||
+                    response.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(response as PinNumberFailures);
                 }
-
+                
                 return response;
             })
             .catch(() => CommonResponses.failure());
@@ -3375,12 +3381,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 } else {
                     if (resp.kind == "rules_not_accepted") {
                         this.markChatRulesAcceptedLocally(false);
-                    }
-
-                    if (resp.kind == "community_rules_not_accepted") {
+                    } else if (resp.kind == "community_rules_not_accepted") {
                         this.markCommunityRulesAcceptedLocally(false);
-                    }
-
+                    } else if (
+                        resp.kind === "pin_incorrect" ||
+                        resp.kind === "pin_required" ||
+                        resp.kind === "too_main_failed_pin_attempts"
+                    ) {
+                        pinNumberFailureStore.set(resp as PinNumberFailures);
+                    }            
+        
                     this.onSendMessageFailure(
                         chatId,
                         msg.messageId,
@@ -3585,7 +3595,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         if (!isTransfer(event.event.content)) {
-            this.dispatchEvent(new SendMessageFailed(!canRetry, response));
+            this.dispatchEvent(new SendMessageFailed(!canRetry));
         }
     }
 
@@ -4694,7 +4704,17 @@ export class OpenChat extends OpenChatAgentWorker {
             pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin });
+        return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+            
+            return resp;
+        });
     }
 
     getGroupMessagesByMessageIndex(
@@ -5285,11 +5305,19 @@ export class OpenChat extends OpenChatAgentWorker {
             pin,
         })
             .then((resp) => {                
-                // TODO: THIS DOESN'T WORK FOR PIN FAILURE
                 localMessageUpdates.setP2PSwapStatus(
                     messageId,
                     mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
                 );
+
+                if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
+                }
+                
                 return resp;
             })
             .catch((err) => {
@@ -5896,7 +5924,17 @@ export class OpenChat extends OpenChatAgentWorker {
             },
             false,
             1000 * 60 * 3,
-        );
+        ).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+            
+            return resp;
+        });
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -6666,6 +6704,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 this.pinNumberRequiredStore.set(newPin !== undefined);
+            } else if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
             }
 
             return resp;
@@ -6673,6 +6717,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private promptForCurrentPin(message: string | undefined): Promise<string> {
+        pinNumberFailureStore.set(undefined);
         return new Promise((resolve, _) => {
             capturePinNumberStore.set({
                 resolve: (pin: string) => {
@@ -6711,48 +6756,6 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         });
     }    
-
-    pinNumberErrorMessage(resp: PinNumberFailures, now: number = 0): ResourceKey | undefined {
-        let error;
-        let nextRetryAt: bigint | undefined;
-
-        now = Math.max(now, Date.now());
-
-        if (resp.kind === "pin_incorrect") {
-            if (resp.nextRetryAt > now) {
-                error = "pinIncorrectTryLater";
-                nextRetryAt = resp.nextRetryAt;
-            } else {
-                error = "pinIncorrect";
-            }
-        } else if (resp.kind === "pin_required") {
-            error = "pinRequired";
-        } else if (resp.kind === "too_main_failed_pin_attempts") {
-            error = "tooManyFailedAttempts";
-            nextRetryAt = resp.nextRetryAt;
-            if (resp.nextRetryAt <= now) {
-                return undefined;
-            }
-        } else {
-            return undefined;
-        }
-
-        const duration = nextRetryAt !== undefined 
-            ? this.formatTimeRemaining(
-                now,
-                Number(nextRetryAt),
-                true,
-            )
-            : "";
-
-        return {
-            kind: "resource_key",
-            key: "pinNumber." + error,
-            params: { duration },
-            level: undefined,
-            lowercase: false,
-        };
-    }
 
     /**
      * Reactive state provided in the form of svelte stores

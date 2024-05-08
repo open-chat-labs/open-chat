@@ -6,7 +6,6 @@
         MultiUserChat,
         CommunitySummary,
         ResourceKey,
-        PinNumberFailures,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -18,7 +17,7 @@
     import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { now500 } from "../../stores/time";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -30,7 +29,6 @@
     let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
     let refreshingBalance = false;
-    let pinErrorResponse: PinNumberFailures | undefined = undefined;
 
     $: user = client.user;
     $: token = client.getTokenDetailsForAccessGate(gate)!;
@@ -58,11 +56,7 @@
             true,
         ),
     );
-    $: errorMessage =
-        error ??
-        (pinErrorResponse !== undefined
-            ? client.pinNumberErrorMessage(pinErrorResponse, $now500)
-            : undefined);
+    $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
 
     function onStartRefreshingBalance() {
         refreshingBalance = true;
@@ -89,7 +83,6 @@
     function doJoin() {
         joining = true;
         error = undefined;
-        pinErrorResponse = undefined;
 
         const promise =
             group.kind === "community"
@@ -111,11 +104,6 @@
                         break;
                     case "blocked":
                         error = i18nKey("youreBlocked");
-                        break;
-                    case "pin_incorrect":
-                    case "pin_required":
-                    case "too_main_failed_pin_attempts":
-                        pinErrorResponse = result;
                         break;
                 }
             })

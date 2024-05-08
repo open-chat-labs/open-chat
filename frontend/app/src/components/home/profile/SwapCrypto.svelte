@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { DexId, OpenChat, PinNumberFailures, ResourceKey } from "openchat-client";
+    import type { DexId, OpenChat, ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
@@ -17,7 +17,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { now500 } from "../../../stores/time";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
 
     export let ledgerIn: string;
 
@@ -39,7 +39,6 @@
     let message: string | undefined = undefined;
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
-    let pinNumberErrorResponse: PinNumberFailures | undefined = undefined;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
@@ -69,11 +68,7 @@
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
 
     $: primaryButtonText = getPrimaryButtonText(state, result);
-
-    $: pinNumberError =
-        pinNumberErrorResponse !== undefined
-            ? client.pinNumberErrorMessage(pinNumberErrorResponse, $now500)
-            : undefined;
+    $: pinNumberError = $pinNumberErrorMessageStore;
 
     onMount(() => loadSwaps(ledgerIn));
 
@@ -148,22 +143,12 @@
         busy = true;
         error = undefined;
         result = undefined;
-        pinNumberErrorResponse = undefined;
 
         swapId = random128();
 
         client
             .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0])
-            .then((resp) => {
-                if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    pinNumberErrorResponse = resp;
-                    busy = false;
-                }
-            });
+            .then((_) => (busy = false));
     }
 
     function dexName(dex: DexId): string {

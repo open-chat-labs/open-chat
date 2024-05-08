@@ -6,7 +6,6 @@
         MessageContext,
         OpenChat,
         P2PSwapContent,
-        PinNumberFailures,
         ResourceKey,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -25,6 +24,7 @@
     import Translatable from "../Translatable.svelte";
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -178,33 +178,32 @@
         response: AcceptP2PSwapResponse | CancelP2PSwapResponse,
         accepting: boolean,
     ) {
-        let key: string = response.kind;
-
-        let resourceKey = client.pinNumberErrorMessage(response as PinNumberFailures);
-
-        if (resourceKey === undefined) {
-            switch (key) {
-                case "already_reserved":
-                case "already_completed":
-                    key = "already_accepted";
-                    break;
-                case "channel_not_found":
-                case "chat_not_found":
-                case "user_suspended":
-                case "user_not_in_group":
-                case "user_not_in_community":
-                case "user_not_in_channel":
-                case "chat_frozen":
-                case "insufficient_funds":
-                case "internal_error":
-                    key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
-                    break;
-            }
-
-            resourceKey = i18nKey("p2pSwap." + key);
+        if ($pinNumberErrorMessageStore !== undefined) {
+            toastStore.showFailureToast(pinNumberErrorMessageStore);
+            return;
         }
 
-        toastStore.showFailureToast(resourceKey);
+        let key: string = response.kind;
+
+        switch (key) {
+            case "already_reserved":
+            case "already_completed":
+                key = "already_accepted";
+                break;
+            case "channel_not_found":
+            case "chat_not_found":
+            case "user_suspended":
+            case "user_not_in_group":
+            case "user_not_in_community":
+            case "user_not_in_channel":
+            case "chat_frozen":
+            case "insufficient_funds":
+            case "internal_error":
+                key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
+                break;
+        }
+
+        toastStore.showFailureToast(i18nKey("p2pSwap." + key));
     }
 
     function onSwapClick() {

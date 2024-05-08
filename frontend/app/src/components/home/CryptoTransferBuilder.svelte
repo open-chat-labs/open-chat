@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
-    import type { CryptocurrencyContent, MessageContext, PinNumberFailures } from "openchat-shared";
+    import type { CryptocurrencyContent, MessageContext } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -20,7 +20,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { now500 } from "../../stores/time";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -33,7 +33,6 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let errorResponse: PinNumberFailures | undefined = undefined;
     let message = "";
     let confirming = false;
     let toppingUp = false;
@@ -58,13 +57,7 @@
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
-
-    $: errorMessage =
-        error !== undefined
-            ? i18nKey(error)
-            : errorResponse !== undefined
-              ? client.pinNumberErrorMessage(errorResponse, $now500)
-              : undefined;
+    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -106,24 +99,17 @@
             },
         };
 
-        errorResponse = undefined;
         sending = true;
+        error = undefined;
 
         client
             .sendMessageWithContent(messageContext, content, false)
             .then((resp) => {
-                if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    errorResponse = resp;
-                } else {
-                    if (resp.kind === "success") {
-                        lastCryptoSent.set(ledger);
-                    }
-
+                if (resp.kind === "success") {
+                    lastCryptoSent.set(ledger);
                     dispatch("close");
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "errorSendingMessage";
                 }
             })
             .finally(() => (sending = false));

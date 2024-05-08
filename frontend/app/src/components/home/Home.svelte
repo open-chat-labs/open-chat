@@ -31,7 +31,6 @@
         CredentialGate,
         PaymentGate,
         ResourceKey,
-        PinNumberFailures,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -100,6 +99,7 @@
     import IdentityMigrationModal from "../IdentityMigrationModal.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     type ViewProfileConfig = {
         userId: string;
@@ -264,14 +264,7 @@
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
             if (ev.detail.alert) {
-                const resp = ev.detail.response;
-
-                let pinError;
-                if (resp !== undefined) {
-                    pinError = client.pinNumberErrorMessage(resp as PinNumberFailures);
-                }
-
-                toastStore.showFailureToast(pinError ?? i18nKey("errorSendingMessage"));
+                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
@@ -865,10 +858,8 @@
                 } else if (resp.kind === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
                 } else if (resp.kind !== "success") {
-                    let pinError = client.pinNumberErrorMessage(resp as PinNumberFailures);
-
                     toastStore.showFailureToast(
-                        pinError ?? i18nKey("joinGroupFailed", undefined, group.level, true),
+                        i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
                     joining = undefined;
                 } else if (select) {

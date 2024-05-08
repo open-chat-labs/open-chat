@@ -6,7 +6,6 @@
         OpenChat,
         PrizeContentInitial,
         MessageContext,
-        PinNumberFailures,
     } from "openchat-client";
     import { bigIntMax } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
@@ -28,7 +27,7 @@
     import NumberInput from "../NumberInput.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { now500 } from "../../stores/time";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -49,7 +48,6 @@
     let diamondOnly = true;
     let refreshing = false;
     let error: string | undefined = undefined;
-    let errorResponse: PinNumberFailures | undefined = undefined;
     let message = "";
     let toppingUp = false;
     let tokenChanging = true;
@@ -74,13 +72,7 @@
     $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
-
-    $: errorMessage =
-        error !== undefined
-            ? i18nKey(error)
-            : errorResponse !== undefined
-              ? client.pinNumberErrorMessage(errorResponse, $now500)
-              : undefined;
+    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     $: {
         if (tokenInputState === "too_low") {
@@ -142,24 +134,17 @@
             prizes,
         };
 
-        errorResponse = undefined;
         sending = true;
+        error = undefined;
 
         client
             .sendMessageWithContent(context, content, false)
             .then((resp) => {
-                if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    errorResponse = resp;
-                } else {
-                    if (resp.kind === "success") {
-                        lastCryptoSent.set(ledger);
-                    }
-
+                if (resp.kind === "success") {
+                    lastCryptoSent.set(ledger);
                     dispatch("close");
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "errorSendingMessage";
                 }
             })
             .finally(() => (sending = false));

@@ -19,3 +19,4 @@ export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
 export type { FailedMessages } from "./stores/failedMessages";
 export { emptyUnreadCounts, emptyCombinedUnreadCounts } from "./stores/global";
+export { pinNumberFailureStore } from "./stores/pinNumber";

@@ -11,7 +11,6 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
-        PinNumberFailures,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -25,8 +24,7 @@
     import TipButton from "./TipButton.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { toastStore } from "../../stores/toast";
-    import { now500 } from "../../stores/time";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -41,6 +39,7 @@
     let refreshing = false;
     let busy = false;
     let error: string | undefined = undefined;
+    let tipError: string | undefined = undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -52,7 +51,6 @@
     let showCustomTip = false;
     let validAmount: boolean = false;
     let draftAmount = 0n;
-    let errorResponse: PinNumberFailures | undefined = undefined;
 
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -70,6 +68,7 @@
     $: valid = draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
     $: transferFees = tokenDetails.transferFee;
+    $: tipErrorMessage = tipError !== undefined ? i18nKey(tipError) : $pinNumberErrorMessageStore;
 
     $: {
         if (ledger !== undefined) {
@@ -94,11 +93,6 @@
             );
         }
     }
-
-    $: tipErrorMessage =
-        errorResponse !== undefined
-            ? client.pinNumberErrorMessage(errorResponse, $now500)
-            : undefined;
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -211,8 +205,8 @@
         };
         lastCryptoSent.set(ledger);
 
-        errorResponse = undefined;
         busy = true;
+        tipError = undefined;
 
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
 
@@ -221,14 +215,8 @@
             .then((resp) => {
                 if (resp.kind === "success") {
                     dispatch("close");
-                } else if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    errorResponse = resp;
-                } else {
-                    toastStore.showFailureToast(i18nKey("tip.failure"));
+                } else if (resp.kind === "failure") {
+                    tipError = "tip.failure";
                 }
             })
             .finally(() => {
