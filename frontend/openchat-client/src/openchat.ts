@@ -6625,7 +6625,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUserLocation(): Promise<string | undefined> {
-        if (this._userLocation !== undefined) return Promise.resolve(this._userLocation);
+        if (this._userLocation !== undefined) {
+            return Promise.resolve(this._userLocation);
+        }
         return getUserCountryCode()
             .then((country) => {
                 this._userLocation = country;
