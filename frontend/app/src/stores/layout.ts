@@ -45,7 +45,8 @@ export const layoutStore: Readable<Layout> = derived(
                         $pathParams.kind === "admin_route") &&
                         !showRight));
             return {
-                showBottomNav: showNav,
+                // showBottomNav: showNav,
+                showBottomNav: false,
                 showNav,
                 showMiddle,
                 showLeft,
