@@ -580,6 +580,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin safezone() {
     --safe-area-inset-bottom: max(0px, env(safe-area-inset-bottom, 0px) - 8px);
+    --safe-area-inset-bottom: 0;
 
     @content;
 }
