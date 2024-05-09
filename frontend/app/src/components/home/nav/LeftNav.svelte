@@ -1,41 +1,55 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
+        type UserSummary,
         emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { getContext, onDestroy, onMount, tick } from "svelte";
-    import NavItem from "./NavItem.svelte";
-    import { layoutStore, navOpen } from "../../../stores/layout";
+    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
+    import LeftNavItem from "./LeftNavItem.svelte";
+    import MainMenu from "./MainMenu.svelte";
+    import { navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
     import { rtlStore } from "../../../stores/rtl";
     import { i18nKey } from "../../../i18n/i18n";
-    import CommonNavElements from "./CommonNavElements.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import MainMenu from "./MainMenu.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
     const flipDurationMs = 300;
 
+    $: createdUser = client.user;
+    $: userStore = client.userStore;
+    $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
+    $: unreadDirectCounts = client.unreadDirectCounts;
+    $: directVideoCallCounts = client.directVideoCallCounts;
+    $: groupVideoCallCounts = client.groupVideoCallCounts;
+    $: favouritesVideoCallCounts = client.favouritesVideoCallCounts;
+    $: unreadGroupCounts = client.unreadGroupCounts;
+    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
     $: communityChannelVideoCallCounts = client.communityChannelVideoCallCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
+    $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -95,8 +109,24 @@
         }
     }
 
+    function viewProfile() {
+        dispatch("profile");
+    }
+
     function exploreCommunities() {
         page("/communities");
+    }
+
+    function directChats() {
+        page("/user");
+    }
+
+    function groupChats() {
+        page("/group");
+    }
+
+    function favouriteChats() {
+        page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
@@ -113,19 +143,64 @@
 <svelte:body on:click={closeIfOpen} />
 
 <section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
-    {#if !$layoutStore.showBottomNav}
-        <div class="top">
-            <CommonNavElements
-                menuAlignment={"start"}
-                menuPosition={"right"}
-                menuGutter={20}
-                orientation={"horizontal"}
-                on:profile
-                on:wallet
-                on:halloffame
-                on:upgrade />
-        </div>
-    {/if}
+    <div class="top">
+        <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
+            <div class="hover logo">
+                <MenuIcon position="right" align="start" gutter={20}>
+                    <span slot="icon">
+                        <HoverIcon>
+                            <Hamburger size={iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                    <span slot="menu">
+                        <MainMenu on:wallet on:halloffame on:upgrade on:profile />
+                    </span>
+                </MenuIcon>
+            </div>
+        </LeftNavItem>
+
+        {#if user !== undefined}
+            <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
+                <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
+            </LeftNavItem>
+        {/if}
+
+        <LeftNavItem
+            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+            label={i18nKey("communities.directChats")}
+            disabled={$anonUser}
+            unread={$unreadDirectCounts.chats}
+            video={$directVideoCallCounts}
+            on:click={directChats}>
+            <div class="hover direct">
+                <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+
+        <LeftNavItem
+            selected={$chatListScope.kind === "group_chat" && !communityExplorer}
+            label={i18nKey("communities.groupChats")}
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
+            video={$groupVideoCallCounts}
+            on:click={groupChats}>
+            <div class="hover direct">
+                <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+
+        <LeftNavItem
+            selected={$chatListScope.kind === "favourite" && !communityExplorer}
+            separator
+            disabled={$anonUser}
+            label={i18nKey("communities.favourites")}
+            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
+            video={$favouritesVideoCallCounts}
+            on:click={favouriteChats}>
+            <div class="hover favs">
+                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+    </div>
 
     <div
         use:dndzone={{
@@ -140,7 +215,7 @@
         class="middle">
         {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
-                <NavItem
+                <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
@@ -160,44 +235,26 @@
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />
-                </NavItem>
+                </LeftNavItem>
             </div>
         {/each}
     </div>
 
     <div class="bottom">
-        <NavItem
+        <LeftNavItem
             selected={communityExplorer}
             label={i18nKey("communities.explore")}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
-        </NavItem>
-        <NavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
+        </LeftNavItem>
+        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
-        </NavItem>
+        </LeftNavItem>
     </div>
-    {#if $layoutStore.showBottomNav}
-        <div class="corner">
-            <NavItem orientation={"vertical"} label={i18nKey("communities.mainMenu")}>
-                <div class="hover logo">
-                    <MenuIcon position={"right"} align={"start"} gutter={20}>
-                        <span slot="icon">
-                            <HoverIcon>
-                                <Hamburger size={iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </span>
-                        <span slot="menu">
-                            <MainMenu on:wallet on:halloffame on:upgrade on:profile />
-                        </span>
-                    </MenuIcon>
-                </div>
-            </NavItem>
-        </div>
-    {/if}
 </section>
 
 <style lang="scss">
@@ -206,24 +263,24 @@
     }
 
     @media (hover: hover) {
-        :global(.nav-item .avatar:not(.selected):hover) {
+        :global(.left-nav-item .avatar:not(.selected):hover) {
             box-shadow: 0 0 0 1px var(--icon-selected);
         }
 
-        :global(.nav-item:hover .hover svg path) {
+        :global(.left-nav-item:hover .hover svg path) {
             fill: var(--icon-selected);
         }
 
-        :global(.nav-item:hover .hover) {
+        :global(.left-nav-item:hover .hover) {
             border-color: var(--icon-selected);
         }
     }
 
-    :global(.nav-item.selected svg path) {
+    :global(.left-nav-item.selected svg path) {
         fill: var(--icon-selected);
     }
 
-    :global(.nav-item.selected) {
+    :global(.left-nav-item.selected) {
         .explore {
             border: 1px solid var(--icon-selected);
         }
@@ -241,7 +298,7 @@
         overflow-x: hidden;
         height: 100%;
         background: var(--panel-nav-bg);
-        padding: $sp2 0 0 0;
+        padding: $sp2 0;
         border-right: var(--bw) solid var(--bd);
         @include z-index("left-nav");
         transition: width 250ms ease-in-out;
@@ -255,7 +312,7 @@
 
         @include mobile() {
             width: toRem(60);
-            padding: $sp1 0 0 0;
+            padding: $sp1 0;
         }
 
         &.open {
@@ -274,15 +331,15 @@
         display: flex;
         flex-direction: column;
     }
+    .logo {
+        width: $size;
+        height: $size;
+        margin: auto;
 
-    .bottom {
-        padding-bottom: $sp1;
-    }
-
-    .corner {
-        display: flex;
-        flex: 0 0 toRem(60);
-        border-top: var(--bw) solid var(--bd);
+        @include mobile() {
+            width: $mobile-size;
+            height: $mobile-size;
+        }
     }
 
     .middle {
