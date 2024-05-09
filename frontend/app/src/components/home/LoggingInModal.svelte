@@ -122,18 +122,24 @@
     }
 
     function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
-        client.generateMagicLink(email, sessionKey).then((response) => {
-            if (response.kind === "success") {
-                startPoller(email, sessionKey, response.userKey, response.expiration);
-            } else if (response.kind === "email_invalid") {
-                error = "loginDialog.invalidEmail";
-            } else if (response.kind === "failed_to_send_email") {
-                console.log("generateMagicLink failed_to_send_email", response.error);
-                error = "loginDialog.failedToSendEmail";
-            } else if (response.kind === "blocked") {
+        client
+            .generateMagicLink(email, sessionKey)
+            .then((response) => {
+                if (response.kind === "success") {
+                    startPoller(email, sessionKey, response.userKey, response.expiration);
+                } else if (response.kind === "email_invalid") {
+                    error = "loginDialog.invalidEmail";
+                } else if (response.kind === "failed_to_send_email") {
+                    console.debug("generateMagicLink failed_to_send_email", response.error);
+                    error = "loginDialog.failedToSendEmail";
+                } else if (response.kind === "blocked") {
+                    error = "loginDialog.unexpectedError";
+                }
+            })
+            .catch((err) => {
+                console.warn("generateMagicLink error", err);
                 error = "loginDialog.unexpectedError";
-            }
-        });
+            });
     }
 
     function startPoller(
@@ -151,9 +157,13 @@
                             emailSignInPoller?.stop();
                             emailSignInPoller == undefined;
                         } else if (response.kind === "error") {
-                            console.log("Failed to getSignInWithEmailDelegation", response.error);
+                            console.debug("getSignInWithEmailDelegation error", response.error);
                             error = "loginDialog.unexpectedError";
                         }
+                    })
+                    .catch((err) => {
+                        console.warn("getSignInWithEmailDelegation error", err);
+                        error = "loginDialog.unexpectedError";
                     });
             }
         }, 1000);
