@@ -384,8 +384,7 @@ import type {
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
-    GenerateEmailVerificationCodeResponse,
-    SignInWithEmailVerificationCodeResponse,
+    GenerateMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
@@ -560,15 +559,6 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
-
-        getUserCountryCode()
-            .then((country) => {
-                this._userLocation = country;
-                console.debug("GEO: derived user's location: ", country);
-            })
-            .catch((err) => {
-                console.warn("GEO: Unable to determine user's country location", err);
-            });
 
         this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
@@ -6124,44 +6114,38 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        return this.sendRequest({ kind: "generateEmailVerificationCode", email });
+    generateMagicLink(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+    ): Promise<GenerateMagicLinkResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
     }
 
-    async signInWithEmailVerificationCode(
+    async getSignInWithEmailDelegation(
         email: string,
-        code: string,
+        userKey: Uint8Array,
         sessionKey: ECDSAKeyIdentity,
-    ): Promise<SignInWithEmailVerificationCodeResponse> {
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
         const sessionKeyDer = toDer(sessionKey);
-        const submitCodeResponse = await this.sendRequest({
-            kind: "submitEmailVerificationCode",
+        const getDelegationResponse = await this.sendRequest({
+            kind: "getSignInWithEmailDelegation",
             email,
-            code,
             sessionKey: sessionKeyDer,
+            expiration,
         });
-
-        if (submitCodeResponse.kind === "success") {
-            const getDelegationResponse = await this.sendRequest({
-                kind: "getSignInWithEmailDelegation",
-                email,
-                sessionKey: sessionKeyDer,
-                expiration: submitCodeResponse.expiration,
-            });
-            if (getDelegationResponse.kind === "success") {
-                const identity = buildDelegationIdentity(
-                    submitCodeResponse.userKey,
-                    sessionKey,
-                    getDelegationResponse.delegation,
-                    getDelegationResponse.signature,
-                );
-                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-                this.loadedAuthenticationIdentity(identity);
-            }
-            return getDelegationResponse;
-        } else {
-            return submitCodeResponse;
+        if (getDelegationResponse.kind === "success") {
+            const identity = buildDelegationIdentity(
+                userKey,
+                sessionKey,
+                getDelegationResponse.delegation,
+                getDelegationResponse.signature,
+            );
+            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+            this.loadedAuthenticationIdentity(identity);
         }
+        return getDelegationResponse;
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
@@ -6640,10 +6624,26 @@ export class OpenChat extends OpenChatAgentWorker {
         return { kind: "direct_chat" };
     }
 
+    getUserLocation(): Promise<string | undefined> {
+        if (this._userLocation !== undefined) {
+            return Promise.resolve(this._userLocation);
+        }
+        return getUserCountryCode()
+            .then((country) => {
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
+                return country;
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+                return undefined;
+            });
+    }
+
     // **** End of Communities stuff
     diamondDurationToMs = diamondDurationToMs;
-    swapRestricted(): boolean {
-        return featureRestricted(this._userLocation, "swap");
+    swapRestricted(): Promise<boolean> {
+        return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
     /**

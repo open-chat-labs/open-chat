@@ -1,4 +1,5 @@
 use crate::guards::caller_is_user_index_canister;
+use crate::timer_job_types::{DeleteUserJob, TimerJob};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -163,6 +164,20 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .data
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
+        }
+        Event::UserDeleted(ev) => {
+            state.data.global_users.remove(&ev.user_id);
+            if state.data.local_users.remove(&ev.user_id) {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::DeleteUser(DeleteUserJob {
+                        user_id: ev.user_id,
+                        attempt: 0,
+                    }),
+                    now,
+                    now,
+                );
+            }
         }
         Event::SecretKeySet(sk_der) => {
             state.data.oc_secret_key_der = Some(sk_der);

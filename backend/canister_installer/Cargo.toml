@@ -27,6 +27,7 @@ online_users_canister = { path = "../canisters/online_users/api" }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 registry_canister = { path = "../canisters/registry/api" }
 sign_in_with_email_canister = { workspace = true }
+sign_in_with_email_canister_test_utils = { workspace = true }
 storage_index_canister = { path = "../canisters/storage_index/api" }
 tokio = { workspace = true, features = ["full"] }
 translations_canister = { path = "../canisters/translations/api" }

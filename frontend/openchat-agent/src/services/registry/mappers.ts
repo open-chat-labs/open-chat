@@ -19,9 +19,7 @@ export function updatesResponse(
             lastUpdated: candid.Success.last_updated,
             tokenDetails:
                 optional(candid.Success.token_details, (tokens) =>
-                    tokens
-                        .filter((t) => t.enabled)
-                        .map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
+                    tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
             nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
             messageFiltersAdded: candid.Success.message_filters_added,
@@ -59,6 +57,7 @@ function tokenDetails(
         transactionUrlFormat: candid.transaction_url_format,
         supportedStandards: candid.supported_standards,
         added: candid.added,
+        enabled: candid.enabled,
         lastUpdated: candid.last_updated,
     };
 }

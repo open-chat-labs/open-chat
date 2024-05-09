@@ -8,12 +8,21 @@ type EncryptedAwsEmailSenderConfig = record {
 type EncryptedEmailSenderConfig = variant {
   Aws : EncryptedAwsEmailSenderConfig;
 };
-type GenerateVerificationCodeArgs = record { email : text };
-type GenerateVerificationCodeResponse = variant {
+type GenerateMagicLinkArgs = record {
+  session_key : vec nat8;
+  email : text;
+  max_time_to_live : opt nat64;
+};
+type GenerateMagicLinkResponse = variant {
   Blocked : nat64;
   EmailInvalid;
   FailedToSendEmail : text;
-  Success;
+  Success : GenerateMagicLinkSuccess;
+};
+type GenerateMagicLinkSuccess = record {
+  created : nat64;
+  user_key : vec nat8;
+  expiration : nat64;
 };
 type GetDelegationArgs = record {
   session_key : vec nat8;
@@ -21,41 +30,35 @@ type GetDelegationArgs = record {
   expiration : nat64;
 };
 type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
-type IncorrectCode = record {
-  blocked_duration : opt nat64;
-  attempts_remaining : nat32;
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : vec nat8;
+  headers : vec record { text; text };
 };
-type InitArgs = record { test_mode : bool };
+type HttpResponse = record {
+  body : vec nat8;
+  headers : vec record { text; text };
+  upgrade : opt bool;
+  status_code : nat16;
+};
+type InitArgs = record {
+  salt : opt vec nat8;
+  email_sender_public_key_pem : text;
+};
 type InitOrUpgradeArgs = variant { Upgrade : UpgradeArgs; Init : InitArgs };
 type SignedDelegation = record {
   signature : vec nat8;
   delegation : Delegation;
 };
-type SubmitVerificationCodeArgs = record {
-  session_key : vec nat8;
-  code : text;
-  email : text;
-  max_time_to_live : opt nat64;
-};
-type SubmitVerificationCodeResponse = variant {
-  NotFound;
-  Success : SubmitVerificationCodeSuccess;
-  IncorrectCode : IncorrectCode;
-};
-type SubmitVerificationCodeSuccess = record {
-  user_key : vec nat8;
-  expiration : nat64;
-};
 type UpgradeArgs = record {
+  email_sender_public_key_pem : opt text;
   email_sender_config : opt EncryptedEmailSenderConfig;
 };
 service : {
-  generate_verification_code : (GenerateVerificationCodeArgs) -> (
-      GenerateVerificationCodeResponse,
-    );
+  generate_magic_link : (GenerateMagicLinkArgs) -> (GenerateMagicLinkResponse);
   get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  http_request_update : (HttpRequest) -> (HttpResponse);
   rsa_public_key : () -> (opt text) query;
-  submit_verification_code : (SubmitVerificationCodeArgs) -> (
-      SubmitVerificationCodeResponse,
-    );
 }
