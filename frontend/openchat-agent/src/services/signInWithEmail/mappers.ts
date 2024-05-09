@@ -1,5 +1,5 @@
-import type { ApiGenerateMagicLinkResponse } from "./candid/idl";
-import { type GenerateMagicLinkResponse, UnsupportedValueError } from "openchat-shared";
+import type { ApiGenerateMagicLinkResponse, ApiHandleMagicLinkResponse } from "./candid/idl";
+import { type GenerateMagicLinkResponse, UnsupportedValueError, type HandleMagicLinkResponse } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
 
 export function generateMagicLinkResponse(
@@ -35,6 +35,24 @@ export function generateMagicLinkResponse(
     );
 }
 
-// function durationToTimestamp(duration: bigint): bigint {
-//     return BigInt(Date.now() + Number(duration));
-// }
+export function handleMagicLinkResponse(
+    candid: ApiHandleMagicLinkResponse,
+): HandleMagicLinkResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("LinkInvalid" in candid) {
+        return {
+            kind: "link_invalid",
+        };
+    }
+    if ("LinkExpired" in candid) {
+        return {
+            kind: "link_expired",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiHandleMagicLinkResponse type received",
+        candid,
+    );
+}

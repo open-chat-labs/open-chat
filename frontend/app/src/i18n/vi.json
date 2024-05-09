@@ -513,6 +513,13 @@
     },
     "logout": "Đăng xuất",
     "lowBandwidth": "Băng thông thấp",
+    "magicLink": {
+        "link_expired": "Liên kết chỉ có hiệu lực trong 5 phút và đã hết hạn. Vui lòng đóng trang này và thử đăng nhập lại.",
+        "link_invalid": "Liên kết không hợp lệ. Vui lòng đóng trang này và thử đăng nhập lại.",
+        "noLink": "Không có liên kết được cung cấp. Vui lòng đóng trang này và thử đăng nhập lại.",
+        "success": "Thành công! Bây giờ bạn đã đăng nhập. Vui lòng đóng trang này và tiếp tục trên trang gốc.",
+        "title": "Đăng nhập bằng liên kết email..."
+    },
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
     "makeGroupPrivateFailed": "Không thể đặt {level} ở chế độ riêng tư",
     "makeGroupPublicFailed": "Không công khai được {level}",

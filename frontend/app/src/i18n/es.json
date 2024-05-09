@@ -513,6 +513,13 @@
     },
     "logout": "desconectar",
     "lowBandwidth": "Ancho de banda bajo",
+    "magicLink": {
+        "link_expired": "El enlace solo es válido por 5 minutos y ha caducado. Cierra esta página e intenta iniciar sesión nuevamente.",
+        "link_invalid": "El enlace no es válido. Cierra esta página e intenta iniciar sesión nuevamente.",
+        "noLink": "No se proporcionó ningún enlace. Cierra esta página e intenta iniciar sesión nuevamente.",
+        "success": "¡Éxito! Ya ha iniciado sesión. Cierre esta página y continúe en la página original.",
+        "title": "Iniciando sesión con un enlace de correo electrónico..."
+    },
     "makeGroupPrivate": "Hacer que el grupo sea privado",
     "makeGroupPrivateFailed": "No se pudo hacer que {level} sea privado",
     "makeGroupPublicFailed": "No se pudo hacer público {level}",

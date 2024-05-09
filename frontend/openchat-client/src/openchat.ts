@@ -385,6 +385,7 @@ import type {
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
     GenerateMagicLinkResponse,
+    HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
@@ -6120,6 +6121,10 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<GenerateMagicLinkResponse> {
         const sessionKeyDer = toDer(sessionKey);
         return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
+    }
+
+    async handleMagicLink(link: string): Promise<HandleMagicLinkResponse> {
+        return this.sendRequest({ kind: "handleMagicLink", link });
     }
 
     async getSignInWithEmailDelegation(

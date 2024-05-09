@@ -199,6 +199,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    HandleMagicLinkResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3307,6 +3308,10 @@ export class OpenChatAgent extends EventTarget {
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
         return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
+    }
+
+    handleMagicLink(link: string): Promise<HandleMagicLinkResponse> {
+        return this._signInWithEmailClient.handleMagicLink(link);
     }
 
     getSignInWithEmailDelegation(

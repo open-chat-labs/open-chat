@@ -1,7 +1,8 @@
 import type { IDL } from "@dfinity/candid";
-import { GenerateMagicLinkResponse, _SERVICE } from "./types";
+import { GenerateMagicLinkResponse, HandleMagicLinkResponse, _SERVICE } from "./types";
 export {
     GenerateMagicLinkResponse as ApiGenerateMagicLinkResponse,
+    HandleMagicLinkResponse as ApiHandleMagicLinkResponse,
     _SERVICE as SignInWithEmailService,
 };
 

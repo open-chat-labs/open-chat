@@ -513,6 +513,13 @@
     },
     "logout": "登出",
     "lowBandwidth": "低带宽",
+    "magicLink": {
+        "link_expired": "该链接仅有效 5 分钟，已过期。请关闭此页面并尝试重新登录。",
+        "link_invalid": "链接无效。请关闭此页面并尝试重新登录。",
+        "noLink": "未提供链接。请关闭此页面并尝试再次登录。",
+        "success": "成功！您现在已登录。请关闭此页面并继续使用原始页面。",
+        "title": "使用电子邮件链接登录..."
+    },
     "makeGroupPrivate": "将群聊设为私有",
     "makeGroupPrivateFailed": "无法将 {level} 设为私有",
     "makeGroupPublicFailed": "未能公开 {level}",

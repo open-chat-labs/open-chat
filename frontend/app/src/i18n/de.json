@@ -513,6 +513,13 @@
     },
     "logout": "Abmelden",
     "lowBandwidth": "Niedrige Bandbreite",
+    "magicLink": {
+        "link_expired": "Der Link ist nur 5 Minuten gültig und dann abgelaufen. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
+        "link_invalid": "Der Link ist ungültig. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
+        "noLink": "Kein Link angegeben. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
+        "success": "Erfolg! Sie sind jetzt angemeldet. Bitte schließen Sie diese Seite und fahren Sie auf der ursprünglichen Seite fort.",
+        "title": "Mit E-Mail-Link anmelden …"
+    },
     "makeGroupPrivate": "Gruppe privat machen",
     "makeGroupPrivateFailed": "{level} konnte nicht privat gemacht werden",
     "makeGroupPublicFailed": "{level} konnte nicht veröffentlicht werden",

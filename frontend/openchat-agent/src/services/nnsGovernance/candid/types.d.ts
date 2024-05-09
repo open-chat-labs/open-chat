@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface Ballot { 'vote' : number, 'voting_power' : bigint }
 export type Command = { 'RegisterVote' : RegisterVote };
@@ -42,5 +41,3 @@ export interface _SERVICE {
   'list_proposals' : ActorMethod<[ListProposalInfo], ListProposalInfoResponse>,
   'manage_neuron' : ActorMethod<[ManageNeuron], ManageNeuronResponse>,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

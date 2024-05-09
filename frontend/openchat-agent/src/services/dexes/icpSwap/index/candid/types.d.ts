@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export type Error = { 'CommonError' : null } |
   { 'InternalError' : string } |
@@ -15,5 +14,3 @@ export interface PoolData {
 }
 export interface Token { 'address' : string, 'standard' : string }
 export interface _SERVICE { 'getPools' : ActorMethod<[], GetPoolsResponse> }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

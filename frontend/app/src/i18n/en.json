@@ -513,6 +513,13 @@
     },
     "logout": "Sign out",
     "lowBandwidth": "Low bandwidth",
+    "magicLink": {
+        "link_expired": "The link is only valid for 5 minutes and has expired. Please close this page and try signing in again.",
+        "link_invalid": "The link is invalid. Please close this page and try signing in again.",
+        "noLink": "No link supplied. Please close this page and try signing in again.",
+        "success": "Success! You are now signed in. Please close this page and continue on the original page.",
+        "title": "Signing in with email link..."
+    },
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make {level} private",
     "makeGroupPublicFailed": "Failed to make {level} public",

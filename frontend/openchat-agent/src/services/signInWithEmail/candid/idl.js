@@ -32,17 +32,11 @@ export const idlFactory = ({ IDL }) => {
     'NotFound' : IDL.Null,
     'Success' : SignedDelegation,
   });
-  const HttpRequest = IDL.Record({
-    'url' : IDL.Text,
-    'method' : IDL.Text,
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
-  });
-  const HttpResponse = IDL.Record({
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
-    'upgrade' : IDL.Opt(IDL.Bool),
-    'status_code' : IDL.Nat16,
+  const HandleMagicLinkArgs = IDL.Record({ 'link' : IDL.Text });
+  const HandleMagicLinkResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'LinkExpired' : IDL.Null,
+    'LinkInvalid' : IDL.Text,
   });
   return IDL.Service({
     'generate_magic_link' : IDL.Func(
@@ -55,9 +49,11 @@ export const idlFactory = ({ IDL }) => {
         [GetDelegationResponse],
         ['query'],
       ),
-    'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
-    'http_request_update' : IDL.Func([HttpRequest], [HttpResponse], []),
-    'rsa_public_key' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+    'handle_magic_link' : IDL.Func(
+        [HandleMagicLinkArgs],
+        [HandleMagicLinkResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

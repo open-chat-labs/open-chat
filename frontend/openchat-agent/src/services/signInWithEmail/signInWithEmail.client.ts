@@ -1,8 +1,8 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEmailService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
-import { generateMagicLinkResponse } from "./mappers";
+import type { GenerateMagicLinkResponse, GetDelegationResponse, HandleMagicLinkResponse } from "openchat-shared";
+import { generateMagicLinkResponse, handleMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
 import type { AgentConfig } from "../../config";
 
@@ -47,6 +47,15 @@ export class SignInWithEmailClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.get_delegation(args),
             getDelegationResponse,
+            args,
+        );
+    }
+
+    handleMagicLink(link: string): Promise<HandleMagicLinkResponse> {
+        const args = { link };
+        return this.handleResponse(
+            this.service.handle_magic_link(args),
+            handleMagicLinkResponse,
             args,
         );
     }

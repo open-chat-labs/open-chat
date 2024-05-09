@@ -513,6 +513,13 @@
     },
     "logout": "disconnessione",
     "lowBandwidth": "Bassa larghezza di banda",
+    "magicLink": {
+        "link_expired": "Il collegamento è valido solo per 5 minuti ed è scaduto. Chiudi questa pagina e prova ad accedere di nuovo.",
+        "link_invalid": "Il collegamento non è valido. Chiudi questa pagina e prova ad accedere di nuovo.",
+        "noLink": "Nessun collegamento fornito. Chiudi questa pagina e prova ad accedere di nuovo.",
+        "success": "Successo! Ora hai effettuato l'accesso. Chiudi questa pagina e continua sulla pagina originale.",
+        "title": "Accesso con collegamento e-mail..."
+    },
     "makeGroupPrivate": "Rendi il gruppo privato",
     "makeGroupPrivateFailed": "Impossibile rendere privato {level}",
     "makeGroupPublicFailed": "Impossibile rendere pubblico {level}",

@@ -160,7 +160,7 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
 } from "./identity";
-import type { GenerateMagicLinkResponse } from "./email";
+import type { GenerateMagicLinkResponse, HandleMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -350,6 +350,7 @@ export type WorkerRequest =
     | UpdateBtcBalance
     | SetPrincipalMigrationJobEnabled
     | GenerateMagicLink
+    | HandleMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
     | SiwsPrepareLogin
@@ -1172,6 +1173,11 @@ type GenerateMagicLink = {
     kind: "generateMagicLink";
 };
 
+type HandleMagicLink = {
+    link: string;
+    kind: "handleMagicLink";
+};
+
 type GetSignInWithEmailDelegation = {
     email: string;
     sessionKey: Uint8Array;
@@ -1348,6 +1354,7 @@ export type WorkerResponseInner =
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
     | GenerateMagicLinkResponse
+    | HandleMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
     | SetVideoCallPresenceResponse
@@ -1974,6 +1981,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? void
     : T extends GenerateMagicLink
     ? GenerateMagicLinkResponse
+    : T extends HandleMagicLink
+    ? HandleMagicLinkResponse
     : T extends GetSignInWithEmailDelegation
     ? GetDelegationResponse
     : T extends SiwePrepareLogin

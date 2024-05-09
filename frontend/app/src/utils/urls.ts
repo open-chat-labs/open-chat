@@ -45,6 +45,7 @@ const scrollingRoutes: RouteType[] = [
     "guidelines_route",
     "faq_route",
     "diamond_route",
+    "magic_link_route",
 ];
 const landingPageRoutes: RouteType[] = ["home_landing_route", ...scrollingRoutes];
 
