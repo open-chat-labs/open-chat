@@ -143,14 +143,19 @@
         expiration: bigint,
     ) {
         emailSignInPoller = new Poller(async () => {
-            client
-                .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
-                .then((response) => {
-                    if (response.kind === "error") {
-                        console.log("Failed to getSignInWithEmailDelegation", response.error);
-                        error = "loginDialog.unexpectedError";
-                    }
-                });
+            if (emailSignInPoller !== undefined) {
+                client
+                    .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
+                    .then((response) => {
+                        if (response.kind === "success") {
+                            emailSignInPoller?.stop();
+                            emailSignInPoller == undefined;
+                        } else if (response.kind === "error") {
+                            console.log("Failed to getSignInWithEmailDelegation", response.error);
+                            error = "loginDialog.unexpectedError";
+                        }
+                    });
+            }
         }, 1000);
     }
 
