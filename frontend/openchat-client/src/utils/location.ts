@@ -1,7 +1,29 @@
 /** For various reasons, we need to (attempt to) figure out roughly where the user is
  */
+import { Poller } from "./poller";
 
-export function getUserCountryCode(): Promise<string> {
+const GET_COUNTRY_ATTEMPT_INTERVAL = 10_000; // 10 seconds
+
+export async function getUserCountryCode(): Promise<string> {
+    return new Promise<string>((resolve, _) => {
+        const poller = new Poller(
+            () =>
+                getUserCountryCodeInner()
+                    .then((country) => {
+                        poller.stop();
+                        resolve(country);
+                    })
+                    .catch((err) =>
+                        console.warn("GEO: Unable to determine user's country location", err),
+                    ),
+            GET_COUNTRY_ATTEMPT_INTERVAL,
+            GET_COUNTRY_ATTEMPT_INTERVAL,
+            true,
+        );
+    });
+}
+
+function getUserCountryCodeInner(): Promise<string> {
     const BASE_URL = "https://api.iplocation.net";
 
     return fetch(`${BASE_URL}/?cmd=get-ip`)
@@ -20,5 +42,9 @@ export function getUserCountryCode(): Promise<string> {
             }
             return resp.json();
         })
-        .then((json) => json.country_code2);
+        .then((json) => {
+            const country = json.country_code2;
+            console.debug("GEO: derived user's location: ", country);
+            return country;
+        });
 }

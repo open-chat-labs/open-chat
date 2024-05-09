@@ -560,14 +560,7 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
 
-        getUserCountryCode()
-            .then((country) => {
-                this._userLocation = country;
-                console.debug("GEO: derived user's location: ", country);
-            })
-            .catch((err) => {
-                console.warn("GEO: Unable to determine user's country location", err);
-            });
+        getUserCountryCode().then((country) => (this._userLocation = country));
 
         this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
