@@ -5,7 +5,8 @@ import { Poller } from "./poller";
 const GET_COUNTRY_ATTEMPT_INTERVAL = 10_000; // 10 seconds
 
 export async function getUserCountryCode(): Promise<string> {
-    return new Promise<string>((resolve, _) => {
+    let attempt = 0;
+    return new Promise<string>((resolve, reject) => {
         const poller = new Poller(
             () =>
                 getUserCountryCodeInner()
@@ -13,9 +14,13 @@ export async function getUserCountryCode(): Promise<string> {
                         poller.stop();
                         resolve(country);
                     })
-                    .catch((err) =>
-                        console.warn("GEO: Unable to determine user's country location", err),
-                    ),
+                    .catch((err) => {
+                        console.warn("GEO: Unable to determine user's country location", err);
+                        if (++attempt > 10) {
+                            poller.stop();
+                            reject(err);
+                        }
+                    }),
             GET_COUNTRY_ATTEMPT_INTERVAL,
             GET_COUNTRY_ATTEMPT_INTERVAL,
             true,
