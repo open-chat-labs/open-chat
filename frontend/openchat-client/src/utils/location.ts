@@ -5,8 +5,8 @@ import { Poller } from "./poller";
 const GET_COUNTRY_ATTEMPT_INTERVAL = 10_000; // 10 seconds
 
 export async function getUserCountryCode(): Promise<string> {
-    let attempt = 0;
     return new Promise<string>((resolve, reject) => {
+        let attempt = 0;
         const poller = new Poller(
             () =>
                 getUserCountryCodeInner()
