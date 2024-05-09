@@ -2,51 +2,46 @@
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import { AuthProvider, type OpenChat } from "openchat-client";
+    import { AuthProvider, Poller, type OpenChat } from "openchat-client";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { Pincode, PincodeInput } from "svelte-pincode";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
-    import { now500 } from "../../stores/time";
-    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import Input from "../Input.svelte";
     import { configKeys } from "../../utils/config";
     import { ECDSAKeyIdentity } from "@dfinity/identity";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let state: "options" | "logging-in" | "code-generation-failed" | "enter-code" = "options";
+    let state: "options" | "logging-in" = "options";
     let mode: "signin" | "signup" = "signin";
     let email = "";
-    let verificationCode: string[] = [];
-    let errorMessage: string | undefined = undefined;
-    let busy = false;
-    let blockedUntil: Date | undefined = undefined;
-    let attemptsRemaining: number | undefined = undefined;
     let showMore = false;
+    let sessionKey: ECDSAKeyIdentity | undefined = undefined;
+    let emailSignInPoller: Poller | undefined = undefined;
+    let error: string | undefined = undefined;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: options = buildOptions($selectedAuthProviderStore, mode);
     $: emailInvalid = !isEmailValid(email);
-    $: codeInvalid = !isCodeValid(verificationCode);
-    $: resetCodeReady = blockedUntil !== undefined ? $now500 >= Number(blockedUntil) : true;
-    $: timeRemaining = resetCodeReady
-        ? undefined
-        : client.formatTimeRemaining($now500, Number(blockedUntil), true);
     $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
+    $: loggingInWithEmail =
+        state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
             identityState.set({ kind: "anon" });
         }
+
+        emailSignInPoller?.stop();
     });
 
     $: {
@@ -102,104 +97,66 @@
         return email.length > 0;
     }
 
-    function isCodeValid(code: string[]): boolean {
-        return code.filter((c) => /^[0-9]$/.test(c)).length === 6;
-    }
-
     function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
 
-        clearCode();
-
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         selectedAuthProviderStore.set(provider);
-        errorMessage = undefined;
-        blockedUntil = undefined;
-        attemptsRemaining = undefined;
         state = "logging-in";
+        error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            client
-                .generateEmailVerificationCode(email)
-                .then((response) => {
-                    if (response.kind === "success") {
-                        state = "enter-code";
-                        errorMessage = undefined;
-                    } else {
-                        switch (response.kind) {
-                            case "email_invalid":
-                                errorMessage = "invalidEmail";
-                                localStorage.setItem(configKeys.selectedAuthEmail, "");
-                                break;
-                            case "blocked":
-                                errorMessage = "codeBlocked";
-                                blockedUntil = new Date(Number(response.until));
-                                break;
-                            case "failed_to_send_email":
-                                errorMessage = "failedToSendEmail";
-                                break;
-                        }
-
-                        state = "code-generation-failed";
-                    }
-                })
-                .catch((e) => {
-                    console.log("error generating code", e);
-                    state = "options";
+            if (sessionKey !== undefined) {
+                generateMagicLink(sessionKey);
+            } else {
+                ECDSAKeyIdentity.generate().then((sk) => {
+                    sessionKey = sk;
+                    generateMagicLink(sk);
                 });
+            }
         } else {
             client.login();
         }
     }
 
-    function clearCode() {
-        verificationCode = ["", "", "", "", "", ""];
-    }
-
-    function onPinComplete() {
-        if (errorMessage !== undefined) {
-            return;
-        }
-
-        submitCode();
-    }
-
-    function submitCode() {
-        if (codeInvalid) {
-            return;
-        }
-
-        busy = true;
-        errorMessage = undefined;
-        blockedUntil = undefined;
-        attemptsRemaining = undefined;
-
-        ECDSAKeyIdentity.generate().then((sessionKey) => {
-            client
-                .signInWithEmailVerificationCode(email, verificationCode.join(""), sessionKey)
-                .then((response) => {
-                    if (response.kind === "incorrect_code") {
-                        if (response.blockedUntil !== undefined) {
-                            errorMessage = "codeBlocked";
-                            blockedUntil = new Date(Number(response.blockedUntil));
-                            state = "code-generation-failed";
-                        } else {
-                            errorMessage = "incorrectCode";
-                            attemptsRemaining = response.attemptsRemaining;
-                        }
-                    } else if (response.kind === "not_found") {
-                        errorMessage = "notFound";
-                        state = "code-generation-failed";
-                    }
-                })
-                .finally(() => (busy = false));
+    function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
+        client.generateMagicLink(email, sessionKey).then((response) => {
+            if (response.kind === "success") {
+                startPoller(email, sessionKey, response.userKey, response.expiration);
+            } else if (response.kind === "email_invalid") {
+                error = "loginDialog.invalidEmail";
+            } else if (response.kind === "failed_to_send_email") {
+                console.log("generateMagicLink failed_to_send_email", response.error);
+                error = "loginDialog.failedToSendEmail";
+            } else if (response.kind === "blocked") {
+                error = "loginDialog.unexpectedError";
+            }
         });
     }
 
-    function resetDialog() {
-        clearCode();
+    function startPoller(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+        userKey: Uint8Array,
+        expiration: bigint,
+    ) {
+        emailSignInPoller = new Poller(async () => {
+            client
+                .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
+                .then((response) => {
+                    if (response.kind === "error") {
+                        console.log("Failed to getSignInWithEmailDelegation", response.error);
+                        error = "loginDialog.unexpectedError";
+                    }
+                });
+        }, 1000);
+    }
+
+    function cancelLink() {
+        emailSignInPoller?.stop();
+        emailSignInPoller == undefined;
         state = "options";
     }
 
@@ -212,23 +169,16 @@
     }
 </script>
 
-<ModalContent
-    hideFooter={state !== "enter-code" && state !== "code-generation-failed"}
-    on:close={cancel}
-    closeIcon>
+<ModalContent hideFooter={!loggingInWithEmail} on:close={cancel} closeIcon>
     <div class="header login" slot="header">
         <div class="logo-img">
-            <FancyLoader loop={state === "logging-in"} />
+            <FancyLoader loop={state === "logging-in" && error === undefined} />
         </div>
         <div class="title">
             <div>
                 <Translatable
                     resourceKey={i18nKey(
-                        state === "enter-code"
-                            ? "loginDialog.enterCode"
-                            : mode === "signin"
-                              ? "loginDialog.title"
-                              : "loginDialog.signupTitle",
+                        mode === "signin" ? "loginDialog.title" : "loginDialog.signupTitle",
                     )} />
             </div>
             <div class="strapline">
@@ -315,74 +265,27 @@
                     </a>
                 </div>
             </div>
-        {:else if state !== "logging-in"}
-            {#if state === "enter-code"}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("loginDialog.enterCodeInfo")} />
-                </div>
-                <div class="code">
-                    <Pincode on:complete={onPinComplete} bind:code={verificationCode}>
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                    </Pincode>
-                </div>
-            {/if}
-            {#if errorMessage !== undefined && !(errorMessage === "codeBlocked" && resetCodeReady)}
-                <div class="center">
-                    <div>
-                        <Translatable
-                            resourceKey={i18nKey("loginDialog." + errorMessage, {
-                                n: attemptsRemaining,
-                            })} />
-                        {#if errorMessage === "codeBlocked" && !resetCodeReady}
-                            <pre>{timeRemaining}</pre>
-                        {/if}
-                    </div>
-                </div>
-            {/if}
-            {#if state === "code-generation-failed" && resetCodeReady}
-                <div>
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <!-- svelte-ignore a11y-missing-attribute -->
-                    <a
-                        class="send-code"
-                        role="button"
-                        tabindex="0"
-                        on:click={() => login(AuthProvider.EMAIL)}>
-                        <Translatable resourceKey={i18nKey("loginDialog.resetCodeReady")} />
-                    </a>
-                </div>
+        {:else if loggingInWithEmail}
+            <p>
+                <Translatable
+                    resourceKey={i18nKey(
+                        emailSignInPoller === undefined
+                            ? "loginDialog.generatingLink"
+                            : "loginDialog.checkEmail",
+                    )} />
+            </p>
+            {#if error !== undefined}
+                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
             {/if}
         {/if}
     </div>
     <div class="footer login-modal" slot="footer">
         <ButtonGroup>
-            {#if state === "enter-code"}
-                <Button
-                    cls="refresh-code"
-                    disabled={emailInvalid}
-                    hollow
-                    tiny
-                    title={$_("loginDialog.refreshTitle")}
-                    on:click={() => login(AuthProvider.EMAIL)}>
-                    <div class="center">
-                        <RefreshIcon size={"1.5em"} color={"var(--icon-txt)"} />
-                    </div>
-                </Button>
-                <Button secondary on:click={clearCode} disabled={busy}>
-                    <Translatable resourceKey={i18nKey("loginDialog.clearCode")} />
-                </Button>
-                <Button on:click={submitCode} disabled={codeInvalid || busy} loading={busy}>
-                    <Translatable resourceKey={i18nKey("loginDialog.submitCode")} />
-                </Button>
-            {:else if state === "code-generation-failed"}
-                <Button on:click={resetDialog}
-                    ><Translatable resourceKey={i18nKey("loginDialog.back")} /></Button>
-            {/if}
+            <Button on:click={cancelLink}
+                ><Translatable
+                    resourceKey={i18nKey(
+                        error === undefined ? "cancel" : "loginDialog.back",
+                    )} /></Button>
         </ButtonGroup>
     </div>
 </ModalContent>
@@ -424,11 +327,6 @@
 
     :global(.login .error) {
         margin-bottom: 0;
-    }
-
-    :global([data-pincode]) {
-        gap: $sp3;
-        border: none !important;
     }
 
     :global(.login button.tiny) {
@@ -478,10 +376,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    .code {
-        text-align: center;
     }
 
     a:hover {

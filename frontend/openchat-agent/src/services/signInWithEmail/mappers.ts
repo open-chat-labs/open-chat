@@ -35,6 +35,6 @@ export function generateMagicLinkResponse(
     );
 }
 
-function durationToTimestamp(duration: bigint): bigint {
-    return BigInt(Date.now() + Number(duration));
-}
+// function durationToTimestamp(duration: bigint): bigint {
+//     return BigInt(Date.now() + Number(duration));
+// }
