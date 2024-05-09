@@ -158,6 +158,10 @@
             &.overflows {
                 height: 100%;
             }
+
+            @include safezone() {
+                padding-bottom: var(--safe-area-inset-bottom);
+            }
         }
         @include size-above(sm) {
             &.fixed-width {

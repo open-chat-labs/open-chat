@@ -29,6 +29,7 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
+    $: anonUser = client.anonUser;
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
@@ -119,7 +120,7 @@
                 menuAlignment={"start"}
                 menuPosition={"right"}
                 menuGutter={20}
-                orientation={"horizontal"}
+                orientation={"vertical"}
                 on:profile
                 on:wallet
                 on:halloffame
@@ -181,7 +182,7 @@
         </NavItem>
     </div>
     {#if $layoutStore.showBottomNav}
-        <div class="corner">
+        <div class="corner" class:anonUser={$anonUser}>
             <NavItem orientation={"vertical"} label={i18nKey("communities.mainMenu")}>
                 <div class="hover logo">
                     <MenuIcon position={"right"} align={"start"} gutter={20}>
@@ -281,8 +282,17 @@
 
     .corner {
         display: flex;
-        flex: 0 0 toRem(60);
         border-top: var(--bw) solid var(--bd);
+
+        @include safezone() {
+            flex: 0 0 calc(toRem(60) + var(--safe-area-inset-bottom));
+            padding-bottom: var(--safe-area-inset-bottom);
+
+            &.anonUser {
+                flex: 0 0 toRem(60);
+                padding-bottom: 0;
+            }
+        }
     }
 
     .middle {

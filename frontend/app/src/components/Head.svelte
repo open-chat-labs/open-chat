@@ -14,7 +14,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    let viewPortContent = "width=device-width, initial-scale=1";
+    let viewPortContent = "viewport-fit=cover, width=device-width, initial-scale=1";
 
     $: userStore = client.userStore;
     $: chatListScope = client.chatListScope;

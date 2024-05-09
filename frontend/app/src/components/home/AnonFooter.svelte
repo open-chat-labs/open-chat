@@ -18,7 +18,6 @@
 <style lang="scss">
     .anon {
         position: absolute;
-        height: toRem(50);
         width: 100%;
         display: flex;
         align-items: center;
@@ -29,5 +28,10 @@
         background-color: var(--notificationBar-bg);
         color: var(--notificationBar-txt);
         padding: $sp4 $sp3;
+
+        @include safezone() {
+            height: calc(toRem(50) + var(--safe-area-inset-bottom));
+            padding-bottom: calc($sp4 + var(--safe-area-inset-bottom));
+        }
     }
 </style>

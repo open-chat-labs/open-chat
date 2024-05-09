@@ -1284,7 +1284,9 @@
         margin: 0 auto;
 
         &.anon {
-            margin-bottom: toRem(50);
+            @include safezone() {
+                margin-bottom: calc(toRem(50) + var(--safe-area-inset-bottom));
+            }
         }
         &.offline {
             margin-bottom: toRem(40);

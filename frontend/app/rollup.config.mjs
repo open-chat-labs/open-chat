@@ -258,9 +258,15 @@ export default {
             ),
             "process.env.REGISTRY_CANISTER": JSON.stringify(process.env.REGISTRY_CANISTER),
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
-            "process.env.SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_EMAIL_CANISTER),
-            "process.env.SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_ETHEREUM_CANISTER),
-            "process.env.SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(process.env.SIGN_IN_WITH_SOLANA_CANISTER),
+            "process.env.SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_EMAIL_CANISTER,
+            ),
+            "process.env.SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_ETHEREUM_CANISTER,
+            ),
+            "process.env.SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_SOLANA_CANISTER,
+            ),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
@@ -329,7 +335,7 @@ export default {
                                 <meta name="twitter:image:alt" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
                                 <meta http-equiv="Content-Security-Policy" content="${csp}" />
                                 <meta charset="utf-8" />
-                                <meta name="viewport" content="width=device-width, initial-scale=1">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
                                 <meta name="twitter:widgets:autoload" content="off">
                                 <meta name="twitter:dnt" content="on">

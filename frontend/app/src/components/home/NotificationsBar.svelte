@@ -42,13 +42,17 @@
         left: 0;
         right: 0;
         height: toRem(60);
+        @include z-index("notification-banner");
 
         @include mobile() {
             padding: $sp4;
             height: unset;
             margin-bottom: 0;
             text-align: center;
-            padding-bottom: calc($sp4 + env(safe-area-inset-bottom));
+
+            @include safezone() {
+                padding-bottom: calc($sp4 + var(--safe-area-inset-bottom));
+            }
         }
     }
 

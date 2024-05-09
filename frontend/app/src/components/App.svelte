@@ -667,14 +667,7 @@
             height: calc(var(--vh, 1vh) * 100);
             height: 100dvh; // firefox will ignore this
             position: fixed;
-
-            @include size-below(lg) {
-                padding: $sp3;
-            }
-
-            @include mobile() {
-                padding: 0;
-            }
+            padding: 0;
 
             &.fill {
                 transition: none;
