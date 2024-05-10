@@ -75,7 +75,7 @@ export class LiveState {
     selectedChat: ChatSummary | undefined;
     selectedServerChat: ChatSummary | undefined;
     events!: EventWrapper<ChatEvent>[];
-    selectedAuthProvider!: AuthProvider;
+    selectedAuthProvider!: AuthProvider | undefined;
     userCreated!: boolean;
     userStore!: UserLookup;
     remainingStorage!: number;

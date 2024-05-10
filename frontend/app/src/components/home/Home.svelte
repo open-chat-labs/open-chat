@@ -1129,13 +1129,11 @@
             on:askToSpeak
             on:hangup />
     {/if}
-
     {#if $layoutStore.showMiddle}
         <MiddlePanel
             {joining}
             bind:currentChatMessages
             on:startVideoCall
-            on:profile={showProfile}
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}

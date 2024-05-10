@@ -6363,8 +6363,8 @@ checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.5.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.5.0#53703e72063528a27dc02dce67528aa63239442e"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.7.0#7ade2aa37344a6cb606cef8327007387770d807f"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -7047,8 +7047,8 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.5.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.5.0#53703e72063528a27dc02dce67528aa63239442e"
+version = "0.7.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.7.0#7ade2aa37344a6cb606cef8327007387770d807f"
 dependencies = [
  "rand 0.8.5",
  "rsa 0.9.6",
