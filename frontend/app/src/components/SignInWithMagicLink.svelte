@@ -3,7 +3,6 @@
     import { onMount, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
-    import { removeQueryStringParam } from "../utils/urls";
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -14,7 +13,7 @@
     let message = "";
 
     onMount(() => {
-        const qs = removeQueryStringParam("auth").toString();
+        const qs = window.location.search;
 
         page.replace("/home");
 

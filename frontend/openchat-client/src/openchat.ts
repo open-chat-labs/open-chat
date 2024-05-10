@@ -6130,8 +6130,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (response.ok) {
             return { kind: "success" } as HandleMagicLinkResponse;
-        } else if (response.status === 400 && response.statusText === "Link expired") {
-            return { kind: "link_expired" } as HandleMagicLinkResponse;
+        } else if (response.status === 400) {
+            const body = await response.text();
+            if (body === "Link expired") {
+                return { kind: "link_expired" } as HandleMagicLinkResponse;
+            }
         }
 
         return { kind: "link_invalid" } as HandleMagicLinkResponse;                
