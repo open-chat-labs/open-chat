@@ -1856,10 +1856,6 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
-    getIdentityMigrationProgress(): Promise<[number, number] | undefined> {
-        return this._userIndexClient.getIdentityMigrationProgress();
-    }
-
     setModerationFlags(flags: number): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
