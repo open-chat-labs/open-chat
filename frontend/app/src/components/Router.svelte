@@ -86,12 +86,6 @@
             () => (route = LandingPage),
         );
         page(
-            "/auth",
-            parsePathParams(() => ({ kind: "magic_link_route" })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
             "/architecture",
             parsePathParams(() => ({ kind: "architecture_route" })),
             track,

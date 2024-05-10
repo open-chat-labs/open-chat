@@ -492,7 +492,7 @@
     "login": "anmelden",
     "loginDialog": {
         "back": "Zurück",
-        "checkEmail": "An die angegebene Adresse wurde eine E-Mail mit einem Anmeldelink gesendet. Klicken Sie auf den Link, um sich anzumelden, und kehren Sie dann zu dieser Seite zurück. Der Link ist nur 5 Minuten lang gültig.",
+        "checkEmail": "Wir haben Ihnen eine E-Mail mit einem 5 Minuten gültigen Anmeldelink gesendet. Klicken Sie auf den Link, um sich anzumelden, und kehren Sie dann zu dieser Seite zurück.",
         "failedToSendEmail": "Wir konnten die E-Mail derzeit nicht versenden. Bitte versuchen Sie es später noch einmal.",
         "generatingLink": "Ein sicherer Anmeldelink wird generiert ...",
         "haveAccount": "Sie haben bereits ein Konto?",
@@ -514,10 +514,11 @@
     "logout": "Abmelden",
     "lowBandwidth": "Niedrige Bandbreite",
     "magicLink": {
-        "link_expired": "Der Link ist nur 5 Minuten gültig und dann abgelaufen. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
-        "link_invalid": "Der Link ist ungültig. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
-        "noLink": "Kein Link angegeben. Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
-        "success": "Erfolg! Sie sind jetzt angemeldet. Bitte schließen Sie diese Seite und fahren Sie auf der ursprünglichen Seite fort.",
+        "closeMessage": "Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
+        "continueMessage": "Bitte schließen Sie diese Seite und fahren Sie auf der Originalseite fort.",
+        "link_expired": "Der Link ist nur 5 Minuten gültig und jetzt abgelaufen.",
+        "link_invalid": "Der Link ist ungültig.",
+        "success": "Erfolg! Sie sind jetzt angemeldet.",
         "title": "Mit E-Mail-Link anmelden …"
     },
     "makeGroupPrivate": "Gruppe privat machen",

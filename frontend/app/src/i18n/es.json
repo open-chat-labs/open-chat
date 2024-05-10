@@ -492,7 +492,7 @@
     "login": "Iniciar sesión",
     "loginDialog": {
         "back": "Atrás",
-        "checkEmail": "Se envió un correo electrónico a la dirección proporcionada con un enlace de inicio de sesión. Haga clic en el enlace para iniciar sesión y luego regrese a esta página. El enlace sólo es válido durante 5 minutos.",
+        "checkEmail": "Le enviamos un correo electrónico con un enlace de inicio de sesión válido por 5 minutos. Haga clic en el enlace para iniciar sesión y luego regrese a esta página.",
         "failedToSendEmail": "No pudimos enviar el correo electrónico en este momento. Por favor, inténtelo de nuevo más tarde.",
         "generatingLink": "Generando un enlace de inicio de sesión seguro...",
         "haveAccount": "¿Ya tienes una cuenta?",
@@ -514,10 +514,11 @@
     "logout": "desconectar",
     "lowBandwidth": "Ancho de banda bajo",
     "magicLink": {
-        "link_expired": "El enlace solo es válido por 5 minutos y ha caducado. Cierra esta página e intenta iniciar sesión nuevamente.",
-        "link_invalid": "El enlace no es válido. Cierra esta página e intenta iniciar sesión nuevamente.",
-        "noLink": "No se proporcionó ningún enlace. Cierra esta página e intenta iniciar sesión nuevamente.",
-        "success": "¡Éxito! Ya ha iniciado sesión. Cierre esta página y continúe en la página original.",
+        "closeMessage": "Cierra esta página e intenta iniciar sesión nuevamente.",
+        "continueMessage": "Cierra esta página y continúa en la página original.",
+        "link_expired": "El enlace sólo es válido durante 5 minutos y ya ha caducado.",
+        "link_invalid": "El enlace no es válido.",
+        "success": "¡Éxito! Ya has iniciado sesión.",
         "title": "Iniciando sesión con un enlace de correo electrónico..."
     },
     "makeGroupPrivate": "Hacer que el grupo sea privado",

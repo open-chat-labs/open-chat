@@ -492,7 +492,7 @@
     "login": "Se connecter",
     "loginDialog": {
         "back": "Dos",
-        "checkEmail": "Un e-mail a été envoyé à l'adresse fournie avec un lien de connexion. Cliquez sur le lien pour vous connecter puis revenez à cette page. Le lien n'est valable que 5 minutes.",
+        "checkEmail": "Nous vous avons envoyé un e-mail avec un lien de connexion valable 5 minutes. Cliquez sur le lien pour vous connecter, puis revenez à cette page.",
         "failedToSendEmail": "Nous n'avons pas pu envoyer l'e-mail pour le moment. Veuillez réessayer plus tard.",
         "generatingLink": "Génération d'un lien de connexion sécurisé...",
         "haveAccount": "Vous avez déjà un compte?",
@@ -514,10 +514,11 @@
     "logout": "se déconnecter",
     "lowBandwidth": "Bas débit",
     "magicLink": {
-        "link_expired": "Le lien n'est valable que 5 minutes et a expiré. Veuillez fermer cette page et réessayer de vous connecter.",
-        "link_invalid": "Le lien n'est pas valide. Veuillez fermer cette page et réessayer de vous connecter.",
-        "noLink": "Aucun lien fourni. Veuillez fermer cette page et réessayer de vous connecter.",
-        "success": "Succès! Vous êtes maintenant connecté. Veuillez fermer cette page et continuer sur la page d'origine.",
+        "closeMessage": "Veuillez fermer cette page et réessayer de vous connecter.",
+        "continueMessage": "Veuillez fermer cette page et continuer sur la page d'origine.",
+        "link_expired": "Le lien n'est valable que 5 minutes et a maintenant expiré.",
+        "link_invalid": "Le lien n'est pas valide.",
+        "success": "Succès! Vous êtes maintenant inscrit.",
         "title": "Connexion avec le lien e-mail..."
     },
     "makeGroupPrivate": "Rendre le groupe privé",

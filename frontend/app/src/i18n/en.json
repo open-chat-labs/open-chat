@@ -492,7 +492,7 @@
     "login": "Sign in",
     "loginDialog": {
         "back": "Back",
-        "checkEmail": "An email has been sent to the address provided with a sign-in link. Click the link to sign-in then return to this page. The link is only valid for 5 minutes.",
+        "checkEmail": "We've sent you an email with a sign-in link valid for 5 minutes. Click the link to sign in, then return to this page.",
         "failedToSendEmail": "We could not send the email at this time. Please try again later.",
         "generatingLink": "Generating a secure sign-in link...",
         "haveAccount": "Already have an account?",
@@ -514,10 +514,11 @@
     "logout": "Sign out",
     "lowBandwidth": "Low bandwidth",
     "magicLink": {
-        "link_expired": "The link is only valid for 5 minutes and has expired. Please close this page and try signing in again.",
-        "link_invalid": "The link is invalid. Please close this page and try signing in again.",
-        "noLink": "No link supplied. Please close this page and try signing in again.",
-        "success": "Success! You are now signed in. Please close this page and continue on the original page.",
+        "closeMessage": "Please close this page and try signing in again.",
+        "continueMessage": "Please close this page and continue on the original page.",
+        "link_expired": "The link is only valid for 5 minutes and has now expired.",
+        "link_invalid": "The link is invalid.",
+        "success": "Success! You are now signed in.",
         "title": "Signing in with email link..."
     },
     "makeGroupPrivate": "Make group private",

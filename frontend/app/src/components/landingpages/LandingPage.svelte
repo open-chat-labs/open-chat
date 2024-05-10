@@ -9,7 +9,6 @@
         isDiamondRoute,
         isFaqRoute,
         isGuidelinesRoute,
-        isMagicLinkRoute,
         isMiamiRoute,
         isRoadmapRoute,
         isWhitepaperRoute,
@@ -136,14 +135,6 @@
                         </div>
                     {:then { default: DiamondPage }}
                         <DiamondPage />
-                    {/await}
-                {:else if isMagicLinkRoute($pathParams)}
-                    {#await import("./MagicLinkPage.svelte")}
-                        <div class="loading">
-                            <Loading />
-                        </div>
-                    {:then { default: MagicLinkPage }}
-                        <MagicLinkPage />
                     {/await}
                 {:else}
                     <HomePage on:login={() => client.login()} />
