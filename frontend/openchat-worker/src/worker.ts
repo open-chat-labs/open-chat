@@ -1639,14 +1639,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "handleMagicLink":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.handleMagicLink(payload.link),
-                );
-                break;
-
             case "getSignInWithEmailDelegation":
                 executeThenReply(
                     payload,

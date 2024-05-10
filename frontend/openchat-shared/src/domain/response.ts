@@ -49,6 +49,7 @@ export type TransferFailed = {
     kind: "transfer_failed";
     error?: string;
 };
+
 export const CommonResponses = {
     userNotInChat: (): UserNotInChat => ({ kind: "user_not_in_chat" }) as UserNotInChat,
     chatNotFound: (): ChatNotFound => ({ kind: "chat_not_found" }) as ChatNotFound,

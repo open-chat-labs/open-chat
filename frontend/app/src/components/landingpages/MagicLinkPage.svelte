@@ -20,10 +20,8 @@
             return;
         }
 
-        const link = qs.substring(1);
-
         client
-            .handleMagicLink(link)
+            .handleMagicLink(qs)
             .then((resp) => {
                 message = "magicLink." + resp.kind;
             })

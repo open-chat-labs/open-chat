@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
@@ -1522,3 +1523,5 @@ export interface _SERVICE {
   'last_online' : ActorMethod<[LastOnlineArgs], LastOnlineResponse>,
   'mark_as_online' : ActorMethod<[MarkAsOnlineArgs], MarkAsOnlineResponse>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

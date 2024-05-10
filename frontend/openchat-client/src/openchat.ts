@@ -6123,8 +6123,18 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
     }
 
-    async handleMagicLink(link: string): Promise<HandleMagicLinkResponse> {
-        return this.sendRequest({ kind: "handleMagicLink", link });
+    async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
+        const signInWithEmailCanister = this.config.signInWithEmailCanister;
+
+        const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
+
+        if (response.ok) {
+            return { kind: "success" } as HandleMagicLinkResponse;
+        } else if (response.status === 400 && response.statusText === "Link expired") {
+            return { kind: "link_expired" } as HandleMagicLinkResponse;
+        }
+
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
     }
 
     async getSignInWithEmailDelegation(

@@ -5,6 +5,15 @@ export interface Delegation {
   'pubkey' : Uint8Array | number[],
   'expiration' : bigint,
 }
+export interface EncryptedAwsEmailSenderConfig {
+  'region' : string,
+  'secret_key_encrypted' : string,
+  'target_arn' : string,
+  'access_key_encrypted' : string,
+}
+export type EncryptedEmailSenderConfig = {
+    'Aws' : EncryptedAwsEmailSenderConfig
+  };
 export interface GenerateMagicLinkArgs {
   'session_key' : Uint8Array | number[],
   'email' : string,
@@ -26,13 +35,31 @@ export interface GetDelegationArgs {
 }
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
-export interface HandleMagicLinkArgs { 'link' : string }
-export type HandleMagicLinkResponse = { 'Success' : null } |
-  { 'LinkExpired' : null } |
-  { 'LinkInvalid' : string };
+export interface HttpRequest {
+  'url' : string,
+  'method' : string,
+  'body' : Uint8Array | number[],
+  'headers' : Array<[string, string]>,
+}
+export interface HttpResponse {
+  'body' : Uint8Array | number[],
+  'headers' : Array<[string, string]>,
+  'upgrade' : [] | [boolean],
+  'status_code' : number,
+}
+export interface InitArgs {
+  'salt' : [] | [Uint8Array | number[]],
+  'email_sender_public_key_pem' : string,
+}
+export type InitOrUpgradeArgs = { 'Upgrade' : UpgradeArgs } |
+  { 'Init' : InitArgs };
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : Delegation,
+}
+export interface UpgradeArgs {
+  'email_sender_public_key_pem' : [] | [string],
+  'email_sender_config' : [] | [EncryptedEmailSenderConfig],
 }
 export interface _SERVICE {
   'generate_magic_link' : ActorMethod<
@@ -40,8 +67,7 @@ export interface _SERVICE {
     GenerateMagicLinkResponse
   >,
   'get_delegation' : ActorMethod<[GetDelegationArgs], GetDelegationResponse>,
-  'handle_magic_link' : ActorMethod<
-    [HandleMagicLinkArgs],
-    HandleMagicLinkResponse
-  >,
+  'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
+  'http_request_update' : ActorMethod<[HttpRequest], HttpResponse>,
+  'rsa_public_key' : ActorMethod<[], [] | [string]>,
 }
