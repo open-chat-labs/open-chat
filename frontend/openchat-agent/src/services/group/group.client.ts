@@ -123,6 +123,8 @@ import {
     apiVideoCallPresence,
     setVideoCallPresence,
     videoCallParticipantsResponse,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -280,19 +282,16 @@ export class GroupClient extends CandidService {
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .catch((err) => {
-                    if (err instanceof ResponseTooLargeError && maxEvents >= 10) {
-                        const reducedMaxEvents = Math.floor(maxEvents / 2);
+                    if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, trying again with maxEvents of ",
-                            reducedMaxEvents,
+                            "Response size too large, we will try to split the window request into a a few chunks",
                         );
-                        return this.chatEventsWindow(
+                        return this.chunkedChatEventsWindowFromBackend(
                             eventIndexRange,
                             messageIndex,
                             threadRootMessageIndex,
                             latestKnownUpdate,
-                            reducedMaxEvents,
-                        );
+                        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
                     } else {
                         throw err;
                     }
@@ -304,6 +303,69 @@ export class GroupClient extends CandidService {
                 latestKnownUpdate,
             );
         }
+    }
+
+    private mergeEventsResponse<T extends ChatEvent>(
+        a: EventsSuccessResult<T>,
+        b: EventsSuccessResult<T>,
+    ): EventsSuccessResult<T> {
+        return {
+            events: [...a.events, ...b.events],
+            expiredEventRanges: [...a.expiredEventRanges, ...b.expiredEventRanges],
+            expiredMessageRanges: [...a.expiredMessageRanges, ...b.expiredMessageRanges],
+            latestEventIndex: Math.max(a.latestEventIndex ?? 0, b.latestEventIndex ?? 0),
+        };
+    }
+
+    // The purpose of this function is to split a request into multiple chunks
+    // and then assemble the result. This is necessary if the response size is
+    // too large for a single request
+    private async chunkedChatEventsWindowFromBackend(
+        [minIndex, maxIndex]: IndexRange,
+        messageIndex: number,
+        threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<ChatEvent>> {
+        const chunkSize = MAX_EVENTS / 5;
+
+        let highIndex,
+            lowIndex = messageIndex;
+
+        // right this is not the same kettle of fish - we need to sort this out
+
+        let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
+            events: [],
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        };
+
+        while (
+            aggregatedResponse.events.length < MAX_EVENTS &&
+            lowIndex >= minIndex &&
+            highIndex <= maxIndex
+        ) {
+            if (lowIndex === highIndex) {
+                // these will be equal on the first iteration
+            }
+
+            const resp = await this.chatEventsWindowFromBackend(
+                lowIndex,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+                chunkSize,
+            );
+
+            // if we get any failures we will need to bail otherwise things are going to get very messed up
+            if (resp === "events_failed") return resp;
+
+            aggregatedResponse = this.mergeEventsResponse(aggregatedResponse, resp);
+            if (resp.events.length > 0) {
+                index = resp.events[resp.events.length - 1].index + 1;
+            }
+        }
+
+        return aggregatedResponse;
     }
 
     private async chatEventsWindowFromBackend(
@@ -333,7 +395,6 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
@@ -341,7 +402,6 @@ export class GroupClient extends CandidService {
             { chatId: this.chatId, threadRootMessageIndex },
             startIndex,
             ascending,
-            maxEvents,
         );
 
         // we may or may not have all of the requested events
@@ -353,24 +413,20 @@ export class GroupClient extends CandidService {
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-                maxEvents,
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .catch((err) => {
-                    if (err instanceof ResponseTooLargeError && maxEvents >= 10) {
-                        const reducedMaxEvents = Math.floor(maxEvents / 2);
+                    if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, trying again with maxEvents of ",
-                            reducedMaxEvents,
+                            "Response size too large, we will try to split the payload into a a few chunks",
                         );
-                        return this.chatEvents(
+                        return this.chunkedChatEventsFromBackend(
                             eventIndexRange,
                             startIndex,
                             ascending,
                             threadRootMessageIndex,
                             latestKnownUpdate,
-                            reducedMaxEvents,
-                        );
+                        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
                     } else {
                         throw err;
                     }
@@ -382,6 +438,53 @@ export class GroupClient extends CandidService {
                 latestKnownUpdate,
             );
         }
+    }
+
+    // The purpose of this function is to split a request into multiple chunks
+    // and then assemble the result. This is necessary if the response size is
+    // too large for a single request
+    private async chunkedChatEventsFromBackend(
+        [minIndex, maxIndex]: IndexRange,
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<ChatEvent>> {
+        const chunkSize = MAX_EVENTS / 5;
+        let index = startIndex;
+
+        let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
+            events: [],
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        };
+
+        while (
+            aggregatedResponse.events.length < MAX_EVENTS &&
+            index >= minIndex &&
+            index <= maxIndex
+        ) {
+            const resp = await this.chatEventsFromBackend(
+                index,
+                ascending,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+                chunkSize,
+            );
+
+            // if we get any failures we will need to bail otherwise things are going to get very messed up
+            if (resp === "events_failed") return resp;
+
+            aggregatedResponse = ascending ? this.mergeEventsResponse(aggregatedResponse, resp) : this.mergeEventsResponse(resp, aggregatedResponse)
+            if (resp.events.length > 0) {
+                index = ascending
+                    ? resp.events[resp.events.length - 1].index + 1
+                    : resp.events[0].index - 1;
+            }
+        }
+
+        return aggregatedResponse;
     }
 
     private chatEventsFromBackend(
