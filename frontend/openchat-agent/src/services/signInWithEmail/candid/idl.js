@@ -1,10 +1,19 @@
 export const idlFactory = ({ IDL }) => {
-  const GenerateVerificationCodeArgs = IDL.Record({ 'email' : IDL.Text });
-  const GenerateVerificationCodeResponse = IDL.Variant({
+  const GenerateMagicLinkArgs = IDL.Record({
+    'session_key' : IDL.Vec(IDL.Nat8),
+    'email' : IDL.Text,
+    'max_time_to_live' : IDL.Opt(IDL.Nat64),
+  });
+  const GenerateMagicLinkSuccess = IDL.Record({
+    'created' : IDL.Nat64,
+    'user_key' : IDL.Vec(IDL.Nat8),
+    'expiration' : IDL.Nat64,
+  });
+  const GenerateMagicLinkResponse = IDL.Variant({
     'Blocked' : IDL.Nat64,
     'EmailInvalid' : IDL.Null,
     'FailedToSendEmail' : IDL.Text,
-    'Success' : IDL.Null,
+    'Success' : GenerateMagicLinkSuccess,
   });
   const GetDelegationArgs = IDL.Record({
     'session_key' : IDL.Vec(IDL.Nat8),
@@ -23,29 +32,22 @@ export const idlFactory = ({ IDL }) => {
     'NotFound' : IDL.Null,
     'Success' : SignedDelegation,
   });
-  const SubmitVerificationCodeArgs = IDL.Record({
-    'session_key' : IDL.Vec(IDL.Nat8),
-    'code' : IDL.Text,
-    'email' : IDL.Text,
-    'max_time_to_live' : IDL.Opt(IDL.Nat64),
+  const HttpRequest = IDL.Record({
+    'url' : IDL.Text,
+    'method' : IDL.Text,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
   });
-  const SubmitVerificationCodeSuccess = IDL.Record({
-    'user_key' : IDL.Vec(IDL.Nat8),
-    'expiration' : IDL.Nat64,
-  });
-  const IncorrectCode = IDL.Record({
-    'blocked_duration' : IDL.Opt(IDL.Nat64),
-    'attempts_remaining' : IDL.Nat32,
-  });
-  const SubmitVerificationCodeResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : SubmitVerificationCodeSuccess,
-    'IncorrectCode' : IncorrectCode,
+  const HttpResponse = IDL.Record({
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'upgrade' : IDL.Opt(IDL.Bool),
+    'status_code' : IDL.Nat16,
   });
   return IDL.Service({
-    'generate_verification_code' : IDL.Func(
-        [GenerateVerificationCodeArgs],
-        [GenerateVerificationCodeResponse],
+    'generate_magic_link' : IDL.Func(
+        [GenerateMagicLinkArgs],
+        [GenerateMagicLinkResponse],
         [],
       ),
     'get_delegation' : IDL.Func(
@@ -53,12 +55,9 @@ export const idlFactory = ({ IDL }) => {
         [GetDelegationResponse],
         ['query'],
       ),
+    'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
+    'http_request_update' : IDL.Func([HttpRequest], [HttpResponse], []),
     'rsa_public_key' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
-    'submit_verification_code' : IDL.Func(
-        [SubmitVerificationCodeArgs],
-        [SubmitVerificationCodeResponse],
-        [],
-      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

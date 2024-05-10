@@ -8,6 +8,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use test_case::test_case;
 use types::{
     icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
     PrizeContentInitial,
@@ -151,8 +152,9 @@ fn read_up_to_data_maintained_after_import() {
     assert_eq!(channel.read_by_me_up_to, Some(4.into()));
 }
 
-#[test]
-fn pending_prizes_transferred_to_community() {
+#[test_case(true)]
+#[test_case(false)]
+fn pending_prizes_transferred_to_community(v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -173,8 +175,8 @@ fn pending_prizes_transferred_to_community() {
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
     let message_id = random_message_id();
-    let prizes = [100000; 2];
-    let amount_to_transfer = prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128;
+    let prizes = vec![100000; 2];
+    let amount_to_transfer = prizes.iter().sum::<u128>() + fee * prizes.len() as u128;
 
     client::user::send_message_with_transfer_to_group(
         env,
@@ -185,7 +187,8 @@ fn pending_prizes_transferred_to_community() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: prizes.into_iter().map(Tokens::from_e8s).collect(),
+                prizes: if v2 { Vec::new() } else { prizes.iter().map(|p| Tokens::from_e8s(*p as u64)).collect() },
+                prizes_v2: if v2 { prizes } else { Vec::new() },
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token: token.clone(),

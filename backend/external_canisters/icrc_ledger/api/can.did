@@ -92,6 +92,7 @@ service : {
     icrc1_symbol : () -> (text) query;
     icrc1_decimals : () -> (nat8) query;
     icrc1_fee : () -> (nat) query;
+    icrc1_total_supply : () -> (nat) query;
     icrc1_supported_standards : () -> (vec record { name : text; url : text }) query;
     icrc1_transfer : (ICRC1_TransferArgs) -> (variant { Ok : nat; Err : ICRC1_TransferError });
 

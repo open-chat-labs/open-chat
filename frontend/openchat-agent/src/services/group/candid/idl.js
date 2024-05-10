@@ -574,6 +574,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_in' : Milliseconds,
   });
   const PrizeContentInitial = IDL.Record({
+    'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
     'prizes' : IDL.Vec(Tokens),

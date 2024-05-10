@@ -17,3 +17,4 @@ notification.did
 release_changelog.md
 summary.md
 temp.did
+frontend/app/src/stores/timeline.ts
