@@ -36,14 +36,16 @@
             <Translatable resourceKey={i18nKey("magicLink.title")} />
         </div>
         <div class="body" slot="body">
-            {#if status === undefined}
-                <div class="loading">
-                    <FancyLoader />
-                </div>
-            {:else}
-                <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
-                <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
-            {/if}
+            <div>
+                {#if status === undefined}
+                    <div class="loading">
+                        <FancyLoader />
+                    </div>
+                {:else}
+                    <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
+                    <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
+                {/if}
+            </div>
         </div>
     </ModalContent>
 </div>
@@ -53,6 +55,7 @@
         min-width: 576px;
         color: var(--txt);
         padding: $sp3;
+        text-align: center;
 
         @include mobile() {
             min-width: auto;
@@ -66,6 +69,11 @@
         @include mobile() {
             font-size: toRem(28);
         }
+    }
+
+    .body {
+        display: flex;
+        justify-content: center;
     }
 
     .loading {

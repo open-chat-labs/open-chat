@@ -148,25 +148,29 @@
         userKey: Uint8Array,
         expiration: bigint,
     ) {
-        emailSignInPoller = new Poller(async () => {
-            if (emailSignInPoller !== undefined) {
-                client
-                    .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
-                    .then((response) => {
-                        if (response.kind === "success") {
-                            emailSignInPoller?.stop();
-                            emailSignInPoller == undefined;
-                        } else if (response.kind === "error") {
-                            console.debug("getSignInWithEmailDelegation error", response.error);
+        emailSignInPoller = new Poller(
+            async () => {
+                if (emailSignInPoller !== undefined) {
+                    client
+                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
+                        .then((response) => {
+                            if (response.kind === "success") {
+                                emailSignInPoller?.stop();
+                                emailSignInPoller == undefined;
+                            } else if (response.kind === "error") {
+                                console.debug("getSignInWithEmailDelegation error", response.error);
+                                error = "loginDialog.unexpectedError";
+                            }
+                        })
+                        .catch((err) => {
+                            console.warn("getSignInWithEmailDelegation error", err);
                             error = "loginDialog.unexpectedError";
-                        }
-                    })
-                    .catch((err) => {
-                        console.warn("getSignInWithEmailDelegation error", err);
-                        error = "loginDialog.unexpectedError";
-                    });
-            }
-        }, 1000);
+                        });
+                }
+            },
+            1000,
+            1000,
+        );
     }
 
     function cancelLink() {
