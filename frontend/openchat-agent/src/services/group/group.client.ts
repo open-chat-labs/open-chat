@@ -331,8 +331,6 @@ export class GroupClient extends CandidService {
         let highIndex,
             lowIndex = messageIndex;
 
-        // right this is not the same kettle of fish - we need to sort this out
-
         let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
             events: [],
             expiredEventRanges: [],
@@ -347,21 +345,48 @@ export class GroupClient extends CandidService {
         ) {
             if (lowIndex === highIndex) {
                 // these will be equal on the first iteration
+                // TODO - it is possible that this *still* fails with a ResponseTooLarge error
+                const resp = await this.chatEventsWindowFromBackend(
+                    lowIndex,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                    chunkSize,
+                );
+
+                // if we get any failures we will need to bail otherwise things are going to get very messed up
+                if (resp === "events_failed") return resp;
+
+                aggregatedResponse = this.mergeEventsResponse(aggregatedResponse, resp);
+            } else {
+                // in this branch we want to concurrently expand the window in both directions and then merge in the results
+                // TODO - it is possible that either of these *still* fails with a ResponseTooLarge error
+                const [above, below] = await Promise.all([
+                    this.chatEventsFromBackend(
+                        lowIndex,
+                        false,
+                        threadRootMessageIndex,
+                        latestKnownUpdate,
+                        chunkSize,
+                    ),
+                    this.chatEventsFromBackend(
+                        highIndex,
+                        true,
+                        threadRootMessageIndex,
+                        latestKnownUpdate,
+                        chunkSize,
+                    ),
+                ]);
+
+                if (above === "events_failed" || below === "events_failed") return "events_failed";
+
+                aggregatedResponse = this.mergeEventsResponse(above, aggregatedResponse);
+                aggregatedResponse = this.mergeEventsResponse(aggregatedResponse, below);
             }
 
-            const resp = await this.chatEventsWindowFromBackend(
-                lowIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-                chunkSize,
-            );
-
-            // if we get any failures we will need to bail otherwise things are going to get very messed up
-            if (resp === "events_failed") return resp;
-
-            aggregatedResponse = this.mergeEventsResponse(aggregatedResponse, resp);
-            if (resp.events.length > 0) {
-                index = resp.events[resp.events.length - 1].index + 1;
+            if (aggregatedResponse.events.length > 0) {
+                lowIndex = aggregatedResponse.events[0].index - 1;
+                highIndex =
+                    aggregatedResponse.events[aggregatedResponse.events.length - 1].index + 1;
             }
         }
 
@@ -476,7 +501,9 @@ export class GroupClient extends CandidService {
             // if we get any failures we will need to bail otherwise things are going to get very messed up
             if (resp === "events_failed") return resp;
 
-            aggregatedResponse = ascending ? this.mergeEventsResponse(aggregatedResponse, resp) : this.mergeEventsResponse(resp, aggregatedResponse)
+            aggregatedResponse = ascending
+                ? this.mergeEventsResponse(aggregatedResponse, resp)
+                : this.mergeEventsResponse(resp, aggregatedResponse);
             if (resp.events.length > 0) {
                 index = ascending
                     ? resp.events[resp.events.length - 1].index + 1
