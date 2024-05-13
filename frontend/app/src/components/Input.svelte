@@ -56,6 +56,7 @@
         data-gram="false"
         data-gramm_editor="false"
         data-enable-grammarly="false"
+        data-lpignore="true"
         class:invalid
         class:hasCountdown={countdown}
         spellcheck="false"
