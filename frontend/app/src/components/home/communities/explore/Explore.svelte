@@ -30,8 +30,6 @@
         communitySearchTerm,
     } from "../../../../stores/search";
     import Fab from "../../../Fab.svelte";
-    import { layoutStore } from "../../../../stores/layout";
-    import BottomNav from "../../nav/BottomNav.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -249,9 +247,6 @@
             <ArrowUp size={$iconSize} color={"#fff"} />
         </Fab>
     </div>
-    {#if $layoutStore.showBottomNav}
-        <BottomNav on:profile />
-    {/if}
 </div>
 
 <style lang="scss">
@@ -265,16 +260,12 @@
         position: relative;
 
         @include mobile() {
-            padding: 0;
+            padding: $sp3;
             gap: $sp3;
         }
     }
 
     .header {
-        @include mobile() {
-            padding: $sp3 $sp3 0 $sp3;
-        }
-
         .title-row {
             display: flex;
             align-items: center;
@@ -327,10 +318,6 @@
         @include nice-scrollbar();
         flex: auto;
         height: 3000px;
-
-        @include mobile() {
-            padding: 0 $sp3 0 $sp3;
-        }
     }
 
     .communities {
@@ -367,7 +354,7 @@
         text-align: center;
     }
 
-    $size: 150px;
+    $size: 200px;
 
     .loading {
         width: $size;

@@ -26,7 +26,7 @@
             imageUrl={"/assets/team/steffen2.png"}
             hoverImageUrl={"/assets/team/steffen.jpeg"}
             name={"Steffen"}
-            blurb={`With extensive expertise spanning founder coaching, life coaching, management consulting, innovation management, and startup marketing, Steffen brings a wealth of knowledge to the table. As a seasoned professional, he excels in guiding entrepreneurs, fostering personal growth, and providing strategic insights for effective management.`} />
+            blurb={`Steffen has over a decade of experience in leading growth marketing for emerging technologies. His first startup, which was backed by Y Combinator, was acquired after seven years of successful expansion. Prior to OpenChat, he led the growth for a leading NFT ticketing company and provided coaching to startup founders across various industries. He has a strong interest in mindfulness and holds a master's degree in Strategic Entrepreneurship from Jönköping University.`} />
     </div>
 </Section>
 

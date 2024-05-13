@@ -385,6 +385,7 @@ import type {
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
     GenerateMagicLinkResponse,
+    HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
@@ -560,15 +561,6 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
 
-        getUserCountryCode()
-            .then((country) => {
-                this._userLocation = country;
-                console.debug("GEO: derived user's location: ", country);
-            })
-            .catch((err) => {
-                console.warn("GEO: Unable to determine user's country location", err);
-            });
-
         this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
             idleOptions: {
@@ -630,7 +622,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     login(): void {
         this.identityState.set({ kind: "logging_in" });
-        const authProvider = this._liveState.selectedAuthProvider;
+        const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
                 identityProvider: this.buildAuthProviderUrl(authProvider),
@@ -646,15 +638,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
-        if (authProvider === AuthProvider.II) {
-            return this.config.internetIdentityUrl;
-        } else {
-            return (
-                this.config.nfidUrl +
-                "&applicationLogo=" +
-                encodeURIComponent("https://oc.app/apple-touch-icon.png") +
-                "#authorize"
-            );
+        switch (authProvider) {
+            case AuthProvider.II:
+                return this.config.internetIdentityUrl;
+            case AuthProvider.NFID:
+                return (
+                    this.config.nfidUrl +
+                    "&applicationLogo=" +
+                    encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+                    "#authorize"
+                );
         }
     }
 
@@ -4171,7 +4164,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
@@ -6131,6 +6123,23 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
     }
 
+    async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
+        const signInWithEmailCanister = this.config.signInWithEmailCanister;
+
+        const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
+
+        if (response.ok) {
+            return { kind: "success" } as HandleMagicLinkResponse;
+        } else if (response.status === 400) {
+            const body = await response.text();
+            if (body === "Link expired") {
+                return { kind: "link_expired" } as HandleMagicLinkResponse;
+            }
+        }
+
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
+    }
+
     async getSignInWithEmailDelegation(
         email: string,
         userKey: Uint8Array,
@@ -6633,10 +6642,26 @@ export class OpenChat extends OpenChatAgentWorker {
         return { kind: "direct_chat" };
     }
 
+    getUserLocation(): Promise<string | undefined> {
+        if (this._userLocation !== undefined) {
+            return Promise.resolve(this._userLocation);
+        }
+        return getUserCountryCode()
+            .then((country) => {
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
+                return country;
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+                return undefined;
+            });
+    }
+
     // **** End of Communities stuff
     diamondDurationToMs = diamondDurationToMs;
-    swapRestricted(): boolean {
-        return featureRestricted(this._userLocation, "swap");
+    swapRestricted(): Promise<boolean> {
+        return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
     /**
