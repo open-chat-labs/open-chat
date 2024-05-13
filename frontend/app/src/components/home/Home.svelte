@@ -1182,10 +1182,6 @@
             on:logout={() => client.logout()}
             on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
     </Overlay>
-{:else if modal === ModalType.IdentityMigration}
-    <Overlay>
-        <IdentityMigrationModal />
-    </Overlay>
 {:else if modal !== ModalType.None}
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
