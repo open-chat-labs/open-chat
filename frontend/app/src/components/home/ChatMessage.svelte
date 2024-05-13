@@ -1,7 +1,6 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import page from "page";
     import Link from "../Link.svelte";
     import { fade } from "svelte/transition";
     import {

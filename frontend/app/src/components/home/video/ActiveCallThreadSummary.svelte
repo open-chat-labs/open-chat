@@ -8,7 +8,6 @@
     import { removeQueryStringParam } from "../../../utils/urls";
     import { activeVideoCall } from "../../../stores/video";
     import { iconSize } from "../../../stores/iconSize";
-    import page from "page";
     import { pageReplace } from "../../../routes";
 
     export let chatId: ChatIdentifier;

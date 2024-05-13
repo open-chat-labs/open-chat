@@ -1,5 +1,4 @@
 <script lang="ts">
-    import page from "page";
     import { onMount, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
