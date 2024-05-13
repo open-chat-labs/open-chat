@@ -5,10 +5,11 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";
+    import { pageReplace } from "../../routes";
 
     function closeRightPanel() {
         if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
-            page.replace(removeQueryStringParam("open"));
+            pageReplace(removeQueryStringParam("open"));
         }
         rightPanelHistory.set([]);
     }

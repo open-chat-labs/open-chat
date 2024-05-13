@@ -10,7 +10,7 @@ GIT_COMMIT_ID=$(git rev-parse HEAD)
 
 echo "CommitId: $GIT_COMMIT_ID"
 
-docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID .
+docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID . || exit 1
 
 container_id=$(docker create openchat)
 rm -rf wasms
