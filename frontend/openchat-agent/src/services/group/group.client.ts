@@ -123,8 +123,6 @@ import {
     apiVideoCallPresence,
     setVideoCallPresence,
     videoCallParticipantsResponse,
-    expiredEventsRange,
-    expiredMessagesRange,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -328,8 +326,8 @@ export class GroupClient extends CandidService {
     ): Promise<EventsResponse<ChatEvent>> {
         const chunkSize = MAX_EVENTS / 5;
 
-        let highIndex,
-            lowIndex = messageIndex;
+        let highIndex = messageIndex;
+        let lowIndex = messageIndex;
 
         let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
             events: [],
