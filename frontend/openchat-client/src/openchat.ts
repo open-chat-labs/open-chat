@@ -385,6 +385,7 @@ import type {
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
     GenerateMagicLinkResponse,
+    HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
@@ -621,7 +622,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     login(): void {
         this.identityState.set({ kind: "logging_in" });
-        const authProvider = this._liveState.selectedAuthProvider;
+        const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
                 identityProvider: this.buildAuthProviderUrl(authProvider),
@@ -637,15 +638,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
-        if (authProvider === AuthProvider.II) {
-            return this.config.internetIdentityUrl;
-        } else {
-            return (
-                this.config.nfidUrl +
-                "&applicationLogo=" +
-                encodeURIComponent("https://oc.app/apple-touch-icon.png") +
-                "#authorize"
-            );
+        switch (authProvider) {
+            case AuthProvider.II:
+                return this.config.internetIdentityUrl;
+            case AuthProvider.NFID:
+                return (
+                    this.config.nfidUrl +
+                    "&applicationLogo=" +
+                    encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+                    "#authorize"
+                );
         }
     }
 
@@ -4162,7 +4164,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
@@ -6120,6 +6121,23 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<GenerateMagicLinkResponse> {
         const sessionKeyDer = toDer(sessionKey);
         return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
+    }
+
+    async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
+        const signInWithEmailCanister = this.config.signInWithEmailCanister;
+
+        const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
+
+        if (response.ok) {
+            return { kind: "success" } as HandleMagicLinkResponse;
+        } else if (response.status === 400) {
+            const body = await response.text();
+            if (body === "Link expired") {
+                return { kind: "link_expired" } as HandleMagicLinkResponse;
+            }
+        }
+
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
     }
 
     async getSignInWithEmailDelegation(

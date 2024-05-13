@@ -5,6 +5,18 @@
     import SellingPoints from "./SellingPoints.svelte";
     import BragBox from "./BragBox.svelte";
     import ArrowLink from "../ArrowLink.svelte";
+    import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
+    import { onMount } from "svelte";
+    import Overlay from "../Overlay.svelte";
+    import { querystring } from "../../routes";
+
+    let showSignInWithMagicLinkModal = false;
+
+    onMount(() => {
+        if ($querystring.has("auth")) {
+            showSignInWithMagicLinkModal = true;
+        }
+    });
 </script>
 
 <div class="content">
@@ -35,6 +47,12 @@
 <div class="content">
     <Team />
 </div>
+
+{#if showSignInWithMagicLinkModal}
+    <Overlay>
+        <SignInWithMagicLink />
+    </Overlay>
+{/if}
 
 <style lang="scss">
     .headline {

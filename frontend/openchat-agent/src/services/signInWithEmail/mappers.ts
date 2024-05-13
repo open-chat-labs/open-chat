@@ -34,3 +34,7 @@ export function generateMagicLinkResponse(
         candid,
     );
 }
+
+// function durationToTimestamp(duration: bigint): bigint {
+//     return BigInt(Date.now() + Number(duration));
+// }

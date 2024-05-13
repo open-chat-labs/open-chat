@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
 
 export interface Delegation {
   'pubkey' : Uint8Array | number[],
@@ -72,5 +71,3 @@ export interface _SERVICE {
   'http_request_update' : ActorMethod<[HttpRequest], HttpResponse>,
   'rsa_public_key' : ActorMethod<[], [] | [string]>,
 }
-export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
