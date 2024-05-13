@@ -6,6 +6,7 @@
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
+    import { pageReplace } from "../routes";
 
     const client = getContext<OpenChat>("client");
 
@@ -15,7 +16,7 @@
     onMount(() => {
         const qs = window.location.search;
 
-        page.replace("/home");
+        pageReplace("/home");
 
         client
             .handleMagicLink(qs)

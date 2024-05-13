@@ -9,6 +9,7 @@
     import { activeVideoCall } from "../../../stores/video";
     import { iconSize } from "../../../stores/iconSize";
     import page from "page";
+    import { pageReplace } from "../../../routes";
 
     export let chatId: ChatIdentifier;
     export let messageIndex: number;
@@ -20,7 +21,7 @@
     function toggleThread() {
         if (threadOpen) {
             popRightPanelHistory();
-            page.replace(removeQueryStringParam("open"));
+            pageReplace(removeQueryStringParam("open"));
         } else {
             client.openThreadFromMessageIndex(chatId, messageIndex);
         }

@@ -42,7 +42,7 @@
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { pathParams } from "../../routes";
+    import { pageReplace, pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
@@ -182,7 +182,7 @@
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
                     filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-                    page.replace(removeQueryStringParam("open"));
+                    pageReplace(removeQueryStringParam("open"));
                 }
             });
         }
