@@ -227,10 +227,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
 
-            case "getIdentityMigrationProgress":
-                executeThenReply(payload, correlationId, agent.getIdentityMigrationProgress());
-                break;
-
             case "getDeletedGroupMessage":
                 executeThenReply(
                     payload,
