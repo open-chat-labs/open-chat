@@ -1,4 +1,4 @@
-import { derived, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -9,11 +9,39 @@ import type {
     ChatListScope,
 } from "openchat-client";
 
+import page from "page";
+
 export const notFound = writable(false);
 
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
 
 export const routerReady = writable(false);
+
+// if we attempt to use the router before it is set up it will blow up
+function getRouter(): Promise<typeof page> {
+    return new Promise((resolve) => {
+        function checkReadiness(iterations: number = 0) {
+            if (iterations > 10)
+                throw new Error("Router readiness check has failed - router cannot be used");
+
+            if (get(routerReady)) {
+                resolve(page);
+            } else {
+                console.debug("ROUTER: router not ready, trying again in 100ms");
+                window.setTimeout(() => checkReadiness(iterations + 1), 100);
+            }
+        }
+        checkReadiness();
+    });
+}
+
+export function pageReplace(url: string) {
+    return getRouter().then((r) => r.replace(url));
+}
+
+export function pageRedirect(url: string) {
+    return getRouter().then((r) => r.redirect(url));
+}
 
 export const location = derived(pathContextStore, ($store) => {
     return $store ? $store.routePath : "";

@@ -49,7 +49,7 @@
     import { getContext, onMount, tick } from "svelte";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pathParams, routeForScope } from "../../routes";
+    import { pageRedirect, pageReplace, pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -264,7 +264,7 @@
                 return false;
             });
         } else if (ev instanceof SelectedChatInvalid) {
-            page.replace(routeForScope(client.getDefaultScope()));
+            pageReplace(routeForScope(client.getDefaultScope()));
         } else if (ev instanceof UserSuspensionChanged) {
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
@@ -287,7 +287,7 @@
             // if the scope is favourite let's redirect to the non-favourite counterpart and try again
             // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
             if ($chatListScope.kind === "favourite") {
-                page.redirect(
+                pageRedirect(
                     routeForChatIdentifier(
                         $chatListScope.communityId === undefined ? "group_chat" : "community",
                         chatId,
@@ -309,7 +309,7 @@
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            page.replace(
+                            pageReplace(
                                 routeForMessage(
                                     "community",
                                     {
@@ -320,7 +320,7 @@
                                 ),
                             );
                         } else {
-                            page.replace(
+                            pageReplace(
                                 routeForMessage(
                                     "community",
                                     { chatId: preview.location },
@@ -329,7 +329,7 @@
                             );
                         }
                     } else {
-                        page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                        pageReplace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
                     modal = ModalType.NotFound;
@@ -376,7 +376,7 @@
         if (!$mobileWidth) {
             const first = $chatSummariesListStore.find((c) => !c.membership.archived);
             if (first !== undefined) {
-                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                pageRedirect(routeForChatIdentifier($chatListScope.kind, first.id));
                 return true;
             }
         }
@@ -395,7 +395,7 @@
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
                 client.identityState.set({ kind: "logging_in" });
-                page.redirect("/group");
+                pageRedirect("/group");
                 return;
             }
 
@@ -460,7 +460,7 @@
                         url: pathParams.url,
                         files: [],
                     };
-                    page.replace(routeForScope(client.getDefaultScope()));
+                    pageReplace(routeForScope(client.getDefaultScope()));
                     modal = ModalType.SelectChat;
                 }
             }
@@ -469,37 +469,37 @@
             const diamond = $querystring.get("diamond");
             if (diamond !== null) {
                 showUpgrade = true;
-                page.replace(removeQueryStringParam("diamond"));
+                pageReplace(removeQueryStringParam("diamond"));
             }
 
             const wallet = $querystring.get("wallet");
             if (wallet !== null) {
                 modal = ModalType.Wallet;
-                page.replace(removeQueryStringParam("wallet"));
+                pageReplace(removeQueryStringParam("wallet"));
             }
 
             const faq = $querystring.get("faq");
             if (faq !== null) {
-                page.replace(`/faq?q=${faq}`);
+                pageReplace(`/faq?q=${faq}`);
             }
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
                 modal = ModalType.HallOfFame;
-                page.replace(removeQueryStringParam("hof"));
+                pageReplace(removeQueryStringParam("hof"));
             }
 
             const everyone = $querystring.get("everyone");
             if (everyone !== null) {
                 rightPanelHistory.set([{ kind: "show_group_members" }]);
-                page.replace(removeQueryStringParam("everyone"));
+                pageReplace(removeQueryStringParam("everyone"));
             }
 
             const usergroup = $querystring.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
-                page.replace(removeQueryStringParam("usergroup"));
+                pageReplace(removeQueryStringParam("usergroup"));
             }
         }
     }
@@ -726,7 +726,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -735,7 +735,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+                pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             }
 
             tick().then(() => {
@@ -760,7 +760,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
