@@ -146,8 +146,12 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
 import type { EditMessageV2Args } from "./candid/types";
+import {
+    chunkedChatEventsFromBackend,
+    chunkedChatEventsWindowFromBackend,
+} from "../common/chunked";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -393,9 +397,37 @@ export class UserClient extends CandidService {
                 missing.size,
                 totalMiss,
             );
-            return this.chatEventsWindowFromBackend(chatId, messageIndex, latestKnownUpdate).then(
-                (resp) => this.setCachedEvents(chatId, resp),
-            );
+            return this.chatEventsWindowFromBackend(chatId, messageIndex, latestKnownUpdate)
+                .then((resp) => this.setCachedEvents(chatId, resp))
+                .catch((err) => {
+                    if (err instanceof ResponseTooLargeError) {
+                        console.log(
+                            "Response size too large, we will try to split the window request into a a few chunks",
+                        );
+                        return chunkedChatEventsWindowFromBackend(
+                            (index: number, ascending: boolean, chunkSize: number) =>
+                                this.chatEventsFromBackend(
+                                    chatId,
+                                    index,
+                                    ascending,
+                                    undefined,
+                                    latestKnownUpdate,
+                                    chunkSize,
+                                ),
+                            (index: number, chunkSize: number) =>
+                                this.chatEventsWindowFromBackend(
+                                    chatId,
+                                    index,
+                                    latestKnownUpdate,
+                                    chunkSize,
+                                ),
+                            eventIndexRange,
+                            messageIndex,
+                        ).then((resp) => this.setCachedEvents(chatId, resp));
+                    } else {
+                        throw err;
+                    }
+                });
         } else {
             return this.handleMissingEvents(
                 chatId,
@@ -410,13 +442,14 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
             user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
-            max_events: MAX_EVENTS,
+            max_events: maxEvents,
             mid_point: messageIndex,
             latest_known_update: apiOptional(identity, latestKnownUpdate),
             latest_client_event_index: [] as [] | [number],
@@ -454,7 +487,33 @@ export class UserClient extends CandidService {
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
+            )
+                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
+                .catch((err) => {
+                    if (err instanceof ResponseTooLargeError) {
+                        console.log(
+                            "Response size too large, we will try to split the payload into a a few chunks",
+                        );
+                        return chunkedChatEventsFromBackend(
+                            (index: number, chunkSize: number) =>
+                                this.chatEventsFromBackend(
+                                    chatId,
+                                    index,
+                                    ascending,
+                                    threadRootMessageIndex,
+                                    latestKnownUpdate,
+                                    chunkSize,
+                                ),
+                            eventIndexRange,
+                            startIndex,
+                            ascending,
+                        ).then((resp) =>
+                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
+                        );
+                    } else {
+                        throw err;
+                    }
+                });
         } else {
             return this.handleMissingEvents(
                 chatId,
@@ -471,12 +530,13 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
             max_messages: MAX_MESSAGES,
-            max_events: MAX_EVENTS,
+            max_events: maxEvents,
             start_index: startIndex,
             ascending: ascending,
             latest_known_update: apiOptional(identity, latestKnownUpdate),
