@@ -20,7 +20,7 @@ echo "Tag: $TAG_ID"
 echo "Commit Id: $GIT_COMMIT_ID"
 echo "Canister name: $CANISTER_NAME"
 
-docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID --build-arg canister_name=$CANISTER_NAME .
+docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID --build-arg canister_name=$CANISTER_NAME . || exit 1
 
 container_id=$(docker create openchat)
 rm -rf wasms
