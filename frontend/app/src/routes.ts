@@ -23,11 +23,9 @@ function getRouter(): Promise<typeof page> {
         function checkReadiness() {
             if (get(routerReady)) {
                 resolve(page);
-                return true;
             } else {
                 window.setTimeout(checkReadiness, 100);
             }
-            return false;
         }
         checkReadiness();
     });
