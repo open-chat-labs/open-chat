@@ -26,8 +26,7 @@
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import { pathParams } from "../../routes";
-    import page from "page";
+    import { pageReplace, pathParams } from "../../routes";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
@@ -194,7 +193,7 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popRightPanelHistory();
-        page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
+        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
 
