@@ -237,7 +237,6 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | IdentityMigrationProgress
     | SetGroupInvite
     | SetCommunityInvite
     | SearchGroupChat
@@ -980,10 +979,6 @@ type CurrentUser = {
     kind: "getCurrentUser";
 };
 
-type IdentityMigrationProgress = {
-    kind: "getIdentityMigrationProgress";
-};
-
 type MarkMessagesRead = {
     kind: "markMessagesRead";
     payload: MarkReadRequest;
@@ -1675,8 +1670,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CurrentUserResponse
     : T extends CreateUserClient
     ? void
-    : T extends IdentityMigrationProgress
-    ? [number, number] | undefined
     : T extends GetAllCachedUsers
     ? UserLookup
     : T extends LastOnline
