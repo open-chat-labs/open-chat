@@ -20,11 +20,15 @@ export const routerReady = writable(false);
 // if we attempt to use the router before it is set up it will blow up
 function getRouter(): Promise<typeof page> {
     return new Promise((resolve) => {
-        function checkReadiness() {
+        function checkReadiness(iterations: number = 0) {
+            if (iterations > 10)
+                throw new Error("Router readiness check has failed - router cannot be used");
+
             if (get(routerReady)) {
                 resolve(page);
             } else {
-                window.setTimeout(checkReadiness, 100);
+                console.debug("ROUTER: router not ready, trying again in 100ms");
+                window.setTimeout(() => checkReadiness(iterations + 1), 100);
             }
         }
         checkReadiness();
