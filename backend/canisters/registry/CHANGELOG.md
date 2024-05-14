@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Expose `enabled` field in the metrics for each token ([#5788](https://github.com/open-chat-labs/open-chat/pull/5788))
+- Update circulating supply definition ([#5801](https://github.com/open-chat-labs/open-chat/pull/5801))
 
 ## [[2.0.1168](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1168-registry)] - 2024-05-08
 

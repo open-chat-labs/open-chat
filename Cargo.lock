@@ -5650,6 +5650,7 @@ dependencies = [
  "canister_tracing_macros",
  "dataurl",
  "futures",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.12.1",

@@ -7,7 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{CanisterId, Empty, Milliseconds};
+use types::{Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
@@ -28,26 +28,7 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    let deleted_canisters: Vec<_> = [
-        "sch6m-vaaaa-aaaaf-ageyq-cai",
-        "st47y-kiaaa-aaaaf-a2zkq-cai",
-        "k26wp-yiaaa-aaaaf-beaua-cai",
-        "antsy-qaaaa-aaaar-a35fq-cai",
-        "vmdca-pqaaa-aaaaf-aabzq-cai",
-        "a6ew7-jyaaa-aaaaf-adsaq-cai",
-        "t2zs6-tiaaa-aaaaf-aak5q-cai",
-    ]
-    .into_iter()
-    .map(|str| CanisterId::from_text(str).unwrap())
-    .collect();
-
     mutate_state(|state| {
-        let now = state.env.now();
-        for canister_id in deleted_canisters {
-            state.data.group_chats.remove(canister_id.into(), now);
-            state.data.communities.remove(canister_id.into(), now);
-        }
-
         if state.data.user_created + SIX_MONTHS < state.env.now()
             && state.data.direct_chats.len() <= 1
             && state.data.group_chats.len() == 0
