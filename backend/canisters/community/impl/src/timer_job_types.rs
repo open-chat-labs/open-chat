@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -289,11 +289,14 @@ impl Job for MakeTransferJob {
         let pending = self.pending_transaction;
         ic_cdk::spawn(make_transfer(pending, sender));
 
-        async fn make_transfer(pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
+        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
             if let Err(error) = process_transaction(pending_transaction.clone(), sender).await {
                 error!(?error, "Transaction failed");
                 mutate_state(|state| {
                     let now = state.env.now();
+                    if (pending_transaction.created() / NANOS_PER_MILLISECOND) + DAY_IN_MS < now {
+                        pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
+                    }
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }),
                         now + MINUTE_IN_MS,

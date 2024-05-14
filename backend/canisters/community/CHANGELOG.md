@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix old failing transactions by updating `created` date ([#5799](https://github.com/open-chat-labs/open-chat/pull/5799))
+
+## [[2.0.1170](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1170-community)] - 2024-05-13
+
 ### Changed
 
 - Support prize messages with 128bit prize amounts ([#5729](https://github.com/open-chat-labs/open-chat/pull/5729))
