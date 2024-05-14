@@ -53,6 +53,11 @@
         }
     }
 
+    function onShowGuidelines() {
+        showGuidelines = true;
+        client.gaTrack("show_guidelines_clicked", "registration");
+    }
+
     function registerUser(username: string): void {
         state.set({ kind: "spinning" });
         client.registerUser(username).then((resp) => {
@@ -168,7 +173,7 @@
             {#if $error}
                 <ErrorMessage><Translatable resourceKey={i18nKey($error)} /></ErrorMessage>
             {/if}
-            <div on:click={() => (showGuidelines = true)} class="smallprint">
+            <div on:click={onShowGuidelines} class="smallprint">
                 <Translatable resourceKey={i18nKey("register.disclaimer")} />
             </div>
         {/if}
