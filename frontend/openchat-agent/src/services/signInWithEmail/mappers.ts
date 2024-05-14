@@ -1,20 +1,15 @@
-import type {
-    ApiGenerateVerificationCodeResponse,
-    ApiSubmitVerificationCodeResponse,
-} from "./candid/idl";
-import {
-    type GenerateEmailVerificationCodeResponse,
-    type SubmitEmailVerificationCodeResponse,
-    UnsupportedValueError,
-} from "openchat-shared";
+import type { ApiGenerateMagicLinkResponse } from "./candid/idl";
+import { type GenerateMagicLinkResponse, UnsupportedValueError } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
 
-export function generateVerificationCodeResponse(
-    candid: ApiGenerateVerificationCodeResponse,
-): GenerateEmailVerificationCodeResponse {
+export function generateMagicLinkResponse(
+    candid: ApiGenerateMagicLinkResponse,
+): GenerateMagicLinkResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
+            userKey: consolidateBytes(candid.Success.user_key),
+            expiration: candid.Success.expiration,
         };
     }
     if ("EmailInvalid" in candid) {
@@ -25,7 +20,7 @@ export function generateVerificationCodeResponse(
     if ("Blocked" in candid) {
         return {
             kind: "blocked",
-            until: candid.Blocked,
+            duration: Number(candid.Blocked),
         };
     }
     if ("FailedToSendEmail" in candid) {
@@ -35,33 +30,11 @@ export function generateVerificationCodeResponse(
         };
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiGenerateVerificationCodeResponse type received",
+        "Unexpected ApiGenerateMagicLinkResponse type received",
         candid,
     );
 }
 
-export function submitVerificationCodeResponse(
-    candid: ApiSubmitVerificationCodeResponse,
-): SubmitEmailVerificationCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            userKey: consolidateBytes(candid.Success.user_key),
-            expiration: candid.Success.expiration,
-        };
-    }
-    if ("IncorrectCode" in candid) {
-        return {
-            kind: "incorrect_code",
-        };
-    }
-    if ("NotFound" in candid) {
-        return {
-            kind: "not_found",
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSubmitVerificationCodeResponse type received",
-        candid,
-    );
-}
+// function durationToTimestamp(duration: bigint): bigint {
+//     return BigInt(Date.now() + Number(duration));
+// }

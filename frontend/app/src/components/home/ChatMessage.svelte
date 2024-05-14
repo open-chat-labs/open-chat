@@ -1,7 +1,6 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import page from "page";
     import Link from "../Link.svelte";
     import { fade } from "svelte/transition";
     import {
@@ -42,7 +41,7 @@
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { pathParams } from "../../routes";
+    import { pageReplace, pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
@@ -57,6 +56,8 @@
     import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import WithRole from "./profile/WithRole.svelte";
+    import RoleIcon from "./profile/RoleIcon.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -145,6 +146,7 @@
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
@@ -179,7 +181,7 @@
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
                     filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-                    page.replace(removeQueryStringParam("open"));
+                    pageReplace(removeQueryStringParam("open"));
                 }
             });
         }
@@ -497,6 +499,20 @@
                                     {senderDisplayName}
                                 </h4>
                                 <Diamond status={sender?.diamondStatus} />
+                                {#if sender && multiUserChat}
+                                    <WithRole
+                                        userId={sender.userId}
+                                        chatMembers={$chatMembersMap}
+                                        communityMembers={$communityMembers}
+                                        let:chatRole
+                                        let:communityRole>
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={chatType === "channel" ? "channel" : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    </WithRole>
+                                {/if}
                             </Link>
                             {#if senderTyping}
                                 <span class="typing">
@@ -713,6 +729,12 @@
         :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
             background-color: var(--icon-hv);
         }
+    }
+
+    :global(.message .sender .never) {
+        display: inline-flex;
+        gap: $sp2;
+        align-items: center;
     }
 
     :global(.message .loading) {

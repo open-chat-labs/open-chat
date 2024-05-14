@@ -26,8 +26,7 @@
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import { pathParams } from "../../routes";
-    import page from "page";
+    import { pageReplace, pathParams } from "../../routes";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
@@ -35,6 +34,7 @@
     import Resizable from "../Resizable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
+    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -193,7 +193,7 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popRightPanelHistory();
-        page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
+        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
 
@@ -368,6 +368,11 @@
             on:editGroup
             on:chatWith
             on:showGroupMembers />
+    {:else if lastState.kind === "call_participants_panel"}
+        <ActiveCallParticipants
+            isOwner={lastState.isOwner}
+            chatId={lastState.chatId}
+            messageId={lastState.messageId} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         <InviteUsers
             {level}

@@ -191,12 +191,14 @@ import type {
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
-    GenerateEmailVerificationCodeResponse,
-    SubmitEmailVerificationCodeResponse,
+    GenerateMagicLinkResponse,
     GetDelegationResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2871,7 +2873,7 @@ export class OpenChatAgent extends EventTarget {
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ),
+                            ).filter((t) => t.enabled),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,
@@ -3215,6 +3217,26 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince?: bigint,
+    ): Promise<VideoCallParticipantsResponse> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).videoCallParticipants(
+                    chatId.channelId,
+                    messageId,
+                    updatesSince,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).videoCallParticipants(
+                    messageId,
+                    updatesSince,
+                );
+        }
+    }
+
     joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).joinVideoCall(
@@ -3225,6 +3247,26 @@ export class OpenChatAgent extends EventTarget {
             return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
         } else {
             return this.userClient.joinVideoCall(chatId.userId, messageId);
+        }
+    }
+
+    setVideoCallPresence(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).setVideoCallPresence(
+                    chatId.channelId,
+                    messageId,
+                    presence,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).setVideoCallPresence(
+                    messageId,
+                    presence,
+                );
         }
     }
 
@@ -3259,19 +3301,11 @@ export class OpenChatAgent extends EventTarget {
         return this._identityClient.setPrincipalMigrationJobEnabled(enabled);
     }
 
-    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        return this._signInWithEmailClient.generateVerificationCode(email);
+    generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
+        return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
     }
 
-    submitEmailVerificationCode(
-        email: string,
-        code: string,
-        sessionKey: Uint8Array,
-    ): Promise<SubmitEmailVerificationCodeResponse> {
-        return this._signInWithEmailClient.submitVerificationCode(email, code, sessionKey);
-    }
-
-    getSignInByEmailDelegation(
+    getSignInWithEmailDelegation(
         email: string,
         sessionKey: Uint8Array,
         expiration: bigint,

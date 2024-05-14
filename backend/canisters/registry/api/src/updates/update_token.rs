@@ -14,6 +14,29 @@ pub struct Args {
     pub logo: Option<String>,
 }
 
+impl Args {
+    pub fn new(ledger_canister_id: CanisterId) -> Args {
+        Args {
+            ledger_canister_id,
+            name: None,
+            symbol: None,
+            info_url: None,
+            how_to_buy_url: None,
+            transaction_url_format: None,
+            logo: None,
+        }
+    }
+
+    pub fn has_updates(&self) -> bool {
+        self.name.is_some()
+            || self.symbol.is_some()
+            || self.info_url.is_some()
+            || self.how_to_buy_url.is_some()
+            || self.transaction_url_format.is_some()
+            || self.logo.is_some()
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

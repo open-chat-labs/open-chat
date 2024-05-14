@@ -8,7 +8,7 @@
     import { removeQueryStringParam } from "../../../utils/urls";
     import { activeVideoCall } from "../../../stores/video";
     import { iconSize } from "../../../stores/iconSize";
-    import page from "page";
+    import { pageReplace } from "../../../routes";
 
     export let chatId: ChatIdentifier;
     export let messageIndex: number;
@@ -16,14 +16,11 @@
     const client = getContext<OpenChat>("client");
 
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
-    $: unreadCount = 0;
-
-    $: console.log("Thread unread: ", unreadCount);
 
     function toggleThread() {
         if (threadOpen) {
             popRightPanelHistory();
-            page.replace(removeQueryStringParam("open"));
+            pageReplace(removeQueryStringParam("open"));
         } else {
             client.openThreadFromMessageIndex(chatId, messageIndex);
         }

@@ -44,6 +44,17 @@ export class DestinationInvalidError extends HttpError {
     }
 }
 
+export class ResponseTooLargeError extends HttpError {
+    constructor(
+        error: Error,
+        public size: number,
+        public maxSize: number,
+    ) {
+        super(500, error);
+        this.name = "ResponseTooLargeError";
+    }
+}
+
 export class InvalidDelegationError extends HttpError {
     constructor(error: Error) {
         super(403, error);

@@ -1614,6 +1614,7 @@ export interface PrizeContent {
   'winners' : Array<UserId>,
 }
 export interface PrizeContentInitial {
+  'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
   'prizes' : Array<Tokens>,
@@ -1927,6 +1928,19 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'DisplayNameTooShort' : number };
+export interface SetVideoCallPresenceArgs {
+  'channel_id' : ChannelId,
+  'presence' : VideoCallPresence,
+  'message_id' : MessageId,
+}
+export type SetVideoCallPresenceResponse = { 'AlreadyEnded' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2263,6 +2277,9 @@ export type VideoCallParticipantsResponse = { 'UserNotInChannel' : null } |
   { 'VideoCallNotFound' : null } |
   { 'Success' : VideoCallParticipants } |
   { 'UserNotInCommunity' : null };
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
 export type VideoCallType = { 'Default' : null } |
   { 'Broadcast' : null };
 export type VideoCallUpdates = { 'NoChange' : null } |
@@ -2386,6 +2403,10 @@ export interface _SERVICE {
   'set_member_display_name' : ActorMethod<
     [SetMemberDisplayNameArgs],
     SetMemberDisplayNameResponse
+  >,
+  'set_video_call_presence' : ActorMethod<
+    [SetVideoCallPresenceArgs],
+    SetVideoCallPresenceResponse
   >,
   'start_video_call' : ActorMethod<
     [StartVideoCallArgs],

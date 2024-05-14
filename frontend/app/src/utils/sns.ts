@@ -26,7 +26,7 @@ export function createAddTokenPayload(
                 {
                     how_to_buy_url: howToBuyUrl,
                     info_url: infoUrl,
-                    logo: logo !== undefined && logo.length > 0 ? [logo] : [],
+                    logo: optionalStringToCandid(logo),
                     token_standard: { icrc1: null },
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     transaction_url_format: transactionUrlFormat,
@@ -60,15 +60,19 @@ export function createUpdateTokenPayload(
             ],
             [
                 {
-                    how_to_buy_url: howToBuyUrl,
-                    info_url: infoUrl,
-                    logo: logo !== undefined && logo.length > 0 ? [logo] : [],
-                    name: name !== undefined && name.length > 0 ? [name] : [],
+                    how_to_buy_url: optionalStringToCandid(howToBuyUrl),
+                    info_url: optionalStringToCandid(infoUrl),
+                    logo: optionalStringToCandid(logo),
+                    name: optionalStringToCandid(name),
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
-                    symbol: symbol !== undefined && symbol.length > 0 ? [symbol] : [],
-                    transaction_url_format: transactionUrlFormat,
+                    symbol: optionalStringToCandid(symbol),
+                    transaction_url_format: optionalStringToCandid(transactionUrlFormat),
                 },
             ],
         ),
     );
+}
+
+function optionalStringToCandid(value: string | undefined): [string] | [] {
+    return value !== undefined && value.length > 0 ? [value] : [];
 }

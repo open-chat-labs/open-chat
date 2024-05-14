@@ -1,13 +1,11 @@
-import type { GetDelegationResponse, PrepareDelegationResponse } from "./identity";
-
-export type GenerateEmailVerificationCodeResponse =
-    | { kind: "success" }
+export type GenerateMagicLinkResponse =
+    | { kind: "success"; userKey: Uint8Array; expiration: bigint }
     | { kind: "email_invalid" }
-    | { kind: "blocked"; until: bigint }
+    | { kind: "blocked"; duration: number }
     | { kind: "failed_to_send_email"; error: string };
 
-export type SignInWithEmailVerificationCodeResponse = GetDelegationResponse | IncorrectCode;
+export type HandleMagicLinkResponse = 
+    | { kind: "success" }
+    | { kind: "link_invalid" }
+    | { kind: "link_expired" };
 
-export type SubmitEmailVerificationCodeResponse = PrepareDelegationResponse | IncorrectCode;
-
-export type IncorrectCode = { kind: "incorrect_code" };

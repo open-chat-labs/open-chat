@@ -7,7 +7,7 @@
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { notFound, pathParams, routeForScope } from "../routes";
+    import { notFound, pageReplace, pathParams, routeForScope } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -103,7 +103,7 @@
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
-            page.replace(removeQueryStringParam("ref"));
+            pageReplace(removeQueryStringParam("ref"))
         }
         calculateHeight();
 
@@ -425,7 +425,6 @@
 <VideoCallAccessRequests />
 
 <IncomingCall on:joinVideoCall={joinVideoCall} />
-
 
 <Witch background />
 

@@ -1248,6 +1248,7 @@ export type GroupChatDetails = {
  */
 export type ChatSpecificState = {
     members: Member[];
+    membersMap: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
@@ -2149,3 +2150,15 @@ export type CancelP2PSwapResponse =
     | { kind: "internal_error"; text: string };
 
 export type JoinVideoCallResponse = "success" | "failure" | "ended";
+
+export type VideoCallPresence = "default" | "owner" | "hidden";
+
+export type SetVideoCallPresenceResponse = "success" | "failure";
+
+export type VideoCallParticipants = {
+    participants: VideoCallParticipant[];
+    hidden: VideoCallParticipant[];
+    lastUpdated: bigint;
+};
+
+export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);

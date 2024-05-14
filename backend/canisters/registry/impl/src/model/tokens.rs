@@ -2,6 +2,7 @@ use dataurl::DataUrl;
 use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
+use tracing::info;
 use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -73,6 +74,7 @@ impl Tokens {
             }
             token.last_updated = now;
             self.last_updated = now;
+            info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
             true
         } else {
             false
@@ -149,6 +151,7 @@ pub struct TokenMetrics {
     transaction_url_format: String,
     supported_standards: Vec<String>,
     added: TimestampMillis,
+    enabled: bool,
     last_updated: TimestampMillis,
 }
 
@@ -167,6 +170,7 @@ impl From<&TokenDetails> for TokenMetrics {
             transaction_url_format: value.transaction_url_format.clone(),
             supported_standards: value.supported_standards.clone(),
             added: value.added,
+            enabled: value.enabled,
             last_updated: value.last_updated,
         }
     }

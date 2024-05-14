@@ -17,6 +17,7 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "create_canister"
+        | "delete_user"
         | "mark_as_online"
         | "pay_for_diamond_membership"
         | "set_display_name"

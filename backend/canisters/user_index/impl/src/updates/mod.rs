@@ -13,6 +13,7 @@ pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
 pub mod c2c_update_user_principal;
 pub mod create_challenge;
+pub mod delete_user;
 pub mod mark_local_user_index_full;
 pub mod mark_suspected_bot;
 pub mod modclub_callback;

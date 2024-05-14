@@ -65,6 +65,9 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -157,10 +160,7 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
 } from "./identity";
-import type {
-    GenerateEmailVerificationCodeResponse,
-    SubmitEmailVerificationCodeResponse,
-} from "./email";
+import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -348,13 +348,28 @@ export type WorkerRequest =
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
     | SetPrincipalMigrationJobEnabled
-    | GenerateEmailVerificationsCode
-    | SubmitEmailVerificationsCode
+    | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
     | SiwsPrepareLogin
     | LoginWithWallet
-    | GetDelegationWithWallet;
+    | GetDelegationWithWallet
+    | SetVideoCallPresence
+    | VideoCallParticipants;
+
+type VideoCallParticipants = {
+    kind: "videoCallParticipants";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    updatesSince?: bigint;
+};
+
+type SetVideoCallPresence = {
+    kind: "setVideoCallPresence";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    presence: VideoCallPresence;
+};
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -1146,16 +1161,10 @@ type SetPrincipalMigrationJobEnabled = {
     kind: "setPrincipalMigrationJobEnabled";
 };
 
-type GenerateEmailVerificationsCode = {
+type GenerateMagicLink = {
     email: string;
-    kind: "generateEmailVerificationCode";
-};
-
-type SubmitEmailVerificationsCode = {
-    email: string;
-    code: string;
     sessionKey: Uint8Array;
-    kind: "submitEmailVerificationCode";
+    kind: "generateMagicLink";
 };
 
 type GetSignInWithEmailDelegation = {
@@ -1209,6 +1218,7 @@ export type WorkerResponseInner =
     | string
     | string[]
     | undefined
+    | [number, number]
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1332,10 +1342,11 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
-    | GenerateEmailVerificationCodeResponse
-    | SubmitEmailVerificationCodeResponse
+    | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
-    | SiwsPrepareLoginResponse;
+    | SiwsPrepareLoginResponse
+    | SetVideoCallPresenceResponse
+    | VideoCallParticipantsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1942,6 +1953,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? CancelP2PSwapResponse
     : T extends JoinVideoCall
     ? JoinVideoCallResponse
+    : T extends SetVideoCallPresence
+    ? SetVideoCallPresenceResponse
+    : T extends VideoCallParticipants
+    ? VideoCallParticipantsResponse
     : T extends GetAccessToken
     ? string | undefined
     : T extends GetLocalUserIndexForUser
@@ -1950,10 +1965,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateBtcBalanceResponse
     : T extends SetPrincipalMigrationJobEnabled
     ? void
-    : T extends GenerateEmailVerificationsCode
-    ? GenerateEmailVerificationCodeResponse
-    : T extends SubmitEmailVerificationsCode
-    ? SubmitEmailVerificationCodeResponse
+    : T extends GenerateMagicLink
+    ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation
     ? GetDelegationResponse
     : T extends SiwePrepareLogin

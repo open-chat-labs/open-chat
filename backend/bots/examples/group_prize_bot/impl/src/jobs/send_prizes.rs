@@ -1,5 +1,4 @@
 use crate::{mutate_state, Prize, RuntimeState};
-use ic_ledger_types::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1;
 use rand::Rng;
@@ -178,7 +177,8 @@ async fn send_prize_message_to_group(
     bot_name: String,
 ) -> Result<(), String> {
     let content = MessageContentInitial::Prize(PrizeContentInitial {
-        prizes: prize.iter().map(|p| Tokens::from_e8s(*p)).collect(),
+        prizes: Vec::new(),
+        prizes_v2: prize.iter().map(|p| u128::from(*p)).collect(),
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,
         caption: None,

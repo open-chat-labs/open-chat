@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
+import { type Identity } from "@dfinity/agent";
+import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -81,11 +81,7 @@ import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import {
-    idbAuthClientStore,
-    lsAuthClientStore,
-    selectedAuthProviderStore,
-} from "./stores/authProviders";
+import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
@@ -137,6 +133,8 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
+    currentChatMembersMap,
+    hideMessagesFromDirectBlocked,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -250,6 +248,7 @@ import {
     ThreadSelected,
     UserLoggedIn,
     UserSuspensionChanged,
+    VideoCallMessageUpdated,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -385,11 +384,13 @@ import type {
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
-    GenerateEmailVerificationCodeResponse,
-    SignInWithEmailVerificationCodeResponse,
+    GenerateMagicLinkResponse,
+    HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     GetDelegationResponse,
+    VideoCallPresence,
+    VideoCallParticipant,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -430,8 +431,12 @@ import {
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    IdentityStorage,
     NoMeetingToJoin,
     featureRestricted,
+    buildDelegationIdentity,
+    toDer,
+    storeIdentity,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -492,6 +497,7 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -505,9 +511,12 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _ocIdentityStorage: IdentityStorage;
     private _userLocation: string | undefined;
+    private _authClientStorage: AuthClientStorage = new IdbStorage();
     private _authClient: Promise<AuthClient>;
-    private _identity: Identity | undefined;
+    private _authPrincipal: string | undefined;
+    private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
@@ -552,24 +561,18 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
 
-        getUserCountryCode()
-            .then((country) => {
-                this._userLocation = country;
-                console.debug("GEO: derived user's location: ", country);
-            })
-            .catch((err) => {
-                console.warn("GEO: Unable to determine user's country location", err);
-            });
-
+        this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
                 disableDefaultIdleCallback: true,
             },
-            storage: idbAuthClientStore,
+            storage: this._authClientStorage,
         });
 
-        this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+        this._authClient
+            .then((c) => c.getIdentity())
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -596,11 +599,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
-    private loadedIdentity(id: Identity) {
-        this._identity = id;
+    private loadedAuthenticationIdentity(id: Identity) {
+        currentUser.set(anonymousUser());
+        chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
+        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
-        this.loadUser(anon);
+        this.loadUser();
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -617,17 +622,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
     login(): void {
         this.identityState.set({ kind: "logging_in" });
-        const authProvider = this._liveState.selectedAuthProvider;
+        const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
                 identityProvider: this.buildAuthProviderUrl(authProvider),
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: this.config.iiDerivationOrigin,
-                onSuccess: () => {
-                    currentUser.set(anonymousUser());
-                    chatsInitialised.set(false);
-                    this.loadedIdentity(c.getIdentity());
-                },
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.identityState.set({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -637,15 +638,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
-        if (authProvider === AuthProvider.II) {
-            return this.config.internetIdentityUrl;
-        } else {
-            return (
-                this.config.nfidUrl +
-                "&applicationLogo=" +
-                encodeURIComponent("https://oc.app/apple-touch-icon.png") +
-                "#authorize"
-            );
+        switch (authProvider) {
+            case AuthProvider.II:
+                return this.config.internetIdentityUrl;
+            case AuthProvider.NFID:
+                return (
+                    this.config.nfidUrl +
+                    "&applicationLogo=" +
+                    encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+                    "#authorize"
+                );
         }
     }
 
@@ -715,8 +717,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadUser(anon: boolean = false) {
+    private async loadUser() {
         await this.connectToWorker();
+
+        if (this._authPrincipal !== undefined) {
+            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        } else {
+            await this._ocIdentityStorage.remove();
+        }
 
         this.startRegistryPoller();
         this.startExchangeRatePoller();
@@ -725,7 +733,7 @@ export class OpenChat extends OpenChatAgentWorker {
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
 
-        if (anon) {
+        if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
@@ -782,27 +790,46 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        if (this._identity === undefined) {
-            throw new Error("onCreatedUser called before the user's identity has been established");
-        }
         this.user.set(user);
         this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
-        const id = this._identity;
+        const id = this._ocIdentity;
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
         startMessagesReadTracker(this);
-        this.startOnlinePoller();
         startSwCheckPoller();
-        this.startSession(id).then(() => this.logout());
-        this.startChatsPoller();
-        this.startUserUpdatePoller();
-        initNotificationStores();
-        this.sendRequest({ kind: "getUserStorageLimits" })
-            .then(storageStore.set)
-            .catch((err) => {
-                console.warn("Unable to retrieve user storage limits", err);
+        if (id !== undefined) {
+            this.startSession(id).then(() => this.logout());
+        }
+
+        if (user.principalUpdates === undefined) {
+            this.startOnlinePoller();
+            this.startChatsPoller();
+            this.startUserUpdatePoller();
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
+        } else {
+            chatsLoading.set(false);
+            const unsubscribe = this.user.subscribe(async (u) => {
+                if (u.principalUpdates === undefined) {
+                    await this.connectToWorker();
+                    this.sendRequest({ kind: "createUserClient", userId: user.userId });
+                    this.startOnlinePoller();
+                    this.startChatsPoller();
+                    this.startUserUpdatePoller();
+                    this.sendRequest({ kind: "getUserStorageLimits" })
+                        .then(storageStore.set)
+                        .catch((err) => {
+                            console.warn("Unable to retrieve user storage limits", err);
+                        });
+                    unsubscribe();
+                }
             });
+        }
+        initNotificationStores();
         if (!this._liveState.anonUser) {
             this.identityState.set({ kind: "logged_in" });
             this.initWebRtc();
@@ -873,18 +900,17 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    logout(): Promise<void> {
-        return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.replace("/"));
-        });
+    async logout(): Promise<void> {
+        await Promise.all([
+            this._ocIdentityStorage.remove(),
+            this._authClient.then((c) => c.logout()),
+        ]).then(() => window.location.replace("/"));
     }
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const identity = ls != null || idb != null;
-        return this._liveState.userCreated && identity;
+        const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
+        return this._liveState.userCreated && identity !== null;
     }
 
     unreadThreadMessageCount(
@@ -1209,11 +1235,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
-        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
+        if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
+            return Promise.resolve(undefined);
+        }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._identity!.getPrincipal().toString(),
+            this._authPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.credentialType,
             gate.credential.credentialArguments,
@@ -2814,6 +2842,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }).catch(() => "failure");
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "membersMap",
+                    resp.members.reduce((all, m) => {
+                        all.set(m.userId, m);
+                        return all;
+                    }, new Map()),
+                );
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
@@ -2892,7 +2928,21 @@ export class OpenChat extends OpenChatAgentWorker {
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
                         }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
-                  ).then((resp) => this.handleEventsResponse(serverChat, resp));
+                  ).then((resp) => {
+                      if (resp !== "events_failed") {
+                          resp.events.forEach((e) => {
+                              if (
+                                  e.event.kind === "message" &&
+                                  e.event.content.kind === "video_call_content"
+                              ) {
+                                  this.dispatchEvent(
+                                      new VideoCallMessageUpdated(serverChat.id, e.event.messageId),
+                                  );
+                              }
+                          });
+                      }
+                      return this.handleEventsResponse(serverChat, resp);
+                  });
 
         const threadEventPromise =
             currentThreadEvents.length === 0
@@ -4114,7 +4164,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
@@ -5260,6 +5309,80 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    setVideoCallPresence(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "setVideoCallPresence",
+            chatId,
+            messageId,
+            presence,
+        })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    private mapVideoCallParticipants(
+        users: Record<string, UserSummary>,
+        participant: VideoCallParticipant,
+    ): Record<string, UserSummary> {
+        if (this._liveState.userStore[participant.userId]) {
+            users[participant.userId] = this._liveState.userStore[participant.userId];
+        }
+        return users;
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince: bigint,
+    ): Promise<{
+        participants: Record<string, UserSummary>;
+        hidden: Record<string, UserSummary>;
+        lastUpdated: bigint;
+    }> {
+        return this.sendRequest({
+            kind: "videoCallParticipants",
+            chatId,
+            messageId,
+            updatesSince,
+        })
+            .then(async (resp) => {
+                if (resp.kind === "success") {
+                    const allUserIds = [
+                        ...resp.participants.map((u) => u.userId),
+                        ...resp.hidden.map((u) => u.userId),
+                    ];
+                    await this.getMissingUsers(allUserIds);
+
+                    return {
+                        participants: resp.participants.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        hidden: resp.hidden.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        lastUpdated: resp.lastUpdated,
+                    };
+                } else {
+                    return {
+                        participants: {},
+                        hidden: {},
+                        lastUpdated: updatesSince,
+                    };
+                }
+            })
+            .catch((_) => ({
+                participants: {},
+                hidden: {},
+                lastUpdated: updatesSince,
+            }));
+    }
+
     private overwriteUserInStore(
         userId: string,
         updater: (user: UserSummary) => UserSummary | undefined,
@@ -5834,15 +5957,13 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             if (userIds.length > 0) {
                 await Promise.all(
-                    userIds
-                        .filter((id) => !rtcConnectionsManager.exists(id))
-                        .map((id) =>
-                            rtcConnectionsManager.create(
-                                this._liveState.user.userId,
-                                id,
-                                this.config.meteredApiKey,
-                            ),
+                    userIds.map((id) =>
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
                         ),
+                    ),
                 );
                 this.sendRtcMessage(userIds, {
                     kind: "remote_video_call_started",
@@ -5990,32 +6111,55 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    generateEmailVerificationCode(email: string): Promise<GenerateEmailVerificationCodeResponse> {
-        return this.sendRequest({ kind: "generateEmailVerificationCode", email });
+    generateMagicLink(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+    ): Promise<GenerateMagicLinkResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
     }
 
-    async signInWithEmailVerificationCode(
-        email: string,
-        code: string,
-        sessionKey: Uint8Array,
-    ): Promise<SignInWithEmailVerificationCodeResponse> {
-        const submitCodeResponse = await this.sendRequest({
-            kind: "submitEmailVerificationCode",
-            email,
-            code,
-            sessionKey,
-        });
+    async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
+        const signInWithEmailCanister = this.config.signInWithEmailCanister;
 
-        if (submitCodeResponse.kind === "success") {
-            return await this.sendRequest({
-                kind: "getSignInWithEmailDelegation",
-                email,
-                sessionKey,
-                expiration: submitCodeResponse.expiration,
-            });
-        } else {
-            return submitCodeResponse;
+        const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
+
+        if (response.ok) {
+            return { kind: "success" } as HandleMagicLinkResponse;
+        } else if (response.status === 400) {
+            const body = await response.text();
+            if (body === "Link expired") {
+                return { kind: "link_expired" } as HandleMagicLinkResponse;
+            }
         }
+
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
+    }
+
+    async getSignInWithEmailDelegation(
+        email: string,
+        userKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        const getDelegationResponse = await this.sendRequest({
+            kind: "getSignInWithEmailDelegation",
+            email,
+            sessionKey: sessionKeyDer,
+            expiration,
+        });
+        if (getDelegationResponse.kind === "success") {
+            const identity = buildDelegationIdentity(
+                userKey,
+                sessionKey,
+                getDelegationResponse.delegation,
+                getDelegationResponse.signature,
+            );
+            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+            this.loadedAuthenticationIdentity(identity);
+        }
+        return getDelegationResponse;
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
@@ -6036,24 +6180,36 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        sessionKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<GetDelegationResponse> {
+        const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
             kind: "loginWithWallet",
             token,
             address,
             signature,
-            sessionKey,
+            sessionKey: sessionKeyDer,
         });
 
         if (loginResponse.kind === "success") {
-            return await this.sendRequest({
+            const getDelegationResponse = await this.sendRequest({
                 kind: "getDelegationWithWallet",
                 token,
                 address,
-                sessionKey,
+                sessionKey: sessionKeyDer,
                 expiration: loginResponse.expiration,
             });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    loginResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
         } else {
             return loginResponse;
         }
@@ -6482,10 +6638,26 @@ export class OpenChat extends OpenChatAgentWorker {
         return { kind: "direct_chat" };
     }
 
+    getUserLocation(): Promise<string | undefined> {
+        if (this._userLocation !== undefined) {
+            return Promise.resolve(this._userLocation);
+        }
+        return getUserCountryCode()
+            .then((country) => {
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
+                return country;
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+                return undefined;
+            });
+    }
+
     // **** End of Communities stuff
     diamondDurationToMs = diamondDurationToMs;
-    swapRestricted(): boolean {
-        return featureRestricted(this._userLocation, "swap");
+    swapRestricted(): Promise<boolean> {
+        return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
     /**
@@ -6508,8 +6680,10 @@ export class OpenChat extends OpenChatAgentWorker {
     typing = typing;
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
+    currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
     currentChatInvitedUsers = currentChatInvitedUsers;
+    hideMessagesFromDirectBlocked = hideMessagesFromDirectBlocked;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;

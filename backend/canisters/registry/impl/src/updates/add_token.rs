@@ -44,6 +44,15 @@ async fn add_token_impl(
     transaction_url_format: Option<String>,
     logo: Option<String>,
 ) -> Response {
+    let metadata = match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
+        Ok(r) => r,
+        Err(error) => return InternalError(format!("{error:?}")),
+    };
+
+    if !check_icrc1_compatibility(&metadata) {
+        return InvalidRequest("Token is not compatible with the ICRC1 standard".to_string());
+    }
+
     let Urls {
         info_url,
         how_to_buy_url,
@@ -62,7 +71,7 @@ async fn add_token_impl(
         icrc_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
         icrc_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
         icrc_ledger_canister_c2c_client::icrc1_supported_standards(ledger_canister_id),
-        get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.logo.clone())),
+        get_logo(logo, metadata, nervous_system.as_ref().map(|ns| ns.logo.clone())),
     ) {
         Ok((.., logo)) if logo.is_none() => {
             let error = "Failed to find logo for token";
@@ -151,14 +160,12 @@ fn extract_urls(
 
 async fn get_logo(
     logo: Option<String>,
-    ledger_canister_id: CanisterId,
+    metadata: Vec<(String, MetadataValue)>,
     governance_logo: Option<String>,
 ) -> Result<Option<String>, (RejectionCode, String)> {
     if logo.is_some() {
         return Ok(logo);
     }
-
-    let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
 
     let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
         if let MetadataValue::Text(t) = v {
@@ -169,4 +176,17 @@ async fn get_logo(
     });
 
     Ok(logo.or(governance_logo))
+}
+
+fn check_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
+    for (k, v) in metadata {
+        if k == "icrc1:transfer_fee_rate" || k == "icrc1:burn_fee" || k == "icrc1:burn_fee_rate" {
+            match v {
+                MetadataValue::Nat(x) if *x > 0u128 => return false,
+                MetadataValue::Int(x) if *x > 0i128 => return false,
+                _ => {}
+            }
+        }
+    }
+    true
 }

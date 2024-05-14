@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
+use utils::canister::should_retry_failed_c2c_call;
 use utils::time::{now_millis, SECOND_IN_MS};
 
 fn start_job_if_required(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
@@ -45,13 +46,18 @@ async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandl
         let calls = handler.canisters.entry(call.canister_id).or_default();
         calls.in_progress.retain(|id| *id != call.id);
 
-        if result.is_err() && call.attempt < 50 {
-            call.attempt += 1;
-            let now = now_millis();
-            let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
-            calls.queue.insert((due, call.id), call);
-        } else if calls.in_progress.is_empty() && calls.queue.is_empty() {
-            handler.canisters.remove(&call.canister_id);
+        match result {
+            Err((code, msg)) if should_retry_failed_c2c_call(code, &msg) && call.attempt < 50 => {
+                call.attempt += 1;
+                let now = now_millis();
+                let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
+                calls.queue.insert((due, call.id), call);
+            }
+            _ => {
+                if calls.in_progress.is_empty() && calls.queue.is_empty() {
+                    handler.canisters.remove(&call.canister_id);
+                }
+            }
         }
     }
 

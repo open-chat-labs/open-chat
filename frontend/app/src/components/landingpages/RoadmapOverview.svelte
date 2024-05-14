@@ -22,8 +22,8 @@
                 <div class="detail">
                     All of the features you expect from a chat app: direct chats, public and private
                     groups, communities and channels; attach files, images, gifs, emojis; translate,
-                    pin, edit and delete messages; video chats; notifications; inline and threaded
-                    replies; create polls; customise appearance; use on desktop or mobile - <Link
+                    pin, edit and delete messages; voice and video calls; notifications; inline and
+                    threaded replies; create polls; customise appearance; use on desktop or mobile - <Link
                         path="features">and much more!</Link>
                 </div>
             </div>
@@ -82,6 +82,10 @@
 </Section>
 
 <style lang="scss">
+    :global(.roadmap a.link) {
+        z-index: 99;
+    }
+
     .header {
         display: flex;
         justify-content: space-between;

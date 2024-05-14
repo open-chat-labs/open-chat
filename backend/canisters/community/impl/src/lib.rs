@@ -255,6 +255,7 @@ impl RuntimeState {
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -508,6 +509,7 @@ pub struct Metrics {
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
+    pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
 }
 
