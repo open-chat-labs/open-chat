@@ -79,6 +79,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                sign_in_with_email: self.data.sign_in_with_email_canister_id,
             },
         }
     }
@@ -185,4 +186,5 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub sign_in_with_email: CanisterId,
 }
