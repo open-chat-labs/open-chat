@@ -7,7 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{CanisterId, Empty, Milliseconds};
+use types::{Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
