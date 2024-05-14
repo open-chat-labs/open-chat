@@ -44,7 +44,7 @@
             }
 
             emailSignInPoller?.stop();
-        }
+        };
     });
 
     $: {
@@ -105,12 +105,10 @@
             return;
         }
 
-        if(mode === "signin") {
-            client.gaTrack("initiated_signin", "registration", provider)
-        }
-
-        if(mode === "signup") {
-            client.gaTrack("initiated_signup", "registration", provider)
+        if (mode === "signin") {
+            client.gaTrack("initiated_signin", "registration", provider);
+        } else if (mode === "signup") {
+            client.gaTrack("initiated_signup", "registration", provider);
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
@@ -137,7 +135,7 @@
             .generateMagicLink(email, sessionKey)
             .then((response) => {
                 if (response.kind === "success") {
-                    client.gaTrack("generated_magic_signin_link", "registration")
+                    client.gaTrack("generated_magic_signin_link", "registration");
                     startPoller(email, sessionKey, response.userKey, response.expiration);
                 } else if (response.kind === "email_invalid") {
                     error = "loginDialog.invalidEmail";
@@ -167,7 +165,7 @@
                         .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
                         .then((response) => {
                             if (response.kind === "success") {
-                                client.gaTrack("received_email_signin_delegation", "registration")
+                                client.gaTrack("received_email_signin_delegation", "registration");
                                 emailSignInPoller?.stop();
                                 emailSignInPoller == undefined;
                             } else if (response.kind === "error") {
@@ -187,7 +185,7 @@
     }
 
     function cancelLink() {
-        client.gaTrack("email_signin_cancelled", "registration")
+        client.gaTrack("email_signin_cancelled", "registration");
         emailSignInPoller?.stop();
         emailSignInPoller == undefined;
         state = "options";
@@ -198,10 +196,9 @@
     }
 
     function toggleMode() {
-        if(mode === "signin") {
+        if (mode === "signin") {
             client.gaTrack("signup_link_clicked", "registration");
-        }
-        if(mode === "signup") {
+        } else if (mode === "signup") {
             client.gaTrack("signin_link_clicked", "registration");
         }
         mode = mode === "signin" ? "signup" : "signin";
