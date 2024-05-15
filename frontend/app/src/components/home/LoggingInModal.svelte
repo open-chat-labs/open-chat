@@ -71,6 +71,8 @@
 
         if (supportsII) {
             options.push(AuthProvider.II);
+            options.push(AuthProvider.ETH);
+            options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
@@ -116,6 +118,10 @@
                     generateMagicLink(sk);
                 });
             }
+        } else if (provider === AuthProvider.ETH) {
+            alert("login with eth coming soon");
+        } else if (provider === AuthProvider.SOL) {
+            alert("login with sol coming soon");
         } else {
             client.login();
         }
@@ -210,7 +216,7 @@
             <div class="options">
                 {#each options as provider, i}
                     {#if showAllOptions || i === 0}
-                        <div class="option">
+                        <div class={`option ${showAllOptions && i === 0 ? "separate" : ""}`}>
                             {#if provider === AuthProvider.EMAIL}
                                 <div class="email">
                                     <div class="email-icon icon">
@@ -242,8 +248,21 @@
                                     <div class="icon center">
                                         {#if provider === AuthProvider.II}
                                             <InternetIdentityLogo />
+                                        {:else if provider === AuthProvider.ETH}
+                                            <img
+                                                class="eth-img"
+                                                src="/assets/ethereum.svg"
+                                                alt="ethereum" />
+                                        {:else if provider === AuthProvider.SOL}
+                                            <img
+                                                class="sol-img"
+                                                src="/assets/solana.svg"
+                                                alt="solana" />
                                         {:else if provider === AuthProvider.NFID}
-                                            <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                                            <img
+                                                class="nfid-img"
+                                                src="/assets/nfid.svg"
+                                                alt="nfid" />
                                         {/if}
                                     </div>
                                     <Button fill on:click={() => login(provider)}>
@@ -403,7 +422,7 @@
 
     .options {
         display: flex;
-        gap: $sp4;
+        gap: 12px;
         flex-direction: column;
         align-items: center;
         margin-bottom: $sp3;
@@ -433,6 +452,12 @@
                 align-items: center;
                 flex: auto;
             }
+
+            &.separate {
+                margin-bottom: $sp2;
+                border-bottom: 1px solid var(--bd);
+                padding-bottom: $sp4;
+            }
         }
 
         .icon {
@@ -448,6 +473,11 @@
 
             .nfid-img {
                 width: 40px;
+            }
+
+            .eth-img,
+            .sol-img {
+                width: 30px;
             }
         }
 
