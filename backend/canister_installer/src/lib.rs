@@ -43,6 +43,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
         set_controllers(management_canister, &canister_ids.event_store, controllers.clone()),
         set_controllers(management_canister, &canister_ids.sign_in_with_email, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_ethereum, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_solana, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -260,6 +262,23 @@ async fn install_service_canisters_impl(
     let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
     let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
 
+    let sign_in_with_ethereum_wasm = get_canister_wasm(CanisterName::SignInWithEthereum, version);
+    let sign_in_with_ethereum_init_args = siwe::SettingsInput {
+        domain: "oc.app".to_string(),
+        uri: "https://oc.app".to_string(),
+        salt: "OpenChat".to_string(),
+        chain_id: None,
+        scheme: None,
+        statement: None,
+        sign_in_expires_in: None,
+        session_expires_in: None,
+        targets: Some(vec![
+            canister_ids.identity.to_string(),
+            canister_ids.sign_in_with_ethereum.to_string(),
+        ]),
+        runtime_features: None,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -362,11 +381,19 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    install_wasm(
-        management_canister,
-        &canister_ids.sign_in_with_email,
-        &sign_in_with_email_wasm.module,
-        sign_in_with_email_init_args,
+    futures::future::join(
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_email,
+            &sign_in_with_email_wasm.module,
+            sign_in_with_email_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_ethereum,
+            &sign_in_with_ethereum_wasm.module,
+            sign_in_with_ethereum_init_args,
+        ),
     )
     .await;
 
@@ -497,4 +524,30 @@ async fn install_service_canisters_impl(
     }
 
     println!("Canister wasms installed");
+}
+
+mod siwe {
+    use candid::CandidType;
+
+    #[allow(dead_code)]
+    #[derive(CandidType)]
+    pub enum RuntimeFeature {
+        IncludeUriInSeed,
+        DisableEthToPrincipalMapping,
+        DisablePrincipalToEthMapping,
+    }
+
+    #[derive(CandidType)]
+    pub struct SettingsInput {
+        pub domain: String,
+        pub uri: String,
+        pub salt: String,
+        pub chain_id: Option<u32>,
+        pub scheme: Option<String>,
+        pub statement: Option<String>,
+        pub sign_in_expires_in: Option<u64>,
+        pub session_expires_in: Option<u64>,
+        pub targets: Option<Vec<String>>,
+        pub runtime_features: Option<Vec<RuntimeFeature>>,
+    }
 }
