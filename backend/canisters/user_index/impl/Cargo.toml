@@ -35,8 +35,6 @@ ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
-identity_canister = { path = "../../identity/api" }
-identity_canister_c2c_client = { path = "../../identity/c2c_client" }
 itertools = { workspace = true }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
@@ -47,8 +45,6 @@ modclub_canister_c2c_client = { path = "../../../external_canisters/modclub/c2c_
 msgpack = { path = "../../../libraries/msgpack" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
-notifications_index_canister = { path = "../../notifications_index/api" }
-notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
 pulldown-cmark = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
