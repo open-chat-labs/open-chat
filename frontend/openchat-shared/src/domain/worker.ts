@@ -349,7 +349,6 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
-    | SetPrincipalMigrationJobEnabled
     | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
@@ -1156,11 +1155,6 @@ type SetCachePrimerTimestamp = {
 type UpdateBtcBalance = {
     userId: string;
     kind: "updateBtcBalance";
-};
-
-type SetPrincipalMigrationJobEnabled = {
-    enabled: boolean;
-    kind: "setPrincipalMigrationJobEnabled";
 };
 
 type GenerateMagicLink = {
@@ -1972,8 +1966,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? string
     : T extends UpdateBtcBalance
     ? UpdateBtcBalanceResponse
-    : T extends SetPrincipalMigrationJobEnabled
-    ? void
     : T extends GenerateMagicLink
     ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation

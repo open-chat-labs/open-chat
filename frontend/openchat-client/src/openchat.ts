@@ -6165,12 +6165,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
     }
 
-    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
-        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
-            .then((_) => true)
-            .catch(() => false);
-    }
-
     generateMagicLink(
         email: string,
         sessionKey: ECDSAKeyIdentity,
@@ -6193,7 +6187,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;
     }
 
     async getSignInWithEmailDelegation(

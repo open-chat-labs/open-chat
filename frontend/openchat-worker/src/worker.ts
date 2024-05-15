@@ -54,11 +54,6 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
                 shouldGetIdentity = true;
                 break;
             }
-            case "legacy": {
-                const migratePrincipalResponse = await identityAgent.migrateLegacyPrincipal();
-                shouldGetIdentity = migratePrincipalResponse.kind === "success";
-                break;
-            }
             case "not_found": {
                 shouldCreateIdentity = true;
                 break;
@@ -1616,14 +1611,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "updateBtcBalance":
                 executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
-                break;
-
-            case "setPrincipalMigrationJobEnabled":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.setPrincipalMigrationJobEnabled(payload.enabled).then(() => undefined),
-                );
                 break;
 
             case "generateMagicLink":
