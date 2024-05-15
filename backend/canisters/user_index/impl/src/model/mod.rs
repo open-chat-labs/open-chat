@@ -7,5 +7,4 @@ pub mod reported_messages;
 pub mod storage_index_user_sync_queue;
 pub mod user;
 pub mod user_map;
-pub mod user_principal_updates_queue;
 pub mod user_referral_leaderboards;

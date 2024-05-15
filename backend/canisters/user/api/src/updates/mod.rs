@@ -18,7 +18,6 @@ pub mod c2c_remove_from_community;
 pub mod c2c_remove_from_group;
 pub mod c2c_revoke_super_admin;
 pub mod c2c_set_user_suspended;
-pub mod c2c_update_user_principal;
 pub mod c2c_vote_on_proposal;
 pub mod cancel_message_reminder;
 pub mod cancel_p2p_swap;
