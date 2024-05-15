@@ -7,9 +7,7 @@ generate_query_call!(get_delegation);
 
 // Updates
 generate_update_call!(create_identity);
-generate_update_call!(migrate_legacy_principal);
 generate_update_call!(prepare_delegation);
-generate_update_call!(set_principal_migration_job_enabled);
 
 pub mod happy_path {
     use candid::Principal;
@@ -82,38 +80,6 @@ pub mod happy_path {
         match response {
             identity_canister::get_delegation::Response::Success(signed_delegation) => signed_delegation,
             response => panic!("'get_delegation' error: {response:?}"),
-        }
-    }
-
-    pub fn migrate_legacy_principal(env: &mut PocketIc, sender: Principal, identity_canister_id: CanisterId) -> Principal {
-        let response = super::migrate_legacy_principal(
-            env,
-            sender,
-            identity_canister_id,
-            &identity_canister::migrate_legacy_principal::Args {},
-        );
-
-        match response {
-            identity_canister::migrate_legacy_principal::Response::Success(result) => result.new_principal,
-            response => panic!("'migrate_legacy_principal' error: {response:?}"),
-        }
-    }
-
-    pub fn set_principal_migration_job_enabled(
-        env: &mut PocketIc,
-        sender: Principal,
-        identity_canister_id: CanisterId,
-        enabled: bool,
-    ) {
-        let response = super::set_principal_migration_job_enabled(
-            env,
-            sender,
-            identity_canister_id,
-            &identity_canister::set_principal_migration_job_enabled::Args { enabled },
-        );
-
-        match response {
-            identity_canister::set_principal_migration_job_enabled::Response::Success => {}
         }
     }
 }
