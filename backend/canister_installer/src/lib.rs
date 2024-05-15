@@ -578,6 +578,7 @@ mod siwe {
 mod siws {
     use candid::CandidType;
 
+    #[allow(dead_code)]
     #[derive(CandidType)]
     pub enum RuntimeFeature {
         IncludeUriInSeed,
