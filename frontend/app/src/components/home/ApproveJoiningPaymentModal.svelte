@@ -1,6 +1,12 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { PaymentGate, OpenChat, MultiUserChat, CommunitySummary } from "openchat-client";
+    import type {
+        PaymentGate,
+        OpenChat,
+        MultiUserChat,
+        CommunitySummary,
+        ResourceKey,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -9,8 +15,9 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import Markdown from "./Markdown.svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -49,6 +56,7 @@
             true,
         ),
     );
+    $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
 
     function onStartRefreshingBalance() {
         refreshingBalance = true;
@@ -74,19 +82,12 @@
 
     function doJoin() {
         joining = true;
+        error = undefined;
 
         const promise =
             group.kind === "community"
-                ? client.joinCommunity(
-                      group,
-                      undefined,
-                      undefined, // TODO: PIN NUMBER
-                  )
-                : client.joinGroup(
-                      group,
-                      undefined,
-                      undefined, // TODO: PIN NUMBER
-                  );
+                ? client.joinCommunity(group, undefined)
+                : client.joinGroup(group, undefined);
 
         promise
             .then((result) => {
@@ -107,8 +108,10 @@
                 }
             })
             .catch((err) => {
-                client.logError(`Failed to join ${group.level}: `, err);
-                error = i18nKey("communities.errors.joinFailed");
+                if (err !== "cancelled") {
+                    client.logError(`Failed to join ${group.level}: `, err);
+                    error = i18nKey("communities.errors.joinFailed");
+                }
             })
             .finally(() => (joining = false));
     }
@@ -134,8 +137,10 @@
     </div>
     <div slot="body">
         <Markdown text={approvalMessage + " " + distributionMessage} />
-        {#if error !== undefined}
-            <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
+        {#if errorMessage !== undefined}
+            <div class="error">
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            </div>
         {/if}
         {#if insufficientFunds}
             <AccountInfo ledger={gate.ledgerCanister} user={$user} />
@@ -180,5 +185,9 @@
 
     p {
         margin-bottom: $sp4;
+    }
+
+    .error {
+        margin-top: $sp4;
     }
 </style>

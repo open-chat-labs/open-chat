@@ -44,4 +44,5 @@ export const configKeys = {
     communityInviteUsersSections: "openchat_community_invite_users_section",
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
+    pinEnabled: "openchat_pin_enabled",
 };

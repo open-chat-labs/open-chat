@@ -4,8 +4,9 @@
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
     import { currentTheme } from "../theme/themes";
-    import { interpolate, type ResourceKey } from "../i18n/i18n";
+    import { interpolate } from "../i18n/i18n";
     import Markdown from "./home/Markdown.svelte";
+    import type { ResourceKey } from "openchat-client";
 
     export let label: ResourceKey;
     export let status: string;

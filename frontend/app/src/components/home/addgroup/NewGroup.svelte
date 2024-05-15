@@ -20,6 +20,7 @@
         type MultiUserChatIdentifier,
         type UserSummary,
         type Level,
+        type ResourceKey,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -27,7 +28,7 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

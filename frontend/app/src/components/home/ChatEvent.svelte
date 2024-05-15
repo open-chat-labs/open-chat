@@ -99,7 +99,7 @@
     }
 
     function retrySend() {
-        dispatch("retrySend", event as EventWrapper<Message>);
+        client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
 
     function initiateThread() {

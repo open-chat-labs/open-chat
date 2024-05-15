@@ -252,7 +252,6 @@ import {
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
-import type { MessageFormatter } from "./utils/i18n";
 import { indexIsInRanges } from "./utils/range";
 import { OpenChatAgentWorker } from "./agentWorker";
 import type {
@@ -391,6 +390,7 @@ import type {
     GetDelegationResponse,
     VideoCallPresence,
     VideoCallParticipant,
+    AcceptedRules,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -498,6 +498,11 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { capturePinNumberStore, pinNumberFailureStore, pinNumberRequiredStore } from "./stores/pinNumber";
+import { captureRulesAcceptanceStore } from "./stores/rules";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
+import { canRetryMessage, isTransfer } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1249,10 +1254,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(
-        group: MultiUserChat | CommunitySummary,
-        pin: string | undefined,
-    ): Promise<ApproveAccessGatePaymentResponse> {
+    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1262,7 +1264,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         kind: "community",
                         communityId: group.id.communityId,
                     })!,
-                    pin,
                 );
             } else {
                 return CommonResponses.success();
@@ -1279,6 +1280,12 @@ export class OpenChat extends OpenChatAgentWorker {
             return CommonResponses.failure();
         }
 
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         return this.sendRequest({
             kind: "approveTransfer",
             spender,
@@ -1291,19 +1298,21 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (response.kind === "approve_error" || response.kind === "internal_error") {
                     this._logger.error("Unable to approve transfer", response.error);
                     return CommonResponses.failure();
+                } else if (
+                    response.kind === "pin_incorrect" ||
+                    response.kind === "pin_required" ||
+                    response.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(response as PinNumberFailures);
                 }
-
+                
                 return response;
             })
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(
-        chat: MultiUserChat,
-        credential: string | undefined,
-        pin: string | undefined,
-    ): Promise<ClientJoinGroupResponse> {
-        const approveResponse = await this.approveAccessGatePayment(chat, pin);
+    async joinGroup(chat: MultiUserChat, credential: string | undefined): Promise<ClientJoinGroupResponse> {
+        const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }
@@ -3086,22 +3095,13 @@ export class OpenChat extends OpenChatAgentWorker {
     groupWhile = groupWhile;
     sameUser = sameUser;
 
-    forwardMessage(
-        messageContext: MessageContext,
-        msg: Message,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
-    ): void {
+    forwardMessage(messageContext: MessageContext, msg: Message): void {
         this.sendMessageWithContent(
             messageContext,
             { ...msg.content },
             msg.blockLevelMarkdown,
             [],
             true,
-            rulesAccepted,
-            communityRulesAccepted,
-            pin,
         );
     }
 
@@ -3256,9 +3256,6 @@ export class OpenChat extends OpenChatAgentWorker {
     async retrySendMessage(
         messageContext: MessageContext,
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -3295,9 +3292,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageContext,
             retryEvent,
             [],
-            rulesAccepted,
-            communityRulesAccepted,
-            pin,
+            true,
         );
     }
 
@@ -3306,28 +3301,47 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
-    ): Promise<void> {
+        retrying: boolean
+    ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
-        const canRetry = this.canRetryMessage(eventWrapper.event.content);
+        let acceptedRules: AcceptedRules | undefined = undefined;
+        if (this.rulesNeedAccepting()) {
+            acceptedRules = await this.promptForRuleAcceptance();
+            if (acceptedRules === undefined) {
+                return CommonResponses.failure();
+            }
+        }
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        if (this.throttleSendMessage()) {
+            return Promise.resolve(CommonResponses.failure());
+        }
+
+        if (!retrying) {
+            this.postSendMessage(chat, eventWrapper, threadRootMessageIndex);
+        }
+
+        const canRetry = canRetryMessage(eventWrapper.event.content);
 
         const messageFilterFailed = doesMessageFailFilter(
             eventWrapper.event,
             get(messageFiltersStore),
         );
 
-        this.sendRequest({
+        return this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
             messageContext,
             user: this._liveState.user,
             mentioned,
             event: eventWrapper,
-            rulesAccepted,
-            communityRulesAccepted,
+            acceptedRules,
             messageFilterFailed,
             pin,
         })
@@ -3354,15 +3368,26 @@ export class OpenChat extends OpenChatAgentWorker {
                         // double counting here which I think is OK since we are limited to string events
                         trackEvent("replied_to_message");
                     }
+
+                    if (acceptedRules?.chat !== undefined) {
+                        this.markChatRulesAcceptedLocally(true);
+                    }
+                    if (acceptedRules?.community !== undefined) {
+                        this.markCommunityRulesAcceptedLocally(true);
+                    }
                 } else {
                     if (resp.kind == "rules_not_accepted") {
                         this.markChatRulesAcceptedLocally(false);
-                    }
-
-                    if (resp.kind == "community_rules_not_accepted") {
+                    } else if (resp.kind == "community_rules_not_accepted") {
                         this.markCommunityRulesAcceptedLocally(false);
-                    }
-
+                    } else if (
+                        resp.kind === "pin_incorrect" ||
+                        resp.kind === "pin_required" ||
+                        resp.kind === "too_main_failed_pin_attempts"
+                    ) {
+                        pinNumberFailureStore.set(resp as PinNumberFailures);
+                    }            
+        
                     this.onSendMessageFailure(
                         chatId,
                         msg.messageId,
@@ -3372,6 +3397,8 @@ export class OpenChat extends OpenChatAgentWorker {
                         resp,
                     );
                 }
+
+                return resp;
             })
             .catch(() => {
                 this.onSendMessageFailure(
@@ -3382,19 +3409,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     canRetry,
                     undefined,
                 );
+
+                return CommonResponses.failure();
             });
     }
 
-    private canRetryMessage(content: MessageContent): boolean {
-        return (
-            content.kind !== "poll_content" &&
-            content.kind !== "crypto_content" &&
-            content.kind !== "prize_content_initial" &&
-            content.kind !== "p2p_swap_content_initial"
-        );
-    }
-
-    rulesNeedAccepting(): boolean {
+    private rulesNeedAccepting(): boolean {
         const chatRules = this._liveState.currentChatRules;
         const chat = this._liveState.selectedChat;
         if (chat === undefined || chatRules === undefined) {
@@ -3430,14 +3450,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return chatRulesText + lineBreak + communityRulesText;
     }
 
-    markChatRulesAcceptedLocally(rulesAccepted: boolean) {
+    private markChatRulesAcceptedLocally(rulesAccepted: boolean) {
         const selectedChatId = this._liveState.selectedChatId;
         if (selectedChatId !== undefined) {
             localChatSummaryUpdates.markUpdated(selectedChatId, { rulesAccepted });
         }
     }
 
-    markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
+    private markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
         const selectedCommunityId = this._liveState.selectedCommunity?.id;
         if (selectedCommunityId !== undefined) {
             localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
@@ -3460,24 +3480,17 @@ export class OpenChat extends OpenChatAgentWorker {
         return undefined;
     }
 
-    sendMessageWithContent(
+    async sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
         blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
-    ): void {
+    ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
         if (chat === undefined) {
-            return;
-        }
-
-        if (this.throttleSendMessage()) {
-            return;
+            return Promise.resolve(CommonResponses.failure());
         }
 
         const draftMessage = this._liveState.draftMessages.get(messageContext);
@@ -3503,17 +3516,13 @@ export class OpenChat extends OpenChatAgentWorker {
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
         };
 
-        this.sendMessageCommon(
+        return this.sendMessageCommon(
             chat,
             messageContext,
             event,
             mentioned,
-            rulesAccepted,
-            communityRulesAccepted,
-            pin,
+            false,
         );
-
-        this.postSendMessage(chat, event, threadRootMessageIndex);
     }
 
     private throttleSendMessage(): boolean {
@@ -3538,19 +3547,13 @@ export class OpenChat extends OpenChatAgentWorker {
         blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-        pin: string | undefined,
     ): void {
-        return this.sendMessageWithContent(
+        this.sendMessageWithContent(
             messageContext,
             this.getMessageContent(textContent, attachment),
             blockLevelMarkdown,
             mentioned,
             false,
-            rulesAccepted,
-            communityRulesAccepted,
-            pin,
         );
     }
 
@@ -3584,7 +3587,9 @@ export class OpenChat extends OpenChatAgentWorker {
             console.error("Error sending message", JSON.stringify(response));
         }
 
-        this.dispatchEvent(new SendMessageFailed(!canRetry));
+        if (!isTransfer(event.event.content)) {
+            this.dispatchEvent(new SendMessageFailed(!canRetry));
+        }
     }
 
     private postSendMessage(
@@ -3598,7 +3603,10 @@ export class OpenChat extends OpenChatAgentWorker {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            unconfirmed.add(context, messageEvent);
+            if (!isTransfer(messageEvent.event.content)) {
+                unconfirmed.add(context, messageEvent);
+            }
+
             failedMessagesStore.delete(context, messageEvent.event.messageId);
 
             // mark our own messages as read manually since we will not be observing them
@@ -3614,9 +3622,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
             draftMessagesStore.delete(context);
 
-            this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                this.dispatchEvent(new SentMessage(context, messageEvent));
-            });
+            if (!isTransfer(messageEvent.event.content)) {
+                this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                    this.dispatchEvent(new SentMessage(context, messageEvent));
+                });
+            }
         }, 0);
     }
 
@@ -4675,11 +4685,24 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getBio", userId });
     }
 
-    withdrawCryptocurrency(
-        domain: PendingCryptocurrencyWithdrawal,
-        pin: string | undefined,
-    ): Promise<WithdrawCryptocurrencyResponse> {
-        return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin });
+    async withdrawCryptocurrency(domain: PendingCryptocurrencyWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+            
+            return resp;
+        });
     }
 
     getGroupMessagesByMessageIndex(
@@ -5126,6 +5149,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
+            pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
@@ -5244,16 +5269,22 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    acceptP2PSwap(
+    async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: this._liveState.user.userId,
         });
+
         return this.sendRequest({
             kind: "acceptP2PSwap",
             chatId,
@@ -5261,11 +5292,20 @@ export class OpenChat extends OpenChatAgentWorker {
             messageId,
             pin,
         })
-            .then((resp) => {
+            .then((resp) => {                
                 localMessageUpdates.setP2PSwapStatus(
                     messageId,
                     mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
                 );
+
+                if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
+                }
+                
                 return resp;
             })
             .catch((err) => {
@@ -5571,27 +5611,26 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    tipMessage(
+    async tipMessage(
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
         currentTip: bigint,
-        pin: string | undefined,
     ): Promise<TipMessageResponse> {
         const chat = this._liveState.chatSummaries.get(messageContext.chatId);
         if (chat === undefined) {
             return Promise.resolve({ kind: "failure" });
         }
 
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         const userId = this._liveState.user.userId;
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
-
-        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
-
-        function undoLocally() {
-            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
-        }
 
         return this.sendRequest({
             kind: "tipMessage",
@@ -5602,13 +5641,19 @@ export class OpenChat extends OpenChatAgentWorker {
             pin,
         })
             .then((resp) => {
-                if (resp.kind !== "success") {
-                    undoLocally();
+                if (resp.kind === "success") {
+                    localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+                } else if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
                 }
+    
                 return resp;
             })
             .catch((_) => {
-                undoLocally();
                 return { kind: "failure" };
             });
     }
@@ -5838,15 +5883,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    swapTokens(
+    async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
         outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
-        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         const lookup = get(cryptoLookup);
 
         return this.sendRequest(
@@ -5862,7 +5912,17 @@ export class OpenChat extends OpenChatAgentWorker {
             },
             false,
             1000 * 60 * 3,
-        );
+        ).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+            
+            return resp;
+        });
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -6105,12 +6165,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
     }
 
-    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<boolean> {
-        return this.sendRequest({ kind: "setPrincipalMigrationJobEnabled", enabled })
-            .then((_) => true)
-            .catch(() => false);
-    }
-
     generateMagicLink(
         email: string,
         sessionKey: ECDSAKeyIdentity,
@@ -6323,12 +6377,8 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => undefined);
     }
 
-    async joinCommunity(
-        community: CommunitySummary,
-        credential: string | undefined,
-        pin: string | undefined,
-    ): Promise<ClientJoinCommunityResponse> {
-        const approveResponse = await this.approveAccessGatePayment(community, pin);
+    async joinCommunity(community: CommunitySummary, credential: string | undefined): Promise<ClientJoinCommunityResponse> {
+        const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }
@@ -6338,7 +6388,6 @@ export class OpenChat extends OpenChatAgentWorker {
             id: community.id,
             localUserIndex: community.localUserIndex,
             credential,
-            pin,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -6660,6 +6709,69 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
+    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+        pinNumberFailureStore.set(undefined);
+
+        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+            if (resp.kind === "success") {
+                this.pinNumberRequiredStore.set(newPin !== undefined);
+            } else if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+
+            return resp;
+        });
+    }
+
+    private promptForCurrentPin(message: string | undefined): Promise<string> {
+        pinNumberFailureStore.set(undefined);
+        return new Promise((resolve, reject) => {
+            capturePinNumberStore.set({
+                resolve: (pin: string) => {
+                    capturePinNumberStore.set(undefined);
+                    resolve(pin);
+                },
+                reject: () => {
+                    capturePinNumberStore.set(undefined);
+                    reject("cancelled");
+                },
+                message,
+            });
+        });
+    }    
+
+    private promptForRuleAcceptance(): Promise<AcceptedRules | undefined> {
+        return new Promise((resolve, _) => {
+            captureRulesAcceptanceStore.set({
+                resolve: (accepted: boolean) => {
+                    let acceptedRules: AcceptedRules | undefined = undefined;
+
+                    if (accepted) {
+                        acceptedRules = {
+                            chat: undefined,
+                            community: undefined,
+                        };
+
+                        if (this._liveState.currentChatRules?.enabled ?? false) {
+                            acceptedRules.chat = this._liveState.currentChatRules?.version;
+                        }
+
+                        if (this._liveState.currentCommunityRules?.enabled ?? false) {
+                            acceptedRules.community = this._liveState.currentChatRules?.version;
+                        }         
+                    }
+                    
+                    captureRulesAcceptanceStore.set(undefined);
+                    resolve(acceptedRules);
+                },
+            });
+        });
+    }    
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -6731,6 +6843,9 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
+    pinNumberRequiredStore = pinNumberRequiredStore;
+    capturePinNumberStore = capturePinNumberStore;
+    captureRulesAcceptanceStore = captureRulesAcceptanceStore;
 
     // current community stores
     chatListScope = chatListScopeStore;

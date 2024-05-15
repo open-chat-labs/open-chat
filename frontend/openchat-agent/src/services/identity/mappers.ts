@@ -2,14 +2,12 @@ import type {
     ApiCheckAuthPrincipalResponse,
     ApiCreateIdentityResponse,
     ApiGetDelegationResponse,
-    ApiMigrateLegacyPrincipalResponse,
     ApiPrepareDelegationResponse,
 } from "./candid/idl";
 import {
     type CheckAuthPrincipalResponse,
     type CreateIdentityResponse,
     type GetDelegationResponse,
-    type MigrateLegacyPrincipalResponse,
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     UnsupportedValueError,
@@ -44,35 +42,11 @@ export function checkAuthPrincipalResponse(
     if ("Success" in candid) {
         return { kind: "success" };
     }
-    if ("Legacy" in candid) {
-        return { kind: "legacy" };
-    }
     if ("NotFound" in candid) {
         return { kind: "not_found" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiCheckAuthPrincipalResponse type received",
-        candid,
-    );
-}
-
-export function migrateLegacyPrincipalResponse(
-    candid: ApiMigrateLegacyPrincipalResponse,
-): MigrateLegacyPrincipalResponse {
-    if ("Success" in candid) {
-        return { kind: "success", newPrincipal: candid.Success.new_principal.toString() };
-    }
-    if ("AlreadyMigrated" in candid) {
-        return { kind: "already_migrated" };
-    }
-    if ("NotFound" in candid) {
-        return { kind: "not_found" };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error", error: candid.InternalError };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiMigrateLegacyPrincipalResponse type received",
         candid,
     );
 }

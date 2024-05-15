@@ -3,9 +3,9 @@
     import TextArea from "../TextArea.svelte";
     import Legend from "../Legend.svelte";
     import Toggle from "../Toggle.svelte";
-    import type { UpdatedRules, Level } from "openchat-client";
+    import type { UpdatedRules, Level, ResourceKey } from "openchat-client";
     import { afterUpdate } from "svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const MAX_RULES_LENGTH = 1024;

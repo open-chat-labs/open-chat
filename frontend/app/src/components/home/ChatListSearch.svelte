@@ -5,9 +5,10 @@
         ChatListScope,
         GroupSearchResponse,
         OpenChat,
+        ResourceKey,
         UserSummary,
     } from "openchat-client";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");

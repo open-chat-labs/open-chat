@@ -199,6 +199,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    AcceptedRules,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -225,11 +226,12 @@ import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 import { TranslationsClient } from "./translations/translations.client";
-import { IdentityClient } from "./identity/identity.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberSettings } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -240,7 +242,6 @@ export class OpenChatAgent extends EventTarget {
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
-    private _identityClient: IdentityClient;
     private _ledgerClients: Record<string, LedgerClient>;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
@@ -270,11 +271,6 @@ export class OpenChatAgent extends EventTarget {
         this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
-        this._identityClient = IdentityClient.create(
-            identity,
-            config.identityCanister,
-            config.icUrl,
-        );
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this.translationsClient = new TranslationsClient(identity, config);
         this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
@@ -435,8 +431,7 @@ export class OpenChatAgent extends EventTarget {
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        acceptedRules: AcceptedRules | undefined,
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
@@ -461,8 +456,8 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    communityRulesAccepted,
-                    rulesAccepted,
+                    acceptedRules?.community,
+                    acceptedRules?.chat,
                     messageFilterFailed,
                     pin,
                 );
@@ -474,8 +469,8 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                communityRulesAccepted,
-                rulesAccepted,
+                acceptedRules?.community,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
@@ -493,7 +488,7 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    rulesAccepted,
+                    acceptedRules?.chat,
                     messageFilterFailed,
                     pin,
                 );
@@ -505,7 +500,7 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                rulesAccepted,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
@@ -1521,6 +1516,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedChannels: ChannelIdentifier[];
         let favouriteChats: ChatIdentifier[];
         let suspensionChanged = undefined;
+        let pinNumberSettings: PinNumberSettings | undefined;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1547,6 +1543,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
+            pinNumberSettings = userResponse.pinNumberSettings;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1568,6 +1565,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = current.pinnedChannels;
             favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
+            pinNumberSettings = current.pinNumberSettings;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1596,6 +1594,7 @@ export class OpenChatAgent extends EventTarget {
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 suspensionChanged = userResponse.suspended;
                 latestUserCanisterUpdates = userResponse.timestamp;
+                pinNumberSettings = applyOptionUpdate(pinNumberSettings, userResponse.pinNumberSettings);
                 anyUpdates = true;
             }
         }
@@ -1746,6 +1745,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats,
             pinnedChannels,
             favouriteChats,
+            pinNumberSettings,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -3297,10 +3297,6 @@ export class OpenChatAgent extends EventTarget {
         return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
     }
 
-    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {
-        return this._identityClient.setPrincipalMigrationJobEnabled(enabled);
-    }
-
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
         return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
     }
@@ -3351,5 +3347,9 @@ export class OpenChatAgent extends EventTarget {
             case "sol":
                 return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
         }
+	}
+
+    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+        return this.userClient.setPinNumber(currentPin, newPin);
     }
 }

@@ -6,9 +6,9 @@ export class LoadedNewMessages extends CustomEvent<MessageContext> {
     }
 }
 
-export class SendMessageFailed extends CustomEvent<boolean> {
+export class SendMessageFailed extends CustomEvent<{alert: boolean}> {
     constructor(alert: boolean) {
-        super("openchat_event", { detail: alert });
+        super("openchat_event", { detail: { alert }});
     }
 }
 

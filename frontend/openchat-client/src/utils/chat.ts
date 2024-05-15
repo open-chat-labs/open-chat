@@ -45,6 +45,7 @@ import type {
     GovernanceProposalsSubtype,
     CreatedUser,
     ChannelSummary,
+    MessageFormatter,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -71,7 +72,6 @@ import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import type { UnconfirmedMessages } from "../stores/unconfirmed";
-import type { MessageFormatter } from "./i18n";
 import { get } from "svelte/store";
 import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";

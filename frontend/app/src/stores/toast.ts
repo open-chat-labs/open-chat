@@ -1,5 +1,5 @@
-import { writable } from "svelte/store";
-import type { ResourceKey } from "../i18n/i18n";
+import { type Readable, writable, readable } from "svelte/store";
+import type { ResourceKey } from "openchat-client";
 
 export enum ToastType {
     Success,
@@ -7,7 +7,7 @@ export enum ToastType {
 }
 
 export type Toast = {
-    resourceKey: ResourceKey;
+    resourceKey: Readable<ResourceKey | undefined>;
     type: ToastType;
     err?: unknown;
 };
@@ -16,9 +16,9 @@ const { subscribe, update } = writable<Toast | undefined>(undefined);
 
 export const toastStore = {
     subscribe,
-    showFailureToast: (resourceKey: ResourceKey, err?: unknown): void => {
+    showFailureToast: (resourceKey: ResourceKey | Readable<ResourceKey | undefined>, err?: unknown): void => {
         return update(() => ({
-            resourceKey,
+            resourceKey: "subscribe" in resourceKey ? resourceKey : readable(resourceKey),
             type: ToastType.Failure,
             err,
         }));
@@ -26,7 +26,7 @@ export const toastStore = {
     showSuccessToast: (resourceKey: ResourceKey): void => {
         window.setTimeout(() => update(() => undefined), 2500);
         return update(() => ({
-            resourceKey,
+            resourceKey: readable(resourceKey),
             type: ToastType.Success,
         }));
     },

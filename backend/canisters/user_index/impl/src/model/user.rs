@@ -65,8 +65,6 @@ pub struct User {
     pub moderation_flags_enabled: u32,
     #[serde(rename = "rm", alias = "reported_messages", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(rename = "pm", alias = "principal_migrated", default, skip_serializing_if = "is_default")]
-    pub principal_migrated: bool,
 }
 
 impl User {
@@ -96,7 +94,6 @@ impl User {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
-        migrated: bool,
     ) -> User {
         User {
             principal,
@@ -117,7 +114,6 @@ impl User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            principal_migrated: migrated,
         }
     }
 
@@ -189,7 +185,6 @@ impl Default for User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            principal_migrated: false,
         }
     }
 }
