@@ -13,9 +13,9 @@
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { PollContent, TotalPollVotes } from "openchat-client";
+    import type { PollContent, TotalPollVotes, ResourceKey } from "openchat-client";
     import Legend from "../Legend.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();

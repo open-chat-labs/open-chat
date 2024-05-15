@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { OpenChat, P2PSwapContentInitial } from "openchat-client";
+    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -17,11 +17,13 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let fromLedger: string;
+    export let messageContext: MessageContext;
 
     let fromAmount: bigint;
     let fromAmountValid: boolean;
@@ -33,6 +35,7 @@
     let error: string | undefined = undefined;
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     let confirming = false;
+    let sending = false;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -44,6 +47,7 @@
     $: minAmount = fromDetails.transferFee * BigInt(10);
     $: valid = error === undefined && fromAmountValid && toAmountValid;
     $: isDiamond = client.isDiamond;
+    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     $: {
         if (tokenInputState === "too_low") {
@@ -98,10 +102,20 @@
             expiresIn,
         };
 
-        dispatch("sendMessageWithContent", { content });
-        lastCryptoSent.set(fromLedger);
-        dispatch("close");
-        return Promise.resolve();
+        sending = true;
+        error = undefined;
+
+        return client
+            .sendMessageWithContent(messageContext, content, false)
+            .then((resp) => {
+                if (resp.kind === "transfer_success") {
+                    lastCryptoSent.set(fromLedger);
+                    dispatch("close");
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "errorSendingMessage";
+                }
+            })
+            .finally(() => (sending = false));
     }
 
     function cancel() {
@@ -210,8 +224,10 @@
                     placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                     bind:value={message} />
             </div>
-            {#if error !== undefined}
-                <ErrorMessage>{error}</ErrorMessage>
+            {#if errorMessage !== undefined}
+                <div class="error">
+                    <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                </div>
             {/if}
         </form>
         <span slot="footer">
@@ -220,7 +236,8 @@
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     small={!$mobileWidth}
-                    disabled={!valid}
+                    disabled={!valid || sending}
+                    loading={sending}
                     tiny={$mobileWidth}
                     on:click={onSend}
                     ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
@@ -274,5 +291,9 @@
         .amount {
             flex-grow: 1;
         }
+    }
+
+    .error {
+        margin-top: $sp4;
     }
 </style>

@@ -11,9 +11,10 @@
         OpenChat,
         User,
         TimelineItem,
+        MessageContent,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -30,7 +31,6 @@
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
     import AreYouSure from "../../AreYouSure.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let rootEvent: EventWrapper<Message>;
@@ -135,12 +135,13 @@
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", {
+        client.sendMessageWithAttachment(
+            messageContext,
             textContent,
+            blockLevelMarkdown,
             attachment,
             mentioned,
-            blockLevelMarkdown,
-        });
+        );
     }
 
     function cancelReply() {
@@ -249,33 +250,46 @@
         removeLinkPreviewDetails = undefined;
         return Promise.resolve();
     }
+
+    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
+        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+    }
 </script>
 
 {#if removeLinkPreviewDetails !== undefined}
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+<PollBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={pollBuilder}
+    bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        {messageContext}
         on:upgrade
-        on:sendMessageWithContent
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
-<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={giphySelector}
+    bind:open={selectingGif} />
 
-<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={memeBuilder}
+    bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
-        on:sendMessageWithContent
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
+        {messageContext}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
@@ -357,7 +371,6 @@
                             on:editEvent={() => editEvent(evt)}
                             on:replyTo={replyTo}
                             on:upgrade
-                            on:retrySend
                             on:startVideoCall
                             on:forward />
                     {/each}

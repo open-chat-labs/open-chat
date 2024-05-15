@@ -10,9 +10,7 @@ fn check_auth_principal() -> Response {
 fn check_auth_principal_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if state.data.legacy_principals.contains(&caller) {
-        Legacy
-    } else if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
+    if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
         Success
     } else {
         NotFound

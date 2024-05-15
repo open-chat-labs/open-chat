@@ -1,4 +1,4 @@
-import type { GateCheckFailed, PinIncorrect, PinRequired, TooManyFailedPinAttempts } from "./chat";
+import type { GateCheckFailed, PinNumberFailures } from "./chat";
 
 export type UserNotInChat = { kind: "user_not_in_chat" };
 export type ChatNotFound = { kind: "chat_not_found" };
@@ -81,8 +81,8 @@ export type Blocked = {
     kind: "blocked";
 };
 
-export type ApproveAccessGatePaymentResponse = Success | PinRequired | PinIncorrect | TooManyFailedPinAttempts | Failure;
+export type ApproveAccessGatePaymentResponse = Success | PinNumberFailures | Failure;
 
-export type ClientJoinGroupResponse = Success | Blocked | GateCheckFailed | PinRequired | PinIncorrect | TooManyFailedPinAttempts | Failure;
+export type ClientJoinGroupResponse = Success | Blocked | GateCheckFailed | PinNumberFailures | Failure;
 
-export type ClientJoinCommunityResponse = Success | GateCheckFailed | PinRequired | PinIncorrect | TooManyFailedPinAttempts | Failure;
+export type ClientJoinCommunityResponse = Success | GateCheckFailed | PinNumberFailures | Failure;

@@ -13,16 +13,7 @@ export type CreateIdentityResponse =
     | { kind: "challenge_required" }
     | { kind: "public_key_invalid" };
 
-export type CheckAuthPrincipalResponse =
-    | { kind: "success" }
-    | { kind: "legacy" }
-    | { kind: "not_found" };
-
-export type MigrateLegacyPrincipalResponse =
-    | { kind: "success"; newPrincipal: string }
-    | { kind: "already_migrated" }
-    | { kind: "not_found" }
-    | { kind: "internal_error"; error: string };
+export type CheckAuthPrincipalResponse = { kind: "success" } | { kind: "not_found" };
 
 export type PrepareDelegationResponse =
     | PrepareDelegationSuccess

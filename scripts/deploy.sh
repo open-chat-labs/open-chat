@@ -30,6 +30,8 @@ fi
 
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 ./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
+./scripts/download-canister-wasm-dfx.sh sign_in_with_ethereum || exit 1
+./scripts/download-canister-wasm-dfx.sh sign_in_with_solana || exit 1
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
@@ -50,6 +52,8 @@ TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
 EVENT_RELAY_CANISTER_ID=$(dfx canister --network $NETWORK id event_relay)
 EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
 SIGN_IN_WITH_EMAIL_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_email)
+SIGN_IN_WITH_ETHEREUM_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_ethereum)
+SIGN_IN_WITH_SOLANA_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_solana)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml -- \
@@ -75,6 +79,8 @@ cargo run \
   --event-relay $EVENT_RELAY_CANISTER_ID \
   --event-store $EVENT_STORE_CANISTER_ID \
   --sign-in-with-email $SIGN_IN_WITH_EMAIL_CANISTER_ID \
+  --sign-in-with-ethereum $SIGN_IN_WITH_ETHEREUM_CANISTER_ID \
+  --sign-in-with-solana $SIGN_IN_WITH_SOLANA_CANISTER_ID \
   --nns-root $NNS_ROOT_CANISTER_ID \
   --nns-governance $NNS_GOVERNANCE_CANISTER_ID \
   --nns-internet-identity $NNS_INTERNET_IDENTITY_CANISTER_ID \

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove code to update user principals ([#5808](https://github.com/open-chat-labs/open-chat/pull/5808))
+
 ## [[2.0.1161](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1161-identity)] - 2024-05-02
 
 ### Fixed

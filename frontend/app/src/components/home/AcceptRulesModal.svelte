@@ -1,34 +1,18 @@
 <script lang="ts">
     import AreYouSure from "../AreYouSure.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { type OpenChat } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     let currentChatRules = client.currentChatRules;
     let currentCommunityRules = client.currentCommunityRules;
-    let chatRulesEnabled = $currentChatRules?.enabled ?? false;
-    let communityRulesEnabled = $currentCommunityRules?.enabled ?? false;
+
+    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
 
     function onAction(accepted: boolean): Promise<void> {
-        let chatRulesVersion = undefined;
-        let communityRulesVersion = undefined;
-
-        if (accepted) {
-            if (chatRulesEnabled) {
-                chatRulesVersion = $currentChatRules?.version;
-                client.markChatRulesAcceptedLocally(true);
-            }
-            if (communityRulesEnabled) {
-                communityRulesVersion = $currentCommunityRules?.version;
-                client.markCommunityRulesAcceptedLocally(true);
-            }
-        }
-
-        dispatch("close", { accepted, chatRulesVersion, communityRulesVersion });
-
+        $rulesAcceptanceStore?.resolve(accepted);
         return Promise.resolve();
     }
 </script>

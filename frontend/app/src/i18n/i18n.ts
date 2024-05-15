@@ -1,7 +1,7 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { type InterpolationValues, type Level, type MessageFormatter } from "openchat-client";
+import { type InterpolationValues, type Level, type MessageFormatter, type ResourceKey } from "openchat-client";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -149,14 +149,6 @@ export function interpolate(
 
 export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
-
-export type ResourceKey = {
-    kind: "resource_key";
-    key: string;
-    level?: Level;
-    lowercase: boolean;
-    params?: InterpolationValues;
-};
 
 export function i18nKey(
     key: string,

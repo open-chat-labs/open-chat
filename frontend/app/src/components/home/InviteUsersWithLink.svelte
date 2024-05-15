@@ -18,10 +18,11 @@
         type CommunityIdentifier,
         type MultiUserChat,
         type MultiUserChatIdentifier,
+        type ResourceKey,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     export let container: MultiUserChat | CommunitySummary;

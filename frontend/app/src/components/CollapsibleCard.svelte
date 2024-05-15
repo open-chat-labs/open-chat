@@ -5,7 +5,7 @@
 
     import { createEventDispatcher } from "svelte";
     import Arrow from "./Arrow.svelte";
-    import type { ResourceKey } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
     import Translatable from "./Translatable.svelte";
 
     const dispatch = createEventDispatcher();

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { locale, dictionary } from "svelte-i18n";
-import { editmode, editingLabel, type ResourceKey } from "../i18n/i18n";
+import { editmode, editingLabel } from "../i18n/i18n";
 import { derived, get } from "svelte/store";
 import { currentTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
+import type { ResourceKey } from "openchat-client";
 
 interface LocaleDictionary {
     [key: string]: LocaleDictionary | string | Array<string | LocaleDictionary> | null;

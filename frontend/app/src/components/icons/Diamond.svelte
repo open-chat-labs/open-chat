@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { DiamondMembershipStatus } from "openchat-client";
+    import type { DiamondMembershipStatus, ResourceKey } from "openchat-client";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     export let size = "0.9em";

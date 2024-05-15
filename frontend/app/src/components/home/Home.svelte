@@ -30,6 +30,7 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
+        ResourceKey,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -92,9 +93,11 @@
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
+    import PinNumberModal from "./PinNumberModal.svelte";
+    import AcceptRulesModal from "./AcceptRulesModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -200,6 +203,8 @@
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: offlineStore = client.offlineStore;
+    $: pinNumberStore = client.capturePinNumberStore;
+    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -242,7 +247,7 @@
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail) {
+            if (ev.detail.alert) {
                 toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
@@ -829,11 +834,7 @@
         }
 
         return client
-            .joinGroup(
-                group,
-                credential,
-                undefined, // TODO: PIN NUMBER
-            )
+            .joinGroup(group, credential)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
@@ -1065,6 +1066,14 @@
         showProfileCard = undefined;
     }
 
+    function onPinNumberComplete(ev: CustomEvent<string>) {
+        $pinNumberStore?.resolve(ev.detail);
+    }
+
+    function onPinNumberClose() {
+        $pinNumberStore?.reject();
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1175,7 +1184,13 @@
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
-{#if modal !== ModalType.None}
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{:else if modal !== ModalType.None}
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
@@ -1224,14 +1239,6 @@
     </Overlay>
 {/if}
 
-{#if modal === ModalType.Registering}
-    <Overlay>
-        <Register
-            on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
-    </Overlay>
-{/if}
-
 {#if $currentTheme.logo}
     <BackgroundLogo
         width={`${bgHeight}px`}
@@ -1245,6 +1252,14 @@
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+{#if $rulesAcceptanceStore !== undefined}
+    <AcceptRulesModal />
+{:else if $pinNumberStore !== undefined}
+    <Overlay>
+        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
+    </Overlay>
+{/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 

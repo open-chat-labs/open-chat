@@ -3,9 +3,10 @@
     import {
         type CommunityPermissionRole,
         type CommunityPermissions,
+        type ResourceKey,
         communityRoles,
     } from "openchat-client";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     export let permissions: CommunityPermissions;

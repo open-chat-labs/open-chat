@@ -40,14 +40,6 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_identity_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_identity_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the identity canister".to_string())
-    }
-}
-
 pub fn caller_is_platform_moderator() -> Result<(), String> {
     if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
