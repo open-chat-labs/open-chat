@@ -5,7 +5,8 @@
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../stores/iconSize";
     import { translatable } from "../actions/translatable";
-    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     const dispatch = createEventDispatcher();
     export let searchTerm = "";

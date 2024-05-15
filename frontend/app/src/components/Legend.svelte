@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ResourceKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
+    import type { ResourceKey } from "openchat-client";
 
     export let label: ResourceKey;
     export let rules: ResourceKey | undefined = undefined;

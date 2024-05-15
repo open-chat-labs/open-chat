@@ -9,6 +9,7 @@
         type MultiUserChat,
         type NervousSystemDetails,
         type OpenChat,
+        type ResourceKey,
         type Treasury,
     } from "openchat-client";
     import { isPrincipalValid, isSubAccountValid, isUrl } from "openchat-shared";
@@ -25,7 +26,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import { createAddTokenPayload, createUpdateTokenPayload } from "../../utils/sns";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const MIN_TITLE_LENGTH = 3;
@@ -107,15 +108,12 @@
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
                 addOrUpdateTokenHowToBuyUrl.length > 0 &&
                 addOrUpdateTokenTransactionUrlFormat.length > 0 &&
-                isTokenLogoValid(addOrUpdateTokenLogo))
-        || (selectedProposalType === "update_token" &&
+                isTokenLogoValid(addOrUpdateTokenLogo)) ||
+            (selectedProposalType === "update_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
-                (
-                    addOrUpdateTokenHowToBuyUrl.length > 0 ||
+                (addOrUpdateTokenHowToBuyUrl.length > 0 ||
                     addOrUpdateTokenTransactionUrlFormat.length > 0 ||
-                    (addOrUpdateTokenLogo.length > 0 && isTokenLogoValid(addOrUpdateTokenLogo))
-                )
-            ));
+                    (addOrUpdateTokenLogo.length > 0 && isTokenLogoValid(addOrUpdateTokenLogo)))));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -428,7 +426,7 @@
                                 })} />
                         </section>
                     </div>
-                {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token" }
+                {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token"}
                     <div>
                         <section>
                             <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />

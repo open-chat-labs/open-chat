@@ -13,7 +13,6 @@
     } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext, tick } from "svelte";
-    import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
@@ -108,39 +107,28 @@
             </div>
         {/if}
     {:else if $selectedChatStore !== undefined}
-        <AcceptRulesWrapper
-            let:sendMessageWithAttachment
-            let:forwardMessage
-            let:retrySend
-            let:sendMessageWithContent
-            messageContext={{ chatId: $selectedChatStore.id }}>
-            <CurrentChat
-                bind:currentChatMessages
-                {joining}
-                chat={$selectedChatStore}
-                events={$eventsStore}
-                filteredProposals={$filteredProposalsStore}
-                on:startVideoCall
-                on:successfulImport
-                on:clearSelection
-                on:leaveGroup
-                on:replyPrivatelyTo
-                on:showInviteGroupUsers
-                on:showProposalFilters
-                on:makeProposal
-                on:showGroupMembers
-                on:chatWith
-                on:joinGroup
-                on:upgrade
-                on:toggleMuteNotifications
-                on:goToMessageIndex
-                on:convertGroupToCommunity
-                on:retrySend={retrySend}
-                on:sendMessageWithContent={sendMessageWithContent}
-                on:sendMessageWithAttachment={sendMessageWithAttachment}
-                on:forwardMessage={forwardMessage}
-                on:forward />
-        </AcceptRulesWrapper>
+        <CurrentChat
+            bind:currentChatMessages
+            {joining}
+            chat={$selectedChatStore}
+            events={$eventsStore}
+            filteredProposals={$filteredProposalsStore}
+            on:startVideoCall
+            on:successfulImport
+            on:clearSelection
+            on:leaveGroup
+            on:replyPrivatelyTo
+            on:showInviteGroupUsers
+            on:showProposalFilters
+            on:makeProposal
+            on:showGroupMembers
+            on:chatWith
+            on:joinGroup
+            on:upgrade
+            on:toggleMuteNotifications
+            on:goToMessageIndex
+            on:convertGroupToCommunity
+            on:forward />
     {/if}
 </section>
 

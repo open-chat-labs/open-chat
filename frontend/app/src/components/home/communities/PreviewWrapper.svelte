@@ -45,11 +45,7 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity(
-                    $selectedCommunity,
-                    credential,
-                    undefined, // TODO: PIN NUMBER
-                )
+                .joinCommunity($selectedCommunity, credential)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = true;

@@ -68,6 +68,8 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    SetPinNumberResponse,
+    AcceptedRules,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -354,7 +356,8 @@ export type WorkerRequest =
     | LoginWithWallet
     | GetDelegationWithWallet
     | SetVideoCallPresence
-    | VideoCallParticipants;
+    | VideoCallParticipants
+    | SetPinNumber;
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -758,8 +761,7 @@ type SendMessage = {
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    rulesAccepted: number | undefined;
-    communityRulesAccepted: number | undefined;
+    acceptedRules: AcceptedRules | undefined;
     messageFilterFailed: bigint | undefined;
     pin: string | undefined;
     kind: "sendMessage";
@@ -1340,7 +1342,8 @@ export type WorkerResponseInner =
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
     | SetVideoCallPresenceResponse
-    | VideoCallParticipantsResponse;
+    | VideoCallParticipantsResponse
+    | SetPinNumberResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1622,6 +1625,12 @@ type CancelP2PSwap = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     kind: "cancelP2PSwap";
+};
+
+type SetPinNumber = {
+    currentPin: string | undefined;
+    newPin: string | undefined;
+    kind: "setPinNumber";
 };
 
 // prettier-ignore
@@ -1969,4 +1978,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? PrepareDelegationResponse
     : T extends GetDelegationWithWallet
     ? GetDelegationResponse
+    : T extends SetPinNumber
+    ? SetPinNumberResponse
     : never;

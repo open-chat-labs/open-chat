@@ -588,8 +588,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.rulesAccepted,
-                        payload.communityRulesAccepted,
+                        payload.acceptedRules,
                         payload.messageFilterFailed,
                         payload.pin,
                     ),
@@ -1664,6 +1663,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.address,
                         payload.sessionKey,
                         payload.expiration,
+                    ),
+                );
+                break;
+
+            case "setPinNumber":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPinNumber(
+                        payload.currentPin,
+                        payload.newPin,
                     ),
                 );
                 break;

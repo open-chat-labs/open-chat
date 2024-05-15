@@ -10,6 +10,7 @@
         type ChatSummary,
         type CommunitySummary,
         type OpenChat,
+        type ResourceKey,
     } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -19,7 +20,7 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
     import Diamond from "../../icons/Diamond.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import ProfileRole from "./ProfileRole.svelte";
 

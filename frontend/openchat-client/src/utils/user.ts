@@ -1,5 +1,4 @@
-import type { MessageFormatter } from "./i18n";
-import type { UserLookup, UserSummary } from "openchat-shared";
+import type { MessageFormatter, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,

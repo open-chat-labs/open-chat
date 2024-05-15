@@ -142,6 +142,23 @@ export function isCaptionedContent(content: MessageContent): content is Captione
     }
 }
 
+export function isTransfer(content: MessageContent): boolean {
+    return (
+        content.kind === "crypto_content" ||
+        content.kind === "prize_content_initial" ||
+        content.kind === "p2p_swap_content_initial"
+    );
+}
+
+export function canRetryMessage(content: MessageContent): boolean {
+    return (
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content" &&
+        content.kind !== "prize_content_initial" &&
+        content.kind !== "p2p_swap_content_initial"
+    );
+}
+
 export type IndexRange = [number, number];
 
 export interface PlaceholderContent {
@@ -193,7 +210,8 @@ export type WithdrawCryptocurrencyResponse =
     | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
     | CompletedCryptocurrencyWithdrawal
-    | Offline;
+    | Offline
+    | PinNumberFailures;
 
 export type CryptocurrencyWithdrawal =
     | PendingCryptocurrencyWithdrawal
@@ -957,6 +975,7 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    pinNumberSettings: PinNumberSettings | undefined;
 };
 
 export type CurrentChatState = {
@@ -1105,7 +1124,28 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    pinNumberSettings: PinNumberSettings | undefined;
 };
+
+export type PinNumberSettings = {
+    length: number,
+    attemptsBlockedUntil: bigint | undefined,
+};
+
+export type PinNumberResolver = {
+    resolve: (pin: string) => void;
+    reject: () => void;
+    message: string | undefined;
+};
+
+export type RulesAcceptanceResolver = {
+    resolve: (accepted: boolean) => void;
+};
+
+export type AcceptedRules = {
+    chat: number | undefined;
+    community: number | undefined;
+}
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 
@@ -1119,6 +1159,7 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
 };
 
 export type DirectChatsUpdates = {
@@ -1594,9 +1635,7 @@ export type SendMessageResponse =
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
     | DuplicateMessageId
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts;
+    | PinNumberFailures;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1706,12 +1745,12 @@ export type PinRequired = {
 
 export type PinIncorrect = {
     kind: "pin_incorrect";
-    next_retry_in_ms: bigint;
+    nextRetryAt: bigint;
 };
 
 export type TooManyFailedPinAttempts = {
     kind: "too_main_failed_pin_attempts";
-    next_retry_in_ms: bigint;
+    nextRetryAt: bigint;
 };
 
 export type GateUpdatedEvent = {
@@ -2057,7 +2096,10 @@ export type PublicGroupSummaryResponse =
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = Success | Failure;
+export type TipMessageResponse = 
+    | Success 
+    | Failure
+    | PinNumberFailures;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
@@ -2117,9 +2159,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts
+    | PinNumberFailures
     | { kind: "internal_error"; text: string };
 
 export type CancelP2PSwapResponse =
@@ -2162,3 +2202,14 @@ export type VideoCallParticipants = {
 };
 
 export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);
+
+export type SetPinNumberResponse =
+    | Success
+    | PinNumberFailures
+    | { kind: "too_short"; minLength: number }
+    | { kind: "too_long"; maxLength: number };
+
+export type PinNumberFailures =     
+    | PinRequired
+    | PinIncorrect
+    | TooManyFailedPinAttempts;

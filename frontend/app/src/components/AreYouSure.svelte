@@ -6,8 +6,9 @@
     import { _ } from "svelte-i18n";
     import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
+    import type { ResourceKey } from "openchat-client";
 
     export let message: ResourceKey | undefined = undefined;
     export let action: (yes: boolean) => Promise<void>;
