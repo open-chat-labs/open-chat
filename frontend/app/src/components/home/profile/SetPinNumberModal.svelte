@@ -10,7 +10,6 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { toastStore } from "../../../stores/toast";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import Legend from "../../Legend.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
