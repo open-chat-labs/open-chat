@@ -14,7 +14,6 @@ use std::collections::{HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Hash, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
-mod guards;
 mod hash;
 mod lifecycle;
 mod memory;
@@ -36,11 +35,6 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
-    }
-
-    pub fn is_caller_user_index_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.user_index_canister_id == caller
     }
 
     pub fn get_principal_from_seed(&self, seed: [u8; 32]) -> Principal {
@@ -74,8 +68,6 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
-            legacy_principals: self.data.legacy_principals.len() as u32,
-            principal_migration_job_enabled: self.data.principal_migration_job_enabled,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -93,11 +85,9 @@ struct Data {
     internet_identity_canister_id: CanisterId,
     sign_in_with_email_canister_id: CanisterId,
     user_principals: UserPrincipals,
-    legacy_principals: HashSet<Principal>,
     #[serde(skip)]
     signature_map: SignatureMap,
     salt: Salt,
-    principal_migration_job_enabled: bool,
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
@@ -119,10 +109,8 @@ impl Data {
             internet_identity_canister_id,
             sign_in_with_email_canister_id,
             user_principals: UserPrincipals::default(),
-            legacy_principals: HashSet::default(),
             signature_map: SignatureMap::default(),
             salt: Salt::default(),
-            principal_migration_job_enabled: false,
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
@@ -177,8 +165,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub user_principals: u32,
     pub auth_principals: u32,
-    pub legacy_principals: u32,
-    pub principal_migration_job_enabled: bool,
     pub canister_ids: CanisterIds,
 }
 

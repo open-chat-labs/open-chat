@@ -33,7 +33,6 @@ members = [
     "backend/canisters/group_index/client",
     "backend/canisters/group_index/impl",
     "backend/canisters/identity/api",
-    "backend/canisters/identity/c2c_client",
     "backend/canisters/identity/impl",
     "backend/canisters/local_group_index/api",
     "backend/canisters/local_group_index/c2c_client",
