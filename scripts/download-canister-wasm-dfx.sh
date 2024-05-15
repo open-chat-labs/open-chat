@@ -14,7 +14,7 @@ cd wasms
 
 echo "Downloading $CANISTER_NAME wasm"
 
-HTTP_CODE=$(curl -sOL $URL --write-out "%{http_code}")
+HTTP_CODE=$(curl -sL $URL -o ${CANISTER_NAME}.wasm.gz --write-out "%{http_code}")
 
 if [[ ${HTTP_CODE} -ne 200 ]] ; then
     echo "Failed to download wasm. Response code: ${HTTP_CODE}"
