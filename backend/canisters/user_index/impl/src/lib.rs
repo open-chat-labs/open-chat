@@ -343,7 +343,6 @@ impl Data {
             0,
             None,
             true,
-            true,
         );
 
         data

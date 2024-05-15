@@ -6,14 +6,12 @@ import type {
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
     GetDelegationResponse,
-    MigrateLegacyPrincipalResponse,
     PrepareDelegationResponse,
 } from "openchat-shared";
 import {
     checkAuthPrincipalResponse,
     createIdentityResponse,
     getDelegationResponse,
-    migrateLegacyPrincipalResponse,
     prepareDelegationResponse,
 } from "./mappers";
 import type { CreateIdentityArgs } from "./candid/types";
@@ -60,14 +58,6 @@ export class IdentityClient extends CandidService {
         );
     }
 
-    migrateLegacyPrincipal(): Promise<MigrateLegacyPrincipalResponse> {
-        return this.handleResponse(
-            this.service.migrate_legacy_principal({}),
-            migrateLegacyPrincipalResponse,
-            {},
-        );
-    }
-
     prepareDelegation(sessionKey: Uint8Array): Promise<PrepareDelegationResponse> {
         const args = {
             session_key: sessionKey,
@@ -89,13 +79,6 @@ export class IdentityClient extends CandidService {
             () => this.service.get_delegation(args),
             getDelegationResponse,
             args,
-        );
-    }
-
-    setPrincipalMigrationJobEnabled(enabled: boolean): Promise<void> {
-        return this.handleResponse(
-            this.service.set_principal_migration_job_enabled({ enabled }),
-            (_) => {},
         );
     }
 }
