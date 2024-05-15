@@ -279,6 +279,23 @@ async fn install_service_canisters_impl(
         runtime_features: None,
     };
 
+    let sign_in_with_solana_wasm = get_canister_wasm(CanisterName::SignInWithSolana, version);
+    let sign_in_with_solana_init_args = siws::SettingsInput {
+        domain: "oc.app".to_string(),
+        uri: "https://oc.app".to_string(),
+        salt: "OpenChat".to_string(),
+        chain_id: None,
+        scheme: None,
+        statement: None,
+        sign_in_expires_in: None,
+        session_expires_in: None,
+        targets: Some(vec![
+            canister_ids.identity.to_string(),
+            canister_ids.sign_in_with_solana.to_string(),
+        ]),
+        runtime_features: None,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -381,7 +398,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join(
+    futures::future::join3(
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_email,
@@ -393,6 +410,12 @@ async fn install_service_canisters_impl(
             &canister_ids.sign_in_with_ethereum,
             &sign_in_with_ethereum_wasm.module,
             sign_in_with_ethereum_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_solana,
+            &sign_in_with_solana_wasm.module,
+            sign_in_with_solana_init_args,
         ),
     )
     .await;
@@ -543,6 +566,32 @@ mod siwe {
         pub uri: String,
         pub salt: String,
         pub chain_id: Option<u32>,
+        pub scheme: Option<String>,
+        pub statement: Option<String>,
+        pub sign_in_expires_in: Option<u64>,
+        pub session_expires_in: Option<u64>,
+        pub targets: Option<Vec<String>>,
+        pub runtime_features: Option<Vec<RuntimeFeature>>,
+    }
+}
+
+mod siws {
+    use candid::CandidType;
+
+    #[allow(dead_code)]
+    #[derive(CandidType)]
+    pub enum RuntimeFeature {
+        IncludeUriInSeed,
+        DisableSolToPrincipalMapping,
+        DisablePrincipalToSolMapping,
+    }
+
+    #[derive(CandidType)]
+    pub struct SettingsInput {
+        pub domain: String,
+        pub uri: String,
+        pub salt: String,
+        pub chain_id: Option<String>,
         pub scheme: Option<String>,
         pub statement: Option<String>,
         pub sign_in_expires_in: Option<u64>,
