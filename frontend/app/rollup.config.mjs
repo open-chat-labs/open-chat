@@ -270,6 +270,7 @@ export default {
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,
             ),
+            "process.env.WALLET_CONNECT_PROJECT_ID": process.env.WALLET_CONNECT_PROJECT_ID,
             "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
         }),
 
