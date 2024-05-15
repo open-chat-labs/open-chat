@@ -148,7 +148,8 @@
 
         client
             .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0])
-            .then((_) => (busy = false));
+            .catch(() => (swapId = undefined))
+            .finally(() => (busy = false));
     }
 
     function dexName(dex: DexId): string {
