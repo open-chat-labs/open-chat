@@ -21,6 +21,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import Overlay from "../../Overlay.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
+    import { pinEnabledStore } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,55 +33,58 @@
     $: pinNumberRequiredStore = client.pinNumberRequiredStore;
 </script>
 
-<ModalContent on:close>
+<ModalContent closeIcon={!$pinEnabledStore} on:close>
     <div class="header" slot="header">
         <div class="title">
             <WalletIcon size={"1.2em"} color={"var(--txt)"} />
             <Translatable resourceKey={i18nKey("wallet")} />
         </div>
-        <div class="menu">
-            <MenuIcon position={"bottom"} align={"end"}>
-                <div slot="icon">
-                    <HoverIcon title={$_("chatMenu")}>
-                        <SecurityIcon color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-                <div slot="menu">
-                    <Menu>
-                        {#if !$pinNumberRequiredStore}
-                            <MenuItem on:click={() => (pinAction = "set")}>
-                                <ShieldPlusIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable resourceKey={i18nKey("pinNumber.setPin")} />
-                                </div>
-                            </MenuItem>
-                        {:else}
-                            <MenuItem on:click={() => (pinAction = "change")}>
-                                <ShieldRefreshIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable resourceKey={i18nKey("pinNumber.changePin")} />
-                                </div>
-                            </MenuItem>
-                            <MenuItem on:click={() => (pinAction = "clear")}>
-                                <ShieldRemoveIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
-                                    <Translatable resourceKey={i18nKey("pinNumber.clearPin")} />
-                                </div>
-                            </MenuItem>
-                        {/if}
-                    </Menu>
-                </div>
-            </MenuIcon>
-        </div>
+        {#if $pinEnabledStore}
+            <div class="menu">
+                <MenuIcon position={"bottom"} align={"end"}>
+                    <div slot="icon">
+                        <HoverIcon title={$_("chatMenu")}>
+                            <SecurityIcon color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </div>
+                    <div slot="menu">
+                        <Menu>
+                            {#if !$pinNumberRequiredStore}
+                                <MenuItem on:click={() => (pinAction = "set")}>
+                                    <ShieldPlusIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("pinNumber.setPin")} />
+                                    </div>
+                                </MenuItem>
+                            {:else}
+                                <MenuItem on:click={() => (pinAction = "change")}>
+                                    <ShieldRefreshIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("pinNumber.changePin")} />
+                                    </div>
+                                </MenuItem>
+                                <MenuItem on:click={() => (pinAction = "clear")}>
+                                    <ShieldRemoveIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("pinNumber.clearPin")} />
+                                    </div>
+                                </MenuItem>
+                            {/if}
+                        </Menu>
+                    </div>
+                </MenuIcon>
+            </div>
+        {/if}
     </div>
     <div slot="body">
         <Accounts bind:showZeroBalance bind:zeroCount />
