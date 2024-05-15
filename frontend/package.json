@@ -60,7 +60,10 @@
     },
     "dependencies": {
         "@daily-co/daily-js": "^0.57.2",
+        "@wagmi/connectors": "^4.3.9",
+        "@wagmi/core": "^2.9.7",
         "svelte-pincode": "^2.2.0",
+        "viem": "^2.10.5",
         "wavesurfer.js": "^7.7.5",
         "workbox-cacheable-response": "^7.0.0",
         "workbox-expiration": "^7.0.0",

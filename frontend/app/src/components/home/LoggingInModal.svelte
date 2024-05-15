@@ -35,6 +35,8 @@
     $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
     $: loggingInWithEmail =
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
+    $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
+    $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
 
     onDestroy(() => {
         if ($anonUser && $identityState.kind === "logging_in") {
@@ -119,9 +121,9 @@
                 });
             }
         } else if (provider === AuthProvider.ETH) {
-            alert("login with eth coming soon");
+            console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {
-            alert("login with sol coming soon");
+            console.log("Logging in with SOL");
         } else {
             client.login();
         }
@@ -315,6 +317,18 @@
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
             {/if}
+        {:else if loggingInWithEth}
+            {#await import("./SigninWithEth.svelte")}
+                <div class="loading">...</div>
+            {:then { default: SigninWithEth }}
+                <SigninWithEth />
+            {/await}
+        {:else if loggingInWithSol}
+            {#await import("./SigninWithEth.svelte")}
+                <div class="loading">...</div>
+            {:then { default: SigninWithEth }}
+                <SigninWithEth />
+            {/await}
         {/if}
     </div>
     <div class="footer login-modal" slot="footer">

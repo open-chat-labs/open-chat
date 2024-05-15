@@ -6133,7 +6133,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
 
-        return { kind: "link_invalid" } as HandleMagicLinkResponse;                
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;
     }
 
     async getSignInWithEmailDelegation(
