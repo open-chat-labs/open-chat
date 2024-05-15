@@ -105,7 +105,7 @@
         client
             .sendMessageWithContent(messageContext, content, false)
             .then((resp) => {
-                if (resp.kind === "success") {
+                if (resp.kind === "transfer_success") {
                     lastCryptoSent.set(ledger);
                     dispatch("close");
                 } else if ($pinNumberErrorMessageStore === undefined) {

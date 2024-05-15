@@ -1066,6 +1066,14 @@
         showProfileCard = undefined;
     }
 
+    function onPinNumberComplete(ev: CustomEvent<string>) {
+        $pinNumberStore?.resolve(ev.detail);
+    }
+
+    function onPinNumberClose() {
+        $pinNumberStore?.reject();
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1249,7 +1257,7 @@
     <AcceptRulesModal />
 {:else if $pinNumberStore !== undefined}
     <Overlay>
-        <PinNumberModal />
+        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
     </Overlay>
 {/if}
 

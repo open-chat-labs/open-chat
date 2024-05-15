@@ -108,8 +108,10 @@
                 }
             })
             .catch((err) => {
-                client.logError(`Failed to join ${group.level}: `, err);
-                error = i18nKey("communities.errors.joinFailed");
+                if (err !== "cancelled") {
+                    client.logError(`Failed to join ${group.level}: `, err);
+                    error = i18nKey("communities.errors.joinFailed");
+                }
             })
             .finally(() => (joining = false));
     }

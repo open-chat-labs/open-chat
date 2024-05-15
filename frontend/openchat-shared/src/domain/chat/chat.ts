@@ -1134,6 +1134,7 @@ export type PinNumberSettings = {
 
 export type PinNumberResolver = {
     resolve: (pin: string) => void;
+    reject: () => void;
     message: string | undefined;
 };
 

@@ -3319,6 +3319,10 @@ export class OpenChat extends OpenChatAgentWorker {
             pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
+        if (this.throttleSendMessage()) {
+            return Promise.resolve(CommonResponses.failure());
+        }
+
         if (!retrying) {
             this.postSendMessage(chat, eventWrapper, threadRootMessageIndex);
         }
@@ -3486,10 +3490,6 @@ export class OpenChat extends OpenChatAgentWorker {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
         if (chat === undefined) {
-            return Promise.resolve(CommonResponses.failure());
-        }
-
-        if (this.throttleSendMessage()) {
             return Promise.resolve(CommonResponses.failure());
         }
 
@@ -5632,12 +5632,6 @@ export class OpenChat extends OpenChatAgentWorker {
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
 
-        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
-
-        function undoLocally() {
-            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
-        }
-
         return this.sendRequest({
             kind: "tipMessage",
             messageContext,
@@ -5647,13 +5641,19 @@ export class OpenChat extends OpenChatAgentWorker {
             pin,
         })
             .then((resp) => {
-                if (resp.kind !== "success") {
-                    undoLocally();
+                if (resp.kind === "success") {
+                    localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+                } else if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
                 }
+    
                 return resp;
             })
             .catch((_) => {
-                undoLocally();
                 return { kind: "failure" };
             });
     }
@@ -6715,12 +6715,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
-    async setPinNumber(newPin: string | undefined): Promise<SetPinNumberResponse> {
-        let currentPin: string | undefined = undefined;
-
-        if (this._liveState.pinNumberRequired) {
-            currentPin = await this.promptForCurrentPin("pinNumber.enterCurrentPinInfo");
-        }
+    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+        pinNumberFailureStore.set(undefined);
 
         return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
             if (resp.kind === "success") {
@@ -6739,11 +6735,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private promptForCurrentPin(message: string | undefined): Promise<string> {
         pinNumberFailureStore.set(undefined);
-        return new Promise((resolve, _) => {
+        return new Promise((resolve, reject) => {
             capturePinNumberStore.set({
                 resolve: (pin: string) => {
                     capturePinNumberStore.set(undefined);
                     resolve(pin);
+                },
+                reject: () => {
+                    capturePinNumberStore.set(undefined);
+                    reject("cancelled");
                 },
                 message,
             });

@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import { Pincode, PincodeInput } from "svelte-pincode";
-    import { type OpenChat } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
-    $: pinNumberStore = client.capturePinNumberStore;
+    export let message: string | undefined = undefined;
+    export let pin: string | undefined = undefined;
 
     let showError = false;
 
@@ -22,7 +22,7 @@
             return;
         }
 
-        $pinNumberStore?.resolve(ev.detail.value);
+        dispatch("complete", ev.detail.value);
     }
 
     function isPinValid(pin: string[]): boolean {
@@ -34,17 +34,17 @@
     }
 </script>
 
-<ModalContent hideFooter fitToContent fixedWidth={false}>
+<ModalContent closeIcon hideFooter fitToContent fixedWidth={false} on:close>
     <div slot="header">
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
     </div>
     <div class="body" slot="body">
-        {#if $pinNumberStore?.message !== undefined}
+        {#if message !== undefined}
             <p>
-                <Translatable resourceKey={i18nKey($pinNumberStore.message)} />
+                <Translatable resourceKey={i18nKey(message)} />
             </p>
         {/if}
-        <Pincode on:complete={onPinComplete}>
+        <Pincode bind:value={pin} on:complete={onPinComplete}>
             <PincodeInput />
             <PincodeInput />
             <PincodeInput />

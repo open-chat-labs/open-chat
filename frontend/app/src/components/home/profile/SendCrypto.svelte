@@ -130,8 +130,10 @@
                 }
             })
             .catch((err) => {
-                error = i18nKey("cryptoAccount.sendFailed", { symbol });
-                client.logError(`Unable to withdraw ${symbol}`, err);
+                if (err !== "cancelled") {
+                    error = i18nKey("cryptoAccount.sendFailed", { symbol });
+                    client.logError(`Unable to withdraw ${symbol}`, err);
+                }
             })
             .finally(() => (busy = false));
     }
