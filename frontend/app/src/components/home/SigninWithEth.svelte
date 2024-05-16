@@ -4,7 +4,7 @@
     import {
         coinbaseWallet,
         // injected,
-        walletConnect,
+        // walletConnect,
     } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
@@ -17,14 +17,14 @@
 
     const wc = { projectId: process.env.WALLET_CONNECT_PROJECT_ID! };
 
-    console.log("Wallet Connect: does this actually work ", wc);
+    console.log("Wallet Connect: ", wc);
 
     const wagmiConfig = createConfig({
         chains: [mainnet],
         connectors: [
             coinbaseWallet({ appName: "OpenChat" }),
             // injected(),
-            walletConnect(wc),
+            // walletConnect(wc),
         ],
         transports: {
             [mainnet.id]: http(),
