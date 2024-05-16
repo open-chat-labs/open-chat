@@ -119,8 +119,12 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        internet_identity_canister_id: canister_ids.nns_internet_identity,
-        sign_in_with_email_canister_id: canister_ids.sign_in_with_email,
+        skip_captcha_whitelist: vec![
+            canister_ids.nns_internet_identity,
+            canister_ids.sign_in_with_email,
+            canister_ids.sign_in_with_ethereum,
+            canister_ids.sign_in_with_solana,
+        ],
         wasm_version: version,
         test_mode,
     };
@@ -272,10 +276,7 @@ async fn install_service_canisters_impl(
         statement: None,
         sign_in_expires_in: None,
         session_expires_in: None,
-        targets: Some(vec![
-            canister_ids.identity.to_string(),
-            canister_ids.sign_in_with_ethereum.to_string(),
-        ]),
+        targets: None,
         runtime_features: None,
     };
 
@@ -289,10 +290,7 @@ async fn install_service_canisters_impl(
         statement: None,
         sign_in_expires_in: None,
         session_expires_in: None,
-        targets: Some(vec![
-            canister_ids.identity.to_string(),
-            canister_ids.sign_in_with_solana.to_string(),
-        ]),
+        targets: None,
         runtime_features: None,
     };
 
