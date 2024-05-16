@@ -15,7 +15,7 @@
 
     const wc = { projectId: process.env.WALLET_CONNECT_PROJECT_ID! };
 
-    console.log("Wallet Connect: ", wc);
+    console.log("Wallet Connect : ", wc);
 
     const wagmiConfig = createConfig({
         chains: [mainnet],
