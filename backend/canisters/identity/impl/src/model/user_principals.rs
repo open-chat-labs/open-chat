@@ -54,15 +54,9 @@ impl UserPrincipals {
     }
 
     pub fn get_by_auth_principal(&self, auth_principal: &Principal) -> Option<UserPrincipal> {
-        self.auth_principals.get(auth_principal).and_then(|a| {
-            self.user_principals
-                .get(usize::try_from(a.user_principal_index).unwrap())
-                .map(|u| UserPrincipal {
-                    index: a.user_principal_index,
-                    principal: u.principal,
-                    auth_principals: u.auth_principals.clone(),
-                })
-        })
+        self.auth_principals
+            .get(auth_principal)
+            .and_then(|a| self.user_principal_by_index(a.user_principal_index))
     }
 
     pub fn user_principals_count(&self) -> u32 {
@@ -71,5 +65,15 @@ impl UserPrincipals {
 
     pub fn auth_principals_count(&self) -> u32 {
         self.auth_principals.len() as u32
+    }
+
+    fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
+        self.user_principals
+            .get(usize::try_from(user_principal_index).unwrap())
+            .map(|u| UserPrincipal {
+                index: user_principal_index,
+                principal: u.principal,
+                auth_principals: u.auth_principals.clone(),
+            })
     }
 }
