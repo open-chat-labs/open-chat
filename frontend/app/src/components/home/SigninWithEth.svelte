@@ -10,6 +10,7 @@
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { ECDSAKeyIdentity } from "@dfinity/identity";
+    import Button from "../Button.svelte";
 
     const client = getContext<OpenChat>("client");
     let sessionKey: ECDSAKeyIdentity | undefined = undefined;
@@ -57,34 +58,56 @@
         }
     }
 
-    function connectorIcon(connector: Connector): string | undefined {
-        if (connector.id === "walletConnect") {
-            return "/assets/walletconnect.svg";
-        }
-        return connector.icon;
-    }
+    let icons: Record<string, string> = {
+        walletConnect: "/assets/walletconnect.svg",
+        coinbaseWalletSDK: "/assets/coinbase.svg",
+    };
 </script>
 
 <h1>Select a wallet to connect with</h1>
 
 {#each wagmiConfig.connectors as connector}
-    <div class="connector" on:click={() => connectWith(connector)}>
-        {#if connectorIcon(connector) !== undefined}
-            <img class="icon" src={connector.icon} />
-        {/if}
-        <span class="name">{connector.name}</span>
+    <div class="auth-option">
+        <div class="icon center">
+            {#if icons[connector.id] ?? connector.icon}
+                <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
+            {/if}
+        </div>
+        <Button fill on:click={() => connectWith(connector)}>
+            <span class="name">{connector.name}</span>
+        </Button>
     </div>
 {/each}
 
 <style lang="scss">
-    .connector {
-        cursor: pointer;
-        border: var(--bw) solid var(--bd);
-        border-radius: var(--br);
-        padding: $sp3;
+    $height: 45px;
+
+    .auth-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex: auto;
+        max-width: 440px;
+    }
+
+    .icon {
+        flex: 0 0 60px;
+        width: 60px;
+        height: $height;
+        border-radius: $sp2 0 0 $sp2;
+        border-right: 1px solid var(--bd);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: $sp3;
+        background-color: var(--input-bg);
+
+        .nfid-img {
+            width: 40px;
+        }
+
+        .eth-img,
+        .sol-img {
+            width: 30px;
+        }
     }
 </style>

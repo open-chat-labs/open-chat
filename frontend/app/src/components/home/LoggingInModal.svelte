@@ -246,7 +246,7 @@
                                     </Button>
                                 </div>
                             {:else}
-                                <div class="other">
+                                <div class="auth-option">
                                     <div class="icon center">
                                         {#if provider === AuthProvider.II}
                                             <InternetIdentityLogo />
@@ -355,7 +355,7 @@
         margin-bottom: 0;
     }
 
-    :global(.login .other button) {
+    :global(.login .auth-option button) {
         border-radius: 0 $sp2 $sp2 0;
     }
 
@@ -460,7 +460,7 @@
                 }
             }
 
-            .other {
+            .auth-option {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
