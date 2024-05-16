@@ -14,6 +14,7 @@ import {
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
 } from "../utils/caching";
+import { isMainnet } from "../utils/network";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
@@ -1594,7 +1595,10 @@ export class OpenChatAgent extends EventTarget {
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 suspensionChanged = userResponse.suspended;
                 latestUserCanisterUpdates = userResponse.timestamp;
-                pinNumberSettings = applyOptionUpdate(pinNumberSettings, userResponse.pinNumberSettings);
+                pinNumberSettings = applyOptionUpdate(
+                    pinNumberSettings,
+                    userResponse.pinNumberSettings,
+                );
                 anyUpdates = true;
             }
         }
@@ -3160,7 +3164,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        return this._icpcoinsClient.exchangeRates();
+        return isMainnet(this.config.icUrl)
+            ? this._icpcoinsClient.exchangeRates()
+            : Promise.resolve({});
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -3347,9 +3353,12 @@ export class OpenChatAgent extends EventTarget {
             case "sol":
                 return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
         }
-	}
+    }
 
-    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
         return this.userClient.setPinNumber(currentPin, newPin);
     }
 }
