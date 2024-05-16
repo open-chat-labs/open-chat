@@ -9,5 +9,6 @@ export DFX_NETWORK=local
 export DEV_PORT=5001
 export BLOB_URL_PATTERN=http://{canisterId}.localhost:8080/{blobType}
 export WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
+export NODE_OPTIONS="--inspect"
 
 npx rollup -c $WATCH
