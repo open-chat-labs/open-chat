@@ -9,11 +9,9 @@
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { ECDSAKeyIdentity } from "@dfinity/identity";
     import Button from "../Button.svelte";
 
     const client = getContext<OpenChat>("client");
-    let sessionKey: ECDSAKeyIdentity | undefined = undefined;
 
     const wc = { projectId: process.env.WALLET_CONNECT_PROJECT_ID! };
 
@@ -33,9 +31,6 @@
 
     async function connectWith(connector: Connector) {
         try {
-            if (sessionKey === undefined) {
-                sessionKey = await ECDSAKeyIdentity.generate();
-            }
             const resp = await connector.connect();
             console.log("response: ", resp, connector.icon);
             if (resp.accounts.length > 0) {
@@ -48,7 +43,7 @@
                         connector,
                         message: prepareResponse.siweMessage,
                     });
-                    client.signInWithWallet("eth", account, signResponse, sessionKey);
+                    client.signInWithWallet("eth", account, signResponse);
                 }
             } else {
                 console.error("Didn't get an address back from the connector");

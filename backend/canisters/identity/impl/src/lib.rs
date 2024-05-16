@@ -71,7 +71,6 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                sign_in_with_email: self.data.sign_in_with_email_canister_id,
             },
         }
     }
@@ -82,8 +81,8 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    internet_identity_canister_id: CanisterId,
-    sign_in_with_email_canister_id: CanisterId,
+    #[serde(default)]
+    skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     #[serde(skip)]
     signature_map: SignatureMap,
@@ -98,16 +97,14 @@ impl Data {
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        internet_identity_canister_id: CanisterId,
-        sign_in_with_email_canister_id: CanisterId,
+        skip_captcha_whitelist: Vec<CanisterId>,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
-            internet_identity_canister_id,
-            sign_in_with_email_canister_id,
+            skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             signature_map: SignatureMap::default(),
             salt: Salt::default(),
@@ -137,12 +134,8 @@ impl Data {
         set_certified_data(&prefixed_root_hash[..]);
     }
 
-    // Internet Identity already has a Captcha and if users have to verify their email that is
-    // enough of a barrier against bots, so we can skip the captcha for identities originating
-    // from the InternetIdentity canister and the SignInWithEmail canister.
-    pub fn requires_captcha(&self, originating_canister_id: CanisterId) -> bool {
-        originating_canister_id != self.internet_identity_canister_id
-            && originating_canister_id != self.sign_in_with_email_canister_id
+    pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
+        !self.skip_captcha_whitelist.contains(originating_canister_id)
     }
 }
 
@@ -172,5 +165,4 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub sign_in_with_email: CanisterId,
 }

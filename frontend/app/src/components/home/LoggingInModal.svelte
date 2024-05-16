@@ -23,7 +23,6 @@
     let mode: "signin" | "signup" = "signin";
     let email = "";
     let showMore = false;
-    let sessionKey: ECDSAKeyIdentity | undefined = undefined;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
 
@@ -112,14 +111,7 @@
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            if (sessionKey !== undefined) {
-                generateMagicLink(sessionKey);
-            } else {
-                ECDSAKeyIdentity.generate().then((sk) => {
-                    sessionKey = sk;
-                    generateMagicLink(sk);
-                });
-            }
+            ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
         } else if (provider === AuthProvider.ETH) {
             console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {
