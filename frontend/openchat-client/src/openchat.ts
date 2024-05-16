@@ -6237,8 +6237,8 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        sessionKey: ECDSAKeyIdentity,
     ): Promise<GetDelegationResponse> {
+        const sessionKey = await ECDSAKeyIdentity.generate();
         const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
             kind: "loginWithWallet",
