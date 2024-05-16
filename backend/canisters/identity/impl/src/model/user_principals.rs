@@ -1,7 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::info;
 use types::CanisterId;
 
 #[derive(Serialize, Deserialize, Default)]
