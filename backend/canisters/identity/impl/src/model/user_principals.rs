@@ -1,7 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::info;
 use types::CanisterId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -33,33 +32,6 @@ struct AuthPrincipalInternal {
 }
 
 impl UserPrincipals {
-    pub fn fix_multi_processed_principals(&mut self) {
-        let mut updates = Vec::new();
-        for (auth_principal, user) in self.auth_principals.iter() {
-            let mut user_principal_index = user.user_principal_index;
-
-            while let Some(next) = self
-                .user_principal_by_index(user_principal_index)
-                .and_then(|u| self.auth_principals.get(&u.principal))
-            {
-                user_principal_index = next.user_principal_index;
-            }
-
-            if user_principal_index != user.user_principal_index {
-                updates.push((*auth_principal, user_principal_index));
-            }
-        }
-
-        assert!(updates.len() < 20);
-
-        for (auth_principal, user_principal_index) in updates {
-            if let Some(user) = self.auth_principals.get_mut(&auth_principal) {
-                user.user_principal_index = user_principal_index;
-                info!("User principal updated");
-            }
-        }
-    }
-
     pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal, originating_canister: CanisterId) {
         assert_eq!(index, self.next_index());
         assert!(!self.auth_principals.contains_key(&auth_principal));
