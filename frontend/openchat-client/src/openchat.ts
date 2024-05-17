@@ -253,7 +253,7 @@ import {
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
-import { OpenChatAgentWorker } from "./agentWorker";
+import { DEFAULT_WORKER_TIMEOUT, OpenChatAgentWorker } from "./agentWorker";
 import type {
     CreatedUser,
     IdentityState,
@@ -498,7 +498,11 @@ import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
-import { capturePinNumberStore, pinNumberFailureStore, pinNumberRequiredStore } from "./stores/pinNumber";
+import {
+    capturePinNumberStore,
+    pinNumberFailureStore,
+    pinNumberRequiredStore,
+} from "./stores/pinNumber";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
@@ -1254,7 +1258,9 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary): Promise<ApproveAccessGatePaymentResponse> {
+    async approveAccessGatePayment(
+        group: MultiUserChat | CommunitySummary,
+    ): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1305,13 +1311,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 ) {
                     pinNumberFailureStore.set(response as PinNumberFailures);
                 }
-                
+
                 return response;
             })
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(chat: MultiUserChat, credential: string | undefined): Promise<ClientJoinGroupResponse> {
+    async joinGroup(
+        chat: MultiUserChat,
+        credential: string | undefined,
+    ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
             return approveResponse;
@@ -3287,13 +3296,7 @@ export class OpenChat extends OpenChatAgentWorker {
         unconfirmed.add(messageContext, retryEvent);
 
         // TODO - what about mentions?
-        this.sendMessageCommon(
-            chat,
-            messageContext,
-            retryEvent,
-            [],
-            true,
-        );
+        this.sendMessageCommon(chat, messageContext, retryEvent, [], true);
     }
 
     private async sendMessageCommon(
@@ -3301,7 +3304,7 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
-        retrying: boolean
+        retrying: boolean,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -3386,8 +3389,8 @@ export class OpenChat extends OpenChatAgentWorker {
                         resp.kind === "too_main_failed_pin_attempts"
                     ) {
                         pinNumberFailureStore.set(resp as PinNumberFailures);
-                    }            
-        
+                    }
+
                     this.onSendMessageFailure(
                         chatId,
                         msg.messageId,
@@ -3516,13 +3519,7 @@ export class OpenChat extends OpenChatAgentWorker {
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
         };
 
-        return this.sendMessageCommon(
-            chat,
-            messageContext,
-            event,
-            mentioned,
-            false,
-        );
+        return this.sendMessageCommon(chat, messageContext, event, mentioned, false);
     }
 
     private throttleSendMessage(): boolean {
@@ -4685,7 +4682,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getBio", userId });
     }
 
-    async withdrawCryptocurrency(domain: PendingCryptocurrencyWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+    async withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal,
+    ): Promise<WithdrawCryptocurrencyResponse> {
         let pin: string | undefined = undefined;
 
         if (this._liveState.pinNumberRequired) {
@@ -4700,7 +4699,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ) {
                 pinNumberFailureStore.set(resp as PinNumberFailures);
             }
-            
+
             return resp;
         });
     }
@@ -5292,7 +5291,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageId,
             pin,
         })
-            .then((resp) => {                
+            .then((resp) => {
                 localMessageUpdates.setP2PSwapStatus(
                     messageId,
                     mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
@@ -5305,7 +5304,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 ) {
                     pinNumberFailureStore.set(resp as PinNumberFailures);
                 }
-                
+
                 return resp;
             })
             .catch((err) => {
@@ -5650,7 +5649,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 ) {
                     pinNumberFailureStore.set(resp as PinNumberFailures);
                 }
-    
+
                 return resp;
             })
             .catch((_) => {
@@ -5831,15 +5830,19 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        return this.sendRequest({
-            kind: "submitProposal",
-            governanceCanisterId,
-            proposal,
-            ledger: nervousSystem.token.ledger,
-            token: nervousSystem.token.symbol,
-            proposalRejectionFee: nervousSystem.proposalRejectionFee,
-            transactionFee: nervousSystem.token.transferFee,
-        })
+        return this.sendRequest(
+            {
+                kind: "submitProposal",
+                governanceCanisterId,
+                proposal,
+                ledger: nervousSystem.token.ledger,
+                token: nervousSystem.token.symbol,
+                proposalRejectionFee: nervousSystem.proposalRejectionFee,
+                transactionFee: nervousSystem.token.transferFee,
+            },
+            false,
+            2 * DEFAULT_WORKER_TIMEOUT,
+        )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
                     return true;
@@ -5920,7 +5923,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ) {
                 pinNumberFailureStore.set(resp as PinNumberFailures);
             }
-            
+
             return resp;
         });
     }
@@ -6377,7 +6380,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => undefined);
     }
 
-    async joinCommunity(community: CommunitySummary, credential: string | undefined): Promise<ClientJoinCommunityResponse> {
+    async joinCommunity(
+        community: CommunitySummary,
+        credential: string | undefined,
+    ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
             return approveResponse;
@@ -6709,7 +6715,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
-    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
         pinNumberFailureStore.set(undefined);
 
         return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
@@ -6742,7 +6751,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 message,
             });
         });
-    }    
+    }
 
     private promptForRuleAcceptance(): Promise<AcceptedRules | undefined> {
         return new Promise((resolve, _) => {
@@ -6762,15 +6771,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
                         if (this._liveState.currentCommunityRules?.enabled ?? false) {
                             acceptedRules.community = this._liveState.currentChatRules?.version;
-                        }         
+                        }
                     }
-                    
+
                     captureRulesAcceptanceStore.set(undefined);
                     resolve(acceptedRules);
                 },
             });
         });
-    }    
+    }
 
     /**
      * Reactive state provided in the form of svelte stores

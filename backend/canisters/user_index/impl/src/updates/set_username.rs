@@ -28,7 +28,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let mut user_to_update = user.clone();
-        user_to_update.username = username.clone();
+        user_to_update.username.clone_from(&username);
         let user_id = user.user_id;
         let now = state.env.now();
         match state.data.users.update(user_to_update, now, false) {

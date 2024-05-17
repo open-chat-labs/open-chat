@@ -19,6 +19,7 @@ use types::{
     TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -140,7 +141,13 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -156,6 +163,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -184,6 +192,7 @@ impl Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
+            ic_root_key,
             rng_seed: [0; 32],
         }
     }
@@ -290,6 +299,7 @@ impl Default for Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
+            ic_root_key: Vec::new(),
             rng_seed: [0; 32],
         }
     }

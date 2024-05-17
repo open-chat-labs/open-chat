@@ -7,9 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-dfx-core = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
 itertools = { workspace = true }
-slog = { workspace = true }
 types = { path = "../types" }
