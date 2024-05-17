@@ -112,6 +112,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
         video_call_operators: state.data.video_call_operators.clone(),
+        ic_root_key: state.data.ic_root_key.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };
