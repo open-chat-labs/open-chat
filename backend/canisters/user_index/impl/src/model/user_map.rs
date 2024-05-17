@@ -448,7 +448,7 @@ mod tests {
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();
-            updated.username = username2.clone();
+            updated.username.clone_from(&username2);
 
             assert!(matches!(user_map.update(updated, 3, false), UpdateUserResult::Success));
 
