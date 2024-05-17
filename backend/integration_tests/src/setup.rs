@@ -160,6 +160,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         escrow_canister_id,
         event_relay_canister_id,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
+        ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
