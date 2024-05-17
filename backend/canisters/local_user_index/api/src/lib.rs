@@ -2,9 +2,9 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
-    UpdateUserPrincipalArgs, User, UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
+    SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, User, UserId,
 };
 
 mod lifecycle;
@@ -35,6 +35,7 @@ pub enum Event {
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
     UserDeleted(UserDeleted),
     SecretKeySet(Vec<u8>),
+    ChitEarned(ChitEarned),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -161,4 +162,12 @@ pub struct GlobalUser {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ChitEarned {
+    pub user_id: UserId,
+    pub amount: i32,
+    pub timestamp: TimestampMillis,
+    pub reason: ChitEarnedReason,
 }

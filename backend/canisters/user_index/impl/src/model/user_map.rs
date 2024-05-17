@@ -9,6 +9,8 @@ use tracing::info;
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
+use super::user::ClaimDailyChitResult;
+
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
 pub struct UserMap {
@@ -186,6 +188,12 @@ impl UserMap {
         } else {
             false
         }
+    }
+
+    pub fn claim_daily_chit(&mut self, principal: &Principal, now: TimestampMillis) -> Option<ClaimDailyChitResult> {
+        self.principal_to_user_id
+            .get(principal)
+            .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
     }
 
     pub fn suspend_user(
