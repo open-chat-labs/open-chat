@@ -328,7 +328,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let previous = state.data.primary_language.clone();
 
         if previous != new {
-            state.data.primary_language = new.clone();
+            state.data.primary_language.clone_from(&new);
 
             let event = PrimaryLanguageChanged {
                 previous,

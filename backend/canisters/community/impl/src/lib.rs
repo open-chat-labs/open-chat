@@ -29,6 +29,7 @@ use types::{
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -313,8 +314,13 @@ struct Data {
     rng_seed: [u8; 32],
     pending_payments_queue: PendingPaymentsQueue,
     total_payment_receipts: PaymentReceipts,
-    #[serde(alias = "event_sink_client")]
+    #[serde(default = "ic_root_key")]
+    ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -343,6 +349,7 @@ impl Data {
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
         rng: &mut StdRng,
         now: TimestampMillis,
@@ -396,6 +403,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
+            ic_root_key,
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),

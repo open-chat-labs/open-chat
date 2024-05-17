@@ -160,6 +160,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         escrow_canister_id,
         event_relay_canister_id,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
+        ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -193,8 +194,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         governance_principals: vec![controller],
         user_index_canister_id,
         cycles_dispenser_canister_id,
-        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
-        sign_in_with_email_canister_id,
+        skip_captcha_whitelist: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };

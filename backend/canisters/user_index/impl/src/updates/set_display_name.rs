@@ -31,7 +31,7 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let mut user_to_update = user.clone();
-        user_to_update.display_name = args.display_name.clone();
+        user_to_update.display_name.clone_from(&args.display_name);
         let user_id = user.user_id;
         match state.data.users.update(user_to_update, now, false) {
             UpdateUserResult::Success => {
