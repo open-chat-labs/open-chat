@@ -27,6 +27,7 @@ pub struct Args {
     pub default_channel_rules: Option<Rules>,
     pub source_group: Option<SourceGroup>,
     pub video_call_operators: Vec<Principal>,
+    pub ic_root_key: Vec<u8>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }
