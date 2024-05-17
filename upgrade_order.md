@@ -1,0 +1,1 @@
+Groups + Communities before codegen is run removing `prizes` from the FE
