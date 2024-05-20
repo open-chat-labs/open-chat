@@ -2,6 +2,7 @@ use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
@@ -36,10 +37,16 @@ impl AccessGate {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct VerifiedCredentialGate {
-    pub vc_subject: Principal,
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
     pub credential_type: String,
+    pub credential_arguments: HashMap<String, VerifiedCredentialArgumentValue>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum VerifiedCredentialArgumentValue {
+    String(String),
+    Int(i32),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -75,6 +82,7 @@ pub enum GateCheckFailedReason {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiedCredentialGateArgs {
+    pub user_principal: Principal,
     pub credential_jwt: String,
     pub ii_origin: String,
 }

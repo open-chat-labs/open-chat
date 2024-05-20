@@ -1494,10 +1494,10 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
-    vc_subject : principal;
     issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
+    credential_arguments : vec record { text; variant { String : text; Int : int32 } };
 };
 
 type SnsNeuronGate = record {
@@ -1528,6 +1528,7 @@ type GateCheckFailedReason = variant {
 };
 
 type VerifiedCredentialGateArgs = record {
+    user_principal : principal;
     credential_jwt : text;
     ii_origin : text;
 };

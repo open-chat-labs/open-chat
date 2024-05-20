@@ -5,11 +5,11 @@ use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
     AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
-    VerifiedCredentialGate,
+    VerifiedCredentialArgumentValue, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::NANOS_PER_MILLISECOND;
-use vc_util::issuer_api::CredentialSpec;
+use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
 use vc_util::VcFlowSigners;
 
 pub enum CheckIfPassesGateResult {
@@ -28,6 +28,7 @@ pub struct CheckGateArgs {
 }
 
 pub struct CheckVerifiedCredentialGateArgs {
+    pub user_principal: Principal,
     pub credential_jwt: String,
     pub ic_root_key: Vec<u8>,
     pub ii_canister_id: CanisterId,
@@ -75,7 +76,7 @@ async fn check_verified_credential_gate(
 
     if let Err(error) = vc_util::validate_ii_presentation_and_claims(
         &args.credential_jwt,
-        gate.vc_subject,
+        args.user_principal,
         &VcFlowSigners {
             ii_canister_id: args.ii_canister_id,
             ii_origin: args.ii_origin,
@@ -84,7 +85,20 @@ async fn check_verified_credential_gate(
         },
         &CredentialSpec {
             credential_type: gate.credential_type.clone(),
-            arguments: None,
+            arguments: Some(
+                gate.credential_arguments
+                    .iter()
+                    .map(|(k, v)| {
+                        (
+                            k.clone(),
+                            match v {
+                                VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
+                                VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
         },
         &args.ic_root_key,
         (now * NANOS_PER_MILLISECOND) as u128,

@@ -136,6 +136,7 @@ fn is_permitted_to_join(
                     diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),
                     verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
+                        user_principal: vc.user_principal,
                         credential_jwt: vc.credential_jwt,
                         ic_root_key: state.data.ic_root_key.clone(),
                         ii_canister_id: state.data.internet_identity_canister_id,
