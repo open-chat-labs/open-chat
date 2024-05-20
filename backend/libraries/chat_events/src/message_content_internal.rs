@@ -860,11 +860,7 @@ impl From<PrizeContentInternalCombined> for PrizeContentInternal {
 impl PrizeContentInternal {
     pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransaction) -> PrizeContentInternal {
         PrizeContentInternal {
-            prizes_remaining: if content.prizes.is_empty() {
-                content.prizes_v2
-            } else {
-                content.prizes.into_iter().map(|t| t.e8s() as u128).collect()
-            },
+            prizes_remaining: content.prizes_v2,
             reservations: HashSet::new(),
             winners: HashSet::new(),
             transaction,
