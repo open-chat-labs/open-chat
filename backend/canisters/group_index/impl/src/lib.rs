@@ -133,6 +133,7 @@ struct Data {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -145,6 +146,10 @@ struct Data {
     #[serde(default = "ic_root_key")]
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 fn ic_root_key() -> Vec<u8> {
