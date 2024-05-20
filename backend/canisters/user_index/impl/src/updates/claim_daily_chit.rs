@@ -5,7 +5,7 @@ use ic_cdk_macros::update;
 use local_user_index_canister::{ChitEarned, Event};
 use types::ChitEarnedReason;
 use user_index_canister::claim_daily_chit::{Response::*, *};
-use utils::time::midnight_tomorrow;
+use utils::time::tomorrow;
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -16,7 +16,7 @@ fn claim_daily_chit(_args: Args) -> Response {
 fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    let tomorrow = midnight_tomorrow(now);
+    let tomorrow = tomorrow(now);
 
     if let Some(claim_result) = state.data.users.claim_daily_chit(&caller, now) {
         state.push_event_to_local_user_index(

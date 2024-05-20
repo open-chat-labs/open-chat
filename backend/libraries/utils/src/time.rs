@@ -16,11 +16,11 @@ pub fn now_nanos() -> TimestampNanos {
     ic_cdk::api::time()
 }
 
-pub fn midnight_today(now: TimestampMillis) -> TimestampMillis {
+pub fn today(now: TimestampMillis) -> TimestampMillis {
     to_timestamp(to_date(now))
 }
 
-pub fn midnight_tomorrow(now: TimestampMillis) -> TimestampMillis {
+pub fn tomorrow(now: TimestampMillis) -> TimestampMillis {
     to_timestamp(to_date(now).next_day().unwrap())
 }
 
