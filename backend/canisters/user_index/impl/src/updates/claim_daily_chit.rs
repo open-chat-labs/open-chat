@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{ChitEarned, Event};
-use types::{ChitEarnedReason, ChitUserBalance};
+use types::ChitEarnedReason;
 use user_index_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 

@@ -10,6 +10,7 @@ pub struct ChitLeaderboard {
 impl ChitLeaderboard {
     pub fn update_position(&mut self, user_id: UserId, latest_balance: i32) {
         if latest_balance <= 0 {
+            self.list.retain(|i| i.user_id != user_id);
             return;
         }
 
