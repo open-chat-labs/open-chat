@@ -1,5 +1,6 @@
 pub mod c2c_lookup_user;
 pub mod check_username;
+pub mod chit_leaderboard;
 pub mod current_user;
 pub mod diamond_membership_fees;
 pub mod platform_moderators;

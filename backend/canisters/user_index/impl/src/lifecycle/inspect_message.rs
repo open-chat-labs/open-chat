@@ -24,7 +24,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_moderation_flags"
         | "set_username"
         | "mark_suspected_bot"
-        | "update_diamond_membership_subscription" => {
+        | "update_diamond_membership_subscription"
+        | "claim_daily_chit" => {
             let caller = state.env.caller();
             let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user

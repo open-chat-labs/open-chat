@@ -1074,6 +1074,8 @@ type UserSummary = record {
     suspended : bool;
     diamond_member : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    chit_balance : int32;
+    streak : nat16;
 };
 
 type BuildVersion = record {
@@ -1780,4 +1782,21 @@ type VideoCallPresence = variant {
     Default;
     Owner;
     Hidden;
-}
+};
+
+type ChitEarned = record {
+    amount : int32;
+    timestamp : TimestampMillis;
+    reason : ChitEarnedReason;
+
+};
+
+type ChitEarnedReason = variant {
+    DailyClaim;
+    Achievement : text;
+};
+
+type ChitUserBalance = record {
+    user_id : UserId;
+    balance : nat32;
+};
