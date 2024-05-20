@@ -8,6 +8,7 @@ use group_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk_macros::update;
 use types::{GroupMessageNotification, Notification, VideoCallPresence, VideoCallType};
+use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -94,15 +95,14 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.push_notification(result.users_to_notify, notification);
     handle_activity_notification(state);
 
-    if let Some(duration) = args.max_duration {
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call::Args {
-                message_id: args.message_id,
-            })),
-            now + duration,
-            now,
-        );
-    }
+    let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call::Args {
+            message_id: args.message_id,
+        })),
+        now + max_duration,
+        now,
+    );
 
     Success
 }
