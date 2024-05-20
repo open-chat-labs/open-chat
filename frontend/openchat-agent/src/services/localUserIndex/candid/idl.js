@@ -557,8 +557,14 @@ export const idlFactory = ({ IDL }) => {
     'previous_name' : IDL.Text,
   });
   const VerifiedCredentialGate = IDL.Record({
-    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'credential_arguments' : IDL.Vec(
+      IDL.Tuple(
+        IDL.Text,
+        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
+      )
+    ),
     'issuer_origin' : IDL.Text,
+    'issuer_canister_id' : CanisterId,
     'credential_type' : IDL.Text,
   });
   const Milliseconds = IDL.Nat64;
@@ -1057,10 +1063,16 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'TooManyInvites' : IDL.Nat32,
   });
+  const VerifiedCredentialGateArgs = IDL.Record({
+    'credential_jwt' : IDL.Text,
+    'ii_origin' : IDL.Text,
+    'user_ii_principal' : IDL.Principal,
+  });
   const JoinChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'verified_credential_args' : IDL.Opt(VerifiedCredentialGateArgs),
   });
   const ICRC2_TransferFromError = IDL.Variant({
     'GenericError' : IDL.Record({
@@ -1082,6 +1094,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'FailedVerifiedCredentialCheck' : IDL.Text,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
   });
   const JoinChannelResponse = IDL.Variant({
@@ -1102,6 +1115,7 @@ export const idlFactory = ({ IDL }) => {
   const JoinCommunityArgs = IDL.Record({
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'verified_credential_args' : IDL.Opt(VerifiedCredentialGateArgs),
   });
   const JoinCommunityResponse = IDL.Variant({
     'NotInvited' : IDL.Null,
@@ -1120,6 +1134,7 @@ export const idlFactory = ({ IDL }) => {
     'invite_code' : IDL.Opt(IDL.Nat64),
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
+    'verified_credential_args' : IDL.Opt(VerifiedCredentialGateArgs),
   });
   const JoinGroupResponse = IDL.Variant({
     'NotInvited' : IDL.Null,

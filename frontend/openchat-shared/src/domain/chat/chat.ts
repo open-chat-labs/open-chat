@@ -1128,8 +1128,8 @@ export type InitialStateResponse = {
 };
 
 export type PinNumberSettings = {
-    length: number,
-    attemptsBlockedUntil: bigint | undefined,
+    length: number;
+    attemptsBlockedUntil: bigint | undefined;
 };
 
 export type PinNumberResolver = {
@@ -1145,7 +1145,7 @@ export type RulesAcceptanceResolver = {
 export type AcceptedRules = {
     chat: number | undefined;
     community: number | undefined;
-}
+};
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 
@@ -1714,7 +1714,8 @@ export type GateCheckFailedReason =
     | "dissolve_delay_not_met"
     | "min_stake_not_met"
     | "payment_failed"
-    | "insufficient_balance";
+    | "insufficient_balance"
+    | "failed_verified_credential_check";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -2096,10 +2097,7 @@ export type PublicGroupSummaryResponse =
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = 
-    | Success 
-    | Failure
-    | PinNumberFailures;
+export type TipMessageResponse = Success | Failure | PinNumberFailures;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
@@ -2209,7 +2207,4 @@ export type SetPinNumberResponse =
     | { kind: "too_short"; minLength: number }
     | { kind: "too_long"; maxLength: number };
 
-export type PinNumberFailures =     
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts;
+export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
