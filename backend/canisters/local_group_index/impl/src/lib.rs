@@ -107,6 +107,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
             },
         }
     }
@@ -129,6 +130,8 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
@@ -142,6 +145,10 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 fn ic_root_key() -> Vec<u8> {
@@ -161,6 +168,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         canister_pool_target_size: u16,
@@ -180,6 +188,7 @@ impl Data {
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             groups_requiring_upgrade: CanistersRequiringUpgrade::default(),
             communities_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -240,4 +249,5 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub event_relay: CanisterId,
+    pub internet_identity: CanisterId,
 }
