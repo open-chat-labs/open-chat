@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::TimestampMillis;
+use crate::{TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChitEarned {
@@ -14,4 +14,10 @@ pub struct ChitEarned {
 pub enum ChitEarnedReason {
     DailyClaim,
     Achievement(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChitUserBalance {
+    pub user_id: UserId,
+    pub balance: i32,
 }

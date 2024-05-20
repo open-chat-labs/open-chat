@@ -331,6 +331,10 @@ type ClaimDailyChitResponse = variant {
     AlreadyClaimed : TimestampMillis;
 };
 
+type ChitLeaderboardResponse = variant {
+    Success : vec ChitUserBalance;
+};
+
 type SetUserUpgradeConcurrencyArgs = record {
     value : nat32;
 };
@@ -412,6 +416,7 @@ service : {
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
     claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
+    chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
