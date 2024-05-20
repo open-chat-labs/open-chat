@@ -1671,11 +1671,16 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setPinNumber(
-                        payload.currentPin,
-                        payload.newPin,
-                    ),
+                    agent.setPinNumber(payload.currentPin, payload.newPin),
                 );
+                break;
+
+            case "claimDailyChit":
+                executeThenReply(payload, correlationId, agent.claimDailyChit());
+                break;
+
+            case "chitLeaderboard":
+                executeThenReply(payload, correlationId, agent.chitLeaderboard());
                 break;
 
             default:

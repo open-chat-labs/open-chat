@@ -146,6 +146,26 @@ export const idlFactory = ({ IDL }) => {
     'StatusError' : SwapStatusError,
     'SwapNotFound' : IDL.Null,
   });
+  const ChitEventsArgs = IDL.Record({
+    'max' : IDL.Nat32,
+    'from' : IDL.Opt(TimestampMillis),
+    'ascending' : IDL.Bool,
+  });
+  const ChitEarnedReason = IDL.Variant({
+    'DailyClaim' : IDL.Null,
+    'Achievement' : IDL.Text,
+  });
+  const ChitEarned = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'amount' : IDL.Int32,
+    'reason' : ChitEarnedReason,
+  });
+  const ChitEventsResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'total' : IDL.Nat32,
+      'events' : IDL.Vec(ChitEarned),
+    }),
+  });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -1860,6 +1880,7 @@ export const idlFactory = ({ IDL }) => {
         [CancelP2PSwapResponse],
         [],
       ),
+    'chit_events' : IDL.Func([ChitEventsArgs], [ChitEventsResponse], ['query']),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_community' : IDL.Func(
         [CreateCommunityArgs],
