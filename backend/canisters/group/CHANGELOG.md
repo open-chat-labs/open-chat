@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
 
+### Removed
+
+- Remove old `prizes` field ([#5819](https://github.com/open-chat-labs/open-chat/pull/5819))
+
 ### Fixed
 
 - Fix old failing transactions by updating `created` date ([#5799](https://github.com/open-chat-labs/open-chat/pull/5799))
