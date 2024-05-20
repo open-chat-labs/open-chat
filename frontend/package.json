@@ -61,7 +61,6 @@
         "@daily-co/daily-js": "^0.57.2",
         "@solana/wallet-adapter-wallets": "^0.19.32",
         "@solana/web3.js": "^1.91.8",
-        "@svelte-on-solana/wallet-adapter-ui": "^1.0.21-alpha.0",
         "@wagmi/connectors": "^4.3.9",
         "@wagmi/core": "^2.9.7",
         "i18next": "^23.11.4",
