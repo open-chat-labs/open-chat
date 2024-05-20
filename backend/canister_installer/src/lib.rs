@@ -97,6 +97,7 @@ async fn install_service_canisters_impl(
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         escrow_canister_id: canister_ids.escrow,
         event_relay_canister_id: canister_ids.event_relay,
+        internet_identity_canister_id: canister_ids.nns_internet_identity,
         video_call_operators: video_call_operators.clone(),
         ic_root_key: agent.read_root_key(),
         wasm_version: version,
