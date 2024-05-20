@@ -1,1 +1,1 @@
-Group & Community -> User (because prize messages now support u128 prizes)
+Groups + Communities before codegen is run removing `prizes` from the FE

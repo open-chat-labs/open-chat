@@ -5,7 +5,6 @@ use crate::{
     ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -271,7 +270,7 @@ impl MessageContentInitial {
             MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
             MessageContentInitial::File(f) => f.blob_reference.is_none(),
             MessageContentInitial::Poll(p) => p.config.options.is_empty(),
-            MessageContentInitial::Prize(p) => p.prizes.is_empty(),
+            MessageContentInitial::Prize(p) => p.prizes_v2.is_empty(),
             MessageContentInitial::Deleted(_) => true,
             MessageContentInitial::Crypto(_)
             | MessageContentInitial::Giphy(_)
@@ -363,7 +362,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Text(c) => MessageContent::Text(c),
             MessageContentInitial::Video(c) => MessageContent::Video(c),
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: c.prizes.len() as u32,
+                prizes_remaining: c.prizes_v2.len() as u32,
                 winners: Vec::new(),
                 token: c.transfer.token(),
                 end_date: c.end_date,
@@ -485,7 +484,6 @@ pub struct CryptoContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
-    pub prizes: Vec<Tokens>,
     pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
