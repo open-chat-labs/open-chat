@@ -316,10 +316,10 @@
                 <SigninWithEth />
             {/await}
         {:else if loggingInWithSol}
-            {#await import("./SigninWithEth.svelte")}
+            {#await import("./SigninWithSol.svelte")}
                 <div class="loading">...</div>
-            {:then { default: SigninWithEth }}
-                <SigninWithEth />
+            {:then { default: SigninWithSol }}
+                <SigninWithSol />
             {/await}
         {/if}
     </div>
