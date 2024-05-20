@@ -6221,8 +6221,8 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
+        sessionKey: ECDSAKeyIdentity,
     ): Promise<GetDelegationResponse> {
-        const sessionKey = await ECDSAKeyIdentity.generate();
         const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
             kind: "loginWithWallet",
@@ -6766,7 +6766,28 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        return this.sendRequest({ kind: "claimDailyChit" });
+        return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
+            if (resp.kind === "success") {
+                this.user.update((user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+                this.overwriteUserInStore(this._liveState.user.userId, (user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                }));
+            } else if (resp.kind === "already_claimed") {
+                this.user.update((user) => ({
+                    ...user,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+            }
+
+            return resp;
+        });
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
