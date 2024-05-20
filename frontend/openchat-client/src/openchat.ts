@@ -6766,7 +6766,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
+        const userId = this._liveState.user.userId;
+        
+        return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
             if (resp.kind === "success") {
                 this.user.update((user) => ({
                     ...user,
@@ -6774,7 +6776,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     streak: resp.streak,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 }));
-                this.overwriteUserInStore(this._liveState.user.userId, (user) => ({
+                this.overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,

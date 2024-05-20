@@ -1640,6 +1640,7 @@ type SetPinNumber = {
 };
 
 type ClaimDailyChit = {
+    userId: string;
     kind: "claimDailyChit";
 };
 
