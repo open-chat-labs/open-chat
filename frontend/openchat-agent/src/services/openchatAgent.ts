@@ -233,6 +233,8 @@ import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereu
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberSettings } from "openchat-shared";
+import type { ClaimDailyChitResponse } from "openchat-shared";
+import type { ChitUserBalance } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -3360,5 +3362,13 @@ export class OpenChatAgent extends EventTarget {
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         return this.userClient.setPinNumber(currentPin, newPin);
+    }
+
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
+        return this._userIndexClient.claimDailyChit(userId);
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this._userIndexClient.chitLeaderboard();
     }
 }

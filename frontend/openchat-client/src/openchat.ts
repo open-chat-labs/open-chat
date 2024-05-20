@@ -391,6 +391,7 @@ import type {
     VideoCallPresence,
     VideoCallParticipant,
     AcceptedRules,
+    ClaimDailyChitResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -507,6 +508,7 @@ import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
+import type { ChitUserBalance } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -6761,6 +6763,37 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
             });
         });
+    }
+
+    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+        const userId = this._liveState.user.userId;
+        
+        return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
+            if (resp.kind === "success") {
+                this.user.update((user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+                this.overwriteUserInStore(userId, (user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                }));
+            } else if (resp.kind === "already_claimed") {
+                this.user.update((user) => ({
+                    ...user,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+            }
+
+            return resp;
+        });
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this.sendRequest({ kind: "chitLeaderboard" });
     }
 
     /**

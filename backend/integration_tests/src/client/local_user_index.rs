@@ -91,6 +91,7 @@ pub mod happy_path {
             &local_user_index_canister::join_group::Args {
                 chat_id,
                 invite_code: None,
+                verified_credential_args: None,
                 correlation_id: 0,
             },
         );
@@ -186,6 +187,7 @@ pub mod happy_path {
             &local_user_index_canister::join_community::Args {
                 community_id,
                 invite_code: None,
+                verified_credential_args: None,
             },
         );
 
@@ -210,6 +212,7 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 invite_code: None,
+                verified_credential_args: None,
             },
         );
 

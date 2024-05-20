@@ -6,11 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [unreleased]
 
 ### Added
+
 - Maintain log of CHIT events + query ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+
+### Changed
+
+- Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
 
 ### Removed
 
 - Remove code to update user principals ([#5808](https://github.com/open-chat-labs/open-chat/pull/5808))
+
+### Fixed
+
+- One time job to mark old video calls as ended ([#5827](https://github.com/open-chat-labs/open-chat/pull/5827))
 
 ## [[2.0.1172](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1172-user)] - 2024-05-13
 

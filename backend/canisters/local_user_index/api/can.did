@@ -85,6 +85,7 @@ type JoinChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
 };
 
 type JoinChannelResponse = variant {
@@ -106,6 +107,7 @@ type JoinChannelResponse = variant {
 type JoinCommunityArgs = record {
     community_id : CommunityId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
 };
 
 type JoinCommunityResponse = variant {
@@ -125,6 +127,7 @@ type JoinCommunityResponse = variant {
 type JoinGroupArgs = record {
     chat_id : ChatId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
     correlation_id : nat64;
 };
 

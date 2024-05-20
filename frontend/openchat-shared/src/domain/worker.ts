@@ -107,6 +107,8 @@ import type {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
+    ClaimDailyChitResponse,
+    ChitUserBalance,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -357,7 +359,9 @@ export type WorkerRequest =
     | GetDelegationWithWallet
     | SetVideoCallPresence
     | VideoCallParticipants
-    | SetPinNumber;
+    | SetPinNumber
+    | ClaimDailyChit
+    | ChitLeaderboard;
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -1343,7 +1347,9 @@ export type WorkerResponseInner =
     | SiwsPrepareLoginResponse
     | SetVideoCallPresenceResponse
     | VideoCallParticipantsResponse
-    | SetPinNumberResponse;
+    | SetPinNumberResponse
+    | ClaimDailyChitResponse
+    | ChitUserBalance[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1631,6 +1637,15 @@ type SetPinNumber = {
     currentPin: string | undefined;
     newPin: string | undefined;
     kind: "setPinNumber";
+};
+
+type ClaimDailyChit = {
+    userId: string;
+    kind: "claimDailyChit";
+};
+
+type ChitLeaderboard = {
+    kind: "chitLeaderboard";
 };
 
 // prettier-ignore
@@ -1980,4 +1995,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? GetDelegationResponse
     : T extends SetPinNumber
     ? SetPinNumberResponse
+    : T extends ClaimDailyChit
+    ? ClaimDailyChitResponse
+    : T extends ChitLeaderboard
+    ? ChitUserBalance[]
     : never;
