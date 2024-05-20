@@ -50,6 +50,7 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
     let c2c_args = local_user_index_canister::join_group::Args {
         chat_id: group.into(),
         invite_code: None,
+        verified_credential_args: None,
         correlation_id: 0,
     };
 

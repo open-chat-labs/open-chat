@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
 - New user event `ChitEarned` ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- Implement validation of verified credential gates ([#5825](https://github.com/open-chat-labs/open-chat/pull/5825))
 
 ## [[2.0.1162](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1162-local_user_index)] - 2024-05-02
 

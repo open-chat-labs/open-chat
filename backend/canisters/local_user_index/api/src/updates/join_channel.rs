@@ -2,6 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReason,
+    VerifiedCredentialGateArgs,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -9,6 +10,7 @@ pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
+    pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

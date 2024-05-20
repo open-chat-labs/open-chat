@@ -75,6 +75,7 @@ fn join_private_channel_fails() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -152,6 +153,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -205,6 +207,7 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
