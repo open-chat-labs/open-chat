@@ -15,8 +15,8 @@ impl ChitLeaderboard {
             }
         }
 
-        if let Some(me) = self.list.iter_mut().find(|i| i.user_id == latest.user_id) {
-            me.balance = latest.balance;
+        if let Some(my) = self.list.iter_mut().find(|i| i.user_id == latest.user_id) {
+            my.balance = latest.balance;
         } else {
             self.list.pop();
             self.list.push(latest);
