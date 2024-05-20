@@ -1766,7 +1766,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
-        prizes: domain.prizes.map((p) => ({ e8s: p })),
+        prizes: [],
         prizes_v2: domain.prizes,
     };
 }
@@ -2805,7 +2805,11 @@ export function acceptP2PSwapResponse(
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);
     }
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
     if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
@@ -2901,7 +2905,11 @@ export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNum
     if ("Success" in candid) {
         return CommonResponses.success();
     }
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
     if ("TooShort" in candid) {

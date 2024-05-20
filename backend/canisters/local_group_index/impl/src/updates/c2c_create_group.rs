@@ -109,6 +109,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         avatar: args.avatar,
         gate: args.gate,
         video_call_operators: state.data.video_call_operators.clone(),
+        ic_root_key: state.data.ic_root_key.clone(),
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

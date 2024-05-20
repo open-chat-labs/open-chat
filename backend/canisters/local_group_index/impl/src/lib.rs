@@ -13,7 +13,7 @@ use types::{
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -137,9 +137,15 @@ struct Data {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -156,6 +162,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -184,6 +191,7 @@ impl Data {
             community_upgrade_concurrency: 2,
             rng_seed: [0; 32],
             video_call_operators,
+            ic_root_key,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),

@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use user_canister::*;
 
 // Queries
+generate_query_call!(chit_events);
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
@@ -385,5 +386,27 @@ pub mod happy_path {
         );
 
         assert!(matches!(response, user_canister::set_pin_number::Response::Success));
+    }
+
+    pub fn chit_events(
+        env: &PocketIc,
+        sender: &User,
+        from: Option<TimestampMillis>,
+        max: u32,
+    ) -> user_canister::chit_events::SuccessResult {
+        let response = super::chit_events(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::chit_events::Args {
+                from,
+                max,
+                ascending: false,
+            },
+        );
+
+        match response {
+            user_canister::chit_events::Response::Success(result) => result,
+        }
     }
 }

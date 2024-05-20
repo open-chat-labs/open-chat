@@ -3,6 +3,7 @@ use candid_gen::generate_candid_method;
 #[allow(deprecated)]
 fn main() {
     generate_candid_method!(user_index, check_username, query);
+    generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, diamond_membership_fees, query);
     generate_candid_method!(user_index, platform_moderators, query);
@@ -22,6 +23,7 @@ fn main() {
     generate_candid_method!(user_index, add_platform_operator, update);
     generate_candid_method!(user_index, add_referral_codes, update);
     generate_candid_method!(user_index, assign_platform_moderators_group, update);
+    generate_candid_method!(user_index, claim_daily_chit, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);

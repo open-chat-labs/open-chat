@@ -1,3 +1,4 @@
+pub mod chit;
 pub mod communities;
 pub mod community;
 pub mod contacts;
