@@ -19,10 +19,10 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     let tomorrow = tomorrow(now);
 
     if let Some(claim_result) = state.data.users.claim_daily_chit(&caller, now) {
-        state.data.chit_leaderboard.update_position(ChitUserBalance {
-            user_id: claim_result.user_id,
-            balance: claim_result.chit_balance,
-        });
+        state
+            .data
+            .chit_leaderboard
+            .update_position(claim_result.user_id, claim_result.chit_balance);
 
         state.push_event_to_local_user_index(
             claim_result.user_id,

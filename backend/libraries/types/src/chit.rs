@@ -19,5 +19,5 @@ pub enum ChitEarnedReason {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChitUserBalance {
     pub user_id: UserId,
-    pub balance: i32,
+    pub balance: u32,
 }

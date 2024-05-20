@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
-use types::ChitUserBalance;
+use types::{ChitUserBalance, UserId};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ChitLeaderboard {
@@ -8,18 +8,27 @@ pub struct ChitLeaderboard {
 }
 
 impl ChitLeaderboard {
-    pub fn update_position(&mut self, latest: ChitUserBalance) {
+    pub fn update_position(&mut self, user_id: UserId, latest_balance: i32) {
+        if latest_balance <= 0 {
+            return;
+        }
+
+        let latest_balance = latest_balance as u32;
+
         if let Some(last) = self.list.last() {
-            if latest.balance <= last.balance {
+            if latest_balance <= last.balance {
                 return;
             }
         }
 
-        if let Some(my) = self.list.iter_mut().find(|i| i.user_id == latest.user_id) {
-            my.balance = latest.balance;
+        if let Some(my) = self.list.iter_mut().find(|i| i.user_id == user_id) {
+            my.balance = latest_balance;
         } else {
             self.list.pop();
-            self.list.push(latest);
+            self.list.push(ChitUserBalance {
+                user_id,
+                balance: latest_balance,
+            });
         }
 
         self.list.sort_unstable_by_key(|i| Reverse(i.balance));

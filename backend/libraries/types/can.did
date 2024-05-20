@@ -1799,5 +1799,5 @@ type ChitEarnedReason = variant {
 
 type ChitUserBalance = record {
     user_id : UserId;
-    balance : int32;
+    balance : nat32;
 };
