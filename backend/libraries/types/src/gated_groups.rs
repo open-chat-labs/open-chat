@@ -40,7 +40,6 @@ pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
     pub credential_type: String,
-    pub credential_arguments: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

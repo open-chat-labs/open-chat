@@ -1498,7 +1498,6 @@ type VerifiedCredentialGate = record {
     issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments : opt blob;
 };
 
 type SnsNeuronGate = record {
