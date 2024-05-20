@@ -133,6 +133,8 @@ struct Data {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -144,6 +146,10 @@ struct Data {
     #[serde(default = "ic_root_key")]
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 fn ic_root_key() -> Vec<u8> {
@@ -162,6 +168,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
@@ -184,6 +191,7 @@ impl Data {
             proposals_bot_user_id,
             escrow_canister_id,
             event_relay_canister_id,
+            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -291,6 +299,7 @@ impl Default for Data {
             proposals_bot_user_id: Principal::anonymous().into(),
             escrow_canister_id: Principal::anonymous(),
             event_relay_canister_id: Principal::anonymous(),
+            internet_identity_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
