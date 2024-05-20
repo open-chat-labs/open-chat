@@ -46,6 +46,7 @@ import {
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedUsers,
+    setChitInfoInCache,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
     setUserDiamondStatusInCache,
@@ -433,11 +434,16 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.claim_daily_chit({}),
             claimDailyChitResponse,
-        );
+        ).then((res) => {
+            if (res.kind === "success") {
+                setChitInfoInCache(userId, res.chitBalance, res.streak);
+            }
+            return res;
+        });
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {

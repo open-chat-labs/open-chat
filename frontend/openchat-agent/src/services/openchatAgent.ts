@@ -3364,8 +3364,8 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setPinNumber(currentPin, newPin);
     }
 
-    claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        return this._userIndexClient.claimDailyChit();
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
+        return this._userIndexClient.claimDailyChit(userId);
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
