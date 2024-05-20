@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [unreleased]
 
 ### Added
+
 - Maintain log of CHIT events + query ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+
+### Changed
+
+- Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
 
 ### Removed
 

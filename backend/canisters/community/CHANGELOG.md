@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
+- Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
 
 ### Removed
 
