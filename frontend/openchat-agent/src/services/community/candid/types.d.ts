@@ -331,6 +331,14 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
+export interface ChitEarned {
+  'timestamp' : TimestampMillis,
+  'amount' : number,
+  'reason' : ChitEarnedReason,
+}
+export type ChitEarnedReason = { 'DailyClaim' : null } |
+  { 'Achievement' : string };
+export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -2215,6 +2223,7 @@ export interface UserGroupDetails {
 }
 export type UserId = CanisterId;
 export interface UserSummary {
+  'streak' : number,
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
@@ -2222,6 +2231,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
+  'chit_balance' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {
