@@ -86,6 +86,8 @@ export function nullUser(username: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     };
 }
 

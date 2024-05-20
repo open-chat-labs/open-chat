@@ -26,6 +26,8 @@ const lookup: UserLookup = {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     },
     b: {
         kind: "user",
@@ -35,6 +37,8 @@ const lookup: UserLookup = {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     },
     xyz: {
         kind: "user",
@@ -44,6 +48,8 @@ const lookup: UserLookup = {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     },
     alpha: {
         kind: "user",
@@ -53,6 +59,8 @@ const lookup: UserLookup = {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     },
 };
 
@@ -102,6 +110,8 @@ describe("compare username", () => {
             updated: BigInt(0),
             suspended: false,
             diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
         };
     }
     test("works with non-null usernames", () => {
