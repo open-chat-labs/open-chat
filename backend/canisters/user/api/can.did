@@ -56,7 +56,7 @@ type StartVideoCallArgs = record {
     initiator_display_name : opt text;
     initiator_avatar_id : opt nat;
     max_duration : opt Milliseconds;
-    call_type: VideoCallType;
+    call_type : VideoCallType;
 };
 
 type StartVideoCallResponse = variant {
@@ -903,7 +903,7 @@ type UpdatesResponse = variant {
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
         pin_number_settings : variant {
-            SetToSome: PinNumberSettings;
+            SetToSome : PinNumberSettings;
             SetToNone;
             NoChange;
         };
@@ -1112,6 +1112,19 @@ type LocalUserIndexResponse = variant {
     Success : CanisterId;
 };
 
+type ChitEventsArgs = record {
+    from : opt TimestampMillis;
+    max : nat32;
+    ascending : bool;
+};
+
+type ChitEventsResponse = variant {
+    Success : record {
+        events : vec ChitEarned;
+        total : nat32;
+    };
+};
+
 type GetCachedBtcAddressResponse = variant {
     Success : text;
     NotFound;
@@ -1196,6 +1209,7 @@ service : {
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
     token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
+    chit_events : (ChitEventsArgs) -> (ChitEventsResponse) query;
 
     get_cached_btc_address : (EmptyArgs) -> (GetCachedBtcAddressResponse) query;
     get_btc_address : (EmptyArgs) -> (GetBtcAddressResponse);

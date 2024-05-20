@@ -91,5 +91,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 );
             }
         }
+        Event::ChitEarned(ev) => {
+            state.data.chit_events.push(*ev);
+        }
     }
 }
