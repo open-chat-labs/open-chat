@@ -76,6 +76,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
+            verified_credential_args: None,
             correlation_id: 0,
         },
     );
