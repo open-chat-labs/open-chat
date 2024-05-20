@@ -45,12 +45,8 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             diamond_membership_status: u.diamond_membership_details.status_full(now),
             moderation_flags_enabled: u.moderation_flags_enabled,
             chit_balance: u.chit_balance,
-            streak: u.streak.as_ref().map_or(0, |s| s.days(now)),
-            next_daily_claim: if u.streak.as_ref().map_or(true, |s| s.can_claim(now)) {
-                midnight_today(now)
-            } else {
-                midnight_tomorrow(now)
-            },
+            streak: u.streak.days(now),
+            next_daily_claim: if u.streak.can_claim(now) { midnight_today(now) } else { midnight_tomorrow(now) },
         })
     } else {
         UserNotFound

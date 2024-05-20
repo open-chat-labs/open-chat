@@ -68,8 +68,8 @@ pub struct User {
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "chit_balance", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
-    #[serde(rename = "os", alias = "streak", default, skip_serializing_if = "Option::is_none")]
-    pub streak: Option<Streak>,
+    #[serde(rename = "st", alias = "streak", default, skip_serializing_if = "is_default")]
+    pub streak: Streak,
 }
 
 impl User {
@@ -99,18 +99,11 @@ impl User {
             500
         }
 
-        let success = if let Some(streak) = self.streak.as_mut() {
-            streak.claim(now)
-        } else {
-            self.streak = Streak::new(now);
-            self.streak.is_some()
-        };
-
-        if !success {
+        if !self.streak.claim(now) {
             return None;
         }
 
-        let streak = self.streak.as_ref().unwrap().days(now);
+        let streak = self.streak.days(now);
         let chit_earned = chit_for_streak(streak);
         let chit_balance = self.chit_balance + chit_earned as i32;
 
@@ -170,7 +163,7 @@ impl User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
-            streak: None,
+            streak: Streak::default(),
         }
     }
 
@@ -185,7 +178,7 @@ impl User {
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
             chit_balance: self.chit_balance,
-            streak: self.streak.as_ref().map_or(0, |s| s.days(now)),
+            streak: self.streak.days(now),
         }
     }
 }
@@ -245,7 +238,7 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
-            streak: None,
+            streak: Streak::default(),
         }
     }
 }
