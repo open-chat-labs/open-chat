@@ -92,6 +92,7 @@ fn join_private_group_using_invite_code_succeeds() {
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: Some(invite_code),
+            verified_credential_args: None,
             correlation_id: 0,
         },
     );

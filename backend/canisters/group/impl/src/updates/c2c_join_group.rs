@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, AddMemberArgs, RuntimeSt
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use types::{AccessGate, MemberJoined, UsersUnblocked};
@@ -48,6 +48,16 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
             user_id: args.user_id,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             this_canister: state.env.canister_id(),
+            verified_credential_args: args
+                .verified_credential_args
+                .as_ref()
+                .map(|vc| CheckVerifiedCredentialGateArgs {
+                    user_ii_principal: vc.user_ii_principal,
+                    credential_jwt: vc.credential_jwt.clone(),
+                    ic_root_key: state.data.ic_root_key.clone(),
+                    ii_canister_id: state.data.internet_identity_canister_id,
+                    ii_origin: vc.ii_origin.clone(),
+                }),
             now: state.env.now(),
         }))
     }

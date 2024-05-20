@@ -5,10 +5,12 @@ use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
     AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
-    VerifiedCredentialGate,
+    VerifiedCredentialArgumentValue, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::NANOS_PER_MILLISECOND;
+use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
+use vc_util::VcFlowSigners;
 
 pub enum CheckIfPassesGateResult {
     Success,
@@ -21,12 +23,21 @@ pub struct CheckGateArgs {
     pub user_id: UserId,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
+    pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
     pub now: TimestampMillis,
+}
+
+pub struct CheckVerifiedCredentialGateArgs {
+    pub user_ii_principal: Principal,
+    pub credential_jwt: String,
+    pub ic_root_key: Vec<u8>,
+    pub ii_canister_id: CanisterId,
+    pub ii_origin: String,
 }
 
 pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResult {
     match args.gate {
-        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.user_id).await,
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now).await,
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
@@ -52,8 +63,50 @@ fn check_diamond_member_gate(
     }
 }
 
-async fn check_verified_credential_gate(_gate: &VerifiedCredentialGate, _user_id: UserId) -> CheckIfPassesGateResult {
-    CheckIfPassesGateResult::Success
+async fn check_verified_credential_gate(
+    gate: &VerifiedCredentialGate,
+    args: Option<CheckVerifiedCredentialGateArgs>,
+    now: TimestampMillis,
+) -> CheckIfPassesGateResult {
+    let Some(args) = args else {
+        return CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
+            "Verified credential gate args not provided".to_string(),
+        ));
+    };
+
+    if let Err(error) = vc_util::validate_ii_presentation_and_claims(
+        &args.credential_jwt,
+        args.user_ii_principal,
+        &VcFlowSigners {
+            ii_canister_id: args.ii_canister_id,
+            ii_origin: args.ii_origin,
+            issuer_canister_id: gate.issuer_canister_id,
+            issuer_origin: gate.issuer_origin.clone(),
+        },
+        &CredentialSpec {
+            credential_type: gate.credential_type.clone(),
+            arguments: Some(
+                gate.credential_arguments
+                    .iter()
+                    .map(|(k, v)| {
+                        (
+                            k.clone(),
+                            match v {
+                                VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
+                                VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+        },
+        &args.ic_root_key,
+        (now * NANOS_PER_MILLISECOND) as u128,
+    ) {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(format!("{error:?}")))
+    } else {
+        CheckIfPassesGateResult::Success
+    }
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {

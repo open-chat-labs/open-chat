@@ -61,6 +61,7 @@ fn join_private_community_fails() {
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -138,6 +139,7 @@ fn join_private_community_using_invite_code_succeeds() {
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: Some(invite_code),
+            verified_credential_args: None,
         },
     );
 
