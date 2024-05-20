@@ -1,11 +1,6 @@
 <script lang="ts">
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
-    // import { wagmiConfig } from "../../utils/siwe";
-    import {
-        coinbaseWallet,
-        // injected,
-        // walletConnect,
-    } from "@wagmi/connectors";
+    import { coinbaseWallet, walletConnect } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
@@ -15,15 +10,13 @@
 
     const wc = { projectId: process.env.WALLET_CONNECT_PROJECT_ID! };
 
-    console.log("Wallet Connect : ", wc);
+    console.log("Wallet Connect: ", wc);
+
+    let connecting: Connector | undefined;
 
     const wagmiConfig = createConfig({
         chains: [mainnet],
-        connectors: [
-            coinbaseWallet({ appName: "OpenChat" }),
-            // injected(),
-            // walletConnect(wc),
-        ],
+        connectors: [coinbaseWallet({ appName: "OpenChat" }), walletConnect(wc)],
         transports: {
             [mainnet.id]: http(),
         },
@@ -31,12 +24,11 @@
 
     async function connectWith(connector: Connector) {
         try {
+            connecting = connector;
             const resp = await connector.connect();
-            console.log("response: ", resp, connector.icon);
             if (resp.accounts.length > 0) {
                 const account = resp.accounts[0];
                 const prepareResponse = await client.siwePrepareLogin(account);
-                console.log("Resp: ", prepareResponse);
                 if (prepareResponse.kind === "success") {
                     const signResponse = await signMessage(wagmiConfig, {
                         account,
@@ -50,6 +42,8 @@
             }
         } catch (err) {
             console.error(`Error connecting to connector: ${connector.name}`, err);
+        } finally {
+            connecting = undefined;
         }
     }
 
@@ -63,7 +57,7 @@
 
 {#each wagmiConfig.connectors as connector}
     <div class="auth-option">
-        <div class="icon center">
+        <div class={`icon center ${connecting === connector ? "connecting" : ""}`}>
             {#if icons[connector.id] ?? connector.icon}
                 <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
             {/if}
@@ -101,6 +95,15 @@
         img {
             height: 32px;
             width: 32px;
+        }
+
+        &.connecting {
+            @include loading-spinner(
+                1.2em,
+                0.6em,
+                var(--button-spinner),
+                "/assets/plain-spinner.svg"
+            );
         }
     }
 </style>
