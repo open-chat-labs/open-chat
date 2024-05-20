@@ -1,6 +1,7 @@
 use crate::model::direct_chat::DirectChat;
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
 use crate::updates::c2c_send_messages::{get_sender_status, handle_message_impl, verify_user, HandleMessageArgs};
+use crate::updates::start_video_call::handle_start_video_call;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -13,9 +14,7 @@ use ledger_utils::format_crypto_amount_with_symbol;
 use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
-use utils::time::MINUTE_IN_MS;
-
-use super::start_video_call::handle_start_video_call;
+use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[update_msgpack]
 #[trace]
@@ -91,7 +90,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 Some(args.message_index),
                 state.env.canister_id().into(),
                 caller_user_id,
-                args.max_duration,
+                args.max_duration.unwrap_or(HOUR_IN_MS),
                 state,
             );
         }
