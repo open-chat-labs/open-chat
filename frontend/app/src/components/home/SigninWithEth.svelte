@@ -8,15 +8,14 @@
 
     const client = getContext<OpenChat>("client");
 
-    const wc = { projectId: process.env.WALLET_CONNECT_PROJECT_ID! };
-
-    console.log("Wallet Connect: ", wc);
-
     let connecting: Connector | undefined;
 
     const wagmiConfig = createConfig({
         chains: [mainnet],
-        connectors: [coinbaseWallet({ appName: "OpenChat" }), walletConnect(wc)],
+        connectors: [
+            coinbaseWallet({ appName: "OpenChat" }),
+            walletConnect({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
+        ],
         transports: {
             [mainnet.id]: http(),
         },
@@ -104,6 +103,10 @@
                 var(--button-spinner),
                 "/assets/plain-spinner.svg"
             );
+
+            img {
+                filter: grayscale(100%);
+            }
         }
     }
 </style>
