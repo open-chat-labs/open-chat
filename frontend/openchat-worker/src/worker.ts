@@ -430,7 +430,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credential),
+                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credentialArgs),
                 );
                 break;
 
@@ -438,7 +438,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credential),
+                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credentialArgs),
                 );
                 break;
 
