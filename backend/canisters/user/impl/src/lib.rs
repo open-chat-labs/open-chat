@@ -15,6 +15,7 @@ use chat_events::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
+use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
@@ -212,6 +213,8 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
+    #[serde(default)]
+    pub chit_events: ChitEarnedEvents,
     pub rng_seed: [u8; 32],
 }
 
@@ -269,6 +272,7 @@ impl Data {
                 .build(),
             pin_number: PinNumber::default(),
             btc_address: None,
+            chit_events: ChitEarnedEvents::default(),
             rng_seed: [0; 32],
         }
     }

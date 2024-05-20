@@ -15,3 +15,19 @@ pub fn now_millis() -> TimestampMillis {
 pub fn now_nanos() -> TimestampNanos {
     ic_cdk::api::time()
 }
+
+pub fn today(now: TimestampMillis) -> TimestampMillis {
+    to_timestamp(to_date(now))
+}
+
+pub fn tomorrow(now: TimestampMillis) -> TimestampMillis {
+    to_timestamp(to_date(now).next_day().unwrap())
+}
+
+pub fn to_date(ts: TimestampMillis) -> time::Date {
+    time::OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap().date()
+}
+
+pub fn to_timestamp(date: time::Date) -> TimestampMillis {
+    (time::OffsetDateTime::new_utc(date, time::Time::MIDNIGHT).unix_timestamp() * 1000) as u64
+}

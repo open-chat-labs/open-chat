@@ -1,5 +1,6 @@
 pub mod bio;
 pub mod c2c_can_issue_access_token;
+pub mod chit_events;
 pub mod contacts;
 pub mod deleted_message;
 pub mod events;

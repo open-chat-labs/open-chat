@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.event_relay_canister_id,
         args.video_call_operators,
+        args.ic_root_key,
         args.test_mode,
     );
 
