@@ -1,7 +1,9 @@
 <script lang="ts">
-    import type { Adapter } from "@solana/wallet-adapter-base";
     import { onMount } from "svelte";
-    import { clusterApiUrl, Connection, Commitment, ConnectionConfig } from "@solana/web3.js";
+    import { clusterApiUrl, Connection } from "@solana/web3.js";
+    import { walletStore, initialize } from "@svelte-on-solana/wallet-adapter-core";
+    import type { WalletError } from "@solana/wallet-adapter-base";
+    import type { WalletName } from "@solana/wallet-adapter-base";
     // import {
     //     //  workSpace,
     //     WalletProvider,
@@ -14,24 +16,54 @@
         SolflareWalletAdapter,
         TorusWalletAdapter,
     } from "@solana/wallet-adapter-wallets";
+    import Button from "../Button.svelte";
 
     const localStorageKey = "walletAdapter";
 
-    let wallets: Adapter[];
+    $: ({ publicKey, wallet, disconnect, connect, select } = $walletStore);
+    $: walletsAvailable = $walletStore.wallets.filter(
+        (wallet) => wallet.readyState === "Installed",
+    ).length;
+
+    function walletError(error: WalletError): void {
+        console.error("WalletError: ", error);
+    }
+
+    async function connectWallet(name: WalletName) {
+        await select(name);
+        await connect();
+    }
 
     onMount(async () => {
         const connection = new Connection(clusterApiUrl("mainnet-beta"), "processed");
-        wallets = [
+        console.log("Connection: ", connection);
+        const wallets = [
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter(),
             new TorusWalletAdapter(),
         ];
+        initialize({ wallets, autoConnect: true, localStorageKey, onError: walletError });
     });
 </script>
 
-<h1>Why is my laptop so utterly shit?</h1>
+<h1>
+    {walletsAvailable
+        ? "Connect a wallet to continue"
+        : "You'll need a wallet on Solana to continue"}
+</h1>
 
-<WalletProvider {localStorageKey} {wallets} autoConnect />
+{#each $walletStore.wallets as { adapter: { name, icon }, readyState }}
+    <div class="auth-option">
+        <div class={`icon center`}>
+            <img src={icon} alt={`${name} icon`} />
+        </div>
+        <Button fill on:click={() => connectWallet(name)}>
+            <span class="name">{name}</span>
+            <span>{readyState === "Installed" ? "Detected" : ""}</span>
+        </Button>
+    </div>
+{/each}
+
 <div>
     <slot />
 </div>
