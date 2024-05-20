@@ -11,6 +11,7 @@ use types::{
 };
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
+use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -27,10 +28,12 @@ fn start_video_call(args: Args) -> Response {
             return NotAuthorized;
         }
 
+        let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
+
         let StartVideoCallResult {
             message_event,
             mute_notification,
-        } = handle_start_video_call(args.message_id, None, sender, sender, args.max_duration, state);
+        } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
 
         if !mute_notification {
             let notification = Notification::DirectMessage(DirectMessageNotification {
@@ -68,7 +71,7 @@ pub fn handle_start_video_call(
     their_message_index: Option<MessageIndex>,
     sender: UserId,
     other: UserId,
-    max_duration: Option<Milliseconds>,
+    max_duration: Milliseconds,
     state: &mut RuntimeState,
 ) -> StartVideoCallResult {
     let now = state.env.now();
@@ -118,17 +121,14 @@ pub fn handle_start_video_call(
         state.data.handle_event_expiry(expiry, now);
     }
 
-    if let Some(duration) = max_duration {
-        let now = state.env.now();
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::Args {
-                user_id: other,
-                message_id,
-            })),
-            now + duration,
-            now,
-        );
-    }
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::Args {
+            user_id: other,
+            message_id,
+        })),
+        now + max_duration,
+        now,
+    );
 
     StartVideoCallResult {
         message_event,
