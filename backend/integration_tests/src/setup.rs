@@ -159,6 +159,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
         event_relay_canister_id,
+        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
         ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),

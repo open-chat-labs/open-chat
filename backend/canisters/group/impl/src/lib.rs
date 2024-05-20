@@ -426,6 +426,8 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
@@ -446,6 +448,10 @@ struct Data {
     #[serde(default = "ic_root_key")]
     pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 fn ic_root_key() -> Vec<u8> {
@@ -479,6 +485,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
@@ -514,6 +521,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
