@@ -27,7 +27,9 @@ import {
     SetModerationFlagsResponse,
     DiamondMembershipStatus,
     DiamondMembershipStatusFull,
-    DiamondMembershipSubscription
+    DiamondMembershipSubscription,
+    ClaimDailyChitResponse,
+    ChitUserBalance
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -57,7 +59,9 @@ export {
     SetModerationFlagsResponse as ApiSetModerationFlagsResponse,
     DiamondMembershipStatus as ApiDiamondMembershipStatus,
     DiamondMembershipStatusFull as ApiDiamondMembershipStatusFull,
-    DiamondMembershipSubscription as ApiDiamondMembershipSubscription
+    DiamondMembershipSubscription as ApiDiamondMembershipSubscription,
+    ClaimDailyChitResponse as ApiClaimDailyChitResponse,
+    ChitUserBalance as ApiChitUserBalance,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

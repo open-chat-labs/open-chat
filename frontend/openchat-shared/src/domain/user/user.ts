@@ -20,6 +20,8 @@ export type UserSummary = DataContent & {
     updated: bigint;
     suspended: boolean;
     diamondStatus: DiamondMembershipStatus["kind"];
+    chitBalance: number;
+    streak: number;
 };
 
 export type UserGroupSummary = {
@@ -121,6 +123,9 @@ export function anonymousUser(): CreatedUser {
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
+        chitBalance: 0,
+        streak: 0,
+        nextDailyChitClaim: 0n,
     };
 }
 
@@ -139,6 +144,9 @@ export type CreatedUser = {
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
+    chitBalance: number;
+    streak: number;
+    nextDailyChitClaim: bigint;
 };
 
 export type DiamondMembershipStatus =
@@ -373,4 +381,19 @@ export type DiamondMembershipFees = {
     threeMonths: bigint;
     oneYear: bigint;
     lifetime: bigint;
+};
+
+export type ClaimDailyChitResponse =
+    | { kind: "already_claimed"; nextDailyChitClaim: bigint }
+    | {
+          kind: "success";
+          streak: number;
+          chitBalance: number;
+          chitEarned: number;
+          nextDailyChitClaim: bigint;
+      };
+
+export type ChitUserBalance = {
+    userId: string;
+    balance: number;
 };

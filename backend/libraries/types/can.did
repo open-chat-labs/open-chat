@@ -1494,9 +1494,10 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
+    issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments : opt blob;
+    credential_arguments : vec record { text; variant { String : text; Int : int32 } };
 };
 
 type SnsNeuronGate = record {
@@ -1523,6 +1524,13 @@ type GateCheckFailedReason = variant {
     NoSnsNeuronsWithRequiredDissolveDelayFound;
     PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
+    FailedVerifiedCredentialCheck : text;
+};
+
+type VerifiedCredentialGateArgs = record {
+    user_ii_principal : principal;
+    credential_jwt : text;
+    ii_origin : text;
 };
 
 type MessageReminderCreated = record {

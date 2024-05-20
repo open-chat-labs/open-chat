@@ -20,6 +20,7 @@ async fn join_group(args: Args) -> Response {
         is_platform_moderator: user_details.is_platform_moderator,
         is_bot: user_details.is_bot,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
+        verified_credential_args: args.verified_credential_args.clone(),
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {

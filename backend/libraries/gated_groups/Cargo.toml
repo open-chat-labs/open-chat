@@ -16,3 +16,4 @@ types = { path = "../types" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_c2c_client = { path = "../../canisters/user_index/c2c_client" }
 utils = { path = "../utils" }
+vc_util = { workspace = true }

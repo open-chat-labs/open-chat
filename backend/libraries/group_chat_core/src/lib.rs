@@ -1334,7 +1334,7 @@ impl GroupChatCore {
         now: TimestampMillis,
     ) -> UpdateResult {
         match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
-            Ok(_) => UpdateResult::Success(self.do_update(
+            Ok(_) => UpdateResult::Success(Box::new(self.do_update(
                 user_id,
                 name,
                 description,
@@ -1345,7 +1345,7 @@ impl GroupChatCore {
                 public,
                 events_ttl,
                 now,
-            )),
+            ))),
             Err(result) => result,
         }
     }
@@ -1876,7 +1876,7 @@ pub enum RemoveMemberResult {
 }
 
 pub enum UpdateResult {
-    Success(UpdateSuccessResult),
+    Success(Box<UpdateSuccessResult>),
     UserSuspended,
     UserNotInGroup,
     NotAuthorized,
