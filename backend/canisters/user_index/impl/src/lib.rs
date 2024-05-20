@@ -11,6 +11,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
+use model::chit_leaderboard::ChitLeaderboard;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -255,6 +256,8 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
+    #[serde(default)]
+    pub chit_leaderboard: ChitLeaderboard,
 }
 
 impl Data {
@@ -320,6 +323,7 @@ impl Data {
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::default(),
         };
 
         // Register the ProposalsBot
@@ -407,6 +411,7 @@ impl Default for Data {
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::default(),
         }
     }
 }
