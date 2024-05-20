@@ -28,7 +28,7 @@ pub struct CheckGateArgs {
 }
 
 pub struct CheckVerifiedCredentialGateArgs {
-    pub user_principal: Principal,
+    pub user_ii_principal: Principal,
     pub credential_jwt: String,
     pub ic_root_key: Vec<u8>,
     pub ii_canister_id: CanisterId,
@@ -76,7 +76,7 @@ async fn check_verified_credential_gate(
 
     if let Err(error) = vc_util::validate_ii_presentation_and_claims(
         &args.credential_jwt,
-        args.user_principal,
+        args.user_ii_principal,
         &VcFlowSigners {
             ii_canister_id: args.ii_canister_id,
             ii_origin: args.ii_origin,

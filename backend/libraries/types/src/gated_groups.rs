@@ -82,7 +82,7 @@ pub enum GateCheckFailedReason {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiedCredentialGateArgs {
-    pub user_principal: Principal,
+    pub user_ii_principal: Principal,
     pub credential_jwt: String,
     pub ii_origin: String,
 }

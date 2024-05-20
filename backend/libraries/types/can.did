@@ -1528,7 +1528,7 @@ type GateCheckFailedReason = variant {
 };
 
 type VerifiedCredentialGateArgs = record {
-    user_principal : principal;
+    user_ii_principal : principal;
     credential_jwt : text;
     ii_origin : text;
 };
