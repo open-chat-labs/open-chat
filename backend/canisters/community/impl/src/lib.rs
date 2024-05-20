@@ -266,6 +266,7 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                internet_identity: self.data.internet_identity_canister_id,
             },
         }
     }
@@ -293,6 +294,8 @@ struct Data {
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    internet_identity_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
     channels: Channels,
@@ -317,6 +320,10 @@ struct Data {
     #[serde(default = "ic_root_key")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 fn ic_root_key() -> Vec<u8> {
@@ -344,6 +351,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         gate: Option<AccessGate>,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
@@ -383,6 +391,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             date_created: now,
             members,
             channels,
@@ -531,4 +540,5 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+    pub internet_identity: CanisterId,
 }
