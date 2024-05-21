@@ -1,4 +1,5 @@
 /* eslint-disable no-case-declarations */
+import { gaTrack } from "./utils/ga";
 import { type Identity } from "@dfinity/agent";
 import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
@@ -3654,6 +3655,7 @@ export class OpenChat extends OpenChatAgentWorker {
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
+    gaTrack = gaTrack;
 
     editMessageWithAttachment(
         messageContext: MessageContext,
@@ -4125,6 +4127,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const code = qs.get("ref") ?? undefined;
         let captured = false;
         if (code) {
+            gaTrack("captured_referral_code", "registration");
             localStorage.setItem("openchat_referredby", code);
             captured = true;
         }
@@ -4141,6 +4144,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
+                    gaTrack("registered_user", "registration");
+                    if (this._referralCode !== undefined) {
+                        gaTrack("registered_user_with_referral_code", "registration");
+                    }
                     this.clearReferralCode();
                 }
                 return res;
