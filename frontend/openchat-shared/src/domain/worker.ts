@@ -124,7 +124,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type { AccessGate, Rules, UpdatedRules } from "./access";
+import type { AccessGate, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -865,15 +865,15 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
-    credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
-    credential?: string;
 };
 
 type LeaveGroup = {

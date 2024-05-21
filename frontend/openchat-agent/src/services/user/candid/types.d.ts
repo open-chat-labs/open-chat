@@ -795,6 +795,7 @@ export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export type GetBtcAddressResponse = { 'Success' : string } |
   { 'InternalError' : string };
@@ -2291,9 +2292,17 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential_arguments' : [] | [Uint8Array | number[]],
+  'credential_arguments' : Array<
+    [string, { 'Int' : number } | { 'String' : string }]
+  >,
   'issuer_origin' : string,
+  'issuer_canister_id' : CanisterId,
   'credential_type' : string,
+}
+export interface VerifiedCredentialGateArgs {
+  'credential_jwt' : string,
+  'ii_origin' : string,
+  'user_ii_principal' : Principal,
 }
 export type Version = number;
 export interface VersionedRules {

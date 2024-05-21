@@ -57,8 +57,14 @@ export const idlFactory = ({ IDL }) => {
     'search_term' : IDL.Opt(IDL.Text),
   });
   const VerifiedCredentialGate = IDL.Record({
-    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'credential_arguments' : IDL.Vec(
+      IDL.Tuple(
+        IDL.Text,
+        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
+      )
+    ),
     'issuer_origin' : IDL.Text,
+    'issuer_canister_id' : CanisterId,
     'credential_type' : IDL.Text,
   });
   const Milliseconds = IDL.Nat64;

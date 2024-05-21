@@ -11,11 +11,13 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     accessTokenResponse,
     apiAccessTokenType,
+    apiVerifiedCredentialArgs,
     groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
@@ -84,33 +86,45 @@ export class LocalUserIndexClient extends CandidService {
     joinCommunity(
         communityId: string,
         inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
             }),
             joinCommunityResponse,
         );
     }
 
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+    joinGroup(
+        chatId: string,
+        inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
+    ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_group({
                 chat_id: Principal.fromText(chatId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
                 correlation_id: BigInt(0),
             }),
             joinGroupResponse,
         );
     }
 
-    joinChannel(id: ChannelIdentifier, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+    joinChannel(
+        id: ChannelIdentifier,
+        inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
+    ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_channel({
                 community_id: Principal.fromText(id.communityId),
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
             }),
             (resp) => joinChannelResponse(resp, id.communityId),
         );

@@ -393,6 +393,7 @@ import type {
     VideoCallParticipant,
     AcceptedRules,
     ClaimDailyChitResponse,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1304,7 +1305,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinGroup(
         chat: MultiUserChat,
-        credential: string | undefined,
+        credentialJwt: string | undefined,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
@@ -1320,7 +1321,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1370,6 +1371,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 return resp;
             })
             .catch(() => CommonResponses.failure());
+    }
+
+    private buildVerifiedCredentialArgs(
+        credentialJwt: string | undefined,
+    ): VerifiedCredentialArgs | undefined {
+        return credentialJwt !== undefined && this._authPrincipal !== undefined
+            ? {
+                  userIIPrincipal: this._authPrincipal,
+                  iiOrigin: new URL(this.config.internetIdentityUrl).origin,
+                  credentialJwt,
+              }
+            : undefined;
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
@@ -6373,7 +6386,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinCommunity(
         community: CommunitySummary,
-        credential: string | undefined,
+        credentialJwt: string | undefined,
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
@@ -6384,7 +6397,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
