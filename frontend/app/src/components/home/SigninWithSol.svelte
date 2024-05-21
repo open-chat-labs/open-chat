@@ -33,7 +33,7 @@
             await select(name);
             await connect();
             if (publicKey && wallet && signMessage) {
-                const account = publicKey.toString();
+                const account = publicKey.toBase58();
                 const prepareResponse = await client.siwsPrepareLogin(account);
                 console.log("PrepareResponse: ", prepareResponse);
                 if (prepareResponse.kind === "success") {
@@ -51,10 +51,19 @@
                     //     version: prepareResponse.siwsMessage.version.toString(),
                     // };
 
-                    const signResponse = await signMessage(
-                        // new TextEncoder().encode(JSON.stringify(msg)),
-                        new TextEncoder().encode(JSON.stringify(prepareResponse.siwsMessage)),
+                    // This is what the example does - just the statement + nonce (but that doesn't seem to work either)
+                    // const data = new TextEncoder().encode(
+                    //     `${prepareResponse.siwsMessage.statement}${prepareResponse.siwsMessage.nonce}`,
+                    // );
+                    const data = new TextEncoder().encode(
+                        JSON.stringify(prepareResponse.siwsMessage),
                     );
+                    const signResponse = await signMessage(data);
+
+                    // const signResponse = await signMessage(
+                    //     // new TextEncoder().encode(JSON.stringify(msg)),
+                    //     new TextEncoder().encode(JSON.stringify(prepareResponse.siwsMessage)),
+                    // );
                     const signature = base58.encode(signResponse);
 
                     console.log("SignResponse: ", signResponse, signature);
