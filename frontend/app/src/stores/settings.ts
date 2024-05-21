@@ -31,6 +31,7 @@ export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroups
 export const browseChannels = createLsBoolStore(configKeys.browseChannels, true);
 export const useBlockLevelMarkdown = createLsBoolStore(configKeys.useBlockLevelMarkdown, false);
 export const pinEnabledStore = createLsBoolStore(configKeys.pinEnabled, false);
+export const chitEnabledStore = createLsBoolStore(configKeys.chitEnabled, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

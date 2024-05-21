@@ -27,9 +27,9 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Search from "./Search.svelte";
     import { compareBigints } from "../utils/bigints";
-    import Diamond from "./icons/Diamond.svelte";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
+    import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -46,6 +46,7 @@
         userId: string | undefined;
         name: string;
         diamondStatus: DiamondMembershipStatus["kind"];
+        streak: number;
         avatarUrl: string;
         description: string;
         username: string | undefined;
@@ -197,6 +198,7 @@
                     userId: chatSummary.them.userId,
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
+                    streak: them.streak,
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                     username: "@" + them.username,
@@ -210,6 +212,7 @@
                     userId: undefined,
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                    streak: 0,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
@@ -314,7 +317,7 @@
                                     <span class="display-name">
                                         {target.name}
                                     </span>
-                                    <Diamond status={target.diamondStatus} />
+                                    <Badges diamondStatus={target.diamondStatus} streak={target.streak} />
                                     {#if target.username !== undefined}
                                         <span class="username">{target.username}</span>
                                     {/if}
