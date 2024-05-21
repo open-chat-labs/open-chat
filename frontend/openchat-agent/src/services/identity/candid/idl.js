@@ -2,7 +2,6 @@ export const idlFactory = ({ IDL }) => {
   const CheckAuthPrincipalResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
-    'Legacy' : IDL.Null,
   });
   const PublicKey = IDL.Vec(IDL.Nat8);
   const Nanoseconds = IDL.Nat64;
@@ -46,12 +45,6 @@ export const idlFactory = ({ IDL }) => {
     'NotFound' : IDL.Null,
     'Success' : SignedDelegation,
   });
-  const MigrateLegacyPrincipalResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Record({ 'new_principal' : IDL.Principal }),
-    'InternalError' : IDL.Text,
-    'AlreadyMigrated' : IDL.Null,
-  });
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
@@ -62,12 +55,6 @@ export const idlFactory = ({ IDL }) => {
       'user_key' : PublicKey,
       'expiration' : TimestampNanoseconds,
     }),
-  });
-  const SetPrincipalMigrationJobEnabledArgs = IDL.Record({
-    'enabled' : IDL.Bool,
-  });
-  const SetPrincipalMigrationJobEnabledResponse = IDL.Variant({
-    'Success' : IDL.Null,
   });
   return IDL.Service({
     'check_auth_principal' : IDL.Func(
@@ -90,19 +77,9 @@ export const idlFactory = ({ IDL }) => {
         [GetDelegationResponse],
         ['query'],
       ),
-    'migrate_legacy_principal' : IDL.Func(
-        [IDL.Record({})],
-        [MigrateLegacyPrincipalResponse],
-        [],
-      ),
     'prepare_delegation' : IDL.Func(
         [PrepareDelegationArgs],
         [PrepareDelegationResponse],
-        [],
-      ),
-    'set_principal_migration_job_enabled' : IDL.Func(
-        [SetPrincipalMigrationJobEnabledArgs],
-        [SetPrincipalMigrationJobEnabledResponse],
         [],
       ),
   });

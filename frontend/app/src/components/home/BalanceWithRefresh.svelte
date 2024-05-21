@@ -3,8 +3,7 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat } from "openchat-client";
-    import type { ResourceKey } from "../../i18n/i18n";
+    import type { OpenChat, ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -59,10 +58,14 @@
 
     function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
         switch (c) {
-            case "usd": return t.dollarBalance.toFixed(2);
-            case "icp": return t.icpBalance.toFixed(3);
-            case "btc": return t.btcBalance.toFixed(6);
-            case "eth": return t.ethBalance.toFixed(6);
+            case "usd":
+                return t.dollarBalance.toFixed(2);
+            case "icp":
+                return t.icpBalance.toFixed(3);
+            case "btc":
+                return t.btcBalance.toFixed(6);
+            case "eth":
+                return t.ethBalance.toFixed(6);
         }
     }
 </script>

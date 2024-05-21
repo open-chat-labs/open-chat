@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
-    import type { CryptocurrencyContent } from "openchat-shared";
+    import type { CryptocurrencyContent, MessageContext } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -20,6 +20,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,12 +29,8 @@
     export let ledger: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
+    export let messageContext: MessageContext;
 
-    $: user = client.user;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: userStore = client.userStore;
     let refreshing = false;
     let error: string | undefined = undefined;
     let message = "";
@@ -43,6 +40,13 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: UserSummary | undefined = undefined;
     let validAmount: boolean = false;
+    let sending = false;
+
+    $: user = client.user;
+    $: lastCryptoSent = client.lastCryptoSent;
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: userStore = client.userStore;
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -53,6 +57,7 @@
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
+    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -93,9 +98,21 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
-        dispatch("sendMessageWithContent", { content });
-        lastCryptoSent.set(ledger);
-        dispatch("close");
+
+        sending = true;
+        error = undefined;
+
+        client
+            .sendMessageWithContent(messageContext, content, false)
+            .then((resp) => {
+                if (resp.kind === "transfer_success") {
+                    lastCryptoSent.set(ledger);
+                    dispatch("close");
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "errorSendingMessage";
+                }
+            })
+            .finally(() => (sending = false));
     }
 
     function cancel() {
@@ -192,9 +209,6 @@
                             placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                             bind:value={message} />
                     </div>
-                    {#if error}
-                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                    {/if}
                     {#if confirming}
                         <div class="confirming">
                             <div class="alert">
@@ -206,6 +220,11 @@
                                         token: symbol,
                                     })} />
                             </div>
+                        </div>
+                    {/if}
+                    {#if errorMessage !== undefined}
+                        <div class="error">
+                            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
                         </div>
                     {/if}
                 {/if}
@@ -225,7 +244,8 @@
                 {:else}
                     <Button
                         small={!$mobileWidth}
-                        disabled={!valid}
+                        disabled={!valid || sending}
+                        loading={sending}
                         tiny={$mobileWidth}
                         on:click={send}
                         ><Translatable
@@ -288,6 +308,10 @@
     }
 
     .how-to {
+        margin-top: $sp4;
+    }
+
+    .error {
         margin-top: $sp4;
     }
 </style>

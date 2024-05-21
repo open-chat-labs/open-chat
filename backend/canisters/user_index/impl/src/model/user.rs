@@ -1,5 +1,6 @@
 use crate::model::account_billing::AccountBilling;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
+use crate::model::streak::Streak;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -65,8 +66,10 @@ pub struct User {
     pub moderation_flags_enabled: u32,
     #[serde(rename = "rm", alias = "reported_messages", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(rename = "pm", alias = "principal_migrated", default, skip_serializing_if = "is_default")]
-    pub principal_migrated: bool,
+    #[serde(rename = "cb", alias = "chit_balance", default, skip_serializing_if = "is_default")]
+    pub chit_balance: i32,
+    #[serde(rename = "st", alias = "streak", default, skip_serializing_if = "is_default")]
+    pub streak: Streak,
 }
 
 impl User {
@@ -78,6 +81,49 @@ impl User {
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up.into())
     }
+
+    pub fn claim_daily_chit(&mut self, now: TimestampMillis) -> Option<ClaimDailyChitResult> {
+        fn chit_for_streak(days: u16) -> u32 {
+            if days == 0 {
+                return 0;
+            }
+            if days < 3 {
+                return 200;
+            }
+            if days < 7 {
+                return 300;
+            }
+            if days < 30 {
+                return 400;
+            }
+            500
+        }
+
+        if !self.streak.claim(now) {
+            return None;
+        }
+
+        let streak = self.streak.days(now);
+        let chit_earned = chit_for_streak(streak);
+        let chit_balance = self.chit_balance + chit_earned as i32;
+
+        self.chit_balance = chit_balance;
+        self.date_updated = now;
+
+        Some(ClaimDailyChitResult {
+            user_id: self.user_id,
+            chit_earned,
+            chit_balance,
+            streak,
+        })
+    }
+}
+
+pub struct ClaimDailyChitResult {
+    pub user_id: UserId,
+    pub chit_earned: u32,
+    pub chit_balance: i32,
+    pub streak: u16,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -96,7 +142,6 @@ impl User {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
-        migrated: bool,
     ) -> User {
         User {
             principal,
@@ -117,7 +162,8 @@ impl User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            principal_migrated: migrated,
+            chit_balance: 0,
+            streak: Streak::default(),
         }
     }
 
@@ -131,6 +177,8 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
+            chit_balance: self.chit_balance,
+            streak: self.streak.days(now),
         }
     }
 }
@@ -189,7 +237,8 @@ impl Default for User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            principal_migrated: false,
+            chit_balance: 0,
+            streak: Streak::default(),
         }
     }
 }

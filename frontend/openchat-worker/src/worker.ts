@@ -54,11 +54,6 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
                 shouldGetIdentity = true;
                 break;
             }
-            case "legacy": {
-                const migratePrincipalResponse = await identityAgent.migrateLegacyPrincipal();
-                shouldGetIdentity = migratePrincipalResponse.kind === "success";
-                break;
-            }
             case "not_found": {
                 shouldCreateIdentity = true;
                 break;
@@ -593,8 +588,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.rulesAccepted,
-                        payload.communityRulesAccepted,
+                        payload.acceptedRules,
                         payload.messageFilterFailed,
                         payload.pin,
                     ),
@@ -1619,14 +1613,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
                 break;
 
-            case "setPrincipalMigrationJobEnabled":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.setPrincipalMigrationJobEnabled(payload.enabled).then(() => undefined),
-                );
-                break;
-
             case "generateMagicLink":
                 executeThenReply(
                     payload,
@@ -1679,6 +1665,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.expiration,
                     ),
                 );
+                break;
+
+            case "setPinNumber":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPinNumber(payload.currentPin, payload.newPin),
+                );
+                break;
+
+            case "claimDailyChit":
+                executeThenReply(payload, correlationId, agent.claimDailyChit(payload.userId));
+                break;
+
+            case "chitLeaderboard":
+                executeThenReply(payload, correlationId, agent.chitLeaderboard());
                 break;
 
             default:

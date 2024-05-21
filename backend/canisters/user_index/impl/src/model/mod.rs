@@ -1,11 +1,12 @@
 pub mod account_billing;
+pub mod chit_leaderboard;
 pub mod diamond_membership_details;
 pub mod local_user_index_map;
 pub mod pending_modclub_submissions_queue;
 pub mod pending_payments_queue;
 pub mod reported_messages;
 pub mod storage_index_user_sync_queue;
+pub mod streak;
 pub mod user;
 pub mod user_map;
-pub mod user_principal_updates_queue;
 pub mod user_referral_leaderboards;

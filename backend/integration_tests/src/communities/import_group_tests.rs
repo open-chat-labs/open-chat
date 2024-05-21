@@ -3,12 +3,10 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_ledger_types::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use test_case::test_case;
 use types::{
     icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
     PrizeContentInitial,
@@ -152,9 +150,8 @@ fn read_up_to_data_maintained_after_import() {
     assert_eq!(channel.read_by_me_up_to, Some(4.into()));
 }
 
-#[test_case(true)]
-#[test_case(false)]
-fn pending_prizes_transferred_to_community(v2: bool) {
+#[test]
+fn pending_prizes_transferred_to_community() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -187,8 +184,7 @@ fn pending_prizes_transferred_to_community(v2: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: if v2 { Vec::new() } else { prizes.iter().map(|p| Tokens::from_e8s(*p as u64)).collect() },
-                prizes_v2: if v2 { prizes } else { Vec::new() },
+                prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token: token.clone(),

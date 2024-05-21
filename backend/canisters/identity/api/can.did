@@ -4,7 +4,6 @@ type TimestampNanoseconds = nat64;
 
 type CheckAuthPrincipalResponse = variant {
     Success;
-    Legacy;
     NotFound;
 };
 
@@ -57,15 +56,6 @@ type CreateIdentityResponse = variant {
     ChallengeFailed;
 };
 
-type MigrateLegacyPrincipalResponse = variant {
-    Success : record {
-        new_principal : principal;
-    };
-    AlreadyMigrated;
-    NotFound;
-    InternalError : text;
-};
-
 type PrepareDelegationArgs = record {
     session_key : PublicKey;
     max_time_to_live : opt Nanoseconds;
@@ -79,20 +69,10 @@ type PrepareDelegationResponse = variant {
     NotFound;
 };
 
-type SetPrincipalMigrationJobEnabledArgs = record {
-    enabled : bool;
-};
-
-type SetPrincipalMigrationJobEnabledResponse = variant {
-    Success;
-};
-
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
     generate_challenge : (record {}) -> (GenerateChallengeResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
-    migrate_legacy_principal : (record {}) -> (MigrateLegacyPrincipalResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
-    set_principal_migration_job_enabled : (SetPrincipalMigrationJobEnabledArgs) -> (SetPrincipalMigrationJobEnabledResponse);
 }

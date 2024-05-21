@@ -58,3 +58,7 @@ export function bigintToBytes(value: bigint): Uint8Array {
 export function bytesToBigint(bytes: Uint8Array | number[]): bigint {
     return BigInt("0x" + bytesToHexString(bytes));
 }
+
+export function durationToTimestamp(duration: bigint): bigint {
+    return BigInt(Date.now() + Number(duration));
+}

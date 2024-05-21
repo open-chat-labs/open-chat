@@ -48,7 +48,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     state
         .data
         .users
-        .register(caller, user_id, args.username.clone(), now, None, true, true);
+        .register(caller, user_id, args.username.clone(), now, None, true);
 
     state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {

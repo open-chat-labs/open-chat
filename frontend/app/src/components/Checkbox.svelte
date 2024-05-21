@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ResourceKey } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
     import Translatable from "./Translatable.svelte";
     export let checked: boolean = false;

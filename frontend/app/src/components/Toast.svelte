@@ -4,7 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Bug from "svelte-material-icons/Bug.svelte";
     import { fly } from "svelte/transition";
-    import { toastStore, ToastType, type Toast } from "../stores/toast";
+    import { toastStore, ToastType } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import Translatable from "./Translatable.svelte";
     import { OpenChat, type ChatIdentifier, routeForChatIdentifier } from "openchat-client";
@@ -17,11 +17,17 @@
     const client = getContext<OpenChat>("client");
 
     $: draftMessagesStore = client.draftMessagesStore;
+    $: reactiveResourceKey = $toastStore?.resourceKey;
 
-    function report(toast: Toast | undefined) {
-        if (toast && toast.type === ToastType.Failure && toast.err !== undefined) {
-            const msg = interpolate($_, toast.resourceKey);
-            const withDetail = `${msg} (${toast.err})`;
+    function report() {
+        if (
+            $toastStore &&
+            $toastStore.type === ToastType.Failure &&
+            $toastStore.err !== undefined &&
+            $reactiveResourceKey !== undefined
+        ) {
+            const msg = interpolate($_, $reactiveResourceKey);
+            const withDetail = `${msg} (${$toastStore.err})`;
             const chatId = {
                 kind: "channel",
                 communityId: "dgegb-daaaa-aaaar-arlhq-cai",
@@ -34,17 +40,17 @@
     }
 </script>
 
-{#if $toastStore}
+{#if $toastStore && $reactiveResourceKey}
     <div class="toast" transition:fly={{ y: 200, duration: 200, easing: sineIn }}>
         <div
             class="message"
             class:failure={$toastStore.type === ToastType.Failure}
             class:success={$toastStore.type === ToastType.Success}>
-            <div class="text"><Translatable resourceKey={$toastStore.resourceKey} /></div>
+            <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
             {#if $toastStore.type === ToastType.Failure}
                 {#if $toastStore.err !== undefined}
                     <TooltipWrapper position="top" align="middle">
-                        <div slot="target" class="report" on:click={() => report($toastStore)}>
+                        <div slot="target" class="report" on:click={report}>
                             <Bug size={$iconSize} color={"var(--button-txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">

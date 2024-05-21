@@ -3,8 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
-  { 'Success' : null } |
-  { 'Legacy' : null };
+  { 'Success' : null };
 export interface CreateIdentityArgs {
   'public_key' : PublicKey,
   'session_key' : PublicKey,
@@ -31,10 +30,6 @@ export interface GetDelegationArgs {
 }
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
-export type MigrateLegacyPrincipalResponse = { 'NotFound' : null } |
-  { 'Success' : { 'new_principal' : Principal } } |
-  { 'InternalError' : string } |
-  { 'AlreadyMigrated' : null };
 export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,
@@ -45,8 +40,6 @@ export type PrepareDelegationResponse = { 'NotFound' : null } |
     'Success' : { 'user_key' : PublicKey, 'expiration' : TimestampNanoseconds }
   };
 export type PublicKey = Uint8Array | number[];
-export interface SetPrincipalMigrationJobEnabledArgs { 'enabled' : boolean }
-export type SetPrincipalMigrationJobEnabledResponse = { 'Success' : null };
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : { 'pubkey' : PublicKey, 'expiration' : TimestampNanoseconds },
@@ -57,17 +50,9 @@ export interface _SERVICE {
   'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
   'generate_challenge' : ActorMethod<[{}], GenerateChallengeResponse>,
   'get_delegation' : ActorMethod<[GetDelegationArgs], GetDelegationResponse>,
-  'migrate_legacy_principal' : ActorMethod<
-    [{}],
-    MigrateLegacyPrincipalResponse
-  >,
   'prepare_delegation' : ActorMethod<
     [PrepareDelegationArgs],
     PrepareDelegationResponse
-  >,
-  'set_principal_migration_job_enabled' : ActorMethod<
-    [SetPrincipalMigrationJobEnabledArgs],
-    SetPrincipalMigrationJobEnabledResponse
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

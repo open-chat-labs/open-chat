@@ -35,6 +35,22 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const EmptyArgs = IDL.Record({});
+  const ChitUserBalance = IDL.Record({
+    'balance' : IDL.Nat32,
+    'user_id' : UserId,
+  });
+  const ChitLeaderboardResponse = IDL.Variant({
+    'Success' : IDL.Vec(ChitUserBalance),
+  });
+  const ClaimDailyChitResponse = IDL.Variant({
+    'AlreadyClaimed' : TimestampMillis,
+    'Success' : IDL.Record({
+      'streak' : IDL.Nat16,
+      'chit_earned' : IDL.Nat32,
+      'chit_balance' : IDL.Int32,
+      'next_claim' : TimestampMillis,
+    }),
+  });
   const DiamondMembershipSubscription = IDL.Variant({
     'OneYear' : IDL.Null,
     'ThreeMonths' : IDL.Null,
@@ -73,6 +89,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'streak' : IDL.Nat16,
       'username' : IDL.Text,
       'date_created' : TimestampMillis,
       'is_platform_operator' : IDL.Bool,
@@ -80,13 +97,14 @@ export const idlFactory = ({ IDL }) => {
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
+      'next_daily_claim' : TimestampMillis,
       'user_id' : UserId,
       'display_name' : IDL.Opt(IDL.Text),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'moderation_flags_enabled' : IDL.Nat32,
+      'chit_balance' : IDL.Int32,
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'principal_updates' : IDL.Opt(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
       'suspension_details' : IDL.Opt(SuspensionDetails),
       'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
@@ -207,6 +225,7 @@ export const idlFactory = ({ IDL }) => {
     'Active' : IDL.Null,
   });
   const UserSummary = IDL.Record({
+    'streak' : IDL.Nat16,
     'username' : IDL.Text,
     'diamond_member' : IDL.Bool,
     'diamond_membership_status' : DiamondMembershipStatus,
@@ -214,6 +233,7 @@ export const idlFactory = ({ IDL }) => {
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'chit_balance' : IDL.Int32,
     'suspended' : IDL.Bool,
   });
   const SearchResponse = IDL.Variant({
@@ -352,6 +372,12 @@ export const idlFactory = ({ IDL }) => {
         [CheckUsernameResponse],
         ['query'],
       ),
+    'chit_leaderboard' : IDL.Func(
+        [EmptyArgs],
+        [ChitLeaderboardResponse],
+        ['query'],
+      ),
+    'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
     'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
     'diamond_membership_fees' : IDL.Func(
         [EmptyArgs],

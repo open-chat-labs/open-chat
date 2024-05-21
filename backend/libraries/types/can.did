@@ -1074,6 +1074,8 @@ type UserSummary = record {
     suspended : bool;
     diamond_member : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    chit_balance : int32;
+    streak : nat16;
 };
 
 type BuildVersion = record {
@@ -1416,7 +1418,6 @@ type MessageIndexRange = record {
 };
 
 type PrizeContentInitial = record {
-    prizes : vec Tokens;
     prizes_v2 : vec nat;
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
@@ -1493,9 +1494,10 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
+    issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments : opt blob;
+    credential_arguments : vec record { text; variant { String : text; Int : int32 } };
 };
 
 type SnsNeuronGate = record {
@@ -1522,6 +1524,13 @@ type GateCheckFailedReason = variant {
     NoSnsNeuronsWithRequiredDissolveDelayFound;
     PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
+    FailedVerifiedCredentialCheck : text;
+};
+
+type VerifiedCredentialGateArgs = record {
+    user_ii_principal : principal;
+    credential_jwt : text;
+    ii_origin : text;
 };
 
 type MessageReminderCreated = record {
@@ -1781,4 +1790,21 @@ type VideoCallPresence = variant {
     Default;
     Owner;
     Hidden;
-}
+};
+
+type ChitEarned = record {
+    amount : int32;
+    timestamp : TimestampMillis;
+    reason : ChitEarnedReason;
+
+};
+
+type ChitEarnedReason = variant {
+    DailyClaim;
+    Achievement : text;
+};
+
+type ChitUserBalance = record {
+    user_id : UserId;
+    balance : nat32;
+};

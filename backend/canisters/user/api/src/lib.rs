@@ -3,9 +3,9 @@ use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
+    CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, ChitEarned, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    P2PSwapStatus, PhoneNumber, Reaction, SuspensionDuration, TimestampMillis, User, UserId,
 };
 
 mod lifecycle;
@@ -97,6 +97,7 @@ pub enum Event {
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
+    ChitEarned(Box<ChitEarned>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

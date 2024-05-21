@@ -18,6 +18,8 @@ import type {
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
     DiamondMembershipFees,
+    ClaimDailyChitResponse,
+    ChitUserBalance,
 } from "openchat-shared";
 import { offline, Stream } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -35,6 +37,8 @@ import {
     userRegistrationCanisterResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
+    claimDailyChitResponse,
+    chitLeaderboardResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
@@ -42,6 +46,7 @@ import {
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedUsers,
+    setChitInfoInCache,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
     setUserDiamondStatusInCache,
@@ -84,10 +89,7 @@ export class UserIndexClient extends CandidService {
                         () => this.userIndexService.current_user({}),
                         currentUserResponse,
                     );
-                    if (
-                        liveUser.kind === "created_user" &&
-                        liveUser.principalUpdates === undefined
-                    ) {
+                    if (liveUser.kind === "created_user") {
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -429,6 +431,25 @@ export class UserIndexClient extends CandidService {
                     user_id: userId !== undefined ? [Principal.fromText(userId)] : [],
                 }),
             (res) => res.Success.json,
+        );
+    }
+
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.claim_daily_chit({}),
+            claimDailyChitResponse,
+        ).then((res) => {
+            if (res.kind === "success") {
+                setChitInfoInCache(userId, res.chitBalance, res.streak);
+            }
+            return res;
+        });
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.chit_leaderboard({}),
+            chitLeaderboardResponse,
         );
     }
 }

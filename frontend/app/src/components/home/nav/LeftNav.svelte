@@ -51,6 +51,7 @@
     $: communityExplorer = $pathParams.kind === "communities_route";
     $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
+    $: globalState = client.globalStateStore;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -188,18 +189,20 @@
             </div>
         </LeftNavItem>
 
-        <LeftNavItem
-            selected={$chatListScope.kind === "favourite" && !communityExplorer}
-            separator
-            disabled={$anonUser}
-            label={i18nKey("communities.favourites")}
-            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
-            video={$favouritesVideoCallCounts}
-            on:click={favouriteChats}>
-            <div class="hover favs">
-                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
+        {#if $globalState.favourites.size > 0}
+            <LeftNavItem
+                selected={$chatListScope.kind === "favourite" && !communityExplorer}
+                separator
+                disabled={$anonUser}
+                label={i18nKey("communities.favourites")}
+                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
+                video={$favouritesVideoCallCounts}
+                on:click={favouriteChats}>
+                <div class="hover favs">
+                    <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
     </div>
 
     <div

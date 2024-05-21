@@ -35,10 +35,12 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.proposals_bot_user_id,
         args.escrow_canister_id,
+        args.internet_identity_canister_id,
         args.test_mode,
         args.permissions_v2,
         args.gate,
         args.video_call_operators,
+        args.ic_root_key,
         env.rng().gen(),
     );
 

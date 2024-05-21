@@ -8,6 +8,7 @@ use types::{CanisterId, Cycles, UserId};
 
 mod batched_summary_and_event_tests;
 mod change_group_role_tests;
+mod chit_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;

@@ -31,7 +31,7 @@ use types::{
     Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::consts::{IC_ROOT_KEY, OPENCHAT_BOT_USER_ID};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -426,6 +426,8 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
@@ -443,8 +445,17 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
     pub video_call_operators: Vec<Principal>,
-    #[serde(alias = "event_sink_client")]
+    #[serde(default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -474,10 +485,12 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         anonymized_chat_id: u128,
     ) -> Data {
         let chat = GroupChatCore::new(
@@ -508,6 +521,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
@@ -524,6 +538,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
+            ic_root_key,
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),

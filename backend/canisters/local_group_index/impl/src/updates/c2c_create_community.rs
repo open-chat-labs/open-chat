@@ -104,6 +104,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
+        internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         banner: args.banner,
         gate: args.gate,
@@ -112,6 +113,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
         video_call_operators: state.data.video_call_operators.clone(),
+        ic_root_key: state.data.ic_root_key.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };

@@ -1,12 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::{ChitUserBalance, Empty};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub enabled: bool,
-}
+pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(Vec<ChitUserBalance>),
 }

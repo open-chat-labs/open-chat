@@ -78,6 +78,7 @@ import type {
     ApiVideoCallPresence,
     ApiSetVideoCallPresenceResponse,
     ApiCallParticipant,
+    ApiSetPinNumberResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -274,6 +275,8 @@ import type {
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
+import type { SetPinNumberResponse } from "openchat-shared";
+import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1763,7 +1766,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
-        prizes: domain.prizes.map((p) => ({ e8s: p })),
+        prizes: [],
         prizes_v2: domain.prizes,
     };
 }
@@ -2802,6 +2805,13 @@ export function acceptP2PSwapResponse(
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);
     }
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
+        return pinNumberFailureResponse(candid);
+    }
     if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
     if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
     if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
@@ -2812,14 +2822,6 @@ export function acceptP2PSwapResponse(
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
-    if ("PinRequired" in candid) return { kind: "pin_required" };
-    if ("PinIncorrect" in candid)
-        return { kind: "pin_incorrect", next_retry_in_ms: candid.PinIncorrect };
-    if ("TooManyFailedPinAttempts" in candid)
-        return {
-            kind: "too_main_failed_pin_attempts",
-            next_retry_in_ms: candid.TooManyFailedPinAttempts,
-        };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
@@ -2897,4 +2899,25 @@ export function videoCallParticipantsResponse(
     }
     console.warn("VideoCallParticipants failed with: ", candid);
     return CommonResponses.failure();
+}
+
+export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNumberResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
+        return pinNumberFailureResponse(candid);
+    }
+    if ("TooShort" in candid) {
+        return { kind: "too_short", minLength: candid.TooShort.min_length };
+    }
+    if ("TooLong" in candid) {
+        return { kind: "too_long", maxLength: candid.TooLong.max_length };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
 }

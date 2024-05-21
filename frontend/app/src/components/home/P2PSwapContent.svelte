@@ -6,6 +6,7 @@
         MessageContext,
         OpenChat,
         P2PSwapContent,
+        ResourceKey,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -17,12 +18,13 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Markdown from "./Markdown.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Translatable from "../Translatable.svelte";
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -163,7 +165,6 @@
                     messageContext.chatId,
                     messageContext.threadRootMessageIndex,
                     messageId,
-                    undefined, // TODO: PIN NUMBER
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
@@ -177,6 +178,11 @@
         response: AcceptP2PSwapResponse | CancelP2PSwapResponse,
         accepting: boolean,
     ) {
+        if ($pinNumberErrorMessageStore !== undefined) {
+            toastStore.showFailureToast(pinNumberErrorMessageStore);
+            return;
+        }
+
         let key: string = response.kind;
 
         switch (key) {

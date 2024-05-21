@@ -177,7 +177,6 @@ async fn send_prize_message_to_group(
     bot_name: String,
 ) -> Result<(), String> {
     let content = MessageContentInitial::Prize(PrizeContentInitial {
-        prizes: Vec::new(),
         prizes_v2: prize.iter().map(|p| u128::from(*p)).collect(),
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,

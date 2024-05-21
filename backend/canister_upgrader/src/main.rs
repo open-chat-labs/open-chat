@@ -39,7 +39,6 @@ async fn main() {
         }
         CanisterName::Registry => upgrade_registry_canister(identity, opts.url, opts.registry, opts.version).await,
         CanisterName::Translations => upgrade_translations_canister(identity, opts.url, opts.translations, opts.version).await,
-        CanisterName::SignInWithEmail => unimplemented!(),
         CanisterName::StorageBucket => {
             upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
@@ -51,6 +50,7 @@ async fn main() {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
         }
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
+        CanisterName::SignInWithEmail | CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
     };
 }
 

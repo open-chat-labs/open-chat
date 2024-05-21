@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DiamondMembershipFees, OpenChat } from "openchat-client";
+    import type { DiamondMembershipFees, OpenChat, ResourceKey } from "openchat-client";
     import { getContext } from "svelte";
     import NumberInput from "../../NumberInput.svelte";
     import Input from "../../Input.svelte";
@@ -9,7 +9,7 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 

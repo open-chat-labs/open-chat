@@ -12,4 +12,6 @@ pub struct UserSummary {
     pub suspended: bool,
     pub diamond_member: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
+    pub chit_balance: i32,
+    pub streak: u16,
 }

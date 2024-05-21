@@ -3,7 +3,6 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
 use candid::Principal;
-use ic_ledger_types::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use std::time::Duration;
@@ -14,9 +13,8 @@ use types::{
 };
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
-#[test_case(true)]
-#[test_case(false)]
-fn prize_messages_can_be_claimed_successfully(v2: bool) {
+#[test]
+fn prize_messages_can_be_claimed_successfully() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -49,8 +47,7 @@ fn prize_messages_can_be_claimed_successfully(v2: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: if v2 { Vec::new() } else { prizes.iter().copied().map(Tokens::from_e8s).collect() },
-                prizes_v2: if v2 { prizes.into_iter().map(u128::from).collect() } else { Vec::new() },
+                prizes_v2: prizes.into_iter().map(u128::from).collect(),
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
@@ -107,11 +104,9 @@ fn prize_messages_can_be_claimed_successfully(v2: bool) {
     }
 }
 
-#[test_case(false, true)]
-#[test_case(true, true)]
-#[test_case(false, false)]
-#[test_case(true, false)]
-fn unclaimed_prizes_get_refunded(delete_message: bool, v2: bool) {
+#[test_case(false)]
+#[test_case(true)]
+fn unclaimed_prizes_get_refunded(delete_message: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -142,8 +137,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool, v2: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: if v2 { Vec::new() } else { prizes.iter().copied().map(Tokens::from_e8s).collect() },
-                prizes_v2: if v2 { prizes.into_iter().map(u128::from).collect() } else { Vec::new() },
+                prizes_v2: prizes.into_iter().map(u128::from).collect(),
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
@@ -223,7 +217,6 @@ fn old_transactions_fixed_by_updating_created_date() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes: Vec::new(),
                 prizes_v2: prizes.into_iter().map(u128::from).collect(),
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,

@@ -24,7 +24,9 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.escrow_canister_id,
         args.event_relay_canister_id,
+        args.internet_identity_canister_id,
         args.video_call_operators,
+        args.ic_root_key,
         args.test_mode,
     );
 

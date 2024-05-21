@@ -6,7 +6,6 @@ import {
     type ChallengeAttempt,
     type CheckAuthPrincipalResponse,
     type CreateOpenChatIdentityError,
-    type MigrateLegacyPrincipalResponse,
     toDer,
 } from "openchat-shared";
 
@@ -19,10 +18,6 @@ export class IdentityAgent {
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
         return this._identityClient.checkAuthPrincipal();
-    }
-
-    migrateLegacyPrincipal(): Promise<MigrateLegacyPrincipalResponse> {
-        return this._identityClient.migrateLegacyPrincipal();
     }
 
     async createOpenChatIdentity(

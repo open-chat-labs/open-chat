@@ -213,6 +213,24 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export interface ChitEarned {
+  'timestamp' : TimestampMillis,
+  'amount' : number,
+  'reason' : ChitEarnedReason,
+}
+export type ChitEarnedReason = { 'DailyClaim' : null } |
+  { 'Achievement' : string };
+export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
+export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
+export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
+  {
+    'Success' : {
+      'streak' : number,
+      'chit_earned' : number,
+      'chit_balance' : number,
+      'next_claim' : TimestampMillis,
+    }
+  };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -369,6 +387,7 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'Other' : string };
 export type CurrentUserResponse = {
     'Success' : {
+      'streak' : number,
       'username' : string,
       'date_created' : TimestampMillis,
       'is_platform_operator' : boolean,
@@ -376,13 +395,14 @@ export type CurrentUserResponse = {
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
+      'next_daily_claim' : TimestampMillis,
       'user_id' : UserId,
       'display_name' : [] | [string],
       'avatar_id' : [] | [bigint],
       'moderation_flags_enabled' : number,
+      'chit_balance' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'principal_updates' : [] | [[number, number]],
       'suspension_details' : [] | [SuspensionDetails],
       'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
@@ -1643,6 +1663,7 @@ export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
+  'streak' : number,
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
@@ -1650,6 +1671,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
+  'chit_balance' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {
@@ -1741,6 +1763,8 @@ export interface _SERVICE {
     AssignPlatformModeratorsGroupResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
+  'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
+  'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<
     [EmptyArgs],

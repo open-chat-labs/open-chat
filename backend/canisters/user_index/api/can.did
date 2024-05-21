@@ -66,7 +66,9 @@ type CurrentUserResponse = variant {
         diamond_membership_details : opt DiamondMembershipDetails;
         diamond_membership_status : DiamondMembershipStatusFull;
         moderation_flags_enabled : nat32;
-        principal_updates : opt record { nat32; nat32; };
+        chit_balance : int32;
+        streak : nat16;
+        next_daily_claim : TimestampMillis;
     };
     UserNotFound;
 };
@@ -319,6 +321,20 @@ type ReferralStats = record {
     total_users : nat32;
 };
 
+type ClaimDailyChitResponse = variant {
+    Success : record {
+        chit_earned : nat32;
+        chit_balance : int32;
+        streak : nat16;
+        next_claim : TimestampMillis;
+    };
+    AlreadyClaimed : TimestampMillis;
+};
+
+type ChitLeaderboardResponse = variant {
+    Success : vec ChitUserBalance;
+};
+
 type SetUserUpgradeConcurrencyArgs = record {
     value : nat32;
 };
@@ -399,6 +415,8 @@ service : {
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
+    claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
+    chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;

@@ -28,6 +28,8 @@ export const videoCallBotUser: UserSummary = {
     suspended: false,
     blobUrl: OPENCHAT_VIDEO_CALL_AVATAR_URL,
     diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
 };
 
 export const openChatBotUser: UserSummary = {
@@ -39,6 +41,8 @@ export const openChatBotUser: UserSummary = {
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
     diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -50,6 +54,8 @@ export const anonymousUserSummary: UserSummary = {
     suspended: false,
     blobUrl: ANON_AVATAR_URL,
     diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -66,6 +72,8 @@ export function proposalsBotUser(userId: string): UserSummary {
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     };
 }
 

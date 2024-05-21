@@ -29,6 +29,7 @@ use types::{
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -265,6 +266,7 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                internet_identity: self.data.internet_identity_canister_id,
             },
         }
     }
@@ -292,6 +294,8 @@ struct Data {
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    internet_identity_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
     channels: Channels,
@@ -313,8 +317,17 @@ struct Data {
     rng_seed: [u8; 32],
     pending_payments_queue: PendingPaymentsQueue,
     total_payment_receipts: PaymentReceipts,
-    #[serde(alias = "event_sink_client")]
+    #[serde(default = "ic_root_key")]
+    ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -338,11 +351,13 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         gate: Option<AccessGate>,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
         rng: &mut StdRng,
         now: TimestampMillis,
@@ -376,6 +391,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             date_created: now,
             members,
             channels,
@@ -396,6 +412,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
+            ic_root_key,
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
@@ -523,4 +540,5 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+    pub internet_identity: CanisterId,
 }

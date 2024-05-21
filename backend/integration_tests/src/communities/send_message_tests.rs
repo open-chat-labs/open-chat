@@ -5,7 +5,6 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_ledger_types::Tokens;
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -140,9 +139,8 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     }
 }
 
-#[test_case(true)]
-#[test_case(false)]
-fn send_prize_in_channel(v2: bool) {
+#[test]
+fn send_prize_in_channel() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -184,8 +182,7 @@ fn send_prize_in_channel(v2: bool) {
                     now_nanos(env),
                 )),
                 caption: None,
-                prizes: if v2 { Vec::new() } else { prizes.iter().map(|p| Tokens::from_e8s(*p as u64)).collect() },
-                prizes_v2: if v2 { prizes } else { Vec::new() },
+                prizes_v2: prizes,
                 end_date: now_millis(env) + 1000,
                 diamond_only: false,
             }),

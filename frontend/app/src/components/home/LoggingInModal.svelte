@@ -23,7 +23,6 @@
     let mode: "signin" | "signup" = "signin";
     let email = "";
     let showMore = false;
-    let sessionKey: ECDSAKeyIdentity | undefined = undefined;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
 
@@ -35,6 +34,8 @@
     $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
     $: loggingInWithEmail =
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
+    $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
+    $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
 
     onMount(() => {
         client.gaTrack("opened_signin_modal", "registration");
@@ -74,6 +75,8 @@
 
         if (supportsII) {
             options.push(AuthProvider.II);
+            options.push(AuthProvider.ETH);
+            options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
@@ -117,14 +120,11 @@
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            if (sessionKey !== undefined) {
-                generateMagicLink(sessionKey);
-            } else {
-                ECDSAKeyIdentity.generate().then((sk) => {
-                    sessionKey = sk;
-                    generateMagicLink(sk);
-                });
-            }
+            ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
+        } else if (provider === AuthProvider.ETH) {
+            console.log("Logging in with ETH");
+        } else if (provider === AuthProvider.SOL) {
+            console.log("Logging in with SOL");
         } else {
             client.login();
         }
@@ -227,7 +227,7 @@
             <div class="options">
                 {#each options as provider, i}
                     {#if showAllOptions || i === 0}
-                        <div class="option">
+                        <div class={`option ${showAllOptions && i === 0 ? "separate" : ""}`}>
                             {#if provider === AuthProvider.EMAIL}
                                 <div class="email">
                                     <div class="email-icon icon">
@@ -255,12 +255,25 @@
                                     </Button>
                                 </div>
                             {:else}
-                                <div class="other">
+                                <div class="auth-option">
                                     <div class="icon center">
                                         {#if provider === AuthProvider.II}
                                             <InternetIdentityLogo />
+                                        {:else if provider === AuthProvider.ETH}
+                                            <img
+                                                class="eth-img"
+                                                src="/assets/ethereum.svg"
+                                                alt="ethereum" />
+                                        {:else if provider === AuthProvider.SOL}
+                                            <img
+                                                class="sol-img"
+                                                src="/assets/solana.svg"
+                                                alt="solana" />
                                         {:else if provider === AuthProvider.NFID}
-                                            <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                                            <img
+                                                class="nfid-img"
+                                                src="/assets/nfid.svg"
+                                                alt="nfid" />
                                         {/if}
                                     </div>
                                     <Button fill on:click={() => login(provider)}>
@@ -313,6 +326,18 @@
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
             {/if}
+        {:else if loggingInWithEth}
+            {#await import("./SigninWithEth.svelte")}
+                <div class="loading">...</div>
+            {:then { default: SigninWithEth }}
+                <SigninWithEth />
+            {/await}
+        {:else if loggingInWithSol}
+            {#await import("./SigninWithEth.svelte")}
+                <div class="loading">...</div>
+            {:then { default: SigninWithEth }}
+                <SigninWithEth />
+            {/await}
         {/if}
     </div>
     <div class="footer login-modal" slot="footer">
@@ -339,7 +364,7 @@
         margin-bottom: 0;
     }
 
-    :global(.login .other button) {
+    :global(.login .auth-option button) {
         border-radius: 0 $sp2 $sp2 0;
     }
 
@@ -420,7 +445,7 @@
 
     .options {
         display: flex;
-        gap: $sp4;
+        gap: 12px;
         flex-direction: column;
         align-items: center;
         margin-bottom: $sp3;
@@ -444,11 +469,17 @@
                 }
             }
 
-            .other {
+            .auth-option {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 flex: auto;
+            }
+
+            &.separate {
+                margin-bottom: $sp2;
+                border-bottom: 1px solid var(--bd);
+                padding-bottom: $sp4;
             }
         }
 
@@ -465,6 +496,11 @@
 
             .nfid-img {
                 width: 40px;
+            }
+
+            .eth-img,
+            .sol-img {
+                width: 30px;
             }
         }
 

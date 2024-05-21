@@ -1,12 +1,13 @@
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::reqwest_transport::ReqwestHttpReplicaV2Transport;
+use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 
@@ -30,6 +31,8 @@ pub enum CanisterName {
     ProposalsBot,
     Registry,
     SignInWithEmail,
+    SignInWithEthereum,
+    SignInWithSolana,
     StorageBucket,
     StorageIndex,
     Translations,
@@ -60,6 +63,8 @@ impl FromStr for CanisterName {
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
             "registry" => Ok(CanisterName::Registry),
             "sign_in_with_email" => Ok(CanisterName::SignInWithEmail),
+            "sign_in_with_ethereum" => Ok(CanisterName::SignInWithEthereum),
+            "sign_in_with_solana" => Ok(CanisterName::SignInWithSolana),
             "storage_bucket" => Ok(CanisterName::StorageBucket),
             "storage_index" => Ok(CanisterName::StorageIndex),
             "translations" => Ok(CanisterName::Translations),
@@ -91,6 +96,8 @@ impl Display for CanisterName {
             CanisterName::ProposalsBot => "proposals_bot",
             CanisterName::Registry => "registry",
             CanisterName::SignInWithEmail => "sign_in_with_email",
+            CanisterName::SignInWithEthereum => "sign_in_with_ethereum",
+            CanisterName::SignInWithSolana => "sign_in_with_solana",
             CanisterName::StorageBucket => "storage_bucket",
             CanisterName::StorageIndex => "storage_index",
             CanisterName::Translations => "translations",
@@ -123,6 +130,8 @@ pub struct CanisterIds {
     pub event_relay: CanisterId,
     pub event_store: CanisterId,
     pub sign_in_with_email: CanisterId,
+    pub sign_in_with_ethereum: CanisterId,
+    pub sign_in_with_solana: CanisterId,
     pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_internet_identity: CanisterId,
@@ -133,9 +142,12 @@ pub struct CanisterIds {
 }
 
 pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
-    let logger = slog::Logger::root(slog::Discard, slog::o!());
-    let mut identity_manager = dfx_core::identity::IdentityManager::new(&logger, &None).unwrap();
-    identity_manager.instantiate_identity_from_name(name, &logger).unwrap()
+    let config_dfx_dir_path = get_user_dfx_config_dir().unwrap();
+    let pem_path = config_dfx_dir_path.join("identity").join(name).join("identity.pem");
+    if !Path::exists(pem_path.as_path()) {
+        panic!("Pem file not found at: {}", pem_path.as_path().display());
+    }
+    Box::new(BasicIdentity::from_pem_file(pem_path.as_path()).unwrap())
 }
 
 pub async fn build_ic_agent(url: String, identity: Box<dyn Identity>) -> Agent {
@@ -216,4 +228,29 @@ fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
         .filter(|f| f.starts_with(file_name_prefix))
         .sorted_unstable_by_key(|f| f.len())
         .next()
+}
+
+fn get_user_dfx_config_dir() -> Option<PathBuf> {
+    let config_root = std::env::var_os("DFX_CONFIG_ROOT");
+    // dirs-next is not used for *nix to preserve existing paths
+    #[cfg(not(windows))]
+    let p = {
+        let home = std::env::var_os("HOME")?;
+        let root = config_root.unwrap_or(home);
+        PathBuf::from(root).join(".config").join("dfx")
+    };
+    #[cfg(windows)]
+    let p = match config_root {
+        Some(var) => PathBuf::from(var),
+        None => project_dirs()?.config_dir().to_owned(),
+    };
+    Some(p)
+}
+
+#[cfg(windows)]
+fn project_dirs() -> Option<&'static ProjectDirs> {
+    lazy_static::lazy_static! {
+        static ref DIRS: Option<ProjectDirs> = ProjectDirs::from("org", "dfinity", "dfx");
+    }
+    DIRS.as_ref().ok()
 }

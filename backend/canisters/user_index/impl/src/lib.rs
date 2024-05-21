@@ -1,7 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_principal_updates_queue::UserPrincipalUpdatesQueue;
 use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -12,6 +11,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
+use model::chit_leaderboard::ChitLeaderboard;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -22,7 +22,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
@@ -94,11 +94,6 @@ impl RuntimeState {
     pub fn is_caller_translations_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.translations_canister_id
-    }
-
-    pub fn is_caller_identity_canister(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.data.identity_canister_id
     }
 
     pub fn is_caller_platform_moderator(&self) -> bool {
@@ -198,8 +193,6 @@ impl RuntimeState {
             event_store_client_info,
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
             pending_payments: self.data.pending_payments_queue.len(),
-            pending_user_principal_updates: self.data.user_principal_updates_queue.len(),
-            pending_legacy_principals_to_sync: self.data.legacy_principals_sync_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             canister_ids: CanisterIds {
@@ -215,7 +208,6 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
-            user_principal_updates_queue: self.data.user_principal_updates_queue.len() as u32,
             empty_users: self.data.empty_users.iter().take(100).copied().collect(),
             empty_users_length: self.data.empty_users.len(),
         }
@@ -242,8 +234,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
-    pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -266,6 +256,8 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
+    #[serde(default)]
+    pub chit_leaderboard: ChitLeaderboard,
 }
 
 impl Data {
@@ -309,8 +301,6 @@ impl Data {
                 .build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
-            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -333,6 +323,7 @@ impl Data {
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::default(),
         };
 
         // Register the ProposalsBot
@@ -342,7 +333,6 @@ impl Data {
             "ProposalsBot".to_string(),
             0,
             None,
-            true,
             true,
         );
 
@@ -399,8 +389,6 @@ impl Default for Data {
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
-            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -423,6 +411,7 @@ impl Default for Data {
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::default(),
         }
     }
 }
@@ -455,13 +444,10 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub pending_modclub_submissions: usize,
     pub pending_payments: usize,
-    pub pending_user_principal_updates: usize,
-    pub pending_legacy_principals_to_sync: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
     pub canister_ids: CanisterIds,
     pub oc_public_key: String,
-    pub user_principal_updates_queue: u32,
     pub empty_users: Vec<UserId>,
     pub empty_users_length: usize,
 }

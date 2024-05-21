@@ -83,6 +83,8 @@
             updated: BigInt(0),
             suspended: false,
             diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
         };
     }
 
@@ -99,7 +101,7 @@
     }
 
     function retrySend() {
-        dispatch("retrySend", event as EventWrapper<Message>);
+        client.retrySendMessage(messageContext, event as EventWrapper<Message>);
     }
 
     function initiateThread() {

@@ -17,10 +17,14 @@ import type {
     SetDisplayNameResponse,
     DiamondMembershipSubscription,
     DiamondMembershipStatus,
+    ClaimDailyChitResponse,
+    ChitUserBalance,
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
+    ApiChitUserBalance,
+    ApiClaimDailyChitResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipFeesResponse,
@@ -44,6 +48,7 @@ import type {
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import { token } from "../common/chatMappers";
+import type { ChitLeaderboardResponse } from "./candid/types";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -77,6 +82,8 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         updated: timestamp,
         suspended: candid.suspended,
         diamondStatus: diamondStatus(candid.diamond_membership_status),
+        chitBalance: candid.chit_balance,
+        streak: candid.streak,
     };
 }
 
@@ -127,7 +134,9 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
-            principalUpdates: optional(r.principal_updates, identity),
+            chitBalance: r.chit_balance,
+            streak: r.streak,
+            nextDailyChitClaim: r.next_daily_claim,
         };
     }
 
@@ -415,4 +424,37 @@ export function diamondMembershipFeesResponse(
         "Unexpected ApiDiamondMembershipFeesResponse type received",
         candid,
     );
+}
+
+export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): ClaimDailyChitResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            streak: candid.Success.streak,
+            chitBalance: candid.Success.chit_balance,
+            chitEarned: candid.Success.chit_earned,
+            nextDailyChitClaim: candid.Success.next_claim,
+        };
+    }
+    if ("AlreadyClaimed" in candid) {
+        return {
+            kind: "already_claimed",
+            nextDailyChitClaim: candid.AlreadyClaimed,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
+}
+
+export function chitLeaderboardResponse(candid: ChitLeaderboardResponse): ChitUserBalance[] {
+    if ("Success" in candid) {
+        return candid.Success.map(chitUserBalance);
+    }
+    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", candid);
+}
+
+function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
+    return {
+        userId: candid.user_id.toString(),
+        balance: candid.balance,
+    };
 }

@@ -27,6 +27,8 @@ async fn main() {
         event_relay: opts.event_relay,
         event_store: opts.event_store,
         sign_in_with_email: opts.sign_in_with_email,
+        sign_in_with_ethereum: opts.sign_in_with_ethereum,
+        sign_in_with_solana: opts.sign_in_with_solana,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -108,6 +110,12 @@ struct Opts {
 
     #[arg(long)]
     sign_in_with_email: CanisterId,
+
+    #[arg(long)]
+    sign_in_with_ethereum: CanisterId,
+
+    #[arg(long)]
+    sign_in_with_solana: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,

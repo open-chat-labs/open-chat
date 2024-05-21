@@ -1,6 +1,7 @@
 import type {
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+	SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     VideoCallPresence,
 } from "openchat-shared";
@@ -101,6 +102,7 @@ export class AnonUserClient {
             },
             timestamp: BigInt(Date.now()),
             suspended: false,
+            pinNumberSettings: undefined,
         });
     }
 
@@ -432,6 +434,10 @@ export class AnonUserClient {
     }
 
     localUserIndex(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    setPinNumber(_currentPin: string | undefined, _newPin: string | undefined): Promise<SetPinNumberResponse> {
         throw new AnonymousOperationError();
     }
 }
