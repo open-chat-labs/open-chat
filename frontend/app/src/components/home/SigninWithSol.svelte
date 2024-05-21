@@ -1,9 +1,14 @@
 <script lang="ts">
     import { initialize, walletStore } from "../../stores/solana/walletStore";
-    import type { WalletError, WalletName } from "@solana/wallet-adapter-base";
+    import {
+        type WalletError,
+        type WalletName,
+        WalletAdapterNetwork,
+    } from "@solana/wallet-adapter-base";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
     import { getContext, onMount } from "svelte";
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+    import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
     import type { OpenChat } from "openchat-client";
     import base58 from "bs58";
@@ -72,7 +77,15 @@
         const connection = new Connection(clusterApiUrl("mainnet-beta"), "processed");
         console.log("Connection: ", connection);
         initialize({
-            wallets: [new PhantomWalletAdapter()],
+            wallets: [
+                new PhantomWalletAdapter(),
+                new WalletConnectWalletAdapter({
+                    network: WalletAdapterNetwork.Mainnet,
+                    options: {
+                        projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
+                    },
+                }),
+            ],
             autoConnect: true,
             localStorageKey,
             onError: walletError,
