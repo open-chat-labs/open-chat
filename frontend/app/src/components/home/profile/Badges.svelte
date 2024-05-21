@@ -7,15 +7,5 @@
     export let streak: number = 0;
 </script>
 
-<!-- <div class="badges"> -->
-    <Diamond status={diamondStatus} />
-    <Streak days={streak} />
-<!-- </div> -->
-
-<!-- <style lang="scss">
-    .badges {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
-</style> -->
+<Diamond status={diamondStatus} />
+<Streak days={streak} />
