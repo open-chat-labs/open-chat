@@ -1,4 +1,5 @@
 /* eslint-disable no-case-declarations */
+import { gaTrack } from "./utils/ga";
 import { type Identity } from "@dfinity/agent";
 import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
@@ -392,6 +393,7 @@ import type {
     VideoCallParticipant,
     AcceptedRules,
     ClaimDailyChitResponse,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1303,7 +1305,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinGroup(
         chat: MultiUserChat,
-        credential: string | undefined,
+        credentialJwt: string | undefined,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
@@ -1319,7 +1321,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1369,6 +1371,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 return resp;
             })
             .catch(() => CommonResponses.failure());
+    }
+
+    private buildVerifiedCredentialArgs(
+        credentialJwt: string | undefined,
+    ): VerifiedCredentialArgs | undefined {
+        return credentialJwt !== undefined && this._authPrincipal !== undefined
+            ? {
+                  userIIPrincipal: this._authPrincipal,
+                  iiOrigin: new URL(this.config.internetIdentityUrl).origin,
+                  credentialJwt,
+              }
+            : undefined;
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
@@ -3654,6 +3668,7 @@ export class OpenChat extends OpenChatAgentWorker {
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
+    gaTrack = gaTrack;
 
     editMessageWithAttachment(
         messageContext: MessageContext,
@@ -4125,6 +4140,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const code = qs.get("ref") ?? undefined;
         let captured = false;
         if (code) {
+            gaTrack("captured_referral_code", "registration");
             localStorage.setItem("openchat_referredby", code);
             captured = true;
         }
@@ -4141,6 +4157,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
+                    gaTrack("registered_user", "registration");
+                    if (this._referralCode !== undefined) {
+                        gaTrack("registered_user_with_referral_code", "registration");
+                    }
                     this.clearReferralCode();
                 }
                 return res;
@@ -6366,7 +6386,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinCommunity(
         community: CommunitySummary,
-        credential: string | undefined,
+        credentialJwt: string | undefined,
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
@@ -6377,7 +6397,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {

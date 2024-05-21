@@ -1,3 +1,4 @@
+import { Principal } from "@dfinity/principal";
 import type {
     AccessTokenType,
     GroupAndCommunitySummaryUpdatesResponse,
@@ -5,6 +6,7 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
+    VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
@@ -17,6 +19,7 @@ import type {
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
+    ApiVerifiedCredentialArgs,
     ApiVideoCallType,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
@@ -209,4 +212,14 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
         console.warn("Join community failed with: ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function apiVerifiedCredentialArgs(
+    domain: VerifiedCredentialArgs,
+): ApiVerifiedCredentialArgs {
+    return {
+        user_ii_principal: Principal.fromText(domain.userIIPrincipal),
+        ii_origin: domain.iiOrigin,
+        credential_jwt: domain.credentialJwt,
+    };
 }

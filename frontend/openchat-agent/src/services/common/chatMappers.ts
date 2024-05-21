@@ -277,6 +277,7 @@ import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
+import { toRecord2 } from "../../utils/list";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1609,12 +1610,12 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
+                    issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                     issuer_origin: domain.credential.issuerOrigin,
                     credential_type: domain.credential.credentialType,
-                    credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                        const encoder = new TextEncoder();
-                        return encoder.encode(JSON.stringify(args));
-                    }, domain.credential.credentialArguments),
+                    credential_arguments: apiCredentialArguments(
+                        domain.credential.credentialArguments,
+                    ),
                 },
             },
         ];
@@ -1658,12 +1659,10 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
+                issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                 issuer_origin: domain.credential.issuerOrigin,
                 credential_type: domain.credential.credentialType,
-                credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                    const encoder = new TextEncoder();
-                    return encoder.encode(JSON.stringify(args));
-                }, domain.credential.credentialArguments),
+                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1696,12 +1695,31 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
 }
 
 export function credentialArguments(
-    candid: number[] | Uint8Array,
+    candid: [string, { String: string } | { Int: number }][],
 ): Record<string, string | number> {
-    const data = new Uint8Array(candid);
-    const decoder = new TextDecoder();
-    const json = decoder.decode(data);
-    return JSON.parse(json) as Record<string, string | number>;
+    return toRecord2(
+        candid,
+        ([k, _]) => k,
+        ([_, v]) => {
+            if ("String" in v) {
+                return v.String;
+            } else {
+                return v.Int;
+            }
+        },
+    );
+}
+
+function apiCredentialArguments(
+    domain?: Record<string, string | number>,
+): [string, { String: string } | { Int: number }][] {
+    return Object.entries(domain ?? {}).map(([k, v]) => {
+        if (typeof v === "number") {
+            return [k, { Int: v }];
+        } else {
+            return [k, { String: v }];
+        }
+    });
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
@@ -1722,12 +1740,13 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
         return {
             kind: "credential_gate",
             credential: {
+                issuerCanisterId: candid.VerifiedCredential.issuer_canister_id.toString(),
                 issuerOrigin: candid.VerifiedCredential.issuer_origin,
                 credentialType: candid.VerifiedCredential.credential_type,
-                credentialArguments: optional(
-                    candid.VerifiedCredential.credential_arguments,
-                    credentialArguments,
-                ),
+                credentialArguments:
+                    candid.VerifiedCredential.credential_arguments.length === 0
+                        ? undefined
+                        : credentialArguments(candid.VerifiedCredential.credential_arguments),
             },
         };
     }
@@ -2090,6 +2109,10 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     }
     if ("InsufficientBalance" in candid) {
         return "insufficient_balance";
+    }
+    if ("FailedVerifiedCredentialCheck" in candid) {
+        console.warn("FailedVerifiedCredentialCheck: ", candid);
+        return "failed_verified_credential_check";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

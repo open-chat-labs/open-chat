@@ -201,6 +201,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     AcceptedRules,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1984,7 +1985,7 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -1993,7 +1994,11 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
-                return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
+                return localUserIndexClient.joinGroup(
+                    chatId.groupId,
+                    groupInviteCode,
+                    credentialArgs,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -2001,7 +2006,11 @@ export class OpenChatAgent extends EventTarget {
                 ).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
-                return localUserIndexClient.joinChannel(chatId, communityInviteCode);
+                return localUserIndexClient.joinChannel(
+                    chatId,
+                    communityInviteCode,
+                    credentialArgs,
+                );
             }
         }
     }
@@ -2009,7 +2018,7 @@ export class OpenChatAgent extends EventTarget {
     async joinCommunity(
         id: CommunityIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2018,6 +2027,7 @@ export class OpenChatAgent extends EventTarget {
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
+            credentialArgs,
         );
     }
 

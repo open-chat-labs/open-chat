@@ -232,25 +232,7 @@ fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
 
 fn get_user_dfx_config_dir() -> Option<PathBuf> {
     let config_root = std::env::var_os("DFX_CONFIG_ROOT");
-    // dirs-next is not used for *nix to preserve existing paths
-    #[cfg(not(windows))]
-    let p = {
-        let home = std::env::var_os("HOME")?;
-        let root = config_root.unwrap_or(home);
-        PathBuf::from(root).join(".config").join("dfx")
-    };
-    #[cfg(windows)]
-    let p = match config_root {
-        Some(var) => PathBuf::from(var),
-        None => project_dirs()?.config_dir().to_owned(),
-    };
-    Some(p)
-}
-
-#[cfg(windows)]
-fn project_dirs() -> Option<&'static ProjectDirs> {
-    lazy_static::lazy_static! {
-        static ref DIRS: Option<ProjectDirs> = ProjectDirs::from("org", "dfinity", "dfx");
-    }
-    DIRS.as_ref().ok()
+    let home = std::env::var_os("HOME")?;
+    let root = config_root.unwrap_or(home);
+    Some(PathBuf::from(root).join(".config").join("dfx"))
 }

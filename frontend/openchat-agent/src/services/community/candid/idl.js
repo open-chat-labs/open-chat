@@ -77,6 +77,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'FailedVerifiedCredentialCheck' : IDL.Text,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
   });
   const UserFailedGateCheck = IDL.Record({
@@ -289,8 +290,14 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const VerifiedCredentialGate = IDL.Record({
-    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'credential_arguments' : IDL.Vec(
+      IDL.Tuple(
+        IDL.Text,
+        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
+      )
+    ),
     'issuer_origin' : IDL.Text,
+    'issuer_canister_id' : CanisterId,
     'credential_type' : IDL.Text,
   });
   const SnsNeuronGate = IDL.Record({
