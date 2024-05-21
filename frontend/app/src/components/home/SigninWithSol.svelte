@@ -1,26 +1,19 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { clusterApiUrl, Connection } from "@solana/web3.js";
-    import { walletStore, initialize } from "@svelte-on-solana/wallet-adapter-core";
-    import type { WalletError } from "@solana/wallet-adapter-base";
-    import type { WalletName } from "@solana/wallet-adapter-base";
-    // import {
-    //     //  workSpace,
-    //     WalletProvider,
-    //     WalletMultiButton,
-    //     ConnectionProvider,
-    //     walletStore,
-    // } from "@svelte-on-solana/wallet-adapter-ui";
-    import {
-        PhantomWalletAdapter,
-        SolflareWalletAdapter,
-        TorusWalletAdapter,
-    } from "@solana/wallet-adapter-wallets";
+    import { initialize, walletStore } from "../../stores/solana/walletStore";
+    import type { WalletError, WalletName } from "@solana/wallet-adapter-base";
+    import { Connection, clusterApiUrl } from "@solana/web3.js";
+    import { getContext, onMount } from "svelte";
+    import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import Button from "../Button.svelte";
+    import type { OpenChat } from "openchat-client";
+    import base58 from "bs58";
+
+    const client = getContext<OpenChat>("client");
 
     const localStorageKey = "walletAdapter";
+    let connecting: WalletName | undefined = undefined;
 
-    $: ({ publicKey, wallet, disconnect, connect, select } = $walletStore);
+    $: ({ publicKey, wallet, connect, select, signMessage } = $walletStore);
     $: walletsAvailable = $walletStore.wallets.filter(
         (wallet) => wallet.readyState === "Installed",
     ).length;
@@ -30,19 +23,60 @@
     }
 
     async function connectWallet(name: WalletName) {
-        await select(name);
-        await connect();
+        try {
+            connecting = name;
+            await select(name);
+            await connect();
+            if (publicKey && wallet && signMessage) {
+                const account = publicKey.toString();
+                const prepareResponse = await client.siwsPrepareLogin(account);
+                console.log("PrepareResponse: ", prepareResponse);
+                if (prepareResponse.kind === "success") {
+                    // const expMilliseconds = Number(
+                    //     prepareResponse.siwsMessage.expirationTime / BigInt(1000000),
+                    // );
+                    // const issuedAtMilliseconds = Number(
+                    //     prepareResponse.siwsMessage.issuedAt / BigInt(1000000),
+                    // );
+
+                    // const msg = {
+                    //     ...prepareResponse.siwsMessage,
+                    //     expirationTime: new Date(expMilliseconds).toISOString(),
+                    //     issuedAt: new Date(issuedAtMilliseconds).toISOString(),
+                    //     version: prepareResponse.siwsMessage.version.toString(),
+                    // };
+
+                    const signResponse = await signMessage(
+                        // new TextEncoder().encode(JSON.stringify(msg)),
+                        new TextEncoder().encode(JSON.stringify(prepareResponse.siwsMessage)),
+                    );
+                    const signature = base58.encode(signResponse);
+
+                    console.log("SignResponse: ", signResponse, signature);
+
+                    const signInResponse = await client.signInWithWallet("sol", account, signature);
+
+                    console.log("SignInResponse: ", signInResponse);
+                }
+            } else {
+                console.error("Didn't get an address back from the connector");
+            }
+        } catch (err) {
+            console.error(`Error connecting to wallet: ${name}`, err);
+        } finally {
+            connecting = undefined;
+        }
     }
 
     onMount(async () => {
         const connection = new Connection(clusterApiUrl("mainnet-beta"), "processed");
         console.log("Connection: ", connection);
-        const wallets = [
-            new PhantomWalletAdapter(),
-            new SolflareWalletAdapter(),
-            new TorusWalletAdapter(),
-        ];
-        initialize({ wallets, autoConnect: true, localStorageKey, onError: walletError });
+        initialize({
+            wallets: [new PhantomWalletAdapter()],
+            autoConnect: true,
+            localStorageKey,
+            onError: walletError,
+        });
     });
 </script>
 
@@ -52,21 +86,16 @@
         : "You'll need a wallet on Solana to continue"}
 </h1>
 
-{#each $walletStore.wallets as { adapter: { name, icon }, readyState }}
+{#each $walletStore.wallets as { adapter: { name, icon } }}
     <div class="auth-option">
-        <div class={`icon center`}>
+        <div class={`icon center ${connecting === name ? "connecting" : ""}`}>
             <img src={icon} alt={`${name} icon`} />
         </div>
         <Button fill on:click={() => connectWallet(name)}>
             <span class="name">{name}</span>
-            <span>{readyState === "Installed" ? "Detected" : ""}</span>
         </Button>
     </div>
 {/each}
-
-<div>
-    <slot />
-</div>
 
 <style lang="scss">
     $height: 45px;
