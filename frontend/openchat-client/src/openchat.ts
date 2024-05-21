@@ -6787,7 +6787,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = this._liveState.user.userId;
-        
+
         return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
             if (resp.kind === "success") {
                 this.user.update((user) => ({
