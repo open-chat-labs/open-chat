@@ -5,6 +5,7 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
+    import LightningBoltIcon from "svelte-material-icons/LightningBoltOutline.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
@@ -28,6 +29,8 @@
     import { isTouchDevice } from "../../../utils/devices";
     import { rtlStore } from "../../../stores/rtl";
     import { i18nKey } from "../../../i18n/i18n";
+    import { now } from "../../../stores/time";
+    import { chitEnabledStore } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -52,6 +55,7 @@
     $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
     $: globalState = client.globalStateStore;
+    $: claimChitAvailable = $createdUser.nextDailyChitClaim < $now;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -159,13 +163,11 @@
                 </MenuIcon>
             </div>
         </LeftNavItem>
-
         {#if user !== undefined}
             <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
-
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
@@ -177,7 +179,6 @@
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
@@ -188,7 +189,6 @@
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
         {#if $globalState.favourites.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
@@ -200,6 +200,16 @@
                 on:click={favouriteChats}>
                 <div class="hover favs">
                     <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
+        {#if $chitEnabledStore}
+            <LeftNavItem
+                selected={claimChitAvailable}
+                label={i18nKey(claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak")}
+                on:click={() => dispatch("claimDailyChit")}>
+                <div class="hover direct">
+                    <LightningBoltIcon size={iconSize} color={"var(--icon-txt)"} />
                 </div>
             </LeftNavItem>
         {/if}

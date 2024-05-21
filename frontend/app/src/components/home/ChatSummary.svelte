@@ -40,10 +40,10 @@
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
     import { buildDisplayName } from "../../utils/user";
-    import Diamond from "../icons/Diamond.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -81,6 +81,7 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
+                    streak: them.streak,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -98,6 +99,7 @@
                 return {
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                    streak: 0,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(
@@ -369,7 +371,7 @@
                         {/if}
                         <span>{chat.name}</span>
                     </h4>
-                    <Diamond status={chat.diamondStatus} />
+                    <Badges diamondStatus={chat.diamondStatus} streak={chat.streak} />
                 </div>
             </div>
             <div class="chat-msg">

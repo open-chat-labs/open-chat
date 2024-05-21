@@ -98,6 +98,7 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import DailyChitModal from "./DailyChitModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -161,6 +162,7 @@
         Registering,
         LoggingIn,
         NotFound,
+        ClaimDailyChit,
     }
 
     let modal = ModalType.None;
@@ -1099,7 +1101,8 @@
             on:newChannel={newChannel}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:upgrade={upgrade} />
+            on:upgrade={upgrade}
+            on:claimDailyChit={() => {modal = ModalType.ClaimDailyChit}} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1235,6 +1238,8 @@
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
+        {:else if modal === ModalType.ClaimDailyChit}
+            <DailyChitModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
