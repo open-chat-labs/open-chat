@@ -456,5 +456,6 @@ function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
     return {
         userId: candid.user_id.toString(),
         balance: candid.balance,
+        username: candid.username,
     };
 }

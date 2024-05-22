@@ -302,7 +302,6 @@ export interface ChitEventsArgs {
 export type ChitEventsResponse = {
     'Success' : { 'total' : number, 'events' : Array<ChitEarned> }
   };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
 }

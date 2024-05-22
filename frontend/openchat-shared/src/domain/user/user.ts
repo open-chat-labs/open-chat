@@ -396,4 +396,5 @@ export type ClaimDailyChitResponse =
 export type ChitUserBalance = {
     userId: string;
     balance: number;
+    username: string;
 };

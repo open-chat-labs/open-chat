@@ -338,7 +338,6 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
