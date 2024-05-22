@@ -20,6 +20,11 @@ export function getLatestResponse(
 
     exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
 
+    const icpToUsd = exchangeRates["icp"]["toUSD"];
+    if (icpToUsd !== undefined) {
+        exchangeRates["ckusdc"] = { toICP: 1 / icpToUsd, toUSD: 1 };
+    }
+
     return exchangeRates;
 }
 
