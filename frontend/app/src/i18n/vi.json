@@ -1117,6 +1117,7 @@
         "title": "Chủ đề",
         "unread": "{count} chuỗi có tin nhắn chưa đọc"
     },
+    "throttleMessage": "Tin nhắn đã được điều chỉnh - sẽ tiếp tục sau {time} giây",
     "tip": {
         "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
         "failure": "Rất tiếc, chúng tôi không thể thêm mẹo của bạn",
