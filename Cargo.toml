@@ -226,7 +226,7 @@ tokio = "1.37.0"
 tracing = "0.1.40"
 tracing-attributes = "0.1.27"
 tracing-subscriber = "0.3.18"
-vc_util = { git="https://github.com/dfinity/internet-identity", rev="5753544a82105e605cd51772ce1d4e4184fe8106" }
+#vc_util = { git="https://github.com/dfinity/internet-identity", rev="5753544a82105e605cd51772ce1d4e4184fe8106" }
 web-push = { version = "0.10.1", default-features = false, features = [
     "hyper-client",
 ] }
