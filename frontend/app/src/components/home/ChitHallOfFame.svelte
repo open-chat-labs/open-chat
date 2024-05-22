@@ -94,7 +94,7 @@
                             <th class="rank">#</th>
                         {/if}
                         <th class="username">{$_("halloffame.username")}</th>
-                        <th class="balance">{$_("halloffame.balance")}</th>
+                        <th class="balance">CHIT</th>
                     </thead>
                     <tbody>
                         {#each leaders as leader, i}
