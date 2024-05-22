@@ -511,6 +511,11 @@ import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
 import type { ChitUserBalance } from "openchat-shared";
+import {
+    initialiseMostRecentSentMessageTimes,
+    shouldThrottle,
+    throttleDeadline,
+} from "./stores/throttling";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -545,7 +550,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
-    private _mostRecentSentMessageTimes: number[] = [];
 
     user = currentUser;
     anonUser = anonUser;
@@ -806,6 +810,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this.user.set(user);
         this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
+        initialiseMostRecentSentMessageTimes(this._liveState.isDiamond);
         const id = this._ocIdentity;
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
@@ -3321,7 +3326,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         if (this.throttleSendMessage()) {
-            return Promise.resolve(CommonResponses.failure());
+            return Promise.resolve({ kind: "message_throttled" });
         }
 
         if (!retrying) {
@@ -3521,19 +3526,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private throttleSendMessage(): boolean {
-        const nowInSecs = Math.floor(Date.now() / 1000);
-        const maxMessagesPerMinute = this._liveState.isDiamond ? 10 : 5;
-
-        this._mostRecentSentMessageTimes = this._mostRecentSentMessageTimes.filter(
-            (t) => t >= nowInSecs - 60,
-        );
-
-        if (this._mostRecentSentMessageTimes.length >= maxMessagesPerMinute) {
-            return true;
-        }
-
-        this._mostRecentSentMessageTimes.push(nowInSecs);
-        return false;
+        return shouldThrottle(this._liveState.isDiamond);
     }
 
     sendMessageWithAttachment(
@@ -6787,7 +6780,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = this._liveState.user.userId;
-        
+
         return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
             if (resp.kind === "success") {
                 this.user.update((user) => ({
@@ -6890,6 +6883,7 @@ export class OpenChat extends OpenChatAgentWorker {
     pinNumberRequiredStore = pinNumberRequiredStore;
     capturePinNumberStore = capturePinNumberStore;
     captureRulesAcceptanceStore = captureRulesAcceptanceStore;
+    throttleDeadline = throttleDeadline;
 
     // current community stores
     chatListScope = chatListScopeStore;
