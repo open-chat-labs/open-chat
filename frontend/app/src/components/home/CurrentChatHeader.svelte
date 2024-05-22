@@ -24,10 +24,10 @@
     import SuspendModal from "./SuspendModal.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
-    import Diamond from "../icons/Diamond.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -75,6 +75,7 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
+                    streak: them.streak,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
@@ -90,6 +91,7 @@
                 return {
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                    streak: 0,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     username: undefined,
@@ -176,7 +178,7 @@
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
-                <Diamond status={chat.diamondStatus} />
+                <Badges diamondStatus={chat.diamondStatus} streak={chat.streak} />
                 <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}
@@ -228,6 +230,9 @@
         @include font(book, normal, fs-120);
         @include ellipsis();
         margin-bottom: $sp1;
+        display: flex;
+        align-items: center;
+        gap: $sp2;
     }
 
     .chat-subtext {

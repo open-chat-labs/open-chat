@@ -23,6 +23,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import ProfileRole from "./ProfileRole.svelte";
+    import Streak from "./Streak.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -314,6 +315,12 @@
                         {/if}
                     {/if}
                 </div>
+                {#if user !== undefined}
+                    <div class="chit">
+                        <div>{$_("chitBalance")} <strong>{user.chitBalance}</strong></div>
+                        <div><Streak days={user.streak} showTooltip={false} /></div>
+                    </div>
+                {/if}
                 {#if $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
                     <ProfileRole
                         {userId}
@@ -435,5 +442,18 @@
 
     .suspend {
         margin-top: $sp3;
+    }
+
+    .chit {
+        @include font(light, normal, fs-60);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $sp2;
+        margin-bottom: $sp3;
+
+        @include mobile() {
+            @include font(light, normal, fs-90);
+        }
     }
 </style>

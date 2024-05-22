@@ -1363,5 +1363,14 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
+    "dailyChit": {
+        "title": "CHIT Streak",
+        "claim": "Claim",
+        "extendStreak": "Extend streak",
+        "viewStreak": "View streak",
+        "available": "Press the claim button to extend your streak!",
+        "alreadyClaimed": "You have already claimed your daily CHIT. Come back tomorrow to extend your streak!"
+    },
+    "chitBalance": "CHIT balance"
 }

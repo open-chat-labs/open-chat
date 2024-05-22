@@ -6,7 +6,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
-    import Diamond from "./icons/Diamond.svelte";
+    import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,7 +42,7 @@
                 {searchTerm}
                 me={user.userId === $createdUser.userId}
                 username={user.displayName ?? user.username} />
-            <Diamond status={user.diamondStatus} />
+            <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
         </h4>
         <div class="username">
             <FilteredUsername {searchTerm} username={"@" + user.username} />
@@ -86,6 +86,12 @@
         .username {
             font-weight: 200;
             color: var(--txt-light);
+        }
+
+        h4 {
+            display: flex;
+            gap: $sp2;
+            align-items: center;
         }
     }
 </style>
