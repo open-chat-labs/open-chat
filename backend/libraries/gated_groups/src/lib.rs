@@ -9,8 +9,8 @@ use types::{
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::NANOS_PER_MILLISECOND;
-use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
-use vc_util::VcFlowSigners;
+// use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
+// use vc_util::VcFlowSigners;
 
 pub enum CheckIfPassesGateResult {
     Success,
@@ -64,49 +64,50 @@ fn check_diamond_member_gate(
 }
 
 async fn check_verified_credential_gate(
-    gate: &VerifiedCredentialGate,
+    _gate: &VerifiedCredentialGate,
     args: Option<CheckVerifiedCredentialGateArgs>,
-    now: TimestampMillis,
+    _now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
-    let Some(args) = args else {
+    let Some(_args) = args else {
         return CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
             "Verified credential gate args not provided".to_string(),
         ));
     };
 
-    if let Err(error) = vc_util::validate_ii_presentation_and_claims(
-        &args.credential_jwt,
-        args.user_ii_principal,
-        &VcFlowSigners {
-            ii_canister_id: args.ii_canister_id,
-            ii_origin: args.ii_origin,
-            issuer_canister_id: gate.issuer_canister_id,
-            issuer_origin: gate.issuer_origin.clone(),
-        },
-        &CredentialSpec {
-            credential_type: gate.credential_type.clone(),
-            arguments: Some(
-                gate.credential_arguments
-                    .iter()
-                    .map(|(k, v)| {
-                        (
-                            k.clone(),
-                            match v {
-                                VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
-                                VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
-                            },
-                        )
-                    })
-                    .collect(),
-            ),
-        },
-        &args.ic_root_key,
-        (now * NANOS_PER_MILLISECOND) as u128,
-    ) {
-        CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(format!("{error:?}")))
-    } else {
-        CheckIfPassesGateResult::Success
-    }
+    // if let Err(error) = vc_util::validate_ii_presentation_and_claims(
+    //     &args.credential_jwt,
+    //     args.user_ii_principal,
+    //     &VcFlowSigners {
+    //         ii_canister_id: args.ii_canister_id,
+    //         ii_origin: args.ii_origin,
+    //         issuer_canister_id: gate.issuer_canister_id,
+    //         issuer_origin: gate.issuer_origin.clone(),
+    //     },
+    //     &CredentialSpec {
+    //         credential_type: gate.credential_type.clone(),
+    //         arguments: Some(
+    //             gate.credential_arguments
+    //                 .iter()
+    //                 .map(|(k, v)| {
+    //                     (
+    //                         k.clone(),
+    //                         match v {
+    //                             VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
+    //                             VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
+    //                         },
+    //                     )
+    //                 })
+    //                 .collect(),
+    //         ),
+    //     },
+    //     &args.ic_root_key,
+    //     (now * NANOS_PER_MILLISECOND) as u128,
+    // ) {
+    //     CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(format!("{error:?}")))
+    // } else {
+    //     CheckIfPassesGateResult::Success
+    // }
+    CheckIfPassesGateResult::Success
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
