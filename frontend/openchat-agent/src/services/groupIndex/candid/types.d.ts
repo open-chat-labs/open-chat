@@ -217,7 +217,6 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
