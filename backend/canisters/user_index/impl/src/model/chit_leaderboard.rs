@@ -54,8 +54,8 @@ impl ChitLeaderboard {
 
 #[cfg(test)]
 mod tests {
-    use testing::rng::random_principal;
     use rand::RngCore;
+    use testing::rng::random_principal;
 
     use super::*;
 
@@ -67,7 +67,7 @@ mod tests {
         leaderboard.update_position(rnd_user(), 200);
 
         let leaders = leaderboard.get();
-    
+
         assert_eq!(leaders.len(), 3);
         assert_eq!(leaders[0].balance, 400);
         assert_eq!(leaders[1].balance, 200);
@@ -94,9 +94,9 @@ mod tests {
 
         leaderboard.update_position(me, 100);
         leaderboard.update_position(me, 400);
-        
+
         let leaders = leaderboard.get();
-    
+
         assert_eq!(leaders.len(), 1);
         assert_eq!(leaders[0].balance, 400);
     }
