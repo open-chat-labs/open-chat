@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use std::collections::HashSet;
 use user_index_canister::users_v2::{Response::*, *};
 

@@ -5,7 +5,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::EndVideoCallResult;
 use group_canister::end_video_call::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]

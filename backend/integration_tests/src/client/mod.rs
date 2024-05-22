@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use crate::rng::random_internet_identity_principal;
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
@@ -8,6 +7,7 @@ use rand::random;
 use serde::de::DeserializeOwned;
 use serde_bytes::ByteBuf;
 use std::time::Duration;
+use testing::rng::random_internet_identity_principal;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;

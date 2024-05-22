@@ -2,7 +2,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use group_canister::messages_by_message_index::{Response::*, *};
 use group_chat_core::MessagesResult;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn messages_by_message_index(args: Args) -> Response {

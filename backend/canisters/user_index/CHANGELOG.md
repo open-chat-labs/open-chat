@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -10,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
 - CHIT balance and streak per user ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
 - CHIT leaderboard ([#5820](https://github.com/open-chat-labs/open-chat/pull/5820))
+
+### Changed
+
+- CHIT leaderboard fixed + returns username ([#5837](https://github.com/open-chat-labs/open-chat/pull/5837))
 
 ### Removed
 
@@ -571,7 +576,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- APIs to add/remove/list platform operators ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264)) 
+- APIs to add/remove/list platform operators ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264))
 - Endpoint for platform ops to set user upgrade concurrency ([#3268](https://github.com/open-chat-labs/open-chat/pull/3268))
 - Implemented recurring Diamond membership payments ([#3274](https://github.com/open-chat-labs/open-chat/pull/3274))
 - Expose more metrics about Diamond membership payments ([#3276](https://github.com/open-chat-labs/open-chat/pull/3276))
@@ -580,7 +585,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-chat-labs/open-chat/pull/3263)) 
+- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-chat-labs/open-chat/pull/3263))
 - Increased user limit to 150,000 ([#3267](https://github.com/open-chat-labs/open-chat/pull/3267))
 
 ### Removed
@@ -614,7 +619,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove one time code to set up `GroupUpgradeBot` users  ([#3159](https://github.com/open-chat-labs/open-chat/pull/3159))
+- Remove one time code to set up `GroupUpgradeBot` users ([#3159](https://github.com/open-chat-labs/open-chat/pull/3159))
 
 ## [[2.0.594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.594-user_index)] - 2023-02-16
 
@@ -671,6 +676,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Give all verified users 12 months Diamond membership ([#3082](https://github.com/open-chat-labs/open-chat/pull/3082))
 
 ### Fixed
+
 - Fix c2c_register_bot so it queues UserRegistered ([#3086](https://github.com/open-chat-labs/open-chat/pull/3086))
 - Fix username uniqueness check to include reserved usernames ([#3088](https://github.com/open-chat-labs/open-chat/pull/3088))
 

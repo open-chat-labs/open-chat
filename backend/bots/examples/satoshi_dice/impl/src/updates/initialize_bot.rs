@@ -1,7 +1,7 @@
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use satoshi_dice_canister::initialize_bot::*;
 use types::Cycles;
 

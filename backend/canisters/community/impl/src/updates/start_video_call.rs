@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
 use utils::time::HOUR_IN_MS;
 

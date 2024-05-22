@@ -2,7 +2,7 @@ use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use types::{
     CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis, User,

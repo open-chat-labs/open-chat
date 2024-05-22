@@ -1,5 +1,5 @@
 use crate::read_state;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use user_canister::bio::{Response::*, *};
 
 #[query]

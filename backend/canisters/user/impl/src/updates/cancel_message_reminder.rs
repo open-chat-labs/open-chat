@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::timer_job_types::TimerJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use user_canister::cancel_message_reminder::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 

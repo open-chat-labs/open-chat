@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use user_index_canister::check_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
 

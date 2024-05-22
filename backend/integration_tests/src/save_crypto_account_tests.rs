@@ -1,7 +1,7 @@
 use crate::env::ENV;
-use crate::rng::{random_principal, random_string};
 use crate::{client, TestEnv};
 use std::ops::Deref;
+use testing::rng::{random_principal, random_string};
 use types::Empty;
 use user_canister::NamedAccount;
 

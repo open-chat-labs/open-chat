@@ -2,7 +2,7 @@ use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};

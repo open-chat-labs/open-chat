@@ -1,7 +1,7 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use notifications_index_canister::push_subscription::{Response::*, *};
 use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user;

@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::delete_frozen_group::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, ChatId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 

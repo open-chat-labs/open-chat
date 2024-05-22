@@ -1,4 +1,4 @@
-use ic_cdk_macros::inspect_message;
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {

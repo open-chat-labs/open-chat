@@ -4,7 +4,7 @@ use crate::model::index_sync_state::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use storage_bucket_canister::forward_file::{Response::*, *};
 

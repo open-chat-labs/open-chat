@@ -1,6 +1,6 @@
 use crate::{calc_chunk_count, read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::cmp::min;

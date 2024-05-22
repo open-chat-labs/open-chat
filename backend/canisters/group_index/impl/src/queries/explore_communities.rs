@@ -1,6 +1,6 @@
 use crate::{model::moderation_flags::ModerationFlags, read_state, RuntimeState};
 use group_index_canister::explore_communities::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;

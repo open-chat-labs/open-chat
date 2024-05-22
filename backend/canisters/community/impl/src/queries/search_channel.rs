@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use community_canister::search_channel::{Response::*, *};
 use group_chat_core::SearchResults;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn search_channel(args: Args) -> Response {

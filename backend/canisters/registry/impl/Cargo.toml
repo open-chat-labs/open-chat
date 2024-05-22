@@ -21,7 +21,6 @@ hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }

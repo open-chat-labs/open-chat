@@ -5,7 +5,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use serde::Serialize;
 use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};

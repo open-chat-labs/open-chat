@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use storage_bucket_canister::c2c_sync_index::{Args, Response, SuccessResult};
 use tracing::error;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
@@ -166,7 +166,7 @@ mod upgrade_canisters {
             new_wasm: WasmToInstall::Default(new_wasm.module),
             args: storage_bucket_canister::post_upgrade::Args { wasm_version },
             deposit_cycles_if_needed: false,
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
     }

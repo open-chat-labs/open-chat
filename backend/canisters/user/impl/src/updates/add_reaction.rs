@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::EventIndex;
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};

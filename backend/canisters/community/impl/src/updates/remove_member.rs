@@ -5,7 +5,7 @@ use crate::{
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, CommunityRole, MembersRemoved, UserId, UsersBlocked};

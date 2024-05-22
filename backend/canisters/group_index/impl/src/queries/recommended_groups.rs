@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_index_canister::recommended_groups::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use std::collections::HashSet;
 
 #[query]

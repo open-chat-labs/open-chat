@@ -1,8 +1,7 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
-use crate::rng::random_principal;
 use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
+use crate::{client, wasms, CanisterIds, TestEnv, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
@@ -13,6 +12,8 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
+use testing::rng::random_principal;
+use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 

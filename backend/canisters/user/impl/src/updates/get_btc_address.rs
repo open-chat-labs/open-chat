@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use user_canister::get_btc_address::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]

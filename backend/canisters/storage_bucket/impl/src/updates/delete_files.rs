@@ -1,7 +1,7 @@
 use crate::model::files::RemoveFileResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use storage_bucket_canister::delete_files::*;
 
 #[update]

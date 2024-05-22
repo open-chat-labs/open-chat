@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::{random_principal, random_string};
 use crate::setup::install_icrc_ledger;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use registry_canister::TokenStandard;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::{random_principal, random_string};
 
 #[test]
 fn add_token_succeeds() {
