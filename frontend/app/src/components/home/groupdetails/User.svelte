@@ -9,9 +9,9 @@
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
-    import Diamond from "../../icons/Diamond.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -62,7 +62,7 @@
         <div class="display-name">
             <h4>
                 <FilteredUsername {searchTerm} username={displayName} {me} />
-                <Diamond status={user.diamondStatus} />
+                <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
             </h4>
             {#if role !== undefined}
                 <span class="role">

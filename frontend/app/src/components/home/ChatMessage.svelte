@@ -52,11 +52,11 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import { filterRightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
-    import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import WithRole from "./profile/WithRole.svelte";
     import RoleIcon from "./profile/RoleIcon.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -483,8 +483,8 @@
                                 <h4 class="username" class:fill class:crypto>
                                     {senderDisplayName}
                                 </h4>
-                                <Diamond status={sender?.diamondStatus} />
-                                {#if sender && multiUserChat}
+                                <Badges diamondStatus={sender?.diamondStatus} streak={sender?.streak ?? 0} />
+                                {#if sender !== undefined && multiUserChat}
                                     <WithRole
                                         userId={sender.userId}
                                         chatMembers={$chatMembersMap}

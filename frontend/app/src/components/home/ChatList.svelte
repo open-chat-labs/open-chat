@@ -35,7 +35,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
-    import Diamond from "../icons/Diamond.svelte";
+    import Badges from "./profile/Badges.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -278,7 +278,8 @@
                                                 <FilteredUsername
                                                     {searchTerm}
                                                     username={user.displayName ?? user.username} />
-                                                <Diamond status={user.diamondStatus} />
+
+                                                <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername
