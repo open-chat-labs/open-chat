@@ -1,7 +1,7 @@
 use crate::read_state;
 use crate::RuntimeState;
 use community_canister::explore_channels::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;

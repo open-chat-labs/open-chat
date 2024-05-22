@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::{EventIndex, MessagesResponse};
 use user_canister::messages_by_message_index::{Response::*, *};
 

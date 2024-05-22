@@ -1,7 +1,7 @@
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use sns1_airdrop::mark_completed::{Response::*, *};
 
 #[update(guard = "caller_is_admin")]

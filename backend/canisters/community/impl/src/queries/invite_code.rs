@@ -1,7 +1,7 @@
 use crate::read_state;
 use crate::RuntimeState;
 use community_canister::invite_code::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn invite_code(_: Args) -> Response {

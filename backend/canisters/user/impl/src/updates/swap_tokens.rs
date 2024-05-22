@@ -5,7 +5,7 @@ use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use tracing::error;

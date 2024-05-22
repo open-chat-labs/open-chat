@@ -1,6 +1,6 @@
 use crate::model::user_referral_leaderboards::MonthKey;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use user_index_canister::referral_leaderboard::{Response::*, *};
 
 #[query]

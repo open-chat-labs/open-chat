@@ -1,7 +1,7 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::decline_invitation::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]

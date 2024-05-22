@@ -2,7 +2,7 @@ use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state, PrizeData};
 use canister_tracing_macros::trace;
 use group_prize_bot::initialize_bot::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::Cycles;
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T

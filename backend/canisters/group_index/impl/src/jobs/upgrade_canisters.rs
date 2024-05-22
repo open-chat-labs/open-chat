@@ -85,7 +85,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         args: local_group_index_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         },
-        mode: CanisterInstallMode::Upgrade,
+        mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })
 }

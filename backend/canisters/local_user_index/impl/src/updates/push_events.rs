@@ -1,7 +1,7 @@
 use crate::guards::caller_is_local_user_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::push_events::Args;
 
 #[update(guard = "caller_is_local_user_canister")]

@@ -1,7 +1,7 @@
 use crate::guards::caller_is_dev_team_dfx_principal;
 use crate::mutate_state;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, ReferralCodeAdded};
 use types::ReferralType;
 use user_index_canister::add_referral_codes::{Response::*, *};

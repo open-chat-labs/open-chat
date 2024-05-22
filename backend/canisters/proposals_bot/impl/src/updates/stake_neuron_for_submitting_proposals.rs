@@ -2,7 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;

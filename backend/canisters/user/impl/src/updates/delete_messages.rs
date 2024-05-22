@@ -3,7 +3,7 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::EventIndex;
 use user_canister::delete_messages::{Response::*, *};
 use user_canister::UserCanisterEvent;

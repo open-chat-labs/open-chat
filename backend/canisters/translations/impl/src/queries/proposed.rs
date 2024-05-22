@@ -1,6 +1,6 @@
 use crate::read_state;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use translations_canister::proposed::{Response::*, *};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 

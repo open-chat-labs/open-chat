@@ -1,6 +1,6 @@
 use crate::{model::events::CommunityEventInternal, read_state, Data, RuntimeState};
 use community_canister::selected_updates_v2::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use std::collections::HashSet;
 use types::UserId;
 

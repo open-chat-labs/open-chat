@@ -2,7 +2,7 @@ use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
 use types::{ChatId, MessageContent, TextContent, User, UserId};
 

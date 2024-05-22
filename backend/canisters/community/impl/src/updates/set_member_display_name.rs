@@ -1,7 +1,7 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
 #[update]

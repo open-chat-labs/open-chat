@@ -3,10 +3,7 @@ use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use candid::CandidType;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{
-    CanisterInstallMode, CanisterInstallModeV2, InstallChunkedCodeArgument, InstallCodeArgument,
-};
-use serde_bytes::ByteBuf;
+use ic_cdk::api::management_canister::main::{CanisterInstallMode, ChunkHash, InstallChunkedCodeArgument, InstallCodeArgument};
 use tracing::{error, trace};
 use types::{BuildVersion, CanisterId, Cycles, Hash};
 
@@ -50,14 +47,14 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
         WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {
-            mode: match mode {
-                CanisterInstallMode::Install => CanisterInstallModeV2::Install,
-                CanisterInstallMode::Reinstall => CanisterInstallModeV2::Reinstall,
-                CanisterInstallMode::Upgrade => CanisterInstallModeV2::Upgrade(None),
-            },
+            mode,
             target_canister: canister_id,
             store_canister: Some(wasm.store_canister_id),
-            chunk_hashes_list: wasm.chunks.into_iter().map(ByteBuf::from).collect(),
+            chunk_hashes_list: wasm
+                .chunks
+                .into_iter()
+                .map(|hash| ChunkHash { hash: hash.to_vec() })
+                .collect(),
             wasm_module_hash: wasm.wasm_hash.to_vec(),
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),

@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use market_maker_canister::update_config::{Response::*, *};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 

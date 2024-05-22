@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UserDeleted};
 use user_index_canister::delete_user::{Response::*, *};
 

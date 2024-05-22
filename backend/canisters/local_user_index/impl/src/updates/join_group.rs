@@ -1,7 +1,7 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::join_group::{Response::*, *};
 use types::{ChatId, MessageIndex, UserId};
 use user_canister::Event as UserEvent;

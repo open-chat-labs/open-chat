@@ -2,7 +2,7 @@ use crate::guards::caller_is_known_user;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use storage_bucket_canister::file_status::{Response::*, *};
 use types::{FileStatus, FileStatusCompleted, FileStatusRejected, FileStatusUploading};
 

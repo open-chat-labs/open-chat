@@ -1,6 +1,6 @@
 use crate::model::pending_actions::PendingAction;
 use crate::{mutate_state, read_state, RuntimeState};
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use ic_ledger_types::{TransferArgs, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
 use tracing::{error, info};

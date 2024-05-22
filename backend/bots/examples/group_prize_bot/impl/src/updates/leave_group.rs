@@ -2,7 +2,7 @@ use crate::guards::caller_is_admin;
 use crate::mutate_state;
 use canister_tracing_macros::trace;
 use group_prize_bot::leave_group::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::CanisterId;
 
