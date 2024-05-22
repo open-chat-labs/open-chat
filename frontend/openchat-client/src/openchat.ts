@@ -514,7 +514,7 @@ import type { ChitUserBalance } from "openchat-shared";
 import {
     initialiseMostRecentSentMessageTimes,
     shouldThrottle,
-    throttleCountdown,
+    throttleDeadline,
 } from "./stores/throttling";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -6883,7 +6883,7 @@ export class OpenChat extends OpenChatAgentWorker {
     pinNumberRequiredStore = pinNumberRequiredStore;
     capturePinNumberStore = capturePinNumberStore;
     captureRulesAcceptanceStore = captureRulesAcceptanceStore;
-    throttleCountdown = throttleCountdown;
+    throttleDeadline = throttleDeadline;
 
     // current community stores
     chatListScope = chatListScopeStore;

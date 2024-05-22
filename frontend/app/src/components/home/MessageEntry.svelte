@@ -81,7 +81,7 @@
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
-    $: throttleCountdown = client.throttleCountdown;
+    $: throttleDeadline = client.throttleDeadline;
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
@@ -563,8 +563,8 @@
             <Translatable
                 resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
         </div>
-    {:else if $throttleCountdown > 0}
-        <ThrottleCountdown countdown={$throttleCountdown} />
+    {:else if $throttleDeadline > 0}
+        <ThrottleCountdown deadline={$throttleDeadline} />
     {:else}
         {#if recording}
             <div class="recording">

@@ -2,24 +2,7 @@ import { writable } from "svelte/store";
 
 const localStorageKey = "openchat_most_recent_sent_message_times";
 
-const countdown = writable<number>(0);
-export const throttleCountdown = {
-    subscribe: countdown.subscribe,
-    set: (n: number) => {
-        countdown.set(n);
-        if (n > 0) {
-            const i = window.setInterval(() => {
-                countdown.update((n) => {
-                    if (n > 0) {
-                        return n - 100;
-                    }
-                    window.clearInterval(i);
-                    return 0;
-                });
-            }, 100);
-        }
-    },
-};
+export const throttleDeadline = writable<number>(0);
 
 export const mostRecentStore = writable<number[]>([]);
 
@@ -56,7 +39,9 @@ function checkTimes(now: number, diamond: boolean, times: number[]): [number[], 
     const throttled = withinLastMinute.length >= maxMessagesPerMinute;
     if (throttled) {
         const timeToWait = withinLastMinute[0] - oneMinuteAgo;
-        throttleCountdown.set(timeToWait);
+        throttleDeadline.set(now + timeToWait);
+    } else {
+        throttleDeadline.set(0);
     }
     return [withinLastMinute, throttled];
 }

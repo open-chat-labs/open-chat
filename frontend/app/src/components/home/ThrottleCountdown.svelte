@@ -1,27 +1,33 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import Progress from "../Progress.svelte";
     import DisappearsAt from "./DisappearsAt.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { now500 } from "../../stores/time";
+    import { getContext } from "svelte";
+    import type { OpenChat } from "openchat-client";
 
-    export let countdown: number;
+    const client = getContext<OpenChat>("client");
 
-    let expiresAt = 0;
+    export let deadline: number;
 
-    onMount(() => {
-        expiresAt = Date.now() + countdown;
-    });
+    let seconds = 0;
+    let percent = 0;
 
-    $: percent = Math.floor((countdown / 60000) * 100);
+    $: {
+        seconds = Math.floor((deadline - $now500) / 1000);
+        percent = Math.floor((seconds / 60) * 100);
+        if (deadline <= $now500) {
+            client.throttleDeadline.set(0);
+        }
+    }
 </script>
 
 <div class="throttle">
     <Progress size={"20px"} {percent}>
         <div class="msg">
-            <DisappearsAt me={true} percentageExpired={percent} {expiresAt} />
-            <Translatable
-                resourceKey={i18nKey("throttleMessage", { time: Math.floor(countdown / 1000) })} />
+            <DisappearsAt me={true} percentageExpired={percent} expiresAt={deadline} />
+            <Translatable resourceKey={i18nKey("throttleMessage", { time: seconds })} />
         </div>
     </Progress>
 </div>
