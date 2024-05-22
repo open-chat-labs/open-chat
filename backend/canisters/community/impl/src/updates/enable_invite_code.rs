@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use community_canister::enable_invite_code::{Response::*, *};
 use community_canister::reset_invite_code;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};

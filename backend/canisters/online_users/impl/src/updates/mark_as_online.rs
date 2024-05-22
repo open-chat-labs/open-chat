@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use online_users_canister::mark_as_online::{Response::*, *};
 use types::{CanisterId, UserId};
 

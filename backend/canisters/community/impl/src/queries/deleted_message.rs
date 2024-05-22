@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use community_canister::deleted_message::{Response::*, *};
 use group_chat_core::DeletedMessageResult;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn deleted_message(args: Args) -> Response {

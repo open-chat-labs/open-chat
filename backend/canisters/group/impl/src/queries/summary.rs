@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::query_msgpack;
 use group_canister::c2c_summary::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::summary::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn summary(_: Args) -> Response {

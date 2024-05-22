@@ -3,7 +3,7 @@ use crate::memory::get_upgrades_memory;
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::post_upgrade;
+use ic_cdk::post_upgrade;
 use notifications_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;

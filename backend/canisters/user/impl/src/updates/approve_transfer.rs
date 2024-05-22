@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use types::TimestampNanos;
 use user_canister::approve_transfer::{Response::*, *};

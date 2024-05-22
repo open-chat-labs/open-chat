@@ -2,7 +2,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use group_canister::thread_previews::{Response::*, *};
 use group_chat_core::ThreadPreviewsResult;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn thread_previews(args: Args) -> Response {

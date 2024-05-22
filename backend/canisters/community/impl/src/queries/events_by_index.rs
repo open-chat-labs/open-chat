@@ -6,7 +6,7 @@ use canister_api_macros::query_msgpack;
 use community_canister::c2c_events_by_index::Args as C2CArgs;
 use community_canister::events_by_index::{Response::*, *};
 use group_chat_core::EventsResult;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn events_by_index(args: Args) -> Response {

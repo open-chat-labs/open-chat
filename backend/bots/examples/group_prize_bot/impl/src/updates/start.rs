@@ -3,7 +3,7 @@ use crate::jobs::send_prizes;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_prize_bot::start::*;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update(guard = "caller_is_admin")]
 #[trace]

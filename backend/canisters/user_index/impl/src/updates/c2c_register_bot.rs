@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UserRegistered};
 use types::{Cycles, UserId};
 use user_index_canister::c2c_register_bot::{Response::*, *};

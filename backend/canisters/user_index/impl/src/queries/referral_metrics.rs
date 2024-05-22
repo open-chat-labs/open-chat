@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use std::{cmp::Reverse, collections::HashMap};
 use types::UserId;
 use user_index_canister::referral_metrics::{Response::*, *};

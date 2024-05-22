@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::delete_user_groups::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]

@@ -1,7 +1,7 @@
 use crate::guards::caller_is_platform_operator;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{DiamondMembershipFees, DiamondMembershipFeesByDuration};
 use user_index_canister::set_diamond_membership_fees::{Response::*, *};
 

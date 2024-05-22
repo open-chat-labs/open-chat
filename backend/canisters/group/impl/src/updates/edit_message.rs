@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use group_canister::edit_message_v2::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]

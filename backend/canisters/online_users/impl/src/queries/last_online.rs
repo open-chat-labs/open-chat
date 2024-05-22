@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use online_users_canister::last_online::{Response::*, *};
 
 #[query]

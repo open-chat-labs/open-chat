@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::disable_invite_code::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
 #[update]

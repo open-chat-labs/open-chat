@@ -2,7 +2,7 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use community_canister::edit_message::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]

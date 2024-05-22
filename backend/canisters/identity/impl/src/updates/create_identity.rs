@@ -2,7 +2,7 @@ use crate::updates::prepare_delegation::prepare_delegation_inner;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use identity_canister::create_identity::{Response::*, *};
 use types::CanisterId;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};

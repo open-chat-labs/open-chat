@@ -4,7 +4,7 @@ use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use std::collections::HashMap;
 use std::iter::zip;
 use types::{

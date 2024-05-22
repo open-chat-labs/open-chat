@@ -2,7 +2,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::cancel_invites::{Response::*, *};
 use group_chat_core::CancelInvitesResult;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]

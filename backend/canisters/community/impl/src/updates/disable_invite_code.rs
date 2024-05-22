@@ -4,7 +4,7 @@ use crate::{
 };
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
 #[update]

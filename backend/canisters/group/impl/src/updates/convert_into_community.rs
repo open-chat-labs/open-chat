@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeS
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};

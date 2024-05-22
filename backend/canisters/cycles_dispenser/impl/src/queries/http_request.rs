@@ -1,6 +1,6 @@
 use crate::{read_state, State};
 use canister_logger::LogEntry;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
