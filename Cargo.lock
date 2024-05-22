@@ -1015,7 +1015,7 @@ name = "canister_timer_jobs"
 version = "0.1.0"
 dependencies = [
  "canister_time",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "serde",
 ]
 
@@ -1270,7 +1270,7 @@ dependencies = [
  "group_index_canister_c2c_client",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
@@ -1593,7 +1593,7 @@ dependencies = [
  "cycles_minting_canister_c2c_client",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icp_ledger_canister_c2c_client",
@@ -1620,7 +1620,7 @@ dependencies = [
  "cycles_dispenser_canister",
  "cycles_dispenser_canister_c2c_client",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "tracing",
  "types",
 ]
@@ -2064,7 +2064,7 @@ dependencies = [
  "hex",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
@@ -2147,7 +2147,7 @@ dependencies = [
  "event_store_utils",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "rand 0.8.5",
@@ -2164,8 +2164,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_canister"
-version = "0.3.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
+version = "0.4.0"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.4.0#31638807501364bbbff820c58d8337191991a5d1"
 dependencies = [
  "candid",
  "serde",
@@ -2174,8 +2174,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_producer"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
+version = "0.4.0"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.4.0#31638807501364bbbff820c58d8337191991a5d1"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2185,13 +2185,13 @@ dependencies = [
 
 [[package]]
 name = "event_store_producer_cdk_runtime"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
+version = "0.4.0"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.4.0#31638807501364bbbff820c58d8337191991a5d1"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
- "ic-cdk 0.12.0",
- "ic-cdk-timers 0.6.0",
+ "ic-cdk 0.14.0",
+ "ic-cdk-timers",
  "ic_principal",
  "rand 0.8.5",
  "serde",
@@ -2200,8 +2200,8 @@ dependencies = [
 
 [[package]]
 name = "event_store_utils"
-version = "0.1.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.3.0#a495910ab85659d82399eecd2c91934eade1d323"
+version = "0.4.0"
+source = "git+https://github.com/open-chat-labs/event-store?rev=v0.4.0#31638807501364bbbff820c58d8337191991a5d1"
 dependencies = [
  "serde",
 ]
@@ -2245,7 +2245,7 @@ dependencies = [
  "canister_client",
  "futures",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "serde",
  "serde_bytes",
  "tracing",
@@ -2514,7 +2514,7 @@ dependencies = [
  "group_index_canister_c2c_client",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icp_ledger_canister_c2c_client",
@@ -2627,7 +2627,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "local_group_index_canister",
  "local_group_index_canister_c2c_client",
@@ -2672,7 +2672,7 @@ dependencies = [
  "group_prize_bot",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
@@ -3244,20 +3244,6 @@ dependencies = [
  "serde",
  "serde_tokenstream 0.2.0",
  "syn 2.0.65",
-]
-
-[[package]]
-name = "ic-cdk-timers"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c43b9706fef3ad10c4192a14801d16bd9539068239f0f06f257857441364329"
-dependencies = [
- "futures",
- "ic-cdk 0.12.0",
- "ic0 0.21.1",
- "serde",
- "serde_bytes",
- "slotmap",
 ]
 
 [[package]]
@@ -3942,7 +3928,7 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icp_dispenser_bot",
@@ -4087,7 +4073,7 @@ dependencies = [
  "http_request",
  "ic-captcha",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-certification 2.5.0",
  "ic-stable-structures 0.6.4",
  "identity_canister",
@@ -4586,7 +4572,7 @@ dependencies = [
  "group_canister",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "ledger_utils",
@@ -4654,7 +4640,7 @@ dependencies = [
  "group_canister_c2c_client",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
@@ -4739,7 +4725,7 @@ dependencies = [
  "hex",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icdex_canister",
  "icdex_canister_c2c_client",
@@ -4924,7 +4910,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "ic-transport-types",
@@ -5097,7 +5083,7 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "msgpack",
  "notifications_canister",
@@ -5147,7 +5133,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "msgpack",
  "notifications_canister",
@@ -5341,7 +5327,7 @@ dependencies = [
  "event_store_producer_cdk_runtime",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "online_users_canister",
  "rand 0.8.5",
@@ -5804,7 +5790,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
@@ -6118,7 +6104,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister",
@@ -6480,7 +6466,7 @@ dependencies = [
  "futures",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
@@ -6954,7 +6940,7 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "msgpack",
  "rand 0.8.5",
@@ -7235,7 +7221,7 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "num-traits",
  "rand 0.8.5",
@@ -7311,7 +7297,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "msgpack",
  "rand 0.8.5",
@@ -7860,7 +7846,7 @@ dependencies = [
  "fire_and_forget_handler",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister",
@@ -8069,7 +8055,7 @@ dependencies = [
  "group_index_canister_c2c_client",
  "http_request",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icpswap_client",
@@ -8168,7 +8154,7 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
@@ -8223,7 +8209,7 @@ dependencies = [
  "cycles_dispenser_client",
  "getrandom 0.2.15",
  "ic-cdk 0.14.0",
- "ic-cdk-timers 0.8.0",
+ "ic-cdk-timers",
  "itertools 0.13.0",
  "msgpack",
  "rand 0.8.5",
