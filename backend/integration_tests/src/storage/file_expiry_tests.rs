@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_principal;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
+use testing::rng::random_principal;
 
 #[test]
 fn file_is_removed_after_expiry_date() {

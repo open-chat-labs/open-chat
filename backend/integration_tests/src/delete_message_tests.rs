@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatEvent, MessageContent};
 use utils::time::MINUTE_IN_MS;
 

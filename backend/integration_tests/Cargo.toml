@@ -38,6 +38,7 @@ serde_bytes = { workspace = true }
 serial_test = "2.0.0"
 storage_bucket_canister = { path = "../canisters/storage_bucket/api" }
 storage_index_canister = { path = "../canisters/storage_index/api" }
+testing = { path = "../libraries/testing" }
 test-case = { workspace = true }
 translations_canister = { path = "../canisters/translations/api" }
 types = { path = "../libraries/types" }
