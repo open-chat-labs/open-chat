@@ -1,11 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
+use types::UserId;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -24,4 +26,22 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    // TODO: Remove this - one time code to give CHIT to meme contest winners
+    mutate_state(|state| {
+        if !state.data.test_mode && state.data.chit_leaderboard.get().is_empty() {
+            state.data.chit_leaderboard.update_position(
+                UserId::from(Principal::from_text("ab4g5-3qaaa-aaaar-aidhq-cai").unwrap()),
+                10000,
+            );
+            state.data.chit_leaderboard.update_position(
+                UserId::from(Principal::from_text("27uaj-6iaaa-aaaar-au4cq-cai").unwrap()),
+                7000,
+            );
+            state.data.chit_leaderboard.update_position(
+                UserId::from(Principal::from_text("pyd4k-raaaa-aaaar-arbza-cai").unwrap()),
+                5000,
+            );
+        }
+    });
 }
