@@ -1117,6 +1117,7 @@
         "title": "线程",
         "unread": "{count} 个有未读消息的线程"
     },
+    "throttleMessage": "消息已限制 - 将在 {time} 秒内恢复",
     "tip": {
         "advice": "点击任意多次即可添加打赏",
         "failure": "抱歉，我们无法添加您的打赏",

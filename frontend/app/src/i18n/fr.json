@@ -1117,6 +1117,7 @@
         "title": "Fil de discussion",
         "unread": "{count} fils de discussion avec des messages non lus"
     },
+    "throttleMessage": "Messages limités – reprise dans {time} s",
     "tip": {
         "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire",
         "failure": "Désolé, nous n'avons pas pu ajouter votre conseil",

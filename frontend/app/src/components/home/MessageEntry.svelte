@@ -37,6 +37,7 @@
     import { translatable } from "../../actions/translatable";
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import { useBlockLevelMarkdown } from "../../stores/settings";
+    import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -80,6 +81,7 @@
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
+    $: throttleDeadline = client.throttleDeadline;
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
@@ -418,7 +420,7 @@
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
-        tick().then(() => inp.focus());
+        tick().then(() => inp?.focus());
     }
 
     export function saveSelection() {
@@ -561,6 +563,8 @@
             <Translatable
                 resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
         </div>
+    {:else if $throttleDeadline > 0}
+        <ThrottleCountdown deadline={$throttleDeadline} />
     {:else}
         {#if recording}
             <div class="recording">

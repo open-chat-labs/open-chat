@@ -1635,7 +1635,8 @@ export type SendMessageResponse =
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
     | DuplicateMessageId
-    | PinNumberFailures;
+    | PinNumberFailures
+    | MessageThrottled;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1738,6 +1739,10 @@ export type P2PSwapSetUpFailed = {
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
+};
+
+export type MessageThrottled = {
+    kind: "message_throttled";
 };
 
 export type PinRequired = {
