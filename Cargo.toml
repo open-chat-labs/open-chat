@@ -143,6 +143,7 @@ members = [
     "backend/libraries/sha256",
     "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
+    "backend/libraries/testing",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
