@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatEvent, MessageContent, VideoCallContent};
 use utils::time::HOUR_IN_MS;
 

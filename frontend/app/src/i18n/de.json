@@ -1117,6 +1117,7 @@
         "title": "Faden",
         "unread": "{count} Thread(s) mit ungelesenen Nachrichten"
     },
+    "throttleMessage": "Nachrichten gedrosselt – Fortsetzung in {time}s",
     "tip": {
         "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
         "failure": "Leider konnten wir Ihren Tipp nicht hinzufügen",

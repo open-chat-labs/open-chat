@@ -1117,6 +1117,7 @@
         "title": "Hilo",
         "unread": "{count} hilo(s) con mensajes no leídos"
     },
+    "throttleMessage": "Mensajes limitados: se reanudarán en {time} s",
     "tip": {
         "advice": "Toca tantas veces como quieras para dejar una propina.",
         "failure": "Lo sentimos, no pudimos agregar tu consejo.",

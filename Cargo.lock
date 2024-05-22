@@ -4304,6 +4304,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
+ "testing",
  "translations_canister",
  "types",
  "user_canister",
@@ -7503,6 +7504,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "testing"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "getrandom 0.2.12",
+ "ic-ledger-types",
+ "icrc-ledger-types",
+ "rand 0.8.5",
+ "range-set",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8179,6 +8195,7 @@ dependencies = [
  "stable_memory",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
+ "testing",
  "time",
  "tracing",
  "types",

@@ -1117,6 +1117,7 @@
         "title": "Filo",
         "unread": "{count} thread con messaggi non letti"
     },
+    "throttleMessage": "Messaggi limitati: ripresa tra {time}s",
     "tip": {
         "advice": "Tocca quante volte vuoi per lasciare una mancia",
         "failure": "Siamo spiacenti, non siamo riusciti ad aggiungere il tuo suggerimento",

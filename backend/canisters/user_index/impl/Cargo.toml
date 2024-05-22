@@ -54,6 +54,7 @@ sha2 = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
+testing = { path = "../../../libraries/testing" }
 time = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
