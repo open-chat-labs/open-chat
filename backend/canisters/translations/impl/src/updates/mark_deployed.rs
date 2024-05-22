@@ -3,7 +3,7 @@ use crate::model::translations::DecisionSummary;
 use crate::mutate_state;
 use crate::RuntimeState;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use translations_canister::mark_deployed::{Response::*, *};
 use user_index_canister::c2c_send_openchat_bot_messages;
 use user_index_canister::c2c_send_openchat_bot_messages::Message;

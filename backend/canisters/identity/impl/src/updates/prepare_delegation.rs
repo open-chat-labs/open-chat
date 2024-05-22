@@ -1,6 +1,6 @@
 use crate::{delegation_signature_msg_hash, mutate_state, Delegation, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use identity_canister::prepare_delegation::{Response::*, *};
 use serde_bytes::ByteBuf;
 use types::Nanoseconds;

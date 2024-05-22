@@ -5,7 +5,7 @@ use crate::{
 };
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 

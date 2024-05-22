@@ -3,7 +3,7 @@ use crate::timer_job_types::TimerJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EndVideoCallResult, Reader};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use user_canister::end_video_call::{Response::*, *};
 
 #[update(guard = "caller_is_video_call_operator")]

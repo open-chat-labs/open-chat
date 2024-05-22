@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use notifications_index_canister::remove_subscriptions_for_user::{Response::*, *};
 
 #[update]

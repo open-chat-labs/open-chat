@@ -7,7 +7,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::post_upgrade::Args;
-use ic_cdk_macros::post_upgrade;
+use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;

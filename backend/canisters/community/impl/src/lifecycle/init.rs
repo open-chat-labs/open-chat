@@ -3,7 +3,7 @@ use crate::updates::import_group::commit_group_to_import;
 use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use tracing::info;
 use utils::env::Environment;
 

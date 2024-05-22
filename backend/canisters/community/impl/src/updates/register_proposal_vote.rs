@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use community_canister::register_proposal_vote::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, ChannelId, ProposalId, UserId};
 
 #[update]

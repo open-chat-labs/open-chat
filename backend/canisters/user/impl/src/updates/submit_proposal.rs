@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1::process_transaction;
 use types::icrc1::PendingCryptoTransaction;

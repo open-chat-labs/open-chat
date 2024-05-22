@@ -5,7 +5,7 @@ use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;

@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use storage_index_canister::{
     can_forward::{Response::*, *},
     ProjectedAllowance,

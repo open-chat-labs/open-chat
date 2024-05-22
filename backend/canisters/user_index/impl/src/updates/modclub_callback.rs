@@ -11,7 +11,7 @@ use crate::{
 use candid::Encode;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 use user_index_canister::modclub_callback::*;

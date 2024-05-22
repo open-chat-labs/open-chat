@@ -1,5 +1,5 @@
 use crate::{delegation_signature_msg_hash, read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
 use identity_canister::{Delegation, SignedDelegation};
 use serde_bytes::ByteBuf;

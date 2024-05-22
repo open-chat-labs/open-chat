@@ -100,7 +100,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
         args: user_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         },
-        mode: CanisterInstallMode::Upgrade,
+        mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })
 }

@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::create_user_group::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 
 #[update]

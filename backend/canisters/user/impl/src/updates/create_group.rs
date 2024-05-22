@@ -4,7 +4,7 @@ use crate::{
 };
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};

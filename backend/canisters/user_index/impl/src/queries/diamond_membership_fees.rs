@@ -1,4 +1,4 @@
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::Cryptocurrency;
 use user_index_canister::diamond_membership_fees::{Response::*, *};
 

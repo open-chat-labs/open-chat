@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,

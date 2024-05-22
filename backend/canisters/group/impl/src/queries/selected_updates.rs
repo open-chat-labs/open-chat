@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_canister::selected_updates_v2::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn selected_updates_v2(args: Args) -> Response {

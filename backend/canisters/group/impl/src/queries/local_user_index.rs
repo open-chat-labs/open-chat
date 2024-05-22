@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_canister::local_user_index::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn local_user_index(_args: Args) -> Response {

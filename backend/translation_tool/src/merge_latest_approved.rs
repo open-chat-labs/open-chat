@@ -139,7 +139,7 @@ async fn write_translation_files(
     fn build_object(translations: Vec<&(String, String)>, depth: usize) -> Value {
         let mut map = Map::new();
 
-        for (key, group) in &translations.into_iter().group_by(|(k, _)| k.split('.').nth(depth).unwrap()) {
+        for (key, group) in &translations.into_iter().chunk_by(|(k, _)| k.split('.').nth(depth).unwrap()) {
             let group_vec: Vec<_> = group.collect();
             let (k0, v0) = group_vec[0];
 

@@ -18,7 +18,6 @@ canister_tracing_macros = { path = "../../../../libraries/canister_tracing_macro
 futures = { workspace = true }
 http_request = { path = "../../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }

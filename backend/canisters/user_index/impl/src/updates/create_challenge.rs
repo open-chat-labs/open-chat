@@ -1,5 +1,5 @@
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use user_index_canister::create_challenge::{Response::*, *};
 
 #[update]

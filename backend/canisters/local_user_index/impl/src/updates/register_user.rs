@@ -4,7 +4,7 @@ use crate::timer_job_types::{AddUserToSatoshiDice, TimerJob};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};

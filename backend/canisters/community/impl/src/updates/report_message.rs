@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::report_message::{Response::*, *};
 use group_index_canister::c2c_report_message;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, MultiUserChat, UserId};
 
 #[update]

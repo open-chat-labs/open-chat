@@ -1,7 +1,7 @@
 use crate::read_state;
 use crate::RuntimeState;
 use community_canister::channel_summary::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn channel_summary(args: Args) -> Response {

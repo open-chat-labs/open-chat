@@ -5,7 +5,7 @@ use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
-use ic_cdk_macros::post_upgrade;
+use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;

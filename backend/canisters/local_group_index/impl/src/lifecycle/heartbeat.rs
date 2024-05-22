@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId, Cycles, CyclesTopUp};
 use utils::canister::{self, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -77,7 +77,7 @@ mod upgrade_groups {
             args: group_canister::post_upgrade::Args {
                 wasm_version: new_wasm_version,
             },
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
     }
@@ -202,7 +202,7 @@ mod upgrade_communities {
             args: community_canister::post_upgrade::Args {
                 wasm_version: new_wasm_version,
             },
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
     }

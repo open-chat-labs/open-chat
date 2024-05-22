@@ -9,7 +9,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId};

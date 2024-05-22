@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use identity_canister::check_auth_principal::{Response::*, *};
 
 #[query]
