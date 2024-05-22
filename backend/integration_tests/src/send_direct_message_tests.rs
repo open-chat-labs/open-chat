@@ -1,9 +1,9 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_message_id;
 use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]

@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, OptionUpdate};
 
 #[test_case(true)]

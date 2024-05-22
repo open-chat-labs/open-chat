@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -8,6 +7,7 @@ use local_user_index_canister::group_and_community_summary_updates::{SummaryUpda
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{CanisterId, ChannelId, ChatEvent, ChatId, CommunityId};
 
 #[test]

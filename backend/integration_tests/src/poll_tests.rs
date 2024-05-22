@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::{client, CanisterIds, TestEnv, User};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
+use testing::rng::random_message_id;
 use types::{ChatEvent, ChatId, MessageContent, MessageContentInitial, PollConfig, PollContent, PollVotes, TotalVotes};
 
 #[test]

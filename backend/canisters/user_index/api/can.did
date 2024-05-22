@@ -335,6 +335,12 @@ type ChitLeaderboardResponse = variant {
     Success : vec ChitUserBalance;
 };
 
+type ChitUserBalance = record {
+    user_id : UserId;
+    username : text;
+    balance : nat32;
+};
+
 type SetUserUpgradeConcurrencyArgs = record {
     value : nat32;
 };

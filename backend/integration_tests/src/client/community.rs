@@ -37,10 +37,10 @@ generate_update_call!(update_community);
 generate_update_call!(update_user_group);
 
 pub mod happy_path {
-    use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use testing::rng::random_message_id;
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
