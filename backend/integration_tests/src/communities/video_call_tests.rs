@@ -1,6 +1,5 @@
 use crate::client::{local_user_index, user_index};
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::{generate_seed, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -9,6 +8,7 @@ use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
+use testing::rng::random_string;
 use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallType};
 
 #[test]

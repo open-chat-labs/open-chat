@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use candid::Principal;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatEvent, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 

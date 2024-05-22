@@ -38,10 +38,10 @@ generate_update_call!(update_group_v2);
 
 pub mod happy_path {
     use crate::env::VIDEO_CALL_OPERATOR;
-    use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use testing::rng::random_message_id;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
         MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId,

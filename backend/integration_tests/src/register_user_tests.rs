@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::{random_delegated_principal, random_string};
 use crate::{client, TestEnv};
 use itertools::Itertools;
 use std::ops::Deref;
+use testing::rng::{random_delegated_principal, random_string};
 
 #[test]
 fn register_users() {

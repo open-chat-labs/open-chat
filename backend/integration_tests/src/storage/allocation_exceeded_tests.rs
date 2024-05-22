@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_principal;
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
+use testing::rng::random_principal;
 
 #[test]
 fn old_files_deleted_when_allocation_exceeded() {

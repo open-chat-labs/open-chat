@@ -1803,8 +1803,3 @@ type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : text;
 };
-
-type ChitUserBalance = record {
-    user_id : UserId;
-    balance : nat32;
-};

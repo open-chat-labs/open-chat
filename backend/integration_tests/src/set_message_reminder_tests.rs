@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{Chat, ChatEvent, EventIndex, MessageContent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
