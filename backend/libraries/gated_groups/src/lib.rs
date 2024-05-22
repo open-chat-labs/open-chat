@@ -5,7 +5,7 @@ use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
     AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
-    VerifiedCredentialArgumentValue, VerifiedCredentialGate,
+    VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::NANOS_PER_MILLISECOND;
