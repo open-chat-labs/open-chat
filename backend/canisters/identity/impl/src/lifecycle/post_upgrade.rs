@@ -36,8 +36,8 @@ fn post_upgrade(args: Args) {
             canister_ids.push("2kpva-5aaaa-aaaar-qaehq-cai"); // SOL
         } else if canister_id == CanisterId::from_text("rejcv-jqaaa-aaaak-afj5q-cai").unwrap() {
             canister_ids.push("rubs2-eaaaa-aaaaf-bijfq-cai"); // Email
-            canister_ids.push("2notu-qyaaa-aaaar-qaeha-cai"); // ETH
-            canister_ids.push("2kpva-5aaaa-aaaar-qaehq-cai"); // SOL
+            canister_ids.push("4s357-zaaaa-aaaaf-bjz7q-cai"); // ETH
+            canister_ids.push("lix6w-ciaaa-aaaaf-bj2aa-cai"); // SOL
         }
 
         for canister_id in canister_ids {
