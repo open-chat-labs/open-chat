@@ -3,6 +3,7 @@ import { _ } from "svelte-i18n";
 import type {
     AccessGate,
     Credential,
+    CredentialGate,
     CryptocurrencyDetails,
     NervousSystemDetails,
 } from "openchat-client";
@@ -138,7 +139,7 @@ const credentialGate: GateBinding = {
             credentialType: "",
         },
     },
-    enabled: false,
+    enabled: true,
 };
 
 export type CredentialIssuer = Credential & { name: string };
@@ -153,13 +154,30 @@ export const credentialIssuers: CredentialIssuer[] = [
             employerName: "DFINITY Foundation",
         },
     },
+    // {
+    //     name: "Is early adopter",
+    //     issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
+    //     issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
+    //     credentialType: "Early adopter",
+    //     credentialArguments: {
+    //         employerName: "DFINITY Foundation",
+    //     },
+    // },
     {
         name: "Is early adopter",
-        issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
-        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
-        credentialType: "Early adopter",
+        issuerCanisterId: "vuq4g-oyaaa-aaaap-ahfsq-cai",
+        issuerOrigin: "https://vuq4g-oyaaa-aaaap-ahfsq-cai.icp0.io",
+        credentialType: "EventAttendance",
         credentialArguments: {
-            employerName: "DFINITY Foundation",
+            eventName: "DICE2024",
         },
     },
 ];
+
+export function findPredefinedIssuer(gate: CredentialGate) {
+    return credentialIssuers.find(
+        (i) =>
+            i.credentialType === gate.credential.credentialType &&
+            i.issuerOrigin === gate.credential.issuerOrigin,
+    );
+}

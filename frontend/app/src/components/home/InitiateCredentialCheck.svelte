@@ -7,7 +7,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { credentialIssuers } from "../../utils/access";
+    import { findPredefinedIssuer } from "../../utils/access";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,11 +18,7 @@
     let failed = false;
     let verifying = false;
 
-    $: issuer = credentialIssuers.find(
-        (i) =>
-            i.credentialType === gate.credential.credentialType &&
-            i.issuerOrigin === gate.credential.issuerOrigin,
-    );
+    $: issuer = findPredefinedIssuer(gate);
 
     function verify() {
         verifying = true;
