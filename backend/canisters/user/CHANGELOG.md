@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -8,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Maintain log of CHIT events + query ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- Add `ChitEarnedReason::MemeContestWinner` ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
 
 ### Changed
 
@@ -120,7 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use initiator as sender for video calls rather than VideoCallBot ([#5477](https://github.com/open-chat-labs/open-chat/pull/5477))
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
-- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ### Removed
@@ -365,7 +367,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `rules_accepted` to cached group summaries ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
 - Transfer to user specific subaccounts when transferring to bot users ([#4388](https://github.com/open-chat-labs/open-chat/pull/4388))
 - Add `CommunityRulesNotAccepted` to `send_channel_message` response ([#?](https://github.com/open-chat-labs/open-chat/pull/?))
- 
+
 ## [[2.0.838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.838-user)] - 2023-09-05
 
 ### Changed
@@ -490,7 +492,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
-  
+
 ### Fixed
 
 - Fix pinned chat changes not coming through in `initial_state_v2` and `updates_v2` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))
@@ -698,7 +700,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-chat-labs/ic-utils) ([#2985](https://github.com/open-chat-labs/open-chat/pull/2985))
 - Ensure direct messages are received by the recipient's canister in the same order they were received by the sender's canister, even if some fail to be sent c2c on first attempt ([#2986](https://github.com/open-chat-labs/open-chat/pull/2986))
 - Use timestamp in nanos not ms for ICRC1 Transfers ([#2988](https://github.com/open-chat-labs/open-chat/pull/2988))
- 
+
 ### Removed
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-chat-labs/open-chat/pull/2966))
@@ -715,6 +717,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `max_messages` to `events` and `events_window` ([#2947](https://github.com/open-chat-labs/open-chat/pull/2947))
 
-### Removed 
+### Removed
 
 - Removed one-time code only needed for previous upgrade ([#2954](https://github.com/open-chat-labs/open-chat/pull/2954))
