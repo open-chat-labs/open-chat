@@ -550,7 +550,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
-    private _mostRecentSentMessageTimes: number[] = [];
 
     user = currentUser;
     anonUser = anonUser;
