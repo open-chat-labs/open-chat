@@ -1117,6 +1117,7 @@
         "title": "Thread",
         "unread": "{count} thread(s) with unread messages"
     },
+    "throttleMessage": "Messages throttled - resuming in {time}s",
     "tip": {
         "advice": "Tap as many times as you like to leave a tip",
         "failure": "Sorry we were unable to add your tip",
