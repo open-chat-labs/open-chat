@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "Bỏ đóng băng cuộc trò chuyện của {unfrozenBy}",
     "chatWith": "Trò chuyện với {username}",
     "checkBackLater": "Xin vui lòng thử lại",
+    "chitBalance": "Số dư CHIT",
     "chooseAStorageLevel": "Chọn mức lưu trữ, tối đa 1GB",
     "chooseMembers": "Chọn thành viên",
     "chooseReaction": "Chọn một phản ứng",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
+    "dailyChit": {
+        "alreadyClaimed": "Bạn đã yêu cầu CHIT hàng ngày của mình. Hãy quay lại vào ngày mai để kéo dài chuỗi trận của bạn!",
+        "available": "Nhấn nút yêu cầu để kéo dài chuỗi của bạn!",
+        "claim": "Khẳng định",
+        "extendStreak": "Kéo dài vệt",
+        "title": "Vệt CHIT",
+        "viewStreak": "Xem chuỗi"
+    },
     "dark": "Tối",
     "days": "Ngày",
     "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định",

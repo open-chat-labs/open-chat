@@ -59,12 +59,7 @@
                 leaders = result.slice(0, 10);
             })
             .finally(() => {
-                if (leaders.length < 10) {
-                    for (let i = leaders.length; i < 10; i++) {
-                        leaders.push(blankLeader);
-                    }
-                    leaders = leaders; //trigger reaction
-                }
+                leaders = [...leaders, ...Array(10 - leaders.length).fill(blankLeader)];
             });
     }
 
