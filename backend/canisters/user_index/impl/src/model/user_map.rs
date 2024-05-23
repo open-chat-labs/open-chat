@@ -196,6 +196,7 @@ impl UserMap {
             .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
     }
 
+    #[allow(dead_code)]
     pub fn give_chit_reward(&mut self, user_id: &UserId, amount: i32, now: TimestampMillis) {
         if let Some(user) = self.users.get_mut(user_id) {
             user.give_chit_reward(amount, now);
