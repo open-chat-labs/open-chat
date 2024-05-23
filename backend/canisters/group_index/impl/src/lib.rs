@@ -143,7 +143,7 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default = "ic_root_key")]
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
 }

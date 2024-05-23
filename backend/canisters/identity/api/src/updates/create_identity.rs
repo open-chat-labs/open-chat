@@ -1,13 +1,14 @@
 use crate::ChallengeAttempt;
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
-use serde_bytes::ByteBuf;
 use types::{Nanoseconds, TimestampNanos};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub public_key: ByteBuf,
-    pub session_key: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub public_key: Vec<u8>,
+    #[serde(with = "serde_bytes")]
+    pub session_key: Vec<u8>,
     pub max_time_to_live: Option<Nanoseconds>,
     pub challenge_attempt: Option<ChallengeAttempt>,
 }
@@ -24,6 +25,7 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub principal: Principal,
-    pub user_key: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub user_key: Vec<u8>,
     pub expiration: TimestampNanos,
 }
