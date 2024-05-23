@@ -107,7 +107,7 @@ pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterId
 
     local_user_index::happy_path::register_user_with_referrer(
         env,
-        create_identity_result.principal,
+        Principal::self_authenticating(&create_identity_result.user_key),
         canister_ids.local_user_index,
         create_identity_result.user_key,
         referral_code,

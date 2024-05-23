@@ -14,13 +14,13 @@ export const idlFactory = ({ IDL }) => {
     ),
   });
   const TimestampNanoseconds = IDL.Nat64;
+  const PrepareDelegationSuccess = IDL.Record({
+    'user_key' : PublicKey,
+    'expiration' : TimestampNanoseconds,
+  });
   const CreateIdentityResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
-    'Success' : IDL.Record({
-      'principal' : IDL.Principal,
-      'user_key' : PublicKey,
-      'expiration' : TimestampNanoseconds,
-    }),
+    'Success' : PrepareDelegationSuccess,
     'ChallengeFailed' : IDL.Null,
     'ChallengeRequired' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
@@ -51,10 +51,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PrepareDelegationResponse = IDL.Variant({
     'NotFound' : IDL.Null,
-    'Success' : IDL.Record({
-      'user_key' : PublicKey,
-      'expiration' : TimestampNanoseconds,
-    }),
+    'Success' : PrepareDelegationSuccess,
   });
   return IDL.Service({
     'check_auth_principal' : IDL.Func(

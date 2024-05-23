@@ -1,7 +1,7 @@
 use crate::ChallengeAttempt;
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use types::{Nanoseconds, TimestampNanos};
+use types::Nanoseconds;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -22,10 +22,4 @@ pub enum Response {
     ChallengeFailed,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub principal: Principal,
-    #[serde(with = "serde_bytes")]
-    pub user_key: Vec<u8>,
-    pub expiration: TimestampNanos,
-}
+pub type SuccessResult = crate::prepare_delegation::SuccessResult;
