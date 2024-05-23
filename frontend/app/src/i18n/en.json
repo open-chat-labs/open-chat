@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "Chat unfrozen by {unfrozenBy}",
     "chatWith": "Chat with {username}",
     "checkBackLater": "Please try again later. ",
+    "chitBalance": "CHIT balance",
     "chooseAStorageLevel": "Choose a storage level up to a maximum of 1GB",
     "chooseMembers": "Choose members",
     "chooseReaction": "Choose a reaction",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "Your current storage limit is {limit}GB and your account balance is {balance} ICP.",
     "currentUsage": "Current Storage Usage",
+    "dailyChit": {
+        "alreadyClaimed": "You have already claimed your daily CHIT. Come back tomorrow to extend your streak!",
+        "available": "Press the claim button to extend your streak!",
+        "claim": "Claim",
+        "extendStreak": "Extend streak",
+        "title": "CHIT Streak",
+        "viewStreak": "View streak"
+    },
     "dark": "dark",
     "days": "Days",
     "defaultMustBePublic": "Only a public channel can be a default",
@@ -1363,14 +1372,5 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
-    "dailyChit": {
-        "title": "CHIT Streak",
-        "claim": "Claim",
-        "extendStreak": "Extend streak",
-        "viewStreak": "View streak",
-        "available": "Press the claim button to extend your streak!",
-        "alreadyClaimed": "You have already claimed your daily CHIT. Come back tomorrow to extend your streak!"
-    },
-    "chitBalance": "CHIT balance"
+    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}"
 }

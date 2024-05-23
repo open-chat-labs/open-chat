@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "הצ'אט בוטל על ידי {unfrozenBy}",
     "chatWith": "צ'אט עם {username}",
     "checkBackLater": "בבקשה נסה שוב מאוחר יותר.",
+    "chitBalance": "איזון CHIT",
     "chooseAStorageLevel": "בחר רמת אחסון של עד 1GB לכל היותר",
     "chooseMembers": "בחר חברים",
     "chooseReaction": "בחר תגובה",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "מגבלת האחסון הנוכחית שלך היא {limit}GB ויתרת החשבון שלך היא {balance} ICP.",
     "currentUsage": "שימוש נוכחי באחסון",
+    "dailyChit": {
+        "alreadyClaimed": "כבר דרשת את ה-CHIT היומי שלך. תחזור מחר כדי להאריך את הרצף שלך!",
+        "available": "לחץ על כפתור התביעה כדי להאריך את הרצף שלך!",
+        "claim": "תְבִיעָה",
+        "extendStreak": "להאריך את הרצף",
+        "title": "רצף CHIT",
+        "viewStreak": "רצף צפייה"
+    },
     "dark": "אפל",
     "days": "ימים",
     "defaultMustBePublic": "רק ערוץ ציבורי יכול להיות ברירת מחדל",

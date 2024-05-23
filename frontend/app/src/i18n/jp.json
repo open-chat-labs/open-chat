@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "{unfrozenBy} によってフリーズ解除されたチャット",
     "chatWith": "{username}とチャット",
     "checkBackLater": "後でもう一度お試しください. ",
+    "chitBalance": "CHIT残高",
     "chooseAStorageLevel": "最大1GBまでのストレージレベルを選択",
     "chooseMembers": "メンバーを選択",
     "chooseReaction": "リアクションを選んでください",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "現在のストレージ制限は{limit} GBで、アカウントの残高は{balance} ICPです。",
     "currentUsage": "現在のストレージ使用量",
+    "dailyChit": {
+        "alreadyClaimed": "すでに毎日の CHIT を獲得しています。明日も戻ってきて、連続記録を伸ばしましょう!",
+        "available": "請求ボタンを押して連続記録を伸ばしましょう!",
+        "claim": "請求",
+        "extendStreak": "連勝を伸ばす",
+        "title": "CHIT ストリーク",
+        "viewStreak": "連続視聴数"
+    },
     "dark": "ダーク",
     "days": "日々",
     "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです",
