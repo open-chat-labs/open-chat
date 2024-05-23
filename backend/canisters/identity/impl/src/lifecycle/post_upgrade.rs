@@ -46,5 +46,7 @@ fn post_upgrade(args: Args) {
                 .skip_captcha_whitelist
                 .insert(CanisterId::from_text(canister_id).unwrap());
         }
+
+        state.data.user_principals.populate_originating_canisters();
     });
 }
