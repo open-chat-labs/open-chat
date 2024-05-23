@@ -1182,6 +1182,7 @@ dependencies = [
  "candid_gen",
  "chat_events",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -2314,6 +2315,7 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -2368,6 +2370,7 @@ dependencies = [
  "rand 0.8.5",
  "search",
  "serde",
+ "serde_bytes",
  "serializer",
  "stable_memory",
  "tracing",

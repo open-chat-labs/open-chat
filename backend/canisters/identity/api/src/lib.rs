@@ -1,6 +1,5 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use serde_bytes::ByteBuf;
 use types::TimestampNanos;
 
 mod lifecycle;
@@ -13,14 +12,16 @@ pub use updates::*;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Delegation {
-    pub pubkey: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub pubkey: Vec<u8>,
     pub expiration: TimestampNanos,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SignedDelegation {
     pub delegation: Delegation,
-    pub signature: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub signature: Vec<u8>,
 }
 
 pub type ChallengeKey = u32;

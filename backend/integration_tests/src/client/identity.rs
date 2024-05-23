@@ -13,15 +13,14 @@ pub mod happy_path {
     use candid::Principal;
     use identity_canister::SignedDelegation;
     use pocket_ic::PocketIc;
-    use serde_bytes::ByteBuf;
     use types::{CanisterId, TimestampMillis};
 
     pub fn create_identity(
         env: &mut PocketIc,
         sender: Principal,
         identity_canister_id: CanisterId,
-        public_key: ByteBuf,
-        session_key: ByteBuf,
+        public_key: Vec<u8>,
+        session_key: Vec<u8>,
     ) -> identity_canister::create_identity::SuccessResult {
         let response = super::create_identity(
             env,
@@ -45,7 +44,7 @@ pub mod happy_path {
         env: &mut PocketIc,
         sender: Principal,
         identity_canister_id: CanisterId,
-        session_key: ByteBuf,
+        session_key: Vec<u8>,
     ) -> identity_canister::prepare_delegation::SuccessResult {
         let response = super::prepare_delegation(
             env,
@@ -67,7 +66,7 @@ pub mod happy_path {
         env: &PocketIc,
         sender: Principal,
         identity_canister_id: CanisterId,
-        session_key: ByteBuf,
+        session_key: Vec<u8>,
         expiration: TimestampMillis,
     ) -> SignedDelegation {
         let response = super::get_delegation(
