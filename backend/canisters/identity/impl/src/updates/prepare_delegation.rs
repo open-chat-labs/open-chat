@@ -2,7 +2,6 @@ use crate::{delegation_signature_msg_hash, mutate_state, Delegation, RuntimeStat
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use identity_canister::prepare_delegation::{Response::*, *};
-use serde_bytes::ByteBuf;
 use types::Nanoseconds;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
@@ -29,7 +28,7 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
 
 pub(crate) fn prepare_delegation_inner(
     seed: [u8; 32],
-    session_key: ByteBuf,
+    session_key: Vec<u8>,
     max_time_to_live: Option<Nanoseconds>,
     state: &mut RuntimeState,
 ) -> SuccessResult {
@@ -46,7 +45,7 @@ pub(crate) fn prepare_delegation_inner(
     state.data.update_root_hash();
 
     SuccessResult {
-        user_key: ByteBuf::from(state.der_encode_canister_sig_key(seed)),
+        user_key: state.der_encode_canister_sig_key(seed),
         expiration,
     }
 }

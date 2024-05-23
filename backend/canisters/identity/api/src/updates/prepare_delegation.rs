@@ -1,11 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use types::{Nanoseconds, TimestampNanos};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub session_key: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub session_key: Vec<u8>,
     pub max_time_to_live: Option<Nanoseconds>,
 }
 
@@ -17,6 +17,7 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub user_key: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub user_key: Vec<u8>,
     pub expiration: TimestampNanos,
 }
