@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::{mutate_state, Data, RuntimeState};
@@ -31,10 +33,16 @@ fn post_upgrade(args: Args) {
     // TODO: Remove this - one time code to give CHIT to meme contest winners
     mutate_state(|state| {
         if !state.data.test_mode && state.data.chit_leaderboard.get().is_empty() {
-            give_chit_reward(state, "ab4g5-3qaaa-aaaar-aidhq-cai", 10000);
-            give_chit_reward(state, "27uaj-6iaaa-aaaar-au4cq-cai", 7000);
-            give_chit_reward(state, "pyd4k-raaaa-aaaar-arbza-cai", 5000);
+            ic_cdk_timers::set_timer(Duration::ZERO, reward_meme_winners);
         }
+    });
+}
+
+fn reward_meme_winners() {
+    mutate_state(|state| {
+        give_chit_reward(state, "ab4g5-3qaaa-aaaar-aidhq-cai", 10000);
+        give_chit_reward(state, "27uaj-6iaaa-aaaar-au4cq-cai", 7000);
+        give_chit_reward(state, "pyd4k-raaaa-aaaar-arbza-cai", 5000);
     });
 }
 
