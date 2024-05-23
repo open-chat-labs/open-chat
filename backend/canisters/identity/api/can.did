@@ -45,11 +45,7 @@ type CreateIdentityArgs = record {
 };
 
 type CreateIdentityResponse = variant {
-    Success : record {
-        "principal" : principal;
-        user_key : PublicKey;
-        expiration : TimestampNanoseconds;
-    };
+    Success : PrepareDelegationSuccess;
     AlreadyRegistered;
     PublicKeyInvalid : text;
     ChallengeRequired;
@@ -62,11 +58,13 @@ type PrepareDelegationArgs = record {
 };
 
 type PrepareDelegationResponse = variant {
-    Success : record {
-        user_key : PublicKey;
-        expiration : TimestampNanoseconds;
-    };
+    Success : PrepareDelegationSuccess;
     NotFound;
+};
+
+type PrepareDelegationSuccess = record {
+    user_key : PublicKey;
+    expiration : TimestampNanoseconds;
 };
 
 service : {

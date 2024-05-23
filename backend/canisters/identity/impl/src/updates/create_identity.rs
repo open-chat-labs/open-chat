@@ -35,12 +35,11 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    let (principal, seed) = state.push_new_user(caller, originating_canister);
+    let seed = state.push_new_user(caller, originating_canister);
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
     Success(SuccessResult {
-        principal,
         user_key: result.user_key,
         expiration: result.expiration,
     })
