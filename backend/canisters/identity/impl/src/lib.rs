@@ -37,25 +37,22 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn get_principal_from_seed(&self, seed: [u8; 32]) -> Principal {
-        let public_key = self.der_encode_canister_sig_key(seed);
-        Principal::self_authenticating(public_key)
-    }
-
     pub fn der_encode_canister_sig_key(&self, seed: [u8; 32]) -> Vec<u8> {
         let canister_id = self.env.canister_id();
         CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
     }
 
-    pub fn push_new_user(&mut self, auth_principal: Principal, originating_canister: CanisterId) -> (Principal, [u8; 32]) {
+    pub fn push_new_user(&mut self, auth_principal: Principal, originating_canister: CanisterId) -> [u8; 32] {
         let index = self.data.user_principals.next_index();
         let seed = self.data.calculate_seed(index);
-        let principal = self.get_principal_from_seed(seed);
+        let public_key = self.der_encode_canister_sig_key(seed);
+        let principal = Principal::self_authenticating(&public_key);
+
         self.data
             .user_principals
             .push(index, principal, auth_principal, originating_canister);
 
-        (principal, seed)
+        seed
     }
 
     pub fn metrics(&self) -> Metrics {
