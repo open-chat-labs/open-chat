@@ -46,7 +46,7 @@ impl RuntimeState {
         let index = self.data.user_principals.next_index();
         let seed = self.data.calculate_seed(index);
         let public_key = self.der_encode_canister_sig_key(seed);
-        let principal = Principal::self_authenticating(&public_key);
+        let principal = Principal::self_authenticating(public_key);
 
         self.data
             .user_principals
