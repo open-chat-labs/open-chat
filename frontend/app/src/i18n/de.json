@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "Chat von {unfrozenBy} freigegeben",
     "chatWith": "Chatten Sie mit {username}",
     "checkBackLater": "Bitte versuchen Sie es später erneut.",
+    "chitBalance": "CHIT-Guthaben",
     "chooseAStorageLevel": "Wählen Sie ein Speicherlimit bis maximal 1 GB",
     "chooseMembers": "Wähle Mitglieder",
     "chooseReaction": "Wähle ein Symbol",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "Ihr aktuelles Speicherlimit beträgt {limit} GB und Ihr Kontostand beträgt {balance} ICP.",
     "currentUsage": "Aktuelle Speichernutzung",
+    "dailyChit": {
+        "alreadyClaimed": "Sie haben Ihren täglichen CHIT bereits eingefordert. Kommen Sie morgen wieder, um Ihre Serie zu verlängern!",
+        "available": "Drücken Sie die Anspruchstaste, um Ihre Serie zu verlängern!",
+        "claim": "Beanspruchen",
+        "extendStreak": "Serie verlängern",
+        "title": "CHIT-Serie",
+        "viewStreak": "Streak anzeigen"
+    },
     "dark": "dunkel",
     "days": "Tage",
     "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein",

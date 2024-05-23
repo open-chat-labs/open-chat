@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "Chat débloqué par {unfrozenBy}",
     "chatWith": "Chattez avec {username}",
     "checkBackLater": "Veuillez réessayer plus tard.",
+    "chitBalance": "Solde CHIT",
     "chooseAStorageLevel": "Choisissez un niveau de stockage jusqu'à un maximum de 1 Go",
     "chooseMembers": "Choisissez les membres",
     "chooseReaction": "Choisissez une réaction",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "Votre limite de stockage actuelle est de {limit} Go et le solde de votre compte est de {balance} ICP.",
     "currentUsage": "Utilisation actuelle du stockage",
+    "dailyChit": {
+        "alreadyClaimed": "Vous avez déjà réclamé votre CHIT quotidien. Revenez demain pour prolonger votre séquence !",
+        "available": "Appuyez sur le bouton de réclamation pour prolonger votre séquence !",
+        "claim": "Réclamer",
+        "extendStreak": "Prolonger la séquence",
+        "title": "Série CHIT",
+        "viewStreak": "Voir la séquence"
+    },
     "dark": "foncé",
     "days": "Jours",
     "defaultMustBePublic": "Seul un canal public peut être un canal par défaut",

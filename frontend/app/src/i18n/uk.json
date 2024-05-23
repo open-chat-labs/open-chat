@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "Чат розморожено {unfrozenBy}",
     "chatWith": "Чат із {username}",
     "checkBackLater": "Будь-ласка спробуйте пізніше.",
+    "chitBalance": "CHIT баланс",
     "chooseAStorageLevel": "Виберіть рівень зберігання до 1 Гб",
     "chooseMembers": "Виберіть учасників",
     "chooseReaction": "Виберіть реакцію",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "Ваш поточний ліміт пам’яті становить {limit} ГБ, а баланс вашого облікового запису — {balance} ICP.",
     "currentUsage": "Поточне використання сховища",
+    "dailyChit": {
+        "alreadyClaimed": "Ви вже отримали свій щоденний CHIT. Приходьте завтра, щоб продовжити свою серію!",
+        "available": "Натисніть кнопку заявки, щоб продовжити свою серію!",
+        "claim": "Претензія",
+        "extendStreak": "Подовжити смугу",
+        "title": "CHIT Streak",
+        "viewStreak": "Смуга перегляду"
+    },
     "dark": "темний",
     "days": "днів",
     "defaultMustBePublic": "Лише загальнодоступний канал може бути стандартним",
