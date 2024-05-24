@@ -1788,6 +1788,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
+        prizes: [],
         prizes_v2: domain.prizes,
     };
 }
