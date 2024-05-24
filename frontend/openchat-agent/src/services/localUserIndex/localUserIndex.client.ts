@@ -6,15 +6,18 @@ import type {
     ChannelIdentifier,
     ChatEvent,
     ChatEventsArgs,
+    ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
     ChatIdentifier,
     EventsSuccessResult,
+    EventWrapper,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
+    MessageContext,
     RegisterUserResponse,
     VerifiedCredentialArgs,
 } from "openchat-shared";
@@ -33,11 +36,12 @@ import {
 } from "./mappers";
 import type { AgentConfig } from "../../config";
 import { joinGroupResponse, apiOptional, apiChatIdentifier } from "../common/chatMappers";
-import { textToCode } from "openchat-shared";
+import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 import {
     type Database,
     getCachedEvents,
+    getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
     setCachedEvents,
     setCachePrimerTimestamp,
@@ -95,45 +99,19 @@ export class LocalUserIndexClient extends CandidService {
     ): Promise<ChatEventsResponse[]> {
         // The responses must be ordered such that the response at index i matches the request at index i
         const responses = [] as ChatEventsResponse[];
+        const partialCachedResults = [] as EventWrapper<ChatEvent>[][];
         const requestsToBackend = [] as ChatEventsArgs[];
 
         for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
-            let fromCache: EventsSuccessResult<ChatEvent> | undefined = undefined;
 
-            if (request.args.kind === "page") {
-                const [cached, missing] = await getCachedEvents(
-                    this.db,
-                    request.args.eventIndexRange,
-                    request.context,
-                    request.args.startIndex,
-                    request.args.ascending,
-                    undefined,
-                    undefined,
-                    1,
-                );
-                if (missing.size === 0) {
-                    fromCache = cached;
-                }
-            } else if (request.args.kind === "window") {
-                const [cached, missing] = await getCachedEventsWindowByMessageIndex(
-                    this.db,
-                    request.args.eventIndexRange,
-                    request.context,
-                    request.args.midPoint,
-                    undefined,
-                    undefined,
-                    1,
-                );
-                if (missing.size === 0) {
-                    fromCache = cached;
-                }
-            }
-            if (fromCache !== undefined) {
+            const [cached, missing] = await this.getEventsFromCache(request.context, request.args);
+
+            if (missing.size === 0) {
                 // Insert the response into the index matching the request
                 responses[i] = {
                     kind: "success",
-                    result: fromCache,
+                    result: cached,
                 };
                 if (cachePrimer && request.latestKnownUpdate !== undefined) {
                     setCachePrimerTimestamp(
@@ -142,8 +120,18 @@ export class LocalUserIndexClient extends CandidService {
                         request.latestKnownUpdate,
                     );
                 }
-            } else {
+            } else if (missing.size > MAX_MISSING) {
                 requestsToBackend.push(request);
+            } else {
+                partialCachedResults[i] = cached.events;
+                requestsToBackend.push({
+                    context: request.context,
+                    args: {
+                        kind: "by_index",
+                        events: [...missing],
+                    },
+                    latestKnownUpdate: request.latestKnownUpdate,
+                });
             }
         }
 
@@ -173,6 +161,15 @@ export class LocalUserIndexClient extends CandidService {
                 // Insert the response into the first empty index, this will match the index of the request
                 for (let j = i; j <= responses.length; j++) {
                     if (responses[j] === undefined) {
+                        if (response.kind === "success") {
+                            const fromCache = partialCachedResults[j];
+                            if (fromCache !== undefined) {
+                                response.result.events = [
+                                    ...response.result.events,
+                                    ...fromCache,
+                                ].sort((a, b) => a.index - b.index);
+                            }
+                        }
                         responses[j] = response;
                         break;
                     }
@@ -181,6 +178,40 @@ export class LocalUserIndexClient extends CandidService {
         }
 
         return responses;
+    }
+
+    private async getEventsFromCache(
+        context: MessageContext,
+        args: ChatEventsArgsInner,
+    ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
+        if (args.kind === "page") {
+            return await getCachedEvents(
+                this.db,
+                args.eventIndexRange,
+                context,
+                args.startIndex,
+                args.ascending,
+                undefined,
+                undefined,
+                1,
+            );
+        }
+        if (args.kind === "window") {
+            const [cached, missing, _] = await getCachedEventsWindowByMessageIndex(
+                this.db,
+                args.eventIndexRange,
+                context,
+                args.midPoint,
+                undefined,
+                undefined,
+                1,
+            );
+            return [cached, missing];
+        }
+        if (args.kind === "by_index") {
+            return await getCachedEventsByIndex(this.db, args.events, context);
+        }
+        throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }
 
     private getChatEventsFromBackend(requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {

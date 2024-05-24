@@ -44,7 +44,7 @@ export class CachePrimer {
             }
 
             if (this.pending.size > 0 && this.runner === undefined) {
-                this.runner = new Poller(() => runOnceIdle(() => this.processNextBatch()), 0);
+                this.runner = new Poller(() => runOnceIdle(() => this.processNextBatch()), 500);
                 debug("runner started");
             }
         }
