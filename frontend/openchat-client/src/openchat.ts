@@ -808,7 +808,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     onCreatedUser(user: CreatedUser): void {
         this.user.set(user);
-        this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
         initialiseMostRecentSentMessageTimes(this._liveState.isDiamond);
         const id = this._ocIdentity;
@@ -5037,7 +5036,9 @@ export class OpenChat extends OpenChatAgentWorker {
             if (this._cachePrimer === undefined) {
                 this._cachePrimer = new CachePrimer(
                     this,
+                    this._liveState.user.userId,
                     chatsResponse.state.userCanisterLocalUserIndex,
+                    (ev) => this.dispatchEvent(ev),
                 );
             }
             this._cachePrimer.processChats(chats);

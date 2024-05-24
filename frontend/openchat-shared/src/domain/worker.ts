@@ -1159,12 +1159,6 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
-type SetCachePrimerTimestamp = {
-    chatIdentifierString: string;
-    timestamp: bigint;
-    kind: "setCachePrimerTimestamp";
-};
-
 type UpdateBtcBalance = {
     userId: string;
     kind: "updateBtcBalance";

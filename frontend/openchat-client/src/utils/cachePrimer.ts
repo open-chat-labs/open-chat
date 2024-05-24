@@ -1,12 +1,4 @@
-import type {
-    ChatEvent,
-    ChatEventsArgs,
-    ChatEventsResponse,
-    ChatSummary,
-    CreatedUser,
-    EventsResponse,
-    IndexRange,
-} from "openchat-shared";
+import type { ChatEventsArgs, ChatEventsResponse, ChatSummary } from "openchat-shared";
 import {
     ChatMap,
     compareChats,
@@ -33,6 +25,7 @@ export class CachePrimer {
 
     constructor(
         private api: OpenChat,
+        private userId: string,
         private userCanisterLocalUserIndex: string,
         private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
     ) {
@@ -70,9 +63,29 @@ export class CachePrimer {
             const responses = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
-            for (const response of responses) {
+            for (let i = 0; i < responses.length; i++) {
+                const request = batch[i];
+                const response = responses[i];
+
                 if (response.kind === "success") {
                     userIdsFromEvents(response.result.events).forEach((u) => userIds.add(u));
+                    response.result.events.forEach((e) => {
+                        if (
+                            e.event.kind === "message" &&
+                            e.event.sender !== this.userId &&
+                            e.event.content.kind === "video_call_content" &&
+                            e.event.content.callType === "default" &&
+                            e.event.content.ended === undefined
+                        ) {
+                            this.onVideoStart(
+                                new RemoteVideoCallStartedEvent(
+                                    request.context.chatId,
+                                    e.event.sender,
+                                    e.event.messageId,
+                                ),
+                            );
+                        }
+                    });
                 }
             }
 
@@ -184,7 +197,7 @@ export class CachePrimer {
                 return this.api.localUserIndexForCommunity(chat.id.communityId);
         }
     }
-  
+
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
         if (chat.membership.archived || isProposalsChat(chat)) return false;
 
