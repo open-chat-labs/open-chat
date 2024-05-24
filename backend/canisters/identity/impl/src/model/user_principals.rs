@@ -49,6 +49,21 @@ impl UserPrincipals {
         );
     }
 
+    pub fn link_auth_principal_with_existing_user(
+        &mut self,
+        new_principal: Principal,
+        originating_canister: CanisterId,
+        user_principal_index: u32,
+    ) {
+        self.auth_principals.insert(
+            new_principal,
+            AuthPrincipalInternal {
+                originating_canister,
+                user_principal_index,
+            },
+        );
+    }
+
     pub fn next_index(&self) -> u32 {
         self.user_principals.len().try_into().unwrap()
     }
@@ -57,6 +72,10 @@ impl UserPrincipals {
         self.auth_principals
             .get(auth_principal)
             .and_then(|a| self.user_principal_by_index(a.user_principal_index))
+    }
+
+    pub fn get_auth_principal(&self, auth_principal: &Principal) -> Option<AuthPrincipal> {
+        self.auth_principals.get(auth_principal).map(|a| a.into())
     }
 
     pub fn user_principals_count(&self) -> u32 {
@@ -75,5 +94,19 @@ impl UserPrincipals {
                 principal: u.principal,
                 auth_principals: u.auth_principals.clone(),
             })
+    }
+}
+
+pub struct AuthPrincipal {
+    pub originating_canister: CanisterId,
+    pub user_principal_index: u32,
+}
+
+impl From<&AuthPrincipalInternal> for AuthPrincipal {
+    fn from(value: &AuthPrincipalInternal) -> Self {
+        AuthPrincipal {
+            originating_canister: value.originating_canister,
+            user_principal_index: value.user_principal_index,
+        }
     }
 }

@@ -23,6 +23,7 @@ lazy_static! {
     pub static ref ONLINE_USERS: CanisterWasm = get_canister_wasm("online_users");
     pub static ref PROPOSALS_BOT: CanisterWasm = get_canister_wasm("proposals_bot");
     pub static ref REGISTRY: CanisterWasm = get_canister_wasm("registry");
+    pub static ref SIGN_IN_WITH_EMAIL: CanisterWasm = get_canister_wasm("sign_in_with_email");
     pub static ref SNS_WASM: CanisterWasm = get_canister_wasm("sns_wasm");
     pub static ref STORAGE_BUCKET: CanisterWasm = get_canister_wasm("storage_bucket");
     pub static ref STORAGE_INDEX: CanisterWasm = get_canister_wasm("storage_index");
