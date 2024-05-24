@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "{unfrozenBy} 解冻聊天",
     "chatWith": "与{username}聊天",
     "checkBackLater": "请稍后再试",
+    "chitBalance": "CHIT 余额",
     "chooseAStorageLevel": "选择最大为 1GB 的存储级别",
     "chooseMembers": "选择成员",
     "chooseReaction": "选择表情",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "您当前的存储限制为 {limit}GB，您的帐户余额为 {balance} ICP。",
     "currentUsage": "当前存储使用情况",
+    "dailyChit": {
+        "alreadyClaimed": "您已领取每日 CHIT。明天再来延长您的连续领取时间吧！",
+        "available": "按下领取按钮来延长你的连续记录！",
+        "claim": "宣称",
+        "extendStreak": "延长连胜",
+        "title": "CHIT 连胜",
+        "viewStreak": "查看连胜"
+    },
     "dark": "深色模式",
     "days": "天",
     "defaultMustBePublic": "只能默认公共频道",

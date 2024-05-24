@@ -221,7 +221,11 @@ export interface ChitEarned {
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
+export interface ChitUserBalance {
+  'username' : string,
+  'balance' : number,
+  'user_id' : UserId,
+}
 export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
   {
     'Success' : {

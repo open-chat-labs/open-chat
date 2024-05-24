@@ -10,4 +10,5 @@ candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
 chat_events = { path = "../../../libraries/chat_events" }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 types = { path = "../../../libraries/types" }

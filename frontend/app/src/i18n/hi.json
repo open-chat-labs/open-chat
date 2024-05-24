@@ -92,6 +92,7 @@
     "chatUnfrozenBy": "{unfrozenBy} द्वारा चैट को अनफ़्रोज़ किया गया",
     "chatWith": "{username} के साथ चैट करें",
     "checkBackLater": "कृपया बाद में पुन: प्रयास करें।",
+    "chitBalance": "चिट संतुलन",
     "chooseAStorageLevel": "अधिकतम 1 जीबी तक का स्टोरेज स्तर चुनें",
     "chooseMembers": "सदस्य चुनें",
     "chooseReaction": "एक प्रतिक्रिया चुनें",
@@ -260,6 +261,14 @@
     },
     "currentLimit": "आपकी वर्तमान संग्रहण सीमा {limit}GB है और आपके खाते की शेष राशि {balance} ICP है।",
     "currentUsage": "वर्तमान भंडारण उपयोग",
+    "dailyChit": {
+        "alreadyClaimed": "आपने पहले ही अपना दैनिक CHIT प्राप्त कर लिया है। अपना क्रम बढ़ाने के लिए कल पुनः आएँ!",
+        "available": "अपना क्रम बढ़ाने के लिए दावा बटन दबाएँ!",
+        "claim": "दावा",
+        "extendStreak": "लकीर बढ़ाएँ",
+        "title": "चिट स्ट्रीक",
+        "viewStreak": "लकीर देखें"
+    },
     "dark": "अँधेरा",
     "days": "दिन",
     "defaultMustBePublic": "केवल एक सार्वजनिक चैनल ही डिफ़ॉल्ट हो सकता है",

@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1182](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1182-user_index)] - 2024-05-23
+
 ### Added
 
 - Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
 - CHIT balance and streak per user ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
 - CHIT leaderboard ([#5820](https://github.com/open-chat-labs/open-chat/pull/5820))
+- Reward meme contest winners with CHIT ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
 
 ### Changed
 
