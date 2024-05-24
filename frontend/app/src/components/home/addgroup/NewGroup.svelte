@@ -74,8 +74,6 @@
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
 
-    $: console.log("GateDirty: ", gateDirty);
-
     $: {
         if (candidateGroup.public) {
             candidateGroup.permissions.startVideoCall = "admin";

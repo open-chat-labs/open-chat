@@ -8,7 +8,6 @@
     export let gate: AccessGate;
     export let showHeader = true;
 
-    $: console.log("AccessGate: ", gate);
     $: showDetails =
         isPaymentGate(gate) ||
         (isNeuronGate(gate) &&
