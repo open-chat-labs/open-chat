@@ -7,14 +7,21 @@
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { notFound, pathParams } from "../routes";
+    import { notFound, pageReplace, pathParams, routeForScope } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, UserLoggedIn, type DiamondMembershipFees } from "openchat-client";
+    import {
+        OpenChat,
+        UserLoggedIn,
+        type DiamondMembershipFees,
+        type ChatSummary,
+        type ChatIdentifier,
+        routeForChatIdentifier,
+    } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -32,6 +39,11 @@
     import Head from "./Head.svelte";
     import { snowing } from "../stores/snow";
     import Snow from "./Snow.svelte";
+    import ActiveCall from "./home/video/ActiveCall.svelte";
+    import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import { incomingVideoCall } from "../stores/video";
+    import IncomingCall from "./home/video/IncomingCall.svelte";
+
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
@@ -47,6 +59,7 @@
             openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
+            identityCanister: process.env.IDENTITY_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
             translationsCanister: process.env.TRANSLATIONS_CANISTER!,
@@ -54,10 +67,14 @@
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
+            videoBridgeUrl: process.env.VIDEO_BRIDGE_URL!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
+            signInWithEmailCanister: process.env.SIGN_IN_WITH_EMAIL_CANISTER!,
+            signInWithEthereumCanister: process.env.SIGN_IN_WITH_ETHEREUM_CANISTER!,
+            signInWithSolanaCanister: process.env.SIGN_IN_WITH_SOLANA_CANISTER!,
             i18nFormatter: $_,
             logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
@@ -69,9 +86,11 @@
     let client: OpenChat = createOpenChatClient();
 
     let profileTrace = client.showTrace();
+    let videoCallElement: ActiveCall;
 
     setContext<OpenChat>("client", client);
 
+    $: chatListScope = client.chatListScope;
     $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);
     $: anonUser = client.anonUser;
@@ -84,7 +103,7 @@
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
-            page.replace(removeQueryStringParam("ref"));
+            pageReplace(removeQueryStringParam("ref"))
         }
         calculateHeight();
 
@@ -352,6 +371,27 @@
         calculateHeight();
     }
 
+    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
+        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
+    }
+
+    function askToSpeak() {
+        videoCallElement?.askToSpeak();
+    }
+
+    function hangup() {
+        videoCallElement?.hangup();
+    }
+
+    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+        incomingVideoCall.set(undefined);
+        const chat = client.lookupChatSummary(ev.detail);
+        if (chat) {
+            page(routeForChatIdentifier("none", chat.id));
+            videoCallElement?.startOrJoinVideoCall(chat, true);
+        }
+    }
+
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
@@ -367,6 +407,14 @@
 
 <Head />
 
+<ActiveCall
+    on:clearSelection={() => page(routeForScope($chatListScope))}
+    bind:this={videoCallElement} />
+
+<VideoCallAccessRequests />
+
+<IncomingCall on:joinVideoCall={joinVideoCall} />
+
 <Witch background />
 
 {#if isCanisterUrl}
@@ -375,7 +423,11 @@
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router {showLandingPage} />
+        <Router
+            on:hangup={hangup}
+            on:askToSpeak={askToSpeak}
+            on:startVideoCall={startVideoCall}
+            {showLandingPage} />
     {/if}
 {/if}
 

@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use group_canister::edit_message_v2::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 
 #[update]
 #[trace]
@@ -33,10 +33,16 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content,
+            block_level_markdown: args.block_level_markdown,
             now,
         };
 
-        match state.data.chat.events.edit_message(edit_message_args) {
+        match state
+            .data
+            .chat
+            .events
+            .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
+        {
             EditMessageResult::Success => {
                 handle_activity_notification(state);
                 Success

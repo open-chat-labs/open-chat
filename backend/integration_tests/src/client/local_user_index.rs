@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
+generate_query_call!(access_token);
 generate_query_call!(chat_events);
 generate_query_call!(group_and_community_summary_updates);
 
@@ -16,20 +17,23 @@ generate_update_call!(register_user);
 generate_update_call!(report_message_v2);
 
 pub mod happy_path {
-    use crate::rng::random_user_principal;
     use crate::utils::principal_to_username;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
+    use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
 
-    pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
-        register_user_with_referrer(env, canister_id, None)
+    pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
+        register_user_with_referrer(env, principal, canister_id, public_key, None)
     }
 
-    pub fn register_user_with_referrer(env: &mut PocketIc, canister_id: CanisterId, referral_code: Option<String>) -> User {
-        let (principal, public_key) = random_user_principal();
-
+    pub fn register_user_with_referrer(
+        env: &mut PocketIc,
+        principal: Principal,
+        canister_id: CanisterId,
+        public_key: Vec<u8>,
+        referral_code: Option<String>,
+    ) -> User {
         let response = super::register_user(
             env,
             principal,
@@ -55,18 +59,19 @@ pub mod happy_path {
 
     pub fn invite_users_to_group(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
         user_ids: Vec<UserId>,
     ) {
         let response = super::invite_users_to_group(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
             &local_user_index_canister::invite_users_to_group::Args {
                 group_id,
                 user_ids,
+                caller_username: user.username(),
                 correlation_id: 0,
             },
         );
@@ -85,6 +90,7 @@ pub mod happy_path {
             &local_user_index_canister::join_group::Args {
                 chat_id,
                 invite_code: None,
+                verified_credential_args: None,
                 correlation_id: 0,
             },
         );
@@ -97,14 +103,14 @@ pub mod happy_path {
 
     pub fn add_users_to_group(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
         users: Vec<(UserId, Principal)>,
     ) {
         invite_users_to_group(
             env,
-            sender,
+            user,
             local_user_index_canister_id,
             group_id,
             users.iter().map(|(user_id, _)| *user_id).collect(),
@@ -119,16 +125,20 @@ pub mod happy_path {
 
     pub fn invite_users_to_community(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         user_ids: Vec<UserId>,
     ) {
         let response = super::invite_users_to_community(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
+            &local_user_index_canister::invite_users_to_community::Args {
+                community_id,
+                user_ids,
+                caller_username: user.username(),
+            },
         );
 
         match response {
@@ -139,7 +149,7 @@ pub mod happy_path {
 
     pub fn invite_users_to_channel(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         channel_id: ChannelId,
@@ -147,12 +157,13 @@ pub mod happy_path {
     ) {
         let response = super::invite_users_to_channel(
             env,
-            sender,
+            user.principal,
             local_user_index_canister_id,
             &local_user_index_canister::invite_users_to_channel::Args {
                 community_id,
                 channel_id,
                 user_ids,
+                caller_username: user.username(),
             },
         );
 
@@ -175,6 +186,7 @@ pub mod happy_path {
             &local_user_index_canister::join_community::Args {
                 community_id,
                 invite_code: None,
+                verified_credential_args: None,
             },
         );
 
@@ -199,6 +211,7 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 invite_code: None,
+                verified_credential_args: None,
             },
         );
 
@@ -211,14 +224,14 @@ pub mod happy_path {
 
     pub fn add_users_to_community(
         env: &mut PocketIc,
-        sender: Principal,
+        user: &User,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
         users: Vec<(UserId, Principal)>,
     ) {
         invite_users_to_community(
             env,
-            sender,
+            user,
             local_user_index_canister_id,
             community_id,
             users.iter().map(|(user_id, _)| *user_id).collect(),
@@ -229,5 +242,29 @@ pub mod happy_path {
         }
 
         env.tick();
+    }
+
+    pub fn access_token(
+        env: &PocketIc,
+        sender: &User,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        token_type: AccessTokenType,
+    ) -> String {
+        let response = super::access_token(
+            env,
+            sender.principal,
+            local_user_index_canister_id,
+            &local_user_index_canister::access_token::Args {
+                token_type,
+                chat: Chat::Channel(community_id, channel_id),
+            },
+        );
+
+        match response {
+            local_user_index_canister::access_token::Response::Success(token) => token,
+            response => panic!("'access_token' error: {response:?}"),
+        }
     }
 }

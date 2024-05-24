@@ -5,12 +5,17 @@ use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
+use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use chat_events::OPENCHAT_BOT_USER_ID;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
+use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
@@ -19,6 +24,7 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
     TimestampMillis, Timestamped, UserId,
@@ -27,6 +33,7 @@ use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
+use utils::time::MINUTE_IN_MS;
 
 mod crypto;
 mod governance_clients;
@@ -93,6 +100,11 @@ impl RuntimeState {
         self.data.communities.exists(&caller.into())
     }
 
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
+    }
+
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
         let args = c2c_push_notification::Args {
             recipients: vec![recipient],
@@ -127,13 +139,16 @@ impl RuntimeState {
     }
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
-        self.data.user_canister_events_queue.push(canister_id, event);
-        jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+        if canister_id != OPENCHAT_BOT_USER_ID.into() {
+            self.data.user_canister_events_queue.push(canister_id, event);
+            jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -144,6 +159,9 @@ impl RuntimeState {
             blocked_users: self.data.blocked_users.len() as u32,
             created: self.data.user_created,
             direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
+            event_store_client_info: self.data.event_store_client.info(),
+            video_call_operators: self.data.video_call_operators.clone(),
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -191,6 +209,11 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
+    pub video_call_operators: Vec<Principal>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
+    pub pin_number: PinNumber,
+    pub btc_address: Option<String>,
+    pub chit_events: ChitEarnedEvents,
     pub rng_seed: [u8; 32],
 }
 
@@ -204,6 +227,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
         username: String,
         test_mode: bool,
         now: TimestampMillis,
@@ -241,6 +265,13 @@ impl Data {
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: CanisterEventSyncQueue::default(),
+            video_call_operators,
+            event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+                .build(),
+            pin_number: PinNumber::default(),
+            btc_address: None,
+            chit_events: ChitEarnedEvents::default(),
             rng_seed: [0; 32],
         }
     }
@@ -274,12 +305,23 @@ impl Data {
         }
         Some(community)
     }
+
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
@@ -289,6 +331,9 @@ pub struct Metrics {
     pub blocked_users: u32,
     pub created: TimestampMillis,
     pub direct_chat_metrics: ChatMetrics,
+    pub event_store_client_info: EventStoreClientInfo,
+    pub video_call_operators: Vec<Principal>,
+    pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
 }
 

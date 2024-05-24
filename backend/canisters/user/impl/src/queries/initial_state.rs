@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::UserId;
 use user_canister::initial_state::{Response::*, *};
 
@@ -44,6 +44,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         avatar_id,
         blocked_users,
         suspended: state.data.suspended.value,
+        pin_number_settings: state.data.pin_number.enabled().then(|| state.data.pin_number.settings(now)),
         local_user_index_canister_id: state.data.local_user_index_canister_id,
     })
 }

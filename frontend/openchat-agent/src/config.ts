@@ -1,3 +1,4 @@
+import type { GroupInvite } from "openchat-shared";
 import type { Logger } from "openchat-shared";
 
 export type AgentConfig = {
@@ -10,6 +11,7 @@ export type AgentConfig = {
     userIndexCanister: string;
     translationsCanister: string;
     registryCanister: string;
+    identityCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
     userGeekApiKey: string;
@@ -17,5 +19,9 @@ export type AgentConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
+    signInWithEmailCanister: string;
+    signInWithEthereumCanister: string;
+    signInWithSolanaCanister: string;
+    groupInvite?: GroupInvite;
     logger: Logger;
 };

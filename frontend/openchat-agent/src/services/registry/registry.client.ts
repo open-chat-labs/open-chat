@@ -8,7 +8,9 @@ import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
 export class RegistryClient extends CandidService {
-    private service: RegistryService;
+    private readonly service: RegistryService;
+    private readonly blobUrlPattern: string;
+    private readonly canisterId: string;
 
     private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
@@ -16,8 +18,10 @@ export class RegistryClient extends CandidService {
         this.service = this.createServiceClient<RegistryService>(
             idlFactory,
             config.registryCanister,
-            config
+            config,
         );
+        this.blobUrlPattern = config.blobUrlPattern;
+        this.canisterId = config.registryCanister;
     }
 
     static create(identity: Identity, config: AgentConfig): RegistryClient {
@@ -26,28 +30,30 @@ export class RegistryClient extends CandidService {
 
     updates(since?: bigint): Promise<RegistryUpdatesResponse> {
         const args = {
-            since: apiOptional(identity, since)
+            since: apiOptional(identity, since),
         };
-        return this.handleQueryResponse(() => this.service.updates(args), updatesResponse);
+        return this.handleQueryResponse(
+            () => this.service.updates(args),
+            (resp) => updatesResponse(resp, this.blobUrlPattern, this.canisterId),
+        );
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
-        return this.handleResponse(
-            this.service.add_message_filter({ regex }), 
-            (resp) => {
-                if ("Success" in resp) {
-                    console.log(`New message filter id: ${resp.Success}`);
-                    return true;
-                } else {
-                    console.debug("Error calling add_message_filter", resp);
-                    return false;
-                }
-            });
+        return this.handleResponse(this.service.add_message_filter({ regex }), (resp) => {
+            if ("Success" in resp) {
+                console.log(`New message filter id: ${resp.Success}`);
+                return true;
+            } else {
+                console.debug("Error calling add_message_filter", resp);
+                return false;
+            }
+        });
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this.handleResponse(
-            this.service.remove_message_filter({ id }), 
-            (resp) => "Success" in resp);        
+            this.service.remove_message_filter({ id }),
+            (resp) => "Success" in resp,
+        );
     }
 }

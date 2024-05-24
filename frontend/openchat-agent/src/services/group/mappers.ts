@@ -129,6 +129,7 @@ export function groupChatSummary(
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
         localUserIndex: candid.local_user_index_canister_id.toString(),
+        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 
@@ -182,6 +183,7 @@ export function groupChatSummaryUpdates(
         rulesAccepted: optional(candid.rules_accepted, identity),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
+        videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 
@@ -209,6 +211,7 @@ export function apiOptionalGroupPermissions(
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
+        start_video_call: apiOptional(apiPermissionRole, permissions.startVideoCall),
         message_permissions: apiOptional(
             apiOptionalMessagePermissions,
             permissions.messagePermissions,
@@ -240,7 +243,8 @@ function apiOptionalMessagePermissions(
         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
-        p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
+        // p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
+        video_call: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
     };

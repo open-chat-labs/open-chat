@@ -45,6 +45,7 @@ const defaultGroupChat: GroupChatSummary = {
         inviteUsers: "admin",
         reactToMessages: "member",
         mentionAllMembers: "member",
+        startVideoCall: "admin",
         messagePermissions: {
             default: "member",
         },
@@ -90,6 +91,8 @@ function createUser(userId: string, username: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     };
 }
 
@@ -114,7 +117,7 @@ describe("thread utils", () => {
                             edited: false,
                             forwarded: false,
                             deleted: false,
-                            lastUpdated: undefined,
+                            blockLevelMarkdown: false,
                         },
                     },
                 ],

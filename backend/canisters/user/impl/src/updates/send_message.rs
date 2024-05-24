@@ -1,24 +1,21 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::{
-    DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
-};
+use crate::model::pin_number::VerifyPinError;
+use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use candid::Principal;
-use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
     EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
     UserId,
 };
-use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
-use user_canister::UserCanisterEvent;
+use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
 use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
@@ -28,7 +25,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let (my_user_id, user_type) = match read_state(|state| validate_request(&args, state)) {
+    let (my_user_id, user_type) = match mutate_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(u, t) => (u, t),
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(u, local_user_index_canister_id) => {
@@ -135,7 +132,7 @@ enum ValidateRequestResult {
     RecipientUnknown(UserId, CanisterId), // UserId, UserIndexCanisterId
 }
 
-fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult {
+fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestResult {
     if state.data.suspended.value {
         return ValidateRequestResult::Invalid(UserSuspended);
     }
@@ -157,8 +154,18 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     }
 
     let now = state.env.now();
-
     let my_user_id: UserId = state.env.canister_id().into();
+
+    if args.content.contains_crypto_transfer() {
+        if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+            return ValidateRequestResult::Invalid(match error {
+                VerifyPinError::PinRequired => PinRequired,
+                VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+                VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+            });
+        }
+    }
+
     if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
@@ -205,51 +212,43 @@ fn send_message_impl(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
-    let my_user_id = state.env.canister_id().into();
+    let this_canister_id = state.env.canister_id();
+    let sender: UserId = this_canister_id.into();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
     } else {
-        args.content.clone().try_into().unwrap()
+        args.content.into()
     };
 
     let push_message_args = PushMessageArgs {
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
-        sender: my_user_id,
+        sender,
         content: content.clone(),
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
+        sender_is_bot: false,
+        block_level_markdown: args.block_level_markdown,
         correlation_id: args.correlation_id,
         now,
     };
 
-    let message_event = state
-        .data
-        .direct_chats
-        .push_message(true, recipient, None, push_message_args, user_type.is_bot());
+    let chat = if let Some(c) = state.data.direct_chats.get_mut(&recipient.into()) {
+        c
+    } else {
+        state
+            .data
+            .direct_chats
+            .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
+    };
 
-    let mut is_next_event_to_expire = false;
-    if let Some(expiry) = message_event.expires_at {
-        is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
-        if is_next_event_to_expire {
-            state.data.next_event_expiry = Some(expiry);
-        }
-    }
-
-    register_timer_jobs(
-        args.recipient.into(),
-        args.message_id,
-        &message_event,
-        Vec::new(),
-        is_next_event_to_expire,
-        now,
-        &mut state.data.timer_jobs,
-    );
+    let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
+            thread_root_message_id: args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
             content,
@@ -257,22 +256,16 @@ fn send_message_impl(
                 if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                     Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
                 } else {
-                    state
-                        .data
-                        .direct_chats
-                        .get(&args.recipient.into())
-                        .and_then(|chat| {
-                            chat.events
-                                .main_events_reader()
-                                .message_internal(r.event_index.into())
-                                .map(|m| m.message_id)
-                        })
+                    chat.events
+                        .main_events_reader()
+                        .message_internal(r.event_index.into())
+                        .map(|m| m.message_id)
                         .map(C2CReplyContext::ThisChat)
                 }
             }),
             forwarding: args.forwarding,
+            block_level_markdown: args.block_level_markdown,
             message_filter_failed: args.message_filter_failed,
-            correlation_id: args.correlation_id,
         };
 
         let sender_name = state.data.username.value.clone();
@@ -287,7 +280,7 @@ fn send_message_impl(
         } else {
             state.push_user_canister_event(
                 recipient.into(),
-                UserCanisterEvent::SendMessages(Box::new(c2c_send_messages_v2::Args {
+                UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
                     messages: vec![send_message_args],
                     sender_name,
                     sender_display_name,
@@ -296,6 +289,16 @@ fn send_message_impl(
             );
         }
     }
+
+    register_timer_jobs(
+        recipient.into(),
+        args.thread_root_message_index,
+        args.message_id,
+        &message_event,
+        Vec::new(),
+        now,
+        &mut state.data,
+    );
 
     if let Some(transfer) = completed_transfer {
         TransferSuccessV2(TransferSuccessV2Result {
@@ -321,28 +324,27 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
     match bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
         Ok(bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
-                let now = state.env.now();
-                for message in result.messages {
-                    let push_message_args = PushMessageArgs {
-                        sender: recipient,
-                        thread_root_message_index: None,
-                        message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                        content: message.content.try_into().unwrap(),
-                        mentioned: Vec::new(),
-                        replies_to: None,
-                        forwarded: false,
-                        correlation_id: 0,
-                        now,
-                    };
-                    state
-                        .data
-                        .direct_chats
-                        .push_message(false, recipient, None, push_message_args, true);
-                }
-
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-                    // Mark that the bot has read the message we just sent
-                    chat.mark_read_up_to(message_index, false, now);
+                    let now = state.env.now();
+                    for message in result.messages {
+                        let push_message_args = PushMessageArgs {
+                            sender: recipient,
+                            thread_root_message_index: None,
+                            message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
+                            content: message.content.into(),
+                            mentioned: Vec::new(),
+                            replies_to: None,
+                            forwarded: false,
+                            sender_is_bot: false,
+                            block_level_markdown: args.block_level_markdown,
+                            correlation_id: 0,
+                            now,
+                        };
+                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
+
+                        // Mark that the bot has read the message we just sent
+                        chat.mark_read_up_to(message_index, false, now);
+                    }
                 }
             });
         }
@@ -354,16 +356,16 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
 
 pub(crate) fn register_timer_jobs(
     chat_id: ChatId,
+    thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
-    is_next_event_to_expire: bool,
     now: TimestampMillis,
-    timer_jobs: &mut TimerJobs<TimerJob>,
+    data: &mut Data,
 ) {
     if !file_references.is_empty() {
         if let Some(expiry) = message_event.expires_at {
-            timer_jobs.enqueue_job(
+            data.timer_jobs.enqueue_job(
                 TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
                 expiry,
                 now,
@@ -371,16 +373,15 @@ pub(crate) fn register_timer_jobs(
         }
     }
 
-    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
-        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    if let Some(expiry) = message_event.expires_at {
+        data.handle_event_expiry(expiry, now);
     }
 
     if let MessageContent::P2PSwap(c) = &message_event.event.content {
-        timer_jobs.enqueue_job(
+        data.timer_jobs.enqueue_job(
             TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
                 chat_id,
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id,
             })),
             c.expires_at,

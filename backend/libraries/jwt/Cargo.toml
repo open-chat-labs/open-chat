@@ -1,0 +1,17 @@
+[package]
+name = "jwt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+ct-codecs = { workspace = true }
+hmac-sha256 = { workspace = true }
+p256 = { workspace = true, features = ["ecdsa", "pkcs8"] }
+p256_key_pair = { path = "../p256_key_pair" }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+types = { path = "../types" }

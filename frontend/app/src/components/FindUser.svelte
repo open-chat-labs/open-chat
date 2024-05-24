@@ -1,35 +1,30 @@
 <script lang="ts">
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { AvatarSize } from "openchat-client";
     import type { UserSummary } from "openchat-client";
-    import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
-    import FilteredUsername from "./FilteredUsername.svelte";
-    import Diamond from "./icons/Diamond.svelte";
     import { i18nKey } from "../i18n/i18n";
     import { translatable } from "../actions/translatable";
-
-    const client = getContext<OpenChat>("client");
+    import MatchingUser from "./MatchingUser.svelte";
+    import Translatable from "./Translatable.svelte";
+    import { trimLeadingAtSymbol } from "../utils/user";
 
     export let mode: "add" | "edit";
     export let enabled = true;
-    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
+    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
     let timer: number | undefined = undefined;
     let searchTerm: string = "";
+    let communityMembers: UserSummary[] = [];
     let users: UserSummary[] = [];
     let searching: boolean = false;
     let hovering = false;
-
-    $: createdUser = client.user;
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -41,8 +36,8 @@
      * This is used both for starting a new direct chat and also for adding a member to a group chat
      */
 
-    function onSelect(user: UserSummary) {
-        dispatch("selectUser", user);
+    function onSelect(ev: CustomEvent<UserSummary>) {
+        dispatch("selectUser", ev.detail);
         searchTerm = "";
         users = [];
         inp.focus();
@@ -57,14 +52,17 @@
             }
             searching = true;
             userLookup(value)
-                .then((u) => (users = u))
+                .then((p) => {
+                    communityMembers = p[0];
+                    users = p[1];
+                })
                 .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
                 .finally(() => (searching = false));
         }, 350);
     }
 
     function onInput() {
-        debounce(inp.value);
+        debounce(trimLeadingAtSymbol(inp.value));
     }
 
     function clearFilter() {
@@ -93,34 +91,19 @@
     {#if searching}
         <Loading />
     {:else}
-        {#each users as user (user.userId)}
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div
-                class="user"
-                on:click={() => onSelect(user)}
-                on:mouseenter={() => (hovering = true)}
-                on:mouseleave={() => (hovering = false)}>
-                <span class="avatar">
-                    <Avatar
-                        statusBorder={hovering ? "var(--members-hv)" : "transparent"}
-                        showStatus
-                        userId={user.userId}
-                        url={client.userAvatarUrl(user)}
-                        size={AvatarSize.Default} />
-                </span>
-                <div class="details">
-                    <h4>
-                        <FilteredUsername
-                            {searchTerm}
-                            me={user.userId === $createdUser.userId}
-                            username={user.displayName ?? user.username} />
-                        <Diamond status={user.diamondStatus} />
-                    </h4>
-                    <div class="username">
-                        <FilteredUsername {searchTerm} username={"@" + user.username} />
-                    </div>
-                </div>
+        {#if communityMembers?.length > 0}
+            <div class="sub-heading">
+                <Translatable resourceKey={i18nKey("communityMembers")} />
             </div>
+            {#each communityMembers as user (user.userId)}
+                <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
+            {/each}
+        {/if}
+        {#if communityMembers?.length > 0 && users?.length > 0}
+            <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
+        {/if}
+        {#each users as user (user.userId)}
+            <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
         {/each}
     {/if}
 </div>
@@ -167,44 +150,6 @@
 
         &::placeholder {
             color: var(--placeholder);
-        }
-    }
-
-    .user {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--txt);
-        padding: $sp4;
-        margin: 0 0 $sp3 0;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        cursor: pointer;
-        gap: 12px;
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--members-hv);
-            }
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-    }
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 0 5px;
-
-        .username {
-            font-weight: 200;
-            color: var(--txt-light);
         }
     }
 

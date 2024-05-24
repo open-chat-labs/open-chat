@@ -19,7 +19,6 @@ import type {
     EventsResponse,
     ExploreChannelsResponse,
     FollowThreadResponse,
-    GateCheckFailedReason,
     GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
@@ -84,6 +83,7 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
+    gateCheckFailedReason,
     groupPermissions,
     groupSubtype,
     memberRole,
@@ -94,7 +94,6 @@ import {
     threadDetails,
     userGroup,
 } from "../common/chatMappers";
-import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
@@ -163,32 +162,8 @@ function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
 function userFailedGateCheck(candid: ApiUserFailedGateCheck): UserFailedGateCheck {
     return {
         userId: candid.user_id.toString(),
-        reason: failedGateCheckReason(candid.reason),
+        reason: gateCheckFailedReason(candid.reason),
     };
-}
-
-function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
-    if ("NotDiamondMember" in candid) {
-        return "not_diamond";
-    }
-    if ("NoSnsNeuronsFound" in candid) {
-        return "no_sns_neuron_found";
-    }
-    if ("NoSnsNeuronsWithRequiredDissolveDelayFound" in candid) {
-        return "dissolve_delay_not_met";
-    }
-    if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
-        return "min_stake_not_met";
-    }
-    if ("PaymentFailed" in candid) {
-        console.warn("PaymentFailed: ", candid);
-        return "payment_failed";
-    }
-    if ("InsufficientBalance" in candid) {
-        return "insufficient_balance";
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 
 function addToChannelPartialSuccess(
@@ -460,6 +435,7 @@ export function communityChannelUpdates(
         latestMessage: optional(candid.latest_message, messageEvent),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
+        videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 
@@ -576,8 +552,7 @@ export function apiOptionalCommunityPermissions(
             apiCommunityPermissionRole,
             permissions.createPrivateChannel,
         ),
-        // TODO
-        manage_user_groups: [],
+        manage_user_groups: apiOptional(apiCommunityPermissionRole, permissions.manageUserGroups),
     };
 }
 

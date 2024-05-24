@@ -1,6 +1,6 @@
 use crate::model::users::FileStatusInternal;
 use crate::{mutate_state, RuntimeState, DATA_LIMIT_BYTES};
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use storage_index_canister::c2c_sync_bucket::{Args, Response, SuccessResult};
 use types::CanisterId;
 

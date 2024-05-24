@@ -8,4 +8,4 @@ export interface _SERVICE {
   'get_latest' : ActorMethod<[], Array<LatestTokenRow>>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

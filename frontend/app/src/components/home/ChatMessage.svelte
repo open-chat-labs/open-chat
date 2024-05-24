@@ -1,7 +1,6 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import page from "page";
     import Link from "../Link.svelte";
     import { fade } from "svelte/transition";
     import {
@@ -17,7 +16,6 @@
         type ChatIdentifier,
         type ChatType,
         routeForMessage,
-        type PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -42,7 +40,7 @@
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { pathParams } from "../../routes";
+    import { pageReplace, pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
@@ -54,9 +52,11 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import { filterRightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
-    import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import WithRole from "./profile/WithRole.svelte";
+    import RoleIcon from "./profile/RoleIcon.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -107,7 +107,6 @@
         msg.content.kind === "prize_content" ||
         msg.content.kind === "p2p_swap_content";
     let poll = msg.content.kind === "poll_content";
-    let canRevealDeleted = false;
     let showRemindMe = false;
     let showReport = false;
     let messageMenu: ChatMessageMenu;
@@ -146,12 +145,20 @@
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
     $: canRevealBlocked = msg.content.kind === "blocked_content";
+    $: deletedByMe = msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId;
+    $: permanentlyDeleted =
+        deletedByMe &&
+        me &&
+        msg.content.kind === "deleted_content" &&
+        Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
+    $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
 
     onMount(() => {
         if (!readByMe) {
@@ -164,28 +171,19 @@
 
         recalculateMediaDimensions();
 
-        return now.subscribe((t) => {
-            canRevealDeleted =
-                !undeleting &&
-                msg.content.kind === "deleted_content" &&
-                ((canDelete && msg.content.deletedBy !== msg.sender) ||
-                    (msg.sender === user.userId &&
-                        // Only allow viewing of your own message for 5 minutes after deleting it
-                        (msg.content.deletedBy !== msg.sender ||
-                            t - Number(msg.content.timestamp) < 5 * 60 * 1000)));
-
-            if (expiresAt !== undefined) {
+        if (expiresAt !== undefined) {
+            return now.subscribe((t) => {
                 const ttl = expiresAt ? expiresAt - Number(timestamp) : 0;
-                const age = $now - Number(timestamp);
+                const age = t - Number(timestamp);
                 const expired = age > ttl;
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
                     filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-                    page.replace(removeQueryStringParam("open"));
+                    pageReplace(removeQueryStringParam("open"));
                 }
-            }
-        });
+            });
+        }
     });
 
     onDestroy(() => {
@@ -371,17 +369,6 @@
     $: canForward = client.canForward(msg.content);
     $: canTranslate = (client.getMessageText(msg.content) ?? "").length > 0;
 
-    function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
-        tipping = undefined;
-        const transfer = ev.detail;
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
-        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
-            if (resp.kind !== "success") {
-                toastStore.showFailureToast(i18nKey("tip.failure"));
-            }
-        });
-    }
-
     function reportMessage() {
         showReport = true;
     }
@@ -394,7 +381,12 @@
 <svelte:window on:resize={recalculateMediaDimensions} />
 
 {#if tipping !== undefined}
-    <TipBuilder ledger={tipping} on:send={sendTip} on:close={() => (tipping = undefined)} {msg} />
+    <TipBuilder
+        ledger={tipping}
+        on:close={() => (tipping = undefined)}
+        {msg}
+        {messageContext}
+        {user} />
 {/if}
 
 {#if showEmojiPicker && canReact}
@@ -491,7 +483,21 @@
                                 <h4 class="username" class:fill class:crypto>
                                     {senderDisplayName}
                                 </h4>
-                                <Diamond status={sender?.diamondStatus} />
+                                <Badges diamondStatus={sender?.diamondStatus} streak={sender?.streak ?? 0} />
+                                {#if sender !== undefined && multiUserChat}
+                                    <WithRole
+                                        userId={sender.userId}
+                                        chatMembers={$chatMembersMap}
+                                        communityMembers={$communityMembers}
+                                        let:chatRole
+                                        let:communityRole>
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={chatType === "channel" ? "channel" : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    </WithRole>
+                                {/if}
                             </Link>
                             {#if senderTyping}
                                 <span class="typing">
@@ -535,16 +541,19 @@
                         {undeleting}
                         {intersecting}
                         {failed}
+                        {timestamp}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}
                         content={msg.content}
                         edited={msg.edited}
                         height={mediaCalculatedHeight}
+                        blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview
                         on:registerVote={registerVote}
                         on:goToMessageIndex
                         on:upgrade
+                        on:startVideoCall
                         on:expandMessage />
 
                     {#if !inert && !isPrize}
@@ -566,6 +575,7 @@
                     {/if}
 
                     {#if debug}
+                        <pre>Sender: {msg.sender}</pre>
                         <pre>EventIdx: {eventIndex}</pre>
                         <pre>MsgIdx: {msg.messageIndex}</pre>
                         <pre>MsgId: {msg.messageId}</pre>
@@ -704,6 +714,12 @@
         :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
             background-color: var(--icon-hv);
         }
+    }
+
+    :global(.message .sender .never) {
+        display: inline-flex;
+        gap: $sp2;
+        align-items: center;
     }
 
     :global(.message .loading) {

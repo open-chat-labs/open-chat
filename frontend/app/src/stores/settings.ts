@@ -7,11 +7,15 @@ export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);
+export const videoCameraOn = createLsBoolStore(configKeys.videoCameraOn, true);
+export const videoMicOn = createLsBoolStore(configKeys.videoMicOn, true);
+export const videoSpeakerView = createLsBoolStore(configKeys.videoSpeakerView, false);
 export const dclickReply = createLsBoolStore(configKeys.dclickReply, true);
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
 export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);
 export const chatsSectionOpen = createLsBoolStore(configKeys.chatsSection, false);
 export const restrictedSectionOpen = createLsBoolStore(configKeys.restrictedSection, false);
+export const videoSectionOpen = createLsBoolStore(configKeys.videoSection, false);
 export const referralOpen = createLsBoolStore(configKeys.referralSection, false);
 export const storageSectionOpen = createLsBoolStore(configKeys.storageSection, false);
 export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
@@ -25,6 +29,9 @@ export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUser
 export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSection, false);
 export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroupsDismissed, false);
 export const browseChannels = createLsBoolStore(configKeys.browseChannels, true);
+export const useBlockLevelMarkdown = createLsBoolStore(configKeys.useBlockLevelMarkdown, false);
+export const pinEnabledStore = createLsBoolStore(configKeys.pinEnabled, false);
+export const chitEnabledStore = createLsBoolStore(configKeys.chitEnabled, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

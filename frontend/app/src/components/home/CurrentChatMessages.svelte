@@ -357,6 +357,7 @@
                         on:upgrade
                         on:forward
                         on:retrySend
+                        on:startVideoCall
                         event={evt} />
                 {/each}
             {/each}

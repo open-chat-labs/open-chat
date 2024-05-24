@@ -3,10 +3,17 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
+  'pin' : [] | [string],
   'user_id' : UserId,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
-export type AcceptP2PSwapResponse = { 'ChatNotFound' : null } |
+export type AcceptP2PSwapResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'ChatNotFound' : null } |
   { 'Success' : AcceptSwapSuccess } |
   { 'UserSuspended' : null } |
   { 'StatusError' : SwapStatusError } |
@@ -22,6 +29,10 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export type AccessTokenType = { 'JoinVideoCall' : null } |
+  { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -59,12 +70,18 @@ export interface AddedToChannelNotification {
   'channel_avatar_id' : [] | [bigint],
 }
 export interface ApproveTransferArgs {
+  'pin' : [] | [string],
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
   'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
-export type ApproveTransferResponse = { 'ApproveError' : ICRC2_ApproveError } |
+export type ApproveTransferResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'ApproveError' : ICRC2_ApproveError } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface ArchiveUnarchiveChatsArgs {
@@ -110,6 +127,10 @@ export interface BuildVersion {
 export interface CachedGroupChatSummaries {
   'summaries' : Array<GroupChatSummary>,
   'timestamp' : TimestampMillis,
+}
+export interface CallParticipant {
+  'user_id' : UserId,
+  'joined' : TimestampMillis,
 }
 export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
 export type CancelMessageReminderResponse = { 'Success' : null };
@@ -266,6 +287,21 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
+export interface ChitEarned {
+  'timestamp' : TimestampMillis,
+  'amount' : number,
+  'reason' : ChitEarnedReason,
+}
+export type ChitEarnedReason = { 'DailyClaim' : null } |
+  { 'Achievement' : string };
+export interface ChitEventsArgs {
+  'max' : number,
+  'from' : [] | [TimestampMillis],
+  'ascending' : boolean,
+}
+export type ChitEventsResponse = {
+    'Success' : { 'total' : number, 'events' : Array<ChitEarned> }
+  };
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
 }
@@ -278,6 +314,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -302,6 +339,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
@@ -567,6 +605,7 @@ export type DiamondMembershipSubscription = { 'OneYear' : null } |
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
+  'video_call_in_progress' : [] | [VideoCall],
   'date_created' : TimestampMillis,
   'metrics' : ChatMetrics,
   'them' : UserId,
@@ -583,6 +622,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'notifications_muted' : [] | [boolean],
   'latest_message_index' : [] | [MessageIndex],
@@ -659,12 +699,20 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserBlocked' : null };
 export interface EditMessageV2Args {
   'content' : MessageContentInitial,
+  'block_level_markdown' : [] | [boolean],
   'user_id' : UserId,
   'correlation_id' : bigint,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EmptyArgs = {};
+export interface EndVideoCallArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type EndVideoCallResponse = { 'AlreadyEnded' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'user_id' : UserId,
@@ -681,7 +729,8 @@ export interface EventsByIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type EventsResponse = { 'ChatNotFound' : null } |
+export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
@@ -745,7 +794,12 @@ export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
+export type GetBtcAddressResponse = { 'Success' : string } |
+  { 'InternalError' : string };
+export type GetCachedBtcAddressResponse = { 'NotFound' : null } |
+  { 'Success' : string };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -764,6 +818,7 @@ export interface GovernanceProposalsSubtype {
 }
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -797,6 +852,7 @@ export interface GroupCanisterGroupChatSummary {
 }
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
@@ -838,6 +894,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -967,6 +1024,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -1123,6 +1181,7 @@ export interface IndexedNotification {
 }
 export type InitialStateResponse = {
     'Success' : {
+      'pin_number_settings' : [] | [PinNumberSettings],
       'communities' : CommunitiesInitial,
       'blocked_users' : Array<UserId>,
       'favourite_chats' : FavouriteChatsInitial,
@@ -1140,6 +1199,16 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface JoinVideoCallArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'UserBlocked' : null };
 export interface LeaveCommunityArgs { 'community_id' : CommunityId }
 export type LeaveCommunityResponse = { 'CommunityNotFound' : null } |
   { 'LastOwnerCannotLeave' : null } |
@@ -1161,6 +1230,7 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
+export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface ManageFavouriteChatsArgs {
   'to_add' : Array<Chat>,
   'to_remove' : Array<Chat>,
@@ -1185,8 +1255,8 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
-  'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
@@ -1194,7 +1264,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
+export type MessageContent = { 'VideoCall' : VideoCallContent } |
+  { 'ReportedMessage' : ReportedMessage } |
   { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
@@ -1248,6 +1319,7 @@ export interface MessageMatch {
 export interface MessagePermissions {
   'audio' : [] | [PermissionRole],
   'video' : [] | [PermissionRole],
+  'video_call' : [] | [PermissionRole],
   'custom' : Array<CustomPermission>,
   'file' : [] | [PermissionRole],
   'poll' : [] | [PermissionRole],
@@ -1290,7 +1362,10 @@ export interface MessagesByMessageIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
+export type MessagesByMessageIndexResponse = {
+    'ThreadMessageNotFound' : null
+  } |
+  { 'ChatNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
@@ -1402,6 +1477,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1409,6 +1485,7 @@ export interface OptionalMessagePermissions {
   'custom_updated' : Array<CustomPermission>,
   'audio' : PermissionRoleUpdate,
   'video' : PermissionRoleUpdate,
+  'video_call' : PermissionRoleUpdate,
   'file' : PermissionRoleUpdate,
   'poll' : PermissionRoleUpdate,
   'text' : PermissionRoleUpdate,
@@ -1416,7 +1493,6 @@ export interface OptionalMessagePermissions {
   'giphy' : PermissionRoleUpdate,
   'custom_deleted' : Array<string>,
   'default' : [] | [PermissionRole],
-  'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
   'p2p_swap' : PermissionRoleUpdate,
@@ -1504,6 +1580,10 @@ export interface PermissionsChanged {
 export interface PinChatV2Request { 'chat' : ChatInList }
 export type PinChatV2Response = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface PinNumberSettings {
+  'attempts_blocked_until' : [] | [TimestampMillis],
+  'length' : number,
+}
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -1535,6 +1615,7 @@ export interface PrizeContent {
   'winners' : Array<UserId>,
 }
 export interface PrizeContentInitial {
+  'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
   'prizes' : Array<Tokens>,
@@ -1656,6 +1737,7 @@ export interface ReportMessageArgs {
   'them' : UserId,
   'delete' : boolean,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type ReportMessageResponse = { 'AlreadyReported' : null } |
   { 'MessageNotFound' : null } |
@@ -1675,6 +1757,11 @@ export interface ReserveP2PSwapSuccess {
   'content' : P2PSwapContent,
   'created_by' : UserId,
 }
+export interface RetrieveBtcArgs { 'address' : string, 'amount' : bigint }
+export type RetrieveBtcResponse = { 'ApproveError' : string } |
+  { 'Success' : bigint } |
+  { 'RetrieveBtcError' : string } |
+  { 'InternalError' : string };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1711,8 +1798,13 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
-export type SendMessageResponse = { 'TextTooLong' : number } |
+export type SendMessageResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1725,15 +1817,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   } |
   { 'TransferCannotBeZero' : null } |
   { 'DuplicateMessageId' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
+  { 'Success' : SendMessageSuccess } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
@@ -1743,9 +1827,18 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
+export interface SendMessageSuccess {
+  'timestamp' : TimestampMillis,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+  'message_index' : MessageIndex,
+}
 export interface SendMessageV2Args {
+  'pin' : [] | [string],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
+  'block_level_markdown' : boolean,
   'recipient' : UserId,
   'forwarding' : boolean,
   'correlation_id' : bigint,
@@ -1754,11 +1847,13 @@ export interface SendMessageV2Args {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface SendMessageWithTransferToChannelArgs {
+  'pin' : [] | [string],
   'channel_id' : ChannelId,
   'channel_rules_accepted' : [] | [Version],
   'community_id' : CommunityId,
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
+  'block_level_markdown' : boolean,
   'community_rules_accepted' : [] | [Version],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
@@ -1768,11 +1863,14 @@ export interface SendMessageWithTransferToChannelArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToChannelResponse = {
-    'Retrying' : [string, CompletedCryptoTransaction]
+    'TooManyFailedPinAttempts' : Milliseconds
   } |
+  { 'Retrying' : [string, CompletedCryptoTransaction] } |
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
+  { 'PinRequired' : null } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
   { 'TransferCannotBeZero' : null } |
   {
@@ -1795,8 +1893,10 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
+  'pin' : [] | [string],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
+  'block_level_markdown' : boolean,
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
   'group_id' : ChatId,
@@ -1808,10 +1908,13 @@ export interface SendMessageWithTransferToGroupArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToGroupResponse = {
-    'Retrying' : [string, CompletedCryptoTransaction]
+    'TooManyFailedPinAttempts' : Milliseconds
   } |
+  { 'Retrying' : [string, CompletedCryptoTransaction] } |
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
@@ -1862,6 +1965,18 @@ export interface SetMessageReminderV2Args {
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
+export interface SetPinNumberArgs {
+  'new' : [] | [string],
+  'current' : [] | [string],
+}
+export type SetPinNumberResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'TooLong' : FieldTooLongResult } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'TooShort' : FieldTooShortResult } |
+  { 'PinRequired' : null } |
+  { 'Success' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1877,12 +1992,25 @@ export interface SnsProposal {
   'title' : string,
   'created' : TimestampMillis,
   'action' : bigint,
+  'minimum_yes_proportion_of_total' : number,
   'last_updated' : TimestampMillis,
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
   'proposer' : SnsNeuronId,
+  'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StartVideoCallArgs {
+  'initiator_username' : string,
+  'initiator' : UserId,
+  'initiator_avatar_id' : [] | [bigint],
+  'max_duration' : [] | [Milliseconds],
+  'initiator_display_name' : [] | [string],
+  'message_id' : MessageId,
+  'call_type' : VideoCallType,
+}
+export type StartVideoCallResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type Subaccount = Uint8Array | number[];
 export interface SubmitProposalArgs {
   'token' : Cryptocurrency,
@@ -1927,6 +2055,7 @@ export interface SwapStatusErrorCompleted {
 export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
 export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface SwapTokensArgs {
+  'pin' : [] | [string],
   'input_amount' : bigint,
   'min_output_amount' : bigint,
   'swap_id' : bigint,
@@ -1936,7 +2065,10 @@ export interface SwapTokensArgs {
     },
   'output_token' : TokenInfo,
 }
-export type SwapTokensResponse = { 'SwapFailed' : null } |
+export type SwapTokensResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'PinRequired' : null } |
+  { 'SwapFailed' : null } |
   { 'Success' : { 'amount_out' : bigint } } |
   { 'InternalError' : string };
 export interface Tally {
@@ -1980,6 +2112,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'pin' : [] | [string],
   'decimals' : number,
   'token' : Cryptocurrency,
   'chat' : Chat,
@@ -1989,8 +2122,11 @@ export interface TipMessageArgs {
   'amount' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type TipMessageResponse = { 'Retrying' : string } |
+export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
+  { 'Retrying' : string } |
+  { 'PinIncorrect' : Milliseconds } |
   { 'TransferNotToMessageSender' : null } |
+  { 'PinRequired' : null } |
   { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'ChatFrozen' : null } |
@@ -2059,6 +2195,9 @@ export interface UpdatedRules {
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
+      'pin_number_settings' : { 'NoChange' : null } |
+        { 'SetToNone' : null } |
+        { 'SetToSome' : PinNumberSettings },
       'communities' : CommunitiesUpdates,
       'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
@@ -2124,6 +2263,7 @@ export interface UserGroup {
 }
 export type UserId = CanisterId;
 export interface UserSummary {
+  'streak' : number,
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
@@ -2131,6 +2271,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
+  'chit_balance' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {
@@ -2150,9 +2291,17 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential_arguments' : [] | [Uint8Array | number[]],
+  'credential_arguments' : Array<
+    [string, { 'Int' : number } | { 'String' : string }]
+  >,
   'issuer_origin' : string,
+  'issuer_canister_id' : CanisterId,
   'credential_type' : string,
+}
+export interface VerifiedCredentialGateArgs {
+  'credential_jwt' : string,
+  'ii_origin' : string,
+  'user_ii_principal' : Principal,
 }
 export type Version = number;
 export interface VersionedRules {
@@ -2160,6 +2309,30 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
+export interface VideoCallContent {
+  'participants' : Array<CallParticipant>,
+  'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
+  'call_type' : VideoCallType,
+}
+export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
+export type VideoCallUpdates = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : VideoCall };
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],
@@ -2171,9 +2344,17 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
-export interface WithdrawCryptoArgs { 'withdrawal' : PendingCryptoTransaction }
-export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
+export interface WithdrawCryptoArgs {
+  'pin' : [] | [string],
+  'withdrawal' : PendingCryptoTransaction,
+}
+export type WithdrawCryptoResponse = {
+    'TooManyFailedPinAttempts' : Milliseconds
+  } |
+  { 'PinIncorrect' : Milliseconds } |
+  { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
+  { 'PinRequired' : null } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
@@ -2197,6 +2378,7 @@ export interface _SERVICE {
     CancelMessageReminderResponse
   >,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
+  'chit_events' : ActorMethod<[ChitEventsArgs], ChitEventsResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],
@@ -2215,16 +2397,24 @@ export interface _SERVICE {
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'edit_message_v2' : ActorMethod<[EditMessageV2Args], EditMessageResponse>,
+  'end_video_call' : ActorMethod<[EndVideoCallArgs], EndVideoCallResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'get_btc_address' : ActorMethod<[EmptyArgs], GetBtcAddressResponse>,
+  'get_cached_btc_address' : ActorMethod<
+    [EmptyArgs],
+    GetCachedBtcAddressResponse
+  >,
   'hot_group_exclusions' : ActorMethod<
     [HotGroupExclusionsArgs],
     HotGroupExclusionsResponse
   >,
   'initial_state' : ActorMethod<[EmptyArgs], InitialStateResponse>,
+  'join_video_call' : ActorMethod<[JoinVideoCallArgs], JoinVideoCallResponse>,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
+  'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
   'manage_favourite_chats' : ActorMethod<
     [ManageFavouriteChatsArgs],
     ManageFavouriteChatsResponse
@@ -2242,6 +2432,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
+  'retrieve_btc' : ActorMethod<[RetrieveBtcArgs], RetrieveBtcResponse>,
   'save_crypto_account' : ActorMethod<
     [NamedAccount],
     SaveCryptoAccountResponse
@@ -2271,6 +2462,11 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'set_pin_number' : ActorMethod<[SetPinNumberArgs], SetPinNumberResponse>,
+  'start_video_call' : ActorMethod<
+    [StartVideoCallArgs],
+    StartVideoCallResponse
+  >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
   'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
@@ -2295,4 +2491,4 @@ export interface _SERVICE {
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

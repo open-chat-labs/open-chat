@@ -1,7 +1,7 @@
 <script lang="ts">
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Translatable from "../Translatable.svelte";
-    import { type ResourceKey } from "../../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     export let text: ResourceKey;
     export let failed: boolean;

@@ -4,12 +4,14 @@ use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use event_store_producer::EventBuilder;
+use ic_cdk::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
+use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, UserId, ICP};
@@ -20,12 +22,11 @@ use utils::time::DAY_IN_MS;
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
-    let user_id = match read_state(|state| {
+    let Some(user_id) = read_state(|state| {
         let caller = state.env.caller();
         state.data.users.get_by_principal(&caller).map(|u| u.user_id)
-    }) {
-        Some(u) => u,
-        _ => return UserNotFound,
+    }) else {
+        return UserNotFound;
     };
 
     pay_for_diamond_membership_impl(args, user_id, true).await
@@ -98,9 +99,23 @@ fn process_charge(
 ) -> Response {
     let share_with = referrer_to_share_payment(user_id, state);
     let recurring = args.recurring && !args.duration.is_lifetime();
+    let now = state.env.now();
+
+    state.data.event_store_client.push(
+        EventBuilder::new("diamond_membership_payment", now)
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
+            .with_json_payload(&PayForDiamondMembershipEventPayload {
+                token: args.token.token_symbol().to_string(),
+                amount: args.expected_price_e8s,
+                duration: args.duration.to_string(),
+                recurring: args.recurring,
+                manual_payment,
+            })
+            .build(),
+    );
 
     if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {
-        let now = state.env.now();
         let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
 
         diamond_membership.add_payment(
@@ -281,4 +296,13 @@ fn process_error_v2(transfer_error: icrc1::transfer::TransferError) -> Response 
         icrc1::transfer::TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.0.try_into().unwrap()),
         error => TransferFailed(format!("{error:?}")),
     }
+}
+
+#[derive(Serialize)]
+pub(crate) struct PayForDiamondMembershipEventPayload {
+    pub token: String,
+    pub amount: u64,
+    pub duration: String,
+    pub recurring: bool,
+    pub manual_payment: bool,
 }

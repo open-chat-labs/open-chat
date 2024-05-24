@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
 use group_index_canister::{c2c_make_private, c2c_update_group};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::{AccessGate, CanisterId, ChatId, Document, UserId};
 

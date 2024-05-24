@@ -28,6 +28,7 @@ export function getTheme(base: Theme): Theme {
     base.button.hv = olive;
     base.button.txt = txt;
     base.button.disabled = veryDarkCyan;
+    base.button["disabled-bd"] = base.bd;
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = olive;
     base.accent = olive;

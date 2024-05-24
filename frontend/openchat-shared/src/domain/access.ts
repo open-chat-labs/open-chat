@@ -14,6 +14,7 @@ export type NoGate = { kind: "no_gate" };
 export type NftGate = { kind: "nft_gate" };
 
 export type Credential = {
+    issuerCanisterId: string;
     issuerOrigin: string;
     credentialType: string;
     credentialArguments?: Record<string, string | number>;
@@ -22,6 +23,12 @@ export type Credential = {
 export type CredentialGate = {
     kind: "credential_gate";
     credential: Credential;
+};
+
+export type VerifiedCredentialArgs = {
+    userIIPrincipal: string;
+    iiOrigin: string;
+    credentialJwt: string;
 };
 
 export type NeuronGate = {
@@ -50,6 +57,10 @@ export function isNeuronGate(gate: AccessGate): gate is NeuronGate {
 
 export function isPaymentGate(gate: AccessGate): gate is PaymentGate {
     return gate.kind === "payment_gate";
+}
+
+export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
+    return gate.kind === "token_balance_gate";
 }
 
 export type DiamondGate = { kind: "diamond_gate" };

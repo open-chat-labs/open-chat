@@ -33,6 +33,7 @@ import type {
     TransferSuccess,
 } from "openchat-shared";
 import {
+    canRetryMessage,
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
@@ -45,7 +46,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 95;
+const CACHE_VERSION = 101;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -113,6 +114,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: CreatedUser;
     };
+
+    localUserIndex: {
+        key: string;
+        value: string;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -171,6 +177,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("currentUser")) {
                 db.deleteObjectStore("currentUser");
             }
+            if (db.objectStoreNames.contains("localUserIndex")) {
+                db.deleteObjectStore("localUserIndex");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             chatEvents.createIndex("expiresAt", "expiresAt");
@@ -183,6 +192,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("failed_thread_messages");
             db.createObjectStore("cachePrimer");
             db.createObjectStore("currentUser");
+            db.createObjectStore("localUserIndex");
         },
     });
 }
@@ -372,18 +382,18 @@ export async function getCachedEventsWindow(
         expiredMessageRanges: [],
         latestEventIndex: undefined,
     };
-    const missing = new Set<number>();
+    const combinedMissing = new Set<number>();
     for (const [events, expiredEventRanges, missing] of await Promise.all(promises)) {
         events.forEach((e) => results.events.push(e));
         expiredEventRanges.forEach((r) => results.expiredEventRanges.push(r));
-        missing.forEach((m) => missing.add(m));
+        missing.forEach((m) => combinedMissing.add(m));
     }
 
-    if (missing.size === 0) {
+    if (combinedMissing.size === 0) {
         console.debug("CACHE: hit: ", results.events.length, Date.now() - start);
     }
 
-    return [results, missing];
+    return [results, combinedMissing];
 }
 
 export async function getCachedEventByIndex(
@@ -590,6 +600,10 @@ export async function recordFailedMessage<T extends Message>(
     event: EventWrapper<T>,
     threadRootMessageIndex?: number,
 ): Promise<void> {
+    if (!canRetryMessage(event.event.content)) {
+        return;
+    }
+
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);
@@ -1202,4 +1216,18 @@ export async function setCurrentUserDiamondStatusInCache(
         },
         principal,
     );
+}
+
+export async function getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
+    if (db === undefined) return;
+    return (await db).get("localUserIndex", userId);
+}
+
+export async function cacheLocalUserIndexForUser(
+    userId: string,
+    localUserIndex: string,
+): Promise<string> {
+    if (db === undefined) return localUserIndex;
+    (await db).put("localUserIndex", localUserIndex, userId);
+    return localUserIndex;
 }

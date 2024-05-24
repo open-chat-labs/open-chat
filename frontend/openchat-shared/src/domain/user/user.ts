@@ -1,3 +1,4 @@
+import type { PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -19,6 +20,8 @@ export type UserSummary = DataContent & {
     updated: bigint;
     suspended: boolean;
     diamondStatus: DiamondMembershipStatus["kind"];
+    chitBalance: number;
+    streak: number;
 };
 
 export type UserGroupSummary = {
@@ -108,6 +111,7 @@ export function anonymousUser(): CreatedUser {
     return {
         kind: "created_user",
         username: ANON_USERNAME,
+        dateCreated: BigInt(0),
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
@@ -119,12 +123,16 @@ export function anonymousUser(): CreatedUser {
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
+        chitBalance: 0,
+        streak: 0,
+        nextDailyChitClaim: 0n,
     };
 }
 
 export type CreatedUser = {
     kind: "created_user";
     username: string;
+    dateCreated: bigint;
     displayName: string | undefined;
     cryptoAccount: string;
     userId: string;
@@ -136,6 +144,9 @@ export type CreatedUser = {
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
+    chitBalance: number;
+    streak: number;
+    nextDailyChitClaim: bigint;
 };
 
 export type DiamondMembershipStatus =
@@ -224,6 +235,7 @@ export type RegisterUserResponse =
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
     | { kind: "referral_code_expired" }
+    | { kind: "registration_in_progress" }
     | Offline;
 
 export type PinChatResponse = "success" | "failure" | "offline";
@@ -330,6 +342,7 @@ export type SwapTokensResponse =
     | {
           kind: "swap_failed";
       }
+    | PinNumberFailures
     | InternalError;
 
 export type Result<T> =
@@ -359,6 +372,7 @@ export type TokenSwapStatusResponse =
 export type ApproveTransferResponse =
     | Success
     | { kind: "approve_error"; error: string }
+    | PinNumberFailures
     | InternalError;
 
 export type DiamondMembershipFees = {
@@ -367,4 +381,20 @@ export type DiamondMembershipFees = {
     threeMonths: bigint;
     oneYear: bigint;
     lifetime: bigint;
+};
+
+export type ClaimDailyChitResponse =
+    | { kind: "already_claimed"; nextDailyChitClaim: bigint }
+    | {
+          kind: "success";
+          streak: number;
+          chitBalance: number;
+          chitEarned: number;
+          nextDailyChitClaim: bigint;
+      };
+
+export type ChitUserBalance = {
+    userId: string;
+    balance: number;
+    username: string;
 };

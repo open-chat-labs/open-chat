@@ -8,6 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
@@ -15,18 +17,22 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
-use types::SNS_FEE_SHARE_PERCENT;
+use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
+use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
+use utils::time::MINUTE_IN_MS;
 
 mod activity_notifications;
 mod guards;
@@ -78,6 +84,11 @@ impl RuntimeState {
 
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
+    }
+
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -228,7 +239,8 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -243,6 +255,8 @@ impl RuntimeState {
             frozen: self.data.is_frozen(),
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
+            event_store_client_info: self.data.event_store_client.info(),
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -252,6 +266,7 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                internet_identity: self.data.internet_identity_canister_id,
             },
         }
     }
@@ -279,6 +294,8 @@ struct Data {
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    internet_identity_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
     channels: Channels,
@@ -294,16 +311,29 @@ struct Data {
     #[serde(skip, default = "init_instruction_counts_log")]
     instruction_counts_log: InstructionCountsLog,
     next_event_expiry: Option<TimestampMillis>,
+    video_call_operators: Vec<Principal>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
     rng_seed: [u8; 32],
-    pub pending_payments_queue: PendingPaymentsQueue,
-    pub total_payment_receipts: PaymentReceipts,
+    pending_payments_queue: PendingPaymentsQueue,
+    total_payment_receipts: PaymentReceipts,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    ic_root_key: Vec<u8>,
+    event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
+        community_id: CommunityId,
         created_by_principal: Principal,
         created_by_user_id: UserId,
         is_public: bool,
@@ -321,14 +351,26 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         gate: Option<AccessGate>,
-        default_channels: Vec<(ChannelId, String)>,
+        default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
+        video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
+        rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Data {
-        let channels = Channels::new(created_by_user_id, default_channels, default_channel_rules, is_public, now);
+        let channels = Channels::new(
+            community_id,
+            created_by_user_id,
+            default_channels,
+            default_channel_rules,
+            is_public,
+            rng,
+            now,
+        );
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
@@ -349,6 +391,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             date_created: now,
             members,
             channels,
@@ -368,6 +411,11 @@ impl Data {
             rng_seed: [0; 32],
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
+            video_call_operators,
+            ic_root_key,
+            event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+                .build(),
         }
     }
 
@@ -432,6 +480,16 @@ impl Data {
             .unwrap_or_default()
     }
 
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
@@ -451,7 +509,8 @@ fn run_regular_jobs() {
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
@@ -466,6 +525,8 @@ pub struct Metrics {
     pub frozen: bool,
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
+    pub event_store_client_info: EventStoreClientInfo,
+    pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
 }
 
@@ -479,4 +540,5 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+    pub internet_identity: CanisterId,
 }

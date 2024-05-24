@@ -3,7 +3,8 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
-use ic_cdk_macros::update;
+use group_chat_core::GroupRoleInternal;
+use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, UserId};
@@ -66,27 +67,30 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
         } else if member.user_id == user_to_remove {
             Err(CannotRemoveSelf)
         } else {
-            // Check if the caller is authorized to remove the user
-            let is_user_to_remove_an_owner = match state.data.chat.members.get(&user_to_remove) {
-                Some(member_to_remove) => {
-                    if member
-                        .role
-                        .can_remove_members_with_role(member_to_remove.role.value, &state.data.chat.permissions)
-                    {
-                        member_to_remove.role.is_owner()
-                    } else {
-                        return Err(NotAuthorized);
+            let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
+                Some(member_to_remove) => member_to_remove.role.value,
+                None if block => {
+                    if state.data.chat.members.is_blocked(&user_to_remove) {
+                        return Err(Success);
                     }
+                    GroupRoleInternal::Member
                 }
-                None if block => false,
-                _ => return Err(UserNotInGroup),
+                None => return Err(UserNotInGroup),
             };
 
-            Ok(PrepareResult {
-                removed_by: member.user_id,
-                local_user_index_canister_id: state.data.local_user_index_canister_id,
-                is_user_to_remove_an_owner,
-            })
+            // Check if the caller is authorized to remove the user
+            if member
+                .role
+                .can_remove_members_with_role(user_to_remove_role, &state.data.chat.permissions)
+            {
+                Ok(PrepareResult {
+                    removed_by: member.user_id,
+                    local_user_index_canister_id: state.data.local_user_index_canister_id,
+                    is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
+                })
+            } else {
+                Err(NotAuthorized)
+            }
         }
     } else {
         Err(CallerNotInGroup)

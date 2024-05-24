@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{BuildVersion, CanisterId, CanisterWasm};
 
@@ -17,6 +17,8 @@ pub struct Args {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    pub internet_identity_canister_id: CanisterId,
+    pub event_relay_canister_id: CanisterId,
+    pub video_call_operators: Vec<Principal>,
+    pub oc_secret_key_der: Option<Vec<u8>>,
     pub test_mode: bool,
 }

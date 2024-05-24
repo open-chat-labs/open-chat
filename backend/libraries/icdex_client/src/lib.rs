@@ -34,14 +34,6 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         }
     }
 
-    pub fn quote_token(&self) -> &TokenInfo {
-        &self.quote_token
-    }
-
-    pub fn base_token(&self) -> &TokenInfo {
-        &self.base_token
-    }
-
     pub async fn latest_price(&self) -> CallResult<u64> {
         let response = icdex_canister_c2c_client::stats(self.dex_canister_id, ()).await?.0;
 

@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::{ChannelId, CommunityId, MessageContent};
 
 #[test]
@@ -75,6 +75,7 @@ fn join_private_channel_fails() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -103,7 +104,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
@@ -142,7 +143,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     let response = client::local_user_index::join_channel(
         env,
@@ -152,6 +153,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -178,7 +180,7 @@ fn invite_non_community_member_to_channel_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller, false);
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     let invite_users_response = client::local_user_index::invite_users_to_channel(
         env,
@@ -188,6 +190,7 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             user_ids: vec![user3.user_id],
+            caller_username: user1.username(),
         },
     );
 
@@ -204,6 +207,7 @@ fn invite_non_community_member_to_channel_succeeds() {
             community_id,
             channel_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -232,7 +236,7 @@ fn invite_to_channel_oc_bot_message_received() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
@@ -276,7 +280,7 @@ fn channel_marked_as_read_after_joining() {
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, random_string(), None);
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     client::local_user_index::happy_path::join_channel(
         env,
@@ -322,7 +326,7 @@ fn channel_marked_as_read_after_joining() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
     let channel_name = random_string();

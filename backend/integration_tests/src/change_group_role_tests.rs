@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::{ChatId, GroupRole};
 
 #[test]
@@ -31,7 +31,7 @@ fn owner_can_promote_to_and_demote_from_owner() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 

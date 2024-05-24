@@ -13,7 +13,7 @@ export const GHOST_SYMBOL = "GHOST";
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
-export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC", "ckETH"];
+export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckUSDC", "ckBTC", "ckETH"];
 
 export type CryptocurrencyDetails = {
     name: string;
@@ -27,6 +27,7 @@ export type CryptocurrencyDetails = {
     transactionUrlFormat: string;
     supportedStandards: string[];
     added: bigint;
+    enabled: boolean;
     lastUpdated: bigint;
 };
 

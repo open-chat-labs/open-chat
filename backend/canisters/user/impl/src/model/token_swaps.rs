@@ -6,7 +6,6 @@ use user_canister::token_swap_status::TokenSwapStatus;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct TokenSwaps {
-    #[serde(default)]
     swaps: HashMap<u128, TokenSwap>,
 }
 

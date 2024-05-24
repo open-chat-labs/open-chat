@@ -40,10 +40,6 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
-    pub fn is_caller_user_index(&self) -> bool {
-        self.env.caller() == self.data.user_index_canister_id
-    }
-
     pub fn is_caller_push_service(&self) -> bool {
         self.data.push_service_principals.contains(&self.env.caller())
     }
@@ -80,7 +76,8 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -160,7 +157,8 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,

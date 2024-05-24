@@ -1,12 +1,16 @@
 use crate::setup::setup_new_env;
 use crate::TestEnv;
+use candid::Principal;
 use lazy_static::lazy_static;
 use std::ops::Deref;
 use std::sync::Mutex;
+use types::Hash;
 
 lazy_static! {
     pub static ref ENV: TestEnvManager = TestEnvManager::default();
 }
+
+pub const VIDEO_CALL_OPERATOR: Principal = Principal::from_slice(&[1, 2, 3, 4, 5]);
 
 #[derive(Default)]
 pub struct TestEnvManager {
@@ -19,8 +23,12 @@ impl TestEnvManager {
         if let Some(env) = lock.pop() {
             TestEnvWrapper::new(env)
         } else {
-            TestEnvWrapper::new(setup_new_env())
+            TestEnvWrapper::new(setup_new_env(None))
         }
+    }
+
+    pub fn get_with_seed(&self, seed: Hash) -> TestEnvWrapper {
+        TestEnvWrapper::new(setup_new_env(Some(seed)))
     }
 }
 

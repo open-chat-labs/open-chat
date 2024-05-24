@@ -11,6 +11,10 @@ export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
+export type AccessTokenType = { 'JoinVideoCall' : null } |
+  { 'StartVideoCall' : null } |
+  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
+  { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
 export interface Account {
   'owner' : Principal,
@@ -69,6 +73,10 @@ export interface BuildVersion {
   'major' : number,
   'minor' : number,
   'patch' : number,
+}
+export interface CallParticipant {
+  'user_id' : UserId,
+  'joined' : TimestampMillis,
 }
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
@@ -205,10 +213,33 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export interface ChitEarned {
+  'timestamp' : TimestampMillis,
+  'amount' : number,
+  'reason' : ChitEarnedReason,
+}
+export type ChitEarnedReason = { 'DailyClaim' : null } |
+  { 'Achievement' : string };
+export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
+export interface ChitUserBalance {
+  'username' : string,
+  'balance' : number,
+  'user_id' : UserId,
+}
+export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
+  {
+    'Success' : {
+      'streak' : number,
+      'chit_earned' : number,
+      'chit_balance' : number,
+      'next_claim' : TimestampMillis,
+    }
+  };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -233,6 +264,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
@@ -359,16 +391,20 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'Other' : string };
 export type CurrentUserResponse = {
     'Success' : {
+      'streak' : number,
       'username' : string,
+      'date_created' : TimestampMillis,
       'is_platform_operator' : boolean,
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
+      'next_daily_claim' : TimestampMillis,
       'user_id' : UserId,
       'display_name' : [] | [string],
       'avatar_id' : [] | [bigint],
       'moderation_flags_enabled' : number,
+      'chit_balance' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : [] | [SuspensionDetails],
@@ -435,6 +471,7 @@ export type DiamondMembershipSubscription = { 'OneYear' : null } |
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
+  'video_call_in_progress' : [] | [VideoCall],
   'date_created' : TimestampMillis,
   'metrics' : ChatMetrics,
   'them' : UserId,
@@ -451,6 +488,7 @@ export interface DirectChatSummary {
 }
 export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'notifications_muted' : [] | [boolean],
   'latest_message_index' : [] | [MessageIndex],
@@ -557,6 +595,7 @@ export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
   'title' : string,
@@ -576,6 +615,7 @@ export interface GovernanceProposalsSubtype {
 }
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -609,6 +649,7 @@ export interface GroupCanisterGroupChatSummary {
 }
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
+  'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
@@ -650,6 +691,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
@@ -768,6 +810,7 @@ export interface GroupPermissions {
   'invite_users' : PermissionRole,
   'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
+  'start_video_call' : PermissionRole,
   'add_members' : PermissionRole,
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
@@ -941,8 +984,8 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
-  'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
@@ -950,7 +993,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
+export type MessageContent = { 'VideoCall' : VideoCallContent } |
+  { 'ReportedMessage' : ReportedMessage } |
   { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
@@ -1004,6 +1048,7 @@ export interface MessageMatch {
 export interface MessagePermissions {
   'audio' : [] | [PermissionRole],
   'video' : [] | [PermissionRole],
+  'video_call' : [] | [PermissionRole],
   'custom' : Array<CustomPermission>,
   'file' : [] | [PermissionRole],
   'poll' : [] | [PermissionRole],
@@ -1143,6 +1188,7 @@ export interface OptionalGroupPermissions {
   'invite_users' : [] | [PermissionRole],
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
+  'start_video_call' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1150,6 +1196,7 @@ export interface OptionalMessagePermissions {
   'custom_updated' : Array<CustomPermission>,
   'audio' : PermissionRoleUpdate,
   'video' : PermissionRoleUpdate,
+  'video_call' : PermissionRoleUpdate,
   'file' : PermissionRoleUpdate,
   'poll' : PermissionRoleUpdate,
   'text' : PermissionRoleUpdate,
@@ -1157,7 +1204,6 @@ export interface OptionalMessagePermissions {
   'giphy' : PermissionRoleUpdate,
   'custom_deleted' : Array<string>,
   'default' : [] | [PermissionRole],
-  'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
   'p2p_swap' : PermissionRoleUpdate,
@@ -1298,6 +1344,7 @@ export interface PrizeContent {
   'winners' : Array<UserId>,
 }
 export interface PrizeContentInitial {
+  'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
   'prizes' : Array<Tokens>,
@@ -1347,6 +1394,8 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export type PublicKeyResponse = { 'NotInitialised' : null } |
+  { 'Success' : string };
 export interface PushEventResult {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -1480,11 +1529,13 @@ export interface SnsProposal {
   'title' : string,
   'created' : TimestampMillis,
   'action' : bigint,
+  'minimum_yes_proportion_of_total' : number,
   'last_updated' : TimestampMillis,
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
   'proposer' : SnsNeuronId,
+  'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
@@ -1617,6 +1668,7 @@ export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
+  'streak' : number,
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
@@ -1624,6 +1676,7 @@ export interface UserSummary {
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
+  'chit_balance' : number,
   'suspended' : boolean,
 }
 export interface UsersBlocked {
@@ -1652,9 +1705,17 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential_arguments' : [] | [Uint8Array | number[]],
+  'credential_arguments' : Array<
+    [string, { 'Int' : number } | { 'String' : string }]
+  >,
   'issuer_origin' : string,
+  'issuer_canister_id' : CanisterId,
   'credential_type' : string,
+}
+export interface VerifiedCredentialGateArgs {
+  'credential_jwt' : string,
+  'ii_origin' : string,
+  'user_ii_principal' : Principal,
 }
 export type Version = number;
 export interface VersionedRules {
@@ -1662,6 +1723,30 @@ export interface VersionedRules {
   'version' : Version,
   'enabled' : boolean,
 }
+export interface VideoCall {
+  'call_type' : VideoCallType,
+  'message_index' : MessageIndex,
+}
+export interface VideoCallContent {
+  'participants' : Array<CallParticipant>,
+  'ended' : [] | [TimestampMillis],
+  'hidden_participants' : number,
+  'call_type' : VideoCallType,
+}
+export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallParticipants {
+  'participants' : Array<CallParticipant>,
+  'hidden' : Array<CallParticipant>,
+  'last_updated' : TimestampMillis,
+}
+export type VideoCallPresence = { 'Default' : null } |
+  { 'Hidden' : null } |
+  { 'Owner' : null };
+export type VideoCallType = { 'Default' : null } |
+  { 'Broadcast' : null };
+export type VideoCallUpdates = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : VideoCall };
 export interface VideoContent {
   'height' : number,
   'image_blob_reference' : [] | [BlobReference],
@@ -1691,6 +1776,8 @@ export interface _SERVICE {
     AssignPlatformModeratorsGroupResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
+  'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
+  'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<
     [EmptyArgs],
@@ -1713,6 +1800,7 @@ export interface _SERVICE {
     [PlatformOperatorsArgs],
     PlatformOperatorsResponse
   >,
+  'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
   'referral_leaderboard' : ActorMethod<
     [ReferralLeaderboardArgs],
     ReferralLeaderboardResponse
@@ -1763,4 +1851,4 @@ export interface _SERVICE {
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

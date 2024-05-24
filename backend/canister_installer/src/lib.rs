@@ -3,6 +3,7 @@ use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use types::{BuildVersion, CanisterWasm, Cycles};
+use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -22,6 +23,9 @@ async fn install_service_canisters_impl(
     test_mode: bool,
 ) {
     let controllers = vec![principal];
+    let video_call_operators =
+        vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()];
+
     futures::future::join_all(vec![
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
@@ -36,6 +40,11 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
         set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
         set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.event_store, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_email, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_ethereum, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.sign_in_with_solana, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -68,9 +77,11 @@ async fn install_service_canisters_impl(
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         escrow_canister_id: canister_ids.escrow,
+        event_relay_canister_id: canister_ids.event_relay,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
+        video_call_operators: video_call_operators.clone(),
         wasm_version: version,
         test_mode,
     };
@@ -85,6 +96,10 @@ async fn install_service_canisters_impl(
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         escrow_canister_id: canister_ids.escrow,
+        event_relay_canister_id: canister_ids.event_relay,
+        internet_identity_canister_id: canister_ids.nns_internet_identity,
+        video_call_operators: video_call_operators.clone(),
+        ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };
@@ -106,6 +121,12 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        skip_captcha_whitelist: vec![
+            canister_ids.nns_internet_identity,
+            canister_ids.sign_in_with_email,
+            canister_ids.sign_in_with_ethereum,
+            canister_ids.sign_in_with_solana,
+        ],
         wasm_version: version,
         test_mode,
     };
@@ -122,6 +143,7 @@ async fn install_service_canisters_impl(
     let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
+        event_relay_canister_id: canister_ids.event_relay,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -220,6 +242,60 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let event_relay_canister_wasm = get_canister_wasm(CanisterName::EventRelay, version);
+    let event_relay_init_args = event_relay_canister::init::Args {
+        push_events_whitelist: vec![
+            canister_ids.user_index,
+            canister_ids.online_users,
+            canister_ids.local_user_index,
+            canister_ids.local_group_index,
+        ],
+        event_store_canister_id: canister_ids.event_store,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let event_store_canister_wasm = get_canister_wasm(CanisterName::EventStore, version);
+    let event_store_init_args = event_store_canister::InitArgs {
+        push_events_whitelist: vec![canister_ids.event_relay],
+        read_events_whitelist: vec![principal],
+        time_granularity: None,
+    };
+
+    let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
+    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
+
+    let sign_in_with_ethereum_wasm = get_canister_wasm(CanisterName::SignInWithEthereum, version);
+    let sign_in_with_ethereum_init_args = siwe::SettingsInput {
+        domain: "oc.app".to_string(),
+        uri: "https://oc.app".to_string(),
+        salt: "OpenChat".to_string(),
+        chain_id: None,
+        scheme: None,
+        statement: None,
+        sign_in_expires_in: None,
+        session_expires_in: None,
+        targets: None,
+        runtime_features: None,
+    };
+
+    let sign_in_with_solana_wasm = get_canister_wasm(CanisterName::SignInWithSolana, version);
+    let sign_in_with_solana_init_args = siws::SettingsInput {
+        domain: "oc.app".to_string(),
+        uri: "https://oc.app".to_string(),
+        salt: "OpenChat".to_string(),
+        chain_id: None,
+        scheme: None,
+        statement: None,
+        sign_in_expires_in: None,
+        session_expires_in: None,
+        targets: None,
+        runtime_features: None,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -288,7 +364,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join3(
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -306,6 +382,40 @@ async fn install_service_canisters_impl(
             &canister_ids.translations,
             &translations_canister_wasm.module,
             translations_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.event_relay,
+            &event_relay_canister_wasm.module,
+            event_relay_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.event_store,
+            &event_store_canister_wasm.module,
+            event_store_init_args,
+        ),
+    )
+    .await;
+
+    futures::future::join3(
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_email,
+            &sign_in_with_email_wasm.module,
+            sign_in_with_email_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_ethereum,
+            &sign_in_with_ethereum_wasm.module,
+            sign_in_with_ethereum_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.sign_in_with_solana,
+            &sign_in_with_solana_wasm.module,
+            sign_in_with_solana_init_args,
         ),
     )
     .await;
@@ -437,4 +547,56 @@ async fn install_service_canisters_impl(
     }
 
     println!("Canister wasms installed");
+}
+
+mod siwe {
+    use candid::CandidType;
+
+    #[allow(dead_code)]
+    #[derive(CandidType)]
+    pub enum RuntimeFeature {
+        IncludeUriInSeed,
+        DisableEthToPrincipalMapping,
+        DisablePrincipalToEthMapping,
+    }
+
+    #[derive(CandidType)]
+    pub struct SettingsInput {
+        pub domain: String,
+        pub uri: String,
+        pub salt: String,
+        pub chain_id: Option<u32>,
+        pub scheme: Option<String>,
+        pub statement: Option<String>,
+        pub sign_in_expires_in: Option<u64>,
+        pub session_expires_in: Option<u64>,
+        pub targets: Option<Vec<String>>,
+        pub runtime_features: Option<Vec<RuntimeFeature>>,
+    }
+}
+
+mod siws {
+    use candid::CandidType;
+
+    #[allow(dead_code)]
+    #[derive(CandidType)]
+    pub enum RuntimeFeature {
+        IncludeUriInSeed,
+        DisableSolToPrincipalMapping,
+        DisablePrincipalToSolMapping,
+    }
+
+    #[derive(CandidType)]
+    pub struct SettingsInput {
+        pub domain: String,
+        pub uri: String,
+        pub salt: String,
+        pub chain_id: Option<String>,
+        pub scheme: Option<String>,
+        pub statement: Option<String>,
+        pub sign_in_expires_in: Option<u64>,
+        pub session_expires_in: Option<u64>,
+        pub targets: Option<Vec<String>>,
+        pub runtime_features: Option<Vec<RuntimeFeature>>,
+    }
 }

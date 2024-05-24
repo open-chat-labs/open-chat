@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_controller;
 use crate::model::bucket_sync_state::EventToSync;
 use crate::{mutate_state, RuntimeState, UserRecordInternal};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use storage_index_canister::add_or_update_users::{Response::*, *};
 
 #[update(guard = "caller_is_user_controller")]

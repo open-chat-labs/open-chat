@@ -3,8 +3,9 @@ use crate::{mutate_state, RuntimeState, COMMUNITY_CANISTER_INITIAL_CYCLES_BALANC
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
+use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, CommunityId, Cycles};
+use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -17,6 +18,11 @@ async fn c2c_create_community(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
+    let created_by = prepare_ok.init_canister_args.created_by_user_id;
+    let is_public = prepare_ok.init_canister_args.is_public;
+    let gate_type = prepare_ok.init_canister_args.gate.as_ref().map(|g| g.gate_type().to_string());
+    let rules_enabled = prepare_ok.init_canister_args.rules.enabled;
+    let channel_count = prepare_ok.init_canister_args.default_channels.len() as u32;
     let wasm_version = prepare_ok.canister_wasm.version;
 
     match canister::create_and_install(
@@ -30,7 +36,20 @@ async fn c2c_create_community(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let community_id = canister_id.into();
-            mutate_state(|state| commit(community_id, wasm_version, state));
+            mutate_state(|state| {
+                commit(
+                    community_id,
+                    created_by,
+                    CommunityCreatedEventPayload {
+                        public: is_public,
+                        gate: gate_type,
+                        rules_enabled,
+                        channels: channel_count,
+                    },
+                    wasm_version,
+                    state,
+                )
+            });
             Success(SuccessResult {
                 community_id,
                 local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
@@ -67,7 +86,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.community_canister_wasm_for_new_canisters.clone();
+    let canister_wasm = state.data.community_canister_wasm_for_new_canisters.wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,
@@ -85,6 +104,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
+        internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         banner: args.banner,
         gate: args.gate,
@@ -92,6 +112,8 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,
         wasm_version: canister_wasm.version,
+        video_call_operators: state.data.video_call_operators.clone(),
+        ic_root_key: state.data.ic_root_key.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };
@@ -105,8 +127,22 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     })
 }
 
-fn commit(community_id: CommunityId, wasm_version: BuildVersion, state: &mut RuntimeState) {
+fn commit(
+    community_id: CommunityId,
+    created_by: UserId,
+    event_payload: CommunityCreatedEventPayload,
+    wasm_version: BuildVersion,
+    state: &mut RuntimeState,
+) {
     state.data.local_communities.add(community_id, wasm_version);
+
+    state.data.event_store_client.push(
+        EventBuilder::new("community_created", state.env.now())
+            .with_user(created_by.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
+            .with_json_payload(&event_payload)
+            .build(),
+    );
 }
 
 fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {

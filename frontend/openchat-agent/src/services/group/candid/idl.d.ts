@@ -71,6 +71,8 @@ import {
     OptionalMessagePermissions,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    JoinVideoCallResponse,
+    VideoCallParticipantsResponse
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -144,6 +146,8 @@ export {
     OptionalMessagePermissions as ApiOptionalMessagePermissions,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
     CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
+    JoinVideoCallResponse as ApiJoinVideoCallResponse,
+    VideoCallParticipantsResponse as ApiVideoCallParticipantsResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

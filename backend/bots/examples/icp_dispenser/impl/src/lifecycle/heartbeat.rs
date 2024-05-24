@@ -1,6 +1,6 @@
 use crate::model::pending_actions::PendingAction;
 use crate::{mutate_state, read_state, RuntimeState};
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use ic_ledger_types::{TransferArgs, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
 use tracing::{error, info};
@@ -38,6 +38,7 @@ mod process_pending_actions {
             Ok(Ok(block_index)) => {
                 let this_canister_id = read_state(|state| state.env.canister_id());
                 let message = BotMessage {
+                    thread_root_message_id: None,
                     content: MessageContentInitial::Crypto(CryptoContent {
                         recipient,
                         transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(
@@ -57,6 +58,7 @@ mod process_pending_actions {
                         caption: None,
                     }),
                     message_id: None,
+                    block_level_markdown: None,
                 };
                 PendingAction::SendMessages(recipient, vec![message])
             }

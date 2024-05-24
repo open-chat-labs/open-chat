@@ -61,6 +61,7 @@ import type {
     ApiSwapTokensResponse,
     ApiTokenSwapStatusResponse,
     ApiApproveTransferResponse,
+    ApiPinNumberSettings,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -154,6 +155,8 @@ import type {
     ProposalToSubmitAction,
     ReportMessageResponse,
 } from "./candid/types";
+import type { PinNumberSettings } from "openchat-shared";
+import { pinNumberFailureResponse } from "../common/pinNumberErrorMapper";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -181,6 +184,11 @@ export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageRes
     if ("Success" in candid || "Retrying" in candid) {
         return CommonResponses.success();
     }
+
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
+    }
+
     console.warn("tipMessage failed with: ", candid);
     return CommonResponses.failure();
 }
@@ -350,10 +358,14 @@ export function sendMessageWithTransferToChannelResponse(
             expiresAt: optional(candid.Success.expires_at, Number),
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
-    } else {
-        console.warn("SendMessageWithTransferToChannel failed with", candid);
-        return CommonResponses.failure();
+    } 
+
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
     }
+    
+    console.warn("SendMessageWithTransferToChannel failed with", candid);
+    return CommonResponses.failure();
 }
 
 export function sendMessageWithTransferToGroupResponse(
@@ -370,10 +382,14 @@ export function sendMessageWithTransferToGroupResponse(
             expiresAt: optional(candid.Success.expires_at, Number),
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
-    } else {
-        console.warn("SendMessageWithTransferToGroup failed with", candid);
-        return CommonResponses.failure();
+    }     
+
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
     }
+    
+    console.warn("SendMessageWithTransferToGroup failed with", candid);
+    return CommonResponses.failure();
 }
 
 export function sendMessageResponse(
@@ -399,6 +415,9 @@ export function sendMessageResponse(
             transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
             expiresAt: optional(candid.TransferSuccessV2.expires_at, Number),
         };
+    }
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
     }
     if ("TransferCannotBeZero" in candid) {
         return { kind: "transfer_cannot_be_zero" };
@@ -448,6 +467,7 @@ export function sendMessageResponse(
     if ("DuplicateMessageId" in candid) {
         return { kind: "duplicate_message_id" };
     }
+
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -475,7 +495,7 @@ export async function getEventsResponse(
 
         return eventsSuccessResponse(candid.Success);
     }
-    if ("ChatNotFound" in candid) {
+    if ("ChatNotFound" in candid || "ThreadMessageNotFound" in candid) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDateV2" in candid) {
@@ -594,10 +614,18 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
             suspended: result.suspended,
+            pinNumberSettings: optional(result.pin_number_settings, pinNumberSettings),
             localUserIndex: result.local_user_index_canister_id.toString(),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
+    return {
+        length: candid.length,
+        attemptsBlockedUntil: optional(candid.attempts_blocked_until, identity),    
+    };
 }
 
 export function userCanisterChannelSummaryUpdates(
@@ -693,6 +721,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
             directChats: directChatsUpdates(candid.Success.direct_chats),
             suspended: optional(candid.Success.suspended, identity),
+            pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
         };
     }
 
@@ -759,6 +788,7 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
+        videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
     };
 }
 
@@ -866,6 +896,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         eventsTTL: undefined,
         eventsTtlLastUpdated: BigInt(0),
         metrics: chatMetrics(candid.metrics),
+        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
         membership: {
             ...nullMembership(),
             role: "owner",
@@ -917,7 +948,6 @@ function completedNnsCryptoWithdrawal(
         feeE8s: candid.fee.e8s,
         memo: candid.memo,
         blockIndex: candid.block_index,
-        transactionHash: bytesToHexString(candid.transaction_hash),
     };
 }
 
@@ -932,13 +962,15 @@ function completedIcrc1CryptoWithdrawal(
         feeE8s: candid.fee,
         memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
         blockIndex: candid.block_index,
-        transactionHash: undefined,
     };
 }
 
 export function withdrawCryptoResponse(
     candid: ApiWithdrawCryptoResponse,
 ): WithdrawCryptocurrencyResponse {
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
+    }
     if ("CurrencyNotSupported" in candid) {
         return { kind: "currency_not_supported" };
     }
@@ -956,6 +988,7 @@ export function withdrawCryptoResponse(
             return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
         }
     }
+    
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
 }
 
@@ -1111,6 +1144,10 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
             error: candid.InternalError,
         };
     }
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
+    }
+
     throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
 }
 
@@ -1176,5 +1213,9 @@ export function approveTransferResponse(
     if ("ApproveError" in candid) {
         return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
     }
+    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+        return pinNumberFailureResponse(candid);
+    }
+
     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
 }

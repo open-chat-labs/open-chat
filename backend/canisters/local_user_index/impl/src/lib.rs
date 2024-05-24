@@ -1,17 +1,23 @@
 use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::timer_job_types::TimerJob;
+use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
+use event_store_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, CommunityCanisterChannelSummary,
-    CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
+    TimestampMillis, Timestamped, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -20,6 +26,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
+use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
@@ -87,12 +94,15 @@ impl RuntimeState {
         jobs::sync_events_to_user_index_canister::try_run_now(self);
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, message: MessageContent) {
-        if self.data.local_users.get(&user_id).is_some() {
-            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message)));
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
+        if self.data.local_users.contains(&user_id) {
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)));
         } else {
             self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
-                user_index_canister::OpenChatBotMessage { user_id, message },
+                user_index_canister::OpenChatBotMessage {
+                    user_id,
+                    message: content,
+                },
             )));
         }
     }
@@ -156,8 +166,12 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_relay_canister_id = event_store_client_info.event_store_canister_id;
+
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -170,11 +184,12 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            user_wasm_version: self.data.user_canister_wasm_for_new_canisters.version,
+            user_wasm_version: self.data.user_canister_wasm_for_new_canisters.wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             referral_codes: self.data.referral_codes.metrics(),
+            event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -183,7 +198,9 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
+                event_relay: event_relay_canister_id,
             },
+            oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
         }
     }
 }
@@ -192,8 +209,8 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    pub user_canister_wasm_for_new_canisters: CanisterWasm,
-    pub user_canister_wasm_for_upgrades: CanisterWasm,
+    pub user_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
+    pub user_canister_wasm_for_upgrades: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -201,7 +218,6 @@ struct Data {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -215,6 +231,10 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
     pub rng_seed: [u8; 32],
+    pub video_call_operators: Vec<Principal>,
+    pub oc_secret_key_der: Option<Vec<u8>>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
+    pub event_deduper: EventDeduper,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -234,15 +254,17 @@ impl Data {
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
-        internet_identity_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
         canister_pool_target_size: u16,
+        video_call_operators: Vec<Principal>,
+        oc_secret_key_der: Option<Vec<u8>>,
         test_mode: bool,
     ) -> Self {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            user_canister_wasm_for_new_canisters: user_canister_wasm.clone(),
-            user_canister_wasm_for_upgrades: user_canister_wasm,
+            user_canister_wasm_for_new_canisters: user_canister_wasm.clone().into(),
+            user_canister_wasm_for_upgrades: user_canister_wasm.into(),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,
@@ -250,7 +272,6 @@ impl Data {
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
-            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -264,13 +285,20 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
             rng_seed: [0; 32],
+            video_call_operators,
+            oc_secret_key_der,
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
+                .build(),
+            event_deduper: EventDeduper::default(),
         }
     }
 }
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
@@ -288,7 +316,9 @@ pub struct Metrics {
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
+    pub oc_secret_key_initialized: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -300,4 +330,5 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
+    pub event_relay: CanisterId,
 }

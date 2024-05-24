@@ -7,6 +7,9 @@ import {
     ANON_AVATAR_URL,
     type CreatedUser,
     anonymousUser,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    OPENCHAT_VIDEO_CALL_USERNAME,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
@@ -15,6 +18,20 @@ export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
+
+export const videoCallBotUser: UserSummary = {
+    kind: "bot",
+    userId: OPENCHAT_VIDEO_CALL_USER_ID,
+    username: OPENCHAT_VIDEO_CALL_USERNAME,
+    displayName: undefined,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
+};
+
 export const openChatBotUser: UserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,
@@ -24,6 +41,8 @@ export const openChatBotUser: UserSummary = {
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
     diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -35,6 +54,8 @@ export const anonymousUserSummary: UserSummary = {
     suspended: false,
     blobUrl: ANON_AVATAR_URL,
     diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -51,6 +72,8 @@ export function proposalsBotUser(userId: string): UserSummary {
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
     };
 }
 
@@ -129,11 +152,7 @@ export const platformModerator = derived(
 );
 
 export const platformOperator = derived(currentUser, ($currentUser) => {
-    if (process.env.NODE_ENV === "production") {
-        return $currentUser.isPlatformOperator;
-    } else {
-        return true;
-    }
+    return $currentUser.isPlatformOperator;
 });
 
 function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {

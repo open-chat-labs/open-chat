@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
         type ChatSummary,
@@ -21,6 +21,7 @@
         type CommunitySummary,
         type AttachmentContent,
         LEDGER_CANISTER_ICP,
+        type MessageContent,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -45,7 +46,6 @@
     export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     let previousChatId: ChatIdentifier | undefined = undefined;
@@ -194,7 +194,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), undefined);
+            sendMessageWithAttachment(randomSentence(), false, undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -202,14 +202,15 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
         if (!canSendAny) return;
-        let [text, mentioned] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
+                    blockLevelMarkdown,
                     $currentChatAttachment,
                     $currentChatEditingEvent,
                 )
@@ -219,20 +220,27 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, $currentChatAttachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, $currentChatAttachment, mentioned);
         }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
+        client.sendMessageWithAttachment(
+            messageContext,
+            textContent,
+            blockLevelMarkdown,
+            attachment,
+            mentioned,
+        );
     }
 
     function forwardMessage(msg: Message) {
-        dispatch("forwardMessage", msg);
+        client.forwardMessage(messageContext, msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -265,6 +273,10 @@
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
+
+    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
+        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -281,7 +293,10 @@
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+<PollBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={pollBuilder}
+    bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
@@ -289,7 +304,7 @@
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
-        on:sendMessageWithContent
+        {messageContext}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
@@ -300,21 +315,26 @@
         {chat}
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         draftAmount={0n}
-        on:sendMessageWithContent
         on:close={() => (creatingPrizeMessage = false)} />
 {/if}
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        {messageContext}
         on:upgrade
-        on:sendMessageWithContent
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
-<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={giphySelector}
+    bind:open={selectingGif} />
 
-<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={memeBuilder}
+    bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}
@@ -333,6 +353,7 @@
             on:showGroupMembers
             on:leaveGroup
             on:upgrade
+            on:startVideoCall
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             on:convertGroupToCommunity
@@ -350,6 +371,7 @@
         on:upgrade
         on:forward
         on:retrySend
+        on:startVideoCall
         on:removePreview={onRemovePreview}
         {chat}
         {events}

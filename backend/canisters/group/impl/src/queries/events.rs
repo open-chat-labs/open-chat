@@ -6,7 +6,7 @@ use canister_api_macros::query_msgpack;
 use group_canister::c2c_events::Args as C2CArgs;
 use group_canister::events::{Response::*, *};
 use group_chat_core::EventsResult;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn events(args: Args) -> Response {

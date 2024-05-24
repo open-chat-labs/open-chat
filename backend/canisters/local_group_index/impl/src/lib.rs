@@ -1,13 +1,21 @@
 use crate::model::local_community_map::LocalCommunityMap;
+use candid::Principal;
 use canister_state_macros::canister_state;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
+use event_store_utils::EventDeduper;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
+use std::time::Duration;
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
+};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
 use utils::env::Environment;
+use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod lifecycle;
@@ -61,9 +69,12 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let group_upgrades_metrics = self.data.groups_requiring_upgrade.metrics();
         let community_upgrades_metrics = self.data.communities_requiring_upgrade.metrics();
+        let event_store_client_info = self.data.event_store_client.info();
+        let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -80,20 +91,23 @@ impl RuntimeState {
             community_upgrades_failed: community_upgrades_metrics.failed,
             community_upgrades_pending: community_upgrades_metrics.pending as u64,
             community_upgrades_in_progress: community_upgrades_metrics.in_progress as u64,
-            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.version,
-            community_wasm_version: self.data.community_canister_wasm_for_new_canisters.version,
+            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.wasm.version,
+            community_wasm_version: self.data.community_canister_wasm_for_new_canisters.wasm.version,
             max_concurrent_group_upgrades: self.data.max_concurrent_group_upgrades,
             group_upgrade_concurrency: self.data.group_upgrade_concurrency,
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
+            event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
-                escrow_canister_id: self.data.escrow_canister_id,
+                escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
             },
         }
     }
@@ -103,10 +117,10 @@ impl RuntimeState {
 struct Data {
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    pub group_canister_wasm_for_new_canisters: CanisterWasm,
-    pub group_canister_wasm_for_upgrades: CanisterWasm,
-    pub community_canister_wasm_for_new_canisters: CanisterWasm,
-    pub community_canister_wasm_for_upgrades: CanisterWasm,
+    pub group_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
+    pub group_canister_wasm_for_upgrades: ChunkedCanisterWasm,
+    pub community_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
+    pub community_canister_wasm_for_upgrades: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -116,6 +130,8 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
@@ -123,7 +139,20 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
+    pub video_call_operators: Vec<Principal>,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
+    pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -138,16 +167,20 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
         Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            group_canister_wasm_for_new_canisters: group_canister_wasm.clone(),
-            group_canister_wasm_for_upgrades: group_canister_wasm,
-            community_canister_wasm_for_new_canisters: community_canister_wasm.clone(),
-            community_canister_wasm_for_upgrades: community_canister_wasm,
+            group_canister_wasm_for_new_canisters: group_canister_wasm.clone().into(),
+            group_canister_wasm_for_upgrades: group_canister_wasm.into(),
+            community_canister_wasm_for_new_canisters: community_canister_wasm.clone().into(),
+            community_canister_wasm_for_upgrades: community_canister_wasm.into(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
@@ -155,6 +188,7 @@ impl Data {
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             groups_requiring_upgrade: CanistersRequiringUpgrade::default(),
             communities_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -165,13 +199,20 @@ impl Data {
             max_concurrent_community_upgrades: 10,
             community_upgrade_concurrency: 2,
             rng_seed: [0; 32],
+            video_call_operators,
+            ic_root_key,
+            event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
+                .build(),
+            event_deduper: EventDeduper::default(),
         }
     }
 }
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
@@ -194,6 +235,7 @@ pub struct Metrics {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
+    pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
 }
 
@@ -204,6 +246,8 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
-    pub escrow_canister_id: CanisterId,
+    pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub event_relay: CanisterId,
+    pub internet_identity: CanisterId,
 }

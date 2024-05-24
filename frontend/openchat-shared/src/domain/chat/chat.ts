@@ -63,7 +63,22 @@ export type MessageContent =
     | MessageReminderContent
     | ReportedMessageContent
     | UserReferralCard
-    | MemeFighterContent;
+    | MemeFighterContent
+    | VideoCallContent;
+
+export type VideoCallParticipant = {
+    userId: string;
+    joined: bigint;
+};
+
+export type VideoCallContent = {
+    kind: "video_call_content";
+    participants: VideoCallParticipant[];
+    ended?: bigint;
+    callType: VideoCallType;
+};
+
+export type VideoCallType = "broadcast" | "default";
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
@@ -127,6 +142,23 @@ export function isCaptionedContent(content: MessageContent): content is Captione
     }
 }
 
+export function isTransfer(content: MessageContent): boolean {
+    return (
+        content.kind === "crypto_content" ||
+        content.kind === "prize_content_initial" ||
+        content.kind === "p2p_swap_content_initial"
+    );
+}
+
+export function canRetryMessage(content: MessageContent): boolean {
+    return (
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content" &&
+        content.kind !== "prize_content_initial" &&
+        content.kind !== "p2p_swap_content_initial"
+    );
+}
+
 export type IndexRange = [number, number];
 
 export interface PlaceholderContent {
@@ -162,7 +194,6 @@ export type CompletedCryptocurrencyWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type FailedCryptocurrencyWithdrawal = {
@@ -179,7 +210,8 @@ export type WithdrawCryptocurrencyResponse =
     | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
     | CompletedCryptocurrencyWithdrawal
-    | Offline;
+    | Offline
+    | PinNumberFailures;
 
 export type CryptocurrencyWithdrawal =
     | PendingCryptocurrencyWithdrawal
@@ -195,7 +227,6 @@ export type CompletedCryptocurrencyTransfer = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string | undefined;
 };
 
 export type PendingCryptocurrencyTransfer = {
@@ -371,6 +402,8 @@ export interface ProposalCommon {
     summary: string;
     proposer: string;
     payloadTextRendering?: string;
+    minYesPercentageOfTotal: number;
+    minYesPercentageOfExercised: number;
 }
 
 export type ManageNeuronResponse =
@@ -591,8 +624,8 @@ export type Message = {
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
-    lastUpdated: bigint | undefined;
     thread?: ThreadSummary;
+    blockLevelMarkdown: boolean;
 };
 
 export type ThreadSummary = {
@@ -625,6 +658,7 @@ export type LocalChatSummaryUpdates = {
     updated?:
         | {
               kind?: undefined;
+              latestMessage?: EventWrapper<Message>;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;
@@ -633,6 +667,7 @@ export type LocalChatSummaryUpdates = {
               kind: "group_chat" | "channel";
               name?: string;
               description?: string;
+              latestMessage?: EventWrapper<Message>;
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;
@@ -662,6 +697,7 @@ export type LocalMessageUpdates = {
     threadSummary?: Partial<ThreadSummary>;
     tips?: TipsReceived;
     hiddenMessageRevealed?: boolean;
+    blockLevelMarkdown?: boolean;
     lastUpdated: number;
 };
 
@@ -939,6 +975,7 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
 };
 
@@ -1088,7 +1125,28 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    pinNumberSettings: PinNumberSettings | undefined;
     localUserIndex: string;
+};
+
+export type PinNumberSettings = {
+    length: number;
+    attemptsBlockedUntil: bigint | undefined;
+};
+
+export type PinNumberResolver = {
+    resolve: (pin: string) => void;
+    reject: () => void;
+    message: string | undefined;
+};
+
+export type RulesAcceptanceResolver = {
+    resolve: (accepted: boolean) => void;
+};
+
+export type AcceptedRules = {
+    chat: number | undefined;
+    community: number | undefined;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -1103,6 +1161,7 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
 };
 
 export type DirectChatsUpdates = {
@@ -1178,6 +1237,7 @@ export type DirectChatSummaryUpdates = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
+    videoCallInProgress: OptionUpdate<number>;
 };
 
 export type GroupSubtypeUpdate =
@@ -1231,6 +1291,7 @@ export type GroupChatDetails = {
  */
 export type ChatSpecificState = {
     members: Member[];
+    membersMap: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
@@ -1272,6 +1333,7 @@ type ChatSummaryCommon = HasMembershipRole & {
     membership: ChatMembership;
     eventsTTL: bigint | undefined;
     eventsTtlLastUpdated: bigint;
+    videoCallInProgress?: number;
 };
 
 export type ChannelSummary = DataContent &
@@ -1380,6 +1442,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
+        videoCallInProgress?: number;
     };
 
 export type UpdatedEvent = {
@@ -1415,6 +1478,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     rulesAccepted: boolean | undefined;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
+    videoCallInProgress: OptionUpdate<number>;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1572,7 +1636,9 @@ export type SendMessageResponse =
     | Offline
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
-    | DuplicateMessageId;
+    | DuplicateMessageId
+    | PinNumberFailures
+    | MessageThrottled;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1651,7 +1717,8 @@ export type GateCheckFailedReason =
     | "dissolve_delay_not_met"
     | "min_stake_not_met"
     | "payment_failed"
-    | "insufficient_balance";
+    | "insufficient_balance"
+    | "failed_verified_credential_check";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1674,6 +1741,24 @@ export type P2PSwapSetUpFailed = {
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
+};
+
+export type MessageThrottled = {
+    kind: "message_throttled";
+};
+
+export type PinRequired = {
+    kind: "pin_required";
+};
+
+export type PinIncorrect = {
+    kind: "pin_incorrect";
+    nextRetryAt: bigint;
+};
+
+export type TooManyFailedPinAttempts = {
+    kind: "too_main_failed_pin_attempts";
+    nextRetryAt: bigint;
 };
 
 export type GateUpdatedEvent = {
@@ -2019,7 +2104,7 @@ export type PublicGroupSummaryResponse =
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = Success | Failure;
+export type TipMessageResponse = Success | Failure | PinNumberFailures;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
@@ -2122,6 +2207,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
+    | PinNumberFailures
     | { kind: "internal_error"; text: string };
 
 export type CancelP2PSwapResponse =
@@ -2150,3 +2236,25 @@ export type CancelP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error"; text: string };
+
+export type JoinVideoCallResponse = "success" | "failure" | "ended";
+
+export type VideoCallPresence = "default" | "owner" | "hidden";
+
+export type SetVideoCallPresenceResponse = "success" | "failure";
+
+export type VideoCallParticipants = {
+    participants: VideoCallParticipant[];
+    hidden: VideoCallParticipant[];
+    lastUpdated: bigint;
+};
+
+export type VideoCallParticipantsResponse = Failure | (Success & VideoCallParticipants);
+
+export type SetPinNumberResponse =
+    | Success
+    | PinNumberFailures
+    | { kind: "too_short"; minLength: number }
+    | { kind: "too_long"; maxLength: number };
+
+export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;

@@ -280,10 +280,25 @@ type ThreadPreviewsResponse = variant {
     ReplicaNotUpToDate : TimestampMillis;
 };
 
+type VideoCallParticipantsArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    updated_since : opt TimestampMillis;
+};
+
+type VideoCallParticipantsResponse = variant {
+    Success : VideoCallParticipants;
+    VideoCallNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChannelNotFound;
+};
+
 type AcceptP2PSwapArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
+    pin : opt text;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -296,6 +311,9 @@ type AcceptP2PSwapResponse = variant {
     UserNotInChannel;
     UserSuspended;
     ChatFrozen;
+    PinRequired;
+    PinIncorrect : Milliseconds;
+    TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
 };
 
@@ -571,6 +589,7 @@ type EditMessageArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     content : MessageContentInitial;
+    block_level_markdown : opt bool;
 };
 
 type EditMessageResponse = variant {
@@ -592,6 +611,17 @@ type EnableInviteCodeResponse = variant {
     CommunityFrozen;
 };
 
+type EndVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+};
+
+type EndVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+};
+
 type ImportGroupArgs = record {
     group_id : ChatId;
 };
@@ -611,6 +641,22 @@ type ImportGroupResponse = variant {
     GroupImportingToAnotherCommunity;
     GroupFrozen;
     InternalError : text;
+};
+
+type JoinVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+};
+
+type JoinVideoCallResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
 };
 
 type LeaveChannelArgs = record {
@@ -779,18 +825,14 @@ type SendMessageArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     forwarding : bool;
+    block_level_markdown : bool;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
 };
 
 type SendMessageResponse = variant {
-    Success : record {
-        event_index : EventIndex;
-        message_index : MessageIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-    };
+    Success : SendMessageSuccess;
     ChannelNotFound;
     ThreadMessageNotFound;
     MessageEmpty;
@@ -806,6 +848,13 @@ type SendMessageResponse = variant {
     CommunityRulesNotAccepted;
 };
 
+type SendMessageSuccess = record {
+    message_index : MessageIndex;
+    event_index : EventIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
+};
+
 type SetMemberDisplayNameArgs = record {
     display_name : opt text;
 };
@@ -818,6 +867,38 @@ type SetMemberDisplayNameResponse = variant {
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;
     DisplayNameTooLong : nat16;
+};
+
+type SetVideoCallPresenceArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    presence : VideoCallPresence;
+};
+
+type SetVideoCallPresenceResponse = variant {
+    Success;
+    MessageNotFound;
+    AlreadyEnded;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    UserNotInChannel;
+};
+
+type StartVideoCallArgs = record {
+    channel_id : ChannelId;
+    message_id : MessageId;
+    initiator : UserId;
+    initiator_username : text;
+    initiator_display_name : opt text;
+    max_duration : opt Milliseconds;
+    call_type: VideoCallType;
+};
+
+type StartVideoCallResponse = variant {
+    Success;
+    NotAuthorized;
 };
 
 type ToggleMuteNotificationsArgs = record {
@@ -1003,6 +1084,7 @@ service : {
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
+    video_call_participants : (VideoCallParticipantsArgs) -> (VideoCallParticipantsResponse) query;
 
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
@@ -1021,7 +1103,9 @@ service : {
     disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
+    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
+    join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
@@ -1034,6 +1118,8 @@ service : {
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
+    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
+    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);

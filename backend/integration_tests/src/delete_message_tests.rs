@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatEvent, MessageContent};
 use utils::time::MINUTE_IN_MS;
 
@@ -12,8 +12,8 @@ fn delete_direct_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let message_id = random_message_id();
 
@@ -58,8 +58,8 @@ fn delete_their_direct_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let message_id = random_message_id();
 
@@ -105,7 +105,7 @@ fn delete_group_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
     let message_id = random_message_id();
@@ -143,8 +143,8 @@ fn delete_then_undelete_direct_message(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let message_id = random_message_id();
 
@@ -220,7 +220,7 @@ fn delete_then_undelete_group_message(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
     let message_id = random_message_id();
@@ -289,7 +289,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
 

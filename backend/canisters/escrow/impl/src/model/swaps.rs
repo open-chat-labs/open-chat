@@ -100,7 +100,7 @@ impl Swap {
     }
 
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
-        if let Some((accepted_by, accepted_at)) = self.accepted_by {
+        if let Some((accepted_by, accepted_at)) = self.token0_received.then_some(self.accepted_by).flatten() {
             if let (Some(token0_transfer_out), Some(token1_transfer_out)) =
                 (self.token0_transfer_out.clone(), self.token1_transfer_out.clone())
             {

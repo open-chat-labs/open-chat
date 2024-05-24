@@ -1,12 +1,13 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, Reader};
+use chat_events::{ChatEvents, PushMessageArgs, Reader};
+use event_store_producer::{EventStoreClient, Runtime};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
-    Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
+    TimestampMillis, Timestamped, UserId,
 };
-use user_canister::c2c_send_messages_v2::SendMessageArgs;
+use user_canister::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -23,11 +24,17 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, is_bot: bool, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> DirectChat {
+    pub fn new(
+        them: UserId,
+        is_bot: bool,
+        events_ttl: Option<Milliseconds>,
+        anonymized_chat_id: u128,
+        now: TimestampMillis,
+    ) -> DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(events_ttl, now),
+            events: ChatEvents::new_direct_chat(them, events_ttl, anonymized_chat_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
@@ -53,6 +60,28 @@ impl DirectChat {
         .into_iter()
         .max()
         .unwrap()
+    }
+
+    pub fn push_message<R: Runtime + Send + 'static>(
+        &mut self,
+        sent_by_me: bool,
+        args: PushMessageArgs,
+        their_message_index: Option<MessageIndex>,
+        event_store_client: Option<&mut EventStoreClient<R>>,
+    ) -> EventWrapper<Message> {
+        let now = args.now;
+        let message_event = self.events.push_message(args, event_store_client);
+
+        self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
+
+        if !sent_by_me {
+            if let Some(their_message_index) = their_message_index {
+                self.unread_message_index_map
+                    .add(message_event.event.message_index, their_message_index);
+            }
+        }
+
+        message_event
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
@@ -100,6 +129,7 @@ impl DirectChat {
             archived: self.archived.value,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
+            video_call_in_progress: self.events.video_call_in_progress().value.clone(),
         }
     }
 
@@ -141,6 +171,28 @@ impl DirectChat {
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
+            video_call_in_progress: self
+                .events
+                .video_call_in_progress()
+                .if_set_after(updates_since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
+    }
+
+    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
+        self.events
+            .main_events_reader()
+            .message_internal(message_id.into())
+            .unwrap()
+            .message_index
+    }
+
+    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
+        self.events
+            .main_events_reader()
+            .message_internal(message_index.into())
+            .unwrap()
+            .message_id
     }
 }

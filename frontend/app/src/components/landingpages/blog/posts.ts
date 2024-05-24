@@ -4,6 +4,8 @@ import CommunitiesReleased from "./CommunitiesReleased.svelte";
 import Governance from "./Governance.svelte";
 import WebsiteReleases from "./WebsiteReleases.svelte";
 import Translation from "./Translation.svelte";
+import Video from "./VideoCallsReleased.svelte";
+import ICFootprint from "./ICFootprint.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -14,6 +16,20 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    ic_footprint: {
+        slug: "ic_footprint",
+        title: "OpenChat tracks carbon-emissions in real-time and commits to net-zero operations",
+        author: "@Steffen",
+        date: new Date(2024, 3, 22),
+        component: ICFootprint,
+    },
+    video: {
+        slug: "video",
+        title: "Video calls released",
+        author: "@julian_jelfs",
+        date: new Date(2024, 2, 7),
+        component: Video,
+    },
     translations: {
         slug: "translations",
         title: "Translations",

@@ -201,6 +201,20 @@ impl PendingCryptoTransaction {
         }
     }
 
+    pub fn created(&self) -> TimestampNanos {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.created,
+            PendingCryptoTransaction::ICRC1(t) => t.created,
+        }
+    }
+
+    pub fn set_created(&mut self, created: TimestampNanos) {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.created = created,
+            PendingCryptoTransaction::ICRC1(t) => t.created = created,
+        }
+    }
+
     pub fn set_memo(mut self, memo: &[u8]) -> Self {
         match &mut self {
             PendingCryptoTransaction::NNS(t) => {
@@ -332,6 +346,7 @@ pub mod nns {
         pub to: CryptoAccount,
         pub memo: Memo,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -346,6 +361,7 @@ pub mod nns {
         pub to: CryptoAccount,
         pub memo: Memo,
         pub created: TimestampNanos,
+        #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }

@@ -6,9 +6,9 @@ OpenChat is a fully featured chat application running end-to-end on the Internet
 
 ## Prerequisites
 
-#### DFX 0.16.0
+#### DFX 0.19.0
 
-To install, run `DFX_VERSION=0.16.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
+To install, run `DFX_VERSION=0.19.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
 
 #### Rust
 
@@ -39,6 +39,6 @@ You can build the OpenChat canister wasms by running `./scripts/docker-build-all
 
 ## License
 
-Copyright 2023 OpenChat Labs LTD
+Copyright 2024 OpenChat Labs LTD
 
 Licensed under the AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html

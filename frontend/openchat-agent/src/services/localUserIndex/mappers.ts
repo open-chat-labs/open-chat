@@ -1,5 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import type {
+    AccessTokenType,
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
@@ -9,9 +10,13 @@ import type {
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
+    VerifiedCredentialArgs,
+    VideoCallType,
 } from "openchat-shared";
 import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiAccessTokenResponse,
+    ApiAccessTokenType,
     ApiChatEventsArgsInner,
     ApiChatEventsResponse,
     ApiEventsContext,
@@ -21,6 +26,8 @@ import type {
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
+    ApiVerifiedCredentialArgs,
+    ApiVideoCallType,
 } from "./candid/idl";
 import { bytesToHexString, identity } from "../../utils/mapping";
 import {
@@ -33,6 +40,35 @@ import {
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
 import { communitySummaryUpdates } from "../community/mappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+
+export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType {
+    switch (domain.kind) {
+        case "join_video_call":
+            return {
+                JoinVideoCall: null,
+            };
+        case "start_video_call":
+            return {
+                StartVideoCallV2: {
+                    call_type: apiCallType(domain.callType),
+                },
+            };
+    }
+}
+
+export function apiCallType(domain: VideoCallType): ApiVideoCallType {
+    if (domain === "broadcast") return { Broadcast: null };
+    if (domain === "default") return { Default: null };
+    throw new UnsupportedValueError("Unexpected VideoCallType received", domain);
+}
+
+export function accessTokenResponse(candid: ApiAccessTokenResponse): string | undefined {
+    if ("Success" in candid) {
+        return candid.Success;
+    }
+    console.warn("Unable to get access token: ", candid);
+    return undefined;
+}
 
 export function groupAndCommunitySummaryUpdates(
     candid: ApiGroupAndCommunitySummaryUpdatesResponse,
@@ -265,6 +301,9 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("ReferralCodeExpired" in candid) {
         return { kind: "referral_code_expired" };
     }
+    if ("RegistrationInProgress" in candid) {
+        return { kind: "registration_in_progress" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
 }
@@ -291,4 +330,14 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
         console.warn("Join community failed with: ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function apiVerifiedCredentialArgs(
+    domain: VerifiedCredentialArgs,
+): ApiVerifiedCredentialArgs {
+    return {
+        user_ii_principal: Principal.fromText(domain.userIIPrincipal),
+        ii_origin: domain.iiOrigin,
+        credential_jwt: domain.credentialJwt,
+    };
 }

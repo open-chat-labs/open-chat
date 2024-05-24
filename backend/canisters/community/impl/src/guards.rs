@@ -47,3 +47,11 @@ pub fn caller_is_escrow_canister() -> Result<(), String> {
         Err("Caller is not the escrow canister".to_string())
     }
 }
+
+pub fn caller_is_video_call_operator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_video_call_operator()) {
+        Ok(())
+    } else {
+        Err("Caller is not a video call operator".to_string())
+    }
+}

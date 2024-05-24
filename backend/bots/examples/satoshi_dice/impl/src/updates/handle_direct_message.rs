@@ -87,8 +87,10 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
         messages: messages
             .into_iter()
             .map(|m| BotMessage {
+                thread_root_message_id: None,
                 content: MessageContentInitial::Text(TextContent { text: m }),
                 message_id: None,
+                block_level_markdown: None,
             })
             .collect(),
     })

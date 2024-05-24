@@ -174,8 +174,6 @@ pub struct MessageInternal {
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
     pub tips: Tips,
-    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
-    pub last_updated: Option<TimestampMillis>,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
     #[serde(rename = "d", default, skip_serializing_if = "Option::is_none")]
@@ -184,6 +182,8 @@ pub struct MessageInternal {
     pub thread_summary: Option<ThreadSummaryInternal>,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub forwarded: bool,
+    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
+    pub block_level_markdown: bool,
 }
 
 impl MessageInternal {
@@ -207,7 +207,7 @@ impl MessageInternal {
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
-            last_updated: self.last_updated,
+            block_level_markdown: self.block_level_markdown,
         }
     }
 
@@ -274,6 +274,7 @@ impl MessageInternal {
             }
             MessageContentInternal::ReportedMessage(_) => {}
             MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swaps),
+            MessageContentInternal::VideoCall(_) => incr(&mut metrics.video_calls),
             MessageContentInternal::Custom(_) => {
                 incr(&mut metrics.custom_type_messages);
             }
@@ -533,6 +534,8 @@ pub struct ChatMetricsInternal {
     pub message_reminders: u64,
     #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
     pub p2p_swaps: u64,
+    #[serde(rename = "vc", default, skip_serializing_if = "is_default")]
+    pub video_calls: u64,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u64,
     #[serde(rename = "la")]
@@ -614,11 +617,11 @@ mod tests {
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),
-            last_updated: None,
             last_edited: None,
             deleted_by: None,
             thread_summary: None,
             forwarded: false,
+            block_level_markdown: false,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
@@ -656,7 +659,6 @@ mod tests {
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
             tips,
-            last_updated: Some(1),
             last_edited: Some(1),
             deleted_by: Some(DeletedByInternal {
                 deleted_by: principal.into(),
@@ -670,6 +672,7 @@ mod tests {
                 latest_event_timestamp: 1,
             }),
             forwarded: true,
+            block_level_markdown: false,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
@@ -685,7 +688,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 202);
+        assert_eq!(message_bytes_len, 199);
         assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);

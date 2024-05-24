@@ -1,4 +1,5 @@
 use crate::model::token_swaps::TokenSwap;
+use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
@@ -6,8 +7,7 @@ use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::c2c_send_messages_v2::C2CReplyContext;
-use user_canister::UserCanisterEvent;
+use user_canister::{C2CReplyContext, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
 
@@ -24,6 +24,7 @@ pub enum TimerJob {
     MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
+    MarkVideoCallEnded(MarkVideoCallEndedJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -112,6 +113,9 @@ pub struct SendMessageToChannelJob {
     pub attempt: u32,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call::Args);
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -126,6 +130,7 @@ impl Job for TimerJob {
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
+            TimerJob::MarkVideoCallEnded(job) => job.execute(),
         }
     }
 }
@@ -147,7 +152,7 @@ impl Job for RetrySendingFailedMessagesJob {
         });
 
         if !pending_messages.is_empty() {
-            let args = user_canister::c2c_send_messages_v2::Args {
+            let args = user_canister::SendMessagesArgs {
                 messages: pending_messages,
                 sender_name,
                 sender_display_name,
@@ -222,7 +227,7 @@ impl Job for MessageReminderJob {
                 chat.events
                     .mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
             }
-            openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
+            openchat_bot::send_message_with_reply(content, Some(replies_to), Vec::new(), false, state)
         });
     }
 }
@@ -368,5 +373,11 @@ impl Job for SendMessageToChannelJob {
                 response => error!(?response, "Failed to send message to channel"),
             };
         })
+    }
+}
+
+impl Job for MarkVideoCallEndedJob {
+    fn execute(self) {
+        mutate_state(|state| end_video_call_impl(self.0, state));
     }
 }

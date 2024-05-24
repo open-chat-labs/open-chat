@@ -10,7 +10,7 @@
     import type { Theme } from "../../../theme/types";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment } from "../../../utils/alignment";
-    import type { ResourceKey } from "../../../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");

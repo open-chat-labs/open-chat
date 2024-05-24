@@ -15,6 +15,8 @@ async fn main() {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }
         CanisterName::Escrow => upgrade_escrow_canister(identity, opts.url, opts.escrow, opts.version).await,
+        CanisterName::EventRelay => upgrade_event_relay_canister(identity, opts.url, opts.event_relay, opts.version).await,
+        CanisterName::EventStore => upgrade_event_store_canister(identity, opts.url, opts.event_store, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
@@ -36,7 +38,7 @@ async fn main() {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
         CanisterName::Registry => upgrade_registry_canister(identity, opts.url, opts.registry, opts.version).await,
-        CanisterName::Translations => upgrade_registry_canister(identity, opts.url, opts.translations, opts.version).await,
+        CanisterName::Translations => upgrade_translations_canister(identity, opts.url, opts.translations, opts.version).await,
         CanisterName::StorageBucket => {
             upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
@@ -48,6 +50,7 @@ async fn main() {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
         }
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
+        CanisterName::SignInWithEmail | CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
     };
 }
 
@@ -97,6 +100,12 @@ struct Opts {
 
     #[arg(long)]
     escrow: CanisterId,
+
+    #[arg(long)]
+    event_relay: CanisterId,
+
+    #[arg(long)]
+    event_store: CanisterId,
 
     #[arg(long)]
     canister_to_upgrade: CanisterName,

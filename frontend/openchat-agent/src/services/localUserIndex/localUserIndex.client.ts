@@ -2,11 +2,13 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
+    AccessTokenType,
     ChannelIdentifier,
     ChatEvent,
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
+    ChatIdentifier,
     EventsSuccessResult,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
@@ -14,11 +16,15 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     chatEventsArgs,
     chatEventsBatchResponse,
+    accessTokenResponse,
+    apiAccessTokenType,
+    apiVerifiedCredentialArgs,
     groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
@@ -26,7 +32,7 @@ import {
     registerUserResponse,
 } from "./mappers";
 import type { AgentConfig } from "../../config";
-import { joinGroupResponse, apiOptional } from "../common/chatMappers";
+import { joinGroupResponse, apiOptional, apiChatIdentifier } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 import {
@@ -206,53 +212,75 @@ export class LocalUserIndexClient extends CandidService {
     joinCommunity(
         communityId: string,
         inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
             }),
             joinCommunityResponse,
         );
     }
 
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+    joinGroup(
+        chatId: string,
+        inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
+    ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_group({
                 chat_id: Principal.fromText(chatId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
                 correlation_id: BigInt(0),
             }),
             joinGroupResponse,
         );
     }
 
-    joinChannel(id: ChannelIdentifier, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+    joinChannel(
+        id: ChannelIdentifier,
+        inviteCode: string | undefined,
+        credentialArgs: VerifiedCredentialArgs | undefined,
+    ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_channel({
                 community_id: Principal.fromText(id.communityId),
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
+                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
             }),
             (resp) => joinChannelResponse(resp, id.communityId),
         );
     }
 
-    inviteUsersToCommunity(communityId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    inviteUsersToCommunity(
+        communityId: string,
+        userIds: string[],
+        callerUsername: string,
+    ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_community({
                 community_id: Principal.fromText(communityId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
             }),
             inviteUsersResponse,
         );
     }
 
-    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    inviteUsersToGroup(
+        chatId: string,
+        userIds: string[],
+        callerUsername: string,
+    ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_group({
                 group_id: Principal.fromText(chatId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
                 correlation_id: BigInt(0),
             }),
             inviteUsersResponse,
@@ -263,14 +291,30 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         channelId: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_channel({
                 community_id: Principal.fromText(communityId),
                 channel_id: BigInt(channelId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                caller_username: callerUsername,
             }),
             inviteUsersResponse,
+        );
+    }
+
+    getAccessToken(
+        chatId: ChatIdentifier,
+        accessType: AccessTokenType,
+    ): Promise<string | undefined> {
+        return this.handleQueryResponse(
+            () =>
+                this.localUserIndexService.access_token({
+                    chat: apiChatIdentifier(chatId),
+                    token_type: apiAccessTokenType(accessType),
+                }),
+            accessTokenResponse,
         );
     }
 }

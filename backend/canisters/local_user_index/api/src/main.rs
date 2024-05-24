@@ -1,6 +1,7 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
+    generate_candid_method!(local_user_index, access_token, query);
     generate_candid_method!(local_user_index, chat_events, query);
     generate_candid_method!(local_user_index, group_and_community_summary_updates, query);
 

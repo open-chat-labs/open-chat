@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, OptionUpdate};
 
 #[test_case(true)]
@@ -18,7 +18,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_diamond_user(env, canister_ids, *controller);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
 
@@ -37,7 +37,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,

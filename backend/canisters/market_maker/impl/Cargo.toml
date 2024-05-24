@@ -20,7 +20,6 @@ futures = { workspace = true }
 hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icdex_canister = { path = "../../../external_canisters/icdex/api" }

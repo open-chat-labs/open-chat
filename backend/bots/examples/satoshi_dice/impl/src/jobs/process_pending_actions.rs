@@ -62,8 +62,10 @@ async fn process_action(action: Action) {
                     messages: messages
                         .into_iter()
                         .map(|m| BotMessage {
+                            thread_root_message_id: None,
                             content: m,
                             message_id: None,
+                            block_level_markdown: None,
                         })
                         .collect(),
                 },

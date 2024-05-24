@@ -29,6 +29,7 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
         this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
             undeletedContent: content,
+            revealedContent: undefined,
         }));
     }
     markContentRevealed(messageId: bigint, content: MessageContent): void {
@@ -40,6 +41,11 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
     markBlockedMessageRevealed(messageId: bigint): void {
         this.applyUpdate(messageId, (_) => ({
             hiddenMessageRevealed: true,
+        }));
+    }
+    setBlockLevelMarkdown(messageId: bigint, blockLevelMarkdown: boolean): void {
+        this.applyUpdate(messageId, (_) => ({
+            blockLevelMarkdown,
         }));
     }
     markContentEdited(messageId: bigint, content: MessageContent): void {

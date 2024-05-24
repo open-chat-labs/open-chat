@@ -47,13 +47,14 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            tokens: self.data.tokens.get_all().iter().map(|t| t.into()).collect(),
+            tokens: self.data.tokens.iter().map(|t| t.into()).collect(),
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
@@ -77,6 +78,10 @@ struct Data {
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
     message_filters: MessageFilters,
+    #[serde(default)]
+    total_supply: Timestamped<u128>,
+    #[serde(default)]
+    circulating_supply: Timestamped<u128>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -100,6 +105,8 @@ impl Data {
             nervous_systems: NervousSystems::default(),
             failed_sns_launches: HashSet::new(),
             message_filters: MessageFilters::default(),
+            total_supply: Timestamped::default(),
+            circulating_supply: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -144,7 +151,7 @@ impl Data {
             IC_LOGO.to_string(),
             "https://dashboard.internetcomputer.org/transactions".to_string(),
             "https://www.finder.com/uk/how-to-buy-internet-computer".to_string(),
-            "https://dashboard.internetcomputer.org/transaction/{transaction_hash}".to_string(),
+            "https://dashboard.internetcomputer.org/transaction/{transaction_index}".to_string(),
             ["ICRC-1".to_string(), "ICRC-2".to_string()].to_vec(),
             now,
         );
@@ -154,7 +161,8 @@ impl Data {
 #[derive(Serialize)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,

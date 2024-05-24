@@ -120,6 +120,6 @@ fn send_oc_bot_messages(pending_payment: &PendingPayment, block_index: BlockInde
     ];
 
     for message in messages {
-        state.push_oc_bot_message_to_user(user_id, message);
+        state.push_oc_bot_message_to_user(user_id, message, Vec::new());
     }
 }

@@ -1,9 +1,9 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_message_id;
 use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]
@@ -11,8 +11,8 @@ fn send_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
 
@@ -32,8 +32,8 @@ fn empty_message_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
@@ -42,7 +42,9 @@ fn empty_message_fails() {
         content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
+        block_level_markdown: false,
         message_filter_failed: None,
+        pin: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
@@ -56,8 +58,8 @@ fn text_too_long_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
@@ -68,7 +70,9 @@ fn text_too_long_fails() {
         }),
         replies_to: None,
         forwarding: false,
+        block_level_markdown: false,
         message_filter_failed: None,
+        pin: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
@@ -82,8 +86,8 @@ fn send_message_retries_if_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
 
@@ -107,8 +111,8 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
 

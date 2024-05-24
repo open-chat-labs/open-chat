@@ -1,20 +1,21 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { type InterpolationValues, type Level, type MessageFormatter } from "openchat-client";
+import { type InterpolationValues, type Level, type MessageFormatter, type ResourceKey } from "openchat-client";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
     de: "de",
-    es: "es",
     en: "en",
+    es: "es",
     fr: "fr",
+    hi: "hi",
     it: "it",
+    iw: "iw",
     jp: "ja",
     ru: "ru",
+    uk: "uk",
     vi: "vi",
-    iw: "iw",
-    hi: "hi",
 };
 
 export const supportedLanguages = [
@@ -62,6 +63,10 @@ export const supportedLanguages = [
         name: "हिंदी",
         code: "hi",
     },
+    {
+        name: "Yкраїнська",
+        code: "uk",
+    },
 ];
 
 export const supportedLanguagesByCode = supportedLanguages.reduce(
@@ -78,12 +83,13 @@ register("cn", () => import("./cn.json"));
 register("de", () => import("./de.json"));
 register("es", () => import("./es.json"));
 register("fr", () => import("./fr.json"));
+register("hi", () => import("./hi.json"));
 register("it", () => import("./it.json"));
+register("iw", () => import("./iw.json"));
 register("jp", () => import("./jp.json"));
 register("ru", () => import("./ru.json"));
+register("uk", () => import("./uk.json"));
 register("vi", () => import("./vi.json"));
-register("iw", () => import("./iw.json"));
-register("hi", () => import("./hi.json"));
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
@@ -95,13 +101,13 @@ export function getStoredLocale(): string {
     return setDialectIfMatchesBrowserLocale(fromStorage);
 }
 
-export function setLocale(code: string): void {
+export async function setLocale(code: string): Promise<void> {
     code = setDialectIfMatchesBrowserLocale(code);
 
     localStorage.setItem(configKeys.locale, code);
 
     if (get(locale) !== code) {
-        locale.set(code);
+        await locale.set(code);
     }
 }
 
@@ -143,14 +149,6 @@ export function interpolate(
 
 export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
-
-export type ResourceKey = {
-    kind: "resource_key";
-    key: string;
-    level?: Level;
-    lowercase: boolean;
-    params?: InterpolationValues;
-};
 
 export function i18nKey(
     key: string,

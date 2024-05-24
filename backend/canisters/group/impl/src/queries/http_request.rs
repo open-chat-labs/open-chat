@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
@@ -26,8 +26,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             state
                 .data
                 .timer_jobs
-                .jobs
-                .values()
+                .iter()
                 .filter_map(|(ts, wrapper)| wrapper.borrow().as_ref().map(|j| (*ts, j.clone())))
                 .collect()
         } else {

@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -7,6 +6,7 @@ use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, CommunityId, Empty, MessageContent};
 
 #[test]
@@ -61,6 +61,7 @@ fn join_private_community_fails() {
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: None,
+            verified_credential_args: None,
         },
     );
 
@@ -88,7 +89,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id],
@@ -138,6 +139,7 @@ fn join_private_community_using_invite_code_succeeds() {
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: Some(invite_code),
+            verified_credential_args: None,
         },
     );
 
@@ -175,7 +177,7 @@ fn invite_to_community_oc_bot_message_received() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id],
@@ -214,7 +216,7 @@ fn default_channels_marked_as_read_after_joining() {
     let default2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let default3 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     for i in 0..3 {
         if i < 1 {
@@ -295,7 +297,7 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
 

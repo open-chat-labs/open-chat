@@ -17,14 +17,17 @@ canister_sig_util = { workspace = true }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 http_request = { path = "../../../libraries/http_request" }
+ic-captcha = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
 rand = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+sha2 = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
@@ -32,3 +35,4 @@ types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
+x509-parser = { workspace = true }

@@ -2,10 +2,10 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::EventIndex;
 use user_canister::edit_message_v2::{Response::*, *};
-use user_canister::{c2c_edit_message, UserCanisterEvent};
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -33,18 +33,25 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_index: None,
             message_id: args.message_id,
             content: args.content.clone(),
+            block_level_markdown: args.block_level_markdown,
             now,
         };
 
-        match chat.events.edit_message(edit_message_args) {
+        match chat
+            .events
+            .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
+        {
             EditMessageResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
+                    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+
                     state.push_user_canister_event(
                         args.user_id.into(),
-                        UserCanisterEvent::EditMessage(Box::new(c2c_edit_message::Args {
+                        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+                            thread_root_message_id,
                             message_id: args.message_id,
                             content: args.content.into(),
-                            correlation_id: args.correlation_id,
+                            block_level_markdown: args.block_level_markdown,
                         })),
                     );
                 }

@@ -15,12 +15,13 @@ const msBlue = "#010081";
 const magenta = "#ff0081";
 const successGreen = "#28a745";
 const errorRed = "#dc3545";
+const green = "#008080";
 
 export function getTheme(base: Theme): Theme {
     base.author = "y3rqn-fyaaa-aaaaf-a7z6a-cai";
     base.name = "windoge98";
     base.label = "Windoge98";
-    base.bg = "#008080 url('/assets/windoge98logo.png') bottom 60px right 10px no-repeat";
+    base.bg = `${green} url('/assets/windoge98logo.png') bottom 60px right 10px no-repeat`;
     base.burst = false;
     base.logo = false;
     base.txt = txt80;
@@ -122,6 +123,18 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt40;
     base.scrollbar.bg = trolleyGray;
     base.card.rd = "0";
+
+    // daily
+    base.daily.header = green;
+    base.daily.accent = base.accent;
+    base.daily.accentText = txt;
+    base.daily.background = green;
+    base.daily.backgroundAccent = silver;
+    base.daily.border = base.bd;
+    base.daily.mainAreaBg = green;
+    base.daily.mainAreaBgAccent = silver;
+    base.daily.mainAreaText = txt;
+    base.daily.supportiveText = "#4e5670";
 
     return base;
 }

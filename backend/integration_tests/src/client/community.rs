@@ -37,12 +37,12 @@ generate_update_call!(update_community);
 generate_update_call!(update_user_group);
 
 pub mod happy_path {
-    use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use testing::rng::random_message_id;
     use types::{
-        AccessGate, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
         MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
@@ -146,6 +146,7 @@ pub mod happy_path {
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
+                block_level_markdown: false,
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
                 message_filter_failed: None,
@@ -414,6 +415,25 @@ pub mod happy_path {
         match response {
             community_canister::claim_prize::Response::Success => {}
             response => panic!("'claim_prize' error: {response:?}"),
+        }
+    }
+
+    pub fn import_group(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        group_id: ChatId,
+    ) -> community_canister::import_group::SuccessResult {
+        let response = super::import_group(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::import_group::Args { group_id },
+        );
+
+        match response {
+            community_canister::import_group::Response::Success(r) => r,
+            response => panic!("'import_group' error: {response:?}"),
         }
     }
 }

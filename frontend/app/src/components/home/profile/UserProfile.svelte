@@ -32,6 +32,7 @@
         chatsSectionOpen,
         dclickReply,
         restrictedSectionOpen,
+        videoSectionOpen,
         enterSend,
         lowBandwidth,
         referralOpen,
@@ -52,6 +53,7 @@
     import ThemeSelector from "./ThemeSelector.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import Translatable from "../../Translatable.svelte";
+    import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -74,6 +76,7 @@
     let view: "global" | "communities" = "global";
     let selectedCommunityId = "";
 
+    $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
     $: identityState = client.identityState;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -356,7 +359,7 @@
 
                 {#if canEditTranslations}
                     <Toggle
-                        id={"enter-send"}
+                        id={"translation-mode"}
                         small
                         on:change={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
@@ -424,6 +427,20 @@
                         on:change={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
+                    <Toggle
+                        id={"hide-blocked"}
+                        small
+                        on:change={() => hideMessagesFromDirectBlocked.toggle()}
+                        label={i18nKey("hideBlocked")}
+                        checked={$hideMessagesFromDirectBlocked} />
+                </CollapsibleCard>
+            </div>
+            <div class="video">
+                <CollapsibleCard
+                    on:toggle={videoSectionOpen.toggle}
+                    open={$videoSectionOpen}
+                    headerText={i18nKey("profile.videoSettings")}>
+                    <VideoCallSettings />
                 </CollapsibleCard>
             </div>
             <div class="restricted">

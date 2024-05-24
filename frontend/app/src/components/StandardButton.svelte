@@ -50,7 +50,9 @@
 
 <style lang="scss">
     button {
-        transition: background ease-in-out 200ms, color ease-in-out 200ms;
+        transition:
+            background ease-in-out 200ms,
+            color ease-in-out 200ms;
         background: var(--button-bg);
         color: var(--button-txt);
         padding: $sp3 $sp6;
@@ -91,15 +93,6 @@
             }
         }
 
-        &.loading {
-            @include loading-spinner(
-                1em,
-                0.5em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
-        }
-
         &.hollow {
             background-color: transparent;
             color: var(--txt);
@@ -110,6 +103,7 @@
             background: var(--button-disabled);
             color: var(--button-disabled-txt);
             cursor: not-allowed;
+            border: var(--bw) solid var(--button-disabled-bd);
         }
 
         &.secondary {
@@ -138,6 +132,15 @@
             pointer-events: none;
             animation: pulse 3s linear infinite;
             transform-origin: top;
+        }
+
+        &.loading {
+            @include loading-spinner(
+                1em,
+                0.5em,
+                var(--button-spinner),
+                "/assets/plain-spinner.svg"
+            );
         }
     }
 

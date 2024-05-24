@@ -22,6 +22,7 @@
     import { sum } from "../../../utils/math";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import RestrictedFeature from "./RestrictedFeature.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,7 +30,7 @@
     export let zeroCount = 0;
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive" | "swap" | "transactions";
+    let manageMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
     let conversionOptions = [
@@ -51,20 +52,25 @@
             .map((ns) => ns.ledgerCanisterId),
     );
     $: total =
-        selectedConversion === "none"
-            ? ""
-            : calculateTotal($cryptoLookup, selectedConversion)
+        selectedConversion === "none" ? "" : calculateTotal($cryptoLookup, selectedConversion);
 
     $: {
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
     }
 
-    function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
+    function calculateTotal(
+        lookup: Record<string, EnhancedTokenDetails>,
+        conversion: "usd" | "icp" | "btc" | "eth",
+    ): string {
         switch (conversion) {
-            case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
-            case "icp": return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
-            case "btc": return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
-            case "eth": return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+            case "usd":
+                return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+            case "icp":
+                return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+            case "btc":
+                return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+            case "eth":
+                return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
         }
     }
 
@@ -92,7 +98,13 @@
 
     function showSwap(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "swap";
+        client.swapRestricted().then((restricted) => {
+            if (restricted) {
+                manageMode = "restricted";
+            } else {
+                manageMode = "swap";
+            }
+        });
     }
 
     function showTransactions(token: { ledger: string; urlFormat: string }) {
@@ -117,6 +129,8 @@
                 ledger={selectedLedger}
                 on:close={hideManageModal}
                 urlFormat={transactionsFormat} />
+        {:else if manageMode === "restricted"}
+            <RestrictedFeature on:close={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
 {/if}

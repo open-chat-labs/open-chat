@@ -2,9 +2,10 @@ use crate::guards::caller_is_group_index_canister;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
+use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles};
+use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -17,6 +18,10 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
+    let created_by = prepare_ok.init_canister_args.created_by_user_id;
+    let is_public = prepare_ok.init_canister_args.is_public;
+    let gate_type = prepare_ok.init_canister_args.gate.as_ref().map(|g| g.gate_type().to_string());
+    let rules_enabled = prepare_ok.init_canister_args.rules.enabled;
     let wasm_version = prepare_ok.canister_wasm.version;
 
     match canister::create_and_install(
@@ -30,7 +35,19 @@ async fn c2c_create_group(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
-            mutate_state(|state| commit(chat_id, wasm_version, state));
+            mutate_state(|state| {
+                commit(
+                    chat_id,
+                    created_by,
+                    GroupCreatedEventPayload {
+                        public: is_public,
+                        gate: gate_type,
+                        rules_enabled,
+                    },
+                    wasm_version,
+                    state,
+                )
+            });
             Success(SuccessResult {
                 chat_id,
                 local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
@@ -67,7 +84,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.clone();
+    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
@@ -89,8 +106,11 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
+        internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         gate: args.gate,
+        video_call_operators: state.data.video_call_operators.clone(),
+        ic_root_key: state.data.ic_root_key.clone(),
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };
@@ -104,8 +124,22 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     })
 }
 
-fn commit(chat_id: ChatId, wasm_version: BuildVersion, state: &mut RuntimeState) {
+fn commit(
+    chat_id: ChatId,
+    created_by: UserId,
+    event_payload: GroupCreatedEventPayload,
+    wasm_version: BuildVersion,
+    state: &mut RuntimeState,
+) {
     state.data.local_groups.add(chat_id, wasm_version);
+
+    state.data.event_store_client.push(
+        EventBuilder::new("group_created", state.env.now())
+            .with_user(created_by.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
+            .with_json_payload(&event_payload)
+            .build(),
+    );
 }
 
 fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {

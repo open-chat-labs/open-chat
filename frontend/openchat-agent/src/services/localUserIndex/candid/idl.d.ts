@@ -11,12 +11,15 @@ import {
     InviteUsersToGroupResponse,
     InviteUsersToChannelResponse,
     GateCheckFailedReason,
-    ReportMessageResponse,
     JoinCommunityResponse,
     CommunityCanisterCommunitySummary,
     CommunityMembership,
     JoinChannelResponse,
     UserGroup,
+    AccessTokenType,
+    AccessTokenResponse,
+    VerifiedCredentialArgs,
+    VideoCallType,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -32,9 +35,12 @@ export {
     InviteUsersToChannelResponse as ApiInviteUsersToChannelResponse,
     JoinCommunityResponse as ApiJoinCommunityResponse,
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
-    CommunityMembership as ApiCommunityMembership,
     JoinChannelResponse as ApiJoinChannelResponse,
     UserGroup as ApiUserGroup,
+    AccessTokenResponse as ApiAccessTokenResponse,
+    AccessTokenType as ApiAccessTokenType,
+    VerifiedCredentialArgs as ApiVerifiedCredentialArgs,
+    VideoCallType as ApiVideoCallType,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

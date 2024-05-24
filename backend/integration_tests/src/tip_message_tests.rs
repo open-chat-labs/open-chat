@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::{random_message_id, random_string};
 use types::{Chat, ChatEvent, Cryptocurrency};
 
 #[test]
@@ -215,6 +215,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
             decimals: 8,
+            pin: None,
         },
     );
 
@@ -295,6 +296,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
             decimals: 8,
+            pin: None,
         },
     );
 
@@ -324,7 +326,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     client::icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
 

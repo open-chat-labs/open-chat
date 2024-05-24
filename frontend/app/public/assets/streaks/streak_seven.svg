@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 189 145" xmlns="http://www.w3.org/2000/svg">
+  <defs/>
+  <g transform="matrix(1, 0, 0, 1, -105.884209, -92.226562)">
+    <path style="fill: rgb(246, 28, 255);" d="M 251.642 120.133 L 153.057 93.176 L 189.862 139.046"/>
+    <path style="fill: rgb(245, 27, 255);" d="M 188.271 212.903 C 186.54 214.766 105.042 102.305 106.204 101.054 L 192.733 137.182"/>
+    <ellipse style="fill: rgb(246, 28, 255);" cx="234.204" cy="176.758" rx="59.26" ry="59.26"/>
+    <ellipse style="fill: rgb(250, 158, 238);" cx="234.717" cy="178.112" rx="44.391" ry="44.391"/>
+  </g>
+</svg>

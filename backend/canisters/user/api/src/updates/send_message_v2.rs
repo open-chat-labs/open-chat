@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
-    ReplyContext, TimestampMillis, UserId,
+    Milliseconds, ReplyContext, TimestampMillis, UserId,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,7 +13,9 @@ pub struct Args {
     pub content: MessageContentInitial,
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,
+    pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
+    pub pin: Option<String>,
     pub correlation_id: u64,
 }
 
@@ -34,6 +36,9 @@ pub enum Response {
     P2PSwapSetUpFailed(String),
     DuplicateMessageId,
     UserSuspended,
+    PinRequired,
+    PinIncorrect(Milliseconds),
+    TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
 }
 

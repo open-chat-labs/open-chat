@@ -3,6 +3,7 @@
 <script lang="ts">
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import VideoContent from "./VideoContent.svelte";
+    import VideoCallContent from "./VideoCallContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import AudioContent from "./AudioContent.svelte";
@@ -43,14 +44,26 @@
     export let undeleting: boolean = false;
     export let intersecting: boolean;
     export let failed: boolean;
+    export let timestamp: bigint | undefined = undefined;
+    export let blockLevelMarkdown: boolean;
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} on:removePreview />
+    <TextContent
+        {blockLevelMarkdown}
+        {me}
+        {fill}
+        {truncate}
+        {pinned}
+        {content}
+        {edited}
+        on:removePreview />
 {:else if content.kind === "image_content"}
     <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
+{:else if content.kind === "video_call_content"}
+    <VideoCallContent on:startVideoCall {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
     <AudioContent {edited} {content} />
 {:else if content.kind === "file_content"}
@@ -72,7 +85,15 @@
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
 {:else if content.kind === "p2p_swap_content"}
-    <P2PSwapContent on:upgrade {messageContext} {messageId} {content} {me} {reply} {pinned} />
+    <P2PSwapContent
+        on:upgrade
+        {senderId}
+        {messageContext}
+        {messageId}
+        {content}
+        {me}
+        {reply}
+        {pinned} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}

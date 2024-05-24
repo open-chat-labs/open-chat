@@ -30,12 +30,14 @@
         UpdatedRules,
         CredentialGate,
         PaymentGate,
+        ResourceKey,
     } from "openchat-client";
     import {
         ChatsUpdated,
         SelectedChatInvalid,
         SendMessageFailed,
         ThreadClosed,
+        RemoteVideoCallStartedEvent,
         ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
@@ -48,7 +50,7 @@
     import { getContext, onMount, tick } from "svelte";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pathParams, routeForScope } from "../../routes";
+    import { pageRedirect, pageReplace, pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -78,7 +80,7 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
-    import HallOfFame from "./HallOfFame.svelte";
+    import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
@@ -91,8 +93,13 @@
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
+    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
+    import PinNumberModal from "./PinNumberModal.svelte";
+    import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import DailyChitModal from "./DailyChitModal.svelte";
+    import { chitEnabledStore } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -156,6 +163,7 @@
         Registering,
         LoggingIn,
         NotFound,
+        ClaimDailyChit,
     }
 
     let modal = ModalType.None;
@@ -198,6 +206,8 @@
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: offlineStore = client.offlineStore;
+    $: pinNumberStore = client.capturePinNumberStore;
+    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -234,11 +244,13 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
+        } else if (ev instanceof RemoteVideoCallStartedEvent) {
+            remoteVideoCallStarted(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail) {
+            if (ev.detail.alert) {
                 toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
@@ -260,11 +272,15 @@
                 return false;
             });
         } else if (ev instanceof SelectedChatInvalid) {
-            page.replace(routeForScope(client.getDefaultScope()));
+            pageReplace(routeForScope(client.getDefaultScope()));
         } else if (ev instanceof UserSuspensionChanged) {
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
         }
+    }
+
+    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+        incomingVideoCall.set(ev.detail);
     }
 
     async function newChatSelected(
@@ -279,7 +295,7 @@
             // if the scope is favourite let's redirect to the non-favourite counterpart and try again
             // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
             if ($chatListScope.kind === "favourite") {
-                page.redirect(
+                pageRedirect(
                     routeForChatIdentifier(
                         $chatListScope.communityId === undefined ? "group_chat" : "community",
                         chatId,
@@ -301,7 +317,7 @@
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            page.replace(
+                            pageReplace(
                                 routeForMessage(
                                     "community",
                                     {
@@ -312,7 +328,7 @@
                                 ),
                             );
                         } else {
-                            page.replace(
+                            pageReplace(
                                 routeForMessage(
                                     "community",
                                     { chatId: preview.location },
@@ -321,7 +337,7 @@
                             );
                         }
                     } else {
-                        page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
+                        pageReplace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
                     modal = ModalType.NotFound;
@@ -364,6 +380,17 @@
         return found;
     }
 
+    function selectFirstChat(): boolean {
+        if (!$mobileWidth) {
+            const first = $chatSummariesListStore.find((c) => !c.membership.archived);
+            if (first !== undefined) {
+                pageRedirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                return true;
+            }
+        }
+        return false;
+    }
+
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
@@ -376,7 +403,7 @@
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
                 client.identityState.set({ kind: "logging_in" });
-                page.redirect("/group");
+                pageRedirect("/group");
                 return;
             }
 
@@ -385,16 +412,8 @@
             }
 
             // When we have a middle panel and this route is for a chat list then select the first chat
-            if (
-                !$mobileWidth &&
-                (pathParams.kind === "selected_community_route" ||
-                    pathParams.kind === "chat_list_route")
-            ) {
-                const first = $chatSummariesListStore.find((c) => !c.membership.archived);
-                if (first !== undefined) {
-                    page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                    return;
-                }
+            if (pathParams.kind === "chat_list_route" && selectFirstChat()) {
+                return;
             }
 
             if (pathParams.kind === "home_route") {
@@ -406,6 +425,9 @@
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
+                if (selectFirstChat()) {
+                    return;
+                }
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
@@ -446,7 +468,7 @@
                         url: pathParams.url,
                         files: [],
                     };
-                    page.replace(routeForScope(client.getDefaultScope()));
+                    pageReplace(routeForScope(client.getDefaultScope()));
                     modal = ModalType.SelectChat;
                 }
             }
@@ -455,37 +477,39 @@
             const diamond = $querystring.get("diamond");
             if (diamond !== null) {
                 showUpgrade = true;
-                page.replace(removeQueryStringParam("diamond"));
+                pageReplace(removeQueryStringParam("diamond"));
             }
 
             const wallet = $querystring.get("wallet");
             if (wallet !== null) {
                 modal = ModalType.Wallet;
-                page.replace(removeQueryStringParam("wallet"));
+                pageReplace(removeQueryStringParam("wallet"));
             }
 
             const faq = $querystring.get("faq");
             if (faq !== null) {
-                page.replace(`/faq?q=${faq}`);
+                pageReplace(`/faq?q=${faq}`);
             }
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                modal = ModalType.HallOfFame;
-                page.replace(removeQueryStringParam("hof"));
+                if ($chitEnabledStore) {
+                    modal = ModalType.HallOfFame;
+                }
+                pageReplace(removeQueryStringParam("hof"));
             }
 
             const everyone = $querystring.get("everyone");
             if (everyone !== null) {
                 rightPanelHistory.set([{ kind: "show_group_members" }]);
-                page.replace(removeQueryStringParam("everyone"));
+                pageReplace(removeQueryStringParam("everyone"));
             }
 
             const usergroup = $querystring.get("usergroup");
             if (usergroup !== null) {
                 const userGroupId = Number(usergroup);
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
-                page.replace(removeQueryStringParam("usergroup"));
+                pageReplace(removeQueryStringParam("usergroup"));
             }
         }
     }
@@ -502,6 +526,7 @@
             return;
         }
         tick().then(() => {
+            activeVideoCall?.threadOpen(false);
             filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }
@@ -711,7 +736,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -720,7 +745,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+                pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             }
 
             tick().then(() => {
@@ -745,7 +770,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            page.replace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
+            pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -816,12 +841,12 @@
         return client
             .joinGroup(group, credential)
             .then((resp) => {
-                if (resp === "blocked") {
+                if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
-                } else if (resp === "gate_check_failed") {
+                } else if (resp.kind === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
-                } else if (resp === "failure") {
+                } else if (resp.kind !== "success") {
                     toastStore.showFailureToast(
                         i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
@@ -936,6 +961,7 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
+                startVideoCall: "member",
                 messagePermissions: {
                     default: "member",
                     p2pSwap: "none",
@@ -1045,6 +1071,14 @@
         showProfileCard = undefined;
     }
 
+    function onPinNumberComplete(ev: CustomEvent<string>) {
+        $pinNumberStore?.resolve(ev.detail);
+    }
+
+    function onPinNumberClose() {
+        $pinNumberStore?.reject();
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1070,7 +1104,8 @@
             on:newChannel={newChannel}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:upgrade={upgrade} />
+            on:upgrade={upgrade}
+            on:claimDailyChit={() => {modal = ModalType.ClaimDailyChit}} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1089,12 +1124,15 @@
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:leaveGroup={triggerConfirm} />
+            on:leaveGroup={triggerConfirm}
+            on:askToSpeak
+            on:hangup />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
             {joining}
             bind:currentChatMessages
+            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1119,6 +1157,7 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
+        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
@@ -1151,7 +1190,13 @@
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
-{#if modal !== ModalType.None}
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{:else if modal !== ModalType.None}
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
@@ -1196,15 +1241,9 @@
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
+        {:else if modal === ModalType.ClaimDailyChit}
+            <DailyChitModal on:close={closeModal} />
         {/if}
-    </Overlay>
-{/if}
-
-{#if modal === ModalType.Registering}
-    <Overlay>
-        <Register
-            on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
     </Overlay>
 {/if}
 
@@ -1221,6 +1260,14 @@
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+{#if $rulesAcceptanceStore !== undefined}
+    <AcceptRulesModal />
+{:else if $pinNumberStore !== undefined}
+    <Overlay>
+        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
+    </Overlay>
+{/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 

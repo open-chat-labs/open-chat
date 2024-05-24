@@ -1,9 +1,76 @@
+type Nanoseconds = nat64;
+type PublicKey = blob;
+type TimestampNanoseconds = nat64;
+
 type CheckAuthPrincipalResponse = variant {
     Success;
-    Legacy;
     NotFound;
+};
+
+type GetDelegationArgs = record {
+    session_key : PublicKey;
+    expiration : TimestampNanoseconds;
+};
+
+type GetDelegationResponse = variant {
+    Success : SignedDelegation;
+    NotFound;
+};
+
+type SignedDelegation = record {
+    delegation : record {
+        pubkey : PublicKey;
+        expiration : TimestampNanoseconds;
+    };
+    signature : blob;
+};
+
+type GenerateChallengeResponse = variant {
+    Success : record {
+        key : nat32;
+        png_base64 : text;
+    };
+    AlreadyRegistered;
+    Throttled;
+};
+
+type CreateIdentityArgs = record {
+    public_key : PublicKey;
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+    challenge_attempt : opt record {
+        key : nat32;
+        chars : text;
+    };
+};
+
+type CreateIdentityResponse = variant {
+    Success : PrepareDelegationSuccess;
+    AlreadyRegistered;
+    PublicKeyInvalid : text;
+    ChallengeRequired;
+    ChallengeFailed;
+};
+
+type PrepareDelegationArgs = record {
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+};
+
+type PrepareDelegationResponse = variant {
+    Success : PrepareDelegationSuccess;
+    NotFound;
+};
+
+type PrepareDelegationSuccess = record {
+    user_key : PublicKey;
+    expiration : TimestampNanoseconds;
 };
 
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
+    get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    generate_challenge : (record {}) -> (GenerateChallengeResponse);
+    create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
+    prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
 }

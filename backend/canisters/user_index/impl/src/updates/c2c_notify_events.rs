@@ -1,12 +1,13 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::{mutate_state, RuntimeState, ONE_MB};
+use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
+use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
-    UsernameChanged,
+    Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, UserId};
@@ -75,6 +76,17 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 })),
             );
         }
+        Event::OpenChatBotMessageV2(ev) => {
+            state.push_event_to_local_user_index(
+                ev.user_id,
+                LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                    user_id: ev.user_id,
+                    thread_root_message_id: ev.thread_root_message_id,
+                    content: ev.content,
+                    mentioned: ev.mentioned,
+                })),
+            );
+        }
     }
 }
 
@@ -114,6 +126,18 @@ fn process_new_user(
         }),
         Some(local_user_index_canister_id),
     );
+
+    state.data.event_store_client.push(
+        EventBuilder::new("user_registered", now)
+            .with_user(user_id.to_string(), true)
+            .with_source(state.env.canister_id().to_string(), false)
+            .with_json_payload(&UserRegisteredEventPayload {
+                referred: referred_by.is_some(),
+                is_bot: false,
+            })
+            .build(),
+    );
+
     if let Some(original_username) = original_username {
         state.push_event_to_local_user_index(
             user_id,
@@ -139,12 +163,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
-    if state.data.test_mode {
-        state.data.legacy_principals_sync_queue.push_back(caller);
-    }
-
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
-    crate::jobs::sync_legacy_user_principals::try_run_now(state);
 
     if let Some(referrer) = referred_by {
         state.data.user_referral_leaderboards.add_referral(referrer, now);

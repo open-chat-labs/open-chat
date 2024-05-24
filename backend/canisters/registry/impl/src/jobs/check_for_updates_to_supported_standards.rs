@@ -6,7 +6,7 @@ use utils::canister_timers::run_now_then_interval;
 use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(12 * HOUR_IN_MS), run);
+    run_now_then_interval(Duration::from_millis(13 * HOUR_IN_MS), run);
 }
 
 fn run() {
@@ -14,8 +14,7 @@ fn run() {
 }
 
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> =
-        read_state(|state| state.data.tokens.get_all().iter().map(|t| t.ledger_canister_id).collect());
+    let ledger_canister_ids: Vec<_> = read_state(|state| state.data.tokens.iter().map(|t| t.ledger_canister_id).collect());
 
     futures::future::join_all(ledger_canister_ids.into_iter().map(get_supported_standards)).await;
 }

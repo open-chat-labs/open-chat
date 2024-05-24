@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
@@ -53,6 +53,7 @@ async fn update_community(mut args: Args) -> Response {
             || args.description.is_some()
             || args.avatar.has_update()
             || args.banner.has_update()
+            || args.gate.has_update()
             || args.public == Some(true)
             || args.primary_language.is_some())
     {
@@ -327,7 +328,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let previous = state.data.primary_language.clone();
 
         if previous != new {
-            state.data.primary_language = new.clone();
+            state.data.primary_language.clone_from(&new);
 
             let event = PrimaryLanguageChanged {
                 previous,

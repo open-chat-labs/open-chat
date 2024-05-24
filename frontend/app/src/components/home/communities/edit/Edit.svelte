@@ -104,7 +104,7 @@
         step = ev.detail;
     }
 
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
 
@@ -176,15 +176,12 @@
                 )
                 .then((response) => {
                     if (response.kind === "success") {
-                        return optionallyInviteUsers(response.id)
-                            .then(() => {
-                                toastStore.showSuccessToast(i18nKey("communities.created"));
-                                dispatch("close");
-                                page(`/community/${response.id}`);
-                            })
+                        toastStore.showSuccessToast(i18nKey("communities.created"));
+                        dispatch("close");
+                        page(`/community/${response.id}`);
+                        optionallyInviteUsers(response.id)
                             .catch((_err) => {
                                 toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                                step = 0;
                             });
                     } else {
                         toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));

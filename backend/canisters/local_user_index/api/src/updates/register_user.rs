@@ -7,12 +7,14 @@ use types::UserId;
 pub struct Args {
     pub username: String,
     pub referral_code: Option<String>,
+    #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    RegistrationInProgress,
     AlreadyRegistered,
     UserLimitReached,
     UsernameInvalid,

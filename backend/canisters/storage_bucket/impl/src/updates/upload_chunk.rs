@@ -4,7 +4,7 @@ use crate::model::index_sync_state::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;

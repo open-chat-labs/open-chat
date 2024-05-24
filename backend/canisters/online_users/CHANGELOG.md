@@ -5,6 +5,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1149](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1149-online_users)] - 2024-04-23
+
+### Changed
+
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1138](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1138-online_users)] - 2024-04-10
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+## [[2.0.1112](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1112-online_users)] - 2024-03-20
+
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Update `event_store` packages to latest version ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+
+### Fixed
+
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
+## [[2.0.1082](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1082-online_users)] - 2024-02-29
+
+### Changed
+
+- Update `EventSinkClient` to latest version ([#5431](https://github.com/open-chat-labs/open-chat/pull/5431))
+
+## [[2.0.1060](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1060-online_users)] - 2024-02-13
+
+### Fixed
+
+- Bump `EventSinkClient` ([#5368](https://github.com/open-chat-labs/open-chat/pull/5368))
+
+## [[2.0.1053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1053-online_users)] - 2024-02-09
+
+### Added
+
+- Push `user_online` events to the `event_relay` canister ([#5337](https://github.com/open-chat-labs/open-chat/pull/5337))
+
 ### Changed
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))

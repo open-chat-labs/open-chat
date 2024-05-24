@@ -21,6 +21,7 @@
     export let user: CreatedUser;
     export let senderId: string;
     export let msg: Message;
+    export let timestamp: bigint;
 
     let crypto = msg.content.kind === "crypto_content";
 
@@ -74,11 +75,7 @@
             {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                    <RepliesTo
-                        {intersecting}
-                        readonly
-                        {chatId}
-                        repliesTo={msg.repliesTo} />
+                    <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
                 {:else}
                     <UnresolvedReply />
                 {/if}
@@ -89,6 +86,7 @@
                 pinned
                 {senderId}
                 {fill}
+                {timestamp}
                 failed={false}
                 messageContext={{ chatId }}
                 edited={msg.edited}
@@ -97,7 +95,8 @@
                 {me}
                 {intersecting}
                 myUserId={user.userId}
-                content={msg.content} />
+                content={msg.content}
+                blockLevelMarkdown={msg.blockLevelMarkdown} />
         </div>
     </IntersectionObserver>
 </div>
@@ -164,6 +163,7 @@
         @include font(book, normal, fs-100);
         border-radius: $radius;
         overflow: hidden;
+        pointer-events: none;
 
         .username {
             color: inherit;

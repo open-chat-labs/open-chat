@@ -18,6 +18,7 @@ pub enum Response {
 pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
+    pub date_created: TimestampMillis,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
@@ -31,6 +32,9 @@ pub struct SuccessResult {
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub next_daily_claim: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

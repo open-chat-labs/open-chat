@@ -1,3 +1,4 @@
+pub mod c2c_can_issue_access_token_for_channel;
 pub mod c2c_events;
 pub mod c2c_events_by_index;
 pub mod c2c_events_window;
@@ -23,3 +24,4 @@ pub mod selected_updates_v2;
 pub mod summary;
 pub mod summary_updates;
 pub mod thread_previews;
+pub mod video_call_participants;

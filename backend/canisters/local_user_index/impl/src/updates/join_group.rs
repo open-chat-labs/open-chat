@@ -1,7 +1,7 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::join_group::{Response::*, *};
 use types::{ChatId, MessageIndex, UserId};
 use user_canister::Event as UserEvent;
@@ -20,6 +20,7 @@ async fn join_group(args: Args) -> Response {
         is_platform_moderator: user_details.is_platform_moderator,
         is_bot: user_details.is_bot,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
+        verified_credential_args: args.verified_credential_args.clone(),
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {

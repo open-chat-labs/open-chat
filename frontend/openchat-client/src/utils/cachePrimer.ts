@@ -1,4 +1,12 @@
-import type { ChatEventsArgs, ChatEventsResponse, ChatSummary } from "openchat-shared";
+import type {
+    ChatEvent,
+    ChatEventsArgs,
+    ChatEventsResponse,
+    ChatSummary,
+    CreatedUser,
+    EventsResponse,
+    IndexRange,
+} from "openchat-shared";
 import {
     ChatMap,
     compareChats,
@@ -14,6 +22,8 @@ import { userStore } from "../stores/user";
 import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
+import { isProposalsChat } from "./chat";
+import { RemoteVideoCallStartedEvent } from "../events";
 
 const BATCH_SIZE = 20;
 
@@ -24,6 +34,7 @@ export class CachePrimer {
     constructor(
         private api: OpenChat,
         private userCanisterLocalUserIndex: string,
+        private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
     ) {
         debug("initialized");
     }
@@ -32,9 +43,8 @@ export class CachePrimer {
         if (chats.length > 0) {
             const lastUpdatedTimestamps = await this.api.getCachePrimerTimestamps();
             for (const chat of chats) {
-                if (chat.membership.archived) continue;
                 const lastUpdated = lastUpdatedTimestamps[chatIdentifierToString(chat.id)];
-                if (lastUpdated === undefined || lastUpdated < chat.lastUpdated) {
+                if (this.shouldEnqueueChat(chat, lastUpdated)) {
                     this.pending.set(chat.id, chat);
                     debug("enqueued " + chat.id);
                 }
@@ -173,6 +183,12 @@ export class CachePrimer {
             case "channel":
                 return this.api.localUserIndexForCommunity(chat.id.communityId);
         }
+    }
+  
+    private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
+        if (chat.membership.archived || isProposalsChat(chat)) return false;
+
+        return lastUpdated === undefined || chat.lastUpdated > lastUpdated;
     }
 }
 

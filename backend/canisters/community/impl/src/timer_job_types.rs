@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
+use crate::updates::end_video_call::end_video_call_impl;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
@@ -8,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -24,6 +25,7 @@ pub enum TimerJob {
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
+    MarkVideoCallEnded(MarkVideoCallEndedJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -131,6 +133,9 @@ pub struct MarkP2PSwapExpiredJob {
     pub message_id: MessageId,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -146,6 +151,7 @@ impl Job for TimerJob {
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
+            TimerJob::MarkVideoCallEnded(job) => job.execute(),
         }
     }
 }
@@ -283,11 +289,14 @@ impl Job for MakeTransferJob {
         let pending = self.pending_transaction;
         ic_cdk::spawn(make_transfer(pending, sender));
 
-        async fn make_transfer(pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
+        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
             if let Err(error) = process_transaction(pending_transaction.clone(), sender).await {
                 error!(?error, "Transaction failed");
                 mutate_state(|state| {
                     let now = state.env.now();
+                    if (pending_transaction.created() / NANOS_PER_MILLISECOND) + DAY_IN_MS < now {
+                        pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
+                    }
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }),
                         now + MINUTE_IN_MS,
@@ -403,5 +412,11 @@ impl Job for MarkP2PSwapExpiredJob {
                     .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
             }
         });
+    }
+}
+
+impl Job for MarkVideoCallEndedJob {
+    fn execute(self) {
+        mutate_state(|state| end_video_call_impl(self.0, state));
     }
 }

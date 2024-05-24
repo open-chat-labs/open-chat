@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::random_message_id;
 use types::ChatEvent;
 
 #[test_case(1)]
@@ -14,8 +14,8 @@ fn retries_after_failures(failures: usize) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
     let message_id = random_message_id();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));

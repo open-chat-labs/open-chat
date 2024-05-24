@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
-use ic_cdk_macros::query;
+use ic_cdk::query;
+use itertools::Itertools;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
@@ -22,7 +23,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_swaps(state: &RuntimeState) -> HttpResponse {
-        let swaps: Vec<_> = state.data.token_swaps.iter().collect();
+        let swaps: Vec<_> = state.data.token_swaps.iter().sorted_unstable_by_key(|s| s.started).collect();
 
         build_json_response(&swaps)
     }

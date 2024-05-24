@@ -1,14 +1,150 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1178](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1178-user)] - 2024-05-23
+
+### Added
+
+- Maintain log of CHIT events + query ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- Add `ChitEarnedReason::MemeContestWinner` ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
+
+### Changed
+
+- Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
+
+### Removed
+
+- Remove code to update user principals ([#5808](https://github.com/open-chat-labs/open-chat/pull/5808))
+
+### Fixed
+
+- One time job to mark old video calls as ended ([#5827](https://github.com/open-chat-labs/open-chat/pull/5827))
+
+## [[2.0.1172](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1172-user)] - 2024-05-13
+
+### Changed
+
+- Support prize messages with 128bit prize amounts ([#5729](https://github.com/open-chat-labs/open-chat/pull/5729))
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Expose count of timer jobs in metrics ([#5744](https://github.com/open-chat-labs/open-chat/pull/5744))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+
+### Fixed
+
+- Remove dangling references to deleted chats ([#5774](https://github.com/open-chat-labs/open-chat/pull/5774))
+- Add missing pin check to c2c_accept_p2p_swap ([#5777](https://github.com/open-chat-labs/open-chat/pull/5777))
+
+## [[2.0.1154](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1154-user)] - 2024-04-23
+
+### Added
+
+- Mark which user accounts are more than 6 month old and have no chats ([#5696](https://github.com/open-chat-labs/open-chat/pull/5696))
+
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Store presence kind of each video call participant ([#5682](https://github.com/open-chat-labs/open-chat/pull/5682))
+- Add `block_level_markdown` to edit message args ([#5697](https://github.com/open-chat-labs/open-chat/pull/5697))
+- Allow non-Diamond members to start video calls ([#5706](https://github.com/open-chat-labs/open-chat/pull/5706))
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Include both heap and stable memory in cycles balance check ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+### Fixed
+
+- One time job to mark video calls ended if message deleted ([#5714](https://github.com/open-chat-labs/open-chat/pull/5714))
+
+## [[2.0.1141](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1141-user)] - 2024-04-11
+
+### Added
+
+- Add ability to deposit and withdraw BTC directly in your OC wallet ([#5617](https://github.com/open-chat-labs/open-chat/pull/5617))
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Disallow deleting video call message if the call is still in progress ([#5607](https://github.com/open-chat-labs/open-chat/pull/5607))
+- Refactor `c2c_can_issue_access_token` ([#5613](https://github.com/open-chat-labs/open-chat/pull/5613))
+- Add `call_type` to `VideoCall` ([#5661](https://github.com/open-chat-labs/open-chat/pull/5661))
+- Include `call_type` in request to get video call access token ([#5662](https://github.com/open-chat-labs/open-chat/pull/5662))
+- Ensure we don't attempt to call c2c into the OpenChat bot ([#5665](https://github.com/open-chat-labs/open-chat/pull/5665))
+
+### Fixed
+
+- One time job to mark video calls ended if message deleted ([#5612](https://github.com/open-chat-labs/open-chat/pull/5612))
+
+## [[2.0.1120](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1120-user)] - 2024-03-21
+
+### Added
+
+- Push event each time a P2P swap is completed ([#5520](https://github.com/open-chat-labs/open-chat/pull/5520))
+- Push event each time a user tips a message ([#5521](https://github.com/open-chat-labs/open-chat/pull/5521))
+- Push event each time a user adds a reaction ([#5522](https://github.com/open-chat-labs/open-chat/pull/5522))
+- Push event each time a user edits a message ([#5523](https://github.com/open-chat-labs/open-chat/pull/5523))
+- Push event each time a video call is ended ([#5530](https://github.com/open-chat-labs/open-chat/pull/5530))
+- Push backdated events for tips, edits, reactions, swaps + video calls ([#5541](https://github.com/open-chat-labs/open-chat/pull/5541))
+- Add optional PIN for sending crypto transfers ([#5571](https://github.com/open-chat-labs/open-chat/pull/5571))
+- Push backdated message events ([#5575](https://github.com/open-chat-labs/open-chat/pull/5575))
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Initial groundwork to support threads in direct chats ([#5552](https://github.com/open-chat-labs/open-chat/pull/5552))
+- Further groundwork to support threads in direct chats ([#5567](https://github.com/open-chat-labs/open-chat/pull/5567))
+- Anonymize all User canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+- Fallback job to mark video calls as ended ([#5569](https://github.com/open-chat-labs/open-chat/pull/5569))
+- Simplify `pin_number_settings` ([#5577](https://github.com/open-chat-labs/open-chat/pull/5577))
+
+### Fixed
+
+- Retry failed DKP swaps with correct transaction fee ([#5542](https://github.com/open-chat-labs/open-chat/pull/5542))
+- Mark old video calls as having ended ([#5572](https://github.com/open-chat-labs/open-chat/pull/5572))
+- Add missing mappings for ICL and ELNA ([#5580](https://github.com/open-chat-labs/open-chat/pull/5580))
+- Add missing mapping for the old SNEED token ([#5581](https://github.com/open-chat-labs/open-chat/pull/5581))
+
+## [[2.0.1100](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1100-user)] - 2024-03-11
+
+### Added
+
+- Implement ability to push events from User canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
+- Push event each time a message is sent ([#5439](https://github.com/open-chat-labs/open-chat/pull/5439))
+- Push backdated message events ([#5441](https://github.com/open-chat-labs/open-chat/pull/5441))
+- Add 'start_video_call' endpoint ([#5470](https://github.com/open-chat-labs/open-chat/pull/5470))
+
+### Changed
+
+- Use ICRC1 for ICP transactions between users ([#5426](https://github.com/open-chat-labs/open-chat/pull/5426))
+- Add more details to message event payloads ([#5447](https://github.com/open-chat-labs/open-chat/pull/5447))
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Support populating usernames in OpenChat Bot messages ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
+- Use initiator as sender for video calls rather than VideoCallBot ([#5477](https://github.com/open-chat-labs/open-chat/pull/5477))
+- Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
+- Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
+
+### Removed
+
+- Remove c2c endpoints that are now handled via events ([#5437](https://github.com/open-chat-labs/open-chat/pull/5437))
+
+## [[2.0.1078](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1078-user)] - 2024-02-22
+
+### Added
+
+- Add `local_user_index` endpoint ([#5413](https://github.com/open-chat-labs/open-chat/pull/5413))
+- Add `c2c_can_issue_access_token` endpoint ([#5415](https://github.com/open-chat-labs/open-chat/pull/5415))
+
 ### Changed
 
 - Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
 - Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+- VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
+- Endpoints to join and end video calls ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+- End video call by `MessageId` ([#5401](https://github.com/open-chat-labs/open-chat/pull/5401))
 
 ## [[2.0.1032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1032-user)] - 2024-01-25
 
@@ -233,7 +369,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `rules_accepted` to cached group summaries ([#4366](https://github.com/open-chat-labs/open-chat/pull/4366))
 - Transfer to user specific subaccounts when transferring to bot users ([#4388](https://github.com/open-chat-labs/open-chat/pull/4388))
 - Add `CommunityRulesNotAccepted` to `send_channel_message` response ([#?](https://github.com/open-chat-labs/open-chat/pull/?))
- 
+
 ## [[2.0.838](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.838-user)] - 2023-09-05
 
 ### Changed
@@ -358,7 +494,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add support for sending the KINIC token ([#3811](https://github.com/open-chat-labs/open-chat/pull/3811))
-  
+
 ### Fixed
 
 - Fix pinned chat changes not coming through in `initial_state_v2` and `updates_v2` ([#3810](https://github.com/open-chat-labs/open-chat/pull/3810))
@@ -566,7 +702,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-chat-labs/ic-utils) ([#2985](https://github.com/open-chat-labs/open-chat/pull/2985))
 - Ensure direct messages are received by the recipient's canister in the same order they were received by the sender's canister, even if some fail to be sent c2c on first attempt ([#2986](https://github.com/open-chat-labs/open-chat/pull/2986))
 - Use timestamp in nanos not ms for ICRC1 Transfers ([#2988](https://github.com/open-chat-labs/open-chat/pull/2988))
- 
+
 ### Removed
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-chat-labs/open-chat/pull/2966))
@@ -583,6 +719,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `max_messages` to `events` and `events_window` ([#2947](https://github.com/open-chat-labs/open-chat/pull/2947))
 
-### Removed 
+### Removed
 
 - Removed one-time code only needed for previous upgrade ([#2954](https://github.com/open-chat-labs/open-chat/pull/2954))

@@ -1,15 +1,16 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
+use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use types::{
     icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId, MessageIndex,
-    P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
+    Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
@@ -40,6 +41,7 @@ async fn send_message_with_transfer_to_channel(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
+            args.pin,
             now,
             state,
         )
@@ -57,6 +59,9 @@ async fn send_message_with_transfer_to_channel(
         PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
         PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
         PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
+        PrepareResult::PinRequired => return PinRequired,
+        PrepareResult::PinIncorrect(delay) => return PinIncorrect(delay),
+        PrepareResult::TooManyFailedPinAttempts(delay) => return TooManyFailedPinAttempts(delay),
     };
 
     // Make the crypto transfer
@@ -77,6 +82,7 @@ async fn send_message_with_transfer_to_channel(
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
+        block_level_markdown: args.block_level_markdown,
         community_rules_accepted: args.community_rules_accepted,
         channel_rules_accepted: args.channel_rules_accepted,
         message_filter_failed: args.message_filter_failed,
@@ -150,6 +156,7 @@ async fn send_message_with_transfer_to_group(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
+            args.pin,
             now,
             state,
         )
@@ -167,6 +174,9 @@ async fn send_message_with_transfer_to_group(
         PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
         PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
         PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
+        PrepareResult::PinRequired => return PinRequired,
+        PrepareResult::PinIncorrect(delay) => return PinIncorrect(delay),
+        PrepareResult::TooManyFailedPinAttempts(delay) => return TooManyFailedPinAttempts(delay),
     };
 
     // Make the crypto transfer
@@ -186,6 +196,7 @@ async fn send_message_with_transfer_to_group(
         replies_to: args.replies_to,
         mentioned: args.mentioned,
         forwarding: false,
+        block_level_markdown: args.block_level_markdown,
         rules_accepted: args.rules_accepted,
         message_filter_failed: args.message_filter_failed,
         correlation_id: args.correlation_id,
@@ -241,6 +252,9 @@ enum PrepareResult {
     InvalidRequest(String),
     TransferCannotBeZero,
     TransferCannotBeToSelf,
+    PinRequired,
+    PinIncorrect(Milliseconds),
+    TooManyFailedPinAttempts(Milliseconds),
 }
 
 fn prepare(
@@ -248,6 +262,7 @@ fn prepare(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     content: &MessageContentInitial,
+    pin: Option<String>,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) -> PrepareResult {
@@ -257,6 +272,14 @@ fn prepare(
         return UserSuspended;
     } else if content.text_length() > MAX_TEXT_LENGTH_USIZE {
         return TextTooLong(MAX_TEXT_LENGTH);
+    }
+
+    if let Err(error) = state.data.pin_number.verify(pin.as_deref(), now) {
+        return match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        };
     }
 
     let pending_transaction = match &content {
@@ -279,12 +302,12 @@ fn prepare(
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
-                    let total_prize = c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128;
-                    let prize_fees = c.prizes.len() as u128 * t.fee();
-                    let total_amount_to_send = total_prize + prize_fees;
+                    let total_prizes = c.prizes_v2.iter().sum::<u128>();
+                    let total_fees = c.prizes_v2.len() as u128 * t.fee();
+                    let total_amount_to_send = total_prizes + total_fees;
 
                     if t.units() != total_amount_to_send {
-                        return InvalidRequest("Transaction amount must equal total prize + prize fees".to_string());
+                        return InvalidRequest("Transaction amount must equal total prizes + total fees".to_string());
                     }
 
                     t.clone().set_memo(&MEMO_PRIZE)

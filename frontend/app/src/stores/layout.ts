@@ -14,7 +14,7 @@ export const fullWidth = derived(
 
 type RightPanelState = "hidden" | "floating" | "inline";
 
-type Layout = {
+export type Layout = {
     showNav: boolean;
     showMiddle: boolean;
     showLeft: boolean;

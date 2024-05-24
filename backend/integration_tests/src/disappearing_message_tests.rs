@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{EventIndex, MessageIndex, OptionUpdate};
 
 #[test]
@@ -10,7 +10,7 @@ fn disappearing_messages_in_group_chats() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     client::group::update_group_v2(
@@ -101,7 +101,7 @@ fn expired_event_and_message_ranges_are_correct() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     client::group::update_group_v2(

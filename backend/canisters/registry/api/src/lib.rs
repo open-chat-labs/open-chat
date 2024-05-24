@@ -22,12 +22,23 @@ pub struct TokenDetails {
     pub decimals: u8,
     pub fee: u128,
     pub logo: String,
+    pub logo_id: Option<u128>,
     pub info_url: String,
     pub how_to_buy_url: String,
     pub transaction_url_format: String,
     pub supported_standards: Vec<String>,
     pub added: TimestampMillis,
+    pub enabled: bool,
     pub last_updated: TimestampMillis,
+}
+
+impl TokenDetails {
+    pub fn remove_logo_if_logo_id_set(mut self) -> TokenDetails {
+        if self.logo_id.is_some() {
+            self.logo.clear();
+        }
+        self
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

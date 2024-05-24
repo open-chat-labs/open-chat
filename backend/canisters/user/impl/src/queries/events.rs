@@ -3,7 +3,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query_candid_and_msgpack;
 use chat_events::Reader;
-use types::{EventOrExpiredRange, EventsResponse};
+use types::{EventIndex, EventOrExpiredRange, EventsResponse};
 use user_canister::events::{Response::*, *};
 
 #[query_candid_and_msgpack(guard = "caller_is_owner_or_local_user_index")]
@@ -17,7 +17,13 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
-        let events_reader = chat.events.main_events_reader();
+        let Some(events_reader) = chat
+            .events
+            .events_reader(EventIndex::default(), args.thread_root_message_index)
+        else {
+            return ThreadMessageNotFound;
+        };
+
         let my_user_id = state.env.canister_id().into();
 
         let (events, expired_event_ranges) = EventOrExpiredRange::split(events_reader.scan(

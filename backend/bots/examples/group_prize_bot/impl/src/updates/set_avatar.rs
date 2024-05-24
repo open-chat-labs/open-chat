@@ -3,7 +3,7 @@ use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_prize_bot::set_avatar::*;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, Timestamped};
 use utils::document_validation::validate_avatar;
 

@@ -11,9 +11,10 @@
         OpenChat,
         User,
         TimelineItem,
+        MessageContent,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -28,8 +29,8 @@
     import { reverseScroll } from "../../../stores/scrollPos";
     import { i18nKey } from "../../../i18n/i18n";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
+    import AreYouSure from "../../AreYouSure.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let rootEvent: EventWrapper<Message>;
@@ -47,6 +48,8 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let creatingP2PSwapMessage = false;
+    let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
+        undefined;
 
     $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -92,7 +95,7 @@
         function send(n: number) {
             if (n === ev.detail) return;
 
-            sendMessageWithAttachment(randomSentence(), undefined);
+            sendMessageWithAttachment(randomSentence(), false, undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -100,19 +103,25 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
         if (!canSendAny) return;
-        let [text, mentioned] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = ev.detail;
         if ($editingEvent !== undefined) {
             client
-                .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
+                .editMessageWithAttachment(
+                    messageContext,
+                    text,
+                    blockLevelMarkdown,
+                    $attachment,
+                    $editingEvent,
+                )
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, $attachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, $attachment, mentioned);
         }
     }
 
@@ -122,10 +131,17 @@
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
+        client.sendMessageWithAttachment(
+            messageContext,
+            textContent,
+            blockLevelMarkdown,
+            attachment,
+            mentioned,
+        );
     }
 
     function cancelReply() {
@@ -215,29 +231,65 @@
     function createP2PSwapMessage() {
         creatingP2PSwapMessage = true;
     }
+
+    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
+        removeLinkPreviewDetails = ev.detail;
+    }
+
+    function removePreview(yes: boolean): Promise<void> {
+        if (removeLinkPreviewDetails !== undefined && yes) {
+            const { event, url } = removeLinkPreviewDetails;
+
+            client.hideLinkPreview(messageContext, event, url).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+                }
+            });
+        }
+
+        removeLinkPreviewDetails = undefined;
+        return Promise.resolve();
+    }
+
+    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
+        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+    }
 </script>
 
-<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+{#if removeLinkPreviewDetails !== undefined}
+    <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
+{/if}
+
+<PollBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={pollBuilder}
+    bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        {messageContext}
         on:upgrade
-        on:sendMessageWithContent
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
-<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={giphySelector}
+    bind:open={selectingGif} />
 
-<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder
+    on:sendMessageWithContent={sendMessageWithContent}
+    bind:this={memeBuilder}
+    bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
-        on:sendMessageWithContent
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
+        {messageContext}
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
@@ -254,6 +306,7 @@
     rootSelector={"thread-messages"}
     maintainScroll={false}
     bind:this={chatEventList}
+    scrollTopButtonEnabled
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
@@ -311,13 +364,14 @@
                             canReplyInThread={false}
                             collapsed={false}
                             on:chatWith
+                            on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
                             on:replyTo={replyTo}
                             on:upgrade
-                            on:retrySend
+                            on:startVideoCall
                             on:forward />
                     {/each}
                 {/each}

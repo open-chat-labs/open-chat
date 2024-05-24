@@ -1,7 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use local_user_index_canister::init::Args;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
@@ -26,8 +26,10 @@ fn init(args: Args) {
         args.proposals_bot_canister_id,
         args.cycles_dispenser_canister_id,
         args.escrow_canister_id,
-        args.internet_identity_canister_id,
+        args.event_relay_canister_id,
         canister_pool_target_size,
+        args.video_call_operators,
+        args.oc_secret_key_der,
         args.test_mode,
     );
 

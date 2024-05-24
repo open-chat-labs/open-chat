@@ -1,11 +1,13 @@
 pub mod c2c_lookup_user;
 pub mod check_username;
+pub mod chit_leaderboard;
 pub mod current_user;
 pub mod diamond_membership_fees;
 pub mod http_request;
 pub mod platform_moderators;
 pub mod platform_moderators_group;
 pub mod platform_operators;
+pub mod public_key;
 pub mod referral_leaderboard;
 pub mod referral_metrics;
 pub mod reported_messages;

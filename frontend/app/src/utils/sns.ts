@@ -26,7 +26,7 @@ export function createAddTokenPayload(
                 {
                     how_to_buy_url: howToBuyUrl,
                     info_url: infoUrl,
-                    logo: logo !== undefined && logo.length > 0 ? [logo] : [],
+                    logo: optionalStringToCandid(logo),
                     token_standard: { icrc1: null },
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     transaction_url_format: transactionUrlFormat,
@@ -34,4 +34,45 @@ export function createAddTokenPayload(
             ],
         ),
     );
+}
+
+export function createUpdateTokenPayload(
+    ledgerCanisterId: string,
+    name: string | undefined,
+    symbol: string | undefined,
+    infoUrl: string | undefined,
+    howToBuyUrl: string | undefined,
+    transactionUrlFormat: string | undefined,
+    logo: string | undefined,
+): Uint8Array {
+    return new Uint8Array(
+        IDL.encode(
+            [
+                IDL.Record({
+                    how_to_buy_url: IDL.Opt(IDL.Text),
+                    info_url: IDL.Opt(IDL.Text),
+                    logo: IDL.Opt(IDL.Text),
+                    name: IDL.Opt(IDL.Text),
+                    ledger_canister_id: IDL.Principal,
+                    symbol: IDL.Opt(IDL.Text),
+                    transaction_url_format: IDL.Opt(IDL.Text),
+                }),
+            ],
+            [
+                {
+                    how_to_buy_url: optionalStringToCandid(howToBuyUrl),
+                    info_url: optionalStringToCandid(infoUrl),
+                    logo: optionalStringToCandid(logo),
+                    name: optionalStringToCandid(name),
+                    ledger_canister_id: Principal.fromText(ledgerCanisterId),
+                    symbol: optionalStringToCandid(symbol),
+                    transaction_url_format: optionalStringToCandid(transactionUrlFormat),
+                },
+            ],
+        ),
+    );
+}
+
+function optionalStringToCandid(value: string | undefined): [string] | [] {
+    return value !== undefined && value.length > 0 ? [value] : [];
 }

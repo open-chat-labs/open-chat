@@ -46,21 +46,29 @@ if (dfxNetwork) {
         process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
+        process.env.IDENTITY_CANISTER = canisters.identity[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
         process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
+        process.env.SIGN_IN_WITH_EMAIL_CANISTER = canisters.sign_in_with_email[dfxNetwork];
+        process.env.SIGN_IN_WITH_ETHEREUM_CANISTER = canisters.sign_in_with_ethereum[dfxNetwork];
+        process.env.SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
 
         console.log("TranslationsCanisterId: ", process.env.TRANSLATIONS_CANISTER);
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
+        console.log("IdentityCanisterId: ", process.env.IDENTITY_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
         console.log("Registry: ", process.env.REGISTRY_CANISTER);
         console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
+        console.log("SignInWithEmail: ", process.env.SIGN_IN_WITH_EMAIL_CANISTER);
+        console.log("SignInWithEthereum: ", process.env.SIGN_IN_WITH_ETHEREUM_CANISTER);
+        console.log("SignInWithSolana: ", process.env.SIGN_IN_WITH_SOLANA_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -240,6 +248,7 @@ export default {
             "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
                 process.env.NOTIFICATIONS_CANISTER,
             ),
+            "process.env.IDENTITY_CANISTER": JSON.stringify(process.env.IDENTITY_CANISTER),
             "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.PROPOSALS_BOT_CANISTER,
@@ -249,13 +258,26 @@ export default {
             ),
             "process.env.REGISTRY_CANISTER": JSON.stringify(process.env.REGISTRY_CANISTER),
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
+            "process.env.SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_EMAIL_CANISTER,
+            ),
+            "process.env.SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_ETHEREUM_CANISTER,
+            ),
+            "process.env.SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
+                process.env.SIGN_IN_WITH_SOLANA_CANISTER,
+            ),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
+            "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,
+            ),
+            "process.env.WALLET_CONNECT_PROJECT_ID": JSON.stringify(
+                process.env.WALLET_CONNECT_PROJECT_ID,
             ),
             "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
         }),

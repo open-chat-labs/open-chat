@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::inspect_message;
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
@@ -19,7 +19,8 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let caller = state.env.caller();
     let is_valid = state.data.get_member(caller).is_some()
-        || state.data.get_invitation(caller).is_some() && method_name == "decline_invitation";
+        || state.data.get_invitation(caller).is_some() && method_name == "decline_invitation"
+        || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator());
 
     if is_valid {
         ic_cdk::api::call::accept_message();

@@ -267,6 +267,7 @@ impl Job for JoinUserToGroup {
                         .users
                         .get_by_user_id(&self.user_id)
                         .and_then(|u| u.diamond_membership_details.expires_at()),
+                    verified_credential_args: None,
                 })
         }) {
             ic_cdk::spawn(join_group(self.group_id, args, self.attempt));

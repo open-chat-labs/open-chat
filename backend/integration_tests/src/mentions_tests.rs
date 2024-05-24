@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatId, GroupPermissionRole, MessageContentInitial, OptionalGroupPermissions, TextContent};
 
 #[test_case(false; "By userId")]
@@ -44,6 +44,7 @@ fn mention_users_succeeds(mention_everyone: bool) {
             replies_to: None,
             mentioned: if mention_everyone { Vec::new() } else { vec![(&user2).into(), (&user3).into()] },
             forwarding: false,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             correlation_id: 0,
@@ -116,6 +117,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             correlation_id: 0,
@@ -141,8 +143,8 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 

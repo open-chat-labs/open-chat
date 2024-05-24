@@ -24,7 +24,7 @@
         </div>
     </div>
 {:else}
-    <Home />
+    <Home on:startVideoCall on:askToSpeak on:hangup />
 {/if}
 
 <style lang="scss">

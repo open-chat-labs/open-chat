@@ -1,15 +1,122 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1179](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1179-local_user_index)] - 2024-05-23
+
+### Added
+
+- Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
+- New user event `ChitEarned` ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- Implement validation of verified credential gates ([#5825](https://github.com/open-chat-labs/open-chat/pull/5825))
+- Add `ChitEarnedReason::MemeContestWinner` ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
+
+## [[2.0.1162](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1162-local_user_index)] - 2024-05-02
+
+### Changed
+
+- Ensure all new users register via the Identity canister ([#5748](https://github.com/open-chat-labs/open-chat/pull/5748))
+
+## [[2.0.1145](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1145-local_user_index)] - 2024-04-23
+
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1137](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1137-local_user_index)] - 2024-04-10
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Include `call_type` in request to get video call access token ([#5662](https://github.com/open-chat-labs/open-chat/pull/5662))
+
+### Fixed
+
+- Prevent users registering twice with the same principal ([#5655](https://github.com/open-chat-labs/open-chat/pull/5655))
+
+## [[2.0.1113](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1113-local_user_index)] - 2024-03-20
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Anonymize all User canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+- Prevent bot users from being able to get video call access tokens ([#5573](https://github.com/open-chat-labs/open-chat/pull/5573))
+
+### Fixed
+
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
+## [[2.0.1099](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1099-local_user_index)] - 2024-03-11
+
+### Changed
+
+- Pause upgrades if events queue becomes too large ([#5507](https://github.com/open-chat-labs/open-chat/pull/5507))
+
+### Fixed
+
+- Fix 'out of cycles' check to use new response code ([#5503](https://github.com/open-chat-labs/open-chat/pull/5503))
+
+## [[2.0.1093](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1093-local_user_index)] - 2024-03-08
+
+### Changed
+
+- Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
+
+### Fixed
+
+- Populate username in 'Invited to group/community' notifications ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
+
+## [[2.0.1086](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1086-local_user_index)] - 2024-03-01
+
+### Added
+
+- Implement ability to push events from User canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
+
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Expose `event_sink_client_info` in metrics ([#5464](https://github.com/open-chat-labs/open-chat/pull/5464))
+
+### Removed
+
+- Remove `c2c_notify_events` ([#5430](https://github.com/open-chat-labs/open-chat/pull/5430))
+
+## [[2.0.1079](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1079-local_user_index)] - 2024-02-22
+
+### Fixed
+
+- Fix chat summary updates ([#5423](https://github.com/open-chat-labs/open-chat/pull/5423))
+
+## [[2.0.1070](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1070-local_user_index)] - 2024-02-22
+
+### Added
+
+- Add `access_token` endpoint + sync secret key ([#5398](https://github.com/open-chat-labs/open-chat/pull/5398))
+
+### Changed
+
+- Add `is_from_identity_canister` to `UserRegistered` events ([#5402](https://github.com/open-chat-labs/open-chat/pull/5402))
+- Use `install_chunked_code` to upgrade User canisters ([#5412](https://github.com/open-chat-labs/open-chat/pull/5412))
+- Fix `access_token` endpoint + integration test ([#5415](https://github.com/open-chat-labs/open-chat/pull/5415))
+
 ## [[2.0.1046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1046-local_user_index)] - 2024-02-05
+
+### Added
+
+- VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
 
 ### Changed
 
 - Handle `DiamondMembershipPaymentReceived` events from non-local users ([#5322](https://github.com/open-chat-labs/open-chat/pull/5322))
+- Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
 
 ## [[2.0.1041](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1041-local_user_index)] - 2024-02-02
 

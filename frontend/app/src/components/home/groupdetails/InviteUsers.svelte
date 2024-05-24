@@ -25,12 +25,13 @@
 
     export let closeIcon: "close" | "back";
     export let busy = false;
-    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
+    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
     export let level: Level;
     export let container: MultiUserChat | CommunitySummary;
 
     $: canInvite =
-        client.canInviteUsers(container.id) && (container.kind !== "channel" || container.public);
+        client.canInviteUsers(container.id) &&
+        (container.kind !== "channel" || !client.isChatPrivate(container));
 
     const dispatch = createEventDispatcher();
     let usersToInvite: UserSummary[] = [];

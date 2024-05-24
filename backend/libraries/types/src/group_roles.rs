@@ -22,8 +22,14 @@ pub struct GroupPermissions {
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
+    #[serde(default = "admin")]
+    pub start_video_call: GroupPermissionRole,
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
+}
+
+fn admin() -> GroupPermissionRole {
+    GroupPermissionRole::Admins
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +45,8 @@ pub struct MessagePermissions {
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
     pub p2p_swap: Option<GroupPermissionRole>,
+    #[serde(default)]
+    pub video_call: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
 
@@ -58,6 +66,7 @@ pub struct OptionalGroupPermissions {
     pub pin_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
     pub mention_all_members: Option<GroupPermissionRole>,
+    pub start_video_call: Option<GroupPermissionRole>,
     pub message_permissions: Option<OptionalMessagePermissions>,
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
@@ -75,7 +84,8 @@ pub struct OptionalMessagePermissions {
     pub giphy: OptionUpdate<GroupPermissionRole>,
     pub prize: OptionUpdate<GroupPermissionRole>,
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    pub p2p_trade: OptionUpdate<GroupPermissionRole>,
+    #[serde(default)]
+    pub video_call: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
 }
@@ -92,6 +102,7 @@ impl Default for GroupPermissions {
             pin_messages: GroupPermissionRole::Admins,
             invite_users: GroupPermissionRole::Admins,
             react_to_messages: GroupPermissionRole::Members,
+            start_video_call: GroupPermissionRole::Admins,
             message_permissions: MessagePermissions::default(),
             thread_permissions: None,
         }
@@ -112,6 +123,7 @@ impl Default for MessagePermissions {
             giphy: None,
             prize: None,
             p2p_swap: None,
+            video_call: None,
             custom: Vec::new(),
         }
     }

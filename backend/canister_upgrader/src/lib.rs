@@ -99,7 +99,7 @@ pub async fn upgrade_translations_canister(
     )
     .await;
 
-    println!("Identity canister upgraded");
+    println!("Translations canister upgraded");
 }
 
 pub async fn upgrade_online_users_canister(
@@ -252,6 +252,36 @@ pub async fn upgrade_escrow_canister(
     .await;
 
     println!("Escrow canister upgraded");
+}
+
+pub async fn upgrade_event_relay_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    event_relay_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        event_relay_canister_id,
+        version,
+        event_relay_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::EventRelay,
+    )
+    .await;
+
+    println!("Event relay canister upgraded");
+}
+
+pub async fn upgrade_event_store_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    event_store_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(identity, url, event_store_canister_id, version, (), CanisterName::EventStore).await;
+
+    println!("Event store canister upgraded");
 }
 
 pub async fn upgrade_local_group_index_canister(
@@ -508,7 +538,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     println!("Upgrading wasm for canister {canister_id}");
     match management_canister
         .install_code(canister_id, wasm_bytes)
-        .with_mode(InstallMode::Upgrade { skip_pre_upgrade: false })
+        .with_mode(InstallMode::Upgrade { skip_pre_upgrade: None })
         .with_arg(args)
         .call_and_wait()
         .await

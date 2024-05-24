@@ -19,6 +19,7 @@ use types::{
     TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -69,7 +70,8 @@ impl RuntimeState {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -105,7 +107,8 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                escrow_canister_id: self.data.escrow_canister_id,
+                escrow: self.data.escrow_canister_id,
+                event_relay: self.data.event_relay_canister_id,
             },
         }
     }
@@ -129,6 +132,9 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    pub event_relay_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -136,7 +142,18 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    pub video_call_operators: Vec<Principal>,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -150,6 +167,10 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -169,6 +190,8 @@ impl Data {
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            event_relay_canister_id,
+            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -176,6 +199,8 @@ impl Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            video_call_operators,
+            ic_root_key,
             rng_seed: [0; 32],
         }
     }
@@ -273,6 +298,8 @@ impl Default for Data {
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
             escrow_canister_id: Principal::anonymous(),
+            event_relay_canister_id: Principal::anonymous(),
+            internet_identity_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
@@ -280,6 +307,8 @@ impl Default for Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            video_call_operators: Vec::default(),
+            ic_root_key: Vec::new(),
             rng_seed: [0; 32],
         }
     }
@@ -287,7 +316,8 @@ impl Default for Data {
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
@@ -344,7 +374,8 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub escrow_canister_id: CanisterId,
+    pub escrow: CanisterId,
+    pub event_relay: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, CommunityId, Rules};
 
 #[test_case(true)]
@@ -47,7 +47,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
 
     let user2 = client::register_diamond_user(env, canister_ids, *controller);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
     client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);

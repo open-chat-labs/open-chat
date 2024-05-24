@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -8,6 +7,7 @@ use pocket_ic::PocketIc;
 use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::{random_message_id, random_string};
 use types::{CanisterId, MessageContentInitial, TextContent, TimestampMillis, UserId};
 
 #[test]
@@ -57,7 +57,9 @@ fn suspend_user() {
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -79,6 +81,7 @@ fn suspend_user() {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             correlation_id: 0,
@@ -103,6 +106,7 @@ fn suspend_user() {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
@@ -136,7 +140,9 @@ fn suspend_user() {
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -158,6 +164,7 @@ fn suspend_user() {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             correlation_id: 0,
@@ -182,6 +189,7 @@ fn suspend_user() {
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
@@ -308,8 +316,8 @@ fn suspended_users_returned_from_user_index_users() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
+    let platform_moderator = client::register_user(env, canister_ids);
 
     client::user_index::add_platform_moderator(
         env,

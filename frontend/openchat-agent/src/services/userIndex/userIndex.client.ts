@@ -18,6 +18,8 @@ import type {
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
     DiamondMembershipFees,
+    ClaimDailyChitResponse,
+    ChitUserBalance,
 } from "openchat-shared";
 import { offline, Stream } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -35,6 +37,8 @@ import {
     userRegistrationCanisterResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
+    claimDailyChitResponse,
+    chitLeaderboardResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
@@ -42,6 +46,7 @@ import {
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedUsers,
+    setChitInfoInCache,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
     setUserDiamondStatusInCache,
@@ -391,7 +396,7 @@ export class UserIndexClient extends CandidService {
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         const chatFees = fees.find((f) => f.token === "CHAT");
         const icpFees = fees.find((f) => f.token === "ICP");
-        
+
         if (chatFees === undefined || icpFees === undefined) {
             return Promise.resolve(false);
         }
@@ -409,8 +414,8 @@ export class UserIndexClient extends CandidService {
                     three_months: icpFees.threeMonths,
                     one_year: icpFees.oneYear,
                     lifetime: icpFees.lifetime,
-                }
-            }
+                },
+            },
         };
 
         return this.handleQueryResponse(
@@ -421,10 +426,30 @@ export class UserIndexClient extends CandidService {
 
     reportedMessages(userId: string | undefined): Promise<string> {
         return this.handleQueryResponse(
-            () => this.userIndexService.reported_messages({
-                user_id: userId !== undefined ? [Principal.fromText(userId)] : []
-            }),
+            () =>
+                this.userIndexService.reported_messages({
+                    user_id: userId !== undefined ? [Principal.fromText(userId)] : [],
+                }),
             (res) => res.Success.json,
+        );
+    }
+
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.claim_daily_chit({}),
+            claimDailyChitResponse,
+        ).then((res) => {
+            if (res.kind === "success") {
+                setChitInfoInCache(userId, res.chitBalance, res.streak);
+            }
+            return res;
+        });
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.chit_leaderboard({}),
+            chitLeaderboardResponse,
         );
     }
 }

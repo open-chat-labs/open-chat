@@ -66,4 +66,4 @@ export interface _SERVICE {
   'manage_neuron' : ActorMethod<[ManageNeuron], ManageNeuronResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

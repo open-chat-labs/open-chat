@@ -3,10 +3,12 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
+    'pin' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const Milliseconds = IDL.Nat64;
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -35,7 +37,10 @@ export const idlFactory = ({ IDL }) => {
     'Expired' : SwapStatusErrorExpired,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
+    'TooManyFailedPinAttempts' : Milliseconds,
+    'PinIncorrect' : Milliseconds,
     'UserNotInChannel' : IDL.Null,
+    'PinRequired' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
@@ -72,6 +77,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'FailedVerifiedCredentialCheck' : IDL.Text,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
   });
   const UserFailedGateCheck = IDL.Record({
@@ -200,6 +206,14 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
+  const VideoCallType = IDL.Variant({
+    'Default' : IDL.Null,
+    'Broadcast' : IDL.Null,
+  });
+  const VideoCall = IDL.Record({
+    'call_type' : VideoCallType,
+    'message_index' : MessageIndex,
+  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -248,6 +262,7 @@ export const idlFactory = ({ IDL }) => {
   const MessagePermissions = IDL.Record({
     'audio' : IDL.Opt(PermissionRole),
     'video' : IDL.Opt(PermissionRole),
+    'video_call' : IDL.Opt(PermissionRole),
     'custom' : IDL.Vec(CustomPermission),
     'file' : IDL.Opt(PermissionRole),
     'poll' : IDL.Opt(PermissionRole),
@@ -268,17 +283,23 @@ export const idlFactory = ({ IDL }) => {
     'invite_users' : PermissionRole,
     'thread_permissions' : IDL.Opt(MessagePermissions),
     'change_roles' : PermissionRole,
+    'start_video_call' : PermissionRole,
     'add_members' : PermissionRole,
     'pin_messages' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
   const EventIndex = IDL.Nat32;
   const VerifiedCredentialGate = IDL.Record({
-    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'credential_arguments' : IDL.Vec(
+      IDL.Tuple(
+        IDL.Text,
+        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
+      )
+    ),
     'issuer_origin' : IDL.Text,
+    'issuer_canister_id' : CanisterId,
     'credential_type' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
@@ -321,6 +342,16 @@ export const idlFactory = ({ IDL }) => {
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'mentions' : IDL.Vec(Mention),
     'my_metrics' : ChatMetrics,
+  });
+  const CallParticipant = IDL.Record({
+    'user_id' : UserId,
+    'joined' : TimestampMillis,
+  });
+  const VideoCallContent = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'ended' : IDL.Opt(TimestampMillis),
+    'hidden_participants' : IDL.Nat32,
+    'call_type' : VideoCallType,
   });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
@@ -495,11 +526,13 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'created' : TimestampMillis,
     'action' : IDL.Nat64,
+    'minimum_yes_proportion_of_total' : IDL.Nat32,
     'last_updated' : TimestampMillis,
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
     'proposer' : SnsNeuronId,
+    'minimum_yes_proportion_of_exercised' : IDL.Nat32,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -649,6 +682,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'VideoCall' : VideoCallContent,
     'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -689,10 +723,10 @@ export const idlFactory = ({ IDL }) => {
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
+    'block_level_markdown' : IDL.Bool,
     'tips' : IDL.Vec(
       IDL.Tuple(CanisterId, IDL.Vec(IDL.Tuple(UserId, IDL.Nat)))
     ),
-    'last_updated' : IDL.Opt(TimestampMillis),
     'sender' : UserId,
     'thread_summary' : IDL.Opt(ThreadSummary),
     'message_id' : MessageId,
@@ -711,6 +745,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
+    'video_call_in_progress' : IDL.Opt(VideoCall),
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
@@ -741,6 +776,11 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'updates_since' : TimestampMillis,
     'invite_code' : IDL.Opt(IDL.Nat64),
+  });
+  const VideoCallUpdates = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : VideoCall,
   });
   const GroupSubtypeUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -775,6 +815,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
+    'video_call_in_progress' : VideoCallUpdates,
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
@@ -952,6 +993,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_in' : Milliseconds,
   });
   const PrizeContentInitial = IDL.Record({
+    'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
     'prizes' : IDL.Vec(Tokens),
@@ -978,6 +1020,7 @@ export const idlFactory = ({ IDL }) => {
   const EditMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
     'content' : MessageContentInitial,
+    'block_level_markdown' : IDL.Opt(IDL.Bool),
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -995,6 +1038,15 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
+  });
+  const EndVideoCallArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'message_id' : MessageId,
+  });
+  const EndVideoCallResponse = IDL.Variant({
+    'AlreadyEnded' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const EventsArgs = IDL.Record({
     'channel_id' : ChannelId,
@@ -1228,6 +1280,20 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
     'UserNotInCommunity' : IDL.Null,
+  });
+  const JoinVideoCallArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'message_id' : MessageId,
+  });
+  const JoinVideoCallResponse = IDL.Variant({
+    'AlreadyEnded' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
   });
   const LeaveChannelArgs = IDL.Record({ 'channel_id' : ChannelId });
   const LeaveChannelResponse = IDL.Variant({
@@ -1534,6 +1600,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_rules_accepted' : IDL.Opt(Version),
     'content' : MessageContentInitial,
     'message_filter_failed' : IDL.Opt(IDL.Nat64),
+    'block_level_markdown' : IDL.Bool,
     'community_rules_accepted' : IDL.Opt(Version),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
@@ -1542,6 +1609,12 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const SendMessageSuccess = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'event_index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
+    'message_index' : MessageIndex,
   });
   const InvalidPollReason = IDL.Variant({
     'DuplicateOptions' : IDL.Null,
@@ -1557,12 +1630,7 @@ export const idlFactory = ({ IDL }) => {
     'UserNotInChannel' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'expires_at' : IDL.Opt(TimestampMillis),
-      'message_index' : MessageIndex,
-    }),
+    'Success' : SendMessageSuccess,
     'UserNotInCommunity' : IDL.Null,
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
@@ -1583,6 +1651,39 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
+  });
+  const VideoCallPresence = IDL.Variant({
+    'Default' : IDL.Null,
+    'Hidden' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const SetVideoCallPresenceArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'presence' : VideoCallPresence,
+    'message_id' : MessageId,
+  });
+  const SetVideoCallPresenceResponse = IDL.Variant({
+    'AlreadyEnded' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+  });
+  const StartVideoCallArgs = IDL.Record({
+    'initiator_username' : IDL.Text,
+    'channel_id' : ChannelId,
+    'initiator' : UserId,
+    'max_duration' : IDL.Opt(Milliseconds),
+    'initiator_display_name' : IDL.Opt(IDL.Text),
+    'message_id' : MessageId,
+    'call_type' : VideoCallType,
+  });
+  const StartVideoCallResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const CommunityPermissionRole = IDL.Variant({
@@ -1764,6 +1865,7 @@ export const idlFactory = ({ IDL }) => {
     'custom_updated' : IDL.Vec(CustomPermission),
     'audio' : PermissionRoleUpdate,
     'video' : PermissionRoleUpdate,
+    'video_call' : PermissionRoleUpdate,
     'file' : PermissionRoleUpdate,
     'poll' : PermissionRoleUpdate,
     'text' : PermissionRoleUpdate,
@@ -1771,7 +1873,6 @@ export const idlFactory = ({ IDL }) => {
     'giphy' : PermissionRoleUpdate,
     'custom_deleted' : IDL.Vec(IDL.Text),
     'default' : IDL.Opt(PermissionRole),
-    'p2p_trade' : PermissionRoleUpdate,
     'image' : PermissionRoleUpdate,
     'prize' : PermissionRoleUpdate,
     'p2p_swap' : PermissionRoleUpdate,
@@ -1790,6 +1891,7 @@ export const idlFactory = ({ IDL }) => {
     'invite_users' : IDL.Opt(PermissionRole),
     'thread_permissions' : OptionalMessagePermissionsUpdate,
     'change_roles' : IDL.Opt(PermissionRole),
+    'start_video_call' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
@@ -1886,6 +1988,23 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
   });
+  const VideoCallParticipantsArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'updated_since' : IDL.Opt(TimestampMillis),
+    'message_id' : MessageId,
+  });
+  const VideoCallParticipants = IDL.Record({
+    'participants' : IDL.Vec(CallParticipant),
+    'hidden' : IDL.Vec(CallParticipant),
+    'last_updated' : TimestampMillis,
+  });
+  const VideoCallParticipantsResponse = IDL.Variant({
+    'UserNotInChannel' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'VideoCallNotFound' : IDL.Null,
+    'Success' : VideoCallParticipants,
+    'UserNotInCommunity' : IDL.Null,
+  });
   return IDL.Service({
     'accept_p2p_swap' : IDL.Func(
         [AcceptP2PSwapArgs],
@@ -1967,6 +2086,7 @@ export const idlFactory = ({ IDL }) => {
         [EnableInviteCodeResponse],
         [],
       ),
+    'end_video_call' : IDL.Func([EndVideoCallArgs], [EndVideoCallResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -1982,6 +2102,11 @@ export const idlFactory = ({ IDL }) => {
     'follow_thread' : IDL.Func([FollowThreadArgs], [FollowThreadResponse], []),
     'import_group' : IDL.Func([ImportGroupArgs], [ImportGroupResponse], []),
     'invite_code' : IDL.Func([EmptyArgs], [InviteCodeResponse], ['query']),
+    'join_video_call' : IDL.Func(
+        [JoinVideoCallArgs],
+        [JoinVideoCallResponse],
+        [],
+      ),
     'leave_channel' : IDL.Func([LeaveChannelArgs], [LeaveChannelResponse], []),
     'local_user_index' : IDL.Func(
         [EmptyArgs],
@@ -2067,6 +2192,16 @@ export const idlFactory = ({ IDL }) => {
         [SetMemberDisplayNameResponse],
         [],
       ),
+    'set_video_call_presence' : IDL.Func(
+        [SetVideoCallPresenceArgs],
+        [SetVideoCallPresenceResponse],
+        [],
+      ),
+    'start_video_call' : IDL.Func(
+        [StartVideoCallArgs],
+        [StartVideoCallResponse],
+        [],
+      ),
     'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
     'summary_updates' : IDL.Func(
         [SummaryUpdatesArgs],
@@ -2109,6 +2244,11 @@ export const idlFactory = ({ IDL }) => {
         [UpdateUserGroupArgs],
         [UpdateUserGroupResponse],
         [],
+      ),
+    'video_call_participants' : IDL.Func(
+        [VideoCallParticipantsArgs],
+        [VideoCallParticipantsResponse],
+        ['query'],
       ),
   });
 };

@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use group_canister::add_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{EventIndex, GroupReactionAddedNotification, Notification, UserId};
 
 #[update]
@@ -30,6 +30,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.message_id,
             args.reaction.clone(),
             now,
+            &mut state.data.event_store_client,
         ) {
             AddRemoveReactionResult::Success => {
                 handle_activity_notification(state);

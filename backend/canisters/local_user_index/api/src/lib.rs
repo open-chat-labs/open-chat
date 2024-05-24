@@ -2,8 +2,9 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
-    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
+    SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, User, UserId,
 };
 
 mod lifecycle;
@@ -29,8 +30,12 @@ pub enum Event {
     UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
+    OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
+    UserDeleted(UserDeleted),
+    SecretKeySet(Vec<u8>),
+    ChitEarned(ChitEarned),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -131,10 +136,23 @@ pub struct OpenChatBotMessage {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessageV2 {
+    pub user_id: UserId,
+    pub thread_root_message_id: Option<MessageId>,
+    pub content: MessageContentInitial,
+    pub mentioned: Vec<User>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReferralCodeAdded {
     pub referral_type: ReferralType,
     pub code: String,
     pub expiry: Option<TimestampMillis>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserDeleted {
+    pub user_id: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -144,4 +162,12 @@ pub struct GlobalUser {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ChitEarned {
+    pub user_id: UserId,
+    pub amount: i32,
+    pub timestamp: TimestampMillis,
+    pub reason: ChitEarnedReason,
 }

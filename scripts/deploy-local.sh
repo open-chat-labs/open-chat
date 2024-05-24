@@ -10,7 +10,7 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Create and install the NNS canisters
-dfx extension install nns >& /dev/null
+dfx extension install nns --version 0.3.1 >& /dev/null
 dfx --identity $IDENTITY nns install
 
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
@@ -38,6 +38,11 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_relay
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_store
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_email
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_ethereum
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_solana
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -54,3 +59,4 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     true \
 
 ./scripts/deploy-test-ledger.sh $IDENTITY
+./scripts/mint-test-tokens.sh "d6g4o-amaaa-aaaaa-qaaoq-cai" $IDENTITY

@@ -8,6 +8,8 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::Reader;
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
@@ -22,16 +24,17 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use types::SNS_FEE_SHARE_PERCENT;
+use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
-    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
+    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::consts::{IC_ROOT_KEY, OPENCHAT_BOT_USER_ID};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
+use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 mod activity_notifications;
 mod guards;
@@ -80,6 +83,11 @@ impl RuntimeState {
 
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
+    }
+
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
     pub fn is_caller_community_being_imported_into(&self) -> bool {
@@ -216,6 +224,7 @@ impl RuntimeState {
             gate: chat.gate.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
+            video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
         }
     }
 
@@ -294,7 +303,7 @@ impl RuntimeState {
         for (message_id, prize_message) in pending_prize_messages {
             let ledger = prize_message.transaction.ledger_canister_id();
             let fee = prize_message.transaction.fee();
-            let amount: u128 = prize_message.prizes_remaining.iter().map(|p| p.e8s() as u128 + fee).sum();
+            let amount: u128 = prize_message.prizes_remaining.iter().map(|p| p + fee).sum();
 
             match transfers_required.entry(ledger) {
                 Vacant(e) => {
@@ -357,7 +366,8 @@ impl RuntimeState {
             .event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
@@ -389,6 +399,8 @@ impl RuntimeState {
                 .as_ref()
                 .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
+            event_store_client_info: self.data.event_store_client.info(),
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -414,6 +426,8 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
@@ -430,6 +444,18 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+    pub video_call_operators: Vec<Principal>,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
+    pub event_store_client: EventStoreClient<CdkRuntime>,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -439,6 +465,7 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 #[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
+        chat_id: ChatId,
         is_public: bool,
         name: String,
         description: String,
@@ -458,11 +485,16 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
+        video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
+        anonymized_chat_id: u128,
     ) -> Data {
         let chat = GroupChatCore::new(
+            MultiUserChat::Group(chat_id),
             creator_user_id,
             is_public,
             name,
@@ -475,6 +507,7 @@ impl Data {
             gate,
             events_ttl,
             proposals_bot_user_id == creator_user_id,
+            anonymized_chat_id,
             now,
         );
 
@@ -488,6 +521,7 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
@@ -503,6 +537,11 @@ impl Data {
             rng_seed: [0; 32],
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
+            video_call_operators,
+            ic_root_key,
+            event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
+                .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
+                .build(),
         }
     }
 
@@ -600,6 +639,16 @@ impl Data {
         );
     }
 
+    pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
+        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+            self.next_event_expiry = Some(expiry);
+
+            let timer_jobs = &mut self.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
@@ -616,7 +665,8 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
@@ -638,6 +688,8 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,
+    pub event_store_client_info: EventStoreClientInfo,
+    pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
 }
 

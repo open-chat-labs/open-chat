@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use group_canister::undelete_messages::{Response::*, *};
 use group_chat_core::UndeleteMessagesResult;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use std::collections::HashSet;
 
 #[update]

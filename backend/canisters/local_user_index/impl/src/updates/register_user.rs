@@ -4,10 +4,10 @@ use crate::timer_job_types::{AddUserToSatoshiDice, TimerJob};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
@@ -15,8 +15,7 @@ use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use utils::text_validation::{validate_username, UsernameValidationError};
-use x509_parser::prelude::FromDer;
-use x509_parser::x509::SubjectPublicKeyInfo;
+use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 pub const USER_LIMIT: usize = 150_000;
 
@@ -30,6 +29,7 @@ async fn register_user(args: Args) -> Response {
         canister_wasm,
         cycles_to_use,
         referral_code,
+        is_from_identity_canister,
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -49,16 +49,24 @@ async fn register_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
+            mutate_state(|state| {
+                commit(
+                    caller,
+                    user_id,
+                    args.username,
+                    wasm_version,
+                    referral_code,
+                    is_from_identity_canister,
+                    state,
+                )
+            });
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
             })
         }
         Err(error) => {
-            if let CreateAndInstallError::InstallFailed(id, ..) = error {
-                mutate_state(|state| state.data.canister_pool.push(id));
-            }
+            mutate_state(|state| rollback(&caller, &error, state));
             InternalError(format!("{error:?}"))
         }
     }
@@ -70,32 +78,30 @@ struct PrepareOk {
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
     referral_code: Option<ReferralCode>,
+    is_from_identity_canister: bool,
     init_canister_args: InitUserCanisterArgs,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = state.env.caller();
-    let mut referral_code = None;
 
     if state.data.global_users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(
-        caller,
-        &args.public_key,
-        state.data.identity_canister_id,
-        state.data.internet_identity_canister_id,
-    ) {
-        return Err(PublicKeyInvalid(error));
+    let now = state.env.now();
+    if !state.data.local_users.mark_registration_in_progress(caller, now) {
+        return Err(RegistrationInProgress);
     }
+
+    let is_from_identity_canister =
+        validate_public_key(caller, &args.public_key, state.data.identity_canister_id).map_err(PublicKeyInvalid)?;
 
     if state.data.global_users.len() >= USER_LIMIT {
         return Err(UserLimitReached);
     }
 
-    let now = state.env.now();
-
+    let mut referral_code = None;
     if let Some(code) = &args.referral_code {
         referral_code = match state.data.referral_codes.check(code, now) {
             Ok(r) => Some(r),
@@ -122,17 +128,17 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .is_some()
     {
         vec![
-            MessageContent::Text(TextContent {
+            MessageContentInitial::Text(TextContent {
                 text: "Welcome to OpenChat!!".to_string(),
             }),
-            MessageContent::Text(TextContent {
+            MessageContentInitial::Text(TextContent {
                 text: format!("Wait a moment {}, your SATS are coming below 👇", args.username),
             }),
         ]
     } else {
         welcome_messages()
             .into_iter()
-            .map(|t| MessageContent::Text(TextContent { text: t }))
+            .map(|t| MessageContentInitial::Text(TextContent { text: t }))
             .collect()
     };
 
@@ -147,7 +153,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.clone();
+    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,
@@ -159,6 +165,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         openchat_bot_messages,
+        video_call_operators: state.data.video_call_operators.clone(),
         test_mode: state.data.test_mode,
     };
 
@@ -170,6 +177,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         canister_wasm,
         cycles_to_use,
         referral_code,
+        is_from_identity_canister,
         init_canister_args,
     })
 }
@@ -180,10 +188,11 @@ fn commit(
     username: String,
     wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
+    is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
-    state.data.local_users.add(user_id, wasm_version, now);
+    state.data.local_users.add(user_id, principal, wasm_version, now);
     state.data.global_users.add(principal, user_id, false);
 
     state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
@@ -191,6 +200,7 @@ fn commit(
         user_id,
         username: username.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        is_from_identity_canister,
     })));
 
     match referral_code {
@@ -234,6 +244,14 @@ fn commit(
     }
 }
 
+fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
+    state.data.local_users.mark_registration_failed(principal);
+
+    if let CreateAndInstallError::InstallFailed(id, ..) = error {
+        state.data.canister_pool.push(*id);
+    }
+}
+
 fn welcome_messages() -> Vec<String> {
     const WELCOME_MESSAGES: &[&str] = &[
         "Welcome to OpenChat!",
@@ -248,23 +266,18 @@ fn welcome_messages() -> Vec<String> {
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
 
-fn validate_public_key(
-    caller: Principal,
-    public_key: &[u8],
-    identity_canister_id: CanisterId,
-    internet_identity_canister_id: CanisterId,
-) -> Result<(), String> {
+fn validate_public_key(caller: Principal, public_key: &[u8], identity_canister_id: CanisterId) -> Result<bool, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-    if canister_id != identity_canister_id && canister_id != internet_identity_canister_id {
-        return Err("PublicKey is not derived from the Identity canister or the InternetIdentity canister".to_string());
+    if canister_id != identity_canister_id {
+        return Err("PublicKey is not derived from the Identity canister".to_string());
     }
 
     let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {
-        Ok(())
+        Ok(canister_id == identity_canister_id)
     } else {
         Err("PublicKey does not match caller".to_string())
     }

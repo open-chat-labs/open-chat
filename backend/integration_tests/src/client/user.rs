@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use user_canister::*;
 
 // Queries
+generate_query_call!(chit_events);
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
@@ -21,6 +22,8 @@ generate_update_call!(delete_direct_chat);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
+generate_update_call!(end_video_call);
+generate_update_call!(join_video_call);
 generate_update_call!(leave_community);
 generate_update_call!(leave_group);
 generate_update_call!(mark_read);
@@ -31,17 +34,20 @@ generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
 generate_update_call!(set_message_reminder_v2);
+generate_update_call!(set_pin_number);
+generate_update_call!(start_video_call);
 generate_update_call!(tip_message);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 
 pub mod happy_path {
-    use crate::rng::random_message_id;
+    use crate::env::VIDEO_CALL_OPERATOR;
     use crate::User;
     use pocket_ic::PocketIc;
+    use testing::rng::random_message_id;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        Reaction, Rules, TextContent, TimestampMillis, UserId,
+        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
 
     pub fn send_text_message(
@@ -62,7 +68,9 @@ pub mod happy_path {
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
+                block_level_markdown: false,
                 message_filter_failed: None,
+                pin: None,
                 correlation_id: 0,
             },
         );
@@ -70,6 +78,34 @@ pub mod happy_path {
         match response {
             user_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn edit_text_message(
+        env: &mut PocketIc,
+        sender: &User,
+        user_id: UserId,
+        message_id: MessageId,
+        text: impl ToString,
+        block_level_markdown: Option<bool>,
+    ) {
+        let response = super::edit_message_v2(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::edit_message_v2::Args {
+                user_id,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+                block_level_markdown,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            user_canister::edit_message_v2::Response::Success => {}
+            response => panic!("'edit_message_v2' error: {response:?}"),
         }
     }
 
@@ -281,9 +317,96 @@ pub mod happy_path {
                 fee: token.fee().unwrap(),
                 decimals: token.decimals().unwrap(),
                 token,
+                pin: None,
             },
         );
 
         assert!(matches!(response, user_canister::tip_message::Response::Success))
+    }
+
+    pub fn start_video_call(
+        env: &mut PocketIc,
+        user: &User,
+        recipient: UserId,
+        message_id: MessageId,
+        max_duration: Option<Milliseconds>,
+    ) {
+        let response = super::start_video_call(
+            env,
+            VIDEO_CALL_OPERATOR,
+            recipient.into(),
+            &user_canister::start_video_call::Args {
+                message_id,
+                initiator: user.user_id,
+                initiator_username: user.username(),
+                initiator_display_name: None,
+                initiator_avatar_id: None,
+                max_duration,
+                call_type: VideoCallType::Default,
+            },
+        );
+
+        assert!(matches!(response, user_canister::start_video_call::Response::Success))
+    }
+
+    pub fn join_video_call(env: &mut PocketIc, joiner: &User, other: UserId, message_id: MessageId) {
+        let response = super::join_video_call(
+            env,
+            joiner.principal,
+            joiner.canister(),
+            &user_canister::join_video_call::Args {
+                user_id: other,
+                message_id,
+            },
+        );
+
+        assert!(matches!(response, user_canister::join_video_call::Response::Success))
+    }
+
+    pub fn end_video_call(env: &mut PocketIc, initiator: UserId, recipient: UserId, message_id: MessageId) {
+        let response = super::end_video_call(
+            env,
+            VIDEO_CALL_OPERATOR,
+            recipient.into(),
+            &user_canister::end_video_call::Args {
+                user_id: initiator,
+                message_id,
+            },
+        );
+
+        assert!(matches!(response, user_canister::end_video_call::Response::Success))
+    }
+
+    pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
+        let response = super::set_pin_number(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::set_pin_number::Args { current, new },
+        );
+
+        assert!(matches!(response, user_canister::set_pin_number::Response::Success));
+    }
+
+    pub fn chit_events(
+        env: &PocketIc,
+        sender: &User,
+        from: Option<TimestampMillis>,
+        max: u32,
+    ) -> user_canister::chit_events::SuccessResult {
+        let response = super::chit_events(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::chit_events::Args {
+                from,
+                max,
+                ascending: false,
+            },
+        );
+
+        match response {
+            user_canister::chit_events::Response::Success(result) => result,
+        }
     }
 }

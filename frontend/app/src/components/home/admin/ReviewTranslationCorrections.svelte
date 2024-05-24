@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import MenuIcon from "../../MenuIcon.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
@@ -19,33 +20,65 @@
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
 
-    $: userStore = client.userStore;
-
     let corrections: TranslationCorrection[] = [];
     let verifying: TranslationCorrection | undefined = undefined;
+    let verifications: Record<number, string> = {};
+    let chatBalance = 0n;
+    let refreshing = false;
+    let processing = new Set<bigint>();
 
-    let verifications: Record<string, string> = {};
+    $: userStore = client.userStore;
+    $: formattedBalance = client.formatTokens(chatBalance, 8);
 
-    onMount(() => {
-        client.getProposedTranslationCorrections().then((res) => {
-            corrections = flattenCorrections(res);
+    onMount(async () => {
+        await client.getProposedTranslationCorrections().then(async (res) => {
+            corrections = await loadRequiredLocales(flattenCorrections(res));
         });
+        refreshBalance();
     });
 
+    // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
+    // and trigger the loading of the current translations for each of those locales.
+    async function loadRequiredLocales(
+        corrections: TranslationCorrection[],
+    ): Promise<TranslationCorrection[]> {
+        const currentLocale = $locale;
+        const locales = corrections.reduce((all, c) => {
+            all.add(c.locale);
+            return all;
+        }, new Set<string>());
+        await [...locales].reduce((p, l) => {
+            return p.then(() => locale.set(l));
+        }, Promise.resolve());
+        await locale.set(currentLocale);
+        return corrections;
+    }
+
+    function refreshBalance() {
+        refreshing = true;
+        client
+            .refreshTranslationsBalance()
+            .then((val) => (chatBalance = val))
+            .finally(() => (refreshing = false));
+    }
+
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
-        return corrections.flatMap((group) =>
-            group.candidates.map((correction) => ({
-                id: correction.id,
-                locale: group.locale,
-                key: group.key,
-                value: correction.value,
-                proposedBy: correction.proposedBy,
-                proposedAt: correction.proposedAt,
-            })),
-        );
+        return corrections
+            .flatMap((group) =>
+                group.candidates.map((correction) => ({
+                    id: correction.id,
+                    locale: group.locale,
+                    key: group.key,
+                    value: correction.value,
+                    proposedBy: correction.proposedBy,
+                    proposedAt: correction.proposedAt,
+                })),
+            )
+            .sort((a, b) => a.key.localeCompare(b.key));
     }
 
     function removeCorrection(id: bigint) {
@@ -53,27 +86,43 @@
     }
 
     function approveCorrection({ id }: TranslationCorrection) {
-        client.approveTranslationCorrection(id).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to approve this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .approveTranslationCorrection(id)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to approve this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
-        client.rejectTranslationCorrection(id, reason).then((success) => {
-            if (success) {
-                removeCorrection(id);
-            } else {
-                toastStore.showFailureToast(
-                    i18nKey("Sorry we were unable to reject this correction"),
-                );
-            }
-        });
+        processing.add(id);
+        processing = processing;
+        client
+            .rejectTranslationCorrection(id, reason)
+            .then((success) => {
+                if (success) {
+                    removeCorrection(id);
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("Sorry we were unable to reject this correction"),
+                    );
+                }
+            })
+            .finally(() => {
+                processing.delete(id);
+                processing = processing;
+            });
     }
 
     function previewCorrection(correction: TranslationCorrection) {
@@ -89,7 +138,7 @@
     }
 
     function getEnglish(correction: TranslationCorrection) {
-        const key = `${correction.locale}_${correction.key}`;
+        const key = Number(correction.id);
         if (verifications[key]) {
             return Promise.resolve(verifications[key]);
         }
@@ -115,7 +164,14 @@
     }
 </script>
 
-<div class="translation-corrections">
+<div class="balance">
+    <div>CHAT balance</div>
+    <div class="amount">{formattedBalance}</div>
+    <div class="refresh" class:refreshing on:click={refreshBalance}>
+        <Refresh size={"1em"} color={"var(--icon-txt)"} />
+    </div>
+</div>
+<div use:menuCloser class="translation-corrections">
     <table class="data">
         <thead>
             <tr>
@@ -134,10 +190,10 @@
                 <tr>
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
-                    <td class="english">{$_(correction.key, { locale: "en" })}</td>
+                    <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
                     <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
-                        {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
+                        {#if verifying !== undefined && verifying.id === correction.id}
                             {verifying.value}
                         {:else}
                             {correction.value}
@@ -150,9 +206,13 @@
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
                             <span slot="icon">
-                                <HoverIcon>
-                                    <Hamburger size={$iconSize} color={"var(--txt)"} />
-                                </HoverIcon>
+                                {#if processing.has(correction.id)}
+                                    <div class="busy"></div>
+                                {:else}
+                                    <HoverIcon>
+                                        <Hamburger size={$iconSize} color={"var(--txt)"} />
+                                    </HoverIcon>
+                                {/if}
                             </span>
                             <span slot="menu">
                                 <Menu>
@@ -163,7 +223,7 @@
                                             slot="icon" />
                                         <span slot="text">Preview</span>
                                     </MenuItem>
-                                    {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
+                                    {#if verifying !== undefined && verifying.id === correction.id}
                                         <MenuItem on:click={() => (verifying = undefined)}>
                                             <Translate
                                                 size={$iconSize}
@@ -216,17 +276,36 @@
 
 <style lang="scss">
     .translation-corrections {
-        padding: $sp4;
+        margin-top: $sp3;
+        padding: 0 $sp4 $sp4 $sp4;
+        flex: auto;
+        @include nice-scrollbar();
     }
 
-    tbody {
-        position: relative;
-    }
+    .balance {
+        display: flex;
+        justify-content: flex-end;
+        margin-right: $sp4;
+        gap: 6px;
 
-    thead {
-        position: sticky;
-        top: 0;
-        z-index: 1;
+        .amount {
+            @include font(bold, normal, fs-100, 22);
+        }
+
+        .refresh {
+            @include font-size(fs-140);
+            height: $sp5;
+            width: $sp5;
+            cursor: pointer;
+            @include mobile() {
+                height: 21.59px;
+                width: 21.59px;
+            }
+
+            &.refreshing {
+                @include spin();
+            }
+        }
     }
 
     table {
@@ -235,15 +314,19 @@
         min-width: 600px; // this will scroll horizontally on mobile
     }
 
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    tbody {
+        position: relative;
+    }
+
     tr {
         border-bottom: 1px solid var(--bd);
-
-        &.pending {
-            background-color: #e91e63;
-        }
-        &.approved {
-            background-color: #66bb6a;
-        }
+        height: 56px;
     }
 
     td,
@@ -276,7 +359,7 @@
         }
     }
 
-    .suggestion {
-        margin-bottom: $sp3;
+    .busy {
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 </style>

@@ -7,7 +7,80 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
+- Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
+
+## [[2.0.1150](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1150-local_group_index)] - 2024-04-23
+
+### Changed
+
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1136-local_group_index)] - 2024-04-10
+
+### Added
+
+- Push `group/community_created` events ([#5525](https://github.com/open-chat-labs/open-chat/pull/5525))
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+
+## [[2.0.1114](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1114-local_group_index)] - 2024-03-20
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Anonymize all Group/Community canisters in events ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+
+### Fixed
+
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
+## [[2.0.1098](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1098-local_group_index)] - 2024-03-11
+
+### Fixed
+
+- Only clear the chunk store if no upgrades running ([#5510](https://github.com/open-chat-labs/open-chat/pull/5510))
+- Retry failed community upgrades ([#5511](https://github.com/open-chat-labs/open-chat/pull/5511))
+
+## [[2.0.1095](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1095-local_group_index)] - 2024-03-08
+
+### Changed
+
+- Pause upgrades if events queue becomes too large ([#5507](https://github.com/open-chat-labs/open-chat/pull/5507))
+
+### Fixed
+
+- Fix 'out of cycles' check to use new response code ([#5503](https://github.com/open-chat-labs/open-chat/pull/5503))
+- Retry community upgrades which failed due to insufficient cycles ([#5506](https://github.com/open-chat-labs/open-chat/pull/5506))
+
+## [[2.0.1087](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1087-local_group_index)] - 2024-03-04
+
+### Added
+
+- Implement ability to push events from Group & Community canisters ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
+
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+
+## [[2.0.1074](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1074-local_group_index)] - 2024-02-22
+
+### Added
+
+- VideoCall message + permission + summary/updates ([#5357](https://github.com/open-chat-labs/open-chat/pull/5357))
+
+### Changed
+
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+- Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+- Use `install_chunked_code` to upgrade Group + Community canisters ([#5412](https://github.com/open-chat-labs/open-chat/pull/5412))
+
+### Fixed
+
+- Fix community canister upgrades ([#5422](https://github.com/open-chat-labs/open-chat/pull/5422))
 
 ## [[2.0.1012](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1012-local_group_index)] - 2024-01-18
 

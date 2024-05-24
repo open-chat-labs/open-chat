@@ -5,6 +5,7 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
+    import LightningBoltIcon from "svelte-material-icons/LightningBoltOutline.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
@@ -28,6 +29,8 @@
     import { isTouchDevice } from "../../../utils/devices";
     import { rtlStore } from "../../../stores/rtl";
     import { i18nKey } from "../../../i18n/i18n";
+    import { now } from "../../../stores/time";
+    import { chitEnabledStore } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -41,12 +44,18 @@
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
     $: unreadDirectCounts = client.unreadDirectCounts;
+    $: directVideoCallCounts = client.directVideoCallCounts;
+    $: groupVideoCallCounts = client.groupVideoCallCounts;
+    $: favouritesVideoCallCounts = client.favouritesVideoCallCounts;
     $: unreadGroupCounts = client.unreadGroupCounts;
     $: unreadFavouriteCounts = client.unreadFavouriteCounts;
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
+    $: communityChannelVideoCallCounts = client.communityChannelVideoCallCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
     $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
+    $: globalState = client.globalStateStore;
+    $: claimChitAvailable = $createdUser.nextDailyChitClaim < $now;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -154,45 +163,56 @@
                 </MenuIcon>
             </div>
         </LeftNavItem>
-
         {#if user !== undefined}
             <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
-
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
             disabled={$anonUser}
             unread={$unreadDirectCounts.chats}
+            video={$directVideoCallCounts}
             on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
+            video={$groupVideoCallCounts}
             on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
-        <LeftNavItem
-            selected={$chatListScope.kind === "favourite" && !communityExplorer}
-            separator
-            disabled={$anonUser}
-            label={i18nKey("communities.favourites")}
-            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
-            on:click={favouriteChats}>
-            <div class="hover favs">
-                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
+        {#if $globalState.favourites.size > 0}
+            <LeftNavItem
+                selected={$chatListScope.kind === "favourite" && !communityExplorer}
+                separator
+                disabled={$anonUser}
+                label={i18nKey("communities.favourites")}
+                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
+                video={$favouritesVideoCallCounts}
+                on:click={favouriteChats}>
+                <div class="hover favs">
+                    <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
+        {#if $chitEnabledStore}
+            <LeftNavItem
+                selected={claimChitAvailable}
+                label={i18nKey(claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak")}
+                on:click={() => dispatch("claimDailyChit")}>
+                <div class="hover direct">
+                    <LightningBoltIcon size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
     </div>
 
     <div
@@ -212,6 +232,10 @@
                     selected={community.id.communityId === selectedCommunityId &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
+                    video={$communityChannelVideoCallCounts.get(community.id) ?? {
+                        muted: 0,
+                        unmuted: 0,
+                    }}
                     unread={client.mergeCombinedUnreadCounts(
                         $unreadCommunityChannelCounts.get(community.id) ??
                             emptyCombinedUnreadCounts(),

@@ -2,6 +2,7 @@ use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use group_canister::*;
 
 // Queries
+generate_c2c_call!(c2c_can_issue_access_token);
 generate_c2c_call!(c2c_events);
 generate_c2c_call!(c2c_events_by_index);
 generate_c2c_call!(c2c_events_internal);
@@ -34,3 +35,4 @@ generate_c2c_call!(delete_messages);
 
 generate_candid_c2c_call!(change_role);
 generate_candid_c2c_call!(send_message_v2);
+generate_candid_c2c_call!(update_group_v2);

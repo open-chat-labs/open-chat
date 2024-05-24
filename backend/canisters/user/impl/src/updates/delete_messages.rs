@@ -3,10 +3,10 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::EventIndex;
 use user_canister::delete_messages::{Response::*, *};
-use user_canister::{c2c_delete_messages, UserCanisterEvent};
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -72,11 +72,13 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                     .collect();
 
                 if !my_messages.is_empty() {
+                    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+
                     state.push_user_canister_event(
                         args.user_id.into(),
-                        UserCanisterEvent::DeleteMessages(Box::new(c2c_delete_messages::Args {
+                        UserCanisterEvent::DeleteMessages(Box::new(user_canister::DeleteUndeleteMessagesArgs {
+                            thread_root_message_id,
                             message_ids: my_messages,
-                            correlation_id: 0,
                         })),
                     );
                 }

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use user_canister::token_swap_status::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]

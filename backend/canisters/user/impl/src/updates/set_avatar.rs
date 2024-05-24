@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::{CanisterId, Timestamped};
 use user_canister::set_avatar::*;
 use utils::document_validation::validate_avatar;

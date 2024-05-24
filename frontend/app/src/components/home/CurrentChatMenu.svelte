@@ -1,5 +1,6 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
+    import Headphones from "svelte-material-icons/Headphones.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -21,7 +22,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import type { ChatSummary, OpenChat } from "openchat-client";
+    import { chatIdentifiersEqual, type ChatSummary, type OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -32,6 +33,7 @@
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { activeVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -67,6 +69,23 @@
         selectedChatSummary.kind === "group_chat" &&
         client.canConvertGroupToCommunity(selectedChatSummary.id);
     $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
+    $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
+
+    $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
+    $: isPublic = !client.isChatPrivate(selectedChatSummary);
+
+    $: incall =
+        $activeVideoCall !== undefined &&
+        videoCallInProgress &&
+        chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id);
+
+    $: videoMenuText = videoCallInProgress
+        ? i18nKey("videoCall.joinVideo")
+        : isPublic
+          ? i18nKey("videoCall.startBroadcast")
+          : i18nKey("videoCall.startVideo");
+
+    $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
 
     let hasUnreadPinned = false;
 
@@ -211,6 +230,13 @@
     function makeProposal() {
         dispatch("makeProposal");
     }
+
+    function startVideoCall() {
+        dispatch("startVideoCall", {
+            chat: selectedChatSummary,
+            join: videoCallInProgress,
+        });
+    }
 </script>
 
 {#if desktop}
@@ -287,6 +313,17 @@
         </div>
         <div slot="menu">
             <Menu>
+                {#if canStartOrJoinVideoCall}
+                    <MenuItem on:click={startVideoCall}>
+                        <Headphones
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">
+                            <Translatable resourceKey={videoMenuText} />
+                        </div>
+                    </MenuItem>
+                {/if}
                 {#if !$favouritesStore.has(selectedChatSummary.id)}
                     <MenuItem on:click={addToFavourites}>
                         <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />

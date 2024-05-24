@@ -1,20 +1,65 @@
 <script lang="ts">
     import { sineIn } from "svelte/easing";
+    import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
+    import Bug from "svelte-material-icons/Bug.svelte";
     import { fly } from "svelte/transition";
     import { toastStore, ToastType } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import Translatable from "./Translatable.svelte";
+    import { OpenChat, type ChatIdentifier, routeForChatIdentifier } from "openchat-client";
+    import { getContext } from "svelte";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import page from "page";
+    import TooltipWrapper from "./TooltipWrapper.svelte";
+    import TooltipPopup from "./TooltipPopup.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    $: draftMessagesStore = client.draftMessagesStore;
+    $: reactiveResourceKey = $toastStore?.resourceKey;
+
+    function report() {
+        if (
+            $toastStore &&
+            $toastStore.type === ToastType.Failure &&
+            $toastStore.err !== undefined &&
+            $reactiveResourceKey !== undefined
+        ) {
+            const msg = interpolate($_, $reactiveResourceKey);
+            const withDetail = `${msg} (${$toastStore.err})`;
+            const chatId = {
+                kind: "channel",
+                communityId: "dgegb-daaaa-aaaar-arlhq-cai",
+                channelId: "20429314036340368324663327710074551214",
+            } as ChatIdentifier;
+            page(routeForChatIdentifier("community", chatId));
+            draftMessagesStore.setTextContent({ chatId }, withDetail);
+            toastStore.hideToast();
+        }
+    }
 </script>
 
-{#if $toastStore}
+{#if $toastStore && $reactiveResourceKey}
     <div class="toast" transition:fly={{ y: 200, duration: 200, easing: sineIn }}>
         <div
             class="message"
             class:failure={$toastStore.type === ToastType.Failure}
             class:success={$toastStore.type === ToastType.Success}>
-            <div class="text"><Translatable resourceKey={$toastStore.resourceKey} /></div>
+            <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
             {#if $toastStore.type === ToastType.Failure}
+                {#if $toastStore.err !== undefined}
+                    <TooltipWrapper position="top" align="middle">
+                        <div slot="target" class="report" on:click={report}>
+                            <Bug size={$iconSize} color={"var(--button-txt)"} />
+                        </div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {align} {position}>
+                                <Translatable resourceKey={i18nKey("reportBug")} />
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                {/if}
                 <div class="close" on:click={toastStore.hideToast}>
                     <Close size={$iconSize} color={"var(--button-txt)"} />
                 </div>
@@ -42,6 +87,7 @@
         max-width: 800px;
         margin: 0 $sp4;
         display: flex;
+        gap: $sp4;
         justify-content: center;
         align-items: center;
         color: var(--button-txt);
@@ -70,7 +116,8 @@
             color: var(--toast-success-txt);
         }
 
-        .close {
+        .close,
+        .report {
             flex: 0 0 30px;
             cursor: pointer;
         }

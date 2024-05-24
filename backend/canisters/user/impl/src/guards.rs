@@ -55,3 +55,11 @@ pub fn caller_is_known_group_or_community_canister() -> Result<(), String> {
         Err("Caller is not a known group canister".to_owned())
     }
 }
+
+pub fn caller_is_video_call_operator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_video_call_operator()) {
+        Ok(())
+    } else {
+        Err("Caller is not a video call operator".to_string())
+    }
+}

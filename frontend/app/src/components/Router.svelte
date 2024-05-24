@@ -219,5 +219,5 @@
 </script>
 
 {#if route !== undefined}
-    <svelte:component this={route} {showLandingPage} />
+    <svelte:component this={route} {showLandingPage} on:startVideoCall on:askToSpeak on:hangup />
 {/if}

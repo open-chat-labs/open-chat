@@ -2,6 +2,7 @@ use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
+use event_store_producer::{EventStoreClient, Runtime};
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
@@ -14,9 +15,10 @@ use types::{
     GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -59,6 +61,7 @@ pub struct GroupChatCore {
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
     pub fn new(
+        chat: MultiUserChat,
         created_by: UserId,
         is_public: bool,
         name: String,
@@ -71,10 +74,19 @@ impl GroupChatCore {
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         is_bot: bool,
+        anonymized_chat_id: u128,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, is_bot, now);
-        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
+        let events = ChatEvents::new_group_chat(
+            chat,
+            name.clone(),
+            description.clone(),
+            created_by,
+            events_ttl,
+            anonymized_chat_id,
+            now,
+        );
 
         GroupChatCore {
             is_public: Timestamped::new(is_public, now),
@@ -213,6 +225,12 @@ impl GroupChatCore {
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             rules_changed: self.rules.version_last_updated > since,
+            video_call_in_progress: self
+                .events
+                .video_call_in_progress()
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
 
@@ -511,7 +529,7 @@ impl GroupChatCore {
         Success(matches)
     }
 
-    pub fn validate_and_send_message(
+    pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
         sender_is_bot: bool,
@@ -524,6 +542,8 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        block_level_markdown: bool,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -546,26 +566,24 @@ impl GroupChatCore {
             };
         }
 
-        if let Ok(content_internal) = content.try_into() {
-            self.send_message(
-                sender,
-                thread_root_message_index,
-                message_id,
-                content_internal,
-                replies_to,
-                mentioned,
-                forwarding,
-                rules_accepted,
-                suppressed,
-                proposals_bot_user_id,
-                now,
-            )
-        } else {
-            InvalidRequest("Invalid message content type".to_string())
-        }
+        self.send_message(
+            sender,
+            thread_root_message_index,
+            message_id,
+            content.into(),
+            replies_to,
+            mentioned,
+            forwarding,
+            rules_accepted,
+            suppressed,
+            proposals_bot_user_id,
+            block_level_markdown,
+            event_store_client,
+            now,
+        )
     }
 
-    pub fn send_message(
+    pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -577,6 +595,8 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         proposals_bot_user_id: UserId,
+        block_level_markdown: bool,
+        event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -585,6 +605,7 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
+            sender_is_bot,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -621,11 +642,13 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
+            sender_is_bot,
+            block_level_markdown,
             correlation_id: 0,
             now,
         };
 
-        let message_event = self.events.push_message(push_message_args);
+        let message_event = self.events.push_message(push_message_args, Some(event_store_client));
         let message_index = message_event.event.message_index;
 
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
@@ -698,25 +721,26 @@ impl GroupChatCore {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
+                sender_is_bot: true,
             });
         }
 
-        match self.members.get_mut(&sender) {
-            Some(m) => {
-                if m.suspended.value {
-                    return UserSuspended;
-                }
+        if !matches!(content, MessageContentInternal::VideoCall(_)) {
+            if let Some(member) = self.members.get_mut(&sender) {
                 if let Some(version) = rules_accepted {
-                    m.accept_rules(min(version, self.rules.text.version), now);
+                    member.accept_rules(min(version, self.rules.text.version), now);
+                }
+                if !member.check_rules(&self.rules.value) {
+                    return RulesNotAccepted;
                 }
             }
-            None => return UserNotInGroup,
+        }
+
+        let Some(member) = self.members.get(&sender) else {
+            return UserNotInGroup;
         };
-
-        let member = self.members.get(&sender).unwrap();
-
-        if !self.check_rules(member) {
-            return RulesNotAccepted;
+        if member.suspended.value {
+            return UserSuspended;
         }
 
         let permissions = &self.permissions;
@@ -732,16 +756,18 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            sender_is_bot: member.is_bot,
         })
     }
 
-    pub fn add_reaction(
+    pub fn add_reaction<R: Runtime + Send + 'static>(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
+        event_store_client: &mut EventStoreClient<R>,
     ) -> AddRemoveReactionResult {
         use AddRemoveReactionResult::*;
 
@@ -756,14 +782,17 @@ impl GroupChatCore {
             let min_visible_event_index = member.min_visible_event_index();
 
             self.events
-                .add_reaction(AddRemoveReactionArgs {
-                    user_id,
-                    min_visible_event_index,
-                    thread_root_message_index,
-                    message_id,
-                    reaction,
-                    now,
-                })
+                .add_reaction(
+                    AddRemoveReactionArgs {
+                        user_id,
+                        min_visible_event_index,
+                        thread_root_message_index,
+                        message_id,
+                        reaction,
+                        now,
+                    },
+                    Some(event_store_client),
+                )
                 .into()
         } else {
             UserNotInGroup
@@ -805,7 +834,11 @@ impl GroupChatCore {
         }
     }
 
-    pub fn tip_message(&mut self, args: TipMessageArgs) -> TipMessageResult {
+    pub fn tip_message<R: Runtime + Send + 'static>(
+        &mut self,
+        args: TipMessageArgs,
+        event_store_client: &mut EventStoreClient<R>,
+    ) -> TipMessageResult {
         use TipMessageResult::*;
 
         if let Some(member) = self.members.get(&args.user_id) {
@@ -818,7 +851,9 @@ impl GroupChatCore {
 
             let min_visible_event_index = member.min_visible_event_index();
 
-            self.events.tip_message(args, min_visible_event_index).into()
+            self.events
+                .tip_message(args, min_visible_event_index, Some(event_store_client))
+                .into()
         } else {
             UserNotInGroup
         }
@@ -1299,7 +1334,7 @@ impl GroupChatCore {
         now: TimestampMillis,
     ) -> UpdateResult {
         match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
-            Ok(_) => UpdateResult::Success(self.do_update(
+            Ok(_) => UpdateResult::Success(Box::new(self.do_update(
                 user_id,
                 name,
                 description,
@@ -1310,7 +1345,7 @@ impl GroupChatCore {
                 public,
                 events_ttl,
                 now,
-            )),
+            ))),
             Err(result) => result,
         }
     }
@@ -1533,15 +1568,6 @@ impl GroupChatCore {
         result
     }
 
-    pub fn check_rules(&self, member: &GroupMemberInternal) -> bool {
-        !self.rules.enabled
-            || member.is_bot
-            || (member
-                .rules_accepted
-                .as_ref()
-                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
-    }
-
     pub fn follow_thread(
         &mut self,
         user_id: UserId,
@@ -1661,6 +1687,7 @@ impl GroupChatCore {
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
+            start_video_call: new.start_video_call.unwrap_or(old.start_video_call),
             message_permissions,
             thread_permissions,
         }
@@ -1679,6 +1706,7 @@ impl GroupChatCore {
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
             p2p_swap: new.p2p_swap.apply_to(old.p2p_swap),
+            video_call: new.video_call.apply_to(old.video_call),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }
@@ -1848,7 +1876,7 @@ pub enum RemoveMemberResult {
 }
 
 pub enum UpdateResult {
-    Success(UpdateSuccessResult),
+    Success(Box<UpdateSuccessResult>),
     UserSuspended,
     UserNotInGroup,
     NotAuthorized,
@@ -1960,6 +1988,7 @@ pub struct SummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
+    pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -2040,4 +2069,5 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
+    sender_is_bot: bool,
 }

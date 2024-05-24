@@ -10,6 +10,7 @@
         type ChatSummary,
         type CommunitySummary,
         type OpenChat,
+        type ResourceKey,
     } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -19,8 +20,10 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
     import Diamond from "../../icons/Diamond.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import ProfileRole from "./ProfileRole.svelte";
+    import Streak from "./Streak.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -58,6 +61,7 @@
     $: currentCommunityBlockedUsers = client.currentCommunityBlockedUsers;
     $: selectedCommunity = client.selectedCommunity;
     $: communityMembers = client.currentCommunityMembers;
+    $: chatMembersMap = client.currentChatMembersMap;
     $: displayName = client.getDisplayName(
         {
             userId,
@@ -311,6 +315,20 @@
                         {/if}
                     {/if}
                 </div>
+                {#if user !== undefined}
+                    <div class="chit">
+                        <div>{$_("chitBalance")} <strong>{user.chitBalance}</strong></div>
+                        <div><Streak days={user.streak} showTooltip={false} /></div>
+                    </div>
+                {/if}
+                {#if $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
+                    <ProfileRole
+                        {userId}
+                        chatMembers={$chatMembersMap}
+                        communityMembers={$communityMembers}
+                        community={$selectedCommunity}
+                        chat={$selectedChat} />
+                {/if}
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
@@ -360,10 +378,6 @@
         width: 320px;
         padding: $sp4 $sp5 0 $sp5;
 
-        @include mobile() {
-            padding: $sp3 $sp4 0 $sp4;
-        }
-
         .avatar {
             padding: 0 0 $sp4 0;
         }
@@ -402,8 +416,7 @@
             @include mobile() {
                 .left,
                 .right {
-                    @include font(light, normal, fs-80);
-                    justify-self: center;
+                    @include font(light, normal, fs-90);
                 }
             }
 
@@ -418,7 +431,6 @@
         width: 250px;
 
         .handle {
-            display: inline;
             overflow-wrap: anywhere;
 
             .username {
@@ -430,5 +442,18 @@
 
     .suspend {
         margin-top: $sp3;
+    }
+
+    .chit {
+        @include font(light, normal, fs-60);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $sp2;
+        margin-bottom: $sp3;
+
+        @include mobile() {
+            @include font(light, normal, fs-90);
+        }
     }
 </style>

@@ -15,6 +15,7 @@ type GetSnsCanistersSummaryResponse = record {
   ledger : opt CanisterSummary;
   index : opt CanisterSummary;
   governance : opt CanisterSummary;
+  dapps : vec CanisterSummary;
   archives : vec CanisterSummary;
 };
 service : {

@@ -14,10 +14,11 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^0.20.2",
-        "@dfinity/auth-client": "^0.20.2",
-        "openchat-shared": "*",
-        "openchat-agent": "*"
+        "@dfinity/agent": "^1.3.0",
+        "@dfinity/auth-client": "^1.3.0",
+        "@dfinity/identity": "^1.3.0",
+        "openchat-agent": "*",
+        "openchat-shared": "*"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^6.4.0",

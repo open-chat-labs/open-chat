@@ -10,6 +10,7 @@
         type OpenChat,
         E8S_PER_TOKEN,
         type DiamondMembershipFees,
+        type ResourceKey,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -18,7 +19,7 @@
     import Expiry from "./Expiry.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import type { RemoteData } from "../../../utils/remoteData";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     export let accountBalance = 0;

@@ -1,4 +1,10 @@
-import type { CancelP2PSwapResponse } from "openchat-shared";
+import type {
+    CancelP2PSwapResponse,
+    JoinVideoCallResponse,
+	SetPinNumberResponse,
+    SetVideoCallPresenceResponse,
+    VideoCallPresence,
+} from "openchat-shared";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
     InitialStateResponse,
@@ -96,6 +102,7 @@ export class AnonUserClient {
             },
             timestamp: BigInt(Date.now()),
             suspended: false,
+            pinNumberSettings: undefined,
             localUserIndex: "",
         });
     }
@@ -240,6 +247,8 @@ export class AnonUserClient {
         _messageContext: MessageContext,
         _messageId: bigint,
         _transfer: PendingCryptocurrencyTransfer,
+        _decimals: number,
+        _pin: string | undefined,
     ): Promise<TipMessageResponse> {
         throw new AnonymousOperationError();
     }
@@ -366,6 +375,7 @@ export class AnonUserClient {
 
     reportMessage(
         _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
         _messageId: bigint,
         _deleteMessage: boolean,
     ): Promise<boolean> {
@@ -400,11 +410,35 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        _userId: string,
+        _threadRootMessageIndex: number | undefined,
+        _messageId: bigint,
+        _pin: string | undefined,
+    ): Promise<AcceptP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 
     cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    joinVideoCall(_userId: string, _messageId: bigint): Promise<JoinVideoCallResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    setVideoCallPresence(
+        _messageId: bigint,
+        _presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    localUserIndex(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    setPinNumber(_currentPin: string | undefined, _newPin: string | undefined): Promise<SetPinNumberResponse> {
         throw new AnonymousOperationError();
     }
 }

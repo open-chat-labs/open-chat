@@ -2,8 +2,9 @@ import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError, offline } from "openchat-shared";
-import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
+import { ResponseTooLargeError } from "openchat-shared";
+import { isMainnet } from "../utils/network";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -16,12 +17,11 @@ export abstract class CandidService {
     protected createServiceClient<T>(
         factory: IDL.InterfaceFactory,
         canisterId: string,
-        config: AgentConfig,
+        config: { icUrl: string },
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
-        const isMainnet = config.icUrl.includes("icp-api.io");
-        if (!isMainnet && !offline()) {
+        if (!isMainnet(config.icUrl) && !offline()) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {
@@ -60,6 +60,7 @@ export abstract class CandidService {
                     Object.getOwnPropertyNames(responseErr),
                 )}, args: ${JSON.stringify(args)}`;
                 if (
+                    !(responseErr instanceof ResponseTooLargeError) &&
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof AuthError) &&

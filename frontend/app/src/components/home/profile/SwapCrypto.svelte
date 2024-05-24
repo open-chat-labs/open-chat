@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { DexId, OpenChat } from "openchat-client";
+    import type { DexId, OpenChat, ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
@@ -15,8 +15,9 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
 
     export let ledgerIn: string;
 
@@ -67,6 +68,7 @@
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
 
     $: primaryButtonText = getPrimaryButtonText(state, result);
+    $: pinNumberError = $pinNumberErrorMessageStore;
 
     onMount(() => loadSwaps(ledgerIn));
 
@@ -91,7 +93,7 @@
         swapId = undefined;
 
         client
-            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn)
+            .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn - BigInt(2) * detailsIn.transferFee)
             .then((response) => {
                 if (response.length === 0) {
                     error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
@@ -139,13 +141,15 @@
         if (!valid) return;
 
         busy = true;
-        message = undefined;
         error = undefined;
         result = undefined;
 
         swapId = random128();
 
-        client.swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0]);
+        client
+            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0])
+            .catch(() => (swapId = undefined))
+            .finally(() => (busy = false));
     }
 
     function dexName(dex: DexId): string {
@@ -226,7 +230,7 @@
                     <div class="amount">
                         <TokenInput
                             ledger={ledgerIn}
-                            minAmount={detailsIn.transferFee * BigInt(100)}
+                            minAmount={detailsIn.transferFee * BigInt(10)}
                             maxAmount={detailsIn.balance}
                             bind:valid={validAmount}
                             bind:amount={amountIn} />
@@ -256,12 +260,18 @@
             </div>
         {/if}
 
-        {#if message !== undefined}
+        {#if message !== undefined && state === "swap" && !swapping}
             <Markdown inline={false} text={message} />
         {/if}
 
-        {#if error !== undefined}
-            <ErrorMessage>{error}</ErrorMessage>
+        {#if error !== undefined || pinNumberError !== undefined}
+            <ErrorMessage>
+                {#if pinNumberError !== undefined}
+                    <Translatable resourceKey={pinNumberError} />
+                {:else}
+                    {error}
+                {/if}
+            </ErrorMessage>
         {/if}
     </form>
     <span slot="footer">

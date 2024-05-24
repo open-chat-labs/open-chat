@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
 #[test_case(true; "diamond_member")]
@@ -43,7 +43,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
     let user2 = if is_diamond {
         client::register_diamond_user(env, canister_ids, *controller)
     } else {
-        client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index)
+        client::register_user(env, canister_ids)
     };
 
     let join_group_response = client::local_user_index::join_group(
@@ -53,6 +53,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
+            verified_credential_args: None,
             correlation_id: 0,
         },
     );
@@ -82,7 +83,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 
@@ -122,6 +123,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
+            verified_credential_args: None,
             correlation_id: 0,
         },
     );

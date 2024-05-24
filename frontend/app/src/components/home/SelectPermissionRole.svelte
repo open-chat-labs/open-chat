@@ -7,8 +7,9 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import type { ResourceKey } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -34,8 +35,9 @@
 </script>
 
 <div class="legend">
-    <span class="label"><Translatable resourceKey={i18nKey("permissions.whoCan")} /> </span>
-    <span class="label"><Translatable resourceKey={label} /></span>
+    <span class="label"
+        ><Translatable resourceKey={i18nKey("permissions.whoCan")} />
+        <Translatable resourceKey={label} /></span>
 </div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class:selecting class="permission-select" on:click|stopPropagation={() => menu.showMenu()}>

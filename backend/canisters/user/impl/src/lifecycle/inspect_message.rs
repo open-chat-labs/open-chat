@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::inspect_message;
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
@@ -15,7 +15,9 @@ fn accept_if_valid(state: &RuntimeState) {
         return;
     }
 
-    if state.is_caller_owner() {
+    if state.is_caller_owner()
+        || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator())
+    {
         ic_cdk::api::call::accept_message();
     }
 }

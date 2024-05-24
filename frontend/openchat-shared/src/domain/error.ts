@@ -15,6 +15,8 @@ export class HttpError extends Error {
     }
 }
 
+export class NoMeetingToJoin extends Error {}
+
 export class AuthError extends HttpError {
     constructor(
         public code: number,
@@ -39,6 +41,17 @@ export class DestinationInvalidError extends HttpError {
     constructor(error: Error) {
         super(404, error);
         this.name = "DestinationInvalidError";
+    }
+}
+
+export class ResponseTooLargeError extends HttpError {
+    constructor(
+        error: Error,
+        public size: number,
+        public maxSize: number,
+    ) {
+        super(500, error);
+        this.name = "ResponseTooLargeError";
     }
 }
 

@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::CommunityId;
 
 #[test]
@@ -26,7 +26,7 @@ fn cancel_invites_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id, user3.user_id],
@@ -61,7 +61,7 @@ fn cancel_channel_invites_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel_id,
@@ -102,7 +102,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel1_id,
@@ -111,7 +111,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
 
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         channel2_id,
@@ -149,7 +149,7 @@ fn cancel_invites_not_authorized() {
 
     client::local_user_index::happy_path::invite_users_to_community(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         community_id,
         vec![user2.user_id, user3.user_id],
@@ -178,8 +178,8 @@ fn cancel_invites_not_authorized() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
 

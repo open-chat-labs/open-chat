@@ -72,6 +72,13 @@ import type {
     ApiP2PSwapStatus,
     ApiCancelP2PSwapResponse as ApiUserCancelP2PSwapResponse,
     ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
+    ApiVideoCallContent,
+    ApiJoinVideoCallResponse as ApiJoinDirectVideoCallResponse,
+    ApiVideoCallType,
+    ApiVideoCallPresence,
+    ApiSetVideoCallPresenceResponse,
+    ApiCallParticipant,
+    ApiSetPinNumberResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -169,6 +176,13 @@ import type {
     TokenInfo,
     CancelP2PSwapResponse,
     GroupInviteCodeChange,
+    VideoCallContent,
+    JoinVideoCallResponse,
+    VideoCallType,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
+    VideoCallParticipant,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -217,6 +231,8 @@ import type {
     ApiClaimPrizeResponse as ApiClaimGroupPrizeResponse,
     ApiAcceptP2PSwapResponse as ApiGroupAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiGroupCancelP2PSwapResponse,
+    ApiJoinVideoCallResponse as ApiJoinGroupVideoCallResponse,
+    ApiVideoCallParticipantsResponse as ApiGroupVideoCallParticipantsResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -253,10 +269,15 @@ import type {
     ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
     ApiAcceptP2PSwapResponse as ApiCommunityAcceptP2PSwapResponse,
     ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
+    ApiJoinVideoCallResponse as ApiJoinChannelVideoCallResponse,
+    ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
+import type { SetPinNumberResponse } from "openchat-shared";
+import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
+import { toRecord2 } from "../../utils/list";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -477,8 +498,8 @@ export function message(candid: ApiMessage): Message {
         edited: candid.edited,
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
-        lastUpdated: optional(candid.last_updated, identity),
         thread: optional(candid.thread_summary, threadSummary),
+        blockLevelMarkdown: candid.block_level_markdown,
     };
 }
 
@@ -565,6 +586,9 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("P2PSwap" in candid) {
         return p2pSwapContent(candid.P2PSwap);
     }
+    if ("VideoCall" in candid) {
+        return videoCallContent(candid.VideoCall);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -642,6 +666,32 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         endDate: candid.end_date,
         caption: optional(candid.caption, identity),
     };
+}
+
+function videoCallContent(candid: ApiVideoCallContent): VideoCallContent {
+    return {
+        kind: "video_call_content",
+        ended: optional(candid.ended, identity),
+        participants: candid.participants.map(videoCallParticipant),
+        callType: videoCallType(candid.call_type),
+    };
+}
+
+function videoCallParticipant(candid: ApiCallParticipant): VideoCallParticipant {
+    return {
+        userId: candid.user_id.toString(),
+        joined: candid.joined,
+    };
+}
+
+function videoCallType(candid: ApiVideoCallType): VideoCallType {
+    if ("Default" in candid) {
+        return "default";
+    }
+    if ("Broadcast" in candid) {
+        return "broadcast";
+    }
+    throw new UnsupportedValueError("Unexpected ApiVideoCallTypye type received", candid);
 }
 
 function p2pSwapContent(candid: ApiP2PSwapContent): P2PSwapContent {
@@ -750,6 +800,8 @@ function proposal(candid: ApiProposal): Proposal {
             created: Number(p.created),
             deadline: Number(p.deadline),
             payloadTextRendering: optional(p.payload_text_rendering, identity),
+            minYesPercentageOfTotal: 3,
+            minYesPercentageOfExercised: 50,
         };
     } else if ("SNS" in candid) {
         const p = candid.SNS;
@@ -773,6 +825,8 @@ function proposal(candid: ApiProposal): Proposal {
             created: Number(p.created),
             deadline: Number(p.deadline),
             payloadTextRendering: optional(p.payload_text_rendering, identity),
+            minYesPercentageOfTotal: p.minimum_yes_proportion_of_total / 100,
+            minYesPercentageOfExercised: p.minimum_yes_proportion_of_exercised / 100,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);
@@ -984,7 +1038,6 @@ export function completedCryptoTransfer(
             feeE8s: trans.fee.e8s,
             memo: trans.memo,
             blockIndex: trans.block_index,
-            transactionHash: bytesToHexString(trans.transaction_hash),
         };
     }
     if ("ICRC1" in candid) {
@@ -997,7 +1050,6 @@ export function completedCryptoTransfer(
             feeE8s: candid.ICRC1.fee,
             memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
             blockIndex: candid.ICRC1.block_index,
-            transactionHash: undefined,
         };
     }
     throw new UnsupportedValueError(
@@ -1152,6 +1204,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         pinMessages: permissionRole(candid.pin_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
         mentionAllMembers: permissionRole(candid.mention_all_members),
+        startVideoCall: permissionRole(candid.start_video_call),
         messagePermissions: messagePermissions(candid.message_permissions),
         threadPermissions: optional(candid.thread_permissions, messagePermissions),
     };
@@ -1205,8 +1258,7 @@ export function apiCommunityPermissions(
         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
         change_roles: apiCommunityPermissionRole(permissions.changeRoles),
         create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
-        // TODO
-        manage_user_groups: apiCommunityPermissionRole("admin"),
+        manage_user_groups: apiCommunityPermissionRole(permissions.manageUserGroups),
     };
 }
 
@@ -1234,6 +1286,7 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
+        start_video_call: apiPermissionRole(permissions.startVideoCall),
         message_permissions: apiMessagePermissions(permissions.messagePermissions),
         thread_permissions: apiOptional(apiMessagePermissions, permissions.threadPermissions),
     };
@@ -1252,6 +1305,7 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
+        video_call: apiOptional(apiPermissionRole, "none"),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1426,6 +1480,7 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
                 },
             };
 
+        case "video_call_content":
         case "deleted_content":
         case "blocked_content":
         case "prize_content":
@@ -1555,12 +1610,12 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
+                    issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                     issuer_origin: domain.credential.issuerOrigin,
                     credential_type: domain.credential.credentialType,
-                    credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                        const encoder = new TextEncoder();
-                        return encoder.encode(JSON.stringify(args));
-                    }, domain.credential.credentialArguments),
+                    credential_arguments: apiCredentialArguments(
+                        domain.credential.credentialArguments,
+                    ),
                 },
             },
         ];
@@ -1586,6 +1641,16 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
             },
         ];
     }
+    if (domain.kind === "token_balance_gate") {
+        return [
+            {
+                TokenBalance: {
+                    ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                    min_balance: domain.minBalance,
+                },
+            },
+        ];
+    }
     return [];
 }
 
@@ -1594,12 +1659,10 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
+                issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                 issuer_origin: domain.credential.issuerOrigin,
                 credential_type: domain.credential.credentialType,
-                credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                    const encoder = new TextEncoder();
-                    return encoder.encode(JSON.stringify(args));
-                }, domain.credential.credentialArguments),
+                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1620,16 +1683,43 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
             },
         };
     }
+    if (domain.kind === "token_balance_gate") {
+        return {
+            TokenBalance: {
+                ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                min_balance: domain.minBalance,
+            },
+        };
+    }
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
 export function credentialArguments(
-    candid: number[] | Uint8Array,
+    candid: [string, { String: string } | { Int: number }][],
 ): Record<string, string | number> {
-    const data = new Uint8Array(candid);
-    const decoder = new TextDecoder();
-    const json = decoder.decode(data);
-    return JSON.parse(json) as Record<string, string | number>;
+    return toRecord2(
+        candid,
+        ([k, _]) => k,
+        ([_, v]) => {
+            if ("String" in v) {
+                return v.String;
+            } else {
+                return v.Int;
+            }
+        },
+    );
+}
+
+function apiCredentialArguments(
+    domain?: Record<string, string | number>,
+): [string, { String: string } | { Int: number }][] {
+    return Object.entries(domain ?? {}).map(([k, v]) => {
+        if (typeof v === "number") {
+            return [k, { Int: v }];
+        } else {
+            return [k, { String: v }];
+        }
+    });
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
@@ -1650,12 +1740,13 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
         return {
             kind: "credential_gate",
             credential: {
+                issuerCanisterId: candid.VerifiedCredential.issuer_canister_id.toString(),
                 issuerOrigin: candid.VerifiedCredential.issuer_origin,
                 credentialType: candid.VerifiedCredential.credential_type,
-                credentialArguments: optional(
-                    candid.VerifiedCredential.credential_arguments,
-                    credentialArguments,
-                ),
+                credentialArguments:
+                    candid.VerifiedCredential.credential_arguments.length === 0
+                        ? undefined
+                        : credentialArguments(candid.VerifiedCredential.credential_arguments),
             },
         };
     }
@@ -1694,7 +1785,8 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
-        prizes: domain.prizes.map((p) => ({ e8s: p })),
+        prizes: [],
+        prizes_v2: domain.prizes,
     };
 }
 
@@ -1768,6 +1860,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): Api
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal,
+    pin: string | undefined,
 ): WithdrawCryptoArgs {
     if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
         return {
@@ -1782,6 +1875,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     created: domain.createdAtNanos,
                 },
             },
+            pin: apiOptional(identity, pin),
         };
     } else {
         return {
@@ -1796,6 +1890,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     created: domain.createdAtNanos,
                 },
             },
+            pin: apiOptional(identity, pin),
         };
     }
 }
@@ -1880,6 +1975,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
 
 export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): CommunitySummary {
     const communityId = candid.community_id.toString();
+    const localUserIndex = candid.local_user_index_canister_id.toString();
     return {
         kind: "community",
         id: { kind: "community", communityId },
@@ -1919,7 +2015,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
         userGroups: new Map(candid.user_groups.map(userGroup)),
-        localUserIndex: candid.local_user_index_canister_id.toString(),
+        localUserIndex,
     };
 }
 
@@ -1968,6 +2064,7 @@ export function communityChannelSummary(
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
+        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
@@ -2012,6 +2109,10 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     }
     if ("InsufficientBalance" in candid) {
         return "insufficient_balance";
+    }
+    if ("FailedVerifiedCredentialCheck" in candid) {
+        console.warn("FailedVerifiedCredentialCheck: ", candid);
+        return "failed_verified_credential_check";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
@@ -2727,6 +2828,13 @@ export function acceptP2PSwapResponse(
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);
     }
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
+        return pinNumberFailureResponse(candid);
+    }
     if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
     if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
     if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
@@ -2736,6 +2844,7 @@ export function acceptP2PSwapResponse(
     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
@@ -2763,4 +2872,75 @@ export function cancelP2PSwapResponse(
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
 
     throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
+}
+
+export function joinVideoCallResponse(
+    candid:
+        | ApiJoinDirectVideoCallResponse
+        | ApiJoinGroupVideoCallResponse
+        | ApiJoinChannelVideoCallResponse,
+): JoinVideoCallResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyEnded" in candid) {
+        return "ended";
+    }
+    console.warn("JoinVideoCall failed with ", candid);
+    return "failure";
+}
+
+export function apiVideoCallPresence(domain: VideoCallPresence): ApiVideoCallPresence {
+    switch (domain) {
+        case "default":
+            return { Default: null };
+        case "hidden":
+            return { Hidden: null };
+        case "owner":
+            return { Owner: null };
+    }
+}
+
+export function setVideoCallPresence(
+    candid: ApiSetVideoCallPresenceResponse,
+): SetVideoCallPresenceResponse {
+    if ("Success" in candid) return "success";
+    console.warn("SetVideoCallPresence failed with: ", candid);
+    return "failure";
+}
+
+export function videoCallParticipantsResponse(
+    candid: ApiGroupVideoCallParticipantsResponse | ApiChannelVideoCallParticipantsResponse,
+): VideoCallParticipantsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            participants: candid.Success.participants.map(videoCallParticipant),
+            hidden: candid.Success.hidden.map(videoCallParticipant),
+            lastUpdated: candid.Success.last_updated,
+        };
+    }
+    console.warn("VideoCallParticipants failed with: ", candid);
+    return CommonResponses.failure();
+}
+
+export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNumberResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
+        return pinNumberFailureResponse(candid);
+    }
+    if ("TooShort" in candid) {
+        return { kind: "too_short", minLength: candid.TooShort.min_length };
+    }
+    if ("TooLong" in candid) {
+        return { kind: "too_long", maxLength: candid.TooLong.max_length };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
 }

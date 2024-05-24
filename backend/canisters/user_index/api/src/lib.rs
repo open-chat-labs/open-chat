@@ -1,6 +1,9 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageIndex, UserId};
+use types::{
+    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    User, UserId,
+};
 
 mod lifecycle;
 mod queries;
@@ -17,6 +20,7 @@ pub enum Event {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
+    OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -25,6 +29,8 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub username: String,
     pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub is_from_identity_canister: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -53,4 +59,12 @@ pub struct JoinUserToGroup {
 pub struct OpenChatBotMessage {
     pub user_id: UserId,
     pub message: MessageContent,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessageV2 {
+    pub user_id: UserId,
+    pub thread_root_message_id: Option<MessageId>,
+    pub content: MessageContentInitial,
+    pub mentioned: Vec<User>,
 }

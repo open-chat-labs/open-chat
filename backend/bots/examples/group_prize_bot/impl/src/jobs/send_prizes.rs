@@ -1,5 +1,4 @@
 use crate::{mutate_state, Prize, RuntimeState};
-use ic_ledger_types::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1;
 use rand::Rng;
@@ -36,7 +35,7 @@ async fn send_prizes_impl() {
 
 async fn send_next_prize() -> bool {
     // 1. Read a bunch of data from the runtime state, pick a random group and prize
-    let (ledger_canister_id, group, token, prize, end_date, now_nanos, bot_name) = match mutate_state(|state| {
+    let Some((ledger_canister_id, group, token, prize, end_date, now_nanos, bot_name)) = mutate_state(|state| {
         if !state.data.started {
             error!("Not started");
             return None;
@@ -64,9 +63,8 @@ async fn send_next_prize() -> bool {
         }
 
         None
-    }) {
-        Some(t) => t,
-        None => return false,
+    }) else {
+        return false;
     };
 
     // 2. Transfer the prize funds to the group
@@ -179,7 +177,7 @@ async fn send_prize_message_to_group(
     bot_name: String,
 ) -> Result<(), String> {
     let content = MessageContentInitial::Prize(PrizeContentInitial {
-        prizes: prize.iter().map(|p| Tokens::from_e8s(*p)).collect(),
+        prizes_v2: prize.iter().map(|p| u128::from(*p)).collect(),
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,
         caption: None,
@@ -195,6 +193,7 @@ async fn send_prize_message_to_group(
         replies_to: None,
         mentioned: Vec::new(),
         forwarding: false,
+        block_level_markdown: false,
         rules_accepted: None,
         message_filter_failed: None,
         correlation_id: 0,

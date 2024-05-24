@@ -12,8 +12,8 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
+    pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
-    #[serde(default)]
     pub message_filter_failed: Option<u64>,
     pub correlation_id: u64,
 }

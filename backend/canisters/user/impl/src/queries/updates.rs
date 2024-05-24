@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 
@@ -33,12 +33,15 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .if_set_after(updates_since)
         .map(|user_ids| user_ids.iter().copied().collect());
 
+    let pin_number_updated = state.data.pin_number.last_updated() > updates_since;
+
     let has_any_updates = username.is_some()
         || display_name.has_update()
         || avatar_id.has_update()
         || blocked_users.is_some()
         || avatar_id.has_update()
         || suspended.is_some()
+        || pin_number_updated
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -110,6 +113,16 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pinned: state.data.favourite_chats.pinned_if_updated(updates_since),
     };
 
+    let pin_number_settings = if pin_number_updated {
+        if state.data.pin_number.enabled() {
+            OptionUpdate::SetToSome(state.data.pin_number.settings(now))
+        } else {
+            OptionUpdate::SetToNone
+        }
+    } else {
+        OptionUpdate::NoChange
+    };
+
     Success(SuccessResult {
         timestamp: now,
         username,
@@ -121,5 +134,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         avatar_id,
         blocked_users,
         suspended,
+        pin_number_settings,
     })
 }

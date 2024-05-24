@@ -2,7 +2,7 @@
     import type { OpenChat } from "openchat-client";
     import { Poller } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import ProgressSteps from "../../ProgressSteps.svelte";
+    import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 
     export let swapId: bigint;
     export let tokenIn: string;
@@ -16,14 +16,17 @@
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
 
-    let step = 0;
+    let percent: number | undefined = 0;
     let amountOut = "";
-    let steps = ["get", "deposit", "notify", "swap", "withdraw"];
-    let progressSteps: ProgressSteps;
+    let steps: Step[] = [{ label: "get", status: "doing" }];
+    let result: Result = undefined;
 
-    $: stepLabels = steps.map((step) => labelPrefix + step);
+    $: fullSteps = steps.map((step) => ({ label: labelPrefix + step.label, status: step.status }));
 
-    let finalLabel = labelPrefix + "done";
+    $: fullResult =
+        result !== undefined
+            ? { label: labelPrefix + result.label, status: result.status }
+            : undefined;
 
     $: labelValues = {
         tokenIn,
@@ -43,58 +46,79 @@
         let response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
-            if (response.withdrawnFromDex?.kind === "ok" && step <= 4) {
+            if (response.withdrawnFromDex?.kind === "ok") {
                 const success =
                     response.amountSwapped?.kind === "ok" &&
                     response.amountSwapped.value.kind === "ok";
 
-                if (!success) {
-                    finalLabel = labelPrefix + "failed";
-                }
-
-                updateProgress(5, true, success);
+                steps = [
+                    { label: "get", status: "done" },
+                    { label: "deposit", status: "done" },
+                    { label: "notify", status: "done" },
+                    { label: "swap", status: "done" },
+                    { label: success ? "withdraw" : "refund", status: "done" },
+                ];
+                result = { label: success ? "done" : "failed", status: "done" };
                 dispatch("finished", success ? "success" : "rateChanged");
-            } else if (response.amountSwapped?.kind === "ok" && step <= 3) {
+            } else if (response.amountSwapped?.kind === "ok") {
                 if (response.amountSwapped.value.kind === "ok") {
                     amountOut = client.formatTokens(
                         response.amountSwapped.value.value,
                         decimalsOut,
                     );
-                    updateProgress(4, true);
+                    steps = [
+                        { label: "get", status: "done" },
+                        { label: "deposit", status: "done" },
+                        { label: "notify", status: "done" },
+                        { label: "swap", status: "done" },
+                        { label: "withdraw", status: "doing" },
+                    ];
+                    percent = 80;
                 } else {
-                    steps[4] = "refund";
-                    updateProgress(4, false);
+                    steps = [
+                        { label: "get", status: "done" },
+                        { label: "deposit", status: "done" },
+                        { label: "notify", status: "done" },
+                        { label: "swap", status: "failed" },
+                        { label: "refund", status: "doing" },
+                    ];
+                    percent = undefined;
                 }
-            } else if (response.notifyDex?.kind == "ok" && step <= 2) {
-                updateProgress(3, true);
-            } else if (response.transfer?.kind == "ok" && step <= 1) {
-                updateProgress(2, true);
-            } else if (response.transfer?.kind == "error" && step <= 1) {
-                finalLabel = labelPrefix + "insufficientFunds";
-                updateProgress(2, false, false);
+            } else if (response.notifyDex?.kind == "ok") {
+                steps = [
+                    { label: "get", status: "done" },
+                    { label: "deposit", status: "done" },
+                    { label: "notify", status: "done" },
+                    { label: "swap", status: "doing" },
+                ];
+                percent = 60;
+            } else if (response.transfer?.kind == "ok") {
+                steps = [
+                    { label: "get", status: "done" },
+                    { label: "deposit", status: "done" },
+                    { label: "notify", status: "doing" },
+                ];
+                percent = 40;
+            } else if (response.transfer?.kind == "error") {
+                steps = [
+                    { label: "get", status: "done" },
+                    { label: "deposit", status: "failed" },
+                ];
+                result = { label: "insufficientFunds", status: "failed" };
                 dispatch("finished", "insufficientFunds");
-            } else if (response.depositAccount?.kind == "ok" && step === 0) {
-                updateProgress(1, true);
-            } else if (response.depositAccount?.kind == "error" && step === 0) {
-                finalLabel = labelPrefix + "error";
-                updateProgress(1, false, false);
+            } else if (response.depositAccount?.kind == "ok") {
+                steps = [
+                    { label: "get", status: "done" },
+                    { label: "deposit", status: "doing" },
+                ];
+                percent = 20;
+            } else if (response.depositAccount?.kind == "error") {
+                steps = [{ label: "get", status: "failed" }];
+                result = { label: "error", status: "failed" };
                 dispatch("finished", "error");
             }
         }
     }
-
-    function updateProgress(nextStep: number, previousSuccess: boolean, outcome?: boolean) {
-        if (nextStep <= step) {
-            return;
-        }
-
-        const numNewSteps = nextStep - step;
-
-        for (let i = 0; i < numNewSteps; i++) {
-            const last = i == numNewSteps - 1;
-            progressSteps.next(!last || previousSuccess, last ? outcome : undefined);
-        }
-    }
 </script>
 
-<ProgressSteps bind:this={progressSteps} {stepLabels} {labelValues} {finalLabel} bind:step />
+<ProgressSteps steps={fullSteps} {labelValues} result={fullResult} {percent} />

@@ -42,6 +42,10 @@ import type {
     MessagePermissions,
     OptionalMessagePermissions,
     OptionUpdate,
+    GovernanceProposalsSubtype,
+    CreatedUser,
+    ChannelSummary,
+    MessageFormatter,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -56,6 +60,8 @@ import {
     getContentAsFormattedText,
     getContentAsText,
     messageContextsEqual,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
 } from "openchat-shared";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -66,7 +72,6 @@ import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import type { UnconfirmedMessages } from "../stores/unconfirmed";
-import type { MessageFormatter } from "./i18n";
 import { get } from "svelte/store";
 import { formatTokens } from "./cryptoFormatter";
 import { currentChatUserIds } from "../stores/chat";
@@ -149,7 +154,7 @@ export function makeRtcConnections(
 
     userIds
         .map((u) => lookup[u])
-        .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
+        .filter((user) => user.kind === "user")
         .map((user) => user.userId)
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
@@ -243,6 +248,7 @@ export function createMessage(
     userId: string,
     messageIndex: number,
     content: MessageContent,
+    blockLevelMarkdown: boolean,
     replyingTo: ReplyContext | undefined,
     forwarded: boolean,
 ): Message {
@@ -258,7 +264,7 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
-        lastUpdated: undefined,
+        blockLevelMarkdown,
     };
 }
 
@@ -289,10 +295,10 @@ function mentionsFromMessages(
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary(
-    chat: GroupChatSummary,
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
+    chat: T,
     unconfirmed: UnconfirmedMessages,
-): GroupChatSummary {
+): T {
     if (chat.membership === undefined) return chat;
     return {
         ...chat,
@@ -361,9 +367,22 @@ export function mergeLocalSummaryUpdates(
             const current = merged.get(chatId);
             const updated = localUpdate.updated;
             if (current !== undefined) {
+                const latestMessage =
+                    (updated.latestMessage?.timestamp ?? BigInt(-1)) >
+                    (current.latestMessage?.timestamp ?? BigInt(-1))
+                        ? updated.latestMessage
+                        : current.latestMessage;
+                const latestEventIndex = Math.max(
+                    latestMessage?.index ?? 0,
+                    current.latestEventIndex,
+                );
+
                 if (updated.kind === undefined) {
                     merged.set(chatId, {
                         ...current,
+                        latestMessage,
+                        latestMessageIndex: latestMessage?.event.messageIndex,
+                        latestEventIndex,
                         membership: {
                             ...current.membership,
                             notificationsMuted:
@@ -376,6 +395,9 @@ export function mergeLocalSummaryUpdates(
                 } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
                     merged.set(chatId, {
                         ...current,
+                        latestMessage,
+                        latestMessageIndex: latestMessage?.event.messageIndex,
+                        latestEventIndex,
                         name: updated.name ?? current.name,
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
@@ -440,7 +462,7 @@ export function mergeUnconfirmedIntoSummary(
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
             latestMessage === undefined ||
-            latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
+            latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
         }
@@ -482,7 +504,7 @@ export function mergeUnconfirmedIntoSummary(
         }
     }
 
-    if (chatSummary.kind === "group_chat") {
+    if (chatSummary.kind !== "direct_chat") {
         if (unconfirmedMessages !== undefined) {
             chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
         }
@@ -522,6 +544,7 @@ function mergePermissions(
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
+        startVideoCall: updated.startVideoCall ?? current.startVideoCall,
         messagePermissions: mergeMessagePermissions(
             current.messagePermissions,
             updated.messagePermissions,
@@ -713,6 +736,10 @@ function reduceJoinedOrLeft(
 }
 
 function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
+    if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
+        return true;
+    }
+
     return (
         (message.content.kind === "deleted_content" ||
             message.content.kind === "blocked_content") &&
@@ -1047,6 +1074,14 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
+export function canStartVideoCalls(chat: ChatSummary): boolean {
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
+    } else {
+        return true;
+    }
+}
+
 export function canPinMessages(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.pinMessages);
@@ -1064,32 +1099,42 @@ export function canInviteUsers(chat: ChatSummary): boolean {
 }
 
 export function permittedMessagesInGroup(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread",
 ): Map<MessagePermission, boolean> {
     return new Map(
         messagePermissionsList.map((m: MessagePermission) => [
             m,
-            canSendGroupMessage(chat, mode, m),
+            canSendGroupMessage(user, chat, mode, m),
         ]),
     );
 }
 
+const PERMISSIONS_BLOCKED_FOR_NEW_USERS: MessagePermission[] = [
+    "audio",
+    "file",
+    "giphy",
+    "image",
+    "video",
+];
+
 export function canSendGroupMessage(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread" | "any",
     permission?: MessagePermission,
 ): boolean {
     if (mode === "any") {
         return (
-            canSendGroupMessage(chat, "message", permission) ||
-            canSendGroupMessage(chat, "thread", permission)
+            canSendGroupMessage(user, chat, "message", permission) ||
+            canSendGroupMessage(user, chat, "thread", permission)
         );
     }
 
     if (permission === undefined) {
         return messagePermissionsList.some((mp: MessagePermission) =>
-            canSendGroupMessage(chat, mode, mp as MessagePermission),
+            canSendGroupMessage(user, chat, mode, mp as MessagePermission),
         );
     }
 
@@ -1100,6 +1145,17 @@ export function canSendGroupMessage(
 
     if (permission === "prize" && mode === "thread") {
         return false;
+    }
+
+    if (
+        chat.public &&
+        user.diamondStatus.kind === "inactive" &&
+        PERMISSIONS_BLOCKED_FOR_NEW_USERS.includes(permission)
+    ) {
+        const isNewUser = Date.now() - Number(user.dateCreated) < 24 * 60 * 60 * 1000; // 1 day
+        if (isNewUser) {
+            return false;
+        }
     }
 
     return (
@@ -1174,19 +1230,11 @@ export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): bool
 }
 
 export function canDeleteGroup(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canConvertToCommunity(thing: AccessControlled & HasMembershipRole): boolean {
-    if (!thing.frozen) {
-        return thing.public && hasOwnerRights(thing.membership.role);
-    } else {
-        return false;
-    }
+    return !thing.frozen && hasOwnerRights(thing.membership.role);
 }
 
 export function canChangeVisibility(thing: AccessControlled & HasMembershipRole): boolean {
@@ -1236,7 +1284,9 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
           ? OPENCHAT_BOT_AVATAR_URL
-          : buildIdenticonUrl(userId);
+          : userId === OPENCHAT_VIDEO_CALL_USER_ID
+            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+            : buildIdenticonUrl(userId);
 }
 
 export function buildBlobUrl(
@@ -1247,7 +1297,7 @@ export function buildBlobUrl(
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobType)}${blobId}`;
+        .replace("{blobType}", blobType)}/${blobId}`;
 }
 
 export function buildIdenticonUrl(id: string): string {
@@ -1455,6 +1505,7 @@ function mergeLocalUpdates(
 
     if (localUpdates?.revealedContent !== undefined) {
         message.content = localUpdates.revealedContent;
+        message.deleted = true;
     }
 
     if (localUpdates?.prizeClaimed !== undefined) {
@@ -1466,6 +1517,10 @@ function mergeLocalUpdates(
                 message.content.prizesPending += 1;
             }
         }
+    }
+
+    if (localUpdates?.blockLevelMarkdown !== undefined) {
+        message.blockLevelMarkdown = localUpdates.blockLevelMarkdown;
     }
 
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
@@ -1704,16 +1759,20 @@ export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
     cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): string | undefined {
-    if (transfer.kind !== "completed") {
-        return undefined;
+    if (transfer.kind === "completed") {
+        return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
     }
+}
 
-    const transactionUrlFormat = cryptoLookup[transfer.ledger].transactionUrlFormat;
-
-    return transactionUrlFormat
-        .replace("{block_index}", transfer.blockIndex.toString())
-        .replace("{transaction_index}", transfer.blockIndex.toString())
-        .replace("{transaction_hash}", transfer.transactionHash ?? "");
+export function buildTransactionUrlByIndex(
+    transactionIndex: bigint,
+    ledger: string,
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): string | undefined {
+    return cryptoLookup[ledger].transactionUrlFormat.replace(
+        "{transaction_index}",
+        transactionIndex.toString(),
+    );
 }
 
 export function buildCryptoTransferText(
@@ -1847,6 +1906,9 @@ export function diffGroupPermissions(
     if (original.deleteMessages !== updated.deleteMessages) {
         diff.deleteMessages = updated.deleteMessages;
     }
+    if (original.startVideoCall !== updated.startVideoCall) {
+        diff.startVideoCall = updated.startVideoCall;
+    }
     if (original.pinMessages !== updated.pinMessages) {
         diff.pinMessages = updated.pinMessages;
     }
@@ -1902,4 +1964,10 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
+}
+
+export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
+    subtype: GovernanceProposalsSubtype;
+} {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }

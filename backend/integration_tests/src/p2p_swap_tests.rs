@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use candid::Principal;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatEvent, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
@@ -19,8 +19,8 @@ fn p2p_swap_in_direct_chat_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::icrc1::happy_path::transfer(
         env,
@@ -57,7 +57,9 @@ fn p2p_swap_in_direct_chat_succeeds() {
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -75,7 +77,9 @@ fn p2p_swap_in_direct_chat_succeeds() {
         user2.canister(),
         &user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
+            thread_root_message_index: None,
             message_id,
+            pin: None,
         },
     );
 
@@ -130,7 +134,7 @@ fn p2p_swap_in_group_succeeds() {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -172,9 +176,11 @@ fn p2p_swap_in_group_succeeds() {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -190,6 +196,7 @@ fn p2p_swap_in_group_succeeds() {
         &group_canister::accept_p2p_swap::Args {
             thread_root_message_index: None,
             message_id,
+            pin: None,
         },
     );
 
@@ -233,8 +240,8 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 
@@ -266,7 +273,9 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );
@@ -356,7 +365,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -393,9 +402,11 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             correlation_id: 0,
             rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -471,8 +482,8 @@ fn deposit_refunded_if_swap_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 
@@ -504,7 +515,9 @@ fn deposit_refunded_if_swap_expires() {
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
+            pin: None,
             correlation_id: 0,
         },
     );

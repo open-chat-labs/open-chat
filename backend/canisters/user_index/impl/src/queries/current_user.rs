@@ -1,8 +1,9 @@
 use crate::{model::user::SuspensionDuration, read_state, RuntimeState, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};
+use utils::time::{today, tomorrow};
 
 #[query]
 fn current_user(_args: Args) -> Response {
@@ -13,6 +14,8 @@ fn current_user_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
     if let Some(u) = state.data.users.get_by_principal(&caller) {
+        let now = state.env.now();
+
         let suspension_details = u.suspension_details.as_ref().map(|d| SuspensionDetails {
             reason: d.reason.to_owned(),
             action: match d.duration {
@@ -24,11 +27,10 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             suspended_by: d.suspended_by,
         });
 
-        let now = state.env.now();
-
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
+            date_created: u.date_created,
             display_name: u.display_name.clone(),
             canister_upgrade_status: CanisterUpgradeStatus::NotRequired,
             avatar_id: u.avatar_id,
@@ -42,6 +44,9 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             diamond_membership_details: u.diamond_membership_details.hydrate(now),
             diamond_membership_status: u.diamond_membership_details.status_full(now),
             moderation_flags_enabled: u.moderation_flags_enabled,
+            chit_balance: u.chit_balance,
+            streak: u.streak.days(now),
+            next_daily_claim: if u.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         })
     } else {
         UserNotFound

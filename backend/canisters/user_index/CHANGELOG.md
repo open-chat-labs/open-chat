@@ -1,9 +1,175 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+## [[2.0.1182](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1182-user_index)] - 2024-05-23
+
+### Added
+
+- Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
+- CHIT balance and streak per user ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- CHIT leaderboard ([#5820](https://github.com/open-chat-labs/open-chat/pull/5820))
+- Reward meme contest winners with CHIT ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
+
+### Changed
+
+- CHIT leaderboard fixed + returns username ([#5837](https://github.com/open-chat-labs/open-chat/pull/5837))
+
+### Removed
+
+- Remove code to migrate identities to Identity canister ([#5808](https://github.com/open-chat-labs/open-chat/pull/5808))
+
+## [[2.0.1164](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1164-user_index)] - 2024-05-03
+
+### Changed
+
+- Handle case where users have duplicate principals ([#5765](https://github.com/open-chat-labs/open-chat/pull/5765))
+- Log user Ids whenever there is a principal clash ([#5766](https://github.com/open-chat-labs/open-chat/pull/5766))
+
+## [[2.0.1163](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1163-user_index)] - 2024-05-02
+
+### Fixed
+
+- Retry principal migrations which failed ([#5758](https://github.com/open-chat-labs/open-chat/pull/5758))
+
+## [[2.0.1160](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1160-user_index)] - 2024-05-01
+
+### Changed
+
+- Make backup of UserId -> Principal map ([#5727](https://github.com/open-chat-labs/open-chat/pull/5727))
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+- Top up user canister with cycles if required during principal update ([#5753](https://github.com/open-chat-labs/open-chat/pull/5753))
+
+## [[2.0.1156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1156-user_index)] - 2024-04-26
+
+### Changed
+
+- Mark principals as migrated after being updated ([#5726](https://github.com/open-chat-labs/open-chat/pull/5726))
+
+## [[2.0.1146](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1146-user_index)] - 2024-04-23
+
+### Added
+
+- Mark which user accounts are more than 6 month old and have no chats ([#5696](https://github.com/open-chat-labs/open-chat/pull/5696))
+
+### Changed
+
+- Add `principal_updates` to `current_user` response ([#5657](https://github.com/open-chat-labs/open-chat/pull/5657))
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Cater for old bug which caused a few users to have duplicate principals ([#5694](https://github.com/open-chat-labs/open-chat/pull/5694))
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1134-user_index)] - 2024-04-09
+
+### Changed
+
+- Log error if any users have duplicate usernames or principals ([#5645](https://github.com/open-chat-labs/open-chat/pull/5645))
+- Re-sync principals to Identity canister but excluding bot users ([#5650](https://github.com/open-chat-labs/open-chat/pull/5650))
+
+### Fixed
+
+- Fix job to sync principals to Identity canister ([#5649](https://github.com/open-chat-labs/open-chat/pull/5649))
+
+## [[2.0.1129](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1129-user_index)] - 2024-04-05
+
+### Added
+
+- Sync legacy principals to the Identity canister ([#5619](https://github.com/open-chat-labs/open-chat/pull/5619))
+
+### Changed
+
+- Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Add `date_created` to `current_user` response ([#5635](https://github.com/open-chat-labs/open-chat/pull/5635))
+
+## [[2.0.1111](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1111-user_index)] - 2024-03-20
+
+### Changed
+
+- Avoid case where principal migration could happen twice ([#5528](https://github.com/open-chat-labs/open-chat/pull/5528))
+- Update `event_store` packages to latest version ([#5535](https://github.com/open-chat-labs/open-chat/pull/5535))
+- Pause principal migration job if pending queue becomes too large ([#5557](https://github.com/open-chat-labs/open-chat/pull/5557))
+- Update `event_store` packages to latest version ([#5568](https://github.com/open-chat-labs/open-chat/pull/5568))
+
+### Fixed
+
+- Fix 'out of cycles' check to use new response code ([#5503](https://github.com/open-chat-labs/open-chat/pull/5503))
+- Fix upgrading from previous events format ([#5579](https://github.com/open-chat-labs/open-chat/pull/5579))
+
+## [[2.0.1091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1091-user_index)] - 2024-03-07
+
+### Changed
+
+- Support populating usernames in OpenChat Bot messages ([#5476](https://github.com/open-chat-labs/open-chat/pull/5476))
+
+## [[2.0.1083](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1083-user_index)] - 2024-02-29
+
+### Changed
+
+- Update `EventSinkClient` to latest version ([#5431](https://github.com/open-chat-labs/open-chat/pull/5431))
+- Add `event_relay_canister_id` to LocalUserIndex init args ([#5436](https://github.com/open-chat-labs/open-chat/pull/5436))
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Put back code to sync secret key with LocalUserIndexes ([#5455](https://github.com/open-chat-labs/open-chat/pull/5455))
+
+## [[2.0.1071](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1071-user_index)] - 2024-02-22
+
+### Added
+
+- Add `public_key` query endpoint ([#5414](https://github.com/open-chat-labs/open-chat/pull/5414))
+
+### Changed
+
+- Propagate video call operators ids for guarding ([#5374](https://github.com/open-chat-labs/open-chat/pull/5374))
+- Generate and store an OpenChat public/private key pair ([#5383](https://github.com/open-chat-labs/open-chat/pull/5383))
+- Sync secret key with local_user_indexes ([#5398](https://github.com/open-chat-labs/open-chat/pull/5398))
+- Add `is_from_identity_canister` to `UserRegistered` events ([#5402](https://github.com/open-chat-labs/open-chat/pull/5402))
+
+## [[2.0.1061](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1061-user_index)] - 2024-02-14
+
+### Added
+
+- Push backdated `diamond_membership_payment` events ([#5372](https://github.com/open-chat-labs/open-chat/pull/5372))
+
+### Changed
+
+- Revert job start / stop messages back to `trace` level ([#5370](https://github.com/open-chat-labs/open-chat/pull/5370))
+
+### Fixed
+
+- Use `set_timer` rather than `set_timer_interval` ([#5369](https://github.com/open-chat-labs/open-chat/pull/5369))
+
+## [[2.0.1059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1059-user_index)] - 2024-02-13
+
+### Fixed
+
+- Push all `user_registered` events again now that they are being anonymised ([#5366](https://github.com/open-chat-labs/open-chat/pull/5366))
+
+## [[2.0.1056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1056-user_index)] - 2024-02-13
+
+### Added
+
+- Push backdated `user_registered` events for existing users ([#5345](https://github.com/open-chat-labs/open-chat/pull/5345))
+
+### Changed
+
+- Log `info` level message rather than `trace` when jobs start / stop ([#5348](https://github.com/open-chat-labs/open-chat/pull/5348))
+- Add more details of background jobs to metrics ([#5349](https://github.com/open-chat-labs/open-chat/pull/5349))
+
+### Fixed
+
+- Don't invoke `ic0::call_new()` while in init mode ([#5358](https://github.com/open-chat-labs/open-chat/pull/5358))
+
+## [[2.0.1054](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1054-user_index)] - 2024-02-09
+
+### Added
+
+- Track `user_registered` and `diamond_membership_payment` events ([#5342](https://github.com/open-chat-labs/open-chat/pull/5342))
+- Expose `EventSinkClientInfo` in metrics ([#5344](https://github.com/open-chat-labs/open-chat/pull/5344))
 
 ## [[2.0.1047](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1047-user_index)] - 2024-02-05
 
@@ -413,7 +579,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- APIs to add/remove/list platform operators ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264)) 
+- APIs to add/remove/list platform operators ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264))
 - Endpoint for platform ops to set user upgrade concurrency ([#3268](https://github.com/open-chat-labs/open-chat/pull/3268))
 - Implemented recurring Diamond membership payments ([#3274](https://github.com/open-chat-labs/open-chat/pull/3274))
 - Expose more metrics about Diamond membership payments ([#3276](https://github.com/open-chat-labs/open-chat/pull/3276))
@@ -422,7 +588,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-chat-labs/open-chat/pull/3263)) 
+- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-chat-labs/open-chat/pull/3263))
 - Increased user limit to 150,000 ([#3267](https://github.com/open-chat-labs/open-chat/pull/3267))
 
 ### Removed
@@ -456,7 +622,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove one time code to set up `GroupUpgradeBot` users  ([#3159](https://github.com/open-chat-labs/open-chat/pull/3159))
+- Remove one time code to set up `GroupUpgradeBot` users ([#3159](https://github.com/open-chat-labs/open-chat/pull/3159))
 
 ## [[2.0.594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.594-user_index)] - 2023-02-16
 
@@ -513,6 +679,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Give all verified users 12 months Diamond membership ([#3082](https://github.com/open-chat-labs/open-chat/pull/3082))
 
 ### Fixed
+
 - Fix c2c_register_bot so it queues UserRegistered ([#3086](https://github.com/open-chat-labs/open-chat/pull/3086))
 - Fix username uniqueness check to include reserved usernames ([#3088](https://github.com/open-chat-labs/open-chat/pull/3088))
 

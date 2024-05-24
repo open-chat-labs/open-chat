@@ -1,6 +1,7 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
+mod c2c_can_issue_access_token_for_channel;
 mod channel_summary;
 mod channel_summary_updates;
 mod deleted_message;
@@ -20,6 +21,7 @@ mod selected_updates;
 mod summary;
 mod summary_updates;
 mod thread_previews;
+mod video_call_participants;
 
 fn check_replica_up_to_date(latest_known_update: Option<TimestampMillis>, state: &RuntimeState) -> Result<(), TimestampMillis> {
     if let Some(ts) = latest_known_update {

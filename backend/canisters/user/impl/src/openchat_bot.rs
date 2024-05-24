@@ -2,9 +2,8 @@ use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use chat_events::{MessageContentInternal, TextContentInternal};
 use ic_ledger_types::Tokens;
-use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, UserId};
-use user_canister::c2c_send_messages_v2::C2CReplyContext;
-use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
+use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId};
+use user_canister::{C2CReplyContext, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
@@ -13,14 +12,14 @@ pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, p
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} community \"{name}\" was deleted by @UserId({deleted_by})");
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_group_deleted_message(deleted_by: UserId, group_name: String, public: bool, state: &mut RuntimeState) {
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_group_imported_into_community_message(
@@ -34,7 +33,7 @@ pub(crate) fn send_group_imported_into_community_message(
     let visibility = if public { "public" } else { "private" };
     let text = format!("The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community");
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_removed_from_group_or_community_message(
@@ -52,7 +51,7 @@ pub(crate) fn send_removed_from_group_or_community_message(
         "You were {action} from the {visibility} {group_or_community} \"{group_or_community_name}\" by @UserId({removed_by})"
     );
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, state: &mut RuntimeState) {
@@ -61,7 +60,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
     let text = format!("Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &mut RuntimeState) {
@@ -78,7 +77,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &
         format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
     };
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, state: &mut RuntimeState) {
@@ -86,7 +85,15 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
-    send_text_message(text, false, state);
+    send_text_message(
+        text,
+        vec![User {
+            user_id,
+            username: event.username.clone(),
+        }],
+        false,
+        state,
+    );
 }
 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut RuntimeState) {
@@ -112,29 +119,38 @@ Reason:
 
 You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be {action}.");
 
-    send_text_message(text, false, state);
+    send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_message(
     content: MessageContentInternal,
+    mentioned: Vec<User>,
     mute_notification: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
-    send_message_with_reply(content, None, mute_notification, state)
+    send_message_with_reply(content, None, mentioned, mute_notification, state)
 }
 
-pub(crate) fn send_text_message(text: String, mute_notification: bool, state: &mut RuntimeState) -> EventWrapper<Message> {
+pub(crate) fn send_text_message(
+    text: String,
+    mentioned: Vec<User>,
+    mute_notification: bool,
+    state: &mut RuntimeState,
+) -> EventWrapper<Message> {
     let content = MessageContentInternal::Text(TextContentInternal { text });
-    send_message(content, mute_notification, state)
+    send_message(content, mentioned, mute_notification, state)
 }
 
 pub(crate) fn send_message_with_reply(
     content: MessageContentInternal,
     replies_to: Option<C2CReplyContext>,
+    mentioned: Vec<User>,
     mute_notification: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
     let args = HandleMessageArgs {
+        sender: OPENCHAT_BOT_USER_ID,
+        thread_root_message_id: None,
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
@@ -142,13 +158,16 @@ pub(crate) fn send_message_with_reply(
         content,
         replies_to,
         forwarding: false,
-        correlation_id: 0,
         is_bot: true,
         sender_avatar_id: None,
+        push_message_sent_event: true,
+        mute_notification,
+        mentioned,
+        block_level_markdown: false,
         now: state.env.now(),
     };
 
-    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, state)
+    handle_message_impl(args, state)
 }
 
 fn to_gb(bytes: u64) -> String {

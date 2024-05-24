@@ -7,7 +7,7 @@ use local_user_index_canister::{Event, UserRegistered};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
-use utils::canister::{install, CanisterToInstall};
+use utils::canister::{install, CanisterToInstall, WasmToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -18,7 +18,8 @@ async fn add_local_user_index_canister(args: Args) -> Response {
             match install(CanisterToInstall {
                 canister_id: args.canister_id,
                 current_wasm_version: BuildVersion::default(),
-                new_wasm: result.canister_wasm,
+                new_wasm_version: result.canister_wasm.version,
+                new_wasm: WasmToInstall::Default(result.canister_wasm.module),
                 deposit_cycles_if_needed: true,
                 args: result.init_args,
                 mode: CanisterInstallMode::Install,
@@ -57,7 +58,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,
-                internet_identity_canister_id: state.data.internet_identity_canister_id,
+                event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
+                video_call_operators: state.data.video_call_operators.clone(),
+                oc_secret_key_der: state
+                    .data
+                    .oc_key_pair
+                    .is_initialised()
+                    .then_some(state.data.oc_key_pair.secret_key_der().to_vec()),
                 test_mode: state.data.test_mode,
             },
         })

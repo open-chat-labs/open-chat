@@ -24,6 +24,7 @@
     import UserGroups from "../communities/details/UserGroups.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { trimLeadingAtSymbol } from "../../../utils/user";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +38,6 @@
     let userGroups: UserGroups | undefined;
 
     $: user = client.user;
-    $: platformModerator = client.platformModerator;
     $: userId = $user.userId;
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
@@ -55,13 +55,17 @@
     $: showBlocked = publicCollection && blockedUsers.length > 0;
     $: showInvited = !publicCollection && invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
+    //$: platformModerator = client.platformModerator;
+    //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
+    $: canPromoteMyselfToOwner = false;
 
-    let searchTerm = "";
+    let searchTermEntered = "";
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
     let selectedTab: "users" | "groups" = "users";
 
+    $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
 
     $: {
@@ -105,7 +109,7 @@
     }
 
     function matchesSearch(searchTermLower: string, user: UserSummary): boolean {
-        if (searchTerm === "") return true;
+        if (searchTermLower === "") return true;
         if (user.username === undefined) return true;
         return (
             user.username.toLowerCase().includes(searchTermLower) ||
@@ -184,7 +188,7 @@
         <Search
             on:searchEntered={() => membersList.reset()}
             searching={false}
-            bind:searchTerm
+            bind:searchTerm={searchTermEntered}
             placeholder={i18nKey("search")} />
     </div>
 
@@ -213,7 +217,7 @@
             <Member
                 me
                 member={me}
-                canPromoteToOwner={me.role !== "owner" && $platformModerator}
+                canPromoteToOwner={canPromoteMyselfToOwner}
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}

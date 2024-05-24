@@ -3,14 +3,15 @@
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
     import { translatable } from "../actions/translatable";
-    import { interpolate, type ResourceKey } from "../i18n/i18n";
+    import { interpolate } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string | number = "";
     export let autofocus: boolean = false;
     export let placeholder: ResourceKey | undefined = undefined;
-    export let type: "text" | "number" = "text";
+    export let type: "text" | "number" | "password" = "text";
     export let minlength: number = 0;
     export let maxlength: number = Number.MAX_VALUE;
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
@@ -56,6 +57,7 @@
         data-gram="false"
         data-gramm_editor="false"
         data-enable-grammarly="false"
+        data-lpignore="true"
         class:invalid
         class:hasCountdown={countdown}
         spellcheck="false"

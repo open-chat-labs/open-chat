@@ -5,9 +5,11 @@ import type {
     Notification,
 } from "../domain";
 
+export type MessageNotification = DirectNotification | GroupNotification | ChannelNotification;
+
 export function isMessageNotification(
     notification: Notification,
-): notification is DirectNotification | GroupNotification | ChannelNotification {
+): notification is MessageNotification {
     return (
         notification.kind === "direct_notification" ||
         notification.kind === "group_notification" ||

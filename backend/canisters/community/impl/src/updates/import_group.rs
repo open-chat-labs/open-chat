@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
 use group_index_canister::c2c_start_importing_group_into_community::Response as C2cResponse;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use rand::Rng;
 use types::{CanisterId, ChannelId, ChatId, UserId};
 

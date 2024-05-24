@@ -12,7 +12,7 @@ import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
 import { Stream } from "openchat-shared";
 
-const WORKER_TIMEOUT = 1000 * 90;
+export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 
 type UnresolvedRequest = {
     kind: string;
@@ -52,6 +52,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     openStorageIndexCanister: this.config.openStorageIndexCanister,
                     groupIndexCanister: this.config.groupIndexCanister,
                     notificationsCanister: this.config.notificationsCanister,
+                    identityCanister: this.config.identityCanister,
                     onlineCanister: this.config.onlineCanister,
                     userIndexCanister: this.config.userIndexCanister,
                     translationsCanister: this.config.translationsCanister,
@@ -63,9 +64,13 @@ export class OpenChatAgentWorker extends EventTarget {
                     blobUrlPattern: this.config.blobUrlPattern,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
+                    signInWithEmailCanister: this.config.signInWithEmailCanister,
+                    signInWithEthereumCanister: this.config.signInWithEthereumCanister,
+                    signInWithSolanaCanister: this.config.signInWithSolanaCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
+                    groupInvite: this.config.groupInvite,
                 },
                 true,
             ).then(() => {
@@ -163,7 +168,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 reject,
                 timeout: window.setTimeout(() => {
                     reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
+                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${DEFAULT_WORKER_TIMEOUT}ms timeout`,
                     );
                     this._unresolved.set(correlationId, {
                         kind: req.kind,
@@ -178,7 +183,7 @@ export class OpenChatAgentWorker extends EventTarget {
     sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = WORKER_TIMEOUT,
+        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -194,7 +199,7 @@ export class OpenChatAgentWorker extends EventTarget {
     async sendRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = WORKER_TIMEOUT,
+        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");

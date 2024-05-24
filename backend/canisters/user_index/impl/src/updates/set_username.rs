@@ -2,7 +2,7 @@ use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
@@ -28,10 +28,10 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let mut user_to_update = user.clone();
-        user_to_update.username = username.clone();
+        user_to_update.username.clone_from(&username);
         let user_id = user.user_id;
         let now = state.env.now();
-        match state.data.users.update(user_to_update, now) {
+        match state.data.users.update(user_to_update, now, false) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
 

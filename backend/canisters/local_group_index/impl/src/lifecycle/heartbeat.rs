@@ -1,8 +1,8 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
-use ic_cdk_macros::heartbeat;
+use ic_cdk::heartbeat;
 use types::{BuildVersion, CanisterId, ChatId, CommunityId, Cycles, CyclesTopUp};
-use utils::canister::{self, FailedUpgrade};
+use utils::canister::{self, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[heartbeat]
@@ -25,6 +25,10 @@ mod upgrade_groups {
     }
 
     fn next_batch(state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+        if state.data.event_store_client.info().events_pending > 100000 {
+            return Vec::new();
+        }
+
         let count_in_progress = state.data.groups_requiring_upgrade.count_in_progress();
         let group_upgrade_concurrency = state.data.group_upgrade_concurrency as usize;
 
@@ -45,11 +49,12 @@ mod upgrade_groups {
     fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let chat_id = canister_id.into();
         let group = state.data.local_groups.get_mut(&chat_id)?;
-        let current_wasm_version = group.wasm_version;
         let group_canister_wasm = &state.data.group_canister_wasm_for_upgrades;
+        let current_wasm_version = group.wasm_version;
+        let new_wasm_version = group_canister_wasm.wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
-        if current_wasm_version == group_canister_wasm.version && !force {
+        if current_wasm_version == new_wasm_version && !force {
             return None;
         }
 
@@ -58,12 +63,21 @@ mod upgrade_groups {
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
-            new_wasm: group_canister_wasm.clone(),
+            new_wasm_version,
+            new_wasm: if group_canister_wasm.chunks.is_empty() {
+                WasmToInstall::Default(group_canister_wasm.wasm.module.clone())
+            } else {
+                WasmToInstall::Chunked(ChunkedWasmToInstall {
+                    chunks: group_canister_wasm.chunks.clone(),
+                    wasm_hash: group_canister_wasm.wasm_hash,
+                    store_canister_id: state.env.canister_id(),
+                })
+            },
             deposit_cycles_if_needed,
             args: group_canister::post_upgrade::Args {
-                wasm_version: group_canister_wasm.version,
+                wasm_version: new_wasm_version,
             },
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
     }
@@ -77,7 +91,7 @@ mod upgrade_groups {
     async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
         let canister_id = canister_to_upgrade.canister_id;
         let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
+        let to_version = canister_to_upgrade.new_wasm_version;
 
         match utils::canister::install(canister_to_upgrade).await {
             Ok(_) => {
@@ -136,6 +150,10 @@ mod upgrade_communities {
     }
 
     fn next_batch(state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+        if state.data.event_store_client.info().events_pending > 100000 {
+            return Vec::new();
+        }
+
         let count_in_progress = state.data.communities_requiring_upgrade.count_in_progress();
         let community_upgrade_concurrency = state.data.community_upgrade_concurrency as usize;
 
@@ -156,11 +174,12 @@ mod upgrade_communities {
     fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let community_id = canister_id.into();
         let community = state.data.local_communities.get_mut(&community_id)?;
-        let current_wasm_version = community.wasm_version;
         let community_canister_wasm = &state.data.community_canister_wasm_for_upgrades;
+        let current_wasm_version = community.wasm_version;
+        let new_wasm_version = community_canister_wasm.wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
-        if current_wasm_version == community_canister_wasm.version && !force {
+        if current_wasm_version == new_wasm_version && !force {
             return None;
         }
 
@@ -169,12 +188,21 @@ mod upgrade_communities {
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
-            new_wasm: community_canister_wasm.clone(),
+            new_wasm_version,
+            new_wasm: if community_canister_wasm.chunks.is_empty() {
+                WasmToInstall::Default(community_canister_wasm.wasm.module.clone())
+            } else {
+                WasmToInstall::Chunked(ChunkedWasmToInstall {
+                    chunks: community_canister_wasm.chunks.clone(),
+                    wasm_hash: community_canister_wasm.wasm_hash,
+                    store_canister_id: state.env.canister_id(),
+                })
+            },
             deposit_cycles_if_needed,
             args: community_canister::post_upgrade::Args {
-                wasm_version: community_canister_wasm.version,
+                wasm_version: new_wasm_version,
             },
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
         })
     }
@@ -188,7 +216,7 @@ mod upgrade_communities {
     async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
         let canister_id = canister_to_upgrade.canister_id;
         let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
+        let to_version = canister_to_upgrade.new_wasm_version;
 
         match utils::canister::install(canister_to_upgrade).await {
             Ok(_) => {

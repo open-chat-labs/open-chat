@@ -7,7 +7,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+
+## [[2.0.1147](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1147-proposals_bot)] - 2024-04-23
+
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Add ability to top up neurons for submitting proposals ([#5712](https://github.com/open-chat-labs/open-chat/pull/5712))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1124](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1124-proposals_bot)] - 2024-03-26
+
+### Fixed
+
+- Fix proposal decision calculation to account for critical proposals ([#5600](https://github.com/open-chat-labs/open-chat/pull/5600))
+
+## [[2.0.1089](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1089-proposals_bot)] - 2024-03-07
+
+### Added
+
+- Reject NNS proposal just before deadline if neuron not already voted ([#5472](https://github.com/open-chat-labs/open-chat/pull/5472))
+
+### Changed
+
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+
+## [[2.0.1077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1077-proposals_bot)] - 2024-02-22
+
+### Changed
+
 - Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
+### Fixed
+
+- Allow everyone to post in threads in new SNS proposals groups ([#5365](https://github.com/open-chat-labs/open-chat/pull/5365))
+- Update thread permissions in proposal groups ([#5373](https://github.com/open-chat-labs/open-chat/pull/5373))
 
 ## [[2.0.1027](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1027-proposals_bot)] - 2024-01-25
 

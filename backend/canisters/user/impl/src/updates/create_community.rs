@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
@@ -115,7 +115,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     }
 }
 
-fn default_channels_valid(default_channels: &Vec<String>) -> bool {
+fn default_channels_valid(default_channels: &[String]) -> bool {
     if default_channels.is_empty()
         || default_channels
             .iter()

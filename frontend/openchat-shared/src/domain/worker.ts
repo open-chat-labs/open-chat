@@ -66,6 +66,12 @@ import type {
     CancelP2PSwapResponse,
     ChatEventsArgs,
     ChatEventsResponse,
+    JoinVideoCallResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
+    SetPinNumberResponse,
+    AcceptedRules,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -103,6 +109,8 @@ import type {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
+    ClaimDailyChitResponse,
+    ChitUserBalance,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -112,8 +120,13 @@ import type {
     ExploreChannelsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
-import type { CommunityPermissions, MemberRole, OptionalChatPermissions } from "./permission";
-import type { AccessGate, Rules, UpdatedRules } from "./access";
+import type {
+    AccessTokenType,
+    CommunityPermissions,
+    MemberRole,
+    OptionalChatPermissions,
+} from "./permission";
+import type { AccessGate, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -140,12 +153,20 @@ import type {
     SetMemberDisplayNameResponse,
     FollowThreadResponse,
 } from "./community";
+import type { UpdateBtcBalanceResponse } from "./bitcoin";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
+import type {
+    GetDelegationResponse,
+    PrepareDelegationResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+} from "./identity";
+import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -327,7 +348,54 @@ export type WorkerRequest =
     | RejectTranslation
     | MarkTranslationsDeployed
     | GetProposedTranslations
-    | GetTranslationsPendingDeployment;
+    | GetTranslationsPendingDeployment
+    | JoinVideoCall
+    | GetAccessToken
+    | GetLocalUserIndexForUser
+    | UpdateBtcBalance
+    | GenerateMagicLink
+    | GetSignInWithEmailDelegation
+    | SiwePrepareLogin
+    | SiwsPrepareLogin
+    | LoginWithWallet
+    | GetDelegationWithWallet
+    | SetVideoCallPresence
+    | VideoCallParticipants
+    | SetPinNumber
+    | ClaimDailyChit
+    | ChitLeaderboard;
+
+type VideoCallParticipants = {
+    kind: "videoCallParticipants";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    updatesSince?: bigint;
+};
+
+type SetVideoCallPresence = {
+    kind: "setVideoCallPresence";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    presence: VideoCallPresence;
+};
+
+type GetLocalUserIndexForUser = {
+    kind: "getLocalUserIndexForUser";
+    userId: string;
+};
+
+type GetAccessToken = {
+    kind: "getAccessToken";
+    chatId: ChatIdentifier;
+    accessTokenType: AccessTokenType;
+    localUserIndex: string;
+};
+
+type JoinVideoCall = {
+    kind: "joinVideoCall";
+    chatId: ChatIdentifier;
+    messageId: bigint;
+};
 
 type ProposeTranslation = {
     kind: "proposeTranslation";
@@ -374,6 +442,7 @@ type TipMessage = {
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
+    pin: string | undefined;
 };
 
 type CanSwap = {
@@ -402,6 +471,7 @@ type SwapTokens = {
     amountIn: bigint;
     minAmountOut: bigint;
     dex: DexId;
+    pin: string | undefined;
 };
 
 type TokenSwapStatus = {
@@ -522,6 +592,7 @@ type GroupMessagesByMessageIndex = {
 
 type WithdrawCrypto = {
     domain: PendingCryptocurrencyWithdrawal;
+    pin: string | undefined;
     kind: "withdrawCryptocurrency";
 };
 
@@ -650,6 +721,7 @@ type InviteUsers = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsers";
 };
 
@@ -657,6 +729,7 @@ type InviteUsersToCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
     userIds: string[];
+    callerUsername: string;
     kind: "inviteUsersToCommunity";
 };
 
@@ -686,6 +759,7 @@ type EditMessage = {
     msg: Message;
     threadRootMessageIndex?: number;
     kind: "editMessage";
+    blockLevelMarkdown?: boolean;
 };
 
 type SendMessage = {
@@ -693,9 +767,9 @@ type SendMessage = {
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    rulesAccepted: number | undefined;
-    communityRulesAccepted: number | undefined;
+    acceptedRules: AcceptedRules | undefined;
     messageFilterFailed: bigint | undefined;
+    pin: string | undefined;
     kind: "sendMessage";
 };
 
@@ -793,15 +867,15 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
-    credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
-    credential?: string;
 };
 
 type LeaveGroup = {
@@ -1085,6 +1159,56 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
+type SetCachePrimerTimestamp = {
+    chatIdentifierString: string;
+    timestamp: bigint;
+    kind: "setCachePrimerTimestamp";
+};
+
+type UpdateBtcBalance = {
+    userId: string;
+    kind: "updateBtcBalance";
+};
+
+type GenerateMagicLink = {
+    email: string;
+    sessionKey: Uint8Array;
+    kind: "generateMagicLink";
+};
+
+type GetSignInWithEmailDelegation = {
+    email: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getSignInWithEmailDelegation";
+};
+
+type SiwePrepareLogin = {
+    address: string;
+    kind: "siwePrepareLogin";
+};
+
+type SiwsPrepareLogin = {
+    address: string;
+    kind: "siwsPrepareLogin";
+};
+
+type LoginWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    signature: string;
+    sessionKey: Uint8Array;
+    kind: "loginWithWallet";
+};
+
+type GetDelegationWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getDelegationWithWallet";
+};
+
 /**
  * Worker error type
  */
@@ -1103,6 +1227,7 @@ export type WorkerResponseInner =
     | string
     | string[]
     | undefined
+    | [number, number]
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1224,7 +1349,17 @@ export type WorkerResponseInner =
     | RejectResponse
     | MarkDeployedResponse
     | ProposedResponse
-    | PendingDeploymentResponse;
+    | PendingDeploymentResponse
+    | JoinVideoCallResponse
+    | UpdateBtcBalanceResponse
+    | GenerateMagicLinkResponse
+    | SiwePrepareLoginResponse
+    | SiwsPrepareLoginResponse
+    | SetVideoCallPresenceResponse
+    | VideoCallParticipantsResponse
+    | SetPinNumberResponse
+    | ClaimDailyChitResponse
+    | ChitUserBalance[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1321,6 +1456,7 @@ type ApproveTransfer = {
     ledger: string;
     amount: bigint;
     expiresIn: bigint | undefined;
+    pin: string | undefined;
     kind: "approveTransfer";
 };
 
@@ -1496,6 +1632,7 @@ type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    pin: string | undefined;
     kind: "acceptP2PSwap";
 };
 
@@ -1504,6 +1641,21 @@ type CancelP2PSwap = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     kind: "cancelP2PSwap";
+};
+
+type SetPinNumber = {
+    currentPin: string | undefined;
+    newPin: string | undefined;
+    kind: "setPinNumber";
+};
+
+type ClaimDailyChit = {
+    userId: string;
+    kind: "claimDailyChit";
+};
+
+type ChitLeaderboard = {
+    kind: "chitLeaderboard";
 };
 
 // prettier-ignore
@@ -1827,4 +1979,34 @@ export type WorkerResult<T> = T extends PinMessage
     ? AcceptP2PSwapResponse
     : T extends CancelP2PSwap
     ? CancelP2PSwapResponse
+    : T extends JoinVideoCall
+    ? JoinVideoCallResponse
+    : T extends SetVideoCallPresence
+    ? SetVideoCallPresenceResponse
+    : T extends VideoCallParticipants
+    ? VideoCallParticipantsResponse
+    : T extends GetAccessToken
+    ? string | undefined
+    : T extends GetLocalUserIndexForUser
+    ? string
+    : T extends UpdateBtcBalance
+    ? UpdateBtcBalanceResponse
+    : T extends GenerateMagicLink
+    ? GenerateMagicLinkResponse
+    : T extends GetSignInWithEmailDelegation
+    ? GetDelegationResponse
+    : T extends SiwePrepareLogin
+    ? SiwePrepareLoginResponse
+    : T extends SiwsPrepareLogin
+    ? SiwsPrepareLoginResponse
+    : T extends LoginWithWallet
+    ? PrepareDelegationResponse
+    : T extends GetDelegationWithWallet
+    ? GetDelegationResponse
+    : T extends SetPinNumber
+    ? SetPinNumberResponse
+    : T extends ClaimDailyChit
+    ? ClaimDailyChitResponse
+    : T extends ChitLeaderboard
+    ? ChitUserBalance[]
     : never;

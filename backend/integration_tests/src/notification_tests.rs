@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -52,7 +52,7 @@ fn group_message_notification_succeeds() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![(user2.user_id, user2.principal)],
@@ -127,7 +127,7 @@ fn group_message_notification_muted() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![(user2.user_id, user2.principal)],
@@ -216,8 +216,8 @@ fn latest_notification_index(env: &PocketIc, notifications_canister_id: Principa
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::notifications_index::happy_path::push_subscription(
         env,

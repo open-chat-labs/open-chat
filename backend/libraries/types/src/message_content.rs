@@ -2,10 +2,9 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
     Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -50,6 +49,7 @@ pub enum MessageContent {
     MessageReminder(MessageReminderContent),
     ReportedMessage(ReportedMessage),
     P2PSwap(P2PSwapContent),
+    VideoCall(VideoCallContent),
     Custom(CustomContent),
 }
 
@@ -104,6 +104,7 @@ impl MessageContent {
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
+            | MessageContent::VideoCall(_)
             | MessageContent::Custom(_) => {}
         }
 
@@ -128,6 +129,7 @@ impl MessageContent {
             MessageContent::MessageReminder(_) => "MessageReminder",
             MessageContent::ReportedMessage(_) => "ReportedMessage",
             MessageContent::P2PSwap(_) => "P2PSwap",
+            MessageContent::VideoCall(_) => "VideoCall",
             MessageContent::Custom(c) => &c.kind,
         };
 
@@ -152,6 +154,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::VideoCall(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -191,6 +194,7 @@ impl MessageContent {
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
+            | MessageContent::VideoCall(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -266,7 +270,7 @@ impl MessageContentInitial {
             MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
             MessageContentInitial::File(f) => f.blob_reference.is_none(),
             MessageContentInitial::Poll(p) => p.config.options.is_empty(),
-            MessageContentInitial::Prize(p) => p.prizes.is_empty(),
+            MessageContentInitial::Prize(p) => p.prizes_v2.is_empty(),
             MessageContentInitial::Deleted(_) => true,
             MessageContentInitial::Crypto(_)
             | MessageContentInitial::Giphy(_)
@@ -309,8 +313,16 @@ impl MessageContentInitial {
             MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
+
+    pub fn contains_crypto_transfer(&self) -> bool {
+        matches!(
+            self,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
+        )
+    }
 }
 
+// TODO: We shouldn't need this
 impl From<MessageContent> for MessageContentInitial {
     fn from(content: MessageContent) -> Self {
         match content {
@@ -329,12 +341,13 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
-            MessageContent::P2PSwap(_) => todo!(),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
+            MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
     }
 }
 
+// TODO: We shouldn't need this
 impl From<MessageContentInitial> for MessageContent {
     fn from(content: MessageContentInitial) -> Self {
         match content {
@@ -349,7 +362,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Text(c) => MessageContent::Text(c),
             MessageContentInitial::Video(c) => MessageContent::Video(c),
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: c.prizes.len() as u32,
+                prizes_remaining: c.prizes_v2.len() as u32,
                 winners: Vec::new(),
                 token: c.transfer.token(),
                 end_date: c.end_date,
@@ -359,8 +372,8 @@ impl From<MessageContentInitial> for MessageContent {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
-            MessageContentInitial::P2PSwap(_) => unimplemented!(),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
+            MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
 }
@@ -471,7 +484,7 @@ pub struct CryptoContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
-    pub prizes: Vec<Tokens>,
+    pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
@@ -545,6 +558,25 @@ pub struct P2PSwapContent {
     pub caption: Option<String>,
     pub token0_txn_in: u64,
     pub status: P2PSwapStatus,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallContentInitial {
+    pub initiator: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallContent {
+    pub call_type: VideoCallType,
+    pub ended: Option<TimestampMillis>,
+    pub participants: Vec<CallParticipant>,
+    pub hidden_participants: u32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CallParticipant {
+    pub user_id: UserId,
+    pub joined: TimestampMillis,
 }
 
 impl P2PSwapContent {

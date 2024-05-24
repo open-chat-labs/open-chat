@@ -18,9 +18,9 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
 
     let (text, action) = if let Some(code) = try_extract_code(args.content) {
         match state.data.reward_codes.claim(code, caller, now) {
-            ClaimRewardCodeResult::Success(transfer_args, transaction_hash) => (
+            ClaimRewardCodeResult::Success(transfer_args) => (
                 "Code claimed successfully! Please wait while your ICP is transferred.",
-                Some(PendingAction::IcpTransfer(caller, transfer_args, transaction_hash)),
+                Some(PendingAction::IcpTransfer(caller, transfer_args, [0; 32])),
             ),
             ClaimRewardCodeResult::UserAlreadyClaimed => ("You have already claimed a reward!", None),
             ClaimRewardCodeResult::CodeAlreadyClaimed => ("That code has already been claimed!", None),
@@ -42,8 +42,10 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
         bot_name: state.data.bot_name.clone(),
         bot_display_name: None,
         messages: vec![BotMessage {
+            thread_root_message_id: None,
             content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
             message_id: None,
+            block_level_markdown: None,
         }],
     })
 }

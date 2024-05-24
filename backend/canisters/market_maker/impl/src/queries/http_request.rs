@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, build_response, encode_logs, extract_route, Route};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use std::io::Write;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 

@@ -40,9 +40,10 @@
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
     import { buildDisplayName } from "../../utils/user";
-    import Diamond from "../icons/Diamond.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import VideoCallIcon from "./video/VideoCallIcon.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -70,12 +71,17 @@
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
+        const muted = chatSummary.membership.notificationsMuted;
+        const video = chatSummary.videoCallInProgress
+            ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
+            : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
+                    streak: them.streak,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -86,11 +92,14 @@
                     ),
                     fav,
                     eventsTTL: undefined,
+                    video,
+                    private: false,
                 };
             default:
                 return {
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                    streak: 0,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(
@@ -101,6 +110,8 @@
                     ),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
+                    video,
+                    private: !chatSummary.public,
                 };
         }
     }
@@ -345,10 +356,14 @@
                     <CameraTimer size={"1em"} color={"#fff"} />
                 </div>
             {/if}
+            <VideoCallIcon video={chat.video} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
                 <div class="chat-name">
+                    {#if chat.private}
+                        <div class="private" />
+                    {/if}
                     <h4>
                         {#if community !== undefined && $chatListScope.kind === "favourite"}
                             <span>{community.name}</span>
@@ -356,7 +371,7 @@
                         {/if}
                         <span>{chat.name}</span>
                     </h4>
-                    <Diamond status={chat.diamondStatus} />
+                    <Badges diamondStatus={chat.diamondStatus} streak={chat.streak} />
                 </div>
             </div>
             <div class="chat-msg">
@@ -689,6 +704,16 @@
         @include disappearing();
     }
 
+    .video-call {
+        height: calc(1em + 4px);
+        width: calc(1em + 4px);
+        border-radius: 50%;
+        position: absolute;
+        bottom: -2px;
+        left: 2px;
+        background-image: url("/assets/video_call.svg");
+    }
+
     .details {
         flex: 1;
         display: flex;
@@ -780,5 +805,13 @@
         &.rtl {
             margin-left: 2px;
         }
+    }
+    .private {
+        background-repeat: no-repeat;
+        $size: 12px;
+        flex: 0 0 $size;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/locked.svg");
     }
 </style>

@@ -26,14 +26,14 @@
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import { pathParams } from "../../routes";
-    import page from "page";
+    import { pageReplace, pathParams } from "../../routes";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import Resizable from "../Resizable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { activeVideoCall } from "../../stores/video";
+    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -64,7 +64,7 @@
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
             $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
         return client.searchUsersForInvite(term, 20, level, false, canInvite);
@@ -192,7 +192,8 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popRightPanelHistory();
-        page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
+        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+        activeVideoCall.threadOpen(false);
     }
 
     function findMessage(
@@ -366,6 +367,11 @@
             on:editGroup
             on:chatWith
             on:showGroupMembers />
+    {:else if lastState.kind === "call_participants_panel"}
+        <ActiveCallParticipants
+            isOwner={lastState.isOwner}
+            chatId={lastState.chatId}
+            messageId={lastState.messageId} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         <InviteUsers
             {level}
@@ -428,27 +434,15 @@
             {user}
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
-        <AcceptRulesWrapper
-            let:sendMessageWithAttachment
-            let:forwardMessage
-            let:retrySend
-            let:sendMessageWithContent
-            messageContext={{
-                chatId: $selectedChat.id,
-                threadRootMessageIndex: threadRootEvent.event.messageIndex,
-            }}>
-            <Thread
-                on:chatWith
-                on:upgrade
-                on:replyPrivatelyTo
-                rootEvent={threadRootEvent}
-                chat={$selectedChat}
-                on:retrySend={retrySend}
-                on:sendMessageWithContent={sendMessageWithContent}
-                on:sendMessageWithAttachment={sendMessageWithAttachment}
-                on:forwardMessage={forwardMessage}
-                on:closeThread={closeThread} />
-        </AcceptRulesWrapper>
+        <Thread
+            on:chatWith
+            on:upgrade
+            on:replyPrivatelyTo
+            rootEvent={threadRootEvent}
+            chat={$selectedChat}
+            on:removePreview
+            on:startVideoCall
+            on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_details"}

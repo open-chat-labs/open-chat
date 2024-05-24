@@ -1,31 +1,42 @@
 import "../../../libraries/types/can.did";
 
+type AccessTokenArgs = record {
+    token_type : AccessTokenType;
+    chat : Chat;
+};
+
+type AccessTokenResponse = variant {
+    Success : text;
+    NotAuthorized;
+    InternalError : text;
+};
+
 type ChatEventsArgs = record {
     requests : vec ChatEventsArgsInner;
 };
 
 type EventsContext = variant {
     Direct : UserId;
-    Group : record { ChatId; opt MessageIndex; };
-    Channel : record { CommunityId; ChannelId; opt MessageIndex};
+    Group : record { ChatId; opt MessageIndex };
+    Channel : record { CommunityId; ChannelId; opt MessageIndex };
 };
 
 type ChatEventsArgsInner = record {
     context : EventsContext;
-    args: variant {
+    args : variant {
         Page : record {
-            start_index: EventIndex;
-            ascending: bool;
-            max_messages: nat32;
-            max_events: nat32;
+            start_index : EventIndex;
+            ascending : bool;
+            max_messages : nat32;
+            max_events : nat32;
         };
         ByIndex : record {
-            events: vec EventIndex;
+            events : vec EventIndex;
         };
         Window : record {
-            mid_point: MessageIndex;
-            max_messages: nat32;
-            max_events: nat32;
+            mid_point : MessageIndex;
+            max_messages : nat32;
+            max_events : nat32;
         };
     };
     latest_known_update : opt TimestampMillis;
@@ -33,8 +44,8 @@ type ChatEventsArgsInner = record {
 
 type ChatEventsResponse = variant {
     Success : record {
-        responses: vec ChatEventsResponseInner;
-        timestamp: TimestampMillis;
+        responses : vec ChatEventsResponseInner;
+        timestamp : TimestampMillis;
     };
 };
 
@@ -74,6 +85,7 @@ type JoinChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
 };
 
 type JoinChannelResponse = variant {
@@ -95,6 +107,7 @@ type JoinChannelResponse = variant {
 type JoinCommunityArgs = record {
     community_id : CommunityId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
 };
 
 type JoinCommunityResponse = variant {
@@ -114,6 +127,7 @@ type JoinCommunityResponse = variant {
 type JoinGroupArgs = record {
     chat_id : ChatId;
     invite_code : opt nat64;
+    verified_credential_args : opt VerifiedCredentialGateArgs;
     correlation_id : nat64;
 };
 
@@ -136,6 +150,7 @@ type InviteUsersToChannelArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     user_ids : vec UserId;
+    caller_username : text;
 };
 
 type InviteUsersToChannelResponse = variant {
@@ -163,6 +178,7 @@ type InviteUsersToChannelFailed = record {
 type InviteUsersToCommunityArgs = record {
     community_id : CommunityId;
     user_ids : vec UserId;
+    caller_username : text;
 };
 
 type InviteUsersToCommunityResponse = variant {
@@ -178,6 +194,7 @@ type InviteUsersToCommunityResponse = variant {
 type InviteUsersToGroupArgs = record {
     group_id : ChatId;
     user_ids : vec UserId;
+    caller_username : text;
     correlation_id : nat64;
 };
 
@@ -202,6 +219,7 @@ type RegisterUserResponse = variant {
         user_id : UserId;
         icp_account : AccountIdentifier;
     };
+    RegistrationInProgress;
     AlreadyRegistered;
     UserLimitReached;
     UsernameInvalid;
@@ -229,6 +247,7 @@ type ReportMessageResponse = variant {
 };
 
 service : {
+    access_token : (AccessTokenArgs) -> (AccessTokenResponse) query;
     chat_events : (ChatEventsArgs) -> (ChatEventsResponse) query;
     group_and_community_summary_updates : (GroupAndCommunitySummaryUpdatesArgs) -> (GroupAndCommunitySummaryUpdatesResponse) query;
 

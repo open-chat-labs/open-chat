@@ -133,6 +133,7 @@ type DirectChatSummary = record {
     archived : bool;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
+    video_call_in_progress : opt VideoCall;
 };
 
 type DirectChatSummaryUpdates = record {
@@ -150,6 +151,7 @@ type DirectChatSummaryUpdates = record {
     archived : opt bool;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type DirectMessageNotification = record {
@@ -283,6 +285,7 @@ type GroupChatSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupCanisterGroupChatSummary = record {
@@ -317,6 +320,7 @@ type GroupCanisterGroupChatSummary = record {
     gate : opt AccessGate;
     rules_accepted : bool;
     membership : opt GroupMembership;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -348,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -407,6 +412,7 @@ type CommunityCanisterChannelSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     membership : opt GroupMembership;
+    video_call_in_progress : opt VideoCall;
 };
 
 type GroupMembership = record {
@@ -469,6 +475,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     membership : opt GroupMembershipUpdates;
+    video_call_in_progress : VideoCallUpdates;
 };
 
 type GroupMembershipUpdates = record {
@@ -556,7 +563,7 @@ type Message = record {
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
-    last_updated : opt TimestampMillis;
+    block_level_markdown : bool;
 };
 
 type MessageEventWrapper = record {
@@ -811,6 +818,7 @@ type MessageContent = variant {
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     P2PSwap : P2PSwapContent;
+    VideoCall : VideoCallContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -1066,6 +1074,8 @@ type UserSummary = record {
     suspended : bool;
     diamond_member : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    chit_balance : int32;
+    streak : nat16;
 };
 
 type BuildVersion = record {
@@ -1219,6 +1229,7 @@ type GroupPermissions = record {
     invite_users : PermissionRole;
     react_to_messages : PermissionRole;
     mention_all_members : PermissionRole;
+    start_video_call : PermissionRole;
     message_permissions : MessagePermissions;
     thread_permissions : opt MessagePermissions;
 };
@@ -1235,6 +1246,7 @@ type MessagePermissions = record {
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
     p2p_swap : opt PermissionRole;
+    video_call : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
@@ -1252,6 +1264,7 @@ type OptionalGroupPermissions = record {
     invite_users : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
+    start_video_call : opt PermissionRole;
     message_permissions : opt OptionalMessagePermissions;
     thread_permissions : OptionalMessagePermissionsUpdate;
 };
@@ -1268,7 +1281,7 @@ type OptionalMessagePermissions = record {
     giphy : PermissionRoleUpdate;
     prize : PermissionRoleUpdate;
     p2p_swap : PermissionRoleUpdate;
-    p2p_trade : PermissionRoleUpdate;
+    video_call : PermissionRoleUpdate;
     custom_updated : vec CustomPermission;
     custom_deleted : vec text;
 };
@@ -1405,7 +1418,7 @@ type MessageIndexRange = record {
 };
 
 type PrizeContentInitial = record {
-    prizes : vec Tokens;
+    prizes_v2 : vec nat;
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
     caption : opt text;
@@ -1481,9 +1494,10 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
+    issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments:  opt blob;
+    credential_arguments : vec record { text; variant { String : text; Int : int32 } };
 };
 
 type SnsNeuronGate = record {
@@ -1510,6 +1524,13 @@ type GateCheckFailedReason = variant {
     NoSnsNeuronsWithRequiredDissolveDelayFound;
     PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
+    FailedVerifiedCredentialCheck : text;
+};
+
+type VerifiedCredentialGateArgs = record {
+    user_ii_principal : principal;
+    credential_jwt : text;
+    ii_origin : text;
 };
 
 type MessageReminderCreated = record {
@@ -1614,6 +1635,22 @@ type P2PSwapCompleted = record {
     token1_txn_out : nat64;
 };
 
+type VideoCallContentInitial = record {
+    initiator : UserId;
+};
+
+type VideoCallContent = record {
+    call_type : VideoCallType;
+    ended : opt TimestampMillis;
+    participants : vec CallParticipant;
+    hidden_participants : nat32;
+};
+
+type CallParticipant = record {
+    user_id : UserId;
+    joined : TimestampMillis;
+};
+
 type EmptyArgs = record {};
 
 type CommunityMatch = record {
@@ -1716,4 +1753,54 @@ type SwapStatusErrorExpired = record {
 
 type SwapStatusErrorCancelled = record {
     token0_txn_out : opt nat64;
+};
+
+type VideoCall = record {
+    message_index : MessageIndex;
+    call_type : VideoCallType;
+};
+
+type VideoCallUpdates = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : VideoCall;
+};
+
+type VideoCallParticipants = record {
+    participants : vec CallParticipant;
+    hidden : vec CallParticipant;
+    last_updated : TimestampMillis;
+};
+
+type AccessTokenType = variant {
+    StartVideoCall;
+    StartVideoCallV2 : record {
+        call_type : VideoCallType;
+    };
+    JoinVideoCall;
+    MarkVideoCallAsEnded;
+};
+
+type VideoCallType = variant {
+    Broadcast;
+    Default;
+};
+
+type VideoCallPresence = variant {
+    Default;
+    Owner;
+    Hidden;
+};
+
+type ChitEarned = record {
+    amount : int32;
+    timestamp : TimestampMillis;
+    reason : ChitEarnedReason;
+
+};
+
+type ChitEarnedReason = variant {
+    DailyClaim;
+    Achievement : text;
+    MemeContestWinner;
 };

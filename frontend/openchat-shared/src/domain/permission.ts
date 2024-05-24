@@ -1,3 +1,4 @@
+import type { VideoCallType } from "./chat";
 import type { OptionUpdate } from "./optionUpdate";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
@@ -12,7 +13,19 @@ export type CommunityPermissionRole = CommunityRolesType[number];
 
 export type MemberRole = "admin" | "moderator" | "member" | "owner" | "none";
 
-export const messagePermissionsList = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter", "p2pSwap"] as const;
+export const messagePermissionsList = [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "file",
+    "poll",
+    "crypto",
+    "giphy",
+    "prize",
+    "memeFighter",
+    "p2pSwap",
+] as const;
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
@@ -35,6 +48,7 @@ export type ChatPermissions = {
     pinMessages: ChatPermissionRole;
     reactToMessages: ChatPermissionRole;
     mentionAllMembers: ChatPermissionRole;
+    startVideoCall: ChatPermissionRole;
     messagePermissions: MessagePermissions;
     threadPermissions: MessagePermissions | undefined;
 };
@@ -63,6 +77,7 @@ export type OptionalChatPermissions = {
     pinMessages?: ChatPermissionRole;
     reactToMessages?: ChatPermissionRole;
     mentionAllMembers?: ChatPermissionRole;
+    startVideoCall?: ChatPermissionRole;
     messagePermissions: OptionalMessagePermissions | undefined;
     threadPermissions: OptionUpdate<OptionalMessagePermissions>;
 };
@@ -117,3 +132,14 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
 }
 
 export type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
+
+export type AccessTokenType = JoinVideoCall | StartVideoCall;
+
+export type JoinVideoCall = {
+    kind: "join_video_call";
+};
+
+export type StartVideoCall = {
+    kind: "start_video_call";
+    callType: VideoCallType;
+};

@@ -5,6 +5,11 @@ type UserRegistrationCanisterResponse = variant {
     NewRegistrationsClosed;
 };
 
+type PublicKeyResponse = variant {
+    Success : text;
+    NotInitialised;
+};
+
 type SetUsernameArgs = record {
     username : text;
 };
@@ -47,6 +52,7 @@ type CurrentUserResponse = variant {
     Success : record {
         user_id : UserId;
         username : text;
+        date_created : TimestampMillis;
         display_name : opt text;
         canister_upgrade_status : CanisterUpgradeStatus;
         avatar_id : opt nat;
@@ -60,6 +66,9 @@ type CurrentUserResponse = variant {
         diamond_membership_details : opt DiamondMembershipDetails;
         diamond_membership_status : DiamondMembershipStatusFull;
         moderation_flags_enabled : nat32;
+        chit_balance : int32;
+        streak : nat16;
+        next_daily_claim : TimestampMillis;
     };
     UserNotFound;
 };
@@ -312,6 +321,26 @@ type ReferralStats = record {
     total_users : nat32;
 };
 
+type ClaimDailyChitResponse = variant {
+    Success : record {
+        chit_earned : nat32;
+        chit_balance : int32;
+        streak : nat16;
+        next_claim : TimestampMillis;
+    };
+    AlreadyClaimed : TimestampMillis;
+};
+
+type ChitLeaderboardResponse = variant {
+    Success : vec ChitUserBalance;
+};
+
+type ChitUserBalance = record {
+    user_id : UserId;
+    username : text;
+    balance : nat32;
+};
+
 type SetUserUpgradeConcurrencyArgs = record {
     value : nat32;
 };
@@ -356,6 +385,7 @@ type AddReferralCodesResponse = variant {
 
 service : {
     user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
+    public_key : (EmptyArgs) -> (PublicKeyResponse) query;
 
     // This is used to set the initial username and subsequently to change it
     set_username : (SetUsernameArgs) -> (SetUsernameResponse);
@@ -391,6 +421,8 @@ service : {
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
+    claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
+    chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;

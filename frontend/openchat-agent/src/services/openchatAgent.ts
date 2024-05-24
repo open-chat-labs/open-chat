@@ -10,7 +10,10 @@ import {
     setCachedChats,
     setCachedMessageIfNotExists,
     recordFailedMessage,
+    cacheLocalUserIndexForUser,
+    getLocalUserIndexForUser,
 } from "../utils/caching";
+import { isMainnet } from "../utils/network";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
@@ -187,6 +190,19 @@ import type {
     CancelP2PSwapResponse,
     ChatEventsArgs,
     ChatEventsResponse,
+    JoinVideoCallResponse,
+    AccessTokenType,
+    UpdateBtcBalanceResponse,
+    GenerateMagicLinkResponse,
+    GetDelegationResponse,
+    PrepareDelegationResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
+    AcceptedRules,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -213,6 +229,14 @@ import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 import { TranslationsClient } from "./translations/translations.client";
+import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
+import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
+import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
+import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberSettings } from "openchat-shared";
+import type { ClaimDailyChitResponse } from "openchat-shared";
+import type { ChitUserBalance } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -228,6 +252,9 @@ export class OpenChatAgent extends EventTarget {
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _icpcoinsClient: ICPCoinsClient;
+    private _signInWithEmailClient: SignInWithEmailClient;
+    private _signInWithEthereumClient: SignInWithEthereumClient;
+    private _signInWithSolanaClient: SignInWithSolanaClient;
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
@@ -251,11 +278,15 @@ export class OpenChatAgent extends EventTarget {
         this._registryClient = RegistryClient.create(identity, config);
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this.translationsClient = new TranslationsClient(identity, config);
+        this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
+        this._signInWithEthereumClient = SignInWithEthereumClient.create(identity, config);
+        this._signInWithSolanaClient = SignInWithSolanaClient.create(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
         this._dexesAgent = new DexesAgent(config);
+        this._groupInvite = config.groupInvite;
     }
 
     private get principal(): Principal {
@@ -371,16 +402,32 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         msg: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         if (offline()) return Promise.resolve("failure");
 
         switch (chatId.kind) {
             case "direct_chat":
-                return this.editDirectMessage(chatId, msg, threadRootMessageIndex);
+                return this.editDirectMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
             case "group_chat":
-                return this.editGroupMessage(chatId, msg, threadRootMessageIndex);
+                return this.editGroupMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
             case "channel":
-                return this.editChannelMessage(chatId, msg, threadRootMessageIndex);
+                return this.editChannelMessage(
+                    chatId,
+                    msg,
+                    threadRootMessageIndex,
+                    blockLevelMarkdown,
+                );
         }
     }
 
@@ -389,9 +436,9 @@ export class OpenChatAgent extends EventTarget {
         user: CreatedUser,
         mentioned: User[],
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined,
-        communityRulesAccepted: number | undefined,
+        acceptedRules: AcceptedRules | undefined,
         messageFilterFailed: bigint | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -414,9 +461,10 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    communityRulesAccepted,
-                    rulesAccepted,
+                    acceptedRules?.community,
+                    acceptedRules?.chat,
                     messageFilterFailed,
+                    pin,
                 );
             }
             return this.sendChannelMessage(
@@ -426,8 +474,8 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                communityRulesAccepted,
-                rulesAccepted,
+                acceptedRules?.community,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
@@ -445,8 +493,9 @@ export class OpenChatAgent extends EventTarget {
                     user,
                     event,
                     threadRootMessageIndex,
-                    rulesAccepted,
+                    acceptedRules?.chat,
                     messageFilterFailed,
+                    pin,
                 );
             }
             return this.sendGroupMessage(
@@ -456,7 +505,7 @@ export class OpenChatAgent extends EventTarget {
                 mentioned,
                 event,
                 threadRootMessageIndex,
-                rulesAccepted,
+                acceptedRules?.chat,
                 messageFilterFailed,
             );
         }
@@ -466,6 +515,7 @@ export class OpenChatAgent extends EventTarget {
                 event,
                 messageFilterFailed,
                 threadRootMessageIndex,
+                pin,
             );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
@@ -520,19 +570,26 @@ export class OpenChatAgent extends EventTarget {
         chatId: GroupChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
-        return this.getGroupClient(chatId.groupId).editMessage(message, threadRootMessageIndex);
+        return this.getGroupClient(chatId.groupId).editMessage(
+            message,
+            threadRootMessageIndex,
+            blockLevelMarkdown,
+        );
     }
 
     private editChannelMessage(
         chatId: ChannelIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return this.communityClient(chatId.communityId).editMessage(
             chatId,
             message,
             threadRootMessageIndex,
+            blockLevelMarkdown,
         );
     }
 
@@ -540,13 +597,15 @@ export class OpenChatAgent extends EventTarget {
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(
             chatId,
             event,
             messageFilterFailed,
             threadRootMessageIndex,
+            pin,
         );
     }
 
@@ -554,8 +613,14 @@ export class OpenChatAgent extends EventTarget {
         recipientId: DirectChatIdentifier,
         message: Message,
         threadRootMessageIndex?: number,
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
-        return this.userClient.editMessage(recipientId.userId, message, threadRootMessageIndex);
+        return this.userClient.editMessage(
+            recipientId.userId,
+            message,
+            threadRootMessageIndex,
+            blockLevelMarkdown,
+        );
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -612,6 +677,7 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -623,6 +689,7 @@ export class OpenChatAgent extends EventTarget {
         return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
+            callerUsername,
         );
     }
 
@@ -630,6 +697,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
         userIds: string[],
+        callerUsername: string,
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
@@ -641,7 +709,11 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
+                return localUserIndexClient.inviteUsersToGroup(
+                    chatId.groupId,
+                    userIds,
+                    callerUsername,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -652,6 +724,7 @@ export class OpenChatAgent extends EventTarget {
                     chatId.communityId,
                     chatId.channelId,
                     userIds,
+                    callerUsername,
                 );
             }
         }
@@ -1422,10 +1495,12 @@ export class OpenChatAgent extends EventTarget {
             });
 
         userResponse.communities.updated.forEach((c) => {
-            if (c.pinned === undefined) {
-                byCommunity.delete(c.id.communityId);
-            } else {
-                byCommunity.set(c.id.communityId, c.pinned);
+            if (c.pinned !== undefined) {
+                if (c.pinned.length === 0) {
+                    byCommunity.delete(c.id.communityId);
+                } else {
+                    byCommunity.set(c.id.communityId, c.pinned);
+                }
             }
         });
 
@@ -1459,6 +1534,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedChannels: ChannelIdentifier[];
         let favouriteChats: ChatIdentifier[];
         let suspensionChanged = undefined;
+        let pinNumberSettings: PinNumberSettings | undefined;
         let userCanisterLocalUserIndex: string;
 
         let latestActiveGroupsCheck = BigInt(0);
@@ -1486,6 +1562,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = userResponse.communities.summaries.flatMap((c) => c.pinned);
             favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
+            pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
             anyUpdates = true;
         } else {
@@ -1508,6 +1585,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels = current.pinnedChannels;
             favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
+            pinNumberSettings = current.pinNumberSettings;
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
 
             if (userResponse.kind === "success") {
@@ -1537,6 +1615,10 @@ export class OpenChatAgent extends EventTarget {
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
                 suspensionChanged = userResponse.suspended;
                 latestUserCanisterUpdates = userResponse.timestamp;
+                pinNumberSettings = applyOptionUpdate(
+                    pinNumberSettings,
+                    userResponse.pinNumberSettings,
+                );
                 anyUpdates = true;
             }
         }
@@ -1687,6 +1769,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats,
             pinnedChannels,
             favouriteChats,
+            pinNumberSettings,
             userCanisterLocalUserIndex,
         };
 
@@ -1920,7 +2003,7 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -1929,7 +2012,11 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
-                return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
+                return localUserIndexClient.joinGroup(
+                    chatId.groupId,
+                    groupInviteCode,
+                    credentialArgs,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -1937,7 +2024,11 @@ export class OpenChatAgent extends EventTarget {
                 ).localUserIndex();
                 const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
-                return localUserIndexClient.joinChannel(chatId, communityInviteCode);
+                return localUserIndexClient.joinChannel(
+                    chatId,
+                    communityInviteCode,
+                    credentialArgs,
+                );
             }
         }
     }
@@ -1945,7 +2036,7 @@ export class OpenChatAgent extends EventTarget {
     async joinCommunity(
         id: CommunityIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -1954,6 +2045,7 @@ export class OpenChatAgent extends EventTarget {
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
+            credentialArgs,
         );
     }
 
@@ -2356,10 +2448,11 @@ export class OpenChatAgent extends EventTarget {
 
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
+        pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.withdrawCryptocurrency(domain);
+        return this.userClient.withdrawCryptocurrency(domain, pin);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
@@ -2812,9 +2905,9 @@ export class OpenChatAgent extends EventTarget {
                         const updated = {
                             lastUpdated: updates.lastUpdated,
                             tokenDetails: distinctBy(
-                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ),
+                            ).filter((t) => t.enabled),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,
@@ -2960,7 +3053,12 @@ export class OpenChatAgent extends EventTarget {
                 deleteMessage,
             );
         } else {
-            return this.userClient.reportMessage(chatId, messageId, deleteMessage);
+            return this.userClient.reportMessage(
+                chatId,
+                threadRootMessageIndex,
+                messageId,
+                deleteMessage,
+            );
         }
     }
 
@@ -3024,6 +3122,7 @@ export class OpenChatAgent extends EventTarget {
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
+        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
         return this._dexesAgent
             .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
@@ -3051,6 +3150,7 @@ export class OpenChatAgent extends EventTarget {
                     amountIn,
                     minAmountOut,
                     exchangeArgs,
+                    pin,
                 );
             });
     }
@@ -3064,8 +3164,9 @@ export class OpenChatAgent extends EventTarget {
         ledger: string,
         amount: bigint,
         expiresIn: bigint | undefined,
+        pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn);
+        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn, pin);
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
@@ -3089,7 +3190,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        return this._icpcoinsClient.exchangeRates();
+        return isMainnet(this.config.icUrl)
+            ? this._icpcoinsClient.exchangeRates()
+            : Promise.resolve({});
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -3100,20 +3203,28 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
                 chatId.channelId,
                 threadRootMessageIndex,
                 messageId,
+                pin,
             );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).acceptP2PSwap(
                 threadRootMessageIndex,
                 messageId,
+                pin,
             );
         } else {
-            return this.userClient.acceptP2PSwap(chatId.userId, messageId);
+            return this.userClient.acceptP2PSwap(
+                chatId.userId,
+                threadRootMessageIndex,
+                messageId,
+                pin,
+            );
         }
     }
 
@@ -3136,5 +3247,152 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.cancelP2PSwap(chatId.userId, messageId);
         }
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince?: bigint,
+    ): Promise<VideoCallParticipantsResponse> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).videoCallParticipants(
+                    chatId.channelId,
+                    messageId,
+                    updatesSince,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).videoCallParticipants(
+                    messageId,
+                    updatesSince,
+                );
+        }
+    }
+
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).joinVideoCall(
+                chatId.channelId,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
+        } else {
+            return this.userClient.joinVideoCall(chatId.userId, messageId);
+        }
+    }
+
+    setVideoCallPresence(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        switch (chatId.kind) {
+            case "channel":
+                return this.communityClient(chatId.communityId).setVideoCallPresence(
+                    chatId.channelId,
+                    messageId,
+                    presence,
+                );
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).setVideoCallPresence(
+                    messageId,
+                    presence,
+                );
+        }
+    }
+
+    async getAccessToken(
+        chatId: ChatIdentifier,
+        accessTokenType: AccessTokenType,
+        localUserIndex: string,
+    ): Promise<string | undefined> {
+        return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
+            chatId,
+            accessTokenType,
+        );
+    }
+
+    async getLocalUserIndexForUser(userId: string): Promise<string> {
+        const localUserIndex = await getLocalUserIndexForUser(userId);
+        if (localUserIndex !== undefined) {
+            return localUserIndex;
+        }
+        return UserClient.create(userId, this.identity, this.config, this.db)
+            .localUserIndex()
+            .then((localUserIndex) => {
+                return cacheLocalUserIndexForUser(userId, localUserIndex);
+            });
+    }
+
+    updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
+        return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
+    }
+
+    generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
+        return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
+    }
+
+    getSignInWithEmailDelegation(
+        email: string,
+        sessionKey: Uint8Array,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        return this._signInWithEmailClient.getDelegation(email, sessionKey, expiration);
+    }
+
+    siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
+        return this._signInWithEthereumClient.prepareLogin(address);
+    }
+
+    siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
+        return this._signInWithSolanaClient.prepareLogin(address);
+    }
+
+    loginWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        signature: string,
+        sessionKey: Uint8Array,
+    ): Promise<PrepareDelegationResponse> {
+        switch (token) {
+            case "eth":
+                return this._signInWithEthereumClient.login(signature, address, sessionKey);
+            case "sol":
+                return this._signInWithSolanaClient.login(signature, address, sessionKey);
+        }
+    }
+
+    getDelegationWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        sessionKey: Uint8Array,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        switch (token) {
+            case "eth":
+                return this._signInWithEthereumClient.getDelegation(
+                    address,
+                    sessionKey,
+                    expiration,
+                );
+            case "sol":
+                return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
+        }
+    }
+
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
+        return this.userClient.setPinNumber(currentPin, newPin);
+    }
+
+    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
+        return this._userIndexClient.claimDailyChit(userId);
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this._userIndexClient.chitLeaderboard();
     }
 }

@@ -14,5 +14,6 @@ pub struct Args {
 pub enum Response {
     Success(MessagesResponse),
     ChatNotFound,
+    ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
 }

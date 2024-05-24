@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::ChatId;
 
 #[test]
@@ -45,7 +45,7 @@ fn join_private_group_with_invitation_succeeds() {
 
     client::local_user_index::happy_path::invite_users_to_group(
         env,
-        user1.principal,
+        &user1,
         canister_ids.local_user_index,
         group_id,
         vec![user2.user_id],
@@ -92,6 +92,7 @@ fn join_private_group_using_invite_code_succeeds() {
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: Some(invite_code),
+            verified_credential_args: None,
             correlation_id: 0,
         },
     );
@@ -113,7 +114,7 @@ fn join_private_group_using_invite_code_succeeds() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 

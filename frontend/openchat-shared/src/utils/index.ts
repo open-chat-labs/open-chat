@@ -1,5 +1,7 @@
 export { getTimeUntilSessionExpiryMs } from "./session";
 export * from "./i18n";
+export * from "./identity";
+export * from "./identityStorage";
 export * from "./bigint";
 export * from "./chat";
 export * from "./logging";

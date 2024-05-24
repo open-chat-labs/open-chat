@@ -6,7 +6,7 @@ use crate::{
     mutate_state, read_state,
 };
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use translations_canister::approve::{Response::*, *};
 use types::Cryptocurrency;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
@@ -33,6 +33,7 @@ async fn approve(args: Args) -> Response {
                     amount: 100_000_000, // 1 CHAT
                     reason: PendingPaymentReason::Approval,
                 });
+                crate::jobs::make_pending_payments::start_job_if_required(state);
             }
             Success
         }

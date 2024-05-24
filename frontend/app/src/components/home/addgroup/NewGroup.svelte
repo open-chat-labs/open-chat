@@ -20,6 +20,7 @@
         type MultiUserChatIdentifier,
         type UserSummary,
         type Level,
+        type ResourceKey,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -27,7 +28,7 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -73,6 +74,12 @@
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
 
+    $: {
+        if (candidateGroup.public) {
+            candidateGroup.permissions.startVideoCall = "admin";
+        }
+    }
+
     function getSteps(
         editing: boolean,
         detailsValid: boolean,
@@ -93,7 +100,7 @@
         return steps;
     }
 
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
             $selectedCommunity === undefined || client.canInviteUsers($selectedCommunity.id);
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
@@ -245,14 +252,11 @@
                         });
                     step = 0;
                 } else if (!hideInviteUsers) {
-                    return optionallyInviteUsers(resp.canisterId)
-                        .then(() => {
-                            onGroupCreated(resp.canisterId);
-                        })
-                        .catch((_err) => {
-                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                            step = 0;
-                        });
+                    onGroupCreated(resp.canisterId);
+                    optionallyInviteUsers(resp.canisterId).catch((_err) => {
+                        toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
+                        step = 0;
+                    });
                 } else {
                     onGroupCreated(resp.canisterId);
                 }

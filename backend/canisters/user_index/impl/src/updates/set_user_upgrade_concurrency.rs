@@ -1,7 +1,7 @@
 use crate::guards::caller_is_platform_operator;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UserUpgradeConcurrencyChanged};
 use tracing::info;
 use user_index_canister::set_user_upgrade_concurrency::{Response::*, *};

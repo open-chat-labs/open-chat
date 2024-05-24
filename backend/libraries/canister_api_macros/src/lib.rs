@@ -4,8 +4,8 @@ use quote::{format_ident, quote};
 use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
-use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, Pat, PatIdent, PatType, Signature, Token};
+use syn::parse::{Parse, ParseStream};
+use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, Signature, Token};
 
 enum MethodType {
     Update,
@@ -72,7 +72,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let candid = if include_candid {
         quote! {
-            #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
+            #[ic_cdk::#method_type(name = #name, #guard #manual_reply)]
             #item
         }
     } else {
@@ -83,7 +83,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
     let msgpack = quote! {
-        #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+        #[ic_cdk::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
         #msgpack_item
     };
 
@@ -109,22 +109,17 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
     let validate_fn = convert_to_validate_fn(original_fn.clone());
 
     TokenStream::from(quote! {
-        #[ic_cdk_macros::query(name = #validate_fn_name, #guard #manual_reply)]
+        #[ic_cdk::query(name = #validate_fn_name, #guard #manual_reply)]
         #validate_fn
 
-        #[ic_cdk_macros::update(name = #name, #guard #manual_reply)]
+        #[ic_cdk::update(name = #name, #guard #manual_reply)]
         #original_fn
     })
 }
 
 #[proc_macro]
 pub fn proposal_validation(input: TokenStream) -> TokenStream {
-    let inputs = parse_macro_input!(input with Punctuated::<Ident, Token![,]>::parse_terminated)
-        .into_iter()
-        .map(|i| i.to_string())
-        .collect();
-
-    let attribute = get_validation_method_attribute(inputs);
+    let attribute = parse_macro_input!(input as ValidationMethodAttribute);
 
     let their_service_name = format_ident!("{}", attribute.service_name);
     let their_function_name = format_ident!("{}", attribute.function_name);
@@ -132,10 +127,20 @@ pub fn proposal_validation(input: TokenStream) -> TokenStream {
 
     let args_type = quote! { #their_service_name::#their_function_name::Args };
 
-    let tokens = quote! {
-        #[ic_cdk_macros::query]
-        fn #our_function_name(args: #args_type) -> Result<String, String> {
+    let to_string_fn = if attribute.convert_to_human_readable {
+        quote! {
             human_readable::to_human_readable_string(&args)
+        }
+    } else {
+        quote! {
+            serde_json::to_string_pretty(&args).map_err(|e| e.to_string())
+        }
+    };
+
+    let tokens = quote! {
+        #[ic_cdk::query]
+        fn #our_function_name(args: #args_type) -> Result<String, String> {
+            #to_string_fn
         }
     };
 
@@ -187,17 +192,29 @@ fn get_arg_names(signature: &Signature) -> Vec<Ident> {
         .collect()
 }
 
-fn get_validation_method_attribute(inputs: Vec<String>) -> ValidationMethodAttribute {
-    let service_name = inputs.first().unwrap().to_string();
-    let function_name = inputs.get(1).unwrap().to_string();
-
-    ValidationMethodAttribute {
-        service_name,
-        function_name,
-    }
-}
-
 struct ValidationMethodAttribute {
     service_name: String,
     function_name: String,
+    convert_to_human_readable: bool,
+}
+
+impl Parse for ValidationMethodAttribute {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let service_name: Ident = input.parse()?;
+        let _: Token![,] = input.parse()?;
+        let function_name: Ident = input.parse()?;
+        let _: Token![,] = input.parse()?;
+        let convert_to_human_readable = if input.is_empty() {
+            true
+        } else {
+            let b: LitBool = input.parse()?;
+            b.value()
+        };
+
+        Ok(ValidationMethodAttribute {
+            service_name: service_name.to_string(),
+            function_name: function_name.to_string(),
+            convert_to_human_readable,
+        })
+    }
 }

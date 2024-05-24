@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
+import { gaTrack } from "./utils/ga";
+import { type Identity } from "@dfinity/agent";
+import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -49,6 +50,7 @@ import {
     isFrozen,
     isPreviewing,
     buildTransactionLink,
+    buildTransactionUrlByIndex,
     buildCryptoTransferText,
     mergeSendMessageResponse,
     serialiseMessageForRtc,
@@ -64,6 +66,8 @@ import {
     permittedMessagesInGroup,
     activeUserIdFromEvent,
     doesMessageFailFilter,
+    canStartVideoCalls,
+    buildBlobUrl,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -78,11 +82,7 @@ import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import {
-    idbAuthClientStore,
-    lsAuthClientStore,
-    selectedAuthProviderStore,
-} from "./stores/authProviders";
+import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
@@ -134,6 +134,8 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
+    currentChatMembersMap,
+    hideMessagesFromDirectBlocked,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -186,6 +188,7 @@ import {
     suspendedUser,
     platformModerator,
     platformOperator,
+    videoCallBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -212,9 +215,14 @@ import {
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
+    spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
-import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
+import {
+    createRemoteVideoStartedEvent,
+    filterWebRtcMessage,
+    parseWebRtcMessage,
+} from "./utils/rtc";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -232,6 +240,7 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
+    RemoteVideoCallStartedEvent,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -240,12 +249,12 @@ import {
     ThreadSelected,
     UserLoggedIn,
     UserSuspensionChanged,
+    VideoCallMessageUpdated,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
-import type { MessageFormatter } from "./utils/i18n";
 import { indexIsInRanges } from "./utils/range";
-import { OpenChatAgentWorker } from "./agentWorker";
+import { DEFAULT_WORKER_TIMEOUT, OpenChatAgentWorker } from "./agentWorker";
 import type {
     CreatedUser,
     IdentityState,
@@ -369,6 +378,22 @@ import type {
     CandidateTranslations,
     ProposeResponse,
     RejectReason,
+    JoinVideoCallResponse,
+    AccessTokenType,
+    UpdateBtcBalanceResponse,
+    ApproveAccessGatePaymentResponse,
+    ClientJoinGroupResponse,
+    ClientJoinCommunityResponse,
+    GenerateMagicLinkResponse,
+    HandleMagicLinkResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    GetDelegationResponse,
+    VideoCallPresence,
+    VideoCallParticipant,
+    AcceptedRules,
+    ClaimDailyChitResponse,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -407,6 +432,14 @@ import {
     isPaymentGate,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
+    LEDGER_CANISTER_CHAT,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    IdentityStorage,
+    NoMeetingToJoin,
+    featureRestricted,
+    buildDelegationIdentity,
+    toDer,
+    storeIdentity,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -444,6 +477,10 @@ import {
     unreadCommunityChannelCounts,
     globalUnreadCount,
     mergeCombinedUnreadCounts,
+    groupVideoCallCounts,
+    directVideoCallCounts,
+    favouritesVideoCallCounts,
+    communityChannelVideoCallCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -462,22 +499,42 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
+import { isBalanceGate } from "openchat-shared";
+import { ECDSAKeyIdentity } from "@dfinity/identity";
+import {
+    capturePinNumberStore,
+    pinNumberFailureStore,
+    pinNumberRequiredStore,
+} from "./stores/pinNumber";
+import { captureRulesAcceptanceStore } from "./stores/rules";
+import type { SetPinNumberResponse } from "openchat-shared";
+import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
+import { canRetryMessage, isTransfer } from "openchat-shared";
+import type { ChitUserBalance } from "openchat-shared";
+import {
+    initialiseMostRecentSentMessageTimes,
+    shouldThrottle,
+    throttleDeadline,
+} from "./stores/throttling";
 
-const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
-const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat extends OpenChatAgentWorker {
+    private _ocIdentityStorage: IdentityStorage;
+    private _userLocation: string | undefined;
+    private _authClientStorage: AuthClientStorage = new IdbStorage();
     private _authClient: Promise<AuthClient>;
-    private _identity: Identity | undefined;
+    private _authPrincipal: string | undefined;
+    private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
     identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
@@ -512,6 +569,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+            [OPENCHAT_VIDEO_CALL_USER_ID]: videoCallBotUser,
             [ANON_USER_ID]: anonymousUserSummary,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
@@ -520,23 +578,18 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
 
-        getUserCountryCode()
-            .then((country) => {
-                console.debug("GEO: User's country location is: ", country);
-            })
-            .catch((err) => {
-                console.warn("GEO: Unable to determine user's country location", err);
-            });
-
+        this._ocIdentityStorage = new IdentityStorage();
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
                 disableDefaultIdleCallback: true,
             },
-            storage: idbAuthClientStore,
+            storage: this._authClientStorage,
         });
 
-        this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+        this._authClient
+            .then((c) => c.getIdentity())
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -563,11 +616,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
-    private loadedIdentity(id: Identity) {
-        this._identity = id;
+    private loadedAuthenticationIdentity(id: Identity) {
+        currentUser.set(anonymousUser());
+        chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
+        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
-        this.loadUser(anon);
+        this.loadUser();
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -584,17 +639,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
     login(): void {
         this.identityState.set({ kind: "logging_in" });
-        const authProvider = this._liveState.selectedAuthProvider;
+        const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
                 identityProvider: this.buildAuthProviderUrl(authProvider),
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: this.config.iiDerivationOrigin,
-                onSuccess: () => {
-                    currentUser.set(anonymousUser());
-                    chatsInitialised.set(false);
-                    this.loadedIdentity(c.getIdentity());
-                },
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.identityState.set({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -604,15 +655,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
-        if (authProvider === AuthProvider.II) {
-            return this.config.internetIdentityUrl;
-        } else {
-            return (
-                this.config.nfidUrl +
-                "&applicationLogo=" +
-                encodeURIComponent("https://oc.app/apple-touch-icon.png") +
-                "#authorize"
-            );
+        switch (authProvider) {
+            case AuthProvider.II:
+                return this.config.internetIdentityUrl;
+            case AuthProvider.NFID:
+                return (
+                    this.config.nfidUrl +
+                    "&applicationLogo=" +
+                    encodeURIComponent("https://oc.app/apple-touch-icon.png") +
+                    "#authorize"
+                );
         }
     }
 
@@ -682,8 +734,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadUser(anon: boolean = false) {
+    private async loadUser() {
         await this.connectToWorker();
+
+        if (this._authPrincipal !== undefined) {
+            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        } else {
+            await this._ocIdentityStorage.remove();
+        }
 
         this.startRegistryPoller();
         this.startExchangeRatePoller();
@@ -692,7 +750,7 @@ export class OpenChat extends OpenChatAgentWorker {
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
 
-        if (anon) {
+        if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
@@ -749,35 +807,33 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        if (this._identity === undefined) {
-            throw new Error("onCreatedUser called before the user's identity has been established");
-        }
         this.user.set(user);
+        this._cachePrimer = new CachePrimer(this, user, (ev) => this.dispatchEvent(ev));
         this.setDiamondStatus(user.diamondStatus);
-        const id = this._identity;
+        initialiseMostRecentSentMessageTimes(this._liveState.isDiamond);
+        const id = this._ocIdentity;
 
-        if (user.canisterUpgradeStatus === "in_progress") {
-            this.identityState.set({ kind: "upgrading_user" });
-            window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
-        } else {
-            this.sendRequest({ kind: "createUserClient", userId: user.userId });
-            startMessagesReadTracker(this);
-            this.startOnlinePoller();
-            startSwCheckPoller();
+        this.sendRequest({ kind: "createUserClient", userId: user.userId });
+        startMessagesReadTracker(this);
+        startSwCheckPoller();
+        if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
-            this.startChatsPoller();
-            this.startUserUpdatePoller();
-            initNotificationStores();
-            this.sendRequest({ kind: "getUserStorageLimits" })
-                .then(storageStore.set)
-                .catch((err) => {
-                    console.warn("Unable to retrieve user storage limits", err);
-                });
-            if (!this._liveState.anonUser) {
-                this.identityState.set({ kind: "logged_in" });
-                this.initWebRtc();
-                this.dispatchEvent(new UserLoggedIn(user.userId));
-            }
+        }
+
+        this.startOnlinePoller();
+        this.startChatsPoller();
+        this.startUserUpdatePoller();
+        this.sendRequest({ kind: "getUserStorageLimits" })
+            .then(storageStore.set)
+            .catch((err) => {
+                console.warn("Unable to retrieve user storage limits", err);
+            });
+
+        initNotificationStores();
+        if (!this._liveState.anonUser) {
+            this.identityState.set({ kind: "logged_in" });
+            this.initWebRtc();
+            this.dispatchEvent(new UserLoggedIn(user.userId));
         }
     }
 
@@ -844,18 +900,17 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    logout(): Promise<void> {
-        return this._authClient.then((c) => {
-            return c.logout().then(() => window.location.replace("/"));
-        });
+    async logout(): Promise<void> {
+        await Promise.all([
+            this._ocIdentityStorage.remove(),
+            this._authClient.then((c) => c.logout()),
+        ]).then(() => window.location.replace("/"));
     }
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_IDENTITY);
-        const identity = ls != null || idb != null;
-        return this._liveState.userCreated && identity;
+        const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
+        return this._liveState.userCreated && identity !== null;
     }
 
     unreadThreadMessageCount(
@@ -1180,11 +1235,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
-        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
+        if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
+            return Promise.resolve(undefined);
+        }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._identity!.getPrincipal().toString(),
+            this._authPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.credentialType,
             gate.credential.credentialArguments,
@@ -1192,7 +1249,9 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary): Promise<boolean> {
+    async approveAccessGatePayment(
+        group: MultiUserChat | CommunitySummary,
+    ): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
         if (!isPaymentGate(group.gate)) {
             // If this is a channel there might still be a payment gate on the community
@@ -1204,7 +1263,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     })!,
                 );
             } else {
-                return true;
+                return CommonResponses.success();
             }
         }
 
@@ -1215,7 +1274,13 @@ export class OpenChat extends OpenChatAgentWorker {
         const token = this.getTokenDetailsForAccessGate(group.gate);
 
         if (token === undefined) {
-            return false;
+            return CommonResponses.failure();
+        }
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
         return this.sendRequest({
@@ -1224,24 +1289,32 @@ export class OpenChat extends OpenChatAgentWorker {
             ledger: group.gate.ledgerCanister,
             amount: group.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
             expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
+            pin,
         })
             .then((response) => {
-                if (response?.kind !== "success") {
-                    this._logger.error("Unable to approve transfer", response?.error);
-                    return false;
+                if (response.kind === "approve_error" || response.kind === "internal_error") {
+                    this._logger.error("Unable to approve transfer", response.error);
+                    return CommonResponses.failure();
+                } else if (
+                    response.kind === "pin_incorrect" ||
+                    response.kind === "pin_required" ||
+                    response.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(response as PinNumberFailures);
                 }
 
-                return true;
+                return response;
             })
-            .catch(() => false);
+            .catch(() => CommonResponses.failure());
     }
 
     async joinGroup(
         chat: MultiUserChat,
-        credential?: string,
-    ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        if (!(await this.approveAccessGatePayment(chat))) {
-            return "gate_check_failed";
+        credentialJwt: string | undefined,
+    ): Promise<ClientJoinGroupResponse> {
+        const approveResponse = await this.approveAccessGatePayment(chat);
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
         }
 
         const localUserIndex =
@@ -1253,7 +1326,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1286,23 +1359,35 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 } else {
                     if (resp.kind === "user_blocked") {
-                        return "blocked";
+                        return CommonResponses.blocked();
                     } else if (resp.kind === "gate_check_failed") {
-                        return "gate_check_failed";
+                        return resp;
                     }
-                    return "failure";
+                    return CommonResponses.failure();
                 }
-                return "success";
+                return CommonResponses.success();
             })
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     if (this._liveState.groupPreviews.has(chat.id)) {
                         removeGroupPreview(chat.id);
                     }
                 }
                 return resp;
             })
-            .catch(() => "failure");
+            .catch(() => CommonResponses.failure());
+    }
+
+    private buildVerifiedCredentialArgs(
+        credentialJwt: string | undefined,
+    ): VerifiedCredentialArgs | undefined {
+        return credentialJwt !== undefined && this._authPrincipal !== undefined
+            ? {
+                  userIIPrincipal: this._authPrincipal,
+                  iiOrigin: new URL(this.config.internetIdentityUrl).origin,
+                  credentialJwt,
+              }
+            : undefined;
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
@@ -1487,7 +1572,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return false;
                 }
             } else {
-                return canSendGroupMessage(chat, mode, permission);
+                return canSendGroupMessage(this._liveState.user, chat, mode, permission);
             }
         });
     }
@@ -1508,7 +1593,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                 }
             } else {
-                return permittedMessagesInGroup(chat, mode);
+                return permittedMessagesInGroup(this._liveState.user, chat, mode);
             }
         }
 
@@ -1517,6 +1602,23 @@ export class OpenChat extends OpenChatAgentWorker {
 
     canDeleteOtherUsersMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canDeleteOtherUsersMessages);
+    }
+
+    canStartVideoCalls(chatId: ChatIdentifier): boolean {
+        return this.chatPredicate(chatId, (chat) => canStartVideoCalls(chat));
+    }
+
+    isChatPrivate(chat: ChatSummary): boolean {
+        switch (chat.kind) {
+            case "channel": {
+                const community = this.getCommunityForChannel(chat.id);
+                return !(community?.public ?? true) || !chat.public;
+            }
+            case "group_chat":
+                return !chat.public;
+            default:
+                return true;
+        }
     }
 
     canPinMessages(chatId: ChatIdentifier): boolean {
@@ -1666,6 +1768,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return userId === OPENCHAT_BOT_USER_ID;
     }
 
+    isVideoCallBot(userId: string): boolean {
+        return userId === OPENCHAT_VIDEO_CALL_USER_ID;
+    }
+
     isChatReadOnly(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
         return this._liveState.suspendedUser || this.isPreviewing(chatId);
@@ -1749,6 +1855,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const userId = this._liveState.user.userId;
         localMessageUpdates.markDeleted(messageId, userId);
+        undeletingMessagesStore.delete(messageId);
 
         const recipients = [...chatStateStore.getProp(id, "userIds")];
 
@@ -2102,6 +2209,7 @@ export class OpenChat extends OpenChatAgentWorker {
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
     youtubeRegex = youtubeRegex;
+    spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
@@ -2309,6 +2417,15 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    openThreadFromMessageIndex(_chatId: ChatIdentifier, messageIndex: number): void {
+        const event = this._liveState.events.find(
+            (ev) => ev.event.kind === "message" && ev.event.messageIndex === messageIndex,
+        ) as EventWrapper<Message> | undefined;
+        if (event !== undefined) {
+            this.openThread(event, event.event.thread === undefined);
+        }
+    }
+
     openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
         this.clearThreadEvents();
         selectedMessageContext.update((context) => {
@@ -2488,13 +2605,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 current.amount !== original.amount
             );
         }
+        if (isBalanceGate(current) && isBalanceGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.minBalance !== original.minBalance
+            );
+        }
         return false;
     }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
-        } else if (gate.kind === "payment_gate") {
+        } else if (gate.kind === "payment_gate" || gate.kind === "token_balance_gate") {
             return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
@@ -2740,6 +2863,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }).catch(() => "failure");
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "membersMap",
+                    resp.members.reduce((all, m) => {
+                        all.set(m.userId, m);
+                        return all;
+                    }, new Map()),
+                );
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
@@ -2747,12 +2878,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             await this.updateUserStore(serverChat.id, []);
         }
-    }
-
-    private buildBlobUrl(canisterId: string, blobId: bigint, blobType: "blobs" | "avatar"): string {
-        return `${this.config.blobUrlPattern
-            .replace("{canisterId}", canisterId)
-            .replace("{blobType}", blobType)}${blobId}`;
     }
 
     // this is unavoidably duplicated from the agent
@@ -2765,7 +2890,12 @@ export class OpenChat extends OpenChatAgentWorker {
             ? {
                   ...dataContent,
                   blobData: undefined,
-                  blobUrl: this.buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+                  blobUrl: buildBlobUrl(
+                      this.config.blobUrlPattern,
+                      ref.canisterId,
+                      ref.blobId,
+                      blobType,
+                  ),
               }
             : dataContent;
     }
@@ -2819,7 +2949,21 @@ export class OpenChat extends OpenChatAgentWorker {
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
                         }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
-                  ).then((resp) => this.handleEventsResponse(serverChat, resp));
+                  ).then((resp) => {
+                      if (resp !== "events_failed") {
+                          resp.events.forEach((e) => {
+                              if (
+                                  e.event.kind === "message" &&
+                                  e.event.content.kind === "video_call_content"
+                              ) {
+                                  this.dispatchEvent(
+                                      new VideoCallMessageUpdated(serverChat.id, e.event.messageId),
+                                  );
+                              }
+                          });
+                      }
+                      return this.handleEventsResponse(serverChat, resp);
+                  });
 
         const threadEventPromise =
             currentThreadEvents.length === 0
@@ -2963,19 +3107,13 @@ export class OpenChat extends OpenChatAgentWorker {
     groupWhile = groupWhile;
     sameUser = sameUser;
 
-    forwardMessage(
-        messageContext: MessageContext,
-        msg: Message,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-    ): void {
+    forwardMessage(messageContext: MessageContext, msg: Message): void {
         this.sendMessageWithContent(
             messageContext,
             { ...msg.content },
+            msg.blockLevelMarkdown,
             [],
             true,
-            rulesAccepted,
-            communityRulesAccepted,
         );
     }
 
@@ -3018,6 +3156,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const now = BigInt(Date.now());
         const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
+        // To ensure we keep the chat summary up to date, if these events are in the main event list, check if there is
+        // now a new latest message and if so, mark it as a local chat summary update.
+        let latestMessageIndex =
+            threadRootMessageIndex === undefined
+                ? this._liveState.serverChatSummaries.get(chatId)?.latestMessageIndex ?? -1
+                : undefined;
+        let newLatestMessage: EventWrapper<Message> | undefined = undefined;
+
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { messageIndex, messageId } = event.event;
@@ -3039,6 +3185,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 ) {
                     messagesRead.markMessageRead(context, messageIndex, messageId);
                 }
+                if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
+                    newLatestMessage = event as EventWrapper<Message>;
+                    latestMessageIndex = messageIndex;
+                }
             }
             if (event.timestamp > recentlyActiveCutOff) {
                 const userId = activeUserIdFromEvent(event.event);
@@ -3052,6 +3202,9 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents, context),
             );
+            if (newLatestMessage !== undefined) {
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
+            }
             const selectedThreadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
                 const threadRootEvent = newEvents.find(
@@ -3115,8 +3268,6 @@ export class OpenChat extends OpenChatAgentWorker {
     async retrySendMessage(
         messageContext: MessageContext,
         event: EventWrapper<Message>,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
     ): Promise<void> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
@@ -3148,14 +3299,7 @@ export class OpenChat extends OpenChatAgentWorker {
         unconfirmed.add(messageContext, retryEvent);
 
         // TODO - what about mentions?
-        this.sendMessageCommon(
-            chat,
-            messageContext,
-            retryEvent,
-            [],
-            rulesAccepted,
-            communityRulesAccepted,
-        );
+        this.sendMessageCommon(chat, messageContext, retryEvent, [], true);
     }
 
     private async sendMessageCommon(
@@ -3163,28 +3307,49 @@ export class OpenChat extends OpenChatAgentWorker {
         messageContext: MessageContext,
         eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-    ): Promise<void> {
+        retrying: boolean,
+    ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
-        const canRetry = this.canRetryMessage(eventWrapper.event.content);
+        let acceptedRules: AcceptedRules | undefined = undefined;
+        if (this.rulesNeedAccepting()) {
+            acceptedRules = await this.promptForRuleAcceptance();
+            if (acceptedRules === undefined) {
+                return CommonResponses.failure();
+            }
+        }
+
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired && isTransfer(eventWrapper.event.content)) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        if (this.throttleSendMessage()) {
+            return Promise.resolve({ kind: "message_throttled" });
+        }
+
+        if (!retrying) {
+            this.postSendMessage(chat, eventWrapper, threadRootMessageIndex);
+        }
+
+        const canRetry = canRetryMessage(eventWrapper.event.content);
 
         const messageFilterFailed = doesMessageFailFilter(
             eventWrapper.event,
             get(messageFiltersStore),
         );
 
-        this.sendRequest({
+        return this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
             messageContext,
             user: this._liveState.user,
             mentioned,
             event: eventWrapper,
-            rulesAccepted,
-            communityRulesAccepted,
+            acceptedRules,
             messageFilterFailed,
+            pin,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3209,13 +3374,24 @@ export class OpenChat extends OpenChatAgentWorker {
                         // double counting here which I think is OK since we are limited to string events
                         trackEvent("replied_to_message");
                     }
+
+                    if (acceptedRules?.chat !== undefined) {
+                        this.markChatRulesAcceptedLocally(true);
+                    }
+                    if (acceptedRules?.community !== undefined) {
+                        this.markCommunityRulesAcceptedLocally(true);
+                    }
                 } else {
                     if (resp.kind == "rules_not_accepted") {
                         this.markChatRulesAcceptedLocally(false);
-                    }
-
-                    if (resp.kind == "community_rules_not_accepted") {
+                    } else if (resp.kind == "community_rules_not_accepted") {
                         this.markCommunityRulesAcceptedLocally(false);
+                    } else if (
+                        resp.kind === "pin_incorrect" ||
+                        resp.kind === "pin_required" ||
+                        resp.kind === "too_main_failed_pin_attempts"
+                    ) {
+                        pinNumberFailureStore.set(resp as PinNumberFailures);
                     }
 
                     this.onSendMessageFailure(
@@ -3227,6 +3403,8 @@ export class OpenChat extends OpenChatAgentWorker {
                         resp,
                     );
                 }
+
+                return resp;
             })
             .catch(() => {
                 this.onSendMessageFailure(
@@ -3237,19 +3415,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     canRetry,
                     undefined,
                 );
+
+                return CommonResponses.failure();
             });
     }
 
-    private canRetryMessage(content: MessageContent): boolean {
-        return (
-            content.kind !== "poll_content" &&
-            content.kind !== "crypto_content" &&
-            content.kind !== "prize_content_initial" &&
-            content.kind !== "p2p_swap_content_initial"
-        );
-    }
-
-    rulesNeedAccepting(): boolean {
+    private rulesNeedAccepting(): boolean {
         const chatRules = this._liveState.currentChatRules;
         const chat = this._liveState.selectedChat;
         if (chat === undefined || chatRules === undefined) {
@@ -3285,14 +3456,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return chatRulesText + lineBreak + communityRulesText;
     }
 
-    markChatRulesAcceptedLocally(rulesAccepted: boolean) {
+    private markChatRulesAcceptedLocally(rulesAccepted: boolean) {
         const selectedChatId = this._liveState.selectedChatId;
         if (selectedChatId !== undefined) {
             localChatSummaryUpdates.markUpdated(selectedChatId, { rulesAccepted });
         }
     }
 
-    markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
+    private markCommunityRulesAcceptedLocally(rulesAccepted: boolean) {
         const selectedCommunityId = this._liveState.selectedCommunity?.id;
         if (selectedCommunityId !== undefined) {
             localCommunitySummaryUpdates.updateRulesAccepted(selectedCommunityId, rulesAccepted);
@@ -3315,18 +3486,17 @@ export class OpenChat extends OpenChatAgentWorker {
         return undefined;
     }
 
-    sendMessageWithContent(
+    async sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
+        blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
-    ): void {
+    ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this._liveState.chatSummaries.get(chatId);
         if (chat === undefined) {
-            return;
+            return Promise.resolve(CommonResponses.failure());
         }
 
         const draftMessage = this._liveState.draftMessages.get(messageContext);
@@ -3340,6 +3510,7 @@ export class OpenChat extends OpenChatAgentWorker {
             this._liveState.user.userId,
             nextMessageIndex,
             content,
+            blockLevelMarkdown,
             draftMessage?.replyingTo,
             forwarded,
         );
@@ -3351,33 +3522,26 @@ export class OpenChat extends OpenChatAgentWorker {
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
         };
 
-        this.sendMessageCommon(
-            chat,
-            messageContext,
-            event,
-            mentioned,
-            rulesAccepted,
-            communityRulesAccepted,
-        );
+        return this.sendMessageCommon(chat, messageContext, event, mentioned, false);
+    }
 
-        this.postSendMessage(chat, event, threadRootMessageIndex);
+    private throttleSendMessage(): boolean {
+        return shouldThrottle(this._liveState.isDiamond);
     }
 
     sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-        rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined,
     ): void {
-        return this.sendMessageWithContent(
+        this.sendMessageWithContent(
             messageContext,
             this.getMessageContent(textContent, attachment),
+            blockLevelMarkdown,
             mentioned,
             false,
-            rulesAccepted,
-            communityRulesAccepted,
         );
     }
 
@@ -3411,7 +3575,9 @@ export class OpenChat extends OpenChatAgentWorker {
             console.error("Error sending message", JSON.stringify(response));
         }
 
-        this.dispatchEvent(new SendMessageFailed(!canRetry));
+        if (!isTransfer(event.event.content)) {
+            this.dispatchEvent(new SendMessageFailed(!canRetry));
+        }
     }
 
     private postSendMessage(
@@ -3425,7 +3591,10 @@ export class OpenChat extends OpenChatAgentWorker {
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            unconfirmed.add(context, messageEvent);
+            if (!isTransfer(messageEvent.event.content)) {
+                unconfirmed.add(context, messageEvent);
+            }
+
             failedMessagesStore.delete(context, messageEvent.event.messageId);
 
             // mark our own messages as read manually since we will not be observing them
@@ -3441,9 +3610,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
             draftMessagesStore.delete(context);
 
-            this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                this.dispatchEvent(new SentMessage(context, messageEvent));
-            });
+            if (!isTransfer(messageEvent.event.content)) {
+                this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
+                    this.dispatchEvent(new SentMessage(context, messageEvent));
+                });
+            }
         }, 0);
     }
 
@@ -3471,6 +3642,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return buildTransactionLink(formatter, transfer, get(cryptoLookup));
     }
 
+    buildTransactionUrl(transactionIndex: bigint, ledger: string): string | undefined {
+        return buildTransactionUrlByIndex(transactionIndex, ledger, get(cryptoLookup));
+    }
+
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
         return messagesRead.getFirstUnreadMention(chat);
     }
@@ -3486,10 +3661,12 @@ export class OpenChat extends OpenChatAgentWorker {
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
+    gaTrack = gaTrack;
 
     editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         editingEvent: EventWrapper<Message>,
     ): Promise<boolean> {
@@ -3513,11 +3690,18 @@ export class OpenChat extends OpenChatAgentWorker {
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
             draftMessagesStore.delete(messageContext);
 
+            const updatedBlockLevelMarkdown =
+                msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
+            if (updatedBlockLevelMarkdown !== undefined) {
+                localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
+            }
+
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
                 threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                blockLevelMarkdown: updatedBlockLevelMarkdown,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -3620,9 +3804,31 @@ export class OpenChat extends OpenChatAgentWorker {
             ascending: false,
             threadRootMessageIndex,
             latestKnownUpdate: serverChat.lastUpdated,
-        }).catch(() => {
-            console.warn("Failed to load event from notification");
-        });
+        })
+            .then((resp) => {
+                if (resp === "events_failed") return resp;
+                if (!this.isChatPrivate(serverChat)) return resp;
+
+                const ev = resp.events.find((e) => e.index === eventIndex);
+                if (ev !== undefined) {
+                    if (
+                        ev.event.kind === "message" &&
+                        ev.event.content.kind === "video_call_content"
+                    ) {
+                        this.dispatchEvent(
+                            new RemoteVideoCallStartedEvent(
+                                chatId,
+                                ev.event.sender,
+                                ev.event.messageId,
+                            ),
+                        );
+                    }
+                }
+                return resp;
+            })
+            .catch(() => {
+                console.warn("Failed to load event from notification");
+            });
     }
 
     private handleConfirmedMessageSentByOther(
@@ -3694,6 +3900,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
+        if (msg.kind === "remote_video_call_started") {
+            const ev = createRemoteVideoStartedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -3806,13 +4019,17 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => []);
     }
 
+    lookupChatSummary(chatId: ChatIdentifier): ChatSummary | undefined {
+        return this._liveState.allChats.get(chatId);
+    }
+
     searchUsersForInvite(
         searchTerm: string,
         maxResults: number,
         level: Level,
         newGroup: boolean,
         canInviteUsers: boolean,
-    ): Promise<UserSummary[]> {
+    ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup
@@ -3827,7 +4044,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 channelMembers,
             );
             if (!canInviteUsers || communityMatches.length >= maxResults) {
-                return Promise.resolve(communityMatches);
+                return Promise.resolve([communityMatches, []]);
             }
 
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3840,19 +4057,19 @@ export class OpenChat extends OpenChatAgentWorker {
                     keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
                 }
 
-                const matches = [...communityMatches];
+                const matches = [];
 
                 // Add the global matches to the results, but only if they are not already in the community matches
                 for (const match of globalMatches) {
                     if (matches.length >= maxResults) {
                         break;
                     }
-                    if (!matches.some((m) => m.userId === match.userId)) {
+                    if (!communityMatches.some((m) => m.userId === match.userId)) {
                         matches.push(match);
                     }
                 }
 
-                return matches;
+                return [communityMatches, matches];
             });
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
@@ -3871,7 +4088,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
                     keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
                 }
-                return matches;
+                return [[], matches];
             });
         }
     }
@@ -3916,6 +4133,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const code = qs.get("ref") ?? undefined;
         let captured = false;
         if (code) {
+            gaTrack("captured_referral_code", "registration");
             localStorage.setItem("openchat_referredby", code);
             captured = true;
         }
@@ -3932,6 +4150,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
+                    gaTrack("registered_user", "registration");
+                    if (this._referralCode !== undefined) {
+                        gaTrack("registered_user_with_referral_code", "registration");
+                    }
                     this.clearReferralCode();
                 }
                 return res;
@@ -3946,7 +4168,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
@@ -4006,7 +4227,13 @@ export class OpenChat extends OpenChatAgentWorker {
     inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
         const localUserIndex = this.localUserIndexForChat(chatId);
-        return this.sendRequest({ kind: "inviteUsers", chatId, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsers",
+            chatId,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersLocally(chatId, userIds);
@@ -4035,7 +4262,13 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<InviteUsersResponse> {
         this.inviteUsersToCommunityLocally(id, userIds);
         const localUserIndex = this.localUserIndexForCommunity(id.communityId);
-        return this.sendRequest({ kind: "inviteUsersToCommunity", id, localUserIndex, userIds })
+        return this.sendRequest({
+            kind: "inviteUsersToCommunity",
+            id,
+            localUserIndex,
+            userIds,
+            callerUsername: this._liveState.user.username,
+        })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersToCommunityLocally(id, userIds);
@@ -4218,6 +4451,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     set groupInvite(value: GroupInvite) {
+        this.config.groupInvite = value;
         this.sendRequest({
             kind: "groupInvite",
             value,
@@ -4273,6 +4507,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 return val;
             })
             .catch(() => 0n);
+    }
+
+    refreshTranslationsBalance(): Promise<bigint> {
+        return this.sendRequest({
+            kind: "refreshAccountBalance",
+            ledger: LEDGER_CANISTER_CHAT,
+            principal: this.config.translationsCanister,
+        }).catch(() => 0n);
     }
 
     async getAccountTransactions(
@@ -4437,10 +4679,26 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getBio", userId });
     }
 
-    withdrawCryptocurrency(
+    async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
-        return this.sendRequest({ kind: "withdrawCryptocurrency", domain });
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        return this.sendRequest({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+
+            return resp;
+        });
     }
 
     getGroupMessagesByMessageIndex(
@@ -4893,6 +5151,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
+            pinNumberRequiredStore.set(chatsResponse.state.pinNumberSettings !== undefined);
+
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
@@ -5011,26 +5271,43 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    acceptP2PSwap(
+    async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
     ): Promise<AcceptP2PSwapResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: this._liveState.user.userId,
         });
+
         return this.sendRequest({
             kind: "acceptP2PSwap",
             chatId,
             threadRootMessageIndex,
             messageId,
+            pin,
         })
             .then((resp) => {
                 localMessageUpdates.setP2PSwapStatus(
                     messageId,
                     mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
                 );
+
+                if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
+                }
+
                 return resp;
             })
             .catch((err) => {
@@ -5064,6 +5341,88 @@ export class OpenChat extends OpenChatAgentWorker {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
                 return { kind: "internal_error", text: err.toString() };
             });
+    }
+
+    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+        return this.sendRequest({
+            kind: "joinVideoCall",
+            chatId,
+            messageId,
+        });
+    }
+
+    setVideoCallPresence(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        presence: VideoCallPresence,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "setVideoCallPresence",
+            chatId,
+            messageId,
+            presence,
+        })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    private mapVideoCallParticipants(
+        users: Record<string, UserSummary>,
+        participant: VideoCallParticipant,
+    ): Record<string, UserSummary> {
+        if (this._liveState.userStore[participant.userId]) {
+            users[participant.userId] = this._liveState.userStore[participant.userId];
+        }
+        return users;
+    }
+
+    videoCallParticipants(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        updatesSince: bigint,
+    ): Promise<{
+        participants: Record<string, UserSummary>;
+        hidden: Record<string, UserSummary>;
+        lastUpdated: bigint;
+    }> {
+        return this.sendRequest({
+            kind: "videoCallParticipants",
+            chatId,
+            messageId,
+            updatesSince,
+        })
+            .then(async (resp) => {
+                if (resp.kind === "success") {
+                    const allUserIds = [
+                        ...resp.participants.map((u) => u.userId),
+                        ...resp.hidden.map((u) => u.userId),
+                    ];
+                    await this.getMissingUsers(allUserIds);
+
+                    return {
+                        participants: resp.participants.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        hidden: resp.hidden.reduce<Record<string, UserSummary>>(
+                            (u, p) => this.mapVideoCallParticipants(u, p),
+                            {},
+                        ),
+                        lastUpdated: resp.lastUpdated,
+                    };
+                } else {
+                    return {
+                        participants: {},
+                        hidden: {},
+                        lastUpdated: updatesSince,
+                    };
+                }
+            })
+            .catch((_) => ({
+                participants: {},
+                hidden: {},
+                lastUpdated: updatesSince,
+            }));
     }
 
     private overwriteUserInStore(
@@ -5254,7 +5613,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    tipMessage(
+    async tipMessage(
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
@@ -5265,15 +5624,15 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve({ kind: "failure" });
         }
 
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         const userId = this._liveState.user.userId;
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
-
-        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
-
-        function undoLocally() {
-            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
-        }
 
         return this.sendRequest({
             kind: "tipMessage",
@@ -5281,15 +5640,22 @@ export class OpenChat extends OpenChatAgentWorker {
             messageId,
             transfer,
             decimals,
+            pin,
         })
             .then((resp) => {
-                if (resp.kind !== "success") {
-                    undoLocally();
+                if (resp.kind === "success") {
+                    localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+                } else if (
+                    resp.kind === "pin_incorrect" ||
+                    resp.kind === "pin_required" ||
+                    resp.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(resp as PinNumberFailures);
                 }
+
                 return resp;
             })
             .catch((_) => {
-                undoLocally();
                 return { kind: "failure" };
             });
     }
@@ -5358,13 +5724,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private updateExchangeRates(): Promise<void> {
         return this.sendRequest({ kind: "exchangeRates" })
-            .then((exchangeRates) => {
-                // Handle couple of special cases
-                exchangeRates["dkp"] = exchangeRates["sns1"];
-                exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
-
-                exchangeRatesLookupStore.set(exchangeRates);
-            })
+            .then((exchangeRates) => exchangeRatesLookupStore.set(exchangeRates))
             .catch(() => undefined);
     }
 
@@ -5465,15 +5825,19 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        return this.sendRequest({
-            kind: "submitProposal",
-            governanceCanisterId,
-            proposal,
-            ledger: nervousSystem.token.ledger,
-            token: nervousSystem.token.symbol,
-            proposalRejectionFee: nervousSystem.proposalRejectionFee,
-            transactionFee: nervousSystem.token.transferFee,
-        })
+        return this.sendRequest(
+            {
+                kind: "submitProposal",
+                governanceCanisterId,
+                proposal,
+                ledger: nervousSystem.token.ledger,
+                token: nervousSystem.token.symbol,
+                proposalRejectionFee: nervousSystem.proposalRejectionFee,
+                transactionFee: nervousSystem.token.transferFee,
+            },
+            false,
+            2 * DEFAULT_WORKER_TIMEOUT,
+        )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
                     return true;
@@ -5517,7 +5881,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    swapTokens(
+    async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
         outputTokenLedger: string,
@@ -5525,6 +5889,12 @@ export class OpenChat extends OpenChatAgentWorker {
         minAmountOut: bigint,
         dex: DexId,
     ): Promise<SwapTokensResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         const lookup = get(cryptoLookup);
 
         return this.sendRequest(
@@ -5536,10 +5906,21 @@ export class OpenChat extends OpenChatAgentWorker {
                 amountIn,
                 minAmountOut,
                 dex,
+                pin,
             },
             false,
             1000 * 60 * 3,
-        );
+        ).then((resp) => {
+            if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+
+            return resp;
+        });
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -5618,6 +5999,272 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((res) => res === "success")
             .catch(() => false);
+    }
+
+    async ringOtherUsers(messageId: bigint) {
+        const chat = this._liveState.selectedChat;
+        let userIds: string[] = [];
+        const me = this._liveState.user.userId;
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") {
+                userIds.push(chat.them.userId);
+            } else if (this.isChatPrivate(chat)) {
+                userIds = this._liveState.currentChatMembers
+                    .map((m) => m.userId)
+                    .filter((id) => id !== me);
+            }
+            if (userIds.length > 0) {
+                await Promise.all(
+                    userIds.map((id) =>
+                        rtcConnectionsManager.create(
+                            this._liveState.user.userId,
+                            id,
+                            this.config.meteredApiKey,
+                        ),
+                    ),
+                );
+                this.sendRtcMessage(userIds, {
+                    kind: "remote_video_call_started",
+                    id: chat.id,
+                    userId: me,
+                    messageId,
+                });
+            }
+        }
+    }
+
+    private getRoomAccessToken(
+        authToken: string,
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
+        // This will send the OC access JWT to the daily middleware service which will:
+        // * validate the jwt
+        // * create the room if necessary
+        // * obtain an access token for the user
+        // * return it to the front end
+        const displayName = this.getDisplayName(
+            this._liveState.user,
+            this._liveState.currentCommunityMembers,
+        );
+        const user = this._liveState.user;
+        const username = user.username;
+        const avatarId = this._liveState.userStore[user.userId]?.blobReference?.blobId;
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+
+        let url = `${this.config.videoBridgeUrl}/room/meeting_access_token?initiator-username=${username}&initiator-displayname=${displayName}`;
+        if (avatarId) {
+            url += `&initiator-avatarid=${avatarId}`;
+        }
+        return fetch(url, {
+            method: "GET",
+            headers: headers,
+        }).then((res) => {
+            if (res.ok) {
+                return res.json();
+            }
+            if (res.status === 401) {
+                const msg =
+                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.";
+                console.error(msg);
+                throw new Error(msg);
+            }
+            if (res.status === 400) {
+                throw new NoMeetingToJoin();
+            }
+            throw new Error(`Unable to get room access token: ${res.status}, ${res.statusText}`);
+        });
+    }
+
+    private getLocalUserIndex(chat: ChatSummary): Promise<string> {
+        switch (chat.kind) {
+            case "group_chat":
+                return Promise.resolve(chat.localUserIndex);
+            case "channel":
+                const community = this._liveState.communities.get({
+                    kind: "community",
+                    communityId: chat.id.communityId,
+                });
+                if (community) {
+                    return Promise.resolve(community.localUserIndex);
+                } else {
+                    throw new Error(`Unable to get the local user index for channel: ${chat.id}`);
+                }
+            case "direct_chat":
+                return this.sendRequest({
+                    kind: "getLocalUserIndexForUser",
+                    userId: chat.them.userId,
+                });
+        }
+    }
+
+    endVideoCallOnBridge(authToken: string) {
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+        return fetch(`${this.config.videoBridgeUrl}/room/end_meeting`, {
+            method: "POST",
+            headers: headers,
+        }).then((res) => {
+            if (!res.ok) {
+                console.error(`Unable to get end meeting: ${res.status}, ${res.statusText}`);
+            }
+        });
+    }
+
+    endVideoCall(chatId: ChatIdentifier) {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId,
+                accessTokenType: { kind: "join_video_call" }, // TODO - this should have it's own token type really
+                localUserIndex,
+            })
+                .then((token) => {
+                    if (token === undefined) {
+                        throw new Error("Didn't get an access token");
+                    }
+                    return token;
+                })
+                .then((token) => this.endVideoCallOnBridge(token));
+        });
+    }
+
+    getVideoChatAccessToken(
+        chatId: ChatIdentifier,
+        accessTokenType: AccessTokenType,
+    ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
+
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId,
+                accessTokenType,
+                localUserIndex,
+            })
+                .then((token) => {
+                    if (token === undefined) {
+                        throw new Error("Didn't get an access token");
+                    }
+                    console.log("TOKEN: ", token);
+                    return token;
+                })
+                .then((token) => this.getRoomAccessToken(token));
+        });
+    }
+
+    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
+        return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
+    }
+
+    generateMagicLink(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+    ): Promise<GenerateMagicLinkResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
+    }
+
+    async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
+        const signInWithEmailCanister = this.config.signInWithEmailCanister;
+
+        const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
+
+        if (response.ok) {
+            return { kind: "success" } as HandleMagicLinkResponse;
+        } else if (response.status === 400) {
+            const body = await response.text();
+            if (body === "Link expired") {
+                return { kind: "link_expired" } as HandleMagicLinkResponse;
+            }
+        }
+
+        return { kind: "link_invalid" } as HandleMagicLinkResponse;
+    }
+
+    async getSignInWithEmailDelegation(
+        email: string,
+        userKey: Uint8Array,
+        sessionKey: ECDSAKeyIdentity,
+        expiration: bigint,
+    ): Promise<GetDelegationResponse> {
+        const sessionKeyDer = toDer(sessionKey);
+        const getDelegationResponse = await this.sendRequest({
+            kind: "getSignInWithEmailDelegation",
+            email,
+            sessionKey: sessionKeyDer,
+            expiration,
+        });
+        if (getDelegationResponse.kind === "success") {
+            const identity = buildDelegationIdentity(
+                userKey,
+                sessionKey,
+                getDelegationResponse.delegation,
+                getDelegationResponse.signature,
+            );
+            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+            this.loadedAuthenticationIdentity(identity);
+        }
+        return getDelegationResponse;
+    }
+
+    siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
+        return this.sendRequest({
+            kind: "siwePrepareLogin",
+            address,
+        });
+    }
+
+    siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
+        return this.sendRequest({
+            kind: "siwsPrepareLogin",
+            address,
+        });
+    }
+
+    async signInWithWallet(
+        token: "eth" | "sol",
+        address: string,
+        signature: string,
+    ): Promise<GetDelegationResponse> {
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        const sessionKeyDer = toDer(sessionKey);
+        const loginResponse = await this.sendRequest({
+            kind: "loginWithWallet",
+            token,
+            address,
+            signature,
+            sessionKey: sessionKeyDer,
+        });
+
+        if (loginResponse.kind === "success") {
+            const getDelegationResponse = await this.sendRequest({
+                kind: "getDelegationWithWallet",
+                token,
+                address,
+                sessionKey: sessionKeyDer,
+                expiration: loginResponse.expiration,
+            });
+            if (getDelegationResponse.kind === "success") {
+                const identity = buildDelegationIdentity(
+                    loginResponse.userKey,
+                    sessionKey,
+                    getDelegationResponse.delegation,
+                    getDelegationResponse.signature,
+                );
+                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return getDelegationResponse;
+        } else {
+            return loginResponse;
+        }
     }
 
     // **** Communities Stuff
@@ -5730,17 +6377,18 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinCommunity(
         community: CommunitySummary,
-        credential?: string,
-    ): Promise<"success" | "failure" | "gate_check_failed"> {
-        if (!(await this.approveAccessGatePayment(community))) {
-            return "gate_check_failed";
+        credentialJwt: string | undefined,
+    ): Promise<ClientJoinCommunityResponse> {
+        const approveResponse = await this.approveAccessGatePayment(community);
+        if (approveResponse.kind !== "success") {
+            return approveResponse;
         }
 
         return this.sendRequest({
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credential,
+            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -5761,13 +6409,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     });
                 } else {
                     if (resp.kind === "gate_check_failed") {
-                        return "gate_check_failed";
+                        return resp;
                     }
-                    return "failure";
+                    return CommonResponses.failure();
                 }
-                return "success";
+                return CommonResponses.success();
             })
-            .catch(() => "failure");
+            .catch(() => CommonResponses.failure());
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
@@ -5813,9 +6461,20 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).catch(() => ({
-            kind: "failure",
-        }));
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    candidate.id = {
+                        kind: "community",
+                        communityId: resp.id,
+                    };
+                    this.addCommunityLocally(candidate);
+                }
+                return resp;
+            })
+            .catch(() => ({
+                kind: "failure",
+            }));
     }
 
     private addToFavouritesLocally(chatId: ChatIdentifier): void {
@@ -6029,9 +6688,124 @@ export class OpenChat extends OpenChatAgentWorker {
         return { kind: "direct_chat" };
     }
 
-    // **** End of Communities stuff
+    getUserLocation(): Promise<string | undefined> {
+        if (this._userLocation !== undefined) {
+            return Promise.resolve(this._userLocation);
+        }
+        return getUserCountryCode()
+            .then((country) => {
+                this._userLocation = country;
+                console.debug("GEO: derived user's location: ", country);
+                return country;
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+                return undefined;
+            });
+    }
 
+    // **** End of Communities stuff
     diamondDurationToMs = diamondDurationToMs;
+    swapRestricted(): Promise<boolean> {
+        return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
+    }
+
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
+        pinNumberFailureStore.set(undefined);
+
+        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+            if (resp.kind === "success") {
+                this.pinNumberRequiredStore.set(newPin !== undefined);
+            } else if (
+                resp.kind === "pin_incorrect" ||
+                resp.kind === "pin_required" ||
+                resp.kind === "too_main_failed_pin_attempts"
+            ) {
+                pinNumberFailureStore.set(resp as PinNumberFailures);
+            }
+
+            return resp;
+        });
+    }
+
+    private promptForCurrentPin(message: string | undefined): Promise<string> {
+        pinNumberFailureStore.set(undefined);
+        return new Promise((resolve, reject) => {
+            capturePinNumberStore.set({
+                resolve: (pin: string) => {
+                    capturePinNumberStore.set(undefined);
+                    resolve(pin);
+                },
+                reject: () => {
+                    capturePinNumberStore.set(undefined);
+                    reject("cancelled");
+                },
+                message,
+            });
+        });
+    }
+
+    private promptForRuleAcceptance(): Promise<AcceptedRules | undefined> {
+        return new Promise((resolve, _) => {
+            captureRulesAcceptanceStore.set({
+                resolve: (accepted: boolean) => {
+                    let acceptedRules: AcceptedRules | undefined = undefined;
+
+                    if (accepted) {
+                        acceptedRules = {
+                            chat: undefined,
+                            community: undefined,
+                        };
+
+                        if (this._liveState.currentChatRules?.enabled ?? false) {
+                            acceptedRules.chat = this._liveState.currentChatRules?.version;
+                        }
+
+                        if (this._liveState.currentCommunityRules?.enabled ?? false) {
+                            acceptedRules.community = this._liveState.currentChatRules?.version;
+                        }
+                    }
+
+                    captureRulesAcceptanceStore.set(undefined);
+                    resolve(acceptedRules);
+                },
+            });
+        });
+    }
+
+    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+        const userId = this._liveState.user.userId;
+
+        return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
+            if (resp.kind === "success") {
+                this.user.update((user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+                this.overwriteUserInStore(userId, (user) => ({
+                    ...user,
+                    chitBalance: resp.chitBalance,
+                    streak: resp.streak,
+                }));
+            } else if (resp.kind === "already_claimed") {
+                this.user.update((user) => ({
+                    ...user,
+                    nextDailyChitClaim: resp.nextDailyChitClaim,
+                }));
+            }
+
+            return resp;
+        });
+    }
+
+    chitLeaderboard(): Promise<ChitUserBalance[]> {
+        return this.sendRequest({ kind: "chitLeaderboard" });
+    }
 
     /**
      * Reactive state provided in the form of svelte stores
@@ -6053,8 +6827,10 @@ export class OpenChat extends OpenChatAgentWorker {
     typing = typing;
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
+    currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
     currentChatInvitedUsers = currentChatInvitedUsers;
+    hideMessagesFromDirectBlocked = hideMessagesFromDirectBlocked;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
@@ -6102,6 +6878,10 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
+    pinNumberRequiredStore = pinNumberRequiredStore;
+    capturePinNumberStore = capturePinNumberStore;
+    captureRulesAcceptanceStore = captureRulesAcceptanceStore;
+    throttleDeadline = throttleDeadline;
 
     // current community stores
     chatListScope = chatListScopeStore;
@@ -6117,9 +6897,13 @@ export class OpenChat extends OpenChatAgentWorker {
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
     unreadGroupCounts = unreadGroupCounts;
+    groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;
+    directVideoCallCounts = directVideoCallCounts;
+    favouritesVideoCallCounts = favouritesVideoCallCounts;
     unreadFavouriteCounts = unreadFavouriteCounts;
     unreadCommunityChannelCounts = unreadCommunityChannelCounts;
+    communityChannelVideoCallCounts = communityChannelVideoCallCounts;
     globalUnreadCount = globalUnreadCount;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
     moderationFlags = moderationFlags;

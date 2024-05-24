@@ -2,7 +2,7 @@ use crate::guards::caller_is_admin;
 use crate::mutate_state;
 use canister_tracing_macros::trace;
 use group_prize_bot::join_group::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
 use types::CanisterId;
 
@@ -50,6 +50,7 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
     let c2c_args = local_user_index_canister::join_group::Args {
         chat_id: group.into(),
         invite_code: None,
+        verified_credential_args: None,
         correlation_id: 0,
     };
 

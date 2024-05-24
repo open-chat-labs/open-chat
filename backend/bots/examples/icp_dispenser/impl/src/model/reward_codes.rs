@@ -1,6 +1,6 @@
 use candid::Principal;
 use ic_ledger_types::{Memo, Timestamp, Tokens, TransferArgs, DEFAULT_FEE};
-use ledger_utils::{calculate_transaction_hash, default_ledger_account};
+use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
@@ -65,12 +65,11 @@ impl RewardCodes {
                                 timestamp_nanos: now * 1000 * 1000,
                             }),
                         };
-                        let transaction_hash = calculate_transaction_hash(self.this_canister_id, &transfer_args);
 
-                        c.claimed_by = Some((user_id, transaction_hash, now));
+                        c.claimed_by = Some((user_id, [0; 32], now));
                         e.insert(code);
 
-                        ClaimRewardCodeResult::Success(transfer_args, transaction_hash)
+                        ClaimRewardCodeResult::Success(transfer_args)
                     }
                 } else {
                     ClaimRewardCodeResult::CodeNotFound
@@ -85,7 +84,7 @@ impl RewardCodes {
 }
 
 pub enum ClaimRewardCodeResult {
-    Success(TransferArgs, TransactionHash),
+    Success(TransferArgs),
     UserAlreadyClaimed,
     CodeAlreadyClaimed,
     CodeExpired,

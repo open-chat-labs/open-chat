@@ -8,7 +8,78 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Expose `enabled` field in the metrics for each token ([#5788](https://github.com/open-chat-labs/open-chat/pull/5788))
+- Update circulating supply definition ([#5801](https://github.com/open-chat-labs/open-chat/pull/5801))
+
+## [[2.0.1168](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1168-registry)] - 2024-05-08
+
+### Changed
+
+- Subtract Dfinity neurons which are still vesting from circulating supply ([#5783](https://github.com/open-chat-labs/open-chat/pull/5783))
+
+## [[2.0.1167](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1167-registry)] - 2024-05-08
+
+### Added
+
+- Automatically update token names, symbols and logos ([#5780](https://github.com/open-chat-labs/open-chat/pull/5780))
+
+### Changed
+
+- Only allow tokens which are compatible with the ICRC1 standard ([#5733](https://github.com/open-chat-labs/open-chat/pull/5733))
+- Update NAUT ledger canister ([#5779](https://github.com/open-chat-labs/open-chat/pull/5779))
+
+## [[2.0.1166](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1166-registry)] - 2024-05-07
+
+### Changed
+
+- Return total and circulating supply amounts as CHATs rather than e8s ([#5773](https://github.com/open-chat-labs/open-chat/pull/5773))
+
+## [[2.0.1165](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1165-registry)] - 2024-05-06
+
+### Changed
+
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Calculate and expose total supply and circulating supply ([#5771](https://github.com/open-chat-labs/open-chat/pull/5771))
+
+## [[2.0.1143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1143-registry)] - 2024-04-19
+
+### Changed
+
+- Avoid returning `logo` if `logo_id` is set ([#5653](https://github.com/open-chat-labs/open-chat/pull/5653))
+
+### Fixed
+
+- Fix incorrect `min_dissolve_delay_to_vote` values ([#5701](https://github.com/open-chat-labs/open-chat/pull/5701))
+
+## [[2.0.1122](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1122-registry)] - 2024-03-26
+
+### Added
+
+- Serve up token logos from the Registry canister ([#5592](https://github.com/open-chat-labs/open-chat/pull/5592))
+
+## [[2.0.1102](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1102-registry)] - 2024-03-14
+
+### Added
+
+- Allow platform operators to disable sending/swapping of tokens ([#5533](https://github.com/open-chat-labs/open-chat/pull/5533))
+
+### Fixed
+
+- Update `last_updated` when `set_fee` is called ([#5544](https://github.com/open-chat-labs/open-chat/pull/5544))
+
+## [[2.0.1101](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1101-registry)] - 2024-03-12
+
+### Fixed
+
+- Fix Dragginz transaction fee ([#5531](https://github.com/open-chat-labs/open-chat/pull/5531))
+
+## [[2.0.1088](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1088-registry)] - 2024-03-07
+
+### Changed
+
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Use index rather than hash to look up ICP transactions ([#5485](https://github.com/open-chat-labs/open-chat/pull/5485))
 
 ## [[2.0.1005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1005-registry)] - 2024-01-15
 

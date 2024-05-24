@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::OptionUpdate;
 
 #[test]
@@ -11,7 +11,7 @@ fn update_username_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 
@@ -69,7 +69,7 @@ fn update_display_name_unauthorized_if_not_diamond_member() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 

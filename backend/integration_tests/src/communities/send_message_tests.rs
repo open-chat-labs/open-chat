@@ -1,16 +1,15 @@
 use crate::client::icrc1::happy_path::balance_of;
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_ledger_types::Tokens;
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{
     CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
@@ -98,9 +97,11 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -157,8 +158,8 @@ fn send_prize_in_channel() {
 
     let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
-    let prizes = vec![Tokens::from_e8s(100000)];
-    let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+    let prizes = vec![100000];
+    let total = prizes.iter().map(|p| p + fee).sum::<u128>();
 
     let transfer_to: CanisterId = community_id.into();
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -181,7 +182,7 @@ fn send_prize_in_channel() {
                     now_nanos(env),
                 )),
                 caption: None,
-                prizes,
+                prizes_v2: prizes,
                 end_date: now_millis(env) + 1000,
                 diamond_only: false,
             }),
@@ -189,9 +190,11 @@ fn send_prize_in_channel() {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            pin: None,
         },
     );
 
@@ -686,6 +689,7 @@ fn send_dummy_message_with_rules(
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             community_rules_accepted,
             channel_rules_accepted,
             message_filter_failed: None,
@@ -695,7 +699,7 @@ fn send_dummy_message_with_rules(
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);

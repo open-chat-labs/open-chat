@@ -1,21 +1,27 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
-use crate::rng::random_principal;
+use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
+use crate::{client, wasms, CanisterIds, TestEnv, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::{PocketIc, PocketIcBuilder};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::{BuildVersion, CanisterId, CanisterWasm};
+use testing::rng::random_principal;
+use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
+use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
-pub fn setup_new_env() -> TestEnv {
+pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
+    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).gen());
+
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
             env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
@@ -43,6 +49,9 @@ pub fn setup_new_env() -> TestEnv {
         .with_sns_subnet()
         .with_application_subnet()
         .build();
+
+    tick_many(&mut env, ticks as usize);
+
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -69,6 +78,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         Some("2ouva-viaaa-aaaaq-aaamq-cai"),
         Vec::new(),
     );
+    let chat_governance_canister_id = SNS_GOVERNANCE_CANISTER_ID;
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -81,6 +91,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
+    let event_relay_canister_id = create_canister(env, controller);
+    let event_store_canister_id = create_canister(env, controller);
+    let sign_in_with_email_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -90,6 +103,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
     let escrow_canister_wasm = wasms::ESCROW.clone();
+    let event_relay_canister_wasm = wasms::EVENT_RELAY.clone();
+    let event_store_canister_wasm = wasms::EVENT_STORE.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
@@ -119,9 +134,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         escrow_canister_id,
+        event_relay_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -142,6 +159,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
+        event_relay_canister_id,
+        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
+        video_call_operators: vec![VIDEO_CALL_OPERATOR],
+        ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -175,6 +196,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         governance_principals: vec![controller],
         user_index_canister_id,
         cycles_dispenser_canister_id,
+        skip_captcha_whitelist: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -203,6 +225,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
+        event_relay_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
@@ -311,6 +334,41 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     };
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
+    let event_relay_init_args = event_relay_canister::init::Args {
+        push_events_whitelist: vec![
+            user_index_canister_id,
+            online_users_canister_id,
+            local_user_index_canister_id,
+            local_group_index_canister_id,
+        ],
+        event_store_canister_id,
+        cycles_dispenser_canister_id,
+        chat_ledger_canister_id,
+        chat_governance_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        event_relay_canister_id,
+        event_relay_canister_wasm,
+        event_relay_init_args,
+    );
+
+    let event_store_init_args = event_store_canister::InitArgs {
+        push_events_whitelist: vec![event_relay_canister_id],
+        read_events_whitelist: vec![controller],
+        time_granularity: None,
+    };
+    install_canister(
+        env,
+        controller,
+        event_store_canister_id,
+        event_store_canister_wasm,
+        event_store_init_args,
+    );
+
     client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
@@ -409,8 +467,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_init_args,
     );
 
-    // Tick a load of times so that all of the child canisters have time to get installed
-    tick_many(env, 30);
+    // Tick a load of times so that all the child canisters have time to get installed
+    tick_many(env, 10);
 
     CanisterIds {
         user_index: user_index_canister_id,
@@ -426,10 +484,12 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
         escrow: escrow_canister_id,
+        translations: translations_canister_id,
+        event_relay: event_relay_canister_id,
+        event_store: event_store_canister_id,
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
-        translations: translations_canister_id,
     }
 }
 

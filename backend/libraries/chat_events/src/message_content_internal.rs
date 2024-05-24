@@ -5,12 +5,17 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
-    CompletedCryptoTransaction, CryptoContent, CryptoTransaction, CustomContent, FileContent, GiphyContent, GiphyImageVariant,
-    ImageContent, MessageContent, MessageContentInitial, MessageIndex, MessageReminderContent, MessageReminderCreatedContent,
-    MessageReport, P2PSwapContent, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent,
-    PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, TextContent,
-    ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoContent, VoteOperation,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
+    CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
+    CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
+    GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
+    MessageContentEventPayload, MessageContentInitial, MessageIndex, MessageReminderContent,
+    MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapContent,
+    P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
+    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
+    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoCallContent,
+    VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -47,6 +52,8 @@ pub enum MessageContentInternal {
     ReportedMessage(ReportedMessageInternal),
     #[serde(rename = "p2p")]
     P2PSwap(P2PSwapContent),
+    #[serde(rename = "vc")]
+    VideoCall(VideoCallContentInternal),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
 }
@@ -90,6 +97,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
             MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.clone()),
+            MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
     }
@@ -112,8 +120,13 @@ impl MessageContentInternal {
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_) => None,
         }
+    }
+
+    pub fn text_length(&self) -> u32 {
+        self.text().map(|t| t.len() as u32).unwrap_or_default()
     }
 
     pub fn blob_references(&self) -> Vec<BlobReference> {
@@ -155,36 +168,124 @@ impl MessageContentInternal {
             | MessageContentInternal::MessageReminder(_)
             | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::P2PSwap(_)
+            | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Custom(_) => {}
         }
 
         references
     }
-}
 
-impl TryFrom<MessageContentInitial> for MessageContentInternal {
-    type Error = ();
+    pub fn message_type(&self) -> String {
+        let message_type = match self {
+            MessageContentInternal::Text(_) => "Text",
+            MessageContentInternal::Image(_) => "Image",
+            MessageContentInternal::Video(_) => "Video",
+            MessageContentInternal::Audio(_) => "Audio",
+            MessageContentInternal::File(_) => "File",
+            MessageContentInternal::Poll(_) => "Poll",
+            MessageContentInternal::Crypto(_) => "Crypto",
+            MessageContentInternal::Deleted(_) => "Deleted",
+            MessageContentInternal::Giphy(_) => "Giphy",
+            MessageContentInternal::GovernanceProposal(_) => "GovernanceProposal",
+            MessageContentInternal::Prize(_) => "Prize",
+            MessageContentInternal::PrizeWinner(_) => "PrizeWinner",
+            MessageContentInternal::MessageReminderCreated(_) => "MessageReminderCreated",
+            MessageContentInternal::MessageReminder(_) => "MessageReminder",
+            MessageContentInternal::ReportedMessage(_) => "ReportedMessage",
+            MessageContentInternal::P2PSwap(_) => "P2PSwap",
+            MessageContentInternal::VideoCall(_) => "VideoCall",
+            MessageContentInternal::Custom(c) => &c.kind,
+        };
 
-    fn try_from(value: MessageContentInitial) -> Result<Self, ()> {
-        match value {
-            MessageContentInitial::Text(t) => Ok(MessageContentInternal::Text(t.into())),
-            MessageContentInitial::Image(i) => Ok(MessageContentInternal::Image(i.into())),
-            MessageContentInitial::Video(v) => Ok(MessageContentInternal::Video(v.into())),
-            MessageContentInitial::Audio(a) => Ok(MessageContentInternal::Audio(a.into())),
-            MessageContentInitial::File(f) => Ok(MessageContentInternal::File(f.into())),
-            MessageContentInitial::Poll(p) => Ok(MessageContentInternal::Poll(p.into())),
-            MessageContentInitial::Deleted(d) => Ok(MessageContentInternal::Deleted(d.into())),
-            MessageContentInitial::Giphy(g) => Ok(MessageContentInternal::Giphy(g.into())),
-            MessageContentInitial::GovernanceProposal(p) => Ok(MessageContentInternal::GovernanceProposal(p.into())),
-            MessageContentInitial::MessageReminderCreated(r) => Ok(MessageContentInternal::MessageReminderCreated(r.into())),
-            MessageContentInitial::MessageReminder(r) => Ok(MessageContentInternal::MessageReminder(r.into())),
-            MessageContentInitial::Custom(c) => Ok(MessageContentInternal::Custom(c.into())),
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
-                // These should be created via `new_with_transfer`
-                Err(())
+        message_type.to_string()
+    }
+
+    pub fn event_payload(&self) -> MessageContentEventPayload {
+        match self {
+            MessageContentInternal::Text(c) => MessageContentEventPayload::Text(TextContentEventPayload {
+                length: c.text.len() as u32,
+            }),
+            MessageContentInternal::Image(c) => MessageContentEventPayload::Image(ImageOrVideoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                height: c.height,
+                width: c.width,
+            }),
+            MessageContentInternal::Video(c) => MessageContentEventPayload::Video(ImageOrVideoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                height: c.height,
+                width: c.width,
+            }),
+            MessageContentInternal::Audio(c) => MessageContentEventPayload::Audio(ContentWithCaptionEventPayload {
+                caption_length: option_string_length(&c.caption),
+            }),
+            MessageContentInternal::File(c) => MessageContentEventPayload::File(FileContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                file_size: c.file_size,
+            }),
+            MessageContentInternal::Poll(c) => MessageContentEventPayload::Poll(PollContentEventPayload {
+                text_length: option_string_length(&c.config.text),
+                options: c.config.options.len() as u32,
+                anonymous: c.config.anonymous,
+                show_votes_before_end_date: c.config.show_votes_before_end_date,
+                allow_multiple_votes_per_user: c.config.allow_multiple_votes_per_user,
+                allow_user_to_change_vote: c.config.allow_user_to_change_vote,
+            }),
+            MessageContentInternal::Crypto(c) => MessageContentEventPayload::Crypto(CryptoContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                token: c.transfer.token().token_symbol().to_string(),
+                amount: c.transfer.units(),
+            }),
+            MessageContentInternal::Giphy(c) => MessageContentEventPayload::Giphy(ContentWithCaptionEventPayload {
+                caption_length: option_string_length(&c.caption),
+            }),
+            MessageContentInternal::GovernanceProposal(c) => {
+                MessageContentEventPayload::GovernanceProposal(GovernanceProposalContentEventPayload {
+                    governance_canister_id: c.governance_canister_id.to_string(),
+                })
+            }
+            MessageContentInternal::Prize(c) => MessageContentEventPayload::Prize(PrizeContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                prizes: (c.prizes_remaining.len() + c.winners.len() + c.reservations.len()) as u32,
+                token: c.transaction.token().token_symbol().to_string(),
+                amount: c.transaction.units(),
+                diamond_only: c.diamond_only,
+            }),
+            MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
+                token: c.transaction.token().token_symbol().to_string(),
+                amount: c.transaction.units(),
+            }),
+            MessageContentInternal::MessageReminderCreated(c) => {
+                MessageContentEventPayload::MessageReminderCreated(MessageReminderContentEventPayload {
+                    notes_length: option_string_length(&c.notes),
+                })
+            }
+            MessageContentInternal::MessageReminder(c) => {
+                MessageContentEventPayload::MessageReminder(MessageReminderContentEventPayload {
+                    notes_length: option_string_length(&c.notes),
+                })
+            }
+            MessageContentInternal::ReportedMessage(c) => {
+                MessageContentEventPayload::ReportedMessage(ReportedMessageContentEventPayload {
+                    reason: c.reports.first().map(|r| r.reason_code).unwrap_or_default(),
+                    notes_length: c.reports.first().map(|r| option_string_length(&r.notes)).unwrap_or_default(),
+                })
+            }
+            MessageContentInternal::P2PSwap(c) => MessageContentEventPayload::P2PSwap(P2PSwapContentEventPayload {
+                caption_length: option_string_length(&c.caption),
+                token0: c.token0.token.token_symbol().to_string(),
+                token0_amount: c.token0_amount,
+                token1: c.token1.token.token_symbol().to_string(),
+                token1_amount: c.token1_amount,
+            }),
+            MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
+                MessageContentEventPayload::Empty
             }
         }
     }
+}
+
+fn option_string_length(value: &Option<String>) -> u32 {
+    value.as_ref().map(|c| c.len() as u32).unwrap_or_default()
 }
 
 impl From<&MessageContentInternal> for Document {
@@ -251,7 +352,9 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Custom(c) => {
                 document.add_field(c.kind.clone(), 1.0, false);
             }
-            MessageContentInternal::ReportedMessage(_) | MessageContentInternal::Deleted(_) => {}
+            MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::Deleted(_)
+            | MessageContentInternal::VideoCall(_) => {}
         }
 
         document
@@ -698,7 +801,28 @@ impl MessageContentInternalSubtype for ProposalContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "PrizeContentInternalCombined")]
 pub struct PrizeContentInternal {
+    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
+    pub prizes_remaining: Vec<u128>,
+    #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
+    pub reservations: HashSet<UserId>,
+    #[serde(rename = "w")]
+    pub winners: HashSet<UserId>,
+    #[serde(rename = "t")]
+    pub transaction: CompletedCryptoTransaction,
+    #[serde(rename = "e")]
+    pub end_date: TimestampMillis,
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
+    pub diamond_only: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInternalCombined {
+    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
+    pub prizes_remaining_v2: Vec<u128>,
     #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
     pub prizes_remaining: Vec<Tokens>,
     #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
@@ -715,10 +839,28 @@ pub struct PrizeContentInternal {
     pub diamond_only: bool,
 }
 
+impl From<PrizeContentInternalCombined> for PrizeContentInternal {
+    fn from(value: PrizeContentInternalCombined) -> Self {
+        PrizeContentInternal {
+            prizes_remaining: if value.prizes_remaining.is_empty() {
+                value.prizes_remaining_v2
+            } else {
+                value.prizes_remaining.into_iter().map(|t| t.e8s() as u128).collect()
+            },
+            reservations: value.reservations,
+            winners: value.winners,
+            transaction: value.transaction,
+            end_date: value.end_date,
+            caption: value.caption,
+            diamond_only: value.diamond_only,
+        }
+    }
+}
+
 impl PrizeContentInternal {
     pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransaction) -> PrizeContentInternal {
         PrizeContentInternal {
-            prizes_remaining: content.prizes,
+            prizes_remaining: content.prizes_v2,
             reservations: HashSet::new(),
             winners: HashSet::new(),
             transaction,
@@ -730,7 +872,7 @@ impl PrizeContentInternal {
 
     pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
         let fee = self.transaction.fee();
-        let unclaimed = self.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+        let unclaimed = self.prizes_remaining.iter().map(|p| p + fee).sum::<u128>();
         if unclaimed > 0 {
             Some(create_pending_transaction(
                 self.transaction.token(),
@@ -871,6 +1013,50 @@ impl From<ReportedMessage> for ReportedMessageInternal {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VideoCallContentInternal {
+    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
+    pub call_type: VideoCallType,
+    #[serde(rename = "e", default, skip_serializing_if = "is_default")]
+    pub ended: Option<TimestampMillis>,
+    #[serde(rename = "p", default)]
+    pub participants: HashMap<UserId, CallParticipantInternal>,
+}
+
+impl VideoCallContentInternal {
+    fn hydrate(&self) -> VideoCallContent {
+        let mut participants = Vec::new();
+        let mut hidden_participants = 0;
+        for (user_id, participant) in self.participants.iter() {
+            if matches!(participant.presence, VideoCallPresence::Hidden) {
+                hidden_participants += 1;
+            } else {
+                participants.push(CallParticipant {
+                    joined: participant.joined,
+                    user_id: *user_id,
+                });
+            }
+        }
+
+        VideoCallContent {
+            call_type: self.call_type,
+            ended: self.ended,
+            participants,
+            hidden_participants,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CallParticipantInternal {
+    #[serde(rename = "j")]
+    pub joined: TimestampMillis,
+    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    pub last_updated: Option<TimestampMillis>,
+    #[serde(rename = "p", default, skip_serializing_if = "is_default")]
+    pub presence: VideoCallPresence,
+}
+
 impl MessageContentInternalSubtype for ReportedMessageInternal {
     type ContentType = ReportedMessage;
 
@@ -906,6 +1092,28 @@ impl MessageContentInternalSubtype for CustomContentInternal {
         CustomContent {
             kind: self.kind.clone(),
             data: self.data.clone(),
+        }
+    }
+}
+
+impl From<MessageContentInitial> for MessageContentInternal {
+    fn from(value: MessageContentInitial) -> Self {
+        match value {
+            MessageContentInitial::Text(t) => MessageContentInternal::Text(t.into()),
+            MessageContentInitial::Image(i) => MessageContentInternal::Image(i.into()),
+            MessageContentInitial::Video(v) => MessageContentInternal::Video(v.into()),
+            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a.into()),
+            MessageContentInitial::File(f) => MessageContentInternal::File(f.into()),
+            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(p.into()),
+            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
+            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g.into()),
+            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p.into()),
+            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
+            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
+            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
+                unreachable!()
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
-use utils::canister::{install, FailedUpgrade};
+use utils::canister::{install, FailedUpgrade, WasmToInstall};
 use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<notifications_canister::post_upgrade::Args>;
@@ -81,12 +81,13 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
-        new_wasm,
+        new_wasm_version,
+        new_wasm: WasmToInstall::Default(new_wasm.module),
         deposit_cycles_if_needed,
         args: notifications_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         },
-        mode: CanisterInstallMode::Upgrade,
+        mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })
 }
@@ -94,7 +95,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
 async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     let canister_id = canister_to_upgrade.canister_id;
     let from_version = canister_to_upgrade.current_wasm_version;
-    let to_version = canister_to_upgrade.new_wasm.version;
+    let to_version = canister_to_upgrade.new_wasm_version;
 
     match install(canister_to_upgrade).await {
         Ok(_) => {

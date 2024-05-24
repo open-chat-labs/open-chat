@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::inspect_message;
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
@@ -17,13 +17,15 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "create_canister"
+        | "delete_user"
         | "mark_as_online"
         | "pay_for_diamond_membership"
         | "set_display_name"
         | "set_moderation_flags"
         | "set_username"
         | "mark_suspected_bot"
-        | "update_diamond_membership_subscription" => {
+        | "update_diamond_membership_subscription"
+        | "claim_daily_chit" => {
             let caller = state.env.caller();
             let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user

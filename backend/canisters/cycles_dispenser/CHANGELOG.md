@@ -7,8 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove duplicate code ([#5637](https://github.com/open-chat-labs/open-chat/pull/5637))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1126](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1126-cycles_dispenser)] - 2024-04-05
+
+### Added
+
+- Automatically add SNS controlled canisters to the whitelist ([#5625](https://github.com/open-chat-labs/open-chat/pull/5625))
+
+### Changed
+
+- Top up all canisters registered with the SNS ([#5621](https://github.com/open-chat-labs/open-chat/pull/5621))
+
+## [[2.0.1092](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1092-cycles_dispenser)] - 2024-03-07
+
+### Changed
+
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
 - Split `sns_root` into its own package within `external_canisters` ([#5266](https://github.com/open-chat-labs/open-chat/pull/5266))
+- Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 
 ## [[2.0.1017](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1017-cycles_dispenser)] - 2024-01-19
 

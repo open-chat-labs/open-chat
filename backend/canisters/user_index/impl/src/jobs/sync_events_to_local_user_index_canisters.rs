@@ -12,7 +12,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.user_index_event_sync_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -69,7 +69,7 @@ async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) 
             state
                 .data
                 .user_index_event_sync_queue
-                .mark_sync_failed_for_canister(canister_id, events);
+                .requeue_failed_events(canister_id, events);
         });
     }
 }

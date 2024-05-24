@@ -1,4 +1,4 @@
-import type { EventWrapper, Message, MessageContext } from "openchat-shared";
+import type { ChatIdentifier, EventWrapper, Message, MessageContext } from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
@@ -6,9 +6,9 @@ export class LoadedNewMessages extends CustomEvent<MessageContext> {
     }
 }
 
-export class SendMessageFailed extends CustomEvent<boolean> {
+export class SendMessageFailed extends CustomEvent<{ alert: boolean }> {
     constructor(alert: boolean) {
-        super("openchat_event", { detail: alert });
+        super("openchat_event", { detail: { alert } });
     }
 }
 
@@ -24,6 +24,25 @@ export class LoadedPreviousMessages extends CustomEvent<{
 export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "add" | "remove" }> {
     constructor(messageId: bigint, kind: "add" | "remove") {
         super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
+export class RemoteVideoCallStartedEvent extends CustomEvent<{
+    chatId: ChatIdentifier;
+    userId: string;
+    messageId: bigint;
+}> {
+    constructor(chatId: ChatIdentifier, userId: string, messageId: bigint) {
+        super("openchat_event", { detail: { chatId, userId, messageId: BigInt(messageId) } });
+    }
+}
+
+export class VideoCallMessageUpdated extends CustomEvent<{
+    chatId: ChatIdentifier;
+    messageId: bigint;
+}> {
+    constructor(chatId: ChatIdentifier, messageId: bigint) {
+        super("openchat_event", { detail: { chatId, messageId } });
     }
 }
 

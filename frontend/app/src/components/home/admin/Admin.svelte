@@ -29,41 +29,41 @@
         <Button on:click={() => page("/")}>Back to safety</Button>
     </div>
 {:else}
-    <SectionHeader slim border={false}>
-        <div class="header">
-            <div class="icon">
-                <CogOutline size={$iconSize} color={"var(--icon-txt)"} />
+    <div class="admin">
+        <SectionHeader slim border={false}>
+            <div class="header">
+                <div class="icon">
+                    <CogOutline size={$iconSize} color={"var(--icon-txt)"} />
+                </div>
+                <div class="details">
+                    <h4 class="name">Admin</h4>
+                </div>
             </div>
-            <div class="details">
-                <h4 class="name">Admin</h4>
+        </SectionHeader>
+        <div class="tabs">
+            <div
+                tabindex="0"
+                role="button"
+                on:click={() => selectTab("translations")}
+                class:selected={selectedTab === "translations"}
+                class="tab">
+                Translation Corrections
+            </div>
+            <div
+                tabindex="0"
+                role="button"
+                on:click={() => selectTab("operator")}
+                class:selected={selectedTab === "operator"}
+                class="tab">
+                Operator functions
             </div>
         </div>
-    </SectionHeader>
-
-    <div class="tabs">
-        <div
-            tabindex="0"
-            role="button"
-            on:click={() => selectTab("translations")}
-            class:selected={selectedTab === "translations"}
-            class="tab">
-            Translation Corrections
-        </div>
-        <div
-            tabindex="0"
-            role="button"
-            on:click={() => selectTab("operator")}
-            class:selected={selectedTab === "operator"}
-            class="tab">
-            Operator functions
-        </div>
+        {#if selectedTab === "translations"}
+            <ReviewTranslationCorrections />
+        {:else if selectedTab === "operator"}
+            <OperatorFunctions />
+        {/if}
     </div>
-
-    {#if selectedTab === "translations"}
-        <ReviewTranslationCorrections />
-    {:else if selectedTab === "operator"}
-        <OperatorFunctions />
-    {/if}
 {/if}
 
 <style lang="scss">
@@ -71,6 +71,12 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+    }
+
+    .admin {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
     .tabs {
@@ -81,7 +87,7 @@
         gap: $sp5;
         border-bottom: 1px solid var(--bd);
         cursor: pointer;
-        margin: 0 $sp4 $sp5 $sp4;
+        margin: 0 $sp4 $sp4 $sp4;
 
         @include mobile() {
             gap: $sp4;
