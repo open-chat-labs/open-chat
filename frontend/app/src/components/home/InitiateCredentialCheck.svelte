@@ -7,7 +7,6 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { findPredefinedIssuer } from "../../utils/access";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -17,8 +16,6 @@
 
     let failed = false;
     let verifying = false;
-
-    $: issuer = findPredefinedIssuer(gate);
 
     function verify() {
         verifying = true;
@@ -41,34 +38,32 @@
     <div class="header" slot="header">
         <div class="credential">🔒️</div>
         <div class="title">
-            <Translatable resourceKey={i18nKey("access.initiateCredentialCheck")} />
+            <Translatable resourceKey={i18nKey("access.credential.initiateCredentialCheck")} />
         </div>
     </div>
     <div slot="body">
-        {#if issuer !== undefined}
-            {#if failed}
-                <ErrorMessage>
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "access.credentialCheckFailed",
-                            {
-                                credential: issuer.name,
-                            },
-                            level,
-                            true,
-                        )} />
-                </ErrorMessage>
-            {:else}
+        {#if failed}
+            <ErrorMessage>
                 <Translatable
                     resourceKey={i18nKey(
-                        "access.credentialCheckMessage",
+                        "access.credential.credentialCheckFailed",
                         {
-                            credential: issuer.name,
+                            credential: gate.credential.credentialName,
                         },
                         level,
                         true,
                     )} />
-            {/if}
+            </ErrorMessage>
+        {:else}
+            <Translatable
+                resourceKey={i18nKey(
+                    "access.credential.credentialCheckMessage",
+                    {
+                        credential: gate.credential.credentialName,
+                    },
+                    level,
+                    true,
+                )} />
         {/if}
     </div>
     <div slot="footer">

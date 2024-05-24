@@ -302,7 +302,6 @@ export interface ChitEventsArgs {
 export type ChitEventsResponse = {
     'Success' : { 'total' : number, 'events' : Array<ChitEarned> }
   };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
 }
@@ -1619,7 +1618,6 @@ export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
-  'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
 }
@@ -2297,6 +2295,7 @@ export interface VerifiedCredentialGate {
   >,
   'issuer_origin' : string,
   'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
 }
 export interface VerifiedCredentialGateArgs {

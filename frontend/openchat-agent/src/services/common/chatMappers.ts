@@ -1610,6 +1610,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
+                    credential_name: domain.credential.credentialName,
                     issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                     issuer_origin: domain.credential.issuerOrigin,
                     credential_type: domain.credential.credentialType,
@@ -1659,6 +1660,7 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
+                credential_name: domain.credential.credentialName,
                 issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                 issuer_origin: domain.credential.issuerOrigin,
                 credential_type: domain.credential.credentialType,
@@ -1743,6 +1745,7 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
                 issuerCanisterId: candid.VerifiedCredential.issuer_canister_id.toString(),
                 issuerOrigin: candid.VerifiedCredential.issuer_origin,
                 credentialType: candid.VerifiedCredential.credential_type,
+                credentialName: candid.VerifiedCredential.credential_name,
                 credentialArguments:
                     candid.VerifiedCredential.credential_arguments.length === 0
                         ? undefined
@@ -1785,7 +1788,6 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
-        prizes: [],
         prizes_v2: domain.prizes,
     };
 }

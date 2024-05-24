@@ -3,7 +3,6 @@ import { _ } from "svelte-i18n";
 import type {
     AccessGate,
     Credential,
-    CredentialGate,
     CryptocurrencyDetails,
     NervousSystemDetails,
 } from "openchat-client";
@@ -129,11 +128,12 @@ const nftGate: GateBinding = {
 };
 
 const credentialGate: GateBinding = {
-    label: "access.credential",
+    label: "access.credential.label",
     key: "credential_gate",
     gate: {
         kind: "credential_gate",
         credential: {
+            credentialName: "",
             issuerCanisterId: "",
             issuerOrigin: "",
             credentialType: "",
@@ -142,11 +142,9 @@ const credentialGate: GateBinding = {
     enabled: true,
 };
 
-export type CredentialIssuer = Credential & { name: string };
-
-export const credentialIssuers: CredentialIssuer[] = [
+export const credentialIssuers: Credential[] = [
     {
-        name: "Is DFINITY employee",
+        credentialName: "Is DFINITY employee",
         issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
         issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
         credentialType: "VerifiedEmployee",
@@ -154,17 +152,8 @@ export const credentialIssuers: CredentialIssuer[] = [
             employerName: "DFINITY Foundation",
         },
     },
-    // {
-    //     name: "Is early adopter",
-    //     issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
-    //     issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
-    //     credentialType: "Early adopter",
-    //     credentialArguments: {
-    //         employerName: "DFINITY Foundation",
-    //     },
-    // },
     {
-        name: "Is early adopter",
+        credentialName: "Is early adopter",
         issuerCanisterId: "vuq4g-oyaaa-aaaap-ahfsq-cai",
         issuerOrigin: "https://vuq4g-oyaaa-aaaap-ahfsq-cai.icp0.io",
         credentialType: "EventAttendance",
@@ -173,11 +162,3 @@ export const credentialIssuers: CredentialIssuer[] = [
         },
     },
 ];
-
-export function findPredefinedIssuer(gate: CredentialGate) {
-    return credentialIssuers.find(
-        (i) =>
-            i.credentialType === gate.credential.credentialType &&
-            i.issuerOrigin === gate.credential.issuerOrigin,
-    );
-}

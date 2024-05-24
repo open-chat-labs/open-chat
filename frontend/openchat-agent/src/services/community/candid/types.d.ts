@@ -338,7 +338,6 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -1626,7 +1625,6 @@ export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
-  'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
 }
@@ -2257,6 +2255,7 @@ export interface VerifiedCredentialGate {
   >,
   'issuer_origin' : string,
   'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
 }
 export interface VerifiedCredentialGateArgs {

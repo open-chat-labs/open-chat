@@ -3,15 +3,11 @@
     import type { CredentialGate } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { findPredefinedIssuer } from "../../utils/access";
 
     export let gate: CredentialGate;
-    $: issuer = findPredefinedIssuer(gate);
 </script>
 
-{#if issuer !== undefined}
-    <Translatable
-        resourceKey={i18nKey("access.credentialGateInfo", {
-            credential: issuer.name,
-        })} />
-{/if}
+<Translatable
+    resourceKey={i18nKey("access.credential.credentialGateInfo", {
+        credential: gate.credential.credentialName,
+    })} />

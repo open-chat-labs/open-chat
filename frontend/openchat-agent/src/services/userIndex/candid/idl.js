@@ -36,6 +36,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EmptyArgs = IDL.Record({});
   const ChitUserBalance = IDL.Record({
+    'username' : IDL.Text,
     'balance' : IDL.Nat32,
     'user_id' : UserId,
   });

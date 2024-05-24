@@ -1102,7 +1102,9 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade}
-            on:claimDailyChit={() => {modal = ModalType.ClaimDailyChit}} />
+            on:claimDailyChit={() => {
+                modal = ModalType.ClaimDailyChit;
+            }} />
     {/if}
 
     {#if $layoutStore.showLeft}
