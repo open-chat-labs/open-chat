@@ -1803,4 +1803,5 @@ type ChitEarned = record {
 type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : text;
+    MemeContestWinner;
 };

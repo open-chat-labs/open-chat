@@ -80,7 +80,7 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
-    import HallOfFame from "./HallOfFame.svelte";
+    import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
@@ -99,6 +99,7 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
+    import { chitEnabledStore } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -492,7 +493,9 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                modal = ModalType.HallOfFame;
+                if ($chitEnabledStore) {
+                    modal = ModalType.HallOfFame;
+                }
                 pageReplace(removeQueryStringParam("hof"));
             }
 

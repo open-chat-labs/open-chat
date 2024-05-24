@@ -2,7 +2,6 @@ use crate::{delegation_signature_msg_hash, read_state, RuntimeState};
 use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
 use identity_canister::{Delegation, SignedDelegation};
-use serde_bytes::ByteBuf;
 
 #[query]
 fn get_delegation(args: Args) -> Response {
@@ -24,10 +23,7 @@ fn get_delegation_impl(args: Args, state: &RuntimeState) -> Response {
     let seed = state.data.calculate_seed(user.index);
 
     if let Ok(signature) = state.data.signature_map.get_signature_as_cbor(&seed, message_hash, None) {
-        Success(SignedDelegation {
-            delegation,
-            signature: ByteBuf::from(signature),
-        })
+        Success(SignedDelegation { delegation, signature })
     } else {
         NotFound
     }

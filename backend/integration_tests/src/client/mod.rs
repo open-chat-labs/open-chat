@@ -5,7 +5,6 @@ use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use rand::random;
 use serde::de::DeserializeOwned;
-use serde_bytes::ByteBuf;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
@@ -102,13 +101,13 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
-    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
+    let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result =
         identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
 
     local_user_index::happy_path::register_user_with_referrer(
         env,
-        create_identity_result.principal,
+        Principal::self_authenticating(&create_identity_result.user_key),
         canister_ids.local_user_index,
         create_identity_result.user_key,
         referral_code,

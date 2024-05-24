@@ -14,4 +14,5 @@ pub struct ChitEarned {
 pub enum ChitEarnedReason {
     DailyClaim,
     Achievement(String),
+    MemeContestWinner,
 }
