@@ -213,7 +213,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
-    #[serde(default)]
     pub chit_events: ChitEarnedEvents,
     pub rng_seed: [u8; 32],
 }
