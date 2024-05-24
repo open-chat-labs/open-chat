@@ -91,7 +91,7 @@
         const num = credentialArguments.length;
         credentialArguments = [
             ...credentialArguments,
-            [`Argument ${num} name`, `Argument ${num} value`],
+            [`Arg ${num + 1} name`, `Arg ${num + 1} value`],
         ];
     }
 
