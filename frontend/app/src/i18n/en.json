@@ -29,7 +29,7 @@
             "issuerCanisterIdPlaceholder": "Enter the issuer canister ID",
             "issuerOrigin": "Issuer origin",
             "issuerOriginPlaceholder": "Enter the issuer origin",
-            "label": "Vefified credential",
+            "label": "Verified credential",
             "requiredCredential": "Required credential"
         },
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",

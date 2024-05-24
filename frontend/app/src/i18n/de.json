@@ -28,8 +28,8 @@
             "issuerCanisterId": "Aussteller-Kanister-ID",
             "issuerCanisterIdPlaceholder": "Geben Sie die ID des Ausstellerkanisters ein",
             "issuerOrigin": "Herkunft des Emittenten",
-            "issuerOriginPlaceholder": "Geben Sie den Ursprung des Emittenten ein",
-            "label": "Überprüfter Nachweis",
+            "issuerOriginPlaceholder": "Geben Sie den Emittentenursprung ein",
+            "label": "Verifizierte Anmeldeinformationen",
             "requiredCredential": "Erforderliche Anmeldeinformationen"
         },
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",

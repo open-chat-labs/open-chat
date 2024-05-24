@@ -29,7 +29,7 @@
             "issuerCanisterIdPlaceholder": "発行者のキャニスターIDを入力してください",
             "issuerOrigin": "発行者の出身地",
             "issuerOriginPlaceholder": "発行元の起源を入力してください",
-            "label": "証明された資格",
+            "label": "認証済みの資格情報",
             "requiredCredential": "必要な資格情報"
         },
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
