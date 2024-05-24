@@ -577,6 +577,7 @@ export const idlFactory = ({ IDL }) => {
     'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
+    'prizes' : IDL.Vec(Tokens),
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
