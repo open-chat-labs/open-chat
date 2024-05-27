@@ -1,4 +1,9 @@
-import type { ChatEventsArgs, ChatEventsResponse, ChatSummary } from "openchat-shared";
+import {
+    type ChatEventsArgs,
+    type ChatEventsResponse,
+    type ChatSummary,
+    MAX_MESSAGES,
+} from "openchat-shared";
 import {
     ChatMap,
     compareChats,
@@ -145,7 +150,7 @@ export class CachePrimer {
 
         if (
             !chatIdentifiersEqual(get(this.api.selectedChatId), chat.id) &&
-            messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > 40
+            messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > MAX_MESSAGES / 2
         ) {
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
                 chat.id,
