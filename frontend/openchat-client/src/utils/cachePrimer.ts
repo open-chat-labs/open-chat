@@ -143,7 +143,10 @@ export class CachePrimer {
 
         const args = [] as ChatEventsArgs[];
 
-        if (!chatIdentifiersEqual(get(this.api.selectedChatId), chat.id)) {
+        if (
+            !chatIdentifiersEqual(get(this.api.selectedChatId), chat.id) &&
+            messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > 40
+        ) {
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
                 chat.id,
                 chat.latestMessage?.event.messageIndex,
