@@ -5052,7 +5052,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     userIds.add(userId);
                 }
             }
-            if (this._liveState.anonUser === false) {
+            if (!this._liveState.anonUser) {
                 userIds.add(this._liveState.user.userId);
             }
             await this.getMissingUsers(userIds);
@@ -5160,6 +5160,10 @@ export class OpenChat extends OpenChatAgentWorker {
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
+
+            if (initialLoad && !this._liveState.anonUser) {
+                window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+            }
         }
     }
 
@@ -5709,10 +5713,6 @@ export class OpenChat extends OpenChatAgentWorker {
                                 })
                                 .filter((f) => f !== undefined) as MessageFilter[],
                         );
-                    }
-
-                    if (!this._liveState.anonUser && final) {
-                        window.setTimeout(() => this.refreshBalancesInSeries(), 0);
                     }
 
                     if (final) {
