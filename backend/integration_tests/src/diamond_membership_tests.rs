@@ -26,11 +26,11 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
     let ledger = if pay_in_chat { canister_ids.chat_ledger } else { canister_ids.icp_ledger };
 
-    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let init_treasury_balance = client::ledger::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     let user = client::register_user(env, canister_ids);
 
-    client::icrc1::happy_path::transfer(env, *controller, ledger, user.user_id, 10_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, 10_000_000_000);
 
     let now = now_millis(env);
 
@@ -79,10 +79,10 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
         )
     };
 
-    let new_balance = client::icrc1::happy_path::balance_of(env, ledger, user.user_id);
+    let new_balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
     assert_eq!(new_balance, 10_000_000_000 - expected_price);
 
-    let treasury_balance = client::icrc1::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let treasury_balance = client::ledger::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     assert_eq!(treasury_balance - init_treasury_balance, expected_price - (2 * transfer_fee));
 }
@@ -130,7 +130,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         .subscription
         .is_active());
 
-    let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
     let fees = DiamondMembershipFees::default();
 
     assert_eq!(
@@ -165,8 +165,9 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     let user_b = client::register_user_with_referrer(env, canister_ids, Some(user_a.user_id.to_string()));
 
     // Take a snapshot of the ledger and referrer ICP balances
-    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let init_referrer_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
+    let init_treasury_balance =
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let init_referrer_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
 
     // Upgrade user_b to Diamond
     let duration = if lifetime {
@@ -185,11 +186,11 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     } as u128;
 
     // Check the referrer has been credited with half the Diamond payment
-    let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
+    let balance_referrer = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
     assert_eq!(balance_referrer - init_referrer_balance, amount_to_referer);
 
     // Check the treasury has received the remainder less the fees
-    let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let treasury_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     let fees = DiamondMembershipFees::default();
 
     assert_eq!(
@@ -247,7 +248,7 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::Disabled
         ));
 
-        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
         assert_eq!(
             new_balance,
             1_000_000_000 - fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128
@@ -263,7 +264,7 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::OneYear
         ));
 
-        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
         assert_eq!(
             new_balance,
             1_000_000_000
