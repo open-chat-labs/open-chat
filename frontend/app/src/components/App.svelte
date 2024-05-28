@@ -43,6 +43,7 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
+    import InstallPrompt from "./home/InstallPrompt.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -103,7 +104,7 @@
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
-            pageReplace(removeQueryStringParam("ref"))
+            pageReplace(removeQueryStringParam("ref"));
         }
         calculateHeight();
 
@@ -416,6 +417,8 @@
 <IncomingCall on:joinVideoCall={joinVideoCall} />
 
 <Witch background />
+
+<InstallPrompt />
 
 {#if isCanisterUrl}
     <SwitchDomain />
