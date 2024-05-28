@@ -618,9 +618,22 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2CompletedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+    'spender' : UserId,
+  });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
+    'ICRC2' : Icrc2CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
     'transaction' : CompletedCryptoTransaction,
@@ -655,9 +668,22 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2FailedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+    'spender' : UserId,
+  });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
+    'ICRC2' : Icrc2FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -681,9 +707,20 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2PendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1Account,
+    'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
+    'ICRC2' : Icrc2PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,

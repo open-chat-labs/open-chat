@@ -1018,6 +1018,9 @@ function pendingCryptoTransfer(
             createdAtNanos: candid.ICRC1.created,
         };
     }
+    if ("ICRC2" in candid) {
+        throw new Error("ICRC2 is not supported yet");
+    }
 
     throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", candid);
 }
@@ -1040,22 +1043,18 @@ export function completedCryptoTransfer(
             blockIndex: trans.block_index,
         };
     }
-    if ("ICRC1" in candid) {
-        return {
-            kind: "completed",
-            ledger: candid.ICRC1.ledger.toString(),
-            recipient,
-            sender,
-            amountE8s: candid.ICRC1.amount,
-            feeE8s: candid.ICRC1.fee,
-            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
-            blockIndex: candid.ICRC1.block_index,
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiCompletedCryptoTransaction type received",
-        candid,
-    );
+
+    const trans = "ICRC1" in candid ? candid.ICRC1 : candid.ICRC2;
+    return {
+        kind: "completed",
+        ledger: trans.ledger.toString(),
+        recipient,
+        sender,
+        amountE8s: trans.amount,
+        feeE8s: trans.fee,
+        memo: optional(trans.memo, bytesToBigint) ?? BigInt(0),
+        blockIndex: trans.block_index,
+    };
 }
 
 export function failedCryptoTransfer(
@@ -1074,19 +1073,17 @@ export function failedCryptoTransfer(
             errorMessage: trans.error_message,
         };
     }
-    if ("ICRC1" in candid) {
-        return {
-            kind: "failed",
-            ledger: candid.ICRC1.ledger.toString(),
-            recipient,
-            amountE8s: candid.ICRC1.amount,
-            feeE8s: candid.ICRC1.fee,
-            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
-            errorMessage: candid.ICRC1.error_message,
-        };
-    }
 
-    throw new UnsupportedValueError("Unexpected ApiFailedCryptoTransaction type received", candid);
+    const trans = "ICRC1" in candid ? candid.ICRC1 : candid.ICRC2;
+    return {
+        kind: "failed",
+        ledger: trans.ledger.toString(),
+        recipient,
+        amountE8s: trans.amount,
+        feeE8s: trans.fee,
+        memo: optional(trans.memo, bytesToBigint) ?? BigInt(0),
+        errorMessage: trans.error_message,
+    };
 }
 
 function imageContent(candid: ApiImageContent): ImageContent {
