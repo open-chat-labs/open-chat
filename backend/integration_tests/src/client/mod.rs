@@ -17,8 +17,8 @@ pub mod escrow;
 pub mod event_store;
 pub mod group;
 pub mod group_index;
-pub mod icrc1;
 pub mod identity;
+pub mod ledger;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -127,7 +127,7 @@ pub fn upgrade_user(
     controller: Principal,
     duration: DiamondMembershipPlanDuration,
 ) {
-    icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
+    ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
     user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
 

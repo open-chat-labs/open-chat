@@ -40,7 +40,7 @@ fn swap_via_escrow_canister_succeeds() {
         subaccount: Some(deposit_subaccount(user1.user_id, swap_id)),
     };
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.icp_ledger,
@@ -53,7 +53,7 @@ fn swap_via_escrow_canister_succeeds() {
         subaccount: Some(deposit_subaccount(user2.user_id, swap_id)),
     };
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -70,11 +70,11 @@ fn swap_via_escrow_canister_succeeds() {
     tick_many(env, 5);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
         chat_amount
     );
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
         icp_amount
     );
 }
