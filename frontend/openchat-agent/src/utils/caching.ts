@@ -754,10 +754,10 @@ export function getCachePrimerTimestamps(db: Database): Promise<Record<string, b
 
 export async function setCachePrimerTimestamp(
     db: Database,
-    chatIdentifierString: string,
+    chatId: ChatIdentifier,
     timestamp: bigint,
 ): Promise<void> {
-    await (await db).put("cachePrimer", timestamp, chatIdentifierString);
+    await (await db).put("cachePrimer", timestamp, chatIdentifierToString(chatId));
 }
 
 function messageToEvent(
