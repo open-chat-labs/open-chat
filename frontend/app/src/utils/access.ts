@@ -128,24 +128,23 @@ const nftGate: GateBinding = {
 };
 
 const credentialGate: GateBinding = {
-    label: "access.credential",
+    label: "access.credential.label",
     key: "credential_gate",
     gate: {
         kind: "credential_gate",
         credential: {
+            credentialName: "",
             issuerCanisterId: "",
             issuerOrigin: "",
             credentialType: "",
         },
     },
-    enabled: false,
+    enabled: true,
 };
 
-export type CredentialIssuer = Credential & { name: string };
-
-export const credentialIssuers: CredentialIssuer[] = [
+export const credentialIssuers: Credential[] = [
     {
-        name: "Is DFINITY employee",
+        credentialName: "Is DFINITY employee",
         issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
         issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
         credentialType: "VerifiedEmployee",
@@ -154,12 +153,12 @@ export const credentialIssuers: CredentialIssuer[] = [
         },
     },
     {
-        name: "Is early adopter",
-        issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
-        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
-        credentialType: "Early adopter",
+        credentialName: "Is early adopter",
+        issuerCanisterId: "vuq4g-oyaaa-aaaap-ahfsq-cai",
+        issuerOrigin: "https://vuq4g-oyaaa-aaaap-ahfsq-cai.icp0.io",
+        credentialType: "EventAttendance",
         credentialArguments: {
-            employerName: "DFINITY Foundation",
+            eventName: "DICE2024",
         },
     },
 ];
