@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
 - Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
 
 ## [[2.0.1150](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1150-local_group_index)] - 2024-04-23
 
