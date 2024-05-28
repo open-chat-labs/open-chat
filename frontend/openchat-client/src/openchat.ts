@@ -499,7 +499,7 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
-import { isBalanceGate } from "openchat-shared";
+import { isBalanceGate, isCredentialGate } from "openchat-shared";
 import { ECDSAKeyIdentity } from "@dfinity/identity";
 import {
     capturePinNumberStore,
@@ -2609,6 +2609,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 current.ledgerCanister !== original.ledgerCanister ||
                 current.minBalance !== original.minBalance
             );
+        }
+        if (isCredentialGate(current) && isCredentialGate(original)) {
+            return JSON.stringify(current.credential) !== JSON.stringify(original.credential);
         }
         return false;
     }

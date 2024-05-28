@@ -1,4 +1,4 @@
-use crate::client::icrc1::happy_path::balance_of;
+use crate::client::ledger::happy_path::balance_of;
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};

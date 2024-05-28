@@ -114,7 +114,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
