@@ -42,6 +42,10 @@
 {/if}
 
 <style lang="scss">
+    .header,
+    .body {
+        color: var(--txt);
+    }
     .body {
         display: flex;
         flex-direction: column;

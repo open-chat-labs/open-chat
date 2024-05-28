@@ -44,6 +44,7 @@
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
+    import NotificationsBar from "./home/NotificationsBar.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -419,6 +420,8 @@
 <Witch background />
 
 <InstallPrompt />
+
+<NotificationsBar />
 
 {#if isCanisterUrl}
     <SwitchDomain />
