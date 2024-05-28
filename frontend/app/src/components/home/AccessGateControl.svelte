@@ -51,6 +51,7 @@
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let amountText = initialPaymentAmount(original.gate);
     let minBalanceText = initialMinBalance(original.gate);
+    let credentialIssuerValid = true;
 
     $: candidateTokenDetails = client.getTokenDetailsForAccessGate(candidate.gate);
     // The minimum payment is 100x the transfer fee for the given token
@@ -71,7 +72,8 @@
                 (invalidDissolveDelay || invalidMinStake)
             ) &&
             !(selectedGateKey === "payment_gate_folder" && invalidAmount) &&
-            !(selectedGateKey === "balance_gate_folder" && invalidMinBalance);
+            !(selectedGateKey === "balance_gate_folder" && invalidMinBalance) &&
+            credentialIssuerValid;
     }
 
     onMount(() => {
@@ -308,7 +310,7 @@
             <div class="info"><Translatable resourceKey={i18nKey("access.openAccessInfo")} /></div>
         {/if}
         {#if candidate.gate.kind === "credential_gate"}
-            <CredentialSelector bind:gate={candidate.gate} />
+            <CredentialSelector bind:valid={credentialIssuerValid} bind:gate={candidate.gate} />
         {/if}
     </div>
 </div>

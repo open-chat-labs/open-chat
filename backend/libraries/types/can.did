@@ -1497,6 +1497,7 @@ type VerifiedCredentialGate = record {
     issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
+    credential_name: text;
     credential_arguments : vec record { text; variant { String : text; Int : int32 } };
 };
 

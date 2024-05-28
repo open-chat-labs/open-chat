@@ -7,6 +7,7 @@
 
     export let gate: AccessGate;
     export let showHeader = true;
+
     $: showDetails =
         isPaymentGate(gate) ||
         (isNeuronGate(gate) &&

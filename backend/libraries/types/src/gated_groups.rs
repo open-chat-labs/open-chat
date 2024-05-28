@@ -40,6 +40,7 @@ pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
     pub credential_type: String,
+    pub credential_name: String,
     pub credential_arguments: HashMap<String, VerifiedCredentialArgumentValue>,
 }
 

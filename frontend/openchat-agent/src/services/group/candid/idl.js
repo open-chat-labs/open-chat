@@ -789,6 +789,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     'issuer_origin' : IDL.Text,
     'issuer_canister_id' : CanisterId,
+    'credential_name' : IDL.Text,
     'credential_type' : IDL.Text,
   });
   const SnsNeuronGate = IDL.Record({
