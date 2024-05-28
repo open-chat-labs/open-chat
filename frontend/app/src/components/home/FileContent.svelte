@@ -12,9 +12,9 @@
 
     export let content: FileContent;
     export let me: boolean = false;
-    export let reply: boolean = false;
     export let draft: boolean = false;
     export let edited: boolean;
+    export let blockLevelMarkdown: boolean = false;
 
     let color = me ? "#ffffff" : "var(--txt)";
 </script>
@@ -40,7 +40,7 @@
     </div>
 {/if}
 
-<ContentCaption caption={content.caption} {edited} {reply} />
+<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     .file-content {

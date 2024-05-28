@@ -22,6 +22,7 @@
     export let height: number | undefined = undefined;
     export let intersecting: boolean = true;
     export let edited: boolean;
+    export let blockLevelMarkdown: boolean = false;
 
     let imgElement: HTMLImageElement;
     let zoom = false;
@@ -137,7 +138,7 @@
     </div>
 {/if}
 
-<ContentCaption caption={normalised.caption} {edited} {reply} />
+<ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
 
 {#if zoomable && zoom}
     <Overlay on:close={() => (zoom = false)} dismissible alignBottomOnMobile={false}>

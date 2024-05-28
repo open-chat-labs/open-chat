@@ -9,6 +9,7 @@
 
     export let content: AudioContent;
     export let edited: boolean;
+    export let blockLevelMarkdown: boolean = false;
 
     let audioPlayer: HTMLAudioElement;
     let playing: boolean = false;
@@ -80,7 +81,7 @@
     </div>
 </div>
 
-<ContentCaption caption={content.caption} {edited} />
+<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     $size: 120px;
