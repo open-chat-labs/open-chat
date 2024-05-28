@@ -26,7 +26,7 @@ pub fn create_pending_transaction(
         token,
         amount,
         to: Account::from(Principal::from(user_id)),
-        memo: memo.map(|bytes| ByteBuf::from(bytes)),
+        memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })
 }
