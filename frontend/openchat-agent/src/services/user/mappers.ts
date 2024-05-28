@@ -615,6 +615,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             timestamp: result.timestamp,
             suspended: result.suspended,
             pinNumberSettings: optional(result.pin_number_settings, pinNumberSettings),
+            localUserIndex: result.local_user_index_canister_id.toString(),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);

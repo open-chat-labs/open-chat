@@ -976,6 +976,7 @@ export type ChatStateFull = {
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
+    userCanisterLocalUserIndex: string;
 };
 
 export type CurrentChatState = {
@@ -1125,6 +1126,7 @@ export type InitialStateResponse = {
     timestamp: bigint;
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
+    localUserIndex: string;
 };
 
 export type PinNumberSettings = {
@@ -2135,6 +2137,49 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           kind: "not_found";
       }
     | { kind: "error"; error: string };
+
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          ascending: boolean;
+          startIndex: number;
+          eventIndexRange: [number, number];
+      }
+    | {
+          kind: "by_index";
+          events: number[];
+      }
+    | {
+          kind: "window";
+          midPoint: number;
+          eventIndexRange: [number, number];
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string };
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }

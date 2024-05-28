@@ -1,15 +1,15 @@
-import type {
-    ChatEvent,
-    ChatSummary,
-    CreatedUser,
-    EventsResponse,
-    IndexRange,
+import {
+    type ChatEventsArgs,
+    type ChatEventsResponse,
+    type ChatSummary,
+    MAX_MESSAGES,
 } from "openchat-shared";
 import {
     ChatMap,
     compareChats,
     missingUserIds,
     userIdsFromEvents,
+    chatIdentifiersEqual,
     chatIdentifierToString,
 } from "openchat-shared";
 import { Poller } from "./poller";
@@ -22,13 +22,16 @@ import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
 import { RemoteVideoCallStartedEvent } from "../events";
 
+const BATCH_SIZE = 20;
+
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
 
     constructor(
         private api: OpenChat,
-        private user: CreatedUser,
+        private userId: string,
+        private userCanisterLocalUserIndex: string,
         private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
     ) {
         debug("initialized");
@@ -46,58 +49,63 @@ export class CachePrimer {
             }
 
             if (this.pending.size > 0 && this.runner === undefined) {
-                this.runner = new Poller(() => runOnceIdle(() => this.processNext()), 0);
+                this.runner = new Poller(() => runOnceIdle(() => this.processNextBatch()), 500);
                 debug("runner started");
             }
         }
     }
 
-    async processNext(): Promise<void> {
+    async processNextBatch(): Promise<void> {
         try {
-            const chat = this.pending.values().sort(compareChats)[0];
-            if (chat === undefined) {
+            const next = this.getNextBatch();
+            if (next === undefined) {
                 debug("queue empty");
                 return;
             }
-            this.pending.delete(chat.id);
 
-            const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
-                chat.id,
-                chat.latestMessage?.event.messageIndex,
-            );
+            const [localUserIndex, batch] = next;
+
+            const responses = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
-            if (firstUnreadMessage !== undefined) {
-                debug(chat.id + " loading events window");
-                const eventsWindowResponse = await this.getEventsWindow(chat, firstUnreadMessage);
-                debug(chat.id + " loaded events window");
-                if (eventsWindowResponse !== "events_failed") {
-                    userIdsFromEvents(eventsWindowResponse.events).forEach((u) => userIds.add(u));
-                }
-            }
+            for (let i = 0; i < responses.length; i++) {
+                const request = batch[i];
+                const response = responses[i];
 
-            debug(chat.id + " loading latest events");
-            const latestEventsResponse = await this.getLatestEvents(chat);
-            debug(chat.id + " loaded latest events");
-            if (latestEventsResponse !== "events_failed") {
-                userIdsFromEvents(latestEventsResponse.events).forEach((u) => userIds.add(u));
+                if (response.kind === "success") {
+                    userIdsFromEvents(response.result.events).forEach((u) => userIds.add(u));
+                    response.result.events.forEach((e) => {
+                        if (
+                            e.event.kind === "message" &&
+                            e.event.sender !== this.userId &&
+                            e.event.content.kind === "video_call_content" &&
+                            e.event.content.callType === "default" &&
+                            e.event.content.ended === undefined
+                        ) {
+                            this.onVideoStart(
+                                new RemoteVideoCallStartedEvent(
+                                    request.context.chatId,
+                                    e.event.sender,
+                                    e.event.messageId,
+                                ),
+                            );
+                        }
+                    });
+                }
             }
 
             if (userIds.size > 0) {
                 const missing = missingUserIds(get(userStore), userIds);
                 if (missing.length > 0) {
-                    debug(`${chat.id} loading ${missing.length} users`);
+                    debug(`Loading ${missing.length} users`);
                     await this.api.getUsers(
                         { userGroups: [{ users: missing, updatedSince: BigInt(0) }] },
                         true,
                     );
                 }
             }
-            await this.api.setCachePrimerTimestamp(
-                chatIdentifierToString(chat.id),
-                chat.lastUpdated,
-            );
-            debug(chat.id + " completed");
+
+            debug(`Batch of size ${batch.length} completed`);
         } finally {
             if (this.pending.size === 0) {
                 this.runner?.stop();
@@ -107,60 +115,95 @@ export class CachePrimer {
         }
     }
 
-    private async getEventsWindow(
-        chat: ChatSummary,
-        firstUnreadMessage: number,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
-        return await this.api
-            .sendRequest({
-                kind: "chatEventsWindow",
-                eventIndexRange: [minVisible, chat.latestEventIndex],
-                chatId: chat.id,
-                messageIndex: firstUnreadMessage,
-                threadRootMessageIndex: undefined,
-                latestKnownUpdate: chat.lastUpdated,
-            })
-            .then((resp) => {
-                if (resp !== "events_failed") {
-                    resp.events.forEach((e) => {
-                        if (
-                            e.event.kind === "message" &&
-                            e.event.sender !== this.user.userId &&
-                            e.event.content.kind === "video_call_content" &&
-                            e.event.content.callType === "default" &&
-                            e.event.content.ended === undefined
-                        ) {
-                            this.onVideoStart(
-                                new RemoteVideoCallStartedEvent(
-                                    chat.id,
-                                    e.event.sender,
-                                    e.event.messageId,
-                                ),
-                            );
-                        }
-                    });
+    private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
+        if (this.pending.size === 0) {
+            return undefined;
+        }
+        const sorted = this.pending.values().sort(compareChats);
+        const next = sorted[0];
+        const batch = this.getEventsArgs(next);
+        const localUserIndex = this.localUserIndex(next);
+
+        this.pending.delete(next.id);
+
+        for (let i = 1; i < sorted.length; i++) {
+            const chat = sorted[i];
+            if (this.localUserIndex(chat) === localUserIndex) {
+                this.getEventsArgs(chat).forEach((args) => batch.push(args));
+                this.pending.delete(chat.id);
+                if (batch.length >= BATCH_SIZE) {
+                    break;
                 }
-                return resp;
-            });
+            }
+        }
+
+        return [localUserIndex, batch];
     }
 
-    private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
-        const range: IndexRange =
-            chat.kind === "direct_chat"
-                ? [0, chat.latestEventIndex]
-                : [chat.minVisibleEventIndex, chat.latestEventIndex];
+    private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
+        const context = { chatId: chat.id };
+        const latestKnownUpdate = chat.lastUpdated;
+        const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
+        const eventIndexRange: [number, number] = [minVisible, chat.latestEventIndex];
 
-        return await this.api.sendRequest({
-            kind: "chatEvents",
-            chatType: chat.kind,
-            chatId: chat.id,
-            eventIndexRange: range,
-            startIndex: chat.latestEventIndex,
-            ascending: false,
-            threadRootMessageIndex: undefined,
-            latestKnownUpdate: chat.lastUpdated,
+        const args = [] as ChatEventsArgs[];
+
+        if (
+            !chatIdentifiersEqual(get(this.api.selectedChatId), chat.id) &&
+            messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > MAX_MESSAGES / 2
+        ) {
+            const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
+                chat.id,
+                chat.latestMessage?.event.messageIndex,
+            );
+            if (firstUnreadMessage !== undefined) {
+                args.push({
+                    context,
+                    args: {
+                        kind: "window",
+                        midPoint: firstUnreadMessage,
+                        eventIndexRange,
+                    },
+                    latestKnownUpdate,
+                });
+            }
+        }
+
+        args.push({
+            context,
+            args: {
+                kind: "page",
+                ascending: false,
+                startIndex: chat.latestEventIndex,
+                eventIndexRange,
+            },
+            latestKnownUpdate,
         });
+
+        return args;
+    }
+
+    private getEventsBatch(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+    ): Promise<ChatEventsResponse[]> {
+        return this.api.sendRequest({
+            kind: "chatEventsBatch",
+            localUserIndex,
+            requests,
+            cachePrimer: true,
+        });
+    }
+
+    private localUserIndex(chat: ChatSummary): string {
+        switch (chat.kind) {
+            case "direct_chat":
+                return this.userCanisterLocalUserIndex;
+            case "group_chat":
+                return chat.localUserIndex;
+            case "channel":
+                return this.api.localUserIndexForCommunity(chat.id.communityId);
+        }
     }
 
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
