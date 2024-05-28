@@ -550,6 +550,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
+    private _accountBalancesLastUpdated: Map<string, number> = new Map();
 
     user = currentUser;
     anonUser = anonUser;
@@ -4494,10 +4495,20 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(ledger: string): Promise<bigint> {
+    refreshAccountBalance(ledger: string, force: boolean = false): Promise<bigint> {
         const user = this._liveState.user;
         if (user === undefined) {
             return Promise.resolve(0n);
+        }
+
+        if (!force) {
+            const lastUpdated = this._accountBalancesLastUpdated.get(ledger);
+            if (lastUpdated !== undefined && Date.now() - lastUpdated > 5 * ONE_MINUTE_MILLIS) {
+                const value = get(cryptoBalance)[ledger];
+                if (value !== undefined) {
+                    return Promise.resolve(value);
+                }
+            }
         }
 
         return this.sendRequest({
@@ -4507,6 +4518,7 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((val) => {
                 cryptoBalance.set(ledger, val);
+                this._accountBalancesLastUpdated.set(ledger, Date.now());
                 return val;
             })
             .catch(() => 0n);

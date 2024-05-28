@@ -29,16 +29,16 @@
 
     $: {
         if (ledger) {
-            refresh();
+            refresh(false);
         }
     }
 
-    export function refresh() {
+    export function refresh(force = true) {
         dispatch("click");
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger)
+            .refreshAccountBalance(ledger, force)
             .then((val) => {
                 dispatch("refreshed", val);
             })
@@ -78,7 +78,7 @@
         {formattedValue}
     </div>
     {#if showRefresh}
-        <div class="refresh" class:refreshing on:click={refresh}>
+        <div class="refresh" class:refreshing on:click={() => refresh()}>
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
