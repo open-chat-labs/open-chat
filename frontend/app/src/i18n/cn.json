@@ -472,6 +472,11 @@
     "howToBuyToken": "我需要购买 {token} 的帮助",
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",
+    "install": {
+        "dontShow": "不要再给我看这个",
+        "message": "为了接收通知并获得最佳用户体验，我们建议您将 OpenChat 添加到主屏幕。",
+        "title": "添加到主屏幕"
+    },
     "insufficientFunds": "请确保上述帐户的余额至少为 {amount} ICP 以支付请求的存储空间，然后点击“刷新”按钮。",
     "insufficientStorage": "存储空间不足",
     "invite": {

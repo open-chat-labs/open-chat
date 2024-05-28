@@ -473,9 +473,9 @@
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",
     "install": {
-        "title": "Add to home screen",
+        "dontShow": "Don't show me this again",
         "message": "To receive notifications and to get the best user experience, we recomment that you add OpenChat to your home screen.",
-        "dontShow": "Don't show me this again"
+        "title": "Add to home screen"
     },
     "insufficientFunds": "Please ensure that the account above has a balance of at least {amount} ICP to cover the requested storage, then hit the \"Refresh\" button.",
     "insufficientStorage": "Insufficient storage",
