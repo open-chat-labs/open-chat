@@ -1949,6 +1949,7 @@ export interface VerifiedCredentialGate {
   >,
   'issuer_origin' : string,
   'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
 }
 export interface VerifiedCredentialGateArgs {
