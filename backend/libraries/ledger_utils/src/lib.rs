@@ -1,13 +1,14 @@
 use candid::Principal;
-use ic_ledger_types::{AccountIdentifier, Subaccount, Tokens, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use sha2::{Digest, Sha256};
 use types::{
-    nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
-    PendingCryptoTransaction, TimestampNanos, UserId,
+    CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
+    UserId,
 };
 
 pub mod icrc1;
+pub mod icrc2;
 pub mod nns;
 
 pub fn create_pending_transaction(
@@ -19,31 +20,15 @@ pub fn create_pending_transaction(
     memo: Option<&[u8]>,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
-    let transaction = match token {
-        Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
-            ledger,
-            token,
-            amount: Tokens::from_e8s(amount as u64),
-            to: UserOrAccount::User(user_id),
-            fee: None,
-            memo: None,
-            created: now_nanos,
-        }),
-        _ => PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
-            ledger,
-            fee,
-            token,
-            amount,
-            to: Account::from(Principal::from(user_id)),
-            memo: None,
-            created: now_nanos,
-        }),
-    };
-    if let Some(memo) = memo {
-        transaction.set_memo(memo)
-    } else {
-        transaction
-    }
+    PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+        ledger,
+        fee,
+        token,
+        amount,
+        to: Account::from(Principal::from(user_id)),
+        memo: memo.map(|bytes| bytes.to_vec().into()),
+        created: now_nanos,
+    })
 }
 
 pub async fn process_transaction(
@@ -53,6 +38,10 @@ pub async fn process_transaction(
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
         PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender).await {
+            Ok(c) => Ok(c.into()),
+            Err(f) => Err(f.into()),
+        },
+        PendingCryptoTransaction::ICRC2(t) => match icrc2::process_transaction(t, sender).await {
             Ok(c) => Ok(c.into()),
             Err(f) => Err(f.into()),
         },

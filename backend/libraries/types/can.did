@@ -1102,16 +1102,19 @@ type CryptoTransaction = variant {
 type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
+    ICRC2 : Icrc2PendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
     NNS : NnsCompletedCryptoTransaction;
     ICRC1 : Icrc1CompletedCryptoTransaction;
+    ICRC2 : Icrc2CompletedCryptoTransaction;
 };
 
 type FailedCryptoTransaction = variant {
     NNS : NnsFailedCryptoTransaction;
     ICRC1 : Icrc1FailedCryptoTransaction;
+    ICRC2 : Icrc2FailedCryptoTransaction;
 };
 
 type NnsPendingCryptoTransaction = record {
@@ -1197,6 +1200,43 @@ type Icrc1FailedCryptoTransaction = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    error_message : text;
+};
+
+type Icrc2PendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    from : Icrc1Account;
+    to : Icrc1Account;
+    memo : opt Memo;
+    created : TimestampNanos;
+};
+
+type Icrc2CompletedCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : BlockIndex;
+};
+
+type Icrc2FailedCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
     from : Icrc1AccountOrMint;
     to : Icrc1AccountOrMint;
     memo : opt Memo;
