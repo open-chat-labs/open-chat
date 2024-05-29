@@ -812,25 +812,23 @@ export class OpenChat extends OpenChatAgentWorker {
         const id = this._ocIdentity;
 
         this.sendRequest({ kind: "createUserClient", userId: user.userId });
-        startMessagesReadTracker(this);
         startSwCheckPoller();
         if (id !== undefined) {
             this.startSession(id).then(() => this.logout());
         }
 
-        this.startOnlinePoller();
         this.startChatsPoller();
         this.startUserUpdatePoller();
-        this.sendRequest({ kind: "getUserStorageLimits" })
-            .then(storageStore.set)
-            .catch((err) => {
-                console.warn("Unable to retrieve user storage limits", err);
-            });
 
         initNotificationStores();
         if (!this._liveState.anonUser) {
+            this.startOnlinePoller();
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
             this.identityState.set({ kind: "logged_in" });
-            this.initWebRtc();
             this.dispatchEvent(new UserLoggedIn(user.userId));
         }
     }
@@ -4962,7 +4960,10 @@ export class OpenChat extends OpenChatAgentWorker {
         try {
             const now = BigInt(Date.now());
             const allUsers = this._liveState.userStore;
-            const usersToUpdate = new Set<string>([this._liveState.user.userId]);
+            const usersToUpdate = new Set<string>();
+            if (!this._liveState.anonUser) {
+                usersToUpdate.add(this._liveState.user.userId);
+            }
 
             const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
@@ -5160,9 +5161,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.dispatchEvent(new ChatsUpdated());
 
-            if (initialLoad && !this._liveState.anonUser) {
-                window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+            if (initialLoad) {
                 this.startExchangeRatePoller();
+                if (!this._liveState.anonUser) {
+                    this.initWebRtc();
+                    startMessagesReadTracker(this);
+                    window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+                }
             }
         }
     }
