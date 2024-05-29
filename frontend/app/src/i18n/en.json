@@ -278,12 +278,14 @@
     "currentLimit": "Your current storage limit is {limit}GB and your account balance is {balance} ICP.",
     "currentUsage": "Current Storage Usage",
     "dailyChit": {
-        "alreadyClaimed": "You have already claimed your daily CHIT. Come back tomorrow to extend your streak!",
-        "available": "Press the claim button to extend your streak!",
-        "claim": "Claim",
+        "alreadyClaimed": "Come back tomorrow to extend your streak!",
+        "available": "Claim your CHIT and extend your streak!",
+        "claim": "Claim CHIT!",
         "extendStreak": "Extend streak",
-        "title": "CHIT Streak",
-        "viewStreak": "View streak"
+        "title": "Maintain your streak",
+        "viewStreak": "View streak",
+        "info": "The longer you maintain your streak the more daily CHIT you can claim!",
+        "comeback": "Come back in {time}"
     },
     "dark": "dark",
     "days": "Days",

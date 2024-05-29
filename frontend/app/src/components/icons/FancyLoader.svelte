@@ -45,7 +45,7 @@
 
     $: {
         plotOrange($orangeStart, $orangeEnd);
-        if (loop) {
+        if (loop || phase > 2) {
             if (phase === 2) {
                 if ($orangeStart >= orangeTarget) {
                     phase = 3;
