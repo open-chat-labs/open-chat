@@ -5,9 +5,11 @@
 
 <section>
     <p>
-        TLDR; in addition to Internet Identity (II), OpenChat users can now sign-in/sign-up using
-        email, or an Ethereum wallet, and soon with a Solana wallet or a simple Passkey. Also coming
-        are email recovery, flexible sessions and 2FA.
+        TLDR; in addition to <ExternalLink href="https://internetcomputer.org/internet-identity"
+            >Internet Identity</ExternalLink
+        >, OpenChat users can now sign-in or sign-up using email, or an Ethereum wallet, and soon
+        with a Solana wallet. Also coming soon are, email recovery, sign-in with a simple PassKey,
+        flexible sessions and Two-factor authentication (2FA).
     </p>
     <BlogScreenshot
         caption="Sign in to OpenChat"
@@ -24,8 +26,7 @@
         including this identifier is sent to your email and is used to prove ownership of the email.
         Having clicked the email link, enter a username to create your OpenChat account. No password
         is required. To sign in at a later date, simply repeat the process by entering your email and
-        you will be sent a sign-in link. We believe email sign-in will be less intimidating than II,
-        encouraging wider adoption.
+        you will be sent a sign-in link.
     </p>
     <BlogScreenshot
         caption="Sign in with email"
@@ -156,8 +157,8 @@
 <section>
     <h2>2FA</h2>
     <p>
-        The new system will also support two factor authentication (2FA). Users will be able to
-        configure their accounts to require sign-in by 2 providers, say Metamask and a Passkey. Or a
+        The new system will also support Two-factor authentication (2FA). Users will be able to
+        configure their accounts to require sign-in by 2 providers, say Metamask and a Passkey, or a
         PassKey and an authenticator app.
     </p>
 </section>
