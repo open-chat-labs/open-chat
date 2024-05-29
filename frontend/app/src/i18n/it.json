@@ -472,6 +472,11 @@
     "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
     "identityMigrationMessage": "Attendi mentre il tuo account viene aggiornato al nostro nuovo sistema. Ciò ci consentirà di supportare molte più opzioni di accesso in futuro, incluso il recupero facoltativo della posta elettronica nel caso in cui perdi l'accesso al tuo dispositivo.",
     "inheritSystem": "Eredita il tema del sistema",
+    "install": {
+        "dontShow": "Non mostrarmelo più",
+        "message": "Per ricevere notifiche e ottenere la migliore esperienza utente, ti consigliamo di aggiungere OpenChat alla schermata iniziale.",
+        "title": "Aggiungere alla schermata Home"
+    },
     "insufficientFunds": "Assicurati che l'account di cui sopra abbia un saldo di almeno {amount} ICP per coprire lo spazio di archiviazione richiesto, quindi premi il pulsante \"Aggiorna\".",
     "insufficientStorage": "Spazio insufficiente",
     "invite": {

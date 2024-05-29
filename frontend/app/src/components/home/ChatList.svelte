@@ -20,7 +20,6 @@
     import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
-    import NotificationsBar from "./NotificationsBar.svelte";
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
@@ -279,7 +278,9 @@
                                                     {searchTerm}
                                                     username={user.displayName ?? user.username} />
 
-                                                <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
+                                                <Badges
+                                                    diamondStatus={user.diamondStatus}
+                                                    streak={user.streak} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername
@@ -337,7 +338,6 @@
         {/if}
     </div>
     <ActiveCallSummary on:askToSpeak on:hangup />
-    <NotificationsBar />
     {#if showPreview}
         <PreviewWrapper let:joiningCommunity let:joinCommunity>
             <div class="join">

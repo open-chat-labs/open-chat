@@ -472,6 +472,11 @@
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
     "identityMigrationMessage": "Vui lòng đợi trong khi tài khoản của bạn được nâng cấp lên hệ thống mới của chúng tôi. Điều này sẽ cho phép chúng tôi hỗ trợ nhiều tùy chọn đăng nhập hơn trong tương lai, bao gồm cả tùy chọn khôi phục email trong trường hợp bạn mất quyền truy cập vào thiết bị của mình.",
     "inheritSystem": "Sử dụng màu nền theo hệ thống",
+    "install": {
+        "dontShow": "Đừng cho tôi xem lại cái này",
+        "message": "Để nhận thông báo và có được trải nghiệm người dùng tốt nhất, chúng tôi khuyên bạn nên thêm OpenChat vào màn hình chính của mình.",
+        "title": "Thêm vào màn hình chính"
+    },
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
     "insufficientStorage": "Không đủ dung lượng lưu trữ",
     "invite": {

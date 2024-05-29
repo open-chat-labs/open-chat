@@ -1,9 +1,13 @@
-import { isTouchDevice } from "../utils/devices";
+import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "openchat-client";
 
 export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
 
+export const showHomeScreenPrompt = createLsBoolStore(
+    configKeys.showHomeScreenPrompt,
+    mobileOperatingSystem === "iOS",
+);
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);
