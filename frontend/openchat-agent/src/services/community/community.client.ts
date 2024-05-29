@@ -605,9 +605,7 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.events_window(args),
-            (res) => {
-                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
-            },
+            (res) => getEventsResponse(this.principal, res, chatId, latestKnownUpdate),
         );
     }
 

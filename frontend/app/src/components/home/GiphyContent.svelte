@@ -17,6 +17,7 @@
     export let height: number | undefined = undefined;
     export let intersecting: boolean = true;
     export let edited: boolean;
+    export let blockLevelMarkdown: boolean = false;
 
     $: withCaption = content.caption !== undefined && content.caption !== "";
     $: image = $mobileWidth ? content.mobile : content.desktop;
@@ -79,7 +80,7 @@
     {/if}
 </div>
 
-<ContentCaption caption={content.caption} {edited} {reply} />
+<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     .img-wrapper {
