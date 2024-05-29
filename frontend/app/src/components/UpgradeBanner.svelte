@@ -3,6 +3,7 @@
     import { OpenChat, Poller, Version } from "openchat-client";
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
+    import { activeVideoCall } from "../stores/video";
 
     const VERSION_INTERVAL = 60 * 1000;
     const client = getContext<OpenChat>("client");
@@ -17,7 +18,7 @@
     onDestroy(() => poller.stop());
 
     function checkVersion(): Promise<void> {
-        if (process.env.NODE_ENV !== "production") return Promise.resolve();
+        if (process.env.NODE_ENV !== "production" || $activeVideoCall !== undefined) return Promise.resolve();
         return getServerVersion().then((serverVersion) => {
             if (serverVersion.isGreaterThan(clientVersion)) {
                 poller.stop();
