@@ -744,7 +744,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         this.startRegistryPoller();
-        this.startExchangeRatePoller();
 
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
@@ -5163,6 +5162,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
             if (initialLoad && !this._liveState.anonUser) {
                 window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+                this.startExchangeRatePoller();
             }
         }
     }
