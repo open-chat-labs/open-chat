@@ -35,7 +35,7 @@ export function mergeKeepingOnlyChanged<T>(orig: T, updated: T): Partial<T> {
 }
 
 export function isEmpty(obj: object) {
-    for (var prop in obj) {
+    for (const prop in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, prop)) {
             return false;
         }
