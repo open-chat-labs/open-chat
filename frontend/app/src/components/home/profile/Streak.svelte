@@ -13,7 +13,7 @@
     $: num = streakNumber(streak);
 
     function streakFromDays(days: number): Streak {
-        return days < 2
+        return days < 3
             ? "none"
             : days < 7
               ? "three"

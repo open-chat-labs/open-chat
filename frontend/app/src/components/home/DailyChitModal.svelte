@@ -24,12 +24,17 @@
     $: user = client.user;
     $: available = $user.nextDailyChitClaim < $now500;
     $: streak = $user.streak;
-    $: percent = (streak / 30) * 100;
+    $: percent = calculatePercentage(streak);
+    $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
+
     // These are useful for testing
     // $: available = true;
     // $: streak = 2;
 
-    $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
+    function calculatePercentage(streak: number): number {
+        const percent = (streak / 30) * 100;
+        return percent > 100 ? 100 : percent;
+    }
 
     function close() {
         dispatch("close");
