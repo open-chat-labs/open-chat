@@ -19,9 +19,6 @@
     let connecting: WalletName | undefined = undefined;
 
     $: ({ publicKey, wallet, connect, select, signMessage } = $walletStore);
-    $: walletsAvailable = $walletStore.wallets.filter(
-        (wallet) => wallet.readyState === "Installed",
-    ).length;
 
     function walletError(error: WalletError): void {
         console.error("WalletError: ", error);
@@ -92,12 +89,6 @@
         return request;
     }
 </script>
-
-<h1>
-    {walletsAvailable
-        ? "Connect a wallet to continue"
-        : "You'll need a wallet on Solana to continue"}
-</h1>
 
 {#each $walletStore.wallets as { adapter: { name, icon } }}
     <div class="auth-option">
