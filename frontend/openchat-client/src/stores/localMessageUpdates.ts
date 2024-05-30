@@ -8,6 +8,7 @@ import {
     type P2PSwapStatus,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
+import { isEmpty } from "../utils/object";
 
 export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMessageUpdates> {
     markCancelled(messageId: bigint, content: MessageContent): void {
@@ -85,6 +86,10 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
 
             if (result.tips[ledger][userId] <= 0n) {
                 delete result.tips[ledger][userId];
+
+                if (isEmpty(result.tips[ledger])) {
+                    delete result.tips[ledger];
+                }
             }
 
             return result;
