@@ -211,10 +211,9 @@
                     claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                 )}
                 on:click={() => dispatch("claimDailyChit")}>
-                <StreakButton enabled={claimChitAvailable} />
-                <!-- <div class="hover direct">
-                    <LightningBoltIcon size={iconSize} color={"var(--icon-txt)"} />
-                </div> -->
+                <div class="hover streak">
+                    <StreakButton enabled={claimChitAvailable} />
+                </div>
             </LeftNavItem>
         {/if}
     </div>

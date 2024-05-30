@@ -1,20 +1,65 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+    import { tweened } from "svelte/motion";
+
+    export let enabled: boolean;
+
+    $: fill = enabled ? "url(#grad1)" : "transparent";
+    $: stroke = enabled ? "rgb(247, 28, 255)" : "var(--icon-txt)";
+
+    let y1 = tweened(-45, { duration: 1000 });
+    let y2 = tweened(55, { duration: 1000 });
+
+    let destroyed = false;
+
+    onMount(() => {
+        return () => (destroyed = true);
+    });
+
+    $: {
+        if (enabled) {
+            animate(55, 155);
+        }
+    }
+
+    function animate(v1: number, v2: number) {
+        y1.set(v1);
+        y2.set(v2);
+        if (destroyed || !enabled) return;
+
+        setTimeout(() => {
+            y1 = tweened(-45, { duration: 1000 });
+            y2 = tweened(55, { duration: 1000 });
+            animate(55, 155);
+        }, 3000);
+    }
 </script>
 
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <defs />
-    <g
-        transform="matrix(-13.487075, -2.149654, -2.149654, 13.487075, 73.790421, 92.579376)"
-        style="transform-origin: 8.46005px 8.53436px;">
-        <defs />
-        <g id="layer1" transform="translate(0 -1036.4)">
-            <path
-                id="path2996"
-                style="stroke-linejoin: round; fill: rgb(255, 213, 0); stroke: rgb(247, 28, 255); stroke-width: 0.433585px;"
-                d="M 3.514 1044.838 L 6.275 1038.396 L 12.602 1038.396 L 8.029 1043.026 L 11.797 1043.026 L 4.406 1051.308 L 6.304 1044.809 L 3.514 1044.838 Z" />
-        </g>
-    </g>
+    <defs>
+        <linearGradient
+            id="grad1"
+            x1="0%"
+            x2="0%"
+            y1={`${$y1}%`}
+            y2={`${$y2}%`}
+            gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="rgb(255,213,0)" />
+            <stop offset="30%" stop-color="rgb(255,213,0)" />
+            <stop offset="50%" stop-color="#fe9d03" />
+            <stop offset="70%" stop-color="rgb(255,213,0)" />
+            <stop offset="100%" stop-color="rgb(255,213,0)" />
+        </linearGradient>
+    </defs>
+    <polygon
+        style={`stroke-width: 8px; fill: ${fill}; stroke-miterlimit: 5; stroke: ${stroke};`}
+        points="42.474 4.937 124.321 18.727 146.446 106.726 110.598 100.041 122.041 188.247 42.947 65.828 92.355 74.039"
+    ></polygon>
 </svg>
 
 <style lang="scss">
+    svg {
+        width: toRem(32);
+        height: toRem(32);
+    }
 </style>

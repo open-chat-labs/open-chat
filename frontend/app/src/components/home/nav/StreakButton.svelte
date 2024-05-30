@@ -4,19 +4,7 @@
     export let enabled: boolean;
 </script>
 
-<div class:enabled class="button">
-    <LighteningBolt />
-</div>
+<LighteningBolt {enabled} />
 
 <style lang="scss">
-    .button {
-        border-radius: 50%;
-        width: toRem(48);
-        height: toRem(48);
-
-        @include mobile() {
-            width: toRem(40);
-            height: toRem(40);
-        }
-    }
 </style>
