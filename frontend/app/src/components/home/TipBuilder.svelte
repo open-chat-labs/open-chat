@@ -37,7 +37,6 @@
     export let messageContext: MessageContext;
 
     let refreshing = false;
-    let busy = false;
     let error: string | undefined = undefined;
     let tipError: string | undefined = undefined;
     let toppingUp = false;
@@ -205,7 +204,6 @@
         };
         lastCryptoSent.set(ledger);
 
-        busy = true;
         tipError = undefined;
 
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
@@ -213,15 +211,12 @@
         client
             .tipMessage(messageContext, msg.messageId, transfer, currentTip)
             .then((resp) => {
-                if (resp.kind === "success") {
-                    dispatch("close");
-                } else if (resp.kind === "failure") {
+                if (resp.kind === "failure") {
                     tipError = "tip.failure";
                 }
-            })
-            .finally(() => {
-                busy = false;
             });
+
+        dispatch("close");
     }
 </script>
 
@@ -353,7 +348,6 @@
                 <Button
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    disabled={busy}
                     secondary
                     on:click={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
@@ -366,9 +360,8 @@
                 {:else}
                     <Button
                         small={!$mobileWidth}
-                        disabled={!valid || busy}
+                        disabled={!valid}
                         tiny={$mobileWidth}
-                        loading={busy}
                         on:click={send}
                         ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
