@@ -16,7 +16,10 @@ const { subscribe, update } = writable<Toast | undefined>(undefined);
 
 export const toastStore = {
     subscribe,
-    showFailureToast: (resourceKey: ResourceKey | Readable<ResourceKey | undefined>, err?: unknown): void => {
+    showFailureToast: (
+        resourceKey: ResourceKey | Readable<ResourceKey | undefined>,
+        err?: unknown,
+    ): void => {
         return update(() => ({
             resourceKey: "subscribe" in resourceKey ? resourceKey : readable(resourceKey),
             type: ToastType.Failure,

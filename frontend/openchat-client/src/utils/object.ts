@@ -30,6 +30,16 @@ export function mergeKeepingOnlyChanged<T>(orig: T, updated: T): Partial<T> {
     if (updated == undefined) return orig;
     return zip(Object.entries(orig), Object.entries(updated)).reduce(
         (maybe, [[ok, ov], [_, uv]]) => (ov !== uv ? { ...maybe, [ok]: uv } : maybe),
-        {}
+        {},
     );
+}
+
+export function isEmpty(obj: object) {
+    for (const prop in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+            return false;
+        }
+    }
+
+    return true;
 }

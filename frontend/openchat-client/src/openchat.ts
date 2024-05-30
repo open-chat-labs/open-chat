@@ -5647,6 +5647,12 @@ export class OpenChat extends OpenChatAgentWorker {
         const totalTip = transfer.amountE8s + currentTip;
         const decimals = get(cryptoLookup)[transfer.ledger].decimals;
 
+        localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+
+        function undoLocally() {
+            localMessageUpdates.markTip(messageId, transfer.ledger, userId, -totalTip);
+        }
+
         return this.sendRequest({
             kind: "tipMessage",
             messageContext,
@@ -5656,19 +5662,22 @@ export class OpenChat extends OpenChatAgentWorker {
             pin,
         })
             .then((resp) => {
-                if (resp.kind === "success") {
-                    localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
-                } else if (
-                    resp.kind === "pin_incorrect" ||
-                    resp.kind === "pin_required" ||
-                    resp.kind === "too_main_failed_pin_attempts"
-                ) {
-                    pinNumberFailureStore.set(resp as PinNumberFailures);
+                if (resp.kind !== "success") {
+                    undoLocally();
+                    
+                    if (
+                        resp.kind === "pin_incorrect" ||
+                        resp.kind === "pin_required" ||
+                        resp.kind === "too_main_failed_pin_attempts"
+                    ) {
+                        pinNumberFailureStore.set(resp as PinNumberFailures);
+                    }                        
                 }
 
                 return resp;
             })
             .catch((_) => {
+                undoLocally();
                 return { kind: "failure" };
             });
     }

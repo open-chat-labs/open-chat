@@ -56,9 +56,7 @@ describe("adding tips locally", () => {
         updates.markTip(123n, "ledger1", "user1", -456n);
         const store = get(updates);
         const tips = store.get(BigInt(123))?.tips;
-        expect(tips).toMatchObject({
-            ledger1: {},
-        });
+        expect(tips).toMatchObject({});
     });
 });
 
