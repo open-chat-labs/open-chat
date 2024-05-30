@@ -281,11 +281,11 @@
         "alreadyClaimed": "Come back tomorrow to extend your streak!",
         "available": "Claim your CHIT and extend your streak!",
         "claim": "Claim CHIT!",
+        "comeback": "Come back in {time}",
         "extendStreak": "Extend streak",
-        "title": "Maintain your streak",
-        "viewStreak": "View streak",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
-        "comeback": "Come back in {time}"
+        "title": "Maintain your streak",
+        "viewStreak": "View streak"
     },
     "dark": "dark",
     "days": "Days",

@@ -22,11 +22,12 @@
     let additional: number | undefined = undefined;
 
     $: user = client.user;
-    // $: available = $user.nextDailyChitClaim < $now500;
-    $: available = true;
-    $: streak = 2;
-    // $: streak = $user.streak;
+    $: available = $user.nextDailyChitClaim < $now500;
+    $: streak = $user.streak;
     $: percent = (streak / 30) * 100;
+    // These are useful for testing
+    // $: available = true;
+    // $: streak = 2;
 
     $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
 
@@ -39,26 +40,34 @@
 
         busy = true;
 
-        // client
-        //     .claimDailyChit()
-        //     .then((resp) => {
-        //         if (resp.kind === "success") {
-        //             claimed = true;
-        //         }
-        //     })
-        //     .finally(() => {
-        //         busy = false;
-        //     });
-        setTimeout(() => {
-            streak += 1;
-            claimed = true;
-            busy = false;
-            additional = 200;
-            setTimeout(() => {
-                claimed = false;
-                additional = undefined;
-            }, 2000);
-        }, 1000);
+        const previousBalance = $user.chitBalance;
+
+        client
+            .claimDailyChit()
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    claimed = true;
+                    additional = $user.chitBalance - previousBalance;
+                    window.setTimeout(() => {
+                        additional = undefined;
+                    }, 2000);
+                }
+            })
+            .finally(() => {
+                busy = false;
+            });
+
+        // This is useful for testing so I'll leave it here for a bit
+        // setTimeout(() => {
+        //     streak += 1;
+        //     claimed = true;
+        //     busy = false;
+        //     additional = 200;
+        //     setTimeout(() => {
+        //         claimed = false;
+        //         additional = undefined;
+        //     }, 2000);
+        // }, 1000);
     }
 </script>
 
@@ -208,7 +217,7 @@
         .line {
             width: 1px;
             flex: 0 0 20px;
-            background-color: var(--txt);
+            background-color: var(--bd);
         }
     }
 

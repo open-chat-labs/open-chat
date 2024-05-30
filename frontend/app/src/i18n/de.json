@@ -278,11 +278,13 @@
     "currentLimit": "Ihr aktuelles Speicherlimit beträgt {limit} GB und Ihr Kontostand beträgt {balance} ICP.",
     "currentUsage": "Aktuelle Speichernutzung",
     "dailyChit": {
-        "alreadyClaimed": "Sie haben Ihren täglichen CHIT bereits eingefordert. Kommen Sie morgen wieder, um Ihre Serie zu verlängern!",
-        "available": "Drücken Sie die Anspruchstaste, um Ihre Serie zu verlängern!",
-        "claim": "Beanspruchen",
+        "alreadyClaimed": "Kommen Sie morgen wieder, um Ihre Serie zu verlängern!",
+        "available": "Fordern Sie Ihren CHIT an und verlängern Sie Ihre Serie!",
+        "claim": "Fordern Sie CHIT an!",
+        "comeback": "Kommen Sie in {time} wieder",
         "extendStreak": "Serie verlängern",
-        "title": "CHIT-Serie",
+        "info": "Je länger Sie Ihre Serie aufrechterhalten, desto mehr CHIT können Sie täglich beanspruchen!",
+        "title": "Behalten Sie Ihre Serie bei",
         "viewStreak": "Streak anzeigen"
     },
     "dark": "dunkel",
