@@ -7,14 +7,12 @@ import type {
     SignerWalletAdapterProps,
     WalletError,
     WalletName,
-    SignInMessageSignerWalletAdapter,
 } from "@solana/wallet-adapter-base";
 import {
     WalletNotConnectedError,
     WalletNotReadyError,
     WalletReadyState,
 } from "@solana/wallet-adapter-base";
-import type { SolanaSignInInput, SolanaSignInOutput } from "@solana/wallet-standard-features";
 import type {
     Connection,
     PublicKey,
