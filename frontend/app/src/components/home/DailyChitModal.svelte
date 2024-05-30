@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Confetti } from "svelte-confetti";
     import { createEventDispatcher, getContext } from "svelte";
+    import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
     import type { OpenChat } from "openchat-client";
     import Translatable from "../Translatable.svelte";
@@ -18,6 +19,7 @@
 
     let busy = false;
     let claimed = false;
+    let additional: number | undefined = undefined;
 
     $: user = client.user;
     // $: available = $user.nextDailyChitClaim < $now500;
@@ -51,7 +53,11 @@
             streak += 1;
             claimed = true;
             busy = false;
-            setTimeout(() => (claimed = false), 1000);
+            additional = 200;
+            setTimeout(() => {
+                claimed = false;
+                additional = undefined;
+            }, 2000);
         }, 1000);
     }
 </script>
@@ -68,9 +74,17 @@
             <div class="streak">{streak}</div>
         </div>
 
-        <p class="balance">
-            {`${$user.chitBalance.toLocaleString()} CHIT`}
-        </p>
+        <div class="balance">
+            <div class="spacer"></div>
+            <div class="current">
+                {`${$user.chitBalance.toLocaleString()} CHIT`}
+            </div>
+            <div class="additional">
+                {#if additional}
+                    <div transition:fade={{ duration: 500 }}>{`+ ${additional}`}</div>
+                {/if}
+            </div>
+        </div>
 
         <p>
             <Translatable
@@ -90,14 +104,17 @@
             </div>
 
             <div class="badges">
-                <div class="badge three" class:achieved={streak >= 3}>
-                    <Streak days={3} />
+                <div class="badge three">
+                    <Streak disabled={streak < 3} days={3} />
                 </div>
-                <div class="badge seven" class:achieved={streak >= 7}>
-                    <Streak days={7} />
+                <div class="badge seven">
+                    <Streak disabled={streak < 7} days={7} />
                 </div>
-                <div class="badge thirty" class:achieved={streak >= 30}>
-                    <Streak days={30} />
+                <div class="badge fourteen">
+                    <Streak disabled={streak < 14} days={14} />
+                </div>
+                <div class="badge thirty">
+                    <Streak disabled={streak < 30} days={30} />
                 </div>
             </div>
         </div>
@@ -105,7 +122,7 @@
     <div slot="footer">
         {#if claimed}
             <div class="confetti">
-                <Confetti />
+                <Confetti colorArray={["url(../assets/chit.svg)"]} />
             </div>
         {/if}
         <ButtonGroup align={"center"}>
@@ -154,17 +171,11 @@
 
         .badge {
             position: absolute;
-            filter: grayscale(80%);
             transform-origin: 50% 50%;
             transform: translateX($offset) scale(2.5);
             transition:
                 filter 300ms ease-in-out,
                 transform 300ms ease-in-out;
-
-            &.achieved {
-                filter: unset;
-                animation: bounce 0.3s forwards;
-            }
 
             &:hover {
                 transform: translateX($offset) scale(3);
@@ -174,7 +185,10 @@
             left: 10%;
         }
         .seven {
-            left: 23.3%;
+            left: 23.33%;
+        }
+        .fourteen {
+            left: 46.66%;
         }
         .thirty {
             left: 100%;
@@ -196,15 +210,6 @@
             flex: 0 0 20px;
             background-color: var(--txt);
         }
-
-        .streak {
-            width: 30px;
-            height: 30px;
-            flex: 0 0 30px;
-            padding: 3px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
     }
 
     .confetti {
@@ -217,6 +222,8 @@
     .logo {
         width: 120px;
         position: relative;
+        -webkit-box-reflect: below 0
+            linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
 
         &.available {
             cursor: pointer;
@@ -231,15 +238,30 @@
         }
     }
 
-    @keyframes bounce {
-        0% {
-            transform: translateX($offset) scale(2.5);
+    .balance {
+        display: flex;
+        gap: $sp4;
+        justify-content: space-between;
+        align-items: center;
+
+        > * {
+            white-space: nowrap;
         }
-        50% {
-            transform: translateX($offset) scale(3);
+
+        .spacer,
+        .additional {
+            flex: 1;
+            min-width: 0;
+            color: var(--txt-light);
+            color: var(--accent);
         }
-        100% {
-            transform: translateX($offset) scale(2.5);
+
+        .current {
+            flex-shrink: 0;
+            padding: $sp2 $sp3;
+            border: 1px solid var(--bd);
+            border-radius: var(--rd);
+            background-color: rgba(255, 255, 255, 0.1);
         }
     }
 </style>
