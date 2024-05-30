@@ -76,7 +76,7 @@
         if (supportsII) {
             options.push(AuthProvider.II);
             options.push(AuthProvider.ETH);
-            // options.push(AuthProvider.SOL);
+            options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
@@ -333,10 +333,10 @@
                 <SigninWithEth />
             {/await}
         {:else if loggingInWithSol}
-            {#await import("./SigninWithEth.svelte")}
+            {#await import("./SigninWithSol.svelte")}
                 <div class="loading">...</div>
-            {:then { default: SigninWithEth }}
-                <SigninWithEth />
+            {:then { default: SigninWithSol }}
+                <SigninWithSol />
             {/await}
         {/if}
     </div>
