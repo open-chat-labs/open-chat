@@ -20,6 +20,7 @@
         transports: {
             [mainnet.id]: http(),
         },
+        multiInjectedProviderDiscovery: false,
     });
 
     async function connectWith(connector: Connector) {
