@@ -76,7 +76,7 @@
         if (supportsII) {
             options.push(AuthProvider.II);
             options.push(AuthProvider.ETH);
-            // options.push(AuthProvider.SOL);
+            options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);

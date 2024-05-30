@@ -10,7 +10,7 @@
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, SiwsMessage } from "openchat-client";
     import base58 from "bs58";
 
     const client = getContext<OpenChat>("client");
@@ -35,42 +35,13 @@
             if (publicKey && wallet && signMessage) {
                 const account = publicKey.toBase58();
                 const prepareResponse = await client.siwsPrepareLogin(account);
-                console.log("PrepareResponse: ", prepareResponse);
+
                 if (prepareResponse.kind === "success") {
-                    // const expMilliseconds = Number(
-                    //     prepareResponse.siwsMessage.expirationTime / BigInt(1000000),
-                    // );
-                    // const issuedAtMilliseconds = Number(
-                    //     prepareResponse.siwsMessage.issuedAt / BigInt(1000000),
-                    // );
-
-                    // const msg = {
-                    //     ...prepareResponse.siwsMessage,
-                    //     expirationTime: new Date(expMilliseconds).toISOString(),
-                    //     issuedAt: new Date(issuedAtMilliseconds).toISOString(),
-                    //     version: prepareResponse.siwsMessage.version.toString(),
-                    // };
-
-                    // This is what the example does - just the statement + nonce (but that doesn't seem to work either)
-                    // const data = new TextEncoder().encode(
-                    //     `${prepareResponse.siwsMessage.statement}${prepareResponse.siwsMessage.nonce}`,
-                    // );
-                    const data = new TextEncoder().encode(
-                        JSON.stringify(prepareResponse.siwsMessage),
-                    );
+                    const request = buildSignInRequest(prepareResponse.siwsMessage);
+                    const data = new TextEncoder().encode(request);
                     const signResponse = await signMessage(data);
-
-                    // const signResponse = await signMessage(
-                    //     // new TextEncoder().encode(JSON.stringify(msg)),
-                    //     new TextEncoder().encode(JSON.stringify(prepareResponse.siwsMessage)),
-                    // );
                     const signature = base58.encode(signResponse);
-
-                    console.log("SignResponse: ", signResponse, signature);
-
-                    const signInResponse = await client.signInWithWallet("sol", account, signature);
-
-                    console.log("SignInResponse: ", signInResponse);
+                    await client.signInWithWallet("sol", account, signature);
                 }
             } else {
                 console.error("Didn't get an address back from the connector");
@@ -100,6 +71,26 @@
             onError: walletError,
         });
     });
+
+    function buildSignInRequest(siwsMessage: SiwsMessage): string {
+        // expiration_time and issued_at are in nanoseconds, convert to milliseconds.
+        const expMilliseconds = Number(
+            siwsMessage.expirationTime / BigInt(1000000)
+        );
+        const issuedAtMilliseconds = Number(
+            siwsMessage.issuedAt / BigInt(1000000)
+        );
+
+        let request = `${siwsMessage.domain} wants you to sign in with your Solana account:\n${siwsMessage.address}\n\n`;
+        request += `${siwsMessage.statement}\n\n`;
+        request += `URI: ${siwsMessage.uri}\n`;
+        request += `Version: ${siwsMessage.version}\n`;
+        request += `Chain ID: ${siwsMessage.chainId}\n`;
+        request += `Nonce: ${siwsMessage.nonce}\n`;
+        request += `Issued At: ${new Date(issuedAtMilliseconds).toISOString()}\n`;
+        request += `Expiration Time: ${new Date(expMilliseconds).toISOString()}`;
+        return request;
+    }
 </script>
 
 <h1>
