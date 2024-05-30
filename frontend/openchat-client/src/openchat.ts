@@ -5664,14 +5664,14 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undoLocally();
-                    
+
                     if (
                         resp.kind === "pin_incorrect" ||
                         resp.kind === "pin_required" ||
                         resp.kind === "too_main_failed_pin_attempts"
                     ) {
                         pinNumberFailureStore.set(resp as PinNumberFailures);
-                    }                        
+                    }
                 }
 
                 return resp;
@@ -6751,6 +6751,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private promptForCurrentPin(message: string | undefined): Promise<string> {
         pinNumberFailureStore.set(undefined);
+
         return new Promise((resolve, reject) => {
             capturePinNumberStore.set({
                 resolve: (pin: string) => {
