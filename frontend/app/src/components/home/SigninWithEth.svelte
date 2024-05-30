@@ -13,9 +13,9 @@
     const wagmiConfig = createConfig({
         chains: [mainnet],
         connectors: [
+            metaMask(),
             coinbaseWallet({ appName: "OpenChat" }),
             walletConnect({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
-            metaMask(),
         ],
         transports: {
             [mainnet.id]: http(),
