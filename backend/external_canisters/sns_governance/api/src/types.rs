@@ -2026,18 +2026,21 @@ impl ProposalData {
         const DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS: u64 = 5000;
 
         if let Some(tally) = self.latest_tally.as_ref() {
-            let min_yes_proportion_of_total = self
-                .minimum_yes_proportion_of_total
-                .and_then(|p| p.basis_points)
-                .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS);
+            let min_yes_proportion_of_total =
+                self.minimum_yes_proportion_of_total
+                    .and_then(|p| p.basis_points)
+                    .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS) as u128;
 
-            let min_yes_proportion_of_exercised = self
-                .minimum_yes_proportion_of_exercised
-                .and_then(|p| p.basis_points)
-                .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS);
+            let min_yes_proportion_of_exercised =
+                self.minimum_yes_proportion_of_exercised
+                    .and_then(|p| p.basis_points)
+                    .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS) as u128;
 
-            tally.yes > tally.total * min_yes_proportion_of_total / 10000
-                && tally.yes > (tally.yes + tally.no) * min_yes_proportion_of_exercised / 10000
+            let yes = tally.yes as u128;
+            let no = tally.no as u128;
+            let total = tally.total as u128;
+
+            yes > total * min_yes_proportion_of_total / 10000 && yes > (yes + no) * min_yes_proportion_of_exercised / 10000
         } else {
             false
         }

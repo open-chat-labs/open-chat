@@ -1,7 +1,7 @@
 use crate::memory::get_upgrades_memory;
 use crate::take_state;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::pre_upgrade;
+use ic_cdk::pre_upgrade;
 use rand::Rng;
 use stable_memory::get_writer;
 use tracing::info;

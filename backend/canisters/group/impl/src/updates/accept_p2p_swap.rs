@@ -3,7 +3,7 @@ use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::accept_p2p_swap::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use types::{AcceptSwapSuccess, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
 

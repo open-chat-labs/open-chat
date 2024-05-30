@@ -1,7 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use sns1_airdrop::init::Args;
 use tracing::info;
 

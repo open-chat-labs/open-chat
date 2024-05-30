@@ -277,6 +277,7 @@ import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
+import { toRecord2 } from "../../utils/list";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1017,6 +1018,9 @@ function pendingCryptoTransfer(
             createdAtNanos: candid.ICRC1.created,
         };
     }
+    if ("ICRC2" in candid) {
+        throw new Error("ICRC2 is not supported yet");
+    }
 
     throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", candid);
 }
@@ -1039,22 +1043,18 @@ export function completedCryptoTransfer(
             blockIndex: trans.block_index,
         };
     }
-    if ("ICRC1" in candid) {
-        return {
-            kind: "completed",
-            ledger: candid.ICRC1.ledger.toString(),
-            recipient,
-            sender,
-            amountE8s: candid.ICRC1.amount,
-            feeE8s: candid.ICRC1.fee,
-            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
-            blockIndex: candid.ICRC1.block_index,
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiCompletedCryptoTransaction type received",
-        candid,
-    );
+
+    const trans = "ICRC1" in candid ? candid.ICRC1 : candid.ICRC2;
+    return {
+        kind: "completed",
+        ledger: trans.ledger.toString(),
+        recipient,
+        sender,
+        amountE8s: trans.amount,
+        feeE8s: trans.fee,
+        memo: optional(trans.memo, bytesToBigint) ?? BigInt(0),
+        blockIndex: trans.block_index,
+    };
 }
 
 export function failedCryptoTransfer(
@@ -1073,19 +1073,17 @@ export function failedCryptoTransfer(
             errorMessage: trans.error_message,
         };
     }
-    if ("ICRC1" in candid) {
-        return {
-            kind: "failed",
-            ledger: candid.ICRC1.ledger.toString(),
-            recipient,
-            amountE8s: candid.ICRC1.amount,
-            feeE8s: candid.ICRC1.fee,
-            memo: optional(candid.ICRC1.memo, bytesToBigint) ?? BigInt(0),
-            errorMessage: candid.ICRC1.error_message,
-        };
-    }
 
-    throw new UnsupportedValueError("Unexpected ApiFailedCryptoTransaction type received", candid);
+    const trans = "ICRC1" in candid ? candid.ICRC1 : candid.ICRC2;
+    return {
+        kind: "failed",
+        ledger: trans.ledger.toString(),
+        recipient,
+        amountE8s: trans.amount,
+        feeE8s: trans.fee,
+        memo: optional(trans.memo, bytesToBigint) ?? BigInt(0),
+        errorMessage: trans.error_message,
+    };
 }
 
 function imageContent(candid: ApiImageContent): ImageContent {
@@ -1609,12 +1607,13 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
+                    credential_name: domain.credential.credentialName,
+                    issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                     issuer_origin: domain.credential.issuerOrigin,
                     credential_type: domain.credential.credentialType,
-                    credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                        const encoder = new TextEncoder();
-                        return encoder.encode(JSON.stringify(args));
-                    }, domain.credential.credentialArguments),
+                    credential_arguments: apiCredentialArguments(
+                        domain.credential.credentialArguments,
+                    ),
                 },
             },
         ];
@@ -1658,12 +1657,11 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
+                credential_name: domain.credential.credentialName,
+                issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
                 issuer_origin: domain.credential.issuerOrigin,
                 credential_type: domain.credential.credentialType,
-                credential_arguments: apiOptional((args: Record<string, string | number>) => {
-                    const encoder = new TextEncoder();
-                    return encoder.encode(JSON.stringify(args));
-                }, domain.credential.credentialArguments),
+                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1696,12 +1694,31 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
 }
 
 export function credentialArguments(
-    candid: number[] | Uint8Array,
+    candid: [string, { String: string } | { Int: number }][],
 ): Record<string, string | number> {
-    const data = new Uint8Array(candid);
-    const decoder = new TextDecoder();
-    const json = decoder.decode(data);
-    return JSON.parse(json) as Record<string, string | number>;
+    return toRecord2(
+        candid,
+        ([k, _]) => k,
+        ([_, v]) => {
+            if ("String" in v) {
+                return v.String;
+            } else {
+                return v.Int;
+            }
+        },
+    );
+}
+
+function apiCredentialArguments(
+    domain?: Record<string, string | number>,
+): [string, { String: string } | { Int: number }][] {
+    return Object.entries(domain ?? {}).map(([k, v]) => {
+        if (typeof v === "number") {
+            return [k, { Int: v }];
+        } else {
+            return [k, { String: v }];
+        }
+    });
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
@@ -1722,12 +1739,14 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
         return {
             kind: "credential_gate",
             credential: {
+                issuerCanisterId: candid.VerifiedCredential.issuer_canister_id.toString(),
                 issuerOrigin: candid.VerifiedCredential.issuer_origin,
                 credentialType: candid.VerifiedCredential.credential_type,
-                credentialArguments: optional(
-                    candid.VerifiedCredential.credential_arguments,
-                    credentialArguments,
-                ),
+                credentialName: candid.VerifiedCredential.credential_name,
+                credentialArguments:
+                    candid.VerifiedCredential.credential_arguments.length === 0
+                        ? undefined
+                        : credentialArguments(candid.VerifiedCredential.credential_arguments),
             },
         };
     }
@@ -2090,6 +2109,10 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     }
     if ("InsufficientBalance" in candid) {
         return "insufficient_balance";
+    }
+    if ("FailedVerifiedCredentialCheck" in candid) {
+        console.warn("FailedVerifiedCredentialCheck: ", candid);
+        return "failed_verified_credential_check";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

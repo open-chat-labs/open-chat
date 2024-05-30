@@ -64,6 +64,8 @@ import type {
     TipMessageResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
     JoinVideoCallResponse,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
@@ -124,7 +126,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type { AccessGate, Rules, UpdatedRules } from "./access";
+import type { AccessGate, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -227,6 +229,7 @@ export type WorkerRequest =
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
+    | ChatEventsBatch
     | ChatEventsByEventIndex
     | ChatEventsWindow
     | LastOnline
@@ -323,7 +326,6 @@ export type WorkerRequest =
     | DeleteUserGroups
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
@@ -865,15 +867,15 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
-    credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
-    credential?: string;
 };
 
 type LeaveGroup = {
@@ -947,6 +949,13 @@ type SearchUsers = {
     searchTerm: string;
     maxResults: number;
     kind: "searchUsers";
+};
+
+type ChatEventsBatch = {
+    localUserIndex: string;
+    requests: ChatEventsArgs[];
+    cachePrimer: boolean;
+    kind: "chatEventsBatch";
 };
 
 type ChatEventsWindow = {
@@ -1150,12 +1159,6 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
-type SetCachePrimerTimestamp = {
-    chatIdentifierString: string;
-    timestamp: bigint;
-    kind: "setCachePrimerTimestamp";
-};
-
 type UpdateBtcBalance = {
     userId: string;
     kind: "updateBtcBalance";
@@ -1266,6 +1269,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
@@ -1685,6 +1689,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record<string, number>
     : T extends MarkAsOnline
     ? void
+    : T extends ChatEventsBatch
+    ? ChatEventsResponse[]
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
@@ -1933,8 +1939,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
     ? Record< string, bigint >
-    : T extends SetCachePrimerTimestamp
-    ? void
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
     : T extends CanSwap

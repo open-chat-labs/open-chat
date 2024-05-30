@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{ChatId, GroupPermissionRole, MessageContentInitial, OptionalGroupPermissions, TextContent};
 
 #[test_case(false; "By userId")]

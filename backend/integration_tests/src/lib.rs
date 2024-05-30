@@ -3,7 +3,6 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
-use serde_bytes::ByteBuf;
 use types::{CanisterId, Cycles, UserId};
 
 mod batched_summary_and_event_tests;
@@ -36,7 +35,6 @@ mod prize_message_tests;
 mod register_user_tests;
 mod registry_tests;
 mod remove_from_group_tests;
-mod rng;
 mod save_crypto_account_tests;
 mod send_crypto_tests;
 mod send_direct_message_tests;
@@ -61,7 +59,7 @@ pub struct TestEnv {
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
-    pub public_key: ByteBuf,
+    pub public_key: Vec<u8>,
 }
 
 impl User {
@@ -106,5 +104,4 @@ pub struct CanisterIds {
     pub cycles_minting_canister: CanisterId,
 }
 
-const T: Cycles = 1_000_000_000_000;
-const NNS_INTERNET_IDENTITY_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 10, 1, 1]);
+pub const T: Cycles = 1_000_000_000_000;

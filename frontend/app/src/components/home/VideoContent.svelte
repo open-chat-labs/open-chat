@@ -12,6 +12,7 @@
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
     export let edited: boolean;
+    export let blockLevelMarkdown: boolean = false;
 
     let videoPlayer: HTMLVideoElement;
     let withCaption = content.caption !== undefined && content.caption !== "";
@@ -42,7 +43,7 @@
     </video>
 </div>
 
-<ContentCaption caption={content.caption} {edited} {reply} />
+<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     .video {

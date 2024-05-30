@@ -18,7 +18,6 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }

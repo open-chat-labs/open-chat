@@ -1,7 +1,7 @@
 use crate::{mutate_state, State};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::c2c_request_cycles::{Response::*, *};
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use std::cmp::min;
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis};
 use utils::canister::deposit_cycles;

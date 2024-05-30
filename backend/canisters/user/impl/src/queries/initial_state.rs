@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use types::UserId;
 use user_canister::initial_state::{Response::*, *};
 

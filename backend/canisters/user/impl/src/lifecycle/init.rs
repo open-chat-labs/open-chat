@@ -1,7 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use tracing::info;
 use user_canister::init::Args;
 use utils::env::Environment;

@@ -117,6 +117,12 @@ impl User {
             streak,
         })
     }
+
+    #[allow(dead_code)]
+    pub fn give_chit_reward(&mut self, amount: i32, now: TimestampMillis) {
+        self.chit_balance += amount;
+        self.date_updated = now;
+    }
 }
 
 pub struct ClaimDailyChitResult {

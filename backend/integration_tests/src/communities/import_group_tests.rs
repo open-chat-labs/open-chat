@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -7,6 +6,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::{random_message_id, random_string};
 use types::{
     icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
     PrizeContentInitial,
@@ -224,13 +224,13 @@ fn pending_prizes_transferred_to_community() {
 
     tick_many(env, 10);
 
-    let community_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
+    let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, amount_to_transfer - token.fee().unwrap());
 
     client::community::happy_path::claim_prize(env, user2.principal, community_id, channel_id, message_id);
     client::community::happy_path::claim_prize(env, user3.principal, community_id, channel_id, message_id);
 
-    let community_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
+    let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, 0);
 }
 

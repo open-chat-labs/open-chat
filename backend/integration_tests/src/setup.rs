@@ -1,9 +1,8 @@
 use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
-use crate::rng::random_principal;
 use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
-use candid::{CandidType, Principal};
+use crate::{client, wasms, CanisterIds, TestEnv, T};
+use candid::{CandidType, Nat, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
@@ -13,6 +12,8 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
+use testing::rng::random_principal;
+use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
@@ -504,8 +505,8 @@ pub fn install_icrc_ledger(
     #[derive(CandidType)]
     pub struct InitArgs {
         pub minting_account: Account,
-        pub initial_balances: Vec<(Account, u64)>,
-        pub transfer_fee: u64,
+        pub initial_balances: Vec<(Account, Nat)>,
+        pub transfer_fee: Nat,
         pub token_name: String,
         pub token_symbol: String,
         pub metadata: Vec<(String, MetadataValue)>,
@@ -526,8 +527,8 @@ pub fn install_icrc_ledger(
 
     let args = LedgerArgument::Init(InitArgs {
         minting_account: Account::from(controller),
-        initial_balances,
-        transfer_fee,
+        initial_balances: initial_balances.into_iter().map(|(k, v)| (k, v.into())).collect(),
+        transfer_fee: transfer_fee.into(),
         token_name,
         token_symbol,
         metadata: Vec::new(),

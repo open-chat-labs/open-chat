@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState, DEFAULT_CHUNK_SIZE_BYTES};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use storage_index_canister::allocated_bucket_v2::{Response::*, *};
 use storage_index_canister::ProjectedAllowance;
 use utils::file_id::generate_file_id;

@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use user_canister::delete_community::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]

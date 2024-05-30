@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use community_canister::video_call_participants::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn video_call_participants(args: Args) -> Response {

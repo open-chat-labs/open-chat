@@ -1,7 +1,7 @@
 use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use core::cmp::Ordering;
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use user_index_canister::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;

@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use community_canister::selected_channel_initial::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn selected_channel_initial(args: Args) -> Response {

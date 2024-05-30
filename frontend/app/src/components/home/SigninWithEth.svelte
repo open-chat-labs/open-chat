@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
-    import { coinbaseWallet, walletConnect } from "@wagmi/connectors";
+    import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
@@ -15,6 +15,7 @@
         connectors: [
             coinbaseWallet({ appName: "OpenChat" }),
             walletConnect({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
+            metaMask(),
         ],
         transports: {
             [mainnet.id]: http(),
@@ -49,10 +50,9 @@
     let icons: Record<string, string> = {
         walletConnect: "/assets/walletconnect.svg",
         coinbaseWalletSDK: "/assets/coinbase.svg",
+        metaMaskSDK: "/assets/metamask.svg",
     };
 </script>
-
-<h1>Select a wallet to connect with</h1>
 
 {#each wagmiConfig.connectors as connector}
     <div class="auth-option">

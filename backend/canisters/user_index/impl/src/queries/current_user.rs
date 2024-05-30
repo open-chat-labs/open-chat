@@ -1,5 +1,5 @@
 use crate::{model::user::SuspensionDuration, read_state, RuntimeState, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};

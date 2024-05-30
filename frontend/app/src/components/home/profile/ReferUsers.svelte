@@ -12,15 +12,16 @@
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
-    import Diamond from "../../icons/Diamond.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import Badges from "./Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
     $: user = client.user;
     $: userStore = client.userStore;
     $: link = `${window.location.origin}/?ref=${$user.userId}`;
+
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -72,16 +73,17 @@
             <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
             <div class="referrals">
                 {#each $user.referrals as userId}
+                    {@const u = $userStore[userId]}
                     <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
                         <div>
                             <Avatar
-                                url={client.userAvatarUrl($userStore[userId])}
+                                url={client.userAvatarUrl(u)}
                                 {userId}
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {client.displayName($userStore[userId])}
-                            <Diamond status={$userStore[userId]?.diamondStatus} />
+                            {client.displayName(u)}
+                            <Badges diamondStatus={u?.diamondStatus} streak={u?.streak ?? 0} />
                         </LinkButton>
                     </div>
                 {/each}

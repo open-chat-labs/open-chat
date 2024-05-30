@@ -1,6 +1,6 @@
 use crate::guards::caller_is_push_service;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 use notifications_canister::latest_notification_index::{Response::*, *};
 
 #[query(guard = "caller_is_push_service")]

@@ -21,7 +21,6 @@ event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }

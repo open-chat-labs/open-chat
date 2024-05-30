@@ -56,4 +56,4 @@ declare namespace svelteHTML {
     }
 }
 
-declare function gtag(command: "event", name: "page_view", options?: any): void;
+declare function gtag(command: "event", name: string, options?: any): void;

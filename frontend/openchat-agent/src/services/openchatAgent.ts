@@ -9,7 +9,6 @@ import {
     removeFailedMessage,
     setCachedChats,
     setCachedMessageIfNotExists,
-    setCachePrimerTimestamp,
     recordFailedMessage,
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
@@ -189,6 +188,8 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
     JoinVideoCallResponse,
     AccessTokenType,
     UpdateBtcBalanceResponse,
@@ -201,6 +202,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     AcceptedRules,
+    VerifiedCredentialArgs,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -245,6 +247,7 @@ export class OpenChatAgent extends EventTarget {
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
+    private _localUserIndexClients: Record<string, LocalUserIndexClient>;
     private _ledgerClients: Record<string, LedgerClient>;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
@@ -279,6 +282,7 @@ export class OpenChatAgent extends EventTarget {
         this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
         this._signInWithEthereumClient = SignInWithEthereumClient.create(identity, config);
         this._signInWithSolanaClient = SignInWithSolanaClient.create(identity, config);
+        this._localUserIndexClients = {};
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -378,8 +382,16 @@ export class OpenChatAgent extends EventTarget {
         return this._ledgerIndexClients[ledgerIndex];
     }
 
-    private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
-        return LocalUserIndexClient.create(this.identity, this.config, canisterId);
+    private getLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
+        if (!this._localUserIndexClients[canisterId]) {
+            this._localUserIndexClients[canisterId] = LocalUserIndexClient.create(
+                this.identity,
+                this.config,
+                canisterId,
+                this.db,
+            );
+        }
+        return this._localUserIndexClients[canisterId];
     }
 
     private getProvidedGroupInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
@@ -684,7 +696,7 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("failure");
 
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
+        return this.getLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
             callerUsername,
@@ -706,7 +718,7 @@ export class OpenChatAgent extends EventTarget {
         switch (chatId.kind) {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToGroup(
                     chatId.groupId,
                     userIds,
@@ -717,7 +729,7 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this.communityClient(
                     chatId.communityId,
                 ).localUserIndex();
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToChannel(
                     chatId.communityId,
                     chatId.channelId,
@@ -726,6 +738,19 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
         }
+    }
+
+    chatEventsBatch(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+        cachePrimer: boolean,
+    ): Promise<ChatEventsResponse[]> {
+        console.debug("CHAT EVENTS: Getting events batch", {
+            localUserIndex,
+            requests,
+        });
+
+        return this.getLocalUserIndexClient(localUserIndex).chatEvents(requests, cachePrimer);
     }
 
     chatEventsWindow(
@@ -1520,6 +1545,7 @@ export class OpenChatAgent extends EventTarget {
         let favouriteChats: ChatIdentifier[];
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
+        let userCanisterLocalUserIndex: string;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1547,6 +1573,7 @@ export class OpenChatAgent extends EventTarget {
             favouriteChats = userResponse.favouriteChats.chats;
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
+            userCanisterLocalUserIndex = userResponse.localUserIndex;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1569,6 +1596,7 @@ export class OpenChatAgent extends EventTarget {
             favouriteChats = current.favouriteChats;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
             pinNumberSettings = current.pinNumberSettings;
+            userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1673,7 +1701,7 @@ export class OpenChatAgent extends EventTarget {
         for (const [localUserIndex, args] of byLocalUserIndex) {
             for (const batch of chunk(args, 50)) {
                 summaryUpdatesPromises.push(
-                    this.createLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
+                    this.getLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
                         batch,
                     ),
                 );
@@ -1752,6 +1780,7 @@ export class OpenChatAgent extends EventTarget {
             pinnedChannels,
             favouriteChats,
             pinNumberSettings,
+            userCanisterLocalUserIndex,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -1984,24 +2013,32 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(
         chatId: MultiUserChatIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
-                return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
+                return localUserIndexClient.joinGroup(
+                    chatId.groupId,
+                    groupInviteCode,
+                    credentialArgs,
+                );
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
                     chatId.communityId,
                 ).localUserIndex();
-                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
-                return localUserIndexClient.joinChannel(chatId, communityInviteCode);
+                return localUserIndexClient.joinChannel(
+                    chatId,
+                    communityInviteCode,
+                    credentialArgs,
+                );
             }
         }
     }
@@ -2009,15 +2046,16 @@ export class OpenChatAgent extends EventTarget {
     async joinCommunity(
         id: CommunityIdentifier,
         _localUserIndex: string,
-        _credential?: string,
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
+        return this.getLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
+            credentialArgs,
         );
     }
 
@@ -2312,7 +2350,7 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
+        return this.getLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -2963,10 +3001,6 @@ export class OpenChatAgent extends EventTarget {
         return getCachePrimerTimestamps(this.db);
     }
 
-    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
-        return setCachePrimerTimestamp(this.db, chatIdentifierString, timestamp);
-    }
-
     followThread(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number,
@@ -3283,10 +3317,7 @@ export class OpenChatAgent extends EventTarget {
         accessTokenType: AccessTokenType,
         localUserIndex: string,
     ): Promise<string | undefined> {
-        return this.createLocalUserIndexClient(localUserIndex).getAccessToken(
-            chatId,
-            accessTokenType,
-        );
+        return this.getLocalUserIndexClient(localUserIndex).getAccessToken(chatId, accessTokenType);
     }
 
     async getLocalUserIndexForUser(userId: string): Promise<string> {

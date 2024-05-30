@@ -338,7 +338,6 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string };
-export interface ChitUserBalance { 'balance' : number, 'user_id' : UserId }
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -494,7 +493,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction } |
+  { 'ICRC2' : Icrc2CompletedCryptoTransaction };
 export interface CreateChannelArgs {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -798,7 +798,8 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'ICRC1' : Icrc1FailedCryptoTransaction };
+  { 'ICRC1' : Icrc1FailedCryptoTransaction } |
+  { 'ICRC2' : Icrc2FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -840,6 +841,7 @@ export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
   'title' : string,
@@ -1191,6 +1193,40 @@ export interface Icrc1PendingCryptoTransaction {
   'fee' : bigint,
   'created' : TimestampNanos,
   'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+}
+export interface Icrc2CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1Account,
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
   'amount' : bigint,
@@ -1564,7 +1600,8 @@ export interface PaymentGate {
   'amount' : bigint,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'ICRC1' : Icrc1PendingCryptoTransaction };
+  { 'ICRC1' : Icrc1PendingCryptoTransaction } |
+  { 'ICRC2' : Icrc2PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
   { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -2251,9 +2288,18 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential_arguments' : [] | [Uint8Array | number[]],
+  'credential_arguments' : Array<
+    [string, { 'Int' : number } | { 'String' : string }]
+  >,
   'issuer_origin' : string,
+  'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
+}
+export interface VerifiedCredentialGateArgs {
+  'credential_jwt' : string,
+  'ii_origin' : string,
+  'user_ii_principal' : Principal,
 }
 export type Version = number;
 export interface VersionedRules {

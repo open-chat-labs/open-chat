@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::random_message_id;
 use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
 use utils::time::MINUTE_IN_MS;
 
@@ -101,7 +101,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
     client::user::happy_path::set_pin_number(env, &user1, None, Some("1000".to_string()));
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let response = client::user::send_message_v2(
         env,

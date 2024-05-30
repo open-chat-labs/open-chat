@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
 use candid::Principal;
@@ -7,6 +6,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_message_id, random_string};
 use types::{
     icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial,
     PendingCryptoTransaction, PrizeContentInitial,
@@ -31,7 +31,7 @@ fn prize_messages_can_be_claimed_successfully() {
     client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
@@ -75,11 +75,11 @@ fn prize_messages_can_be_claimed_successfully() {
 
     if let user_canister::send_message_with_transfer_to_group::Response::Success(result) = send_message_response {
         client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+        let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 200000);
 
         client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
-        let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id);
+        let user3_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id);
         assert_eq!(user3_balance, 100000);
 
         let events = client::group::happy_path::thread_events(
@@ -121,7 +121,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
@@ -175,12 +175,12 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     env.advance_time(Duration::from_millis(interval - 1));
     env.tick();
 
-    let user1_balance_before_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let user1_balance_before_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     env.advance_time(Duration::from_millis(1));
     tick_many(env, 2);
 
-    let user1_balance_after_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let user1_balance_after_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     assert_eq!(user1_balance_after_refund, user1_balance_before_refund + 100000);
 }
@@ -198,10 +198,10 @@ fn old_transactions_fixed_by_updating_created_date() {
     let user = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user, random_string().as_str(), true, true);
 
-    let starting_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let starting_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 200_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 200_000);
 
     let prizes = [100_000];
     let token = Cryptocurrency::InternetComputer;
@@ -252,12 +252,12 @@ fn old_transactions_fixed_by_updating_created_date() {
     tick_many(env, 3);
     client::start_canister(env, *controller, canister_ids.icp_ledger);
 
-    let user_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
     assert_eq!(user_balance, starting_balance + 80_000);
 
     env.advance_time(Duration::from_millis(MINUTE_IN_MS + 1));
     tick_many(env, 3);
 
-    let user_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
     assert_eq!(user_balance, starting_balance + 180_000);
 }

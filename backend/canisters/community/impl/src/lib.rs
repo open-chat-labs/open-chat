@@ -317,7 +317,7 @@ struct Data {
     rng_seed: [u8; 32],
     pending_payments_queue: PendingPaymentsQueue,
     total_payment_receipts: PaymentReceipts,
-    #[serde(default = "ic_root_key")]
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
 }

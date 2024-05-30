@@ -976,6 +976,7 @@ export type ChatStateFull = {
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
+    userCanisterLocalUserIndex: string;
 };
 
 export type CurrentChatState = {
@@ -1125,11 +1126,12 @@ export type InitialStateResponse = {
     timestamp: bigint;
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
+    localUserIndex: string;
 };
 
 export type PinNumberSettings = {
-    length: number,
-    attemptsBlockedUntil: bigint | undefined,
+    length: number;
+    attemptsBlockedUntil: bigint | undefined;
 };
 
 export type PinNumberResolver = {
@@ -1145,7 +1147,7 @@ export type RulesAcceptanceResolver = {
 export type AcceptedRules = {
     chat: number | undefined;
     community: number | undefined;
-}
+};
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
 
@@ -1635,7 +1637,8 @@ export type SendMessageResponse =
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
     | DuplicateMessageId
-    | PinNumberFailures;
+    | PinNumberFailures
+    | MessageThrottled;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1714,7 +1717,8 @@ export type GateCheckFailedReason =
     | "dissolve_delay_not_met"
     | "min_stake_not_met"
     | "payment_failed"
-    | "insufficient_balance";
+    | "insufficient_balance"
+    | "failed_verified_credential_check";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1737,6 +1741,10 @@ export type P2PSwapSetUpFailed = {
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
+};
+
+export type MessageThrottled = {
+    kind: "message_throttled";
 };
 
 export type PinRequired = {
@@ -2096,10 +2104,7 @@ export type PublicGroupSummaryResponse =
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = 
-    | Success 
-    | Failure
-    | PinNumberFailures;
+export type TipMessageResponse = Success | Failure | PinNumberFailures;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
@@ -2132,6 +2137,49 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           kind: "not_found";
       }
     | { kind: "error"; error: string };
+
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          ascending: boolean;
+          startIndex: number;
+          eventIndexRange: [number, number];
+      }
+    | {
+          kind: "by_index";
+          events: number[];
+      }
+    | {
+          kind: "window";
+          midPoint: number;
+          eventIndexRange: [number, number];
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string };
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }
@@ -2209,7 +2257,4 @@ export type SetPinNumberResponse =
     | { kind: "too_short"; minLength: number }
     | { kind: "too_long"; maxLength: number };
 
-export type PinNumberFailures =     
-    | PinRequired
-    | PinIncorrect
-    | TooManyFailedPinAttempts;
+export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;

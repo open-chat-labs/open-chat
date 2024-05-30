@@ -72,7 +72,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let candid = if include_candid {
         quote! {
-            #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
+            #[ic_cdk::#method_type(name = #name, #guard #manual_reply)]
             #item
         }
     } else {
@@ -83,7 +83,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
     let msgpack = quote! {
-        #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+        #[ic_cdk::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
         #msgpack_item
     };
 
@@ -109,10 +109,10 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
     let validate_fn = convert_to_validate_fn(original_fn.clone());
 
     TokenStream::from(quote! {
-        #[ic_cdk_macros::query(name = #validate_fn_name, #guard #manual_reply)]
+        #[ic_cdk::query(name = #validate_fn_name, #guard #manual_reply)]
         #validate_fn
 
-        #[ic_cdk_macros::update(name = #name, #guard #manual_reply)]
+        #[ic_cdk::update(name = #name, #guard #manual_reply)]
         #original_fn
     })
 }
@@ -138,7 +138,7 @@ pub fn proposal_validation(input: TokenStream) -> TokenStream {
     };
 
     let tokens = quote! {
-        #[ic_cdk_macros::query]
+        #[ic_cdk::query]
         fn #our_function_name(args: #args_type) -> Result<String, String> {
             #to_string_fn
         }

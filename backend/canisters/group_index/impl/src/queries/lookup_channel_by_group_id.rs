@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_index_canister::lookup_channel_by_group_id::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn lookup_channel_by_group_id(args: Args) -> Response {

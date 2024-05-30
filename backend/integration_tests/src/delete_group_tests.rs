@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::ChatId;
 
 #[test]

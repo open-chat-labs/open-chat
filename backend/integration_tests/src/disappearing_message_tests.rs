@@ -1,8 +1,8 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{EventIndex, MessageIndex, OptionUpdate};
 
 #[test]

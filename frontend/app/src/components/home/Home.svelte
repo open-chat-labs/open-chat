@@ -80,7 +80,7 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
-    import HallOfFame from "./HallOfFame.svelte";
+    import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
@@ -98,6 +98,8 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import DailyChitModal from "./DailyChitModal.svelte";
+    import { chitEnabledStore } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -161,6 +163,7 @@
         Registering,
         LoggingIn,
         NotFound,
+        ClaimDailyChit,
     }
 
     let modal = ModalType.None;
@@ -490,7 +493,9 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                modal = ModalType.HallOfFame;
+                if ($chitEnabledStore) {
+                    modal = ModalType.HallOfFame;
+                }
                 pageReplace(removeQueryStringParam("hof"));
             }
 
@@ -1099,7 +1104,10 @@
             on:newChannel={newChannel}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
-            on:upgrade={upgrade} />
+            on:upgrade={upgrade}
+            on:claimDailyChit={() => {
+                modal = ModalType.ClaimDailyChit;
+            }} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1235,6 +1243,8 @@
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
+        {:else if modal === ModalType.ClaimDailyChit}
+            <DailyChitModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

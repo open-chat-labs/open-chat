@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -8,6 +7,7 @@ use pocket_ic::PocketIc;
 use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::{random_message_id, random_string};
 use types::{CanisterId, MessageContentInitial, TextContent, TimestampMillis, UserId};
 
 #[test]

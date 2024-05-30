@@ -19,7 +19,6 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 http_request = { path = "../../../libraries/http_request" }
 ic-captcha = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }

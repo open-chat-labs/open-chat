@@ -1,13 +1,12 @@
 #![allow(dead_code)]
-use crate::rng::random_internet_identity_principal;
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use rand::random;
 use serde::de::DeserializeOwned;
-use serde_bytes::ByteBuf;
 use std::time::Duration;
+use testing::rng::random_internet_identity_principal;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
@@ -18,8 +17,8 @@ pub mod escrow;
 pub mod event_store;
 pub mod group;
 pub mod group_index;
-pub mod icrc1;
 pub mod identity;
+pub mod ledger;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -102,13 +101,13 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
-    let session_key = ByteBuf::from(random::<[u8; 32]>().to_vec());
+    let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result =
         identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
 
     local_user_index::happy_path::register_user_with_referrer(
         env,
-        create_identity_result.principal,
+        Principal::self_authenticating(&create_identity_result.user_key),
         canister_ids.local_user_index,
         create_identity_result.user_key,
         referral_code,
@@ -128,7 +127,7 @@ pub fn upgrade_user(
     controller: Principal,
     duration: DiamondMembershipPlanDuration,
 ) {
-    icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
+    ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
     user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
 

@@ -4,11 +4,13 @@ import {
     RegisterUserResponse,
     GroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary,
+    ChatEventsArgsInner,
+    EventsContext,
+    ChatEventsResponse,
     JoinGroupResponse,
     InviteUsersToGroupResponse,
     InviteUsersToChannelResponse,
     GateCheckFailedReason,
-    ReportMessageResponse,
     JoinCommunityResponse,
     CommunityCanisterCommunitySummary,
     CommunityMembership,
@@ -16,25 +18,29 @@ import {
     UserGroup,
     AccessTokenType,
     AccessTokenResponse,
-    VideoCallType
+    VerifiedCredentialArgs,
+    VideoCallType,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
     RegisterUserResponse as ApiRegisterUserResponse,
     GroupAndCommunitySummaryUpdatesResponse as ApiGroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary as ApiGroupCanisterGroupChatSummary,
+    ChatEventsArgsInner as ApiChatEventsArgsInner,
+    EventsContext as ApiEventsContext,
+    ChatEventsResponse as ApiChatEventsResponse,
     JoinGroupResponse as ApiJoinGroupResponse,
     GateCheckFailedReason as ApiGateCheckFailedReason,
     InviteUsersToGroupResponse as ApiInviteUsersResponse,
     InviteUsersToChannelResponse as ApiInviteUsersToChannelResponse,
     JoinCommunityResponse as ApiJoinCommunityResponse,
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
-    CommunityMembership as ApiCommunityMembership,
     JoinChannelResponse as ApiJoinChannelResponse,
     UserGroup as ApiUserGroup,
     AccessTokenResponse as ApiAccessTokenResponse,
     AccessTokenType as ApiAccessTokenType,
-    VideoCallType as ApiVideoCallType
+    VerifiedCredentialArgs as ApiVerifiedCredentialArgs,
+    VideoCallType as ApiVideoCallType,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

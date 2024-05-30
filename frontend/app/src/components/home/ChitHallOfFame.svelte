@@ -1,0 +1,265 @@
+<script lang="ts">
+    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import Button from "../Button.svelte";
+    import { _ } from "svelte-i18n";
+    import type { OpenChat, ChitUserBalance } from "openchat-client";
+    import { now500 } from "../../stores/time";
+    import { mobileWidth } from "../../stores/screenDimensions";
+    import Invaders from "./Invaders.svelte";
+    import { isTouchDevice } from "../../utils/devices";
+
+    const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
+
+    $: supportsGame =
+        !isTouchDevice ||
+        //@ts-ignore
+        (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission);
+
+    let bodyElement: HTMLDivElement;
+    let showGame = false;
+    let date = new Date();
+    let blankLeader = {
+        username: "________",
+        userId: "",
+        balance: 0,
+    };
+    let leaders: ChitUserBalance[] = dummyData();
+    let cutoff = getBeginningOfNextMonth(date);
+
+    onMount(() => {
+        if (bodyElement) {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement("div");
+                star.classList.add("star");
+                const left = Math.floor(Math.random() * 100);
+                const top = Math.floor(Math.random() * 100);
+                bodyElement.appendChild(star);
+                star.style.left = `${left}%`;
+                star.style.top = `${top}%`;
+            }
+        }
+        getData();
+    });
+
+    function dummyData() {
+        const data = [];
+        for (let i = 0; i < 10; i++) {
+            data.push(blankLeader);
+        }
+        return data;
+    }
+
+    function getData() {
+        client
+            .chitLeaderboard()
+            .then((result) => {
+                leaders = result.slice(0, 10);
+            })
+            .finally(() => {
+                leaders = [...leaders, ...Array(10 - leaders.length).fill(blankLeader)];
+            });
+    }
+
+    function getBeginningOfNextMonth(d: Date) {
+        const month = d.getUTCMonth();
+        const year = d.getUTCFullYear();
+        const nextMonth = month === 11 ? 0 : month + 1;
+        const nextYear = month === 11 ? year + 1 : year;
+        return +new Date(Date.UTC(nextYear, nextMonth, 1, 0, 0, 0, 0));
+    }
+</script>
+
+<ModalContent hideHeader closeIcon on:close>
+    <div bind:this={bodyElement} class="body" slot="body">
+        {#if showGame}
+            <Invaders />
+        {:else}
+            <img class="bot left" src="/assets/pixel.svg" />
+            <img class="bot right" src="/assets/pixel.svg" />
+            <div class="title-wrapper">
+                <div class="title">{$_("openChat")}</div>
+            </div>
+            <div class="scoreboard-container">
+                <table cellpadding="3px" class="scoreboard">
+                    <thead class="table-header">
+                        {#if !$mobileWidth}
+                            <th class="rank">#</th>
+                        {/if}
+                        <th class="username">{$_("halloffame.username")}</th>
+                        <th class="balance">CHIT</th>
+                    </thead>
+                    <tbody>
+                        {#each leaders as leader, i}
+                            <tr class="table-row">
+                                {#if !$mobileWidth}
+                                    <td class="rank">{i + 1}</td>
+                                {/if}
+                                <td class="username" title={leader.username}>{leader.username}</td>
+                                <td class="balance">{leader.balance}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    </div>
+    <div slot="footer" class="hof-footer">
+        <span class="countdown">{client.formatTimeRemaining($now500, cutoff)}</span>
+        <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+            {#if showGame}
+                <div on:click={() => (showGame = false)} class="joystick">🏆️</div>
+                <Button
+                    tiny={$mobileWidth}
+                    small={!$mobileWidth}
+                    on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
+            {:else}
+                {#if supportsGame}
+                    <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
+                {/if}
+                <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
+                    >{$_("close")}</Button>
+            {/if}
+        </ButtonGroup>
+    </div>
+</ModalContent>
+
+<style lang="scss">
+    :global(.hof-footer button) {
+        font-family: "Press Start 2P", cursive;
+    }
+    :global(.star) {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .body {
+        position: relative;
+    }
+
+    .title-wrapper {
+        perspective: 150px;
+        overflow: hidden;
+        margin-bottom: $sp5;
+    }
+
+    .body,
+    .hof-footer {
+        font-family: "Press Start 2P", cursive;
+    }
+
+    .hof-footer {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .title {
+        @include font-size(fs-220);
+        color: yellow;
+        text-shadow: 3px 3px 0 red;
+        text-transform: uppercase;
+        transform: rotateX(45deg);
+        text-align: center;
+
+        @include mobile() {
+            @include font-size(fs-180);
+        }
+    }
+
+    .countdown {
+        @include font-size(fs-160);
+        color: yellow;
+        text-shadow: 3px 3px 0 red;
+
+        @include mobile() {
+            @include font-size(fs-100);
+            text-shadow: 2px 2px 0 red;
+        }
+    }
+
+    .scoreboard-container {
+        position: relative;
+    }
+
+    .scoreboard {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        text-transform: uppercase;
+        margin-bottom: $sp4;
+        @include font-size(fs-80);
+        .table-header {
+            border-bottom: 2px solid red;
+            margin-bottom: $sp3;
+        }
+
+        tr:nth-child(-n + 3) {
+            color: green;
+        }
+
+        th,
+        td {
+            padding: $sp2;
+            @include mobile() {
+                @include font-size(fs-50);
+            }
+        }
+
+        th {
+            @include font-size(fs-50);
+        }
+
+        .username {
+            @include ellipsis();
+            max-width: 0;
+        }
+
+        .rank {
+            // width: 50px;
+        }
+
+        .username,
+        .rank {
+            text-align: start;
+        }
+
+        .balance {
+            // width: 20%;
+            text-align: end;
+        }
+    }
+
+    .bot {
+        position: absolute;
+        width: 35px;
+        height: 35px;
+        top: 4px;
+
+        &.left {
+            left: 4px;
+        }
+
+        &.right {
+            right: 4px;
+        }
+    }
+
+    .joystick {
+        display: grid;
+        align-content: center;
+        font-size: 1.6rem;
+        margin-right: $sp2;
+        cursor: pointer;
+    }
+</style>

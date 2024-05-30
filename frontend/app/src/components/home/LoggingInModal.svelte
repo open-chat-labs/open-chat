@@ -1,6 +1,6 @@
 <script lang="ts">
     import ModalContent from "../ModalContent.svelte";
-    import { createEventDispatcher, getContext, onDestroy } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { AuthProvider, Poller, type OpenChat } from "openchat-client";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
@@ -37,12 +37,15 @@
     $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
     $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
 
-    onDestroy(() => {
-        if ($anonUser && $identityState.kind === "logging_in") {
-            identityState.set({ kind: "anon" });
-        }
+    onMount(() => {
+        client.gaTrack("opened_signin_modal", "registration");
+        return () => {
+            if ($anonUser && $identityState.kind === "logging_in") {
+                identityState.set({ kind: "anon" });
+            }
 
-        emailSignInPoller?.stop();
+            emailSignInPoller?.stop();
+        };
     });
 
     $: {
@@ -73,7 +76,7 @@
         if (supportsII) {
             options.push(AuthProvider.II);
             options.push(AuthProvider.ETH);
-            options.push(AuthProvider.SOL);
+            // options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
@@ -105,6 +108,12 @@
             return;
         }
 
+        if (mode === "signin") {
+            client.gaTrack("initiated_signin", "registration", provider);
+        } else if (mode === "signup") {
+            client.gaTrack("initiated_signup", "registration", provider);
+        }
+
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         selectedAuthProviderStore.set(provider);
         state = "logging-in";
@@ -126,6 +135,7 @@
             .generateMagicLink(email, sessionKey)
             .then((response) => {
                 if (response.kind === "success") {
+                    client.gaTrack("generated_magic_signin_link", "registration");
                     startPoller(email, sessionKey, response.userKey, response.expiration);
                 } else if (response.kind === "email_invalid") {
                     error = "loginDialog.invalidEmail";
@@ -155,6 +165,7 @@
                         .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
                         .then((response) => {
                             if (response.kind === "success") {
+                                client.gaTrack("received_email_signin_delegation", "registration");
                                 emailSignInPoller?.stop();
                                 emailSignInPoller == undefined;
                             } else if (response.kind === "error") {
@@ -174,6 +185,7 @@
     }
 
     function cancelLink() {
+        client.gaTrack("email_signin_cancelled", "registration");
         emailSignInPoller?.stop();
         emailSignInPoller == undefined;
         state = "options";
@@ -184,6 +196,11 @@
     }
 
     function toggleMode() {
+        if (mode === "signin") {
+            client.gaTrack("signup_link_clicked", "registration");
+        } else if (mode === "signup") {
+            client.gaTrack("signin_link_clicked", "registration");
+        }
         mode = mode === "signin" ? "signup" : "signin";
     }
 </script>

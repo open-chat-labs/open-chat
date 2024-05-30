@@ -11,13 +11,7 @@ export interface CreateIdentityArgs {
   'challenge_attempt' : [] | [{ 'key' : number, 'chars' : string }],
 }
 export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
-  {
-    'Success' : {
-      'principal' : Principal,
-      'user_key' : PublicKey,
-      'expiration' : TimestampNanoseconds,
-    }
-  } |
+  { 'Success' : PrepareDelegationSuccess } |
   { 'ChallengeFailed' : null } |
   { 'ChallengeRequired' : null } |
   { 'PublicKeyInvalid' : string };
@@ -36,9 +30,11 @@ export interface PrepareDelegationArgs {
   'max_time_to_live' : [] | [Nanoseconds],
 }
 export type PrepareDelegationResponse = { 'NotFound' : null } |
-  {
-    'Success' : { 'user_key' : PublicKey, 'expiration' : TimestampNanoseconds }
-  };
+  { 'Success' : PrepareDelegationSuccess };
+export interface PrepareDelegationSuccess {
+  'user_key' : PublicKey,
+  'expiration' : TimestampNanoseconds,
+}
 export type PublicKey = Uint8Array | number[];
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],

@@ -42,9 +42,9 @@ generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::env::VIDEO_CALL_OPERATOR;
-    use crate::rng::random_message_id;
     use crate::User;
     use pocket_ic::PocketIc;
+    use testing::rng::random_message_id;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
         Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,

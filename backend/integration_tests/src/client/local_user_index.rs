@@ -21,10 +21,9 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use serde_bytes::ByteBuf;
     use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
 
-    pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: ByteBuf) -> User {
+    pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
         register_user_with_referrer(env, principal, canister_id, public_key, None)
     }
 
@@ -32,7 +31,7 @@ pub mod happy_path {
         env: &mut PocketIc,
         principal: Principal,
         canister_id: CanisterId,
-        public_key: ByteBuf,
+        public_key: Vec<u8>,
         referral_code: Option<String>,
     ) -> User {
         let response = super::register_user(

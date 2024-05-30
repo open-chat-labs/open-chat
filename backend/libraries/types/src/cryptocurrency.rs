@@ -75,18 +75,21 @@ pub enum CryptoTransaction {
 pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
+    ICRC2(icrc2::PendingCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CompletedCryptoTransaction {
     NNS(nns::CompletedCryptoTransaction),
     ICRC1(icrc1::CompletedCryptoTransaction),
+    ICRC2(icrc2::CompletedCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum FailedCryptoTransaction {
     NNS(nns::FailedCryptoTransaction),
     ICRC1(icrc1::FailedCryptoTransaction),
+    ICRC2(icrc2::FailedCryptoTransaction),
 }
 
 impl CryptoTransaction {
@@ -132,6 +135,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.ledger,
             PendingCryptoTransaction::ICRC1(t) => t.ledger,
+            PendingCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
@@ -139,6 +143,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.token.clone(),
             PendingCryptoTransaction::ICRC1(t) => t.token.clone(),
+            PendingCryptoTransaction::ICRC2(t) => t.token.clone(),
         }
     }
 
@@ -150,6 +155,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             PendingCryptoTransaction::ICRC1(t) => t.amount,
+            PendingCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -157,6 +163,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(_) => ICP_FEE,
             PendingCryptoTransaction::ICRC1(t) => t.fee,
+            PendingCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 
@@ -170,6 +177,13 @@ impl PendingCryptoTransaction {
                 }
             }
             PendingCryptoTransaction::ICRC1(t) => {
+                if t.to.subaccount.unwrap_or_default() == [0; 32] {
+                    Some(t.to.owner.into())
+                } else {
+                    None
+                }
+            }
+            PendingCryptoTransaction::ICRC2(t) => {
                 if t.to.subaccount.unwrap_or_default() == ic_ledger_types::DEFAULT_SUBACCOUNT.0 {
                     Some(t.to.owner.into())
                 } else {
@@ -188,6 +202,7 @@ impl PendingCryptoTransaction {
                 UserOrAccount::User(u) => u == recipient,
             },
             PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
+            PendingCryptoTransaction::ICRC2(t) => t.to.owner == recipient.into(),
         }
     }
 
@@ -198,6 +213,10 @@ impl PendingCryptoTransaction {
                 t.to.owner = owner;
                 t.to.subaccount = Some(subaccount.0)
             }
+            PendingCryptoTransaction::ICRC2(t) => {
+                t.to.owner = owner;
+                t.to.subaccount = Some(subaccount.0)
+            }
         }
     }
 
@@ -205,6 +224,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.created,
             PendingCryptoTransaction::ICRC1(t) => t.created,
+            PendingCryptoTransaction::ICRC2(t) => t.created,
         }
     }
 
@@ -212,6 +232,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.created = created,
             PendingCryptoTransaction::ICRC1(t) => t.created = created,
+            PendingCryptoTransaction::ICRC2(t) => t.created = created,
         }
     }
 
@@ -221,6 +242,10 @@ impl PendingCryptoTransaction {
                 t.memo = Some(ic_ledger_types::Memo(u64_from_bytes(memo)));
             }
             PendingCryptoTransaction::ICRC1(t) => {
+                assert!(memo.len() <= 32);
+                t.memo = Some(memo.to_vec().into());
+            }
+            PendingCryptoTransaction::ICRC2(t) => {
                 assert!(memo.len() <= 32);
                 t.memo = Some(memo.to_vec().into());
             }
@@ -234,6 +259,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.ledger,
             CompletedCryptoTransaction::ICRC1(t) => t.ledger,
+            CompletedCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
@@ -241,6 +267,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.token.clone(),
             CompletedCryptoTransaction::ICRC1(t) => t.token.clone(),
+            CompletedCryptoTransaction::ICRC2(t) => t.token.clone(),
         }
     }
 
@@ -248,6 +275,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             CompletedCryptoTransaction::ICRC1(t) => t.amount,
+            CompletedCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -255,6 +283,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(_) => ICP_FEE,
             CompletedCryptoTransaction::ICRC1(t) => t.fee,
+            CompletedCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 
@@ -262,6 +291,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.block_index,
             CompletedCryptoTransaction::ICRC1(t) => t.block_index,
+            CompletedCryptoTransaction::ICRC2(t) => t.block_index,
         }
     }
 }
@@ -271,6 +301,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.ledger,
             FailedCryptoTransaction::ICRC1(t) => t.ledger,
+            FailedCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
@@ -278,6 +309,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.token.clone(),
             FailedCryptoTransaction::ICRC1(t) => t.token.clone(),
+            FailedCryptoTransaction::ICRC2(t) => t.token.clone(),
         }
     }
 
@@ -285,6 +317,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => &t.error_message,
             FailedCryptoTransaction::ICRC1(t) => &t.error_message,
+            FailedCryptoTransaction::ICRC2(t) => &t.error_message,
         }
     }
 
@@ -292,6 +325,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             FailedCryptoTransaction::ICRC1(t) => t.amount,
+            FailedCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -299,6 +333,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(_) => ICP_FEE,
             FailedCryptoTransaction::ICRC1(t) => t.fee,
+            FailedCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 }
@@ -429,6 +464,63 @@ pub mod icrc1 {
     impl From<Account> for CryptoAccount {
         fn from(value: Account) -> Self {
             CryptoAccount::Account(value)
+        }
+    }
+}
+
+pub mod icrc2 {
+    use super::*;
+    use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: u128,
+        pub from: Account,
+        pub to: Account,
+        pub fee: u128,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct CompletedCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: u128,
+        pub spender: UserId,
+        pub from: icrc1::CryptoAccount,
+        pub to: icrc1::CryptoAccount,
+        pub fee: u128,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub block_index: u64,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct FailedCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token: Cryptocurrency,
+        pub amount: u128,
+        pub fee: u128,
+        pub spender: UserId,
+        pub from: icrc1::CryptoAccount,
+        pub to: icrc1::CryptoAccount,
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub error_message: String,
+    }
+
+    impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransaction) -> Self {
+            super::CompletedCryptoTransaction::ICRC2(value)
+        }
+    }
+
+    impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
+        fn from(value: FailedCryptoTransaction) -> Self {
+            super::FailedCryptoTransaction::ICRC2(value)
         }
     }
 }

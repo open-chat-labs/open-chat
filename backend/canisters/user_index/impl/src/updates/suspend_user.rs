@@ -2,7 +2,7 @@ use crate::guards::caller_is_platform_moderator;
 use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::{Event, UserSuspended};
 use types::{ChatId, CommunityId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};

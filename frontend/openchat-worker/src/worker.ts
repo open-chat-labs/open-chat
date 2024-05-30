@@ -302,6 +302,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "chatEventsBatch":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.chatEventsBatch(
+                        payload.localUserIndex,
+                        payload.requests,
+                        payload.cachePrimer,
+                    ),
+                );
+                break;
+
             case "chatEventsWindow":
                 executeThenReply(
                     payload,
@@ -430,7 +442,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credential),
+                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credentialArgs),
                 );
                 break;
 
@@ -438,7 +450,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credential),
+                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credentialArgs),
                 );
                 break;
 
@@ -1390,16 +1402,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getCachePrimerTimestamps":
                 executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
-                break;
-
-            case "setCachePrimerTimestamp":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .setCachePrimerTimestamp(payload.chatIdentifierString, payload.timestamp)
-                        .then(() => undefined),
-                );
                 break;
 
             case "tipMessage":

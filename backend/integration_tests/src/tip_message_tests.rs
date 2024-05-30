@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::{random_message_id, random_string};
 use types::{Chat, ChatEvent, Cryptocurrency};
 
 #[test]
@@ -60,7 +60,7 @@ fn tip_direct_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -109,7 +109,7 @@ fn tip_group_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -172,7 +172,7 @@ fn tip_channel_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -328,7 +328,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_user(env, canister_ids);
 
-    client::icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
+    client::ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
 
     TestData { user1, user2 }
 }

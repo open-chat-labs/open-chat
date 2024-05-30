@@ -2,7 +2,7 @@ use crate::updates::prepare_delegation::prepare_delegation_inner;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use identity_canister::create_identity::{Response::*, *};
 use types::CanisterId;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
@@ -35,12 +35,11 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    let (principal, seed) = state.push_new_user(caller, originating_canister);
+    let seed = state.push_new_user(caller, originating_canister);
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
     Success(SuccessResult {
-        principal,
         user_key: result.user_key,
         expiration: result.expiration,
     })

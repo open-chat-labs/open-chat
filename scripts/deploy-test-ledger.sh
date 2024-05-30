@@ -10,7 +10,7 @@ PRINCIPAL=$(dfx --identity $IDENTITY identity get-principal)
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 test_ledger
 dfx --identity $IDENTITY canister install test_ledger --wasm ./wasms/icrc_ledger.wasm.gz --argument "(variant { Init = record {
     minting_account = record { owner = principal \"$PRINCIPAL\" };
-    transfer_fee = 10000:nat64;
+    transfer_fee = 10000:nat;
     decimals = 8:nat8;
     token_symbol = \"TEST\";
     token_name = \"Test\";

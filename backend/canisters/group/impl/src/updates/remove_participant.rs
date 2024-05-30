@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, UserId};

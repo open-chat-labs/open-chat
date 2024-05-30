@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use group_canister::selected_initial::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_cdk::query;
 
 #[query]
 fn selected_initial(_args: Args) -> Response {

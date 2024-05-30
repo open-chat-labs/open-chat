@@ -15,7 +15,15 @@ export type GateBinding = {
 };
 
 export function getGateBindings(): GateBinding[] {
-    return [noGate, diamondGate, neuronGateFolder, paymentGateFolder, balanceGateFolder, credentialGate, nftGate];
+    return [
+        noGate,
+        diamondGate,
+        neuronGateFolder,
+        paymentGateFolder,
+        balanceGateFolder,
+        credentialGate,
+        nftGate,
+    ];
 }
 
 export function getNeuronGateBindings(
@@ -57,21 +65,20 @@ export function getPaymentGateBindings(
 }
 
 export function getBalanceGateBindings(
-    cryptoLookup: Record<string, CryptocurrencyDetails>
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): GateBinding[] {
-    return Object.values(cryptoLookup)
-        .map((c) => {
-            return {
-                label: formatLabel(c.symbol, false),
-                gate: {
-                    kind: "token_balance_gate",
-                    ledgerCanister: c.ledger,
-                    minBalance: BigInt(100) * c.transferFee,
-                },
-                key: c.ledger,
-                enabled: true,
-            };
-        });
+    return Object.values(cryptoLookup).map((c) => {
+        return {
+            label: formatLabel(c.symbol, false),
+            gate: {
+                kind: "token_balance_gate",
+                ledgerCanister: c.ledger,
+                minBalance: BigInt(100) * c.transferFee,
+            },
+            key: c.ledger,
+            enabled: true,
+        };
+    });
 }
 
 function formatLabel(token: string, comingSoon: boolean): string {
@@ -121,23 +128,24 @@ const nftGate: GateBinding = {
 };
 
 const credentialGate: GateBinding = {
-    label: "access.credential",
+    label: "access.credential.label",
     key: "credential_gate",
     gate: {
         kind: "credential_gate",
         credential: {
+            credentialName: "",
+            issuerCanisterId: "",
             issuerOrigin: "",
             credentialType: "",
         },
     },
-    enabled: false,
+    enabled: true,
 };
 
-export type CredentialIssuer = Credential & { name: string };
-
-export const credentialIssuers: CredentialIssuer[] = [
+export const credentialIssuers: Credential[] = [
     {
-        name: "Is DFINITY employee",
+        credentialName: "Is DFINITY employee",
+        issuerCanisterId: "vu2yf-xiaaa-aaaad-aad5q-cai",
         issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
         credentialType: "VerifiedEmployee",
         credentialArguments: {
@@ -145,11 +153,12 @@ export const credentialIssuers: CredentialIssuer[] = [
         },
     },
     {
-        name: "Is early adopter",
-        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
-        credentialType: "Early adopter",
+        credentialName: "Is early adopter",
+        issuerCanisterId: "vuq4g-oyaaa-aaaap-ahfsq-cai",
+        issuerOrigin: "https://vuq4g-oyaaa-aaaap-ahfsq-cai.icp0.io",
+        credentialType: "EventAttendance",
         credentialArguments: {
-            employerName: "DFINITY Foundation",
+            eventName: "DICE2024",
         },
     },
 ];
