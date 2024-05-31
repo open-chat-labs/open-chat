@@ -55,8 +55,6 @@
             : "/assets/unknownUserAvatar.svg";
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
-    $: isPremium = profile?.isPremium ?? false;
-    $: phoneIsVerified = profile?.phoneIsVerified ?? false;
     $: selectedChat = client.selectedChatStore;
     $: blockedUsers = client.blockedUsers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
@@ -308,14 +306,6 @@
                     <div class="right">
                         {joined}
                     </div>
-                    {#if $platformModerator}
-                        {#if isPremium}
-                            <p class="left">PREMIUM</p>
-                        {/if}
-                        {#if phoneIsVerified}
-                            <p class="right">VERIFIED</p>
-                        {/if}
-                    {/if}
                 </div>
                 {#if user !== undefined}
                     <div class="chit">

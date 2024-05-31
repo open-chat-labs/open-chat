@@ -70,27 +70,35 @@
         align-items: center;
         justify-content: center;
         background-repeat: no-repeat;
-        text-shadow: 0.3px 0.3px #777;
-        width: 20px;
-        height: 15px;
-        padding: 2px 0 0 7px;
+        // text-shadow: 0.3px 0.3px #777;
+        width: 21px;
+        height: 18px;
+        padding: 1px 0 0 7px;
         @include font(bold, normal, fs-50);
-        font-size: 0.5rem;
+        font-size: 0.4rem;
+        margin-top: 1px;
 
         &.three {
             background-image: url("/assets/streaks/streak_three.svg");
+            color: rgb(10, 203, 50);
+            padding-left: 8px;
         }
         &.seven {
             background-image: url("/assets/streaks/streak_seven.svg");
+            color: rgb(246, 28, 255);
+            padding-left: 8px;
         }
         &.fourteen {
             background-image: url("/assets/streaks/streak_fourteen.svg");
+            color: rgb(255, 159, 27);
         }
         &.thirty {
             background-image: url("/assets/streaks/streak_thirty.svg");
+            color: rgb(255, 0, 0);
         }
         &.disabled {
             background-image: url("/assets/streaks/streak_disabled.svg");
+            color: #888;
         }
     }
 
