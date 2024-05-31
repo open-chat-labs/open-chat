@@ -61,3 +61,15 @@ export type CreateOpenChatIdentityError =
     | "challenge_failed"
     | "challenge_required"
     | "public_key_invalid";
+
+export type GenerateChallengeResponse =
+    | { kind: "throttled" }
+    | { kind: "already_registered" }
+    | ChallengeSuccess;
+
+export type ChallengeSuccess = { kind: "success" } & Challenge;
+
+export type Challenge = {
+    key: number;
+    pngBase64: string;
+};

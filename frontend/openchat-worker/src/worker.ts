@@ -47,35 +47,18 @@ async function getIdentity(identityCanister: string, icUrl: string): Promise<Ide
             icUrl,
         );
         const checkAuthPrincipalResponse = await identityAgent.checkAuthPrincipal();
-        let shouldGetIdentity = false;
-        let shouldCreateIdentity = false;
-        switch (checkAuthPrincipalResponse.kind) {
-            case "success": {
-                shouldGetIdentity = true;
-                break;
-            }
-            case "not_found": {
-                shouldCreateIdentity = true;
-                break;
-            }
-        }
-        if (shouldGetIdentity || shouldCreateIdentity) {
-            const sessionKey = await ECDSAKeyIdentity.generate();
 
-            const identity = shouldGetIdentity
-                ? await identityAgent.getOpenChatIdentity(sessionKey)
-                : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
+        let shouldGetIdentity = checkAuthPrincipalResponse.kind === "success";
 
-            if (identity !== undefined && typeof identity !== "string") {
-                await ocIdentityStorage.set(
-                    authPrincipalString,
-                    sessionKey,
-                    identity.getDelegation(),
-                );
-                return (
-                    (await ocIdentityStorage.get(authPrincipalString)) ?? new AnonymousIdentity()
-                );
-            }
+        const sessionKey = await ECDSAKeyIdentity.generate();
+
+        const identity = shouldGetIdentity
+            ? await identityAgent.getOpenChatIdentity(sessionKey)
+            : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
+
+        if (identity !== undefined && typeof identity !== "string") {
+            await ocIdentityStorage.set(authPrincipalString, sessionKey, identity.getDelegation());
+            return (await ocIdentityStorage.get(authPrincipalString)) ?? new AnonymousIdentity();
         }
     }
     return new AnonymousIdentity();

@@ -1,6 +1,7 @@
 import type {
     ApiCheckAuthPrincipalResponse,
     ApiCreateIdentityResponse,
+    ApiGenerateChallengeResponse,
     ApiGetDelegationResponse,
     ApiPrepareDelegationResponse,
 } from "./candid/idl";
@@ -11,6 +12,7 @@ import {
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     UnsupportedValueError,
+    type GenerateChallengeResponse,
 } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
@@ -96,4 +98,26 @@ function prepareDelegationSuccess(candid: {
         userKey: consolidateBytes(candid.user_key),
         expiration: candid.expiration,
     };
+}
+
+export function generateChallengeResponse(
+    candid: ApiGenerateChallengeResponse,
+): GenerateChallengeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            key: candid.Success.key,
+            pngBase64: candid.Success.png_base64,
+        };
+    }
+    if ("AlreadyRegistered" in candid) {
+        return { kind: "already_registered" };
+    }
+    if ("Throttled" in candid) {
+        return { kind: "throttled" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGenerateChallengeResponse type received",
+        candid,
+    );
 }
