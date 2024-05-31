@@ -193,7 +193,6 @@
         {#if $globalState.favourites.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
-                separator
                 disabled={$anonUser}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
@@ -206,6 +205,7 @@
         {/if}
         {#if $chitEnabledStore}
             <LeftNavItem
+                separator
                 selected={claimChitAvailable}
                 label={i18nKey(
                     claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
