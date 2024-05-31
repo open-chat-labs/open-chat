@@ -70,7 +70,6 @@
         align-items: center;
         justify-content: center;
         background-repeat: no-repeat;
-        // text-shadow: 0.3px 0.3px #777;
         width: 21px;
         height: 18px;
         padding: 1px 0 0 7px;
