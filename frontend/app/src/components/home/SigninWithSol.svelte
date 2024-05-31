@@ -7,6 +7,7 @@
     } from "@solana/wallet-adapter-base";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
     import { getContext, onMount } from "svelte";
+    import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
@@ -56,6 +57,7 @@
         initialize({
             wallets: [
                 new PhantomWalletAdapter(),
+                new CoinbaseWalletAdapter(),
                 new WalletConnectWalletAdapter({
                     network: WalletAdapterNetwork.Mainnet,
                     options: {

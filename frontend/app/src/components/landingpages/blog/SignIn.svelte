@@ -5,11 +5,9 @@
 
 <section>
     <p>
-        TLDR; in addition to <ExternalLink href="https://internetcomputer.org/internet-identity"
-            >Internet Identity</ExternalLink
-        >, OpenChat users can now sign-in or sign-up using email, or an Ethereum wallet, and soon
-        with a Solana wallet. Also coming soon are, email recovery, sign-in with a simple PassKey,
-        flexible sessions and Two-factor authentication (2FA).
+        In addition to Internet Identity, OpenChat users can now sign-in or sign-up using email, an
+        Ethereum wallet or a Solana wallet. Coming soon are, email recovery, sign-in with a simple
+        PassKey, flexible sessions and two-factor authentication (2FA).
     </p>
     <BlogScreenshot
         caption="Sign in to OpenChat"
@@ -60,8 +58,8 @@
 <section>
     <h2>Sign-in with Ethereum wallet</h2>
     <p>
-        For users coming from the Ethereum ecosystem, OpenChat now offers sign-in by Ethereum
-        wallets such as MetaMask, increasing the potential pool of OpenChat users. In the future, we
+        For users coming from the Ethereum ecosystem, OpenChat now offers sign-in by Ethereum wallet
+        such as MetaMask, increasing the potential pool of OpenChat users. In the future, we
         anticipate signing in with your Ethereum wallet will enable you to send/swap/tip/gift ETH
         ecosystem tokens as you currently can with ICP tokens, albeit not so quickly or cheaply!
     </p>
@@ -72,10 +70,11 @@
 </section>
 <section>
     <h2>Sign-in with Solana wallet</h2>
-    <p>
-        See the Ethereum wallet above. The same will soon be true for the Solana wallet and
-        ecosystem!
-    </p>
+    <p>See the Ethereum wallet above. The same goes for the Solana wallet and ecosystem!</p>
+    <BlogScreenshot
+        caption="Sign in with Solana wallet"
+        desktopUrl={"/assets/blog/signin/solana_desktop.png"}
+        mobileUrl={"/assets/blog/signin/solana_mobile.png"} />
 </section>
 <section>
     <h2>What has changed?</h2>
