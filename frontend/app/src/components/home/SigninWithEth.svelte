@@ -22,6 +22,14 @@
         },
     });
 
+    const connectorNames = new Set<string>();
+    const uniqueConnectors = wagmiConfig.connectors
+        .filter((c) => {
+            if (connectorNames.has(c.name)) return false;
+            connectorNames.add(c.name);
+            return true;
+        });
+
     async function connectWith(connector: Connector) {
         try {
             connecting = connector;
@@ -54,7 +62,7 @@
     };
 </script>
 
-{#each wagmiConfig.connectors as connector}
+{#each uniqueConnectors as connector}
     <div class="auth-option">
         <div class={`icon center ${connecting === connector ? "connecting" : ""}`}>
             {#if icons[connector.id] ?? connector.icon}
