@@ -46,5 +46,4 @@ export const configKeys = {
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
     pinEnabled: "openchat_pin_enabled",
-    chitEnabled: "openchat_chit_enabled",
 };

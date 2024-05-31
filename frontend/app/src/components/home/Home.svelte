@@ -99,7 +99,6 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
-    import { chitEnabledStore } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -493,9 +492,8 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                if ($chitEnabledStore) {
-                    modal = ModalType.HallOfFame;
-                }
+                // TODO - sort out hall of fame for chit
+                // modal = ModalType.HallOfFame;
                 pageReplace(removeQueryStringParam("hof"));
             }
 

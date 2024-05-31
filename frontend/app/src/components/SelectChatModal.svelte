@@ -227,7 +227,7 @@
     ): Promise<string> {
         return client.getLastOnlineDate(chat.them.userId, now).then((lastOnline) => {
             if (lastOnline !== undefined && lastOnline !== 0) {
-                return client.formatLastOnlineDate($_, now, lastOnline);
+                return client.formatLastOnlineDate($_, now, lastOnline)[0];
             } else {
                 return $_("offline");
             }
@@ -317,7 +317,9 @@
                                     <span class="display-name">
                                         {target.name}
                                     </span>
-                                    <Badges diamondStatus={target.diamondStatus} streak={target.streak} />
+                                    <Badges
+                                        diamondStatus={target.diamondStatus}
+                                        streak={target.streak} />
                                     {#if target.username !== undefined}
                                         <span class="username">{target.username}</span>
                                     {/if}

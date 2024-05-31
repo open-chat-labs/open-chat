@@ -25,7 +25,7 @@
         if (checkLastOnline && chat.kind === "direct_chat") {
             client.getLastOnlineDate(chat.them.userId, $now).then((lastOnline) => {
                 if (lastOnline !== undefined && lastOnline !== 0) {
-                    subtext = client.formatLastOnlineDate($_, $now, lastOnline);
+                    [subtext] = client.formatLastOnlineDate($_, $now, lastOnline);
                 } else {
                     subtext = "";
                 }
