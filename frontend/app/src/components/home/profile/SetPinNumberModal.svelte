@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
     import { Pincode, PincodeInput } from "svelte-pincode";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
-    import { type OpenChat } from "openchat-client";
+    import { pinNumberFailureStore, type OpenChat } from "openchat-client";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { toastStore } from "../../../stores/toast";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
@@ -28,6 +28,10 @@
         (type === "set" || isPinValid(currPinArray));
 
     $: errorMessage = $pinNumberErrorMessageStore;
+
+    onMount(() => {
+        pinNumberFailureStore.set(undefined);
+    });
 
     function isPinValid(pin: string[]): boolean {
         return pin.filter((c) => /^[0-9]$/.test(c)).length === 6;

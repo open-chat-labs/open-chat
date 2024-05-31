@@ -6,6 +6,7 @@ import WebsiteReleases from "./WebsiteReleases.svelte";
 import Translation from "./Translation.svelte";
 import Video from "./VideoCallsReleased.svelte";
 import ICFootprint from "./ICFootprint.svelte";
+import SignIn from "./SignIn.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -16,6 +17,13 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    signin: {
+        slug: "signin",
+        title: "Sign-in / sign-up to OpenChat",
+        author: "@Matt",
+        date: new Date(2024, 4, 29),
+        component: SignIn,
+    },
     ic_footprint: {
         slug: "ic_footprint",
         title: "OpenChat tracks carbon-emissions in real-time and commits to net-zero operations",

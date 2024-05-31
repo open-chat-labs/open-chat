@@ -13,14 +13,22 @@
     const wagmiConfig = createConfig({
         chains: [mainnet],
         connectors: [
+            metaMask(),
             coinbaseWallet({ appName: "OpenChat" }),
             walletConnect({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
-            metaMask(),
         ],
         transports: {
             [mainnet.id]: http(),
         },
     });
+
+    const connectorNames = new Set<string>();
+    const uniqueConnectors = wagmiConfig.connectors
+        .filter((c) => {
+            if (connectorNames.has(c.name)) return false;
+            connectorNames.add(c.name);
+            return true;
+        });
 
     async function connectWith(connector: Connector) {
         try {
@@ -54,7 +62,7 @@
     };
 </script>
 
-{#each wagmiConfig.connectors as connector}
+{#each uniqueConnectors as connector}
     <div class="auth-option">
         <div class={`icon center ${connecting === connector ? "connecting" : ""}`}>
             {#if icons[connector.id] ?? connector.icon}
