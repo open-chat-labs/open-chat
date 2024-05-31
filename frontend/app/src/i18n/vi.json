@@ -278,11 +278,13 @@
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "dailyChit": {
-        "alreadyClaimed": "Bạn đã yêu cầu CHIT hàng ngày của mình. Hãy quay lại vào ngày mai để kéo dài chuỗi trận của bạn!",
-        "available": "Nhấn nút yêu cầu để kéo dài chuỗi của bạn!",
-        "claim": "Khẳng định",
+        "alreadyClaimed": "Hãy quay lại vào ngày mai để kéo dài chuỗi trận của bạn!",
+        "available": "Yêu cầu CHIT của bạn và kéo dài chuỗi của bạn!",
+        "claim": "Yêu cầu CHIT!",
+        "comeback": "Hãy quay lại trong {time}",
         "extendStreak": "Kéo dài vệt",
-        "title": "Vệt CHIT",
+        "info": "Bạn duy trì chuỗi của mình càng lâu thì bạn càng có thể yêu cầu nhiều CHIT hàng ngày hơn!",
+        "title": "Duy trì thành tích của bạn",
         "viewStreak": "Xem chuỗi"
     },
     "dark": "Tối",

@@ -278,11 +278,13 @@
     "currentLimit": "Il tuo attuale limite di archiviazione è {limit}GB e il saldo del tuo account è {balance} ICP.",
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
     "dailyChit": {
-        "alreadyClaimed": "Hai già richiesto il tuo CHIT giornaliero. Torna domani per prolungare la tua serie di vittorie consecutive!",
-        "available": "Premi il pulsante di richiesta per estendere la tua serie di vittorie!",
-        "claim": "Reclamo",
+        "alreadyClaimed": "Torna domani per prolungare la tua serie di vittorie consecutive!",
+        "available": "Richiedi il tuo CHIT ed estendi la tua serie di vittorie!",
+        "claim": "Richiedi CHIT!",
+        "comeback": "Torna tra {time}",
         "extendStreak": "Estendi la serie",
-        "title": "Serie CHIT",
+        "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
+        "title": "Mantieni la tua serie di vittorie",
         "viewStreak": "Visualizza serie"
     },
     "dark": "buio",

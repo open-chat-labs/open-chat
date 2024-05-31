@@ -4,13 +4,13 @@ export function formatLastOnlineDate(
     formatter: MessageFormatter,
     now: number,
     lastOnline: number,
-): string {
+): [string, boolean] {
     const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
     const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
     if (minutesSinceLastOnline < 2) {
-        return formatter("onlineNow");
+        return [formatter("onlineNow"), true];
     }
 
     let durationText: string;
@@ -34,7 +34,7 @@ export function formatLastOnlineDate(
                     : formatter("durationDays", { values: { duration: daysSinceLastOnline } });
         }
     }
-    return formatter("lastOnline", { values: { duration: durationText } });
+    return [formatter("lastOnline", { values: { duration: durationText } }), false];
 }
 
 export function buildUsernameList(
