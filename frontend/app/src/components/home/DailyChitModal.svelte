@@ -21,15 +21,14 @@
     let claimed = false;
     let additional: number | undefined = undefined;
 
+    // These are useful for testing
+    // $: available = true;
+    // $: streak = 2;
     $: user = client.user;
     $: available = $user.nextDailyChitClaim < $now500;
     $: streak = $user.streak;
     $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
-
-    // These are useful for testing
-    // $: available = true;
-    // $: streak = 2;
 
     function calculatePercentage(streak: number): number {
         const percent = (streak / 30) * 100;
@@ -111,25 +110,25 @@
             <Translatable resourceKey={i18nKey("dailyChit.info")} />
         </p>
 
-        <div class="progress">
-            <Progress size={"20px"} {percent}></Progress>
-
-            <div class="marker" style="left: {percent}%">
-                <div class="line"></div>
-            </div>
-
-            <div class="badges">
-                <div class="badge three">
-                    <Streak disabled={streak < 3} days={3} />
+        <div class="progress-wrapper">
+            <div class="progress">
+                <Progress size={"20px"} {percent}></Progress>
+                <div class="marker" style="left: {percent}%">
+                    <div class="line"></div>
                 </div>
-                <div class="badge seven">
-                    <Streak disabled={streak < 7} days={7} />
-                </div>
-                <div class="badge fourteen">
-                    <Streak disabled={streak < 14} days={14} />
-                </div>
-                <div class="badge thirty">
-                    <Streak disabled={streak < 30} days={30} />
+                <div class="badges">
+                    <div class="badge three">
+                        <Streak disabled={streak < 3} days={3} />
+                    </div>
+                    <div class="badge seven">
+                        <Streak disabled={streak < 7} days={7} />
+                    </div>
+                    <div class="badge fourteen">
+                        <Streak disabled={streak < 14} days={14} />
+                    </div>
+                    <div class="badge thirty">
+                        <Streak disabled={streak < 30} days={30} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -154,7 +153,16 @@
 </ModalContent>
 
 <style lang="scss">
-    $offset: -18px;
+    :root {
+        --offset: -20px;
+        --margin-top: -28px;
+        --scale: 2.5;
+        @include mobile() {
+            --offset: -18px;
+            --margin-top: -25px;
+            --scale: 2;
+        }
+    }
 
     .header,
     .body {
@@ -169,6 +177,11 @@
         gap: $sp3;
     }
 
+    .progress-wrapper {
+        width: 100%;
+        padding: 0 $sp4;
+    }
+
     .progress {
         position: relative;
         margin: $sp6 0 48px 0;
@@ -181,19 +194,19 @@
     }
 
     .badges {
-        margin-top: -28px;
+        margin-top: var(--margin-top);
         position: relative;
 
         .badge {
             position: absolute;
             transform-origin: 50% 50%;
-            transform: translateX($offset) scale(2.5);
+            transform: translateX(var(--offset)) scale(var(--scale));
             transition:
                 filter 300ms ease-in-out,
                 transform 300ms ease-in-out;
 
             &:hover {
-                transform: translateX($offset) scale(3);
+                transform: translateX(var(--offset)) scale(3);
             }
         }
         .three {
