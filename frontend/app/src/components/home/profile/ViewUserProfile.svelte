@@ -401,7 +401,6 @@
             @include nice-scrollbar();
             color: var(--txt-light);
             margin-bottom: $sp3;
-            margin-top: 12px;
             width: 100%;
         }
 
@@ -486,7 +485,7 @@
         gap: $sp3;
         align-items: center;
         align-self: center;
-        margin-top: -26px;
+        margin: 0 0 $sp4 0;
         z-index: 0;
 
         .chit {

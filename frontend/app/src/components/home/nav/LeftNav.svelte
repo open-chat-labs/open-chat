@@ -29,7 +29,6 @@
     import { rtlStore } from "../../../stores/rtl";
     import { i18nKey } from "../../../i18n/i18n";
     import { now } from "../../../stores/time";
-    import { chitEnabledStore } from "../../../stores/settings";
     import LighteningBolt from "./LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -202,19 +201,14 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if $chitEnabledStore}
-            <LeftNavItem
-                separator
-                selected={claimChitAvailable}
-                label={i18nKey(
-                    claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
-                )}
-                on:click={() => dispatch("claimDailyChit")}>
-                <div class="hover streak">
-                    <LighteningBolt enabled={claimChitAvailable} />
-                </div>
-            </LeftNavItem>
-        {/if}
+        <LeftNavItem
+            separator
+            label={i18nKey(claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak")}
+            on:click={() => dispatch("claimDailyChit")}>
+            <div class="hover streak">
+                <LighteningBolt enabled={claimChitAvailable} />
+            </div>
+        </LeftNavItem>
     </div>
 
     <div

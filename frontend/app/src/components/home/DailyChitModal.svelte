@@ -237,8 +237,6 @@
     .logo {
         width: 120px;
         position: relative;
-        // -webkit-box-reflect: below 0
-        //     linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
 
         &.available {
             cursor: pointer;
@@ -274,7 +272,6 @@
         .current {
             flex-shrink: 0;
             padding: $sp2 $sp3;
-            border: 1px solid var(--bd);
             border-radius: var(--rd);
             background-color: rgba(255, 255, 255, 0.1);
             display: flex;
