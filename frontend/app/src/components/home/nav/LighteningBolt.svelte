@@ -52,7 +52,7 @@
         </linearGradient>
     </defs>
     <polygon
-        style={`stroke-width: 8px; fill: ${fill}; stroke-miterlimit: 5; stroke: ${stroke};`}
+        style={`stroke-width: 10px; fill: ${fill}; stroke-miterlimit: 5; stroke: ${stroke};`}
         points="42.474 4.937 124.321 18.727 146.446 106.726 110.598 100.041 122.041 188.247 42.947 65.828 92.355 74.039"
     ></polygon>
 </svg>

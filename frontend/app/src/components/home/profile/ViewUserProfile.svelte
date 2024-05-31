@@ -33,6 +33,8 @@
     export let chatButton = true;
     export let inGlobalContext = false;
 
+    // this is the next thing on the list
+
     let profile: PublicProfile | undefined = undefined;
     let user: UserSummary | undefined;
     let lastOnline: number | undefined;

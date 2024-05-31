@@ -91,6 +91,7 @@
         <div class="balance">
             <div class="spacer"></div>
             <div class="current">
+                <div class="chit"></div>
                 {`${$user.chitBalance.toLocaleString()} CHIT`}
             </div>
             <div class="additional">
@@ -236,8 +237,8 @@
     .logo {
         width: 120px;
         position: relative;
-        -webkit-box-reflect: below 0
-            linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
+        // -webkit-box-reflect: below 0
+        //     linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0) 45%, hsla(0, 0%, 100%, 0.2));
 
         &.available {
             cursor: pointer;
@@ -276,6 +277,16 @@
             border: 1px solid var(--bd);
             border-radius: var(--rd);
             background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: $sp3;
+            align-items: center;
+
+            .chit {
+                background-image: url("/assets/chit.svg");
+                background-repeat: no-repeat;
+                width: $sp4;
+                height: $sp4;
+            }
         }
     }
 </style>
