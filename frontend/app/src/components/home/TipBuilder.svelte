@@ -25,6 +25,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,9 +38,7 @@
     export let messageContext: MessageContext;
 
     let refreshing = false;
-    let busy = false;
     let error: string | undefined = undefined;
-    let tipError: string | undefined = undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -68,7 +67,6 @@
     $: valid = draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
     $: transferFees = tokenDetails.transferFee;
-    $: tipErrorMessage = tipError !== undefined ? i18nKey(tipError) : $pinNumberErrorMessageStore;
 
     $: {
         if (ledger !== undefined) {
@@ -205,23 +203,17 @@
         };
         lastCryptoSent.set(ledger);
 
-        busy = true;
-        tipError = undefined;
-
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
 
-        client
-            .tipMessage(messageContext, msg.messageId, transfer, currentTip)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    dispatch("close");
-                } else if (resp.kind === "failure") {
-                    tipError = "tip.failure";
-                }
-            })
-            .finally(() => {
-                busy = false;
-            });
+        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
+            if (resp.kind === "failure") {
+                toastStore.showFailureToast(i18nKey("tip.failure"));
+            } else if (resp.kind !== "success") {
+                toastStore.showFailureToast(pinNumberErrorMessageStore);
+            }
+        });
+
+        dispatch("close");
     }
 </script>
 
@@ -334,15 +326,9 @@
                             </div>
                         {/if}
                     </div>
-                    {#if error !== undefined || tipErrorMessage !== undefined}
+                    {#if error !== undefined}
                         <div class="error">
-                            <ErrorMessage>
-                                {#if tipErrorMessage !== undefined}
-                                    <Translatable resourceKey={tipErrorMessage} />
-                                {:else if error !== undefined}
-                                    {$_(error)}
-                                {/if}
-                            </ErrorMessage>
+                            <ErrorMessage>{$_(error)}</ErrorMessage>
                         </div>
                     {/if}
                 {/if}
@@ -350,12 +336,8 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                <Button
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    disabled={busy}
-                    secondary
-                    on:click={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
@@ -366,9 +348,8 @@
                 {:else}
                     <Button
                         small={!$mobileWidth}
-                        disabled={!valid || busy}
+                        disabled={!valid}
                         tiny={$mobileWidth}
-                        loading={busy}
                         on:click={send}
                         ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
