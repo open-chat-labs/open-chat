@@ -162,6 +162,7 @@ import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRate
 import type { DexId } from "./dexes";
 import type {
     GetDelegationResponse,
+    GetOpenChatIdentityResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -984,6 +985,7 @@ export type RehydrateMessage = {
 };
 
 type Init = Omit<AgentConfig, "logger"> & {
+    createIdentityIfNotExists: boolean;
     kind: "init";
 };
 
@@ -1652,8 +1654,12 @@ type ChitLeaderboard = {
     kind: "chitLeaderboard";
 };
 
+export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+
 // prettier-ignore
-export type WorkerResult<T> = T extends PinMessage
+export type WorkerResult<T> = T extends Init
+    ? ConnectToWorkerResponse
+    : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
     ? NamedAccount[]

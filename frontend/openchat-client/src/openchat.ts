@@ -735,9 +735,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser() {
-        await this.connectToWorker();
+        const connectToWorkerResponse = await this.connectToWorker(false);
 
         if (this._authPrincipal !== undefined) {
+            if (connectToWorkerResponse === "oc_identity_not_found") {
+                await this.connectToWorker(true);
+            }
+
             this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
         } else {
             await this._ocIdentityStorage.remove();

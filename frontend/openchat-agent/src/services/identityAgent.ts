@@ -5,7 +5,6 @@ import type { GenerateChallengeResponse } from "openchat-shared";
 import {
     buildDelegationIdentity,
     type ChallengeAttempt,
-    type CheckAuthPrincipalResponse,
     type CreateOpenChatIdentityError,
     toDer,
 } from "openchat-shared";
@@ -17,8 +16,8 @@ export class IdentityAgent {
         this._identityClient = IdentityClient.create(identity, identityCanister, icUrl);
     }
 
-    checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
-        return this._identityClient.checkAuthPrincipal();
+    checkOpenChatIdentityExists(): Promise<boolean> {
+        return this._identityClient.checkAuthPrincipal().then((resp) => resp.kind === "success");
     }
 
     async createOpenChatIdentity(
