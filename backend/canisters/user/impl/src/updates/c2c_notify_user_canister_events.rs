@@ -103,7 +103,9 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
         if let Some(chat) = state.data.direct_chats.get(&sender.into()) {
-            if chat.events.contains_message_id(None, message.message_id) {
+            let thread_root_message_index = message.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
+            if chat.events.contains_message_id(thread_root_message_index, message.message_id) {
                 continue;
             }
         }
