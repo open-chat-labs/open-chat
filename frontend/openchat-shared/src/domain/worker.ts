@@ -161,6 +161,7 @@ import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
     PrepareDelegationResponse,
@@ -242,6 +243,7 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
+    | GenerateIdentityChallenge
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite
@@ -989,6 +991,12 @@ type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
+type GenerateIdentityChallenge = {
+    kind: "generateIdentityChallenge";
+    identityCanister: string;
+    icUrl: string;
+};
+
 type CurrentUser = {
     kind: "getCurrentUser";
 };
@@ -1224,6 +1232,7 @@ export type WorkerResponseInner =
     | string[]
     | undefined
     | [number, number]
+    | GenerateChallengeResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1659,6 +1668,8 @@ export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
 // prettier-ignore
 export type WorkerResult<T> = T extends Init
     ? ConnectToWorkerResponse
+    : T extends GenerateIdentityChallenge
+    ? GenerateChallengeResponse
     : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts

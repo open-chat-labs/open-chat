@@ -394,6 +394,7 @@ import type {
     AcceptedRules,
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
+    GenerateChallengeResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -911,6 +912,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const KEY_STORAGE_IDENTITY = "identity";
         const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
         return this._liveState.userCreated && identity !== null;
+    }
+
+    generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
+        return this.sendRequest({
+            kind: "generateIdentityChallenge",
+            identityCanister: this.config.identityCanister,
+            icUrl: this.config.icUrl ?? window.location.origin,
+        });
     }
 
     unreadThreadMessageCount(

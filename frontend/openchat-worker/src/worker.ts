@@ -15,6 +15,7 @@ import {
     Stream,
     IdentityStorage,
     type GetOpenChatIdentityResponse,
+    type GenerateChallengeResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -71,6 +72,19 @@ async function getOpenChatIdentity(
     }
 
     return { kind: "oc_identity_not_found" };
+}
+
+async function generateIdentityChallenge(
+    identityCanister: string,
+    icUrl: string,
+): Promise<GenerateChallengeResponse> {
+    const authProviderIdentity = await authClient.then((a) => a.getIdentity());
+    const identityAgent = new IdentityAgent(
+        authProviderIdentity as SignIdentity,
+        identityCanister,
+        icUrl,
+    );
+    return await identityAgent.generateChallenge();
 }
 
 let agent: OpenChatAgent | undefined = undefined;
@@ -215,6 +229,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         switch (kind) {
+            case "generateIdentityChallenge": {
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    generateIdentityChallenge(payload.identityCanister, payload.icUrl),
+                );
+                break;
+            }
             case "getCurrentUser":
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
