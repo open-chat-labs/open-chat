@@ -118,12 +118,6 @@ impl User {
         })
     }
 
-    pub fn update_if_streak_expired_yesterday(&mut self, today: u16, now: TimestampMillis) {
-        if self.streak.expired_yesterday(today) {
-            self.date_updated = now;
-        }
-    }
-
     #[allow(dead_code)]
     pub fn give_chit_reward(&mut self, amount: i32, now: TimestampMillis) {
         self.chit_balance += amount;

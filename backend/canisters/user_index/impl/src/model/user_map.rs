@@ -200,7 +200,9 @@ impl UserMap {
     pub fn update_streaks(&mut self, now: TimestampMillis) {
         if let Some(today) = Streak::timestamp_to_day(now) {
             for user in self.users.values_mut() {
-                user.update_if_streak_expired_yesterday(today, now);
+                if user.streak.expired_yesterday(today) {
+                    user.date_updated = now;
+                }
             }
         }
     }
