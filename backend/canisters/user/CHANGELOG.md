@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+- Use `thread_root_message_index` when checking for duplicate messageId ([#5890](https://github.com/open-chat-labs/open-chat/pull/5890))
 
 ## [[2.0.1178](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1178-user)] - 2024-05-23
 
