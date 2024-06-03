@@ -244,6 +244,7 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | GenerateIdentityChallenge
+    | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite
@@ -986,15 +987,17 @@ export type RehydrateMessage = {
     kind: "rehydrateMessage";
 };
 
-type Init = Omit<AgentConfig, "logger"> & {
-    createIdentityIfNotExists: boolean;
+export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
 type GenerateIdentityChallenge = {
     kind: "generateIdentityChallenge";
-    identityCanister: string;
-    icUrl: string;
+};
+
+type CreateOpenChatIdentity = {
+    kind: "createOpenChatIdentity";
+    challengeAttempt: string | undefined;
 };
 
 type CurrentUser = {
@@ -1670,6 +1673,8 @@ export type WorkerResult<T> = T extends Init
     ? ConnectToWorkerResponse
     : T extends GenerateIdentityChallenge
     ? GenerateChallengeResponse
+    : T extends CreateOpenChatIdentity
+    ? ConnectToWorkerResponse
     : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts

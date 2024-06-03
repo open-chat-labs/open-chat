@@ -736,11 +736,14 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser() {
-        const connectToWorkerResponse = await this.connectToWorker(false);
+        const connectToWorkerResponse = await this.connectToWorker();
 
         if (this._authPrincipal !== undefined) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                await this.connectToWorker(true);
+                await this.sendRequest({
+                    kind: "createOpenChatIdentity",
+                    challengeAttempt: undefined,
+                });
             }
 
             this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
@@ -750,15 +753,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.startRegistryPoller();
 
-        this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
-            failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
-        );
-
         if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
         }
+
+        this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
+            failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
+        );
 
         this.getCurrentUser()
             .then((user) => {

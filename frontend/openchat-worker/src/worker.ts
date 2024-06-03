@@ -4,6 +4,7 @@ import { ECDSAKeyIdentity } from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
+    type Init,
     type Logger,
     MessagesReadFromServer,
     StorageUpdated,
@@ -87,6 +88,7 @@ async function generateIdentityChallenge(
     return await identityAgent.generateChallenge();
 }
 
+let initPayload: Init | undefined = undefined;
 let agent: OpenChatAgent | undefined = undefined;
 
 function handleAgentEvent(ev: Event): void {
@@ -192,14 +194,20 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     const correlationId = payload.correlationId;
 
     try {
-        if (kind === "init") {
+        if (kind === "init" || kind === "createOpenChatIdentity") {
+            if (kind === "init") {
+                initPayload = payload;
+            } else if (initPayload === undefined) {
+                throw new Error("Init payload undefined");
+            }
+            const init = initPayload;
             executeThenReply(
                 payload,
                 correlationId,
                 getOpenChatIdentity(
-                    payload.identityCanister,
-                    payload.icUrl,
-                    payload.createIdentityIfNotExists,
+                    init.identityCanister,
+                    init.icUrl,
+                    kind === "createOpenChatIdentity",
                 ).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
@@ -207,20 +215,24 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         id.getPrincipal().toString(),
                         id?.getPrincipal().isAnonymous(),
                     );
-                    logger = inititaliseLogger(
-                        payload.rollbarApiKey,
-                        payload.websiteVersion,
-                        payload.env,
-                    );
+                    logger = inititaliseLogger(init.rollbarApiKey, init.websiteVersion, init.env);
                     logger?.debug("WORKER: constructing agent instance");
                     agent = new OpenChatAgent(id, {
-                        ...payload,
+                        ...init,
                         logger,
                     });
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     return resp.kind;
                 }),
             );
+            return;
+        } else if (payload.kind === "generateIdentityChallenge" && initPayload !== undefined) {
+            executeThenReply(
+                payload,
+                correlationId,
+                generateIdentityChallenge(initPayload.identityCanister, initPayload.icUrl),
+            );
+            return;
         }
 
         if (!agent) {
@@ -229,14 +241,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         switch (kind) {
-            case "generateIdentityChallenge": {
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    generateIdentityChallenge(payload.identityCanister, payload.icUrl),
-                );
-                break;
-            }
             case "getCurrentUser":
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
