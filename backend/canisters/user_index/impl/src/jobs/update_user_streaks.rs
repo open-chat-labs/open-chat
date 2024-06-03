@@ -14,8 +14,7 @@ thread_local! {
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() {
         let now = state.env.now();
-        let run_at = time_until_midnight(now);
-        let timer_id = ic_cdk_timers::set_timer(run_at, run);
+        let timer_id = ic_cdk_timers::set_timer(time_until_midnight(now), run);
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -31,8 +30,7 @@ fn run() {
         let now = state.env.now();
         state.data.users.update_streaks(now);
 
-        let run_at = time_until_midnight(now);
-        let timer_id = ic_cdk_timers::set_timer(run_at, run);
+        let timer_id = ic_cdk_timers::set_timer(time_until_midnight(now), run);
         TIMER_ID.set(Some(timer_id));
     });
 }
