@@ -25,8 +25,9 @@
     // $: available = true;
     // $: streak = 2;
     $: user = client.user;
+    $: userStore = client.userStore;
     $: available = $user.nextDailyChitClaim < $now500;
-    $: streak = $user.streak;
+    $: streak = $userStore[$user.userId]?.streak ?? 0;
     $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
 
