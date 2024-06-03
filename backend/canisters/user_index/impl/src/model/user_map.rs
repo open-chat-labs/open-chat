@@ -9,6 +9,7 @@ use tracing::info;
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
+use super::streak::Streak;
 use super::user::ClaimDailyChitResult;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -194,6 +195,16 @@ impl UserMap {
         self.principal_to_user_id
             .get(principal)
             .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
+    }
+
+    pub fn update_streaks(&mut self, now: TimestampMillis) {
+        if let Some(today) = Streak::timestamp_to_day(now) {
+            for user in self.users.values_mut() {
+                if user.streak.expired_yesterday(today) {
+                    user.date_updated = now;
+                }
+            }
+        }
     }
 
     #[allow(dead_code)]
