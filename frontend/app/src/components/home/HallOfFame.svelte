@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
