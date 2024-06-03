@@ -64,13 +64,13 @@
     ): string {
         switch (conversion) {
             case "usd":
-                return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+                return sum(Object.values(lookup).map((c) => c.dollarBalance ?? 0)).toFixed(2);
             case "icp":
-                return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+                return sum(Object.values(lookup).map((c) => c.icpBalance ?? 0)).toFixed(3);
             case "btc":
-                return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+                return sum(Object.values(lookup).map((c) => c.btcBalance ?? 0)).toFixed(6);
             case "eth":
-                return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+                return sum(Object.values(lookup).map((c) => c.ethBalance ?? 0)).toFixed(6);
         }
     }
 

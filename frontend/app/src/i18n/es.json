@@ -278,11 +278,13 @@
     "currentLimit": "Su límite de almacenamiento actual es {limit} GB y el saldo de su cuenta es {balance} ICP.",
     "currentUsage": "Uso de almacenamiento actual",
     "dailyChit": {
-        "alreadyClaimed": "Ya has reclamado tu CHIT diario. ¡Vuelve mañana para ampliar tu racha!",
-        "available": "¡Presiona el botón de reclamo para extender tu racha!",
-        "claim": "Afirmar",
+        "alreadyClaimed": "¡Vuelve mañana para ampliar tu racha!",
+        "available": "¡Reclama tu CHIT y extiende tu racha!",
+        "claim": "¡Reclama CHIT!",
+        "comeback": "Vuelve en {time}",
         "extendStreak": "Extender racha",
-        "title": "Racha de CHIT",
+        "info": "¡Cuanto más tiempo mantengas tu racha, más CHIT diario podrás reclamar!",
+        "title": "Mantén tu racha",
         "viewStreak": "Ver racha"
     },
     "dark": "dark",

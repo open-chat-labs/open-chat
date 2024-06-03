@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+- Detect canisters that need cycles topped up when pushing events ([#5891](https://github.com/open-chat-labs/open-chat/pull/5891))
 
 ## [[2.0.1179](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1179-local_user_index)] - 2024-05-23
 

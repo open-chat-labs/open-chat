@@ -2,6 +2,7 @@ import { derived, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 import {
     type CryptocurrencyDetails,
+    type EnhancedTokenDetails,
     type NervousSystemDetails,
     DEFAULT_TOKENS,
     type TokenExchangeRates,
@@ -50,17 +51,23 @@ export const enhancedCryptoLookup = derived(
         const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
         const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
 
-        const accounts = Object.values($lookup).map((t) => {
+        const accounts: EnhancedTokenDetails[] = Object.values($lookup).map((t) => {
             const balance = $balance[t.ledger] ?? BigInt(0);
             const symbolLower = t.symbol.toLowerCase();
             const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
             const rates = $exchangeRatesLookup[symbolLower];
-            const xrUSD = rates?.toUSD ?? 0;
-            const dollarBalance = xrUSD * balanceWholeUnits;
-            const xrICP = rates?.toICP ?? 0;
-            const icpBalance = xrICP * balanceWholeUnits;
-            const btcBalance = dollarBalance * xrDollarToBTC;
-            const ethBalance = dollarBalance * xrDollarToETH;
+            const xrUSD = rates?.toUSD;
+            const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
+            const xrICP = rates?.toICP;
+            const icpBalance = xrICP !== undefined ? xrICP * balanceWholeUnits : undefined;
+            const btcBalance =
+                dollarBalance !== undefined && xrDollarToBTC !== undefined
+                    ? dollarBalance * xrDollarToBTC
+                    : undefined;
+            const ethBalance =
+                dollarBalance !== undefined && xrDollarToETH !== undefined
+                    ? dollarBalance * xrDollarToETH
+                    : undefined;
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
             return {
                 ...t,
@@ -80,13 +87,16 @@ export const enhancedCryptoLookup = derived(
 
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup).sort((a, b) => {
+        const aDollarBalance = a.dollarBalance ?? -1;
+        const bDollarBalance = b.dollarBalance ?? -1;
+
         // Sort by $ balance
         // Then by whether token is a default
         // Then by default precedence
         // Then alphabetically by symbol
-        if (a.dollarBalance < b.dollarBalance) {
+        if (aDollarBalance < bDollarBalance) {
             return 1;
-        } else if (a.dollarBalance > b.dollarBalance) {
+        } else if (aDollarBalance > bDollarBalance) {
             return -1;
         } else {
             const defA = DEFAULT_TOKENS.indexOf(a.symbol);

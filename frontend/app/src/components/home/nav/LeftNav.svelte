@@ -5,7 +5,6 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
-    import LightningBoltIcon from "svelte-material-icons/LightningBoltOutline.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
@@ -30,7 +29,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { i18nKey } from "../../../i18n/i18n";
     import { now } from "../../../stores/time";
-    import { chitEnabledStore } from "../../../stores/settings";
+    import LighteningBolt from "./LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -192,7 +191,6 @@
         {#if $globalState.favourites.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
-                separator
                 disabled={$anonUser}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
@@ -203,16 +201,14 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if $chitEnabledStore}
-            <LeftNavItem
-                selected={claimChitAvailable}
-                label={i18nKey(claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak")}
-                on:click={() => dispatch("claimDailyChit")}>
-                <div class="hover direct">
-                    <LightningBoltIcon size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
-        {/if}
+        <LeftNavItem
+            separator
+            label={i18nKey(claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak")}
+            on:click={() => dispatch("claimDailyChit")}>
+            <div class="hover streak">
+                <LighteningBolt enabled={claimChitAvailable} />
+            </div>
+        </LeftNavItem>
     </div>
 
     <div

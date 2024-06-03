@@ -278,11 +278,13 @@
     "currentLimit": "Votre limite de stockage actuelle est de {limit} Go et le solde de votre compte est de {balance} ICP.",
     "currentUsage": "Utilisation actuelle du stockage",
     "dailyChit": {
-        "alreadyClaimed": "Vous avez déjà réclamé votre CHIT quotidien. Revenez demain pour prolonger votre séquence !",
-        "available": "Appuyez sur le bouton de réclamation pour prolonger votre séquence !",
-        "claim": "Réclamer",
+        "alreadyClaimed": "Revenez demain pour prolonger votre séquence !",
+        "available": "Réclamez votre CHIT et prolongez votre séquence !",
+        "claim": "Réclamez CHIT !",
+        "comeback": "Revenez dans {time}",
         "extendStreak": "Prolonger la séquence",
-        "title": "Série CHIT",
+        "info": "Plus vous maintenez votre séquence longtemps, plus vous pouvez réclamer de CHIT quotidien !",
+        "title": "Maintenez votre séquence",
         "viewStreak": "Voir la séquence"
     },
     "dark": "foncé",

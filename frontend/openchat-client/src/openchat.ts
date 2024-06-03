@@ -5040,7 +5040,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.updateReadUpToStore(chats);
 
-            if (this._cachePrimer === undefined) {
+            if (this._cachePrimer === undefined && !this._liveState.anonUser) {
                 this._cachePrimer = new CachePrimer(
                     this,
                     this._liveState.user.userId,
@@ -5048,7 +5048,9 @@ export class OpenChat extends OpenChatAgentWorker {
                     (ev) => this.dispatchEvent(ev),
                 );
             }
-            this._cachePrimer.processChats(chats);
+            if (this._cachePrimer !== undefined) {
+                this._cachePrimer.processChats(chats);
+            }
 
             const userIds = this.userIdsFromChatSummaries(chats);
             if (initialLoad) {

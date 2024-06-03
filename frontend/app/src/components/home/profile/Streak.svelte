@@ -1,27 +1,30 @@
 <script lang="ts">
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
-    
-    type Streak = "none" | "three" | "seven" | "thirty";
+
+    type Streak = "none" | "three" | "seven" | "fourteen" | "thirty";
 
     export let days: number = 0;
     export let showTooltip = true;
+    export let disabled = false;
 
     $: streak = streakFromDays(days);
     $: show = streak !== "none";
     $: num = streakNumber(streak);
 
     function streakFromDays(days: number): Streak {
-        return days < 2 
+        return days < 3
             ? "none"
             : days < 7
-            ? "three" 
-            : days < 30
-            ? "seven" 
-            : "thirty";
+              ? "three"
+              : days < 14
+                ? "seven"
+                : days < 30
+                  ? "fourteen"
+                  : "thirty";
     }
 
-    function streakNumber(streak: Streak): 0 | 3 | 7 | 30 {
+    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 {
         switch (streak) {
             case "none":
                 return 0;
@@ -29,6 +32,8 @@
                 return 3;
             case "seven":
                 return 7;
+            case "fourteen":
+                return 14;
             case "thirty":
                 return 30;
         }
@@ -38,24 +43,24 @@
 {#if show}
     {#if showTooltip}
         <TooltipWrapper position="top" align="middle">
-            <div slot="target" class={`icon ${streak}`}>
+            <div slot="target" class:disabled class={`icon ${streak}`}>
                 {num}
             </div>
             <div let:position let:align slot="tooltip">
-                    <TooltipPopup {position} {align}>
-                        {`${streak.toUpperCase()} day streak!`}
-                    </TooltipPopup>
+                <TooltipPopup {position} {align}>
+                    {`${streak.toUpperCase()} day streak!`}
+                </TooltipPopup>
             </div>
         </TooltipWrapper>
     {:else}
         <div class="wrapper">
             <div>
-                {`${streak.toUpperCase()} day streak!`} 
+                {`${streak.toUpperCase()} day streak!`}
             </div>
-            <div class={`icon ${streak}`}>
+            <div class:disabled class={`icon ${streak}`}>
                 {num}
-            </div>        
-        </div>        
+            </div>
+        </div>
     {/if}
 {/if}
 
@@ -64,22 +69,35 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 20px;
-        height: 15px;
         background-repeat: no-repeat;
+        width: 21px;
+        height: 18px;
+        padding: 1px 0 0 7px;
         @include font(bold, normal, fs-50);
-        text-shadow: 0.3px 0.3px #777;
-        font-size: 0.5rem;
-        padding: 2px 0 0 7px;
+        font-size: 0.4rem;
+        margin-top: 1px;
 
         &.three {
             background-image: url("/assets/streaks/streak_three.svg");
+            color: rgb(10, 203, 50);
+            padding-left: 8px;
         }
         &.seven {
             background-image: url("/assets/streaks/streak_seven.svg");
+            color: rgb(246, 28, 255);
+            padding-left: 8px;
+        }
+        &.fourteen {
+            background-image: url("/assets/streaks/streak_fourteen.svg");
+            color: rgb(255, 159, 27);
         }
         &.thirty {
             background-image: url("/assets/streaks/streak_thirty.svg");
+            color: rgb(255, 0, 0);
+        }
+        &.disabled {
+            background-image: url("/assets/streaks/streak_disabled.svg");
+            color: #888;
         }
     }
 
