@@ -63,3 +63,66 @@ impl Streak {
         Some(day as u16)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn never_claimed_can_claim() {
+        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let streak = Streak::default();
+        assert!(streak.can_claim(now));
+    }
+
+    #[test]
+    fn claim_once_on_1_day_streak() {
+        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut streak = Streak::default();
+        assert!(streak.claim(now));
+        assert_eq!(1, streak.days(now));
+    }
+
+    #[test]
+    fn claim_once_per_day_only() {
+        let now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut streak = Streak::default();
+        assert!(streak.claim(now));
+        assert!(!streak.claim(now));
+    }
+
+    #[test]
+    fn claim_again_next_day() {
+        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut streak = Streak::default();
+        assert!(streak.claim(now));
+
+        now += MS_IN_DAY;
+        assert!(streak.claim(now));
+        assert_eq!(2, streak.days(now));
+    }
+
+    #[test]
+    fn claim_again_nearly_next_day_fails() {
+        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut streak = Streak::default();
+        assert!(streak.claim(now));
+
+        now += MS_IN_DAY - 1;
+        assert!(!streak.claim(now));
+        assert_eq!(1, streak.days(now));
+    }
+
+    #[test]
+    fn streak_reset_the_following_day() {
+        let mut now = DAY_ZERO + (60 * MS_IN_DAY);
+        let mut streak = Streak::default();
+        streak.claim(now);
+
+        now += MS_IN_DAY;
+        streak.claim(now);
+
+        now += MS_IN_DAY * 2;
+        assert_eq!(0, streak.days(now));
+    }
+}
