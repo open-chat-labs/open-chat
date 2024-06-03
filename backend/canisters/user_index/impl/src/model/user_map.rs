@@ -196,6 +196,12 @@ impl UserMap {
             .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
     }
 
+    pub fn update_streaks(&mut self, now: TimestampMillis) {
+        for user in self.users.values_mut() {
+            user.update_if_streak_expired_yesterday(now);
+        }
+    }
+
     #[allow(dead_code)]
     pub fn give_chit_reward(&mut self, user_id: &UserId, amount: i32, now: TimestampMillis) {
         if let Some(user) = self.users.get_mut(user_id) {
