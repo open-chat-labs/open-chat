@@ -118,11 +118,9 @@ impl User {
         })
     }
 
-    pub fn update_if_streak_expired_yesterday(&mut self, now: TimestampMillis) {
-        if let Some(today) = Streak::timestamp_to_day(now) {
-            if self.streak.expired_yesterday(today) {
-                self.date_updated = now;
-            }
+    pub fn update_if_streak_expired_yesterday(&mut self, today: u16, now: TimestampMillis) {
+        if self.streak.expired_yesterday(today) {
+            self.date_updated = now;
         }
     }
 
