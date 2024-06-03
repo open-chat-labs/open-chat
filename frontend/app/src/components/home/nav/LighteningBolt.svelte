@@ -61,5 +61,10 @@
     svg {
         width: toRem(32);
         height: toRem(32);
+
+        @include mobile() {
+            width: toRem(24);
+            height: toRem(24);
+        }
     }
 </style>

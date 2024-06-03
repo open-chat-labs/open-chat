@@ -20,7 +20,8 @@ fn start_video_call(args: Args) -> Response {
 
     mutate_state(|state| {
         let sender = args.initiator;
-        if state.data.suspended.value || state.data.blocked_users.contains(&sender) {
+        let my_user_id = state.env.canister_id().into();
+        if state.data.suspended.value || state.data.blocked_users.contains(&sender) || sender == my_user_id {
             return NotAuthorized;
         }
 
@@ -50,7 +51,7 @@ fn start_video_call(args: Args) -> Response {
                 crypto_transfer: None,
             });
 
-            state.push_notification(state.env.canister_id().into(), notification);
+            state.push_notification(my_user_id, notification);
         }
 
         state.push_user_canister_event(
