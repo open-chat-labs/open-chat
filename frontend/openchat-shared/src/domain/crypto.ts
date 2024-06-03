@@ -33,10 +33,10 @@ export type CryptocurrencyDetails = {
 
 export type EnhancedTokenDetails = CryptocurrencyDetails & {
     balance: bigint;
-    dollarBalance: number;
-    icpBalance: number;
-    btcBalance: number;
-    ethBalance: number;
+    dollarBalance: number | undefined;
+    icpBalance: number | undefined;
+    btcBalance: number | undefined;
+    ethBalance: number | undefined;
     zero: boolean;
     urlFormat: string;
 };

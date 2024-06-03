@@ -59,13 +59,13 @@
     function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
         switch (c) {
             case "usd":
-                return t.dollarBalance.toFixed(2);
+                return t.dollarBalance?.toFixed(2) ?? "???";
             case "icp":
-                return t.icpBalance.toFixed(3);
+                return t.icpBalance?.toFixed(3) ?? "???";
             case "btc":
-                return t.btcBalance.toFixed(6);
+                return t.btcBalance?.toFixed(6) ?? "???";
             case "eth":
-                return t.ethBalance.toFixed(6);
+                return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
 </script>
