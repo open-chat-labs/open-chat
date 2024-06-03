@@ -10,7 +10,7 @@ use utils::cycles::can_spend_cycles;
 #[update_msgpack(guard = "caller_is_local_user_canister")]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
-    top_up_user(None)
+    top_up_user(None).await
 }
 
 pub(crate) async fn top_up_user(user_id: Option<UserId>) -> NotifyLowBalanceResponse {
