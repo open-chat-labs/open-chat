@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+- Disallow starting video call with yourself ([#5892](https://github.com/open-chat-labs/open-chat/pull/5892))
 
 ## [[2.0.1178](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1178-user)] - 2024-05-23
 
