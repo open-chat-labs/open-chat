@@ -63,7 +63,7 @@ fn chit_streak_gained_and_lost_as_expected() {
     assert_eq!(result.chit_balance, 1000);
     assert_eq!(result.streak, 4);
 
-    env.advance_time(2 * Duration::from_secs(DAY_IN_SECS));
+    env.advance_time(Duration::from_secs((2 * DAY_IN_SECS) + 1));
     let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert_eq!(current_user.streak, 0);
 }
