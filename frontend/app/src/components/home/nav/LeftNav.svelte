@@ -201,7 +201,7 @@
                 </div>
             </LeftNavItem>
         {/if}
-        {#if !anonUser}
+        {#if !$anonUser}
             <LeftNavItem
                 separator
                 label={i18nKey(
