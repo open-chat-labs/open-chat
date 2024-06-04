@@ -83,8 +83,6 @@
         {#if showGame}
             <Invaders />
         {:else}
-            <img class="bot left" src="/assets/pixel.svg" />
-            <img class="bot right" src="/assets/pixel.svg" />
             <div class="scoreboard-container">
                 <table cellpadding="3px" class="scoreboard">
                     <thead class="table-header">
@@ -154,6 +152,7 @@
         perspective: 150px;
         overflow: hidden;
         margin-top: -$sp3;
+        position: relative;
 
         @include mobile() {
             margin-top: 0;
