@@ -13,6 +13,7 @@ New `users` endpoint to handle volatile user data ([#5900](https://github.com/op
 ### Changed
 
 - Add 14 day CHIT streak ([#5902](https://github.com/open-chat-labs/open-chat/pull/5902))
+- Push `user_claimed_daily_chit` event ([#5906](https://github.com/open-chat-labs/open-chat/pull/5906))
 
 ## [[2.0.1186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1186-user_index)] - 2024-06-04
 
