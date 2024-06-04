@@ -1,16 +1,16 @@
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
-use crate::model::user::{SuspensionDetails, SuspensionDuration, User};
+use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
+use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
 use super::streak::Streak;
-use super::user::ClaimDailyChitResult;
+use super::user::{ClaimDailyChitResult, SuspensionDetails};
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -201,7 +201,7 @@ impl UserMap {
         if let Some(today) = Streak::timestamp_to_day(now) {
             for user in self.users.values_mut() {
                 if user.streak.expired_yesterday(today) {
-                    user.date_updated = now;
+                    user.date_updated_volatile = now;
                 }
             }
         }
