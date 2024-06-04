@@ -109,6 +109,10 @@ export function isDiamondRoute(route: RouteParams): route is DiamondRoute {
     return route.kind === "diamond_route";
 }
 
+export function isShopRoute(route: RouteParams): route is ShopRoute {
+    return route.kind === "shop_route";
+}
+
 export function blogRoute(ctx: PageJS.Context): RouteParams {
     return {
         kind: "blog_route",
@@ -256,7 +260,8 @@ export type LandingPageRoute =
     | MiamiRoute
     | FaqRoute
     | GuidelinesRoute
-    | DiamondRoute;
+    | DiamondRoute
+    | ShopRoute;
 
 export type RouteType = RouteParams["kind"];
 
@@ -285,6 +290,7 @@ export type RoadmapRoute = { kind: "roadmap_route" };
 export type MiamiRoute = { kind: "miami_route" };
 export type FaqRoute = { kind: "faq_route" };
 export type DiamondRoute = { kind: "diamond_route" };
+export type ShopRoute = { kind: "shop_route" };
 export type GuidelinesRoute = { kind: "guidelines_route" };
 
 export type HomeRoute = RouteCommon & {

@@ -45,6 +45,7 @@ const scrollingRoutes: RouteType[] = [
     "guidelines_route",
     "faq_route",
     "diamond_route",
+    "shop_route",
 ];
 const landingPageRoutes: RouteType[] = ["home_landing_route", ...scrollingRoutes];
 
@@ -81,7 +82,7 @@ export function copyToClipboard(txt: string): Promise<boolean> {
     return new Promise((resolve) => {
         navigator.clipboard.writeText(txt).then(
             () => resolve(true),
-            () => resolve(false)
+            () => resolve(false),
         );
     });
 }

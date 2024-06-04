@@ -12,6 +12,7 @@
         isMiamiRoute,
         isRoadmapRoute,
         isWhitepaperRoute,
+        isShopRoute,
         pathParams,
     } from "../../routes";
     import { getContext, onMount } from "svelte";
@@ -135,6 +136,14 @@
                         </div>
                     {:then { default: DiamondPage }}
                         <DiamondPage />
+                    {/await}
+                {:else if isShopRoute($pathParams)}
+                    {#await import("./ShopPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: ShopPage }}
+                        <ShopPage />
                     {/await}
                 {:else}
                     <HomePage on:login={() => client.login()} />

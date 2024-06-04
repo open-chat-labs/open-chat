@@ -9,6 +9,7 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
+    import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
     import Menu from "../Menu.svelte";
     import { location, routeForScope } from "../../routes";
     import page from "page";
@@ -33,6 +34,10 @@
 </script>
 
 <Menu>
+    <MenuItem selected={path === "/shop"} on:click={() => page("/shop")}>
+        <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <div slot="text">{"Shop"}</div>
+    </MenuItem>
     <MenuItem selected={path === "/features"} on:click={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Features"}</div>

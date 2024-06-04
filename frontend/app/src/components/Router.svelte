@@ -86,6 +86,12 @@
             () => (route = LandingPage),
         );
         page(
+            "/shop",
+            parsePathParams(() => ({ kind: "shop_route" })),
+            track,
+            () => (route = LandingPage),
+        );
+        page(
             "/architecture",
             parsePathParams(() => ({ kind: "architecture_route" })),
             track,

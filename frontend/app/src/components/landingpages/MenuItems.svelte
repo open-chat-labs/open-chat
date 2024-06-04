@@ -17,6 +17,9 @@
 <div class="menu-items">
     <div class="nav">
         <div class="menu-item">
+            <Link selected={path === "/shop"} mode={"menu"} path="shop">Shop</Link>
+        </div>
+        <div class="menu-item">
             <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
         </div>
         <div class="menu-item">
