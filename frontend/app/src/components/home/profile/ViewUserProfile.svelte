@@ -287,7 +287,7 @@
                         <div class="username">
                             @{profile.username}
                         </div>
-                        <Badges {diamondStatus} streak={$createdUser.streak} />
+                        <Badges {diamondStatus} streak={user?.streak ?? 0} />
                         {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
                             <WithRole
                                 userId={user.userId}
