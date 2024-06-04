@@ -70,7 +70,7 @@ pub struct User {
     pub chit_balance: i32,
     #[serde(rename = "st", alias = "streak", default, skip_serializing_if = "is_default")]
     pub streak: Streak,
-    #[serde(rename = "dv", alias = "date_updated_volatile")]
+    #[serde(rename = "dv", alias = "date_updated_volatile", default)]
     pub date_updated_volatile: TimestampMillis,
 }
 
