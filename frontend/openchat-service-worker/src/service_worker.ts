@@ -58,6 +58,9 @@ staticResourceCache({
     plugins: [
         new CacheableResponsePlugin({
             statuses: [200],
+            headers: {
+                "X-Cacheable-Resource": "true",
+            },
         }),
         new ExpirationPlugin({
             maxAgeSeconds: 30 * 24 * 60 * 60,
