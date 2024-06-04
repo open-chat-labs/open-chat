@@ -152,7 +152,6 @@
         perspective: 150px;
         overflow: hidden;
         margin-top: -$sp3;
-        position: relative;
 
         @include mobile() {
             margin-top: 0;
