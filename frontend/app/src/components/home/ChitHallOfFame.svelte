@@ -239,21 +239,6 @@
         }
     }
 
-    .bot {
-        position: absolute;
-        width: 35px;
-        height: 35px;
-        top: 4px;
-
-        &.left {
-            left: 4px;
-        }
-
-        &.right {
-            right: 4px;
-        }
-    }
-
     .joystick {
         display: grid;
         align-content: center;
