@@ -279,7 +279,9 @@
     }
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
-        incomingVideoCall.set(ev.detail);
+        if (!ev.detail.currentUserIsParticipant) {
+            incomingVideoCall.set(ev.detail);
+        }
     }
 
     async function newChatSelected(
