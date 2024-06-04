@@ -13,7 +13,7 @@ use types::{
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -130,7 +130,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     pub internet_identity_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -140,19 +139,11 @@ struct Data {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub video_call_operators: Vec<Principal>,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {

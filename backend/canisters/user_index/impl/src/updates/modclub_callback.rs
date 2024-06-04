@@ -2,7 +2,7 @@ use crate::{
     guards::caller_is_modclub,
     model::{
         reported_messages::{build_message_to_reporter, build_message_to_sender, RecordOutcomeResult, ReportOutcome},
-        user::{SuspensionDetails, SuspensionDuration},
+        user::SuspensionDetails,
     },
     mutate_state,
     timer_job_types::{SetUserSuspended, TimerJob},
@@ -13,7 +13,7 @@ use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk::update;
 use tracing::error;
-use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
+use types::{CanisterId, ChannelId, MessageId, MessageIndex, SuspensionDuration, UserId};
 use user_index_canister::modclub_callback::*;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
