@@ -83,8 +83,6 @@
         {#if showGame}
             <Invaders />
         {:else}
-            <img class="bot left" src="/assets/pixel.svg" />
-            <img class="bot right" src="/assets/pixel.svg" />
             <div class="scoreboard-container">
                 <table cellpadding="3px" class="scoreboard">
                     <thead class="table-header">
@@ -237,21 +235,6 @@
         .balance {
             // width: 20%;
             text-align: end;
-        }
-    }
-
-    .bot {
-        position: absolute;
-        width: 35px;
-        height: 35px;
-        top: 4px;
-
-        &.left {
-            left: 4px;
-        }
-
-        &.right {
-            right: 4px;
         }
     }
 
