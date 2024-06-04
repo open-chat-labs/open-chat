@@ -95,10 +95,13 @@ impl User {
             if days < 7 {
                 return 300;
             }
-            if days < 30 {
+            if days < 14 {
                 return 400;
             }
-            500
+            if days < 30 {
+                return 500;
+            }
+            600
         }
 
         if !self.streak.claim(now) {
