@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat, ChitUserBalance } from "openchat-client";
-    import { now500 } from "../../stores/time";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Invaders from "./Invaders.svelte";
     import { isTouchDevice } from "../../utils/devices";
+    import LighteningBolt from "./nav/LighteningBolt.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -20,14 +21,12 @@
 
     let bodyElement: HTMLDivElement;
     let showGame = false;
-    let date = new Date();
     let blankLeader = {
         username: "________",
         userId: "",
         balance: 0,
     };
     let leaders: ChitUserBalance[] = dummyData();
-    let cutoff = getBeginningOfNextMonth(date);
 
     onMount(() => {
         if (bodyElement) {
@@ -63,25 +62,29 @@
             });
     }
 
-    function getBeginningOfNextMonth(d: Date) {
-        const month = d.getUTCMonth();
-        const year = d.getUTCFullYear();
-        const nextMonth = month === 11 ? 0 : month + 1;
-        const nextYear = month === 11 ? year + 1 : year;
-        return +new Date(Date.UTC(nextYear, nextMonth, 1, 0, 0, 0, 0));
+    function streak() {
+        dispatch("close");
+        tick().then(() => dispatch("streak"));
     }
 </script>
 
-<ModalContent hideHeader closeIcon on:close>
+<ModalContent closeIcon on:close>
+    <div slot="header" class="header">
+        <div class="streak">
+            <HoverIcon on:click={streak}>
+                <LighteningBolt enabled={false} />
+            </HoverIcon>
+        </div>
+        <div class="title-wrapper">
+            <div class="title">{$_("openChat")}</div>
+        </div>
+    </div>
     <div bind:this={bodyElement} class="body" slot="body">
         {#if showGame}
             <Invaders />
         {:else}
             <img class="bot left" src="/assets/pixel.svg" />
             <img class="bot right" src="/assets/pixel.svg" />
-            <div class="title-wrapper">
-                <div class="title">{$_("openChat")}</div>
-            </div>
             <div class="scoreboard-container">
                 <table cellpadding="3px" class="scoreboard">
                     <thead class="table-header">
@@ -107,8 +110,7 @@
         {/if}
     </div>
     <div slot="footer" class="hof-footer">
-        <span class="countdown">{client.formatTimeRemaining($now500, cutoff)}</span>
-        <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+        <ButtonGroup align={"end"}>
             {#if showGame}
                 <div on:click={() => (showGame = false)} class="joystick">🏆️</div>
                 <Button
@@ -127,9 +129,15 @@
 </ModalContent>
 
 <style lang="scss">
+    :global(.hof-footer .button-group) {
+        justify-content: space-between !important;
+        width: 100%;
+    }
+
     :global(.hof-footer button) {
         font-family: "Press Start 2P", cursive;
     }
+
     :global(.star) {
         position: absolute;
         width: 2px;
@@ -145,9 +153,14 @@
     .title-wrapper {
         perspective: 150px;
         overflow: hidden;
-        margin-bottom: $sp5;
+        margin-top: -$sp3;
+
+        @include mobile() {
+            margin-top: 0;
+        }
     }
 
+    .header,
     .body,
     .hof-footer {
         font-family: "Press Start 2P", cursive;
@@ -173,17 +186,6 @@
         }
     }
 
-    .countdown {
-        @include font-size(fs-160);
-        color: yellow;
-        text-shadow: 3px 3px 0 red;
-
-        @include mobile() {
-            @include font-size(fs-100);
-            text-shadow: 2px 2px 0 red;
-        }
-    }
-
     .scoreboard-container {
         position: relative;
     }
@@ -195,9 +197,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-
         text-transform: uppercase;
-        margin-bottom: $sp4;
         @include font-size(fs-80);
         .table-header {
             border-bottom: 2px solid red;
@@ -226,7 +226,7 @@
         }
 
         .rank {
-            // width: 50px;
+            width: 100px;
         }
 
         .username,
@@ -261,5 +261,12 @@
         font-size: 1.6rem;
         margin-right: $sp2;
         cursor: pointer;
+    }
+
+    .streak {
+        position: absolute;
+        top: $sp3;
+        left: $sp3;
+        @include z-index("overlay");
     }
 </style>
