@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+New `users` endpoint to handle volatile user data ([#5900](https://github.com/open-chat-labs/open-chat/pull/5900))
+
+### Changed
+
+- Add 14 day CHIT streak ([#5902](https://github.com/open-chat-labs/open-chat/pull/5902))
+
+## [[2.0.1186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1186-user_index)] - 2024-06-04
+
 ### Changed
 
 - Job to update users whose streak ended yesterday ([#5896](https://github.com/open-chat-labs/open-chat/pull/5896))
