@@ -1,8 +1,10 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
+use event_store_producer::EventBuilder;
 use ic_cdk::update;
 use local_user_index_canister::{ChitEarned, Event};
+use serde::Serialize;
 use types::ChitEarnedReason;
 use user_index_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
@@ -34,6 +36,16 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
             }),
         );
 
+        state.data.event_store_client.push(
+            EventBuilder::new("user_claimed_daily_chit", now)
+                .with_user(claim_result.user_id.to_string(), true)
+                .with_json_payload(&UserClaimedDailyChitEventPayload {
+                    streak: claim_result.streak,
+                    chit_earned: claim_result.chit_earned,
+                })
+                .build(),
+        );
+
         Success(SuccessResult {
             chit_earned: claim_result.chit_earned,
             chit_balance: claim_result.chit_balance,
@@ -43,4 +55,10 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     } else {
         AlreadyClaimed(tomorrow)
     }
+}
+
+#[derive(Serialize)]
+struct UserClaimedDailyChitEventPayload {
+    streak: u16,
+    chit_earned: u32,
 }
