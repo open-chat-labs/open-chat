@@ -371,9 +371,6 @@ pub enum UpdateUserResult {
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
     suspected_bots: BTreeSet<UserId>,
-    #[serde(default)]
-    user_id_to_principal_backup: HashMap<UserId, Principal>,
-    #[serde(default)]
     deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
