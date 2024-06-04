@@ -379,12 +379,9 @@ impl From<UserMapTrimmed> for UserMap {
         let mut user_map = UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
-            user_id_to_principal_backup: value.user_id_to_principal_backup,
             deleted_users: value.deleted_users,
             ..Default::default()
         };
-
-        let populate_backup = user_map.user_id_to_principal_backup.is_empty();
 
         for (user_id, user) in user_map.users.iter() {
             if let Some(referred_by) = user.referred_by {
@@ -397,10 +394,6 @@ impl From<UserMapTrimmed> for UserMap {
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
-            }
-
-            if populate_backup {
-                user_map.user_id_to_principal_backup.insert(*user_id, user.principal);
             }
         }
 
