@@ -15,7 +15,6 @@
         <style>
             :root {
                 --bg: #121212;
-                --prize: #f79413;
                 --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
                     Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
                 --font: "Roboto", sans-serif;
@@ -55,12 +54,28 @@
     <body>
         <div id="oc-shop"><a href="https://openchat.myspreadshop.com">OpenChat shop</a></div>
         <script>
+            window.addEventListener(
+                "message",
+                function (event) {
+                    const message = event.data;
+                    if (message && message.kind === "shop_theme") {
+                        Object.entries(message)
+                            .filter(([k]) => k !== "shop_theme")
+                            .forEach(([k, v]) => {
+                                document.body.style.setProperty(k, v);
+                            });
+                    }
+                },
+                false,
+            );
             var spread_shop_config = {
                 shopName: "openchat",
                 locale: "us_US",
                 prefix: "https://openchat.myspreadshop.com",
                 baseId: "oc-shop",
             };
+
+            window.top.alert("You fucking prick");
         </script>
         <script
             type="text/javascript"
