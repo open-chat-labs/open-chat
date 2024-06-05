@@ -305,7 +305,7 @@ export default {
                     base-uri 'self';
                     form-action 'self';
                     upgrade-insecure-requests;
-                    script-src 'self' 'unsafe-eval' https://www.spreadshirt.com https://openchat.myspreadshop.com https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                    script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                         " ",
                     )}`;
                 if (development) {
