@@ -7,7 +7,6 @@ use ic_cdk::post_upgrade;
 use registry_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -26,26 +25,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    let old_naut_ledger = CanisterId::from_text("alp3y-eiaaa-aaaak-akoya-cai").unwrap();
-    let new_naut_ledger = CanisterId::from_text("u2mpw-6yaaa-aaaam-aclrq-cai").unwrap();
-
-    mutate_state(|state| {
-        if let Some(token) = state.data.tokens.get(old_naut_ledger) {
-            let now = state.env.now();
-            state.data.tokens.add(
-                new_naut_ledger,
-                token.name.clone(),
-                token.symbol.clone(),
-                token.decimals,
-                token.fee,
-                token.logo.clone(),
-                token.info_url.clone(),
-                token.how_to_buy_url.clone(),
-                token.transaction_url_format.clone(),
-                token.supported_standards.clone(),
-                now,
-            );
-            state.data.tokens.set_enabled(old_naut_ledger, false, now);
-        }
-    });
+    mutate_state(|state| state.data.tokens.fix_logo_ids(state.env.now()));
 }
