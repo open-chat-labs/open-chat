@@ -1368,6 +1368,7 @@
         "joinVideo": "Nehmen Sie am Videoanruf teil",
         "leave": "Anruf verlassen",
         "leaveVideo": "Videoanruf verlassen",
+        "minimise": "Minimieren",
         "noMeetingToJoin": "Es tut uns leid, aber das Meeting, an dem Sie teilnehmen möchten, ist beendet",
         "participants": "Teilnehmer",
         "presenters": "Moderatoren ({count})",
