@@ -1,11 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import WindowMaximize from "svelte-material-icons/WindowMaximize.svelte";
-    import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
-    import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import { rtlStore } from "../../../stores/rtl";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -13,25 +9,17 @@
     import { createEventDispatcher } from "svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Typing from "../../Typing.svelte";
-    import { AvatarSize, type ChatIdentifier, type DirectChatIdentifier } from "openchat-client";
-    import { activeVideoCall, hasPresence } from "../../../stores/video";
+    import { AvatarSize } from "openchat-client";
+    import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Avatar from "../../Avatar.svelte";
-    import ActiveCallThreadSummary from "./ActiveCallThreadSummary.svelte";
-    import ActiveCallParticipantsToggle from "./ActiveCallParticipantsToggle.svelte";
-
-    type Chat = {
-        chatId: ChatIdentifier;
-        name: string;
-        avatarUrl: string;
-        userId: DirectChatIdentifier | undefined;
-        messageIndex?: number;
-    };
+    import ActiveCallActions from "./ActiveCallActions.svelte";
+    import type { VideoCallChat } from "./callChat";
 
     const dispatch = createEventDispatcher();
 
     export let askedToSpeak: boolean;
-    export let chat: Chat;
+    export let chat: VideoCallChat;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -47,10 +35,6 @@
         } else if ($activeVideoCall?.view === "fullscreen") {
             activeVideoCall.setView("default");
         }
-    }
-
-    export function askToSpeak() {
-        dispatch("askToSpeak");
     }
 </script>
 
@@ -93,35 +77,14 @@
                 <Typing />
             {/if}
         </div>
-        <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
-            {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
-                <HoverIcon on:click={askToSpeak}>
-                    <HandFrontLeft
-                        title={$_("videoCall.askToSpeak")}
-                        size={$iconSize}
-                        color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                </HoverIcon>
-            {/if}
-            {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
-                <ActiveCallParticipantsToggle
-                    chatId={$activeVideoCall.chatId}
-                    messageId={$activeVideoCall.messageId} />
-            {/if}
-            {#if chat.chatId && chat.messageIndex !== undefined}
-                <ActiveCallThreadSummary chatId={chat.chatId} messageIndex={chat.messageIndex} />
-            {/if}
-            <HoverIcon on:click={minimise}>
-                <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-            {#if !$mobileWidth}
-                <HoverIcon on:click={toggleFullscreen}>
-                    <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            {/if}
-            <HoverIcon title={$_("videoCall.leave")} on:click={() => dispatch("hangup")}>
-                <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
-            </HoverIcon>
-        </div>
+
+        <ActiveCallActions
+            {chat}
+            {askedToSpeak}
+            on:askToSpeak
+            on:minimise={minimise}
+            on:toggleFullScreen={toggleFullscreen}
+            on:hangup />
     </div>
 </SectionHeader>
 
@@ -148,16 +111,6 @@
         .name {
             @include font(book, normal, fs-120);
             @include ellipsis();
-        }
-
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: $sp3;
-
-            &.joining {
-                pointer-events: none;
-            }
         }
     }
 </style>

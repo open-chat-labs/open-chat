@@ -1368,6 +1368,7 @@
         "joinVideo": "Join video call",
         "leave": "Leave call",
         "leaveVideo": "Leave video call",
+        "minimise": "Minimise",
         "noMeetingToJoin": "Sorry but the meeting you are trying to join has ended",
         "participants": "Participants",
         "presenters": "Presenters ({count})",
