@@ -2,7 +2,8 @@ use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
 use types::{
-    BuildVersion, CanisterUpgradeStatus, DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, TimestampMillis, UserId,
+    BuildVersion, CanisterUpgradeStatus, DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails,
+    TimestampMillis, UserId,
 };
 
 pub type Args = Empty;
@@ -35,17 +36,4 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub next_daily_claim: TimestampMillis,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuspensionDetails {
-    pub reason: String,
-    pub action: SuspensionAction,
-    pub suspended_by: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum SuspensionAction {
-    Unsuspend(TimestampMillis),
-    Delete(TimestampMillis),
 }

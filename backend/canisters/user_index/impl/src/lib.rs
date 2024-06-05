@@ -256,7 +256,6 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
-    #[serde(default)]
     pub chit_leaderboard: ChitLeaderboard,
 }
 
