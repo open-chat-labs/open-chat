@@ -1,8 +1,7 @@
 <script lang="ts">
 </script>
 
-<iframe class="swag" title="OpenChat shop" frameborder="0" src="https://openchat.myspreadshop.com/"
-></iframe>
+<iframe class="swag" title="OpenChat shop" frameborder="0" src="./shop.html"></iframe>
 
 <style lang="scss">
     .swag {
@@ -10,7 +9,6 @@
         width: 100%;
         height: 100%;
         position: fixed;
-        top: 0;
         left: 0;
 
         @include mobile() {
