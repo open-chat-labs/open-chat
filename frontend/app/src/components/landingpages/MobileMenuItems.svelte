@@ -9,6 +9,7 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
+    import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
     import Menu from "../Menu.svelte";
     import { location, routeForScope } from "../../routes";
     import page from "page";
@@ -33,6 +34,18 @@
 </script>
 
 <Menu>
+    <MenuItem>
+        <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <div slot="text">
+            <a
+                class="link"
+                href={"https://openchat.myspreadshop.com"}
+                target="_blank"
+                rel="noreferrer">
+                Shop
+            </a>
+        </div>
+    </MenuItem>
     <MenuItem selected={path === "/features"} on:click={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Features"}</div>
@@ -75,5 +88,9 @@
 <style lang="scss">
     .rocket {
         @include font-size(fs-120);
+    }
+
+    .link {
+        color: inherit;
     }
 </style>
