@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="description" content="OpenChat merch shop" />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="/" />
+        <title>OpenChat Shop</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #121212;
+                --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+                    Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
+                --font: "Roboto", sans-serif;
+                --font-bold: "Manrope", sans-serif;
+                --font-size: 16px;
+            }
+            html,
+            body {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+
+            html {
+                box-sizing: border-box;
+                font-size: var(--font-size);
+            }
+            *,
+            *:before,
+            *:after {
+                box-sizing: inherit;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--txt);
+                margin: 0;
+                box-sizing: border-box;
+                font-family: var(--font-fallback);
+                font-family: var(--font);
+                font-weight: 400;
+                font-size: toRem(16);
+                line-height: 135%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="oc-shop"><a href="https://openchat.myspreadshop.com">OpenChat shop</a></div>
+        <script>
+            window.addEventListener(
+                "message",
+                function (event) {
+                    const message = event.data;
+                    if (message && message.kind === "shop_theme") {
+                        Object.entries(message)
+                            .filter(([k]) => k !== "shop_theme")
+                            .forEach(([k, v]) => {
+                                document.body.style.setProperty(k, v);
+                            });
+                    }
+                },
+                false,
+            );
+            var spread_shop_config = {
+                shopName: "openchat",
+                locale: "us_US",
+                prefix: "https://openchat.myspreadshop.com",
+                baseId: "oc-shop",
+            };
+
+            window.top.alert("You fucking prick");
+        </script>
+        <script
+            type="text/javascript"
+            src="https://openchat.myspreadshop.com/shopfiles/shopclient/shopclient.nocache.js"
+        ></script>
+    </body>
+</html>
