@@ -34,9 +34,17 @@
 </script>
 
 <Menu>
-    <MenuItem selected={path === "/shop"} on:click={() => page("/shop")}>
+    <MenuItem>
         <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <div slot="text">{"Shop"}</div>
+        <div slot="text">
+            <a
+                class="link"
+                href={"https://openchat.myspreadshop.com"}
+                target="_blank"
+                rel="noreferrer">
+                Shop
+            </a>
+        </div>
     </MenuItem>
     <MenuItem selected={path === "/features"} on:click={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
@@ -80,5 +88,9 @@
 <style lang="scss">
     .rocket {
         @include font-size(fs-120);
+    }
+
+    .link {
+        color: inherit;
     }
 </style>
