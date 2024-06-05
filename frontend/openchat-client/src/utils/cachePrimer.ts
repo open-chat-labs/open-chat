@@ -3,6 +3,8 @@ import {
     type ChatEventsResponse,
     type ChatSummary,
     MAX_MESSAGES,
+    type Message,
+    type VideoCallContent,
 } from "openchat-shared";
 import {
     ChatMap,
@@ -83,10 +85,10 @@ export class CachePrimer {
                             e.event.content.ended === undefined
                         ) {
                             this.onVideoStart(
-                                new RemoteVideoCallStartedEvent(
+                                RemoteVideoCallStartedEvent.create(
                                     request.context.chatId,
-                                    e.event.sender,
-                                    e.event.messageId,
+                                    this.userId,
+                                    e.event as Message<VideoCallContent>,
                                 ),
                             );
                         }

@@ -33,11 +33,6 @@ import type {
     CommunitySummary,
 } from "../community";
 
-export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
-export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
-export const HotOrNotGovernanceCanisterId = "6wcax-haaaa-aaaaq-aaava-cai";
-export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
-
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
 
@@ -612,12 +607,12 @@ type LedgerId = string;
 type UserId = string;
 export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
 
-export type Message = {
+export type Message<T extends MessageContent = MessageContent> = {
     kind: "message";
     messageId: bigint;
     messageIndex: number;
     sender: string;
-    content: MessageContent;
+    content: T;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
     tips: TipsReceived;

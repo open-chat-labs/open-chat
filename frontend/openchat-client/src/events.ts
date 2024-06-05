@@ -1,4 +1,10 @@
-import type { ChatIdentifier, EventWrapper, Message, MessageContext } from "openchat-shared";
+import type {
+    ChatIdentifier,
+    EventWrapper,
+    Message,
+    MessageContext,
+    VideoCallContent,
+} from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
@@ -31,9 +37,30 @@ export class RemoteVideoCallStartedEvent extends CustomEvent<{
     chatId: ChatIdentifier;
     userId: string;
     messageId: bigint;
+    currentUserIsParticipant: boolean;
 }> {
-    constructor(chatId: ChatIdentifier, userId: string, messageId: bigint) {
-        super("openchat_event", { detail: { chatId, userId, messageId: BigInt(messageId) } });
+    constructor(
+        chatId: ChatIdentifier,
+        userId: string,
+        messageId: bigint,
+        currentUserIsParticipant: boolean,
+    ) {
+        super("openchat_event", {
+            detail: { chatId, userId, messageId: BigInt(messageId), currentUserIsParticipant },
+        });
+    }
+
+    static create(
+        chatId: ChatIdentifier,
+        currentUser: string,
+        message: Message<VideoCallContent>,
+    ): RemoteVideoCallStartedEvent {
+        return new RemoteVideoCallStartedEvent(
+            chatId,
+            message.sender,
+            message.messageId,
+            message.content.participants.some((p) => p.userId === currentUser),
+        );
     }
 }
 
