@@ -1,0 +1,22 @@
+// This is a trimmed down version of the full candid file which can be found here -
+// https://dashboard.internetcomputer.org/canister/3xwpq-ziaaa-aaaah-qcn4a-cai
+
+type PairInfoExt =
+ record {
+   blockTimestampLast: int;
+   creator: principal;
+   id: text;
+   kLast: nat;
+   lptoken: text;
+   price0CumulativeLast: nat;
+   price1CumulativeLast: nat;
+   reserve0: nat;
+   reserve1: nat;
+   token0: text;
+   token1: text;
+   totalSupply: nat;
+ };
+service : {
+  getAllPairs: () -> (vec PairInfoExt) query;
+  getPair: (principal, principal) -> (opt PairInfoExt) query;
+}

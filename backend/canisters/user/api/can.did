@@ -183,13 +183,16 @@ type SwapTokensArgs = record {
     output_token : TokenInfo;
     input_amount : nat;
     exchange_args : variant {
-        ICPSwap : record {
-            swap_canister_id : CanisterId;
-            zero_for_one : bool;
-        };
+        ICPSwap : ExchangeArgs;
+        Sonic : ExchangeArgs;
     };
     min_output_amount : nat;
     pin : opt text;
+};
+
+type ExchangeArgs = record {
+    swap_canister_id : CanisterId;
+    zero_for_one : bool;
 };
 
 type SwapTokensResponse = variant {
