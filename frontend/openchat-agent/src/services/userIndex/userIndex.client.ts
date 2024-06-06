@@ -69,7 +69,6 @@ import {
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
-    private userId?: string;
 
     constructor(identity: Identity, config: AgentConfig) {
         super(identity);
@@ -90,7 +89,6 @@ export class UserIndexClient extends CandidService {
                 const isOffline = offline();
 
                 if (cachedUser !== undefined) {
-                    this.userId = cachedUser.userId;
                     resolve(cachedUser, isOffline);
                 }
 
@@ -100,7 +98,6 @@ export class UserIndexClient extends CandidService {
                         currentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
-                        this.userId = liveUser.userId;
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -156,6 +153,8 @@ export class UserIndexClient extends CandidService {
         console.debug("USERS: result from backend", apiResponse);
 =======
 >>>>>>> f0fd9c897 (wire up new users api)
+
+        console.debug("USERS: result from backend", apiResponse);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
