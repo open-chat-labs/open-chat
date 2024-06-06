@@ -18,7 +18,6 @@
         width: $size;
         height: $size;
         border-radius: 50%;
-        position: absolute;
         left: -4px;
         bottom: -4px;
         background-image: url("/assets/video_call.svg");

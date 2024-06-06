@@ -110,6 +110,7 @@ import {
     swapTokensResponse,
     tokenSwapStatusResponse,
     approveTransferResponse,
+    apiExchangeArgs,
 } from "./mappers";
 import {
     type Database,
@@ -1279,12 +1280,7 @@ export class UserClient extends CandidService {
                     fee: outputToken.transferFee,
                 },
                 input_amount: amountIn,
-                exchange_args: {
-                    ICPSwap: {
-                        swap_canister_id: Principal.fromText(exchangeArgs.swapCanisterId),
-                        zero_for_one: exchangeArgs.zeroForOne,
-                    },
-                },
+                exchange_args: apiExchangeArgs(exchangeArgs),
                 min_output_amount: minAmountOut,
                 pin: apiOptional(identity, pin),
             }),
@@ -1379,13 +1375,16 @@ export class UserClient extends CandidService {
         );
     }
 
-    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
                 current: apiOptional(identity, currentPin),
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,
-        );        
+        );
     }
 }

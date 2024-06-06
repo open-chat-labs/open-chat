@@ -6,7 +6,6 @@ use types::{CurrentUserSummary, TimestampMillis, UserId, UserSummaryV2};
 pub struct Args {
     pub user_groups: Vec<UserGroup>,
     pub users_suspended_since: Option<TimestampMillis>,
-    pub current_user_updated_since: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

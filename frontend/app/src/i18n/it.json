@@ -1368,6 +1368,7 @@
         "joinVideo": "Partecipa alla videochiamata",
         "leave": "Lascia la chiamata",
         "leaveVideo": "Abbandona la videochiamata",
+        "minimise": "Minimizzare",
         "noMeetingToJoin": "Siamo spiacenti ma la riunione a cui stai tentando di partecipare è terminata",
         "participants": "Partecipanti",
         "presenters": "Relatori ({count})",

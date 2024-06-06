@@ -97,7 +97,6 @@ type UsersArgs = record {
         updated_since : TimestampMillis;
     };
     users_suspended_since : opt TimestampMillis;
-    current_user_updated_since : opt TimestampMillis;
 };
 
 type UsersResponse = variant {

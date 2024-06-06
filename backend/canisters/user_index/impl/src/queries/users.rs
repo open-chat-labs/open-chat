@@ -12,45 +12,19 @@ fn users(args: Args) -> Response {
 
 fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
+    let caller = state.env.caller();
 
     let mut user_ids = HashSet::new();
     let mut users = Vec::new();
     let mut current_user: Option<CurrentUserSummary> = None;
 
-    for group in args.user_groups {
-        let updated_since = group.updated_since;
-        users.extend(
-            group
-                .users
-                .into_iter()
-                .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .filter(move |u| u.date_updated > updated_since || u.date_updated_volatile > updated_since)
-                .filter(|u| user_ids.insert(u.user_id))
-                .map(|u| UserSummaryV2 {
-                    user_id: u.user_id,
-                    stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: (u.date_updated_volatile > updated_since).then(|| u.to_summary_volatile(now)),
-                }),
-        );
-    }
-
-    if let Some(ts) = args.users_suspended_since {
-        users.extend(
-            state
-                .data
-                .users
-                .iter_suspended_or_unsuspended_users(ts)
-                .rev()
-                .take(100)
-                .filter(|u| user_ids.insert(*u))
-                .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .map(|u| u.to_summary_v2(now)),
-        );
-    }
-
-    if let Some(ts) = args.current_user_updated_since {
-        let caller = state.env.caller();
-        if let Some(u) = state.data.users.get_by_principal(&caller) {
+    if let Some(u) = state.data.users.get_by_principal(&caller) {
+        if let Some(ts) = args
+            .user_groups
+            .iter()
+            .find(|g| g.users.contains(&u.user_id))
+            .map(|g| g.updated_since)
+        {
             if u.date_updated > ts || u.date_updated_volatile > ts {
                 let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
@@ -73,6 +47,39 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 });
             }
         }
+    }
+
+    for group in args.user_groups {
+        let updated_since = group.updated_since;
+        users.extend(
+            group
+                .users
+                .into_iter()
+                .filter_map(|u| state.data.users.get_by_user_id(&u))
+                .filter(move |u| {
+                    (u.date_updated > updated_since || u.date_updated_volatile > updated_since) && u.principal != caller
+                })
+                .filter(|u| user_ids.insert(u.user_id))
+                .map(|u| UserSummaryV2 {
+                    user_id: u.user_id,
+                    stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
+                    volatile: (u.date_updated_volatile > updated_since).then(|| u.to_summary_volatile(now)),
+                }),
+        );
+    }
+
+    if let Some(ts) = args.users_suspended_since {
+        users.extend(
+            state
+                .data
+                .users
+                .iter_suspended_or_unsuspended_users(ts)
+                .rev()
+                .take(100)
+                .filter(|u| user_ids.insert(*u))
+                .filter_map(|u| state.data.users.get_by_user_id(&u))
+                .map(|u| u.to_summary_v2(now)),
+        );
     }
 
     Success(Result {

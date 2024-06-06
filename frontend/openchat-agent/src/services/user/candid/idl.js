@@ -1681,6 +1681,10 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const ExchangeArgs = IDL.Record({
+    'zero_for_one' : IDL.Bool,
+    'swap_canister_id' : CanisterId,
+  });
   const SwapTokensArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
     'input_amount' : IDL.Nat,
@@ -1688,10 +1692,8 @@ export const idlFactory = ({ IDL }) => {
     'swap_id' : IDL.Nat,
     'input_token' : TokenInfo,
     'exchange_args' : IDL.Variant({
-      'ICPSwap' : IDL.Record({
-        'zero_for_one' : IDL.Bool,
-        'swap_canister_id' : CanisterId,
-      }),
+      'Sonic' : ExchangeArgs,
+      'ICPSwap' : ExchangeArgs,
     }),
     'output_token' : TokenInfo,
   });

@@ -62,6 +62,7 @@ import type {
     ApiTokenSwapStatusResponse,
     ApiApproveTransferResponse,
     ApiPinNumberSettings,
+    ApiExchangeArgs,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -125,6 +126,7 @@ import type {
     TokenSwapStatusResponse,
     Result,
     ApproveTransferResponse,
+    ExchangeTokenSwapArgs,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -185,7 +187,11 @@ export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageRes
         return CommonResponses.success();
     }
 
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
 
@@ -358,12 +364,16 @@ export function sendMessageWithTransferToChannelResponse(
             expiresAt: optional(candid.Success.expires_at, Number),
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
-    } 
+    }
 
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
-    
+
     console.warn("SendMessageWithTransferToChannel failed with", candid);
     return CommonResponses.failure();
 }
@@ -382,12 +392,16 @@ export function sendMessageWithTransferToGroupResponse(
             expiresAt: optional(candid.Success.expires_at, Number),
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
-    }     
+    }
 
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
-    
+
     console.warn("SendMessageWithTransferToGroup failed with", candid);
     return CommonResponses.failure();
 }
@@ -416,7 +430,11 @@ export function sendMessageResponse(
             expiresAt: optional(candid.TransferSuccessV2.expires_at, Number),
         };
     }
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
     if ("TransferCannotBeZero" in candid) {
@@ -624,7 +642,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
     return {
         length: candid.length,
-        attemptsBlockedUntil: optional(candid.attempts_blocked_until, identity),    
+        attemptsBlockedUntil: optional(candid.attempts_blocked_until, identity),
     };
 }
 
@@ -968,7 +986,11 @@ function completedIcrc1CryptoWithdrawal(
 export function withdrawCryptoResponse(
     candid: ApiWithdrawCryptoResponse,
 ): WithdrawCryptocurrencyResponse {
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
     if ("CurrencyNotSupported" in candid) {
@@ -988,7 +1010,7 @@ export function withdrawCryptoResponse(
             return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
         }
     }
-    
+
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
 }
 
@@ -1144,7 +1166,11 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
             error: candid.InternalError,
         };
     }
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
 
@@ -1213,9 +1239,32 @@ export function approveTransferResponse(
     if ("ApproveError" in candid) {
         return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
     }
-    if ("PinRequired" in candid || "PinIncorrect" in candid || "TooManyFailedPinAttempts" in candid) {
+    if (
+        "PinRequired" in candid ||
+        "PinIncorrect" in candid ||
+        "TooManyFailedPinAttempts" in candid
+    ) {
         return pinNumberFailureResponse(candid);
     }
 
     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
+}
+
+export function apiExchangeArgs(
+    args: ExchangeTokenSwapArgs,
+): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
+    const value = {
+        swap_canister_id: Principal.fromText(args.swapCanisterId),
+        zero_for_one: args.zeroForOne,
+    };
+    if (args.dex === "icpswap") {
+        return {
+            ICPSwap: value,
+        };
+    } else if (args.dex === "sonic") {
+        return {
+            Sonic: value,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected dex", args.dex);
 }
