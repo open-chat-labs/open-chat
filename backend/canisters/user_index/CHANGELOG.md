@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1196](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1196-user_index)] - 2024-06-06
+
 ### Changed
 
 - Clear the `empty_users` list ([#5912](https://github.com/open-chat-labs/open-chat/pull/5912))
+- Changed `users` args to match `users_v2` args ([#5913](https://github.com/open-chat-labs/open-chat/pull/5913))
 
 ## [[2.0.1192](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1192-user_index)] - 2024-06-04
 
@@ -20,7 +23,6 @@ New `users` endpoint to handle volatile user data ([#5900](https://github.com/op
 
 - Add 14 day CHIT streak ([#5902](https://github.com/open-chat-labs/open-chat/pull/5902))
 - Push `user_claimed_daily_chit` event ([#5906](https://github.com/open-chat-labs/open-chat/pull/5906))
-- Changed `users` args to match `users_v2` args ([#5913](https://github.com/open-chat-labs/open-chat/pull/5913))
 
 ## [[2.0.1186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1186-user_index)] - 2024-06-04
 
