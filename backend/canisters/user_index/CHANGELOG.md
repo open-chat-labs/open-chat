@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Clear the `empty_users` list ([#5912](https://github.com/open-chat-labs/open-chat/pull/5912))
+
+## [[2.0.1192](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1192-user_index)] - 2024-06-04
+
 ### Added
 
 New `users` endpoint to handle volatile user data ([#5900](https://github.com/open-chat-labs/open-chat/pull/5900))
