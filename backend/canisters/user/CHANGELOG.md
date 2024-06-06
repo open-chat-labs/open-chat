@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1197](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1197-user)] - 2024-06-06
+
 ### Added
 
 - Support sending transactions using ICRC2 ([#5854](https://github.com/open-chat-labs/open-chat/pull/5854))
