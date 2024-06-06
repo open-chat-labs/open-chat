@@ -333,7 +333,6 @@ export const idlFactory = ({ IDL }) => {
     'NewRegistrationsClosed' : IDL.Null,
   });
   const UsersArgs = IDL.Record({
-    'current_user_updated_since' : IDL.Opt(TimestampMillis),
     'user_groups' : IDL.Vec(
       IDL.Record({
         'users' : IDL.Vec(UserId),

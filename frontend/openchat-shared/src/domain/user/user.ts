@@ -24,7 +24,36 @@ export type UserSummary = DataContent & {
     streak: number;
 };
 
-function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSummary {
+// Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
+export function mergeUserSummaryWithUpdates(
+    cached: UserSummary | undefined,
+    updates: UserSummaryUpdate,
+    timestamp: bigint,
+): UserSummary | undefined {
+    if (cached === undefined) {
+        if (updates.stable === undefined || updates.volatile === undefined) {
+            // in this case we cannot construct a valid UserSummary - this should not happen
+            return undefined;
+        }
+        return {
+            kind: updates.stable.isBot ? "bot" : "user",
+            userId: updates.userId,
+            ...updates.stable,
+            ...updates.volatile,
+            updated: timestamp,
+        };
+    }
+    if (cached.userId !== updates.userId) {
+        return undefined;
+    }
+    return {
+        ...cached,
+        ...updates.stable,
+        ...updates.volatile,
+    };
+}
+
+export function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSummary {
     return {
         kind: current.isBot ? "bot" : "user",
         userId: current.userId,
@@ -38,8 +67,7 @@ function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSum
     };
 }
 
-function updateCreatedUser(created: CreatedUser, summary: CurrentUserSummary): CreatedUser {
-    // TODO come back to this and fill it in when it is clear that we need it - I think we need it
+export function updateCreatedUser(created: CreatedUser, summary: CurrentUserSummary): CreatedUser {
     return {
         ...created,
         ...summary,
@@ -97,12 +125,37 @@ export type UsersArgs = {
         users: string[];
         updatedSince: bigint;
     }[];
-    currentUserUpdatedSince: bigint | undefined;
 };
 
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: UserSummary[];
+    currentUser?: CurrentUserSummary;
+};
+
+export type UserSummaryStable = DataContent & {
+    username: string;
+    diamondStatus: DiamondMembershipStatus["kind"];
+    isBot: boolean;
+    displayName: string | undefined;
+    suspended: boolean;
+};
+
+export type UserSummaryVolatile = {
+    streak: number;
+    chitBalance: number;
+};
+
+export type UserSummaryUpdate = {
+    stable?: UserSummaryStable;
+    userId: string;
+    volatile?: UserSummaryVolatile;
+};
+
+export type UsersApiResponse = {
+    serverTimestamp: bigint;
+    users: UserSummaryUpdate[];
+    currentUser?: CurrentUserSummary;
 };
 
 export enum UserStatus {
@@ -145,7 +198,7 @@ type CurrentUserCommon = {
     isSuspectedBot: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isPlatformModerator: boolean;
-    diamonDetails?: DiamondMembershipDetails;
+    diamondDetails?: DiamondMembershipDetails;
     updated: bigint;
 };
 

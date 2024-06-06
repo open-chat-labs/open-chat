@@ -1751,7 +1751,6 @@ export interface UserSummaryVolatile {
   'chit_balance' : number,
 }
 export interface UsersArgs {
-  'current_user_updated_since' : [] | [TimestampMillis],
   'user_groups' : Array<
     { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
   >,

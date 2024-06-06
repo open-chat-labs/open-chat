@@ -20,14 +20,21 @@ import type {
     DiamondMembershipFees,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    UsersApiResponse,
+    UserSummaryUpdate,
 } from "openchat-shared";
-import { offline, Stream } from "openchat-shared";
+import {
+    mergeUserSummaryWithUpdates,
+    offline,
+    Stream,
+    userSummaryFromCurrentUserSummary,
+} from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
     setUsernameResponse,
     currentUserResponse,
-    usersResponse,
+    usersApiResponse,
     userSearchResponse,
     suspendUserResponse,
     unsuspendUserResponse,
@@ -55,6 +62,7 @@ import {
 import { identity } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
+    mergeCachedCurrentUser,
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
@@ -93,7 +101,6 @@ export class UserIndexClient extends CandidService {
                     );
                     if (liveUser.kind === "created_user") {
                         this.userId = liveUser.userId;
-                        // TODO - let's put the current user in the general user cache as well
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -142,7 +149,7 @@ export class UserIndexClient extends CandidService {
         // ensures the cache is always correct and doesn't miss any updates
         const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
-        const response = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
+        const apiResponse = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
@@ -150,13 +157,17 @@ export class UserIndexClient extends CandidService {
         const mergedResponse = this.mergeGetUsersResponse(
             allUsers,
             requestedFromServer,
-            response,
+            apiResponse,
             fromCache,
         );
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
         );
+
+        if (mergedResponse.currentUser) {
+            mergeCachedCurrentUser(this.principal.toString(), mergedResponse.currentUser);
+        }
 
         if (mergedResponse.serverTimestamp !== undefined) {
             setSuspendedUsersSyncedUpTo(mergedResponse.serverTimestamp).catch((err) =>
@@ -170,9 +181,10 @@ export class UserIndexClient extends CandidService {
     private getUsersFromBackend(
         users: UsersArgs,
         suspendedUsersSyncedUpTo: bigint | undefined,
-    ): Promise<UsersResponse> {
+    ): Promise<UsersApiResponse> {
         if (offline())
             return Promise.resolve({
+                serverTimestamp: 0n,
                 users: [],
             });
 
@@ -184,39 +196,13 @@ export class UserIndexClient extends CandidService {
                 updated_since: updatedSince,
             })),
             users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
-            current_user_updated_since: apiOptional(identity, users.currentUserUpdatedSince),
         };
         return this.handleQueryResponse(
             () => this.userIndexService.users(args),
-            usersResponse,
+            usersApiResponse,
             args,
         );
     }
-
-    // private getUsersFromBackend(
-    //     users: UsersArgs,
-    //     suspendedUsersSyncedUpTo: bigint | undefined,
-    // ): Promise<UsersResponse> {
-    //     if (offline())
-    //         return Promise.resolve({
-    //             users: [],
-    //         });
-
-    //     const userGroups = users.userGroups.filter((g) => g.users.length > 0);
-
-    //     const args = {
-    //         user_groups: userGroups.map(({ users, updatedSince }) => ({
-    //             users: users.map((u) => Principal.fromText(u)),
-    //             updated_since: updatedSince,
-    //         })),
-    //         users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
-    //     };
-    //     return this.handleQueryResponse(
-    //         () => this.userIndexService.users_v2(args),
-    //         usersResponse,
-    //         args,
-    //     );
-    // }
 
     private buildGetUsersArgs(
         users: string[],
@@ -224,17 +210,14 @@ export class UserIndexClient extends CandidService {
         allowStale: boolean,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
-        const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
+        const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
 
         const args: UsersArgs = {
             userGroups: [],
-            currentUserUpdatedSince: this.userId
-                ? fromCacheMap.get(this.userId)?.updated
-                : undefined,
         };
 
         // Add the users not found in the cache and ask for all updates
-        const notFoundInCache = users.filter((u) => !fromCacheMap.has(u));
+        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
@@ -257,27 +240,32 @@ export class UserIndexClient extends CandidService {
 
     // Merges the cached values into the response
     private mergeGetUsersResponse(
-        allUsers: string[],
+        allUsersRequested: string[],
         requestedFromServer: Set<string>,
-        response: UsersResponse,
+        apiResponse: UsersApiResponse,
         fromCache: UserSummary[],
     ): UsersResponse {
-        if (fromCache.length === 0) {
-            return response;
-        }
-
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
-        const responseMap = new Map<string, UserSummary>(response.users.map((u) => [u.userId, u]));
+        const apiResponseMap = new Map<string, UserSummaryUpdate>(
+            apiResponse.users.map((u) => [u.userId, u]),
+        );
 
         const users: UserSummary[] = [];
 
-        for (const userId of allUsers) {
+        for (const userId of allUsersRequested) {
             const cached = fromCacheMap.get(userId);
-            const fromServer = responseMap.get(userId);
+            const fromServer = apiResponseMap.get(userId);
 
             if (fromServer !== undefined) {
-                responseMap.delete(userId);
-                users.push(fromServer);
+                apiResponseMap.delete(userId);
+                const merged = mergeUserSummaryWithUpdates(
+                    cached,
+                    fromServer,
+                    apiResponse.serverTimestamp,
+                );
+                if (merged !== undefined) {
+                    users.push(merged);
+                }
             } else if (cached !== undefined) {
                 if (requestedFromServer.has(userId)) {
                     // If this user was requested from the server but wasn't included in the response, then that means
@@ -285,22 +273,39 @@ export class UserIndexClient extends CandidService {
                     users.push({
                         ...cached,
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        updated: response.serverTimestamp!,
+                        updated: apiResponse.serverTimestamp!,
                     });
                 } else {
                     users.push(cached);
                 }
+            } else {
+                // if we get here it means that for this user, nothing came back from the server
+                // & nothing was in the cache - this would be odd but worth knowing if this is happening
+                console.debug(
+                    "USERS: userId requested not in cache and not returned from server",
+                    userId,
+                );
             }
         }
 
         // This is needed because newly suspended users won't have been included in the `allUsers` array
-        for (const user of responseMap.values()) {
-            users.push(user);
+        for (const user of apiResponseMap.values()) {
+            const cached = fromCacheMap.get(user.userId);
+            const merged = mergeUserSummaryWithUpdates(cached, user, apiResponse.serverTimestamp);
+            if (merged !== undefined) {
+                users.push(merged);
+            }
+        }
+
+        // let's see if we got the current user back from the server
+        if (apiResponse.currentUser !== undefined) {
+            users.push(userSummaryFromCurrentUserSummary(apiResponse.currentUser));
         }
 
         return {
-            serverTimestamp: response.serverTimestamp,
+            serverTimestamp: apiResponse.serverTimestamp,
             users,
+            currentUser: apiResponse.currentUser,
         };
     }
 
