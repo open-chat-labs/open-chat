@@ -128,7 +128,6 @@ export type UsersArgs = {
         users: string[];
         updatedSince: bigint;
     }[];
-    currentUserUpdatedSince: bigint | undefined;
 };
 
 export type UsersResponse = {
