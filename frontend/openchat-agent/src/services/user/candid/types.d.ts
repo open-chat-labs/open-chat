@@ -756,6 +756,10 @@ export interface EventsWindowArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
+export interface ExchangeArgs {
+  'zero_for_one' : boolean,
+  'swap_canister_id' : CanisterId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction } |
   { 'ICRC2' : Icrc2FailedCryptoTransaction };
@@ -2097,9 +2101,8 @@ export interface SwapTokensArgs {
   'min_output_amount' : bigint,
   'swap_id' : bigint,
   'input_token' : TokenInfo,
-  'exchange_args' : {
-      'ICPSwap' : { 'zero_for_one' : boolean, 'swap_canister_id' : CanisterId }
-    },
+  'exchange_args' : { 'Sonic' : ExchangeArgs } |
+    { 'ICPSwap' : ExchangeArgs },
   'output_token' : TokenInfo,
 }
 export type SwapTokensResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
