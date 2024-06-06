@@ -31,7 +31,7 @@ use types::{
     Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
-use utils::consts::{IC_ROOT_KEY, OPENCHAT_BOT_USER_ID};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};

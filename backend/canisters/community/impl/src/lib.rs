@@ -29,7 +29,6 @@ use types::{
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
-use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
