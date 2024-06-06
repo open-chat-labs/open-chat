@@ -64,6 +64,7 @@ export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
 
 export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
     if ("Success" in candid) {
+        console.debug("USERS: ApiUsersResponse: ", candid.Success);
         const timestamp = candid.Success.timestamp;
         return {
             serverTimestamp: timestamp,
@@ -97,6 +98,10 @@ export function currentUserSummary(
         isPlatformModerator: candid.is_platform_moderator,
         diamondDetails: optional(candid.diamond_membership_details, diamondMembership),
         updated: timestamp,
+        blobReference: optional(candid.avatar_id, (id) => ({
+            blobId: id,
+            canisterId: candid.user_id.toString(),
+        })),
     };
 }
 

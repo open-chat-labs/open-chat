@@ -69,7 +69,6 @@ import {
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
-    private userId?: string;
 
     constructor(identity: Identity, config: AgentConfig) {
         super(identity);
@@ -90,7 +89,6 @@ export class UserIndexClient extends CandidService {
                 const isOffline = offline();
 
                 if (cachedUser !== undefined) {
-                    this.userId = cachedUser.userId;
                     resolve(cachedUser, isOffline);
                 }
 
@@ -100,7 +98,6 @@ export class UserIndexClient extends CandidService {
                         currentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
-                        this.userId = liveUser.userId;
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -140,6 +137,7 @@ export class UserIndexClient extends CandidService {
     }
 
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
+        console.debug("USERS: getting users", users);
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
@@ -151,6 +149,8 @@ export class UserIndexClient extends CandidService {
 
         const apiResponse = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
 
+        console.debug("USERS: result from backend", apiResponse);
+
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
@@ -160,6 +160,8 @@ export class UserIndexClient extends CandidService {
             apiResponse,
             fromCache,
         );
+
+        console.debug("USERS: merged result", mergedResponse);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
@@ -267,16 +269,18 @@ export class UserIndexClient extends CandidService {
                     users.push(merged);
                 }
             } else if (cached !== undefined) {
-                if (requestedFromServer.has(userId)) {
-                    // If this user was requested from the server but wasn't included in the response, then that means
-                    // our cached copy is up to date.
-                    users.push({
-                        ...cached,
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        updated: apiResponse.serverTimestamp!,
-                    });
-                } else {
-                    users.push(cached);
+                if (cached.userId !== apiResponse.currentUser?.userId) {
+                    if (requestedFromServer.has(userId)) {
+                        // If this user was requested from the server but wasn't included in the response, then that means
+                        // our cached copy is up to date.
+                        users.push({
+                            ...cached,
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            updated: apiResponse.serverTimestamp!,
+                        });
+                    } else {
+                        users.push(cached);
+                    }
                 }
             } else {
                 // if we get here it means that for this user, nothing came back from the server

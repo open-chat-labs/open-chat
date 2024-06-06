@@ -64,6 +64,9 @@ export function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): 
         diamondStatus: current.diamondStatus.kind,
         chitBalance: current.chitBalance,
         streak: current.streak,
+        blobReference: current.blobReference,
+        blobData: current.blobData,
+        blobUrl: current.blobUrl,
     };
 }
 
@@ -184,7 +187,7 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
-type CurrentUserCommon = {
+type CurrentUserCommon = DataContent & {
     streak: number;
     username: string;
     isPlatformOperator: boolean;

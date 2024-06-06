@@ -1208,6 +1208,7 @@ export async function mergeCachedCurrentUser(
     const current = await getCachedCurrentUser(principal);
     if (current) {
         const merged = updateCreatedUser(current, updated);
+        console.debug("USERS: merging cached current user", current, updated, merged);
         (await db).put("currentUser", merged, principal);
     }
 }
