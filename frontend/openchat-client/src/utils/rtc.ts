@@ -26,7 +26,7 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
 export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
     const chat = findChatByChatType(msg);
     if (chat) {
-        return new RemoteVideoCallStartedEvent(chat.id, msg.userId, msg.messageId);
+        return new RemoteVideoCallStartedEvent(chat.id, msg.userId, msg.messageId, false);
     }
 }
 

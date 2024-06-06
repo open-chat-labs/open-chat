@@ -1368,6 +1368,7 @@
         "joinVideo": "Unirse a videollamada",
         "leave": "dejar llamada",
         "leaveVideo": "Dejar videollamada",
+        "minimise": "Minimizar",
         "noMeetingToJoin": "Lo sentimos, pero la reunión a la que intentas unirte ha finalizado.",
         "participants": "Participantes",
         "presenters": "Presentadores ({count})",

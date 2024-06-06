@@ -28,6 +28,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
     import Badges from "./profile/Badges.svelte";
+    import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -201,6 +202,7 @@
             {/if}
         </div>
     </div>
+    <ActiveVideoCallResume />
     {#if !readonly}
         <CurrentChatMenu
             bind:showSuspendUserModal

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix incorrect token logo Ids ([#5911](https://github.com/open-chat-labs/open-chat/pull/5911))
+
+## [[2.0.1174](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1174-registry)] - 2024-05-14
+
 ### Changed
 
 - Expose `enabled` field in the metrics for each token ([#5788](https://github.com/open-chat-labs/open-chat/pull/5788))

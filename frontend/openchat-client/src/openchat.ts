@@ -394,6 +394,7 @@ import type {
     AcceptedRules,
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
+    VideoCallContent,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -3815,10 +3816,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         ev.event.content.kind === "video_call_content"
                     ) {
                         this.dispatchEvent(
-                            new RemoteVideoCallStartedEvent(
+                            RemoteVideoCallStartedEvent.create(
                                 chatId,
-                                ev.event.sender,
-                                ev.event.messageId,
+                                this._liveState.user.userId,
+                                ev.event as Message<VideoCallContent>,
                             ),
                         );
                     }
