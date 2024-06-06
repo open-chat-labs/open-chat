@@ -12,6 +12,17 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn fix_logo_ids(&mut self, now: TimestampMillis) {
+        for token in self.tokens.iter_mut() {
+            let logo_id = logo_id(&token.logo);
+            if logo_id != token.logo_id {
+                token.logo_id = logo_id;
+                token.last_updated = now;
+                self.last_updated = now;
+            }
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
@@ -70,6 +81,7 @@ impl Tokens {
                 token.transaction_url_format = transaction_url_format;
             }
             if let Some(logo) = args.logo {
+                token.logo_id = logo_id(&logo);
                 token.logo = logo;
             }
             token.last_updated = now;

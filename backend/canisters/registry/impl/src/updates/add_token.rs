@@ -163,11 +163,7 @@ async fn get_logo(
     metadata: Vec<(String, MetadataValue)>,
     governance_logo: Option<String>,
 ) -> Result<Option<String>, (RejectionCode, String)> {
-    if logo.is_some() {
-        return Ok(logo);
-    }
-
-    let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
+    let metadata_logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
         if let MetadataValue::Text(t) = v {
             Some(t)
         } else {
@@ -175,7 +171,7 @@ async fn get_logo(
         }
     });
 
-    Ok(logo.or(governance_logo))
+    Ok(metadata_logo.or(logo).or(governance_logo))
 }
 
 fn check_icrc1_compatibility(metadata: &[(String, MetadataValue)]) -> bool {
