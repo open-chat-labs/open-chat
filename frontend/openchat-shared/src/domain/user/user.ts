@@ -24,6 +24,29 @@ export type UserSummary = DataContent & {
     streak: number;
 };
 
+function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSummary {
+    return {
+        kind: current.isBot ? "bot" : "user",
+        userId: current.userId,
+        username: current.username,
+        displayName: current.displayName,
+        updated: current.updated,
+        suspended: current.suspensionDetails !== undefined,
+        diamondStatus: current.diamondStatus.kind,
+        chitBalance: current.chitBalance,
+        streak: current.streak,
+    };
+}
+
+function updateCreatedUser(created: CreatedUser, summary: CurrentUserSummary): CreatedUser {
+    // TODO come back to this and fill it in when it is clear that we need it - I think we need it
+    return {
+        ...created,
+        ...summary,
+        kind: "created_user",
+    };
+}
+
 export type UserGroupSummary = {
     kind: "user_group";
     memberCount: number;
@@ -74,6 +97,7 @@ export type UsersArgs = {
         users: string[];
         updatedSince: bigint;
     }[];
+    currentUserUpdatedSince: bigint | undefined;
 };
 
 export type UsersResponse = {
@@ -107,6 +131,35 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
+type CurrentUserCommon = {
+    streak: number;
+    username: string;
+    isPlatformOperator: boolean;
+    diamondStatus: DiamondMembershipStatus;
+    nextDailyChitClaim: bigint;
+    userId: string;
+    isBot: boolean;
+    displayName: string | undefined;
+    moderationFlagsEnabled: number;
+    chitBalance: number;
+    isSuspectedBot: boolean;
+    suspensionDetails: SuspensionDetails | undefined;
+    isPlatformModerator: boolean;
+    diamonDetails?: DiamondMembershipDetails;
+    updated: bigint;
+};
+
+export type CurrentUserSummary = CurrentUserCommon & {
+    kind: "current_user_summary";
+};
+
+export type CreatedUser = CurrentUserCommon & {
+    kind: "created_user";
+    dateCreated: bigint;
+    cryptoAccount: string;
+    referrals: string[];
+};
+
 export function anonymousUser(): CreatedUser {
     return {
         kind: "created_user",
@@ -115,7 +168,6 @@ export function anonymousUser(): CreatedUser {
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
-        canisterUpgradeStatus: "not_required",
         referrals: [],
         isPlatformModerator: false,
         isPlatformOperator: false,
@@ -126,28 +178,10 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         nextDailyChitClaim: 0n,
+        isBot: false,
+        updated: 0n,
     };
 }
-
-export type CreatedUser = {
-    kind: "created_user";
-    username: string;
-    dateCreated: bigint;
-    displayName: string | undefined;
-    cryptoAccount: string;
-    userId: string;
-    canisterUpgradeStatus: "required" | "not_required" | "in_progress";
-    referrals: string[];
-    isPlatformModerator: boolean;
-    isPlatformOperator: boolean;
-    suspensionDetails: SuspensionDetails | undefined;
-    isSuspectedBot: boolean;
-    diamondStatus: DiamondMembershipStatus;
-    moderationFlagsEnabled: number;
-    chitBalance: number;
-    streak: number;
-    nextDailyChitClaim: bigint;
-};
 
 export type DiamondMembershipStatus =
     | { kind: "inactive" }
