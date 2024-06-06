@@ -8,6 +8,7 @@ import { Principal } from "@dfinity/principal";
 
 const SONIC_INDEX_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
 const TEN_MINUTES = 10 * 60 * 1000;
+const ENABLED: boolean = false;
 
 export class SonicSwapsClient extends CandidService {
     private service: SonicSwapsService;
@@ -29,6 +30,8 @@ export class SonicSwapsClient extends CandidService {
     }
 
     async getPools(): Promise<TokenSwapPool[]> {
+        if (!ENABLED) return Promise.resolve([]);
+
         const now = Date.now();
         if (this.pools.length > 0 && now - this.poolsLastUpdated < TEN_MINUTES)
             return Promise.resolve(this.pools);
