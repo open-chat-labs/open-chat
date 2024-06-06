@@ -1469,6 +1469,9 @@ export class OpenChatAgent extends EventTarget {
                         updatedSince: BigInt(0),
                     },
                 ],
+                // TODO - not sure if this is the right thing to do here - is it possible that userId actually represents the current user?
+                // need to check where this function is actually used.
+                currentUserUpdatedSince: undefined,
             },
             allowStale,
         );

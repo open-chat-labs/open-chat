@@ -69,6 +69,7 @@ import {
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
+    private userId?: string;
 
     constructor(identity: Identity, config: AgentConfig) {
         super(identity);
@@ -89,6 +90,7 @@ export class UserIndexClient extends CandidService {
                 const isOffline = offline();
 
                 if (cachedUser !== undefined) {
+                    this.userId = cachedUser.userId;
                     resolve(cachedUser, isOffline);
                 }
 
@@ -98,6 +100,8 @@ export class UserIndexClient extends CandidService {
                         currentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
+                        this.userId = liveUser.userId;
+                        // TODO - let's put the current user in the general user cache as well
                         setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
@@ -198,6 +202,7 @@ export class UserIndexClient extends CandidService {
                 updated_since: updatedSince,
             })),
             users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
+            current_user_updated_since: apiOptional(identity, users.currentUserUpdatedSince),
         };
         return this.handleQueryResponse(
             () => this.userIndexService.users(args),
@@ -206,20 +211,48 @@ export class UserIndexClient extends CandidService {
         );
     }
 
+    // private getUsersFromBackend(
+    //     users: UsersArgs,
+    //     suspendedUsersSyncedUpTo: bigint | undefined,
+    // ): Promise<UsersResponse> {
+    //     if (offline())
+    //         return Promise.resolve({
+    //             users: [],
+    //         });
+
+    //     const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+
+    //     const args = {
+    //         user_groups: userGroups.map(({ users, updatedSince }) => ({
+    //             users: users.map((u) => Principal.fromText(u)),
+    //             updated_since: updatedSince,
+    //         })),
+    //         users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
+    //     };
+    //     return this.handleQueryResponse(
+    //         () => this.userIndexService.users_v2(args),
+    //         usersResponse,
+    //         args,
+    //     );
+    // }
+
     private buildGetUsersArgs(
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
-        const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
+        const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
 
         const args: UsersArgs = {
             userGroups: [],
+            currentUserUpdatedSince: this.userId
+                ? fromCacheMap.get(this.userId)?.updated
+                : undefined,
         };
 
         // Add the users not found in the cache and ask for all updates
-        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
+        const notFoundInCache = users.filter((u) => !fromCacheMap.has(u));
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
