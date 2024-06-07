@@ -25,6 +25,7 @@
     let showMore = false;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
+    let verificationCode: string | undefined = undefined;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -131,10 +132,13 @@
     }
 
     function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
+        verificationCode = undefined;
+
         client
             .generateMagicLink(email, sessionKey)
             .then((response) => {
                 if (response.kind === "success") {
+                    verificationCode = response.code;
                     client.gaTrack("generated_magic_signin_link", "registration");
                     startPoller(email, sessionKey, response.userKey, response.expiration);
                 } else if (response.kind === "email_invalid") {
@@ -322,6 +326,17 @@
                             ? "loginDialog.generatingLink"
                             : "loginDialog.checkEmail",
                     )} />
+
+                {#if emailSignInPoller !== undefined && verificationCode !== undefined}
+                    <div class="code-wrapper">
+                        <div>
+                            <Translatable resourceKey={i18nKey("loginDialog.verificationCode")} />
+                        </div>
+                        <div class="code">
+                            {verificationCode}
+                        </div>
+                    </div>
+                {/if}
             </p>
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
@@ -507,5 +522,19 @@
         .change-mode {
             margin-top: $sp4;
         }
+    }
+
+    .code-wrapper {
+        margin-top: $sp4;
+        display: flex;
+        gap: $sp3;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .code {
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        @include font-size(fs-160);
     }
 </style>

@@ -524,9 +524,9 @@
     "login": "登入",
     "loginDialog": {
         "back": "后退",
-        "checkEmail": "我们已向您发送了一封电子邮件，其中包含有效期为 5 分钟的登录链接。单击该链接登录，然后返回此页面。",
+        "checkEmail": "我们已向您发送了一封电子邮件，其中包含有效期为 5 分钟的登录链接。点击该链接并输入验证码即可登录，然后返回此页面。",
         "failedToSendEmail": "我们目前无法发送电子邮件。请稍后重试。",
-        "generatingLink": "正在生成安全登录链接...",
+        "generatingLink": "正在生成安全登录链接和代码...",
         "haveAccount": "已有账户？",
         "invalidEmail": "该电子邮件地址无效。",
         "noAccount": "沒有帳戶？",
@@ -541,13 +541,16 @@
         "signupWith": "使用 {provider} 注册",
         "strapline": "Web3 的沟通之道",
         "title": "登录 OpenChat",
-        "unexpectedError": "意外错误。请稍后重试。"
+        "unexpectedError": "意外错误。请稍后重试。",
+        "verificationCode": "验证码"
     },
     "logout": "登出",
     "lowBandwidth": "低带宽",
     "magicLink": {
         "closeMessage": "请关闭此页面并尝试再次登录。",
+        "code_invalid": "代码无效。",
         "continueMessage": "请关闭此页面并继续浏览原页面。",
+        "enterCode": "输入验证码",
         "link_expired": "该链接仅有效期5分钟，现已过期。",
         "link_invalid": "该链接无效。",
         "success": "成功！您现在已登录。",

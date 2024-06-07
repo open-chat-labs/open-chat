@@ -524,9 +524,9 @@
     "login": "Iniciar sesión",
     "loginDialog": {
         "back": "Atrás",
-        "checkEmail": "Le enviamos un correo electrónico con un enlace de inicio de sesión válido por 5 minutos. Haga clic en el enlace para iniciar sesión y luego regrese a esta página.",
+        "checkEmail": "Le enviamos un correo electrónico con un enlace de inicio de sesión válido por 5 minutos. Haga clic en el enlace e ingrese el código de verificación para iniciar sesión, luego regrese a esta página.",
         "failedToSendEmail": "No pudimos enviar el correo electrónico en este momento. Por favor, inténtelo de nuevo más tarde.",
-        "generatingLink": "Generando un enlace de inicio de sesión seguro...",
+        "generatingLink": "Generando un enlace y código de inicio de sesión seguro...",
         "haveAccount": "¿Ya tienes una cuenta?",
         "invalidEmail": "La dirección de correo electrónico es inválida.",
         "noAccount": "¿No tienes una cuenta?",
@@ -541,13 +541,16 @@
         "signupWith": "Regístrate con {provider}",
         "strapline": "Donde se comunica Web3",
         "title": "Iniciar sesión en OpenChat",
-        "unexpectedError": "Error inesperado. Por favor, inténtelo de nuevo más tarde."
+        "unexpectedError": "Error inesperado. Por favor, inténtelo de nuevo más tarde.",
+        "verificationCode": "Código de verificación"
     },
     "logout": "desconectar",
     "lowBandwidth": "Ancho de banda bajo",
     "magicLink": {
         "closeMessage": "Cierra esta página e intenta iniciar sesión nuevamente.",
+        "code_invalid": "El código no es válido.",
         "continueMessage": "Cierra esta página y continúa en la página original.",
+        "enterCode": "Introduzca el código de verificación",
         "link_expired": "El enlace sólo es válido durante 5 minutos y ya ha caducado.",
         "link_invalid": "El enlace no es válido.",
         "success": "¡Éxito! Ya has iniciado sesión.",

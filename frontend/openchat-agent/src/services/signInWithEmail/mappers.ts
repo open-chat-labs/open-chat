@@ -9,6 +9,7 @@ export function generateMagicLinkResponse(
         return {
             kind: "success",
             userKey: consolidateBytes(candid.Success.user_key),
+            code: candid.Success.code,
             expiration: candid.Success.expiration,
         };
     }

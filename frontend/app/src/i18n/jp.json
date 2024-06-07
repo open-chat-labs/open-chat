@@ -524,9 +524,9 @@
     "login": "サインイン",
     "loginDialog": {
         "back": "戻る",
-        "checkEmail": "5 分間有効なサインイン リンクを記載したメールを送信しました。リンクをクリックしてサインインし、このページに戻ってください。",
+        "checkEmail": "5 分間有効なサインイン リンクを記載したメールを送信しました。リンクをクリックして確認コードを入力し、サインインしてからこのページに戻ってください。",
         "failedToSendEmail": "現在、メールを送信できませんでした。しばらくしてからもう一度お試しください。",
-        "generatingLink": "安全なサインイン リンクを生成しています...",
+        "generatingLink": "安全なサインイン リンクとコードを生成しています...",
         "haveAccount": "すでにアカウントをお持ちですか？",
         "invalidEmail": "メールアドレスが無効です。",
         "noAccount": "アカウントをお持ちではありませんか?",
@@ -541,13 +541,16 @@
         "signupWith": "{provider} でサインアップ",
         "strapline": "Web3が通信する場所",
         "title": "OpenChatにサインイン",
-        "unexpectedError": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。"
+        "unexpectedError": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。",
+        "verificationCode": "検証コード"
     },
     "logout": "サインアウト",
     "lowBandwidth": "低帯域幅",
     "magicLink": {
         "closeMessage": "このページを閉じて、もう一度サインインしてください。",
+        "code_invalid": "コードが無効です。",
         "continueMessage": "このページを閉じて、元のページに戻ってください。",
+        "enterCode": "認証コードを入力してください",
         "link_expired": "リンクは 5 分間のみ有効で、期限切れになっています。",
         "link_invalid": "リンクが無効です。",
         "success": "成功しました。これでサインインできました。",

@@ -493,6 +493,28 @@ pub async fn upgrade_storage_bucket_canister(
     println!("Storage bucket canister wasm upgraded to version {version}");
 }
 
+pub async fn upgrade_sign_in_with_email_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    sign_in_with_email_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        sign_in_with_email_canister_id,
+        version,
+        sign_in_with_email_canister::InitOrUpgradeArgs::Upgrade(sign_in_with_email_canister::UpgradeArgs {
+            email_sender_public_key_pem: None,
+            email_sender_config: None,
+        }),
+        CanisterName::SignInWithEmail,
+    )
+    .await;
+
+    println!("sign_in_with_email_canister upgraded");
+}
+
 async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
     identity: Box<dyn Identity>,
     url: String,

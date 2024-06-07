@@ -524,9 +524,9 @@
     "login": "Se connecter",
     "loginDialog": {
         "back": "Dos",
-        "checkEmail": "Nous vous avons envoyé un e-mail avec un lien de connexion valable 5 minutes. Cliquez sur le lien pour vous connecter, puis revenez à cette page.",
+        "checkEmail": "Nous vous avons envoyé un e-mail avec un lien de connexion valable 5 minutes. Cliquez sur le lien et entrez le code de vérification pour vous connecter, puis revenez à cette page.",
         "failedToSendEmail": "Nous n'avons pas pu envoyer l'e-mail pour le moment. Veuillez réessayer plus tard.",
-        "generatingLink": "Génération d'un lien de connexion sécurisé...",
+        "generatingLink": "Génération d'un lien et d'un code de connexion sécurisés...",
         "haveAccount": "Vous avez déjà un compte?",
         "invalidEmail": "L'adresse mail est invalide.",
         "noAccount": "Vous n'avez pas de compte ?",
@@ -541,13 +541,16 @@
         "signupWith": "Inscrivez-vous avec {provider}",
         "strapline": "Où Web3 communique",
         "title": "Connectez-vous à OpenChat",
-        "unexpectedError": "Erreur inattendue. Veuillez réessayer plus tard."
+        "unexpectedError": "Erreur inattendue. Veuillez réessayer plus tard.",
+        "verificationCode": "Le code de vérification"
     },
     "logout": "se déconnecter",
     "lowBandwidth": "Bas débit",
     "magicLink": {
         "closeMessage": "Veuillez fermer cette page et réessayer de vous connecter.",
+        "code_invalid": "Le code n'est pas valide.",
         "continueMessage": "Veuillez fermer cette page et continuer sur la page d'origine.",
+        "enterCode": "Entrer le code de vérification",
         "link_expired": "Le lien n'est valable que 5 minutes et a maintenant expiré.",
         "link_invalid": "Le lien n'est pas valide.",
         "success": "Succès! Vous êtes maintenant inscrit.",

@@ -524,9 +524,9 @@
     "login": "Sign in",
     "loginDialog": {
         "back": "Back",
-        "checkEmail": "We've sent you an email with a sign-in link valid for 5 minutes. Click the link to sign in, then return to this page.",
+        "checkEmail": "We've sent you an email with a sign-in link valid for 5 minutes. Click the link and enter the verification code to sign in, then return to this page.",
         "failedToSendEmail": "We could not send the email at this time. Please try again later.",
-        "generatingLink": "Generating a secure sign-in link...",
+        "generatingLink": "Generating a secure sign-in link and code...",
         "haveAccount": "Already have an account?",
         "invalidEmail": "The email address is invalid.",
         "noAccount": "Don't have an account?",
@@ -541,13 +541,16 @@
         "signupWith": "Sign up with {provider}",
         "strapline": "Where Web3 communicates",
         "title": "Sign in to OpenChat",
-        "unexpectedError": "Unexpected error. Please try again later."
+        "unexpectedError": "Unexpected error. Please try again later.",
+        "verificationCode": "Verification code"
     },
     "logout": "Sign out",
     "lowBandwidth": "Low bandwidth",
     "magicLink": {
         "closeMessage": "Please close this page and try signing in again.",
+        "code_invalid": "The code is invalid.",
         "continueMessage": "Please close this page and continue on the original page.",
+        "enterCode": "Enter the verification code",
         "link_expired": "The link is only valid for 5 minutes and has now expired.",
         "link_invalid": "The link is invalid.",
         "success": "Success! You are now signed in.",
