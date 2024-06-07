@@ -441,6 +441,7 @@ import {
     buildDelegationIdentity,
     toDer,
     storeIdentity,
+    updateCreatedUser,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4601,6 +4602,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         g.users.filter((u) => !usersReturned.has(u)),
                     );
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+                }
+                if (resp.currentUser) {
+                    this.user.update((u) => {
+                        return resp.currentUser ? updateCreatedUser(u, resp.currentUser) : u;
+                    });
                 }
                 return resp;
             })

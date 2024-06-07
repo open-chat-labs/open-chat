@@ -93,7 +93,6 @@
                     displayName: undefined,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,
-                    canisterUpgradeStatus: "not_required",
                     referrals: [],
                     isPlatformModerator: false,
                     isPlatformOperator: false,
@@ -104,6 +103,8 @@
                     chitBalance: 0,
                     streak: 0,
                     nextDailyChitClaim: 0n,
+                    updated: 0n,
+                    isBot: false,
                 };
                 dispatch("createdUser", createdUser);
             }
