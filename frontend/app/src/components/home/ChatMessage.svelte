@@ -483,7 +483,9 @@
                                 <h4 class="username" class:fill class:crypto>
                                     {senderDisplayName}
                                 </h4>
-                                <Badges diamondStatus={sender?.diamondStatus} streak={sender?.streak ?? 0} />
+                                <Badges
+                                    diamondStatus={sender?.diamondStatus}
+                                    streak={sender?.streak ?? 0} />
                                 {#if sender !== undefined && multiUserChat}
                                     <WithRole
                                         userId={sender.userId}
