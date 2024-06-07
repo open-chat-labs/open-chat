@@ -19,13 +19,13 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let mut current_user: Option<CurrentUserSummary> = None;
 
     if let Some(u) = state.data.users.get_by_principal(&caller) {
-        if let Some(ts) = args
+        if let Some(updated_since) = args
             .user_groups
             .iter()
             .find(|g| g.users.contains(&u.user_id))
             .map(|g| g.updated_since)
         {
-            if u.date_updated > ts || u.date_updated_volatile > ts {
+            if u.date_updated > updated_since || u.date_updated_volatile > updated_since {
                 let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
                 current_user = Some(CurrentUserSummary {
@@ -63,7 +63,8 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .map(|u| UserSummaryV2 {
                     user_id: u.user_id,
                     stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: (u.date_updated_volatile > updated_since).then(|| u.to_summary_volatile(now)),
+                    volatile: (u.date_created > updated_since || u.date_updated_volatile > updated_since)
+                        .then(|| u.to_summary_volatile(now)),
                 }),
         );
     }
