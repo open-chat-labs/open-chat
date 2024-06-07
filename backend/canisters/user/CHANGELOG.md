@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support sending transactions using ICRC2 ([#5854](https://github.com/open-chat-labs/open-chat/pull/5854))
+- Integrate with Sonic for token swaps ([#5908](https://github.com/open-chat-labs/open-chat/pull/5908))
 
 ### Changed
 
