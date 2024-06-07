@@ -17,7 +17,7 @@ use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
-pub const USER_LIMIT: usize = 150_000;
+pub const USER_LIMIT: usize = 200_000;
 
 #[update]
 #[trace]
