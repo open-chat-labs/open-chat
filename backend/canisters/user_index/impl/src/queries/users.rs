@@ -25,7 +25,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             .find(|g| g.users.contains(&u.user_id))
             .map(|g| g.updated_since)
         {
-            if updated_since == 0 || u.date_updated > updated_since || u.date_updated_volatile > updated_since {
+            if u.date_updated > updated_since || u.date_updated_volatile > updated_since {
                 let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
                 current_user = Some(CurrentUserSummary {
@@ -57,14 +57,14 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .into_iter()
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
                 .filter(move |u| {
-                    (updated_since == 0 || u.date_updated > updated_since || u.date_updated_volatile > updated_since)
-                        && u.principal != caller
+                    (u.date_updated > updated_since || u.date_updated_volatile > updated_since) && u.principal != caller
                 })
                 .filter(|u| user_ids.insert(u.user_id))
                 .map(|u| UserSummaryV2 {
                     user_id: u.user_id,
                     stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: (u.date_updated_volatile > updated_since).then(|| u.to_summary_volatile(now)),
+                    volatile: (updated_since == 0 || u.date_updated_volatile > updated_since)
+                        .then(|| u.to_summary_volatile(now)),
                 }),
         );
     }
