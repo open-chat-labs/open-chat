@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Increase user limit from 150,000 to 200,000 ([#5916](https://github.com/open-chat-labs/open-chat/pull/5916))
+
 ## [[2.0.1196](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1196-user_index)] - 2024-06-06
 
 ### Changed
