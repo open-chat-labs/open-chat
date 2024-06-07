@@ -137,7 +137,6 @@ export class UserIndexClient extends CandidService {
     }
 
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
-        console.debug("USERS: getting users", users);
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
@@ -148,13 +147,6 @@ export class UserIndexClient extends CandidService {
         const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
         const apiResponse = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
-<<<<<<< HEAD
-
-        console.debug("USERS: result from backend", apiResponse);
-=======
->>>>>>> f0fd9c897 (wire up new users api)
-
-        console.debug("USERS: result from backend", apiResponse);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
@@ -165,8 +157,6 @@ export class UserIndexClient extends CandidService {
             apiResponse,
             fromCache,
         );
-
-        console.debug("USERS: merged result", mergedResponse);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),

@@ -64,7 +64,6 @@ export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
 
 export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
     if ("Success" in candid) {
-        console.debug("USERS: ApiUsersResponse: ", candid.Success);
         const timestamp = candid.Success.timestamp;
         return {
             serverTimestamp: timestamp,
