@@ -63,7 +63,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .map(|u| UserSummaryV2 {
                     user_id: u.user_id,
                     stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: (updated_since == 0 || u.date_updated_volatile > updated_since)
+                    volatile: (u.date_created > updated_since || u.date_updated_volatile > updated_since)
                         .then(|| u.to_summary_volatile(now)),
                 }),
         );
