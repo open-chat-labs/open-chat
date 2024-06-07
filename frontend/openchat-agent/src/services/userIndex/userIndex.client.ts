@@ -146,7 +146,7 @@ export class UserIndexClient extends CandidService {
         // ensures the cache is always correct and doesn't miss any updates
         const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
-        const apiResponse = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
+        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
