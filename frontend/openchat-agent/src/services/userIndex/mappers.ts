@@ -2,7 +2,6 @@ import type {
     CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
-    UsersResponse,
     UserSummary,
     SuspendUserResponse,
     UnsuspendUserResponse,
@@ -19,6 +18,9 @@ import type {
     DiamondMembershipStatus,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    CurrentUserSummary,
+    UsersApiResponse,
+    UserSummaryUpdate,
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import type {
@@ -26,6 +28,7 @@ import type {
     ApiChitUserBalance,
     ApiClaimDailyChitResponse,
     ApiCurrentUserResponse,
+    ApiCurrentUserSummary,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipFeesResponse,
     ApiDiamondMembershipPlanDuration,
@@ -45,6 +48,7 @@ import type {
     ApiUserRegistrationCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
+    ApiUserSummaryUpdate,
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import { token } from "../common/chatMappers";
@@ -58,15 +62,67 @@ export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
 }
 
-export function usersResponse(candid: ApiUsersResponse): UsersResponse {
+export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
     if ("Success" in candid) {
         const timestamp = candid.Success.timestamp;
         return {
             serverTimestamp: timestamp,
-            users: candid.Success.users.map((u) => userSummary(u, timestamp)),
+            users: candid.Success.users.map(userSummaryUpdate),
+            currentUser: optional(candid.Success.current_user, (u) =>
+                currentUserSummary(u, timestamp),
+            ),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
+}
+
+export function currentUserSummary(
+    candid: ApiCurrentUserSummary,
+    timestamp: bigint,
+): CurrentUserSummary {
+    return {
+        kind: "current_user_summary",
+        streak: candid.streak,
+        username: candid.username,
+        isPlatformOperator: candid.is_platform_operator,
+        diamondStatus: diamondMembershipStatus(candid.diamond_membership_status),
+        nextDailyChitClaim: candid.next_daily_claim,
+        userId: candid.user_id.toString(),
+        isBot: candid.is_bot,
+        displayName: optional(candid.display_name, identity),
+        moderationFlagsEnabled: candid.moderation_flags_enabled,
+        chitBalance: candid.chit_balance,
+        isSuspectedBot: candid.is_suspected_bot,
+        suspensionDetails: optional(candid.suspension_details, suspensionDetails),
+        isPlatformModerator: candid.is_platform_moderator,
+        diamondDetails: optional(candid.diamond_membership_details, diamondMembership),
+        updated: timestamp,
+        blobReference: optional(candid.avatar_id, (id) => ({
+            blobId: id,
+            canisterId: candid.user_id.toString(),
+        })),
+    };
+}
+
+export function userSummaryUpdate(candid: ApiUserSummaryUpdate): UserSummaryUpdate {
+    return {
+        userId: candid.user_id.toString(),
+        stable: optional(candid.stable, (s) => ({
+            username: s.username,
+            diamondStatus: diamondStatus(s.diamond_membership_status),
+            isBot: s.is_bot,
+            displayName: optional(s.display_name, identity),
+            blobReference: optional(s.avatar_id, (id) => ({
+                blobId: id,
+                canisterId: candid.user_id.toString(),
+            })),
+            suspended: s.suspended,
+        })),
+        volatile: optional(candid.volatile, (v) => ({
+            chitBalance: v.chit_balance,
+            streak: v.streak,
+        })),
+    };
 }
 
 export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSummary {
@@ -121,12 +177,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             dateCreated: r.date_created,
             displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
-            canisterUpgradeStatus:
-                "Required" in r.canister_upgrade_status
-                    ? "required"
-                    : "NotRequired" in r.canister_upgrade_status
-                      ? "not_required"
-                      : "in_progress",
             referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
@@ -137,6 +187,8 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             chitBalance: r.chit_balance,
             streak: r.streak,
             nextDailyChitClaim: r.next_daily_claim,
+            isBot: false,
+            updated: BigInt(Date.now()),
         };
     }
 

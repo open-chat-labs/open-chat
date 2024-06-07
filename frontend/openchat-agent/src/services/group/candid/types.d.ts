@@ -263,7 +263,8 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string };
+  { 'Achievement' : string } |
+  { 'MemeContestWinner' : null };
 export interface ClaimPrizeArgs {
   'correlation_id' : bigint,
   'message_id' : MessageId,
@@ -448,6 +449,23 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'KINIC' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
+export interface CurrentUserSummary {
+  'streak' : number,
+  'username' : string,
+  'is_platform_operator' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatusFull,
+  'next_daily_claim' : TimestampMillis,
+  'user_id' : UserId,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'moderation_flags_enabled' : number,
+  'chit_balance' : number,
+  'is_suspected_bot' : boolean,
+  'suspension_details' : [] | [SuspensionDetails],
+  'is_platform_moderator' : boolean,
+  'diamond_membership_details' : [] | [DiamondMembershipDetails],
+}
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -1490,7 +1508,6 @@ export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
-  'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
 }
@@ -1789,6 +1806,13 @@ export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'updates' : GroupCanisterGroupChatSummaryUpdates } } |
   { 'SuccessNoUpdates' : null };
+export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
+  { 'Delete' : TimestampMillis };
+export interface SuspensionDetails {
+  'action' : SuspensionAction,
+  'suspended_by' : UserId,
+  'reason' : string,
+}
 export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
   { 'Accepted' : SwapStatusErrorAccepted } |
   { 'Cancelled' : SwapStatusErrorCancelled } |
@@ -1963,6 +1987,23 @@ export interface UserSummary {
   'avatar_id' : [] | [bigint],
   'chit_balance' : number,
   'suspended' : boolean,
+}
+export interface UserSummaryStable {
+  'username' : string,
+  'diamond_membership_status' : DiamondMembershipStatus,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'suspended' : boolean,
+}
+export interface UserSummaryV2 {
+  'stable' : [] | [UserSummaryStable],
+  'user_id' : UserId,
+  'volatile' : [] | [UserSummaryVolatile],
+}
+export interface UserSummaryVolatile {
+  'streak' : number,
+  'chit_balance' : number,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
