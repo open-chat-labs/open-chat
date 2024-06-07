@@ -31,7 +31,6 @@ import type {
     CreatedUser,
     DiamondMembershipStatus,
     TransferSuccess,
-    CurrentUser,
     CurrentUserSummary,
 } from "openchat-shared";
 import {
