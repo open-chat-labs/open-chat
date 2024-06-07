@@ -8,6 +8,7 @@
     import Translatable from "../Translatable.svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import Input from "../Input.svelte";
@@ -15,6 +16,8 @@
     import { ECDSAKeyIdentity } from "@dfinity/identity";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -207,6 +210,19 @@
         }
         mode = mode === "signin" ? "signup" : "signin";
     }
+
+    function copyCode() {
+        if (verificationCode === undefined) return;
+
+        navigator.clipboard.writeText(verificationCode).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
+            },
+        );
+    }
 </script>
 
 <ModalContent hideFooter={!loggingInWithEmail} on:close={cancel} closeIcon>
@@ -329,11 +345,11 @@
 
                 {#if emailSignInPoller !== undefined && verificationCode !== undefined}
                     <div class="code-wrapper">
-                        <div>
-                            <Translatable resourceKey={i18nKey("loginDialog.verificationCode")} />
-                        </div>
                         <div class="code">
                             {verificationCode}
+                        </div>
+                        <div class="copy" on:click={copyCode}>
+                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                     </div>
                 {/if}
@@ -536,5 +552,11 @@
     .code {
         font-family: Menlo, Monaco, "Courier New", monospace;
         @include font-size(fs-160);
+    }
+
+    .copy {
+        cursor: pointer;
+        position: relative;
+        top: 2px;
     }
 </style>

@@ -524,7 +524,9 @@
     "login": "להתחבר",
     "loginDialog": {
         "back": "חזור",
-        "checkEmail": "שלחנו לך אימייל עם קישור כניסה תקף למשך 5 דקות. לחץ על הקישור והזן את קוד האימות כדי להיכנס, ולאחר מכן חזור לדף זה.",
+        "checkEmail": "לחץ על הקישור ששלחנו לך והזן את הקוד הבא",
+        "codeCopiedToClipboard": "הקוד הועתק ללוח",
+        "failedToCopyCodeToClipboard": "ההעתקה של הקוד ללוח נכשלה",
         "failedToSendEmail": "לא יכולנו לשלוח את האימייל בשלב זה. בבקשה נסה שוב מאוחר יותר.",
         "generatingLink": "יוצר קישור וקוד כניסה מאובטחים...",
         "haveAccount": "כבר יש לך חשבון?",
@@ -541,8 +543,7 @@
         "signupWith": "הירשם עם {provider}",
         "strapline": "איפה Web3 מתקשר",
         "title": "היכנס ל-OpenChat",
-        "unexpectedError": "שגיאה בלתי צפויה. בבקשה נסה שוב מאוחר יותר.",
-        "verificationCode": "קוד אימות"
+        "unexpectedError": "שגיאה בלתי צפויה. בבקשה נסה שוב מאוחר יותר."
     },
     "logout": "התנתק",
     "lowBandwidth": "רוחב פס נמוך",

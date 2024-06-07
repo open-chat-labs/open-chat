@@ -524,7 +524,9 @@
     "login": "Registrazione",
     "loginDialog": {
         "back": "Indietro",
-        "checkEmail": "Ti abbiamo inviato un'e-mail con un collegamento di accesso valido per 5 minuti. Fai clic sul collegamento e inserisci il codice di verifica per accedere, quindi torna a questa pagina.",
+        "checkEmail": "Clicca sul link che ti abbiamo inviato e inserisci il seguente codice",
+        "codeCopiedToClipboard": "Codice copiato negli appunti",
+        "failedToCopyCodeToClipboard": "Impossibile copiare il codice negli appunti",
         "failedToSendEmail": "Non è stato possibile inviare l'e-mail in questo momento. Per favore riprova più tardi.",
         "generatingLink": "Generazione di un collegamento e di un codice di accesso sicuro in corso...",
         "haveAccount": "Hai già un account?",
@@ -541,8 +543,7 @@
         "signupWith": "Iscriviti con {provider}",
         "strapline": "Dove Web3 comunica",
         "title": "Accedi a OpenChat",
-        "unexpectedError": "Errore inaspettato. Per favore riprova più tardi.",
-        "verificationCode": "Codice di verifica"
+        "unexpectedError": "Errore inaspettato. Per favore riprova più tardi."
     },
     "logout": "disconnessione",
     "lowBandwidth": "Bassa larghezza di banda",

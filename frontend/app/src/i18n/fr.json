@@ -524,7 +524,9 @@
     "login": "Se connecter",
     "loginDialog": {
         "back": "Dos",
-        "checkEmail": "Nous vous avons envoyé un e-mail avec un lien de connexion valable 5 minutes. Cliquez sur le lien et entrez le code de vérification pour vous connecter, puis revenez à cette page.",
+        "checkEmail": "Cliquez sur le lien que nous vous avons envoyé et entrez le code suivant",
+        "codeCopiedToClipboard": "Code copié dans le presse-papier",
+        "failedToCopyCodeToClipboard": "Échec de la copie du code dans le presse-papiers",
         "failedToSendEmail": "Nous n'avons pas pu envoyer l'e-mail pour le moment. Veuillez réessayer plus tard.",
         "generatingLink": "Génération d'un lien et d'un code de connexion sécurisés...",
         "haveAccount": "Vous avez déjà un compte?",
@@ -541,8 +543,7 @@
         "signupWith": "Inscrivez-vous avec {provider}",
         "strapline": "Où Web3 communique",
         "title": "Connectez-vous à OpenChat",
-        "unexpectedError": "Erreur inattendue. Veuillez réessayer plus tard.",
-        "verificationCode": "Le code de vérification"
+        "unexpectedError": "Erreur inattendue. Veuillez réessayer plus tard."
     },
     "logout": "se déconnecter",
     "lowBandwidth": "Bas débit",

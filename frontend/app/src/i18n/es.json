@@ -524,7 +524,9 @@
     "login": "Iniciar sesión",
     "loginDialog": {
         "back": "Atrás",
-        "checkEmail": "Le enviamos un correo electrónico con un enlace de inicio de sesión válido por 5 minutos. Haga clic en el enlace e ingrese el código de verificación para iniciar sesión, luego regrese a esta página.",
+        "checkEmail": "Haz clic en el enlace que te hemos enviado e introduce el siguiente código",
+        "codeCopiedToClipboard": "Código copiado al portapapeles",
+        "failedToCopyCodeToClipboard": "No se pudo copiar el código al portapapeles",
         "failedToSendEmail": "No pudimos enviar el correo electrónico en este momento. Por favor, inténtelo de nuevo más tarde.",
         "generatingLink": "Generando un enlace y código de inicio de sesión seguro...",
         "haveAccount": "¿Ya tienes una cuenta?",
@@ -541,8 +543,7 @@
         "signupWith": "Regístrate con {provider}",
         "strapline": "Donde se comunica Web3",
         "title": "Iniciar sesión en OpenChat",
-        "unexpectedError": "Error inesperado. Por favor, inténtelo de nuevo más tarde.",
-        "verificationCode": "Código de verificación"
+        "unexpectedError": "Error inesperado. Por favor, inténtelo de nuevo más tarde."
     },
     "logout": "desconectar",
     "lowBandwidth": "Ancho de banda bajo",

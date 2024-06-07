@@ -524,7 +524,9 @@
     "login": "サインイン",
     "loginDialog": {
         "back": "戻る",
-        "checkEmail": "5 分間有効なサインイン リンクを記載したメールを送信しました。リンクをクリックして確認コードを入力し、サインインしてからこのページに戻ってください。",
+        "checkEmail": "送信したリンクをクリックして、次のコードを入力してください",
+        "codeCopiedToClipboard": "コードをクリップボードにコピーしました",
+        "failedToCopyCodeToClipboard": "コードをクリップボードにコピーできませんでした",
         "failedToSendEmail": "現在、メールを送信できませんでした。しばらくしてからもう一度お試しください。",
         "generatingLink": "安全なサインイン リンクとコードを生成しています...",
         "haveAccount": "すでにアカウントをお持ちですか？",
@@ -541,8 +543,7 @@
         "signupWith": "{provider} でサインアップ",
         "strapline": "Web3が通信する場所",
         "title": "OpenChatにサインイン",
-        "unexpectedError": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。",
-        "verificationCode": "検証コード"
+        "unexpectedError": "予期しないエラーが発生しました。しばらくしてからもう一度お試しください。"
     },
     "logout": "サインアウト",
     "lowBandwidth": "低帯域幅",

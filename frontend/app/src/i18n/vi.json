@@ -524,7 +524,9 @@
     "login": "Đăng nhập",
     "loginDialog": {
         "back": "Mặt sau",
-        "checkEmail": "Chúng tôi đã gửi cho bạn email có liên kết đăng nhập hợp lệ trong 5 phút. Nhấp vào liên kết và nhập mã xác minh để đăng nhập, sau đó quay lại trang này.",
+        "checkEmail": "Nhấp vào liên kết chúng tôi đã gửi cho bạn và nhập mã sau đây",
+        "codeCopiedToClipboard": "Đã sao chép mã vào bảng nhớ tạm",
+        "failedToCopyCodeToClipboard": "Không sao chép được mã vào bảng nhớ tạm",
         "failedToSendEmail": "Chúng tôi không thể gửi email vào lúc này. Vui lòng thử lại sau.",
         "generatingLink": "Đang tạo liên kết và mã đăng nhập an toàn...",
         "haveAccount": "Bạn co săn san để tạo một tai khoản?",
@@ -541,8 +543,7 @@
         "signupWith": "Đăng ký với {provider}",
         "strapline": "Nơi Web3 giao tiếp",
         "title": "Đăng nhập vào OpenChat",
-        "unexpectedError": "Lỗi không mong đợi. Vui lòng thử lại sau.",
-        "verificationCode": "Mã xác nhận"
+        "unexpectedError": "Lỗi không mong đợi. Vui lòng thử lại sau."
     },
     "logout": "Đăng xuất",
     "lowBandwidth": "Băng thông thấp",

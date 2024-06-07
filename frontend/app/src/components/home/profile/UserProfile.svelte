@@ -512,11 +512,13 @@
                     <Stats showReported stats={$userMetrics} />
                 </CollapsibleCard>
             </div>
-            <div class="advanced">
-                <CollapsibleCard
-                    on:toggle={advancedSectionOpen.toggle}
-                    open={$advancedSectionOpen}
-                    headerText={i18nKey("advanced")}>
+        {/if}
+        <div class="advanced">
+            <CollapsibleCard
+                on:toggle={advancedSectionOpen.toggle}
+                open={$advancedSectionOpen}
+                headerText={i18nKey("advanced")}>
+                {#if !$anonUser}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
@@ -526,13 +528,13 @@
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
-                        <div>{version}</div>
-                    </div>
-                </CollapsibleCard>
-            </div>
-        {/if}
+                {/if}
+                <div>
+                    <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
+                    <div>{version}</div>
+                </div>
+            </CollapsibleCard>
+        </div>
     </form>
 {:else}
     <div class="community-selector">

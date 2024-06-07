@@ -524,7 +524,9 @@
     "login": "anmelden",
     "loginDialog": {
         "back": "Zurück",
-        "checkEmail": "Wir haben Ihnen eine E-Mail mit einem 5 Minuten gültigen Anmeldelink gesendet. Klicken Sie auf den Link und geben Sie den Bestätigungscode ein, um sich anzumelden. Kehren Sie dann zu dieser Seite zurück.",
+        "checkEmail": "Klicken Sie auf den Link, den wir Ihnen gesendet haben, und geben Sie den folgenden Code ein",
+        "codeCopiedToClipboard": "Code in die Zwischenablage kopiert",
+        "failedToCopyCodeToClipboard": "Code konnte nicht in die Zwischenablage kopiert werden",
         "failedToSendEmail": "Wir konnten die E-Mail derzeit nicht versenden. Bitte versuchen Sie es später noch einmal.",
         "generatingLink": "Ein sicherer Anmeldelink und -code wird generiert …",
         "haveAccount": "Sie haben bereits ein Konto?",
@@ -541,8 +543,7 @@
         "signupWith": "Melde dich mit {provider} an",
         "strapline": "Wo Web3 kommuniziert",
         "title": "Melden Sie sich bei OpenChat an",
-        "unexpectedError": "Unerwarteter Fehler. Bitte versuchen Sie es später erneut.",
-        "verificationCode": "Bestätigungscode"
+        "unexpectedError": "Unerwarteter Fehler. Bitte versuchen Sie es später erneut."
     },
     "logout": "Abmelden",
     "lowBandwidth": "Niedrige Bandbreite",
