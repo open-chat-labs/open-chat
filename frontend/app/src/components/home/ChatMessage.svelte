@@ -483,7 +483,6 @@
                                 <h4 class="username" class:fill class:crypto>
                                     {senderDisplayName}
                                 </h4>
-                                <pre>{sender?.streak}</pre>
                                 <Badges
                                     diamondStatus={sender?.diamondStatus}
                                     streak={sender?.streak ?? 0} />
