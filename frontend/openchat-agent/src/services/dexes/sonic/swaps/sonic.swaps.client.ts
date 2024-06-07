@@ -8,7 +8,7 @@ import { Principal } from "@dfinity/principal";
 
 const SONIC_INDEX_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
 const TEN_MINUTES = 10 * 60 * 1000;
-const ENABLED: boolean = true;
+const ENABLED: boolean = false;
 
 export class SonicSwapsClient extends CandidService {
     private service: SonicSwapsService;
