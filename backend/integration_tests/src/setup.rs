@@ -116,6 +116,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
+    let sign_in_with_email_canister_wasm = wasms::SIGN_IN_WITH_EMAIL.clone();
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
@@ -197,6 +198,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         cycles_dispenser_canister_id,
         skip_captcha_whitelist: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
+        ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -369,6 +371,15 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         event_store_init_args,
     );
 
+    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
+    install_canister(
+        env,
+        controller,
+        sign_in_with_email_canister_id,
+        sign_in_with_email_canister_wasm,
+        sign_in_with_email_init_args,
+    );
+
     client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
@@ -487,6 +498,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         translations: translations_canister_id,
         event_relay: event_relay_canister_id,
         event_store: event_store_canister_id,
+        sign_in_with_email: sign_in_with_email_canister_id,
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,

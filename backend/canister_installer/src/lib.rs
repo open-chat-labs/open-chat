@@ -127,6 +127,7 @@ async fn install_service_canisters_impl(
             canister_ids.sign_in_with_ethereum,
             canister_ids.sign_in_with_solana,
         ],
+        ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };

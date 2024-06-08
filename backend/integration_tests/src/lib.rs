@@ -23,6 +23,7 @@ mod escrow_tests;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
+mod identity_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod mentions_tests;
@@ -99,6 +100,7 @@ pub struct CanisterIds {
     pub translations: CanisterId,
     pub event_relay: CanisterId,
     pub event_store: CanisterId,
+    pub sign_in_with_email: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
