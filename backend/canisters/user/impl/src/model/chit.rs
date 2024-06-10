@@ -43,7 +43,7 @@ impl ChitEarnedEvents {
                 .iter()
                 .rev()
                 .skip_while(|e| from.map_or(false, |ts| e.timestamp >= ts))
-                .take_while(|e| to.map_or(true, |ts| e.timestamp <= ts))
+                .take_while(|e| to.map_or(true, |ts| e.timestamp >= ts))
                 .take(max as usize)
                 .cloned()
                 .collect()
