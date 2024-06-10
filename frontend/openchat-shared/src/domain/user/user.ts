@@ -536,6 +536,7 @@ export type ChitEventsResponse = {
 };
 
 export type ChitEventsRequest = {
+    kind: "getChitEvents";
     from?: bigint;
     max: number;
     ascending: boolean;

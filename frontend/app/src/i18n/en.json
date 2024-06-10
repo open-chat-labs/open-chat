@@ -285,7 +285,8 @@
         "extendStreak": "Extend streak",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",
-        "viewStreak": "View streak"
+        "viewStreak": "View streak",
+        "tab": "CHIT"
     },
     "dark": "dark",
     "days": "Days",

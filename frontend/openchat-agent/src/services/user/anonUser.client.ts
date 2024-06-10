@@ -1,7 +1,9 @@
 import type {
     CancelP2PSwapResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
     JoinVideoCallResponse,
-	SetPinNumberResponse,
+    SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     VideoCallPresence,
 } from "openchat-shared";
@@ -438,7 +440,14 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    setPinNumber(_currentPin: string | undefined, _newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        _currentPin: string | undefined,
+        _newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    chitEvents(_req: ChitEventsRequest): Promise<ChitEventsResponse> {
         throw new AnonymousOperationError();
     }
 }

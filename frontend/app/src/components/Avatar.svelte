@@ -71,6 +71,11 @@
         background-position: center;
         background-size: cover;
         border-radius: var(--avatar-rd);
+        transition: filter 300ms ease-in-out;
+
+        &:hover {
+            filter: saturate(2.5);
+        }
     }
 
     .avatar {
