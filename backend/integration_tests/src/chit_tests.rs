@@ -32,7 +32,7 @@ fn claim_daily_chit_logged_in_user_canister() {
 
     env.tick();
 
-    let events = client::user::happy_path::chit_events(env, &user, None, 10);
+    let events = client::user::happy_path::chit_events(env, &user, None, None, 10);
     assert_eq!(events.total, 1);
     assert_eq!(events.events.len(), 1);
     assert_eq!(events.events[0].amount, 200);

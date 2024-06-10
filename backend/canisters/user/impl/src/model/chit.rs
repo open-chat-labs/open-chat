@@ -117,6 +117,17 @@ mod tests {
         assert_eq!(events[3].timestamp, 15);
     }
 
+    #[test]
+    fn range_desc_matches_expected() {
+        let store = init_test_data();
+
+        let (events, _) = store.events(Some(15), Some(11), 99, false);
+
+        assert_eq!(events.len(), 4);
+        assert_eq!(events[0].timestamp, 14);
+        assert_eq!(events[3].timestamp, 11);
+    }
+
     fn init_test_data() -> ChitEarnedEvents {
         ChitEarnedEvents {
             events: vec![
