@@ -6,28 +6,54 @@
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
+    import { Pincode, PincodeInput } from "svelte-pincode";
 
     const client = getContext<OpenChat>("client");
 
+    let qs = window.location.search;
     let status: string | undefined = undefined;
-    let message = "";
+    let message = "magicLink.closeMessage";
+    let busy = false;
 
     onMount(() => {
-        const qs = window.location.search;
-
         pageReplace("/home");
+    });
+
+    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
+        if (!isCodeComplete(ev.detail.code)) {
+            return;
+        }
+
+        if (!isCodeValid(ev.detail.code)) {
+            status = "magicLink.code_invalid";
+            return;
+        }
+
+        qs += "&u=" + ev.detail.value;
+
+        busy = true;
 
         client
             .handleMagicLink(qs)
             .then((resp) => {
                 status = "magicLink." + resp.kind;
-                message =
-                    "magicLink." + (resp.kind === "success" ? "continueMessage" : "closeMessage");
+                if (resp.kind === "success") {
+                    message = "magicLink.continueMessage";
+                }
             })
             .catch((_) => {
                 status = "magicLink.link_invalid";
-            });
-    });
+            })
+            .finally(() => (busy = false));
+    }
+
+    function isCodeComplete(code: string[]): boolean {
+        return code.filter((c) => c.length > 0).length === 3;
+    }
+
+    function isCodeValid(code: string[]): boolean {
+        return code.filter((c) => /^[0-9]$/.test(c)).length === 3;
+    }
 </script>
 
 <div class="magic-link">
@@ -37,10 +63,18 @@
         </div>
         <div class="body" slot="body">
             <div>
-                {#if status === undefined}
+                {#if busy}
                     <div class="loading">
                         <FancyLoader />
                     </div>
+                {:else if status === undefined}
+                    <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
+
+                    <Pincode on:complete={onCodeEntered}>
+                        <PincodeInput />
+                        <PincodeInput />
+                        <PincodeInput />
+                    </Pincode>
                 {:else}
                     <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
@@ -51,6 +85,11 @@
 </div>
 
 <style lang="scss">
+    :global([data-pincode]) {
+        gap: $sp3;
+        border: none !important;
+    }
+
     :global(.magic-link .modal-content) {
         min-width: 576px;
         color: var(--txt);
@@ -83,6 +122,9 @@
 
     .status {
         font-weight: bold;
+    }
+
+    p {
         margin-bottom: $sp4;
     }
 </style>
