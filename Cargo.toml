@@ -10,9 +10,9 @@ members = [
     "backend/bots/examples/satoshi_dice/impl",
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
-    "backend/canister_installer",
-    "backend/canister_upgrade_proposal_builder",
-    "backend/canister_upgrader",
+    "backend/tools/canister_installer",
+    "backend/tools/canister_upgrade_proposal_builder",
+    "backend/tools/canister_upgrader",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",
     "backend/canisters/community/impl",
@@ -149,7 +149,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/translation_tool",
+    "backend/tools/translation_tool",
 ]
 resolver = "2"
 

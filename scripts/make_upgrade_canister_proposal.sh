@@ -57,7 +57,7 @@ $SUMMARY"
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
-    PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/canister_upgrade_proposal_builder
+    PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/tools/canister_upgrade_proposal_builder
     PROPOSAL_FILE=proposal.candid
     PROPOSAL_BUILDER_PATH=$PROPOSAL_BUILDER_FOLDER/$PROPOSAL_FILE
 

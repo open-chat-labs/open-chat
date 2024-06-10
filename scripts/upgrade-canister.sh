@@ -39,7 +39,7 @@ EVENT_RELAY_CANISTER_ID=$(dfx canister --network $NETWORK id event_relay)
 EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
 
 cargo run \
-  --manifest-path backend/canister_upgrader/Cargo.toml -- \
+  --manifest-path backend/tools/canister_upgrader/Cargo.toml -- \
   --url $IC_URL \
   --controller $IDENTITY \
   --user-index $USER_INDEX_CANISTER_ID \
