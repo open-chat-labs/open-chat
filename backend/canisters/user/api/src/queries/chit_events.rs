@@ -5,6 +5,7 @@ use types::{ChitEarned, TimestampMillis};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub from: Option<TimestampMillis>,
+    pub to: Option<TimestampMillis>,
     pub max: u32,
     pub ascending: bool,
 }

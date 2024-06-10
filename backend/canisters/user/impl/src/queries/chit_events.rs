@@ -9,7 +9,7 @@ fn chit_events(args: Args) -> Response {
 }
 
 fn chit_events_impl(args: Args, state: &RuntimeState) -> Response {
-    let (events, total) = state.data.chit_events.events(args.from, args.max, args.ascending);
+    let (events, total) = state.data.chit_events.events(args.from, args.to, args.max, args.ascending);
 
     Response::Success(SuccessResult { events, total })
 }
