@@ -59,6 +59,7 @@
 
 <style lang="scss">
     svg {
+        transform: scaleX(-1);
         width: toRem(32);
         height: toRem(32);
 

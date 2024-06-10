@@ -154,6 +154,7 @@ export const idlFactory = ({ IDL }) => {
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : IDL.Text,
+    'MemeContestWinner' : IDL.Null,
   });
   const ChitEarned = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -795,7 +796,6 @@ export const idlFactory = ({ IDL }) => {
     'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
-    'prizes' : IDL.Vec(Tokens),
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
@@ -1681,6 +1681,10 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const ExchangeArgs = IDL.Record({
+    'zero_for_one' : IDL.Bool,
+    'swap_canister_id' : CanisterId,
+  });
   const SwapTokensArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
     'input_amount' : IDL.Nat,
@@ -1688,10 +1692,8 @@ export const idlFactory = ({ IDL }) => {
     'swap_id' : IDL.Nat,
     'input_token' : TokenInfo,
     'exchange_args' : IDL.Variant({
-      'ICPSwap' : IDL.Record({
-        'zero_for_one' : IDL.Bool,
-        'swap_canister_id' : CanisterId,
-      }),
+      'Sonic' : ExchangeArgs,
+      'ICPSwap' : ExchangeArgs,
     }),
     'output_token' : TokenInfo,
   });

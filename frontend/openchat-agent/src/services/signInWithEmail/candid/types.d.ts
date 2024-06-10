@@ -27,6 +27,7 @@ export type GenerateMagicLinkResponse = { 'Blocked' : bigint } |
 export interface GenerateMagicLinkSuccess {
   'created' : bigint,
   'user_key' : Uint8Array | number[],
+  'code' : string,
   'expiration' : bigint,
 }
 export interface GetDelegationArgs {

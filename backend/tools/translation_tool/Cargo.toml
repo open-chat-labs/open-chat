@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_agent_utils = { path = "../libraries/canister_agent_utils" }
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
@@ -15,6 +15,6 @@ itertools = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, features = ["preserve_order"] }
 tokio = { workspace = true, features = ["full"] }
-translations_canister = { path = "../canisters/translations/api" }
-translations_canister_client = { path = "../canisters/translations/client" }
-types = { path = "../libraries/types" }
+translations_canister = { path = "../../canisters/translations/api" }
+translations_canister_client = { path = "../../canisters/translations/client" }
+types = { path = "../../libraries/types" }

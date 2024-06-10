@@ -22,6 +22,7 @@ type GenerateMagicLinkResponse = variant {
 type GenerateMagicLinkSuccess = record {
   created : nat64;
   user_key : vec nat8;
+  code : text;
   expiration : nat64;
 };
 type GetDelegationArgs = record {

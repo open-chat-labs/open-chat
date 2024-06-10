@@ -394,6 +394,7 @@ import type {
     AcceptedRules,
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
+    VideoCallContent,
     GenerateChallengeResponse,
 } from "openchat-shared";
 import {
@@ -441,6 +442,7 @@ import {
     buildDelegationIdentity,
     toDer,
     storeIdentity,
+    updateCreatedUser,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3831,10 +3833,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         ev.event.content.kind === "video_call_content"
                     ) {
                         this.dispatchEvent(
-                            new RemoteVideoCallStartedEvent(
+                            RemoteVideoCallStartedEvent.create(
                                 chatId,
-                                ev.event.sender,
-                                ev.event.messageId,
+                                this._liveState.user.userId,
+                                ev.event as Message<VideoCallContent>,
                             ),
                         );
                     }
@@ -4616,6 +4618,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         g.users.filter((u) => !usersReturned.has(u)),
                     );
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+                }
+                if (resp.currentUser) {
+                    this.user.update((u) => {
+                        return resp.currentUser ? updateCreatedUser(u, resp.currentUser) : u;
+                    });
                 }
                 return resp;
             })

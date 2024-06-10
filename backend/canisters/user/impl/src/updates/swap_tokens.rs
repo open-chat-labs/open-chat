@@ -8,6 +8,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use sonic_client::SonicClient;
 use tracing::error;
 use types::{TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
@@ -211,6 +212,16 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 token0,
                 token1,
                 icpswap.zero_for_one,
+            ))
+        }
+        ExchangeArgs::Sonic(sonic) => {
+            let (token0, token1) = if sonic.zero_for_one { (input_token, output_token) } else { (output_token, input_token) };
+            Box::new(SonicClient::new(
+                this_canister_id,
+                sonic.swap_canister_id,
+                token0,
+                token1,
+                sonic.zero_for_one,
             ))
         }
     }

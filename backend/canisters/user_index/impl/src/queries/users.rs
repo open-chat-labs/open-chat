@@ -1,18 +1,53 @@
 use crate::{read_state, RuntimeState};
 use ic_cdk::query;
 use std::collections::HashSet;
-use user_index_canister::users_v2::{Response::*, *};
+use types::{CurrentUserSummary, UserSummaryV2};
+use user_index_canister::users::{Response::*, *};
+use utils::time::{today, tomorrow};
 
 #[query]
-fn users_v2(args: Args) -> Response {
+fn users(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }
 
 fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
+    let caller = state.env.caller();
 
     let mut user_ids = HashSet::new();
     let mut users = Vec::new();
+    let mut current_user: Option<CurrentUserSummary> = None;
+
+    if let Some(u) = state.data.users.get_by_principal(&caller) {
+        if let Some(updated_since) = args
+            .user_groups
+            .iter()
+            .find(|g| g.users.contains(&u.user_id))
+            .map(|g| g.updated_since)
+        {
+            if u.date_updated > updated_since || u.date_updated_volatile > updated_since {
+                let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
+
+                current_user = Some(CurrentUserSummary {
+                    user_id: u.user_id,
+                    username: u.username.clone(),
+                    display_name: u.display_name.clone(),
+                    avatar_id: u.avatar_id,
+                    is_bot: u.is_bot,
+                    is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
+                    is_platform_operator: state.data.platform_operators.contains(&u.user_id),
+                    suspension_details,
+                    is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
+                    diamond_membership_details: u.diamond_membership_details.hydrate(now),
+                    diamond_membership_status: u.diamond_membership_details.status_full(now),
+                    moderation_flags_enabled: u.moderation_flags_enabled,
+                    chit_balance: u.chit_balance,
+                    streak: u.streak.days(now),
+                    next_daily_claim: if u.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+                });
+            }
+        }
+    }
 
     for group in args.user_groups {
         let updated_since = group.updated_since;
@@ -21,9 +56,16 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .users
                 .into_iter()
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .filter(move |u| u.date_updated > updated_since)
+                .filter(move |u| {
+                    (u.date_updated > updated_since || u.date_updated_volatile > updated_since) && u.principal != caller
+                })
                 .filter(|u| user_ids.insert(u.user_id))
-                .map(|u| u.to_summary(now)),
+                .map(|u| UserSummaryV2 {
+                    user_id: u.user_id,
+                    stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
+                    volatile: (u.date_created > updated_since || u.date_updated_volatile > updated_since)
+                        .then(|| u.to_summary_volatile(now)),
+                }),
         );
     }
 
@@ -37,142 +79,13 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .take(100)
                 .filter(|u| user_ids.insert(*u))
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .map(|u| u.to_summary(now)),
+                .map(|u| u.to_summary_v2(now)),
         );
     }
 
-    Success(Result { users, timestamp: now })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::model::user::{PhoneStatus, User};
-    use crate::Data;
-    use candid::Principal;
-    use itertools::Itertools;
-    use types::PhoneNumber;
-    use utils::env::test::TestEnv;
-
-    #[test]
-    fn requested_users_returned() {
-        let mut env = TestEnv::default();
-        let mut data = Data::default();
-
-        let user_id1 = Principal::from_slice(&[1, 1]).into();
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
-
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[1]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
-            user_id: user_id1,
-            username: "abc".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[2]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
-            user_id: user_id2,
-            username: "def".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[3]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
-            user_id: user_id3,
-            username: "ghi".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        let state = RuntimeState::new(Box::new(env), data);
-
-        let args = Args {
-            user_groups: vec![UserGroup {
-                users: vec![user_id1, user_id3],
-                updated_since: 0,
-            }],
-            users_suspended_since: None,
-        };
-
-        let Success(result) = users_impl(args, &state);
-
-        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id).collect_vec();
-
-        assert_eq!(users.len(), 2);
-
-        assert_eq!(users[0].user_id, user_id1);
-        assert_eq!(users[0].username, "abc".to_string());
-
-        assert_eq!(users[1].user_id, user_id3);
-        assert_eq!(users[1].username, "ghi".to_string());
-    }
-
-    #[test]
-    fn updated_since_filters_results() {
-        let mut env = TestEnv::default();
-        let mut data = Data::default();
-
-        let user_id1 = Principal::from_slice(&[1, 1]).into();
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
-
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[1]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
-            user_id: user_id1,
-            username: "abc".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[2]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
-            user_id: user_id2,
-            username: "def".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[3]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
-            user_id: user_id3,
-            username: "ghi".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        let now = env.now;
-        let state = RuntimeState::new(Box::new(env), data);
-
-        let args = Args {
-            user_groups: vec![UserGroup {
-                users: vec![user_id1, user_id3],
-                updated_since: now - 1500,
-            }],
-            users_suspended_since: None,
-        };
-
-        let Success(result) = users_impl(args, &state);
-
-        let users = result.users;
-
-        assert_eq!(users.len(), 1);
-
-        assert_eq!(users[0].user_id, user_id3);
-        assert_eq!(users[0].username, "ghi".to_string());
-    }
+    Success(Result {
+        users,
+        current_user,
+        timestamp: now,
+    })
 }

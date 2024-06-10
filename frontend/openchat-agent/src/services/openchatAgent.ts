@@ -3137,11 +3137,7 @@ export class OpenChatAgent extends EventTarget {
         return this._dexesAgent
             .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
             .then((pools) => {
-                const pool = pools.find(
-                    (p) =>
-                        (p.dex === dex && p.token0 === inputTokenDetails.ledger) ||
-                        p.token0 === outputTokenDetails.ledger,
-                );
+                const pool = pools.find((p) => p.dex === dex);
 
                 if (pool === undefined) {
                     return Promise.reject("Cannot find a matching pool");

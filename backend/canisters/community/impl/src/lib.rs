@@ -29,7 +29,6 @@ use types::{
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
-use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -294,7 +293,6 @@ struct Data {
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     internet_identity_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
@@ -317,17 +315,9 @@ struct Data {
     rng_seed: [u8; 32],
     pending_payments_queue: PendingPaymentsQueue,
     total_payment_receipts: PaymentReceipts,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {

@@ -37,9 +37,10 @@ ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
 EVENT_RELAY_CANISTER_ID=$(dfx canister --network $NETWORK id event_relay)
 EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
+SIGN_IN_WITH_EMAIL_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_email)
 
 cargo run \
-  --manifest-path backend/canister_upgrader/Cargo.toml -- \
+  --manifest-path backend/tools/canister_upgrader/Cargo.toml -- \
   --url $IC_URL \
   --controller $IDENTITY \
   --user-index $USER_INDEX_CANISTER_ID \
@@ -57,5 +58,6 @@ cargo run \
   --translations $TRANSLATIONS_CANISTER_ID \
   --event-relay $EVENT_RELAY_CANISTER_ID \
   --event-store $EVENT_STORE_CANISTER_ID \
+  --sign-in-with-email $SIGN_IN_WITH_EMAIL_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

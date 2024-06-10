@@ -1,5 +1,5 @@
 [package]
-name = "canister_upgrade_proposal_builder"
+name = "account_id"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,5 +8,4 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-sns_governance_canister = { path = "../external_canisters/sns_governance/api" }
-types = { path = "../libraries/types" }
+ic-ledger-types = { workspace = true }

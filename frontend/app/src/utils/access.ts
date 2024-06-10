@@ -139,7 +139,7 @@ const credentialGate: GateBinding = {
             credentialType: "",
         },
     },
-    enabled: false,
+    enabled: true,
 };
 
 export const credentialIssuers: Credential[] = [

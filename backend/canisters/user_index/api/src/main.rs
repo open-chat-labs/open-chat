@@ -17,6 +17,7 @@ fn main() {
     generate_candid_method!(user_index, suspected_bots, query);
     generate_candid_method!(user_index, user, query);
     generate_candid_method!(user_index, user_registration_canister, query);
+    generate_candid_method!(user_index, users, query);
     generate_candid_method!(user_index, users_v2, query);
 
     generate_candid_method!(user_index, add_platform_moderator, update);

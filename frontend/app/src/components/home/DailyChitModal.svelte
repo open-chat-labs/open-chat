@@ -1,6 +1,7 @@
 <script lang="ts">
+    import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
     import type { OpenChat } from "openchat-client";
@@ -13,6 +14,8 @@
     import Progress from "../Progress.svelte";
     import Streak from "./profile/Streak.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -25,8 +28,9 @@
     // $: available = true;
     // $: streak = 2;
     $: user = client.user;
+    $: userStore = client.userStore;
     $: available = $user.nextDailyChitClaim < $now500;
-    $: streak = $user.streak;
+    $: streak = $userStore[$user.userId]?.streak ?? 0;
     $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
 
@@ -73,10 +77,20 @@
         //     }, 2000);
         // }, 1000);
     }
+
+    function leaderboard() {
+        close();
+        tick().then(() => dispatch("leaderboard"));
+    }
 </script>
 
 <ModalContent closeIcon on:close={close}>
     <div class="header" slot="header">
+        <div class="leaderboard">
+            <HoverIcon on:click={leaderboard}>
+                <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </div>
         <Translatable resourceKey={i18nKey("dailyChit.title")} />
     </div>
     <div class="body" slot="body">
@@ -298,5 +312,11 @@
                 height: $sp4;
             }
         }
+    }
+
+    .leaderboard {
+        position: absolute;
+        top: $sp3;
+        left: $sp3;
     }
 </style>

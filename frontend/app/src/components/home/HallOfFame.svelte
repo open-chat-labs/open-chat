@@ -115,7 +115,7 @@
             <img class="bot left" src="/assets/pixel.svg" />
             <img class="bot right" src="/assets/pixel.svg" />
             <div class="title-wrapper">
-                <div class="title">{$_("openChat")}</div>
+                <div class="title">{$_("cockpissy")}</div>
             </div>
             <div class="settings">
                 <div

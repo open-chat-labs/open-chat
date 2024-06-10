@@ -279,7 +279,9 @@
     }
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
-        incomingVideoCall.set(ev.detail);
+        if (!ev.detail.currentUserIsParticipant) {
+            incomingVideoCall.set(ev.detail);
+        }
     }
 
     async function newChatSelected(
@@ -492,8 +494,7 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                // TODO - sort out hall of fame for chit
-                // modal = ModalType.HallOfFame;
+                modal = ModalType.HallOfFame;
                 pageReplace(removeQueryStringParam("hof"));
             }
 
@@ -535,6 +536,10 @@
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
         waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+    }
+
+    function leaderboard() {
+        modal = ModalType.HallOfFame;
     }
 
     function closeModal() {
@@ -1236,13 +1241,15 @@
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
-            <HallOfFame on:close={closeModal} />
+            <HallOfFame
+                on:streak={() => (modal = ModalType.ClaimDailyChit)}
+                on:close={closeModal} />
         {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
         {:else if modal === ModalType.ClaimDailyChit}
-            <DailyChitModal on:close={closeModal} />
+            <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

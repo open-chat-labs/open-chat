@@ -24,6 +24,60 @@ export type UserSummary = DataContent & {
     streak: number;
 };
 
+// Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
+export function mergeUserSummaryWithUpdates(
+    cached: UserSummary | undefined,
+    updates: UserSummaryUpdate,
+    timestamp: bigint,
+): UserSummary | undefined {
+    if (cached === undefined) {
+        if (updates.stable === undefined || updates.volatile === undefined) {
+            // in this case we cannot construct a valid UserSummary - this should not happen
+            return undefined;
+        }
+        return {
+            kind: updates.stable.isBot ? "bot" : "user",
+            userId: updates.userId,
+            ...updates.stable,
+            ...updates.volatile,
+            updated: timestamp,
+        };
+    }
+    if (cached.userId !== updates.userId) {
+        return undefined;
+    }
+    return {
+        ...cached,
+        ...updates.stable,
+        ...updates.volatile,
+    };
+}
+
+export function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSummary {
+    return {
+        kind: current.isBot ? "bot" : "user",
+        userId: current.userId,
+        username: current.username,
+        displayName: current.displayName,
+        updated: current.updated,
+        suspended: current.suspensionDetails !== undefined,
+        diamondStatus: current.diamondStatus.kind,
+        chitBalance: current.chitBalance,
+        streak: current.streak,
+        blobReference: current.blobReference,
+        blobData: current.blobData,
+        blobUrl: current.blobUrl,
+    };
+}
+
+export function updateCreatedUser(created: CreatedUser, summary: CurrentUserSummary): CreatedUser {
+    return {
+        ...created,
+        ...summary,
+        kind: "created_user",
+    };
+}
+
 export type UserGroupSummary = {
     kind: "user_group";
     memberCount: number;
@@ -79,6 +133,32 @@ export type UsersArgs = {
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: UserSummary[];
+    currentUser?: CurrentUserSummary;
+};
+
+export type UserSummaryStable = DataContent & {
+    username: string;
+    diamondStatus: DiamondMembershipStatus["kind"];
+    isBot: boolean;
+    displayName: string | undefined;
+    suspended: boolean;
+};
+
+export type UserSummaryVolatile = {
+    streak: number;
+    chitBalance: number;
+};
+
+export type UserSummaryUpdate = {
+    stable?: UserSummaryStable;
+    userId: string;
+    volatile?: UserSummaryVolatile;
+};
+
+export type UsersApiResponse = {
+    serverTimestamp: bigint;
+    users: UserSummaryUpdate[];
+    currentUser?: CurrentUserSummary;
 };
 
 export enum UserStatus {
@@ -107,6 +187,35 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
+type CurrentUserCommon = DataContent & {
+    streak: number;
+    username: string;
+    isPlatformOperator: boolean;
+    diamondStatus: DiamondMembershipStatus;
+    nextDailyChitClaim: bigint;
+    userId: string;
+    isBot: boolean;
+    displayName: string | undefined;
+    moderationFlagsEnabled: number;
+    chitBalance: number;
+    isSuspectedBot: boolean;
+    suspensionDetails: SuspensionDetails | undefined;
+    isPlatformModerator: boolean;
+    diamondDetails?: DiamondMembershipDetails;
+    updated: bigint;
+};
+
+export type CurrentUserSummary = CurrentUserCommon & {
+    kind: "current_user_summary";
+};
+
+export type CreatedUser = CurrentUserCommon & {
+    kind: "created_user";
+    dateCreated: bigint;
+    cryptoAccount: string;
+    referrals: string[];
+};
+
 export function anonymousUser(): CreatedUser {
     return {
         kind: "created_user",
@@ -115,7 +224,6 @@ export function anonymousUser(): CreatedUser {
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
-        canisterUpgradeStatus: "not_required",
         referrals: [],
         isPlatformModerator: false,
         isPlatformOperator: false,
@@ -126,28 +234,10 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         nextDailyChitClaim: 0n,
+        isBot: false,
+        updated: 0n,
     };
 }
-
-export type CreatedUser = {
-    kind: "created_user";
-    username: string;
-    dateCreated: bigint;
-    displayName: string | undefined;
-    cryptoAccount: string;
-    userId: string;
-    canisterUpgradeStatus: "required" | "not_required" | "in_progress";
-    referrals: string[];
-    isPlatformModerator: boolean;
-    isPlatformOperator: boolean;
-    suspensionDetails: SuspensionDetails | undefined;
-    isSuspectedBot: boolean;
-    diamondStatus: DiamondMembershipStatus;
-    moderationFlagsEnabled: number;
-    chitBalance: number;
-    streak: number;
-    nextDailyChitClaim: bigint;
-};
 
 export type DiamondMembershipStatus =
     | { kind: "inactive" }

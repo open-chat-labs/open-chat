@@ -17,7 +17,6 @@ pub struct SonicClient {
     token0: TokenInfo,
     token1: TokenInfo,
     zero_for_one: bool,
-    deposit_subaccount: [u8; 32],
 }
 
 impl SonicClient {
@@ -27,7 +26,6 @@ impl SonicClient {
         token0: TokenInfo,
         token1: TokenInfo,
         zero_for_one: bool,
-        deposit_subaccount: [u8; 32],
     ) -> Self {
         SonicClient {
             this_canister_id,
@@ -35,7 +33,6 @@ impl SonicClient {
             token0,
             token1,
             zero_for_one,
-            deposit_subaccount,
         }
     }
 
@@ -47,17 +44,18 @@ impl SonicClient {
     }
 
     pub async fn deposit(&self, amount: u128) -> CallResult<u128> {
-        let args = (self.input_token().ledger, amount.into());
+        let token = self.input_token();
+        let args = (token.ledger, amount.saturating_sub(token.fee).into());
         match sonic_canister_c2c_client::deposit(self.sonic_canister_id, args).await?.0 {
             SonicResult::Ok(amount_deposited) => Ok(nat_to_u128(amount_deposited)),
             SonicResult::Err(error) => Err(convert_error(error)),
         }
     }
 
-    pub async fn swap(&self, amount: u128) -> CallResult<u128> {
+    pub async fn swap(&self, amount: u128, min_amount_out: u128) -> CallResult<Result<u128, String>> {
         let args = (
             Nat::from(amount),
-            Nat::from(0u32),
+            Nat::from(min_amount_out),
             vec![self.input_token().ledger.to_string(), self.output_token().ledger.to_string()],
             self.this_canister_id,
             Int::from(u64::MAX),
@@ -66,15 +64,15 @@ impl SonicClient {
             .await?
             .0
         {
-            SonicResult::Ok(_tx_id) => {
-                unimplemented!()
-            }
-            SonicResult::Err(error) => Err(convert_error(error)),
+            SonicResult::Ok(amount_out) => Ok(Ok(nat_to_u128(amount_out))),
+            SonicResult::Err(error) => Ok(Err(error)),
         }
     }
 
-    pub async fn withdraw(&self, amount: u128) -> CallResult<u128> {
-        let args = (self.output_token().ledger, amount.into());
+    pub async fn withdraw(&self, successful_swap: bool, amount: u128) -> CallResult<u128> {
+        let token = if successful_swap { self.output_token() } else { self.input_token() };
+        let amount = if successful_swap { amount } else { amount.saturating_sub(token.fee) };
+        let args = (token.ledger, amount.into());
         match sonic_canister_c2c_client::withdraw(self.sonic_canister_id, args).await?.0 {
             SonicResult::Ok(amount_withdrawn) => Ok(nat_to_u128(amount_withdrawn)),
             SonicResult::Err(error) => Err(convert_error(error)),

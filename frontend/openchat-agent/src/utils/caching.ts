@@ -31,6 +31,7 @@ import type {
     CreatedUser,
     DiamondMembershipStatus,
     TransferSuccess,
+    CurrentUserSummary,
 } from "openchat-shared";
 import {
     canRetryMessage,
@@ -40,13 +41,14 @@ import {
     MessageContextMap,
     MAX_EVENTS,
     MAX_MESSAGES,
+    updateCreatedUser,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 102;
+const CACHE_VERSION = 103;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -1195,6 +1197,18 @@ async function runExpiredEventSweeper() {
 export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
     if (db === undefined) return;
     return (await db).get("currentUser", principal);
+}
+
+export async function mergeCachedCurrentUser(
+    principal: string,
+    updated: CurrentUserSummary,
+): Promise<void> {
+    if (db === undefined) return;
+    const current = await getCachedCurrentUser(principal);
+    if (current) {
+        const merged = updateCreatedUser(current, updated);
+        (await db).put("currentUser", merged, principal);
+    }
 }
 
 export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
