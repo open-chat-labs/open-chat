@@ -73,6 +73,8 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -111,6 +113,7 @@ import {
     tokenSwapStatusResponse,
     approveTransferResponse,
     apiExchangeArgs,
+    chitEventsResponse,
 } from "./mappers";
 import {
     type Database,
@@ -1385,6 +1388,18 @@ export class UserClient extends CandidService {
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,
+        );
+    }
+
+    chitEvents({ from, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.userService.chit_events({
+                    from: apiOptional(identity, from),
+                    max,
+                    ascending,
+                }),
+            chitEventsResponse,
         );
     }
 }
