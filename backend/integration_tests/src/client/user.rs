@@ -392,6 +392,7 @@ pub mod happy_path {
         env: &PocketIc,
         sender: &User,
         from: Option<TimestampMillis>,
+        to: Option<TimestampMillis>,
         max: u32,
     ) -> user_canister::chit_events::SuccessResult {
         let response = super::chit_events(
@@ -400,6 +401,7 @@ pub mod happy_path {
             sender.canister(),
             &user_canister::chit_events::Args {
                 from,
+                to,
                 max,
                 ascending: false,
             },
