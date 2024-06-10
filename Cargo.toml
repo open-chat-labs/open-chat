@@ -10,6 +10,7 @@ members = [
     "backend/bots/examples/satoshi_dice/impl",
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
+    "backend/tools/account_id",
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
     "backend/tools/canister_upgrader",
