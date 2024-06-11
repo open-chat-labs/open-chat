@@ -20,8 +20,12 @@
         routerReady,
         adminRoute,
     } from "../routes";
+    import type { MultiUserChat } from "openchat-client";
 
     export let showLandingPage: boolean;
+    export let joinAfterRegister:
+        | CustomEvent<{ group: MultiUserChat; select: boolean }>
+        | undefined = undefined;
 
     let route: typeof SvelteComponent<object> | undefined = undefined;
 
@@ -219,5 +223,11 @@
 </script>
 
 {#if route !== undefined}
-    <svelte:component this={route} {showLandingPage} on:startVideoCall on:askToSpeak on:hangup />
+    <svelte:component
+        this={route}
+        {showLandingPage}
+        bind:joinAfterRegister
+        on:startVideoCall
+        on:askToSpeak
+        on:hangup />
 {/if}

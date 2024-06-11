@@ -21,6 +21,7 @@
         type ChatSummary,
         type ChatIdentifier,
         routeForChatIdentifier,
+        type MultiUserChat,
     } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
@@ -89,6 +90,8 @@
 
     let profileTrace = client.showTrace();
     let videoCallElement: ActiveCall;
+    let joinAfterRegister: CustomEvent<{ group: MultiUserChat; select: boolean }> | undefined =
+        undefined;
 
     setContext<OpenChat>("client", client);
 
@@ -433,6 +436,7 @@
             on:hangup={hangup}
             on:askToSpeak={askToSpeak}
             on:startVideoCall={startVideoCall}
+            bind:joinAfterRegister
             {showLandingPage} />
     {/if}
 {/if}

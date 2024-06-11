@@ -108,6 +108,11 @@
     };
 
     const client = getContext<OpenChat>("client");
+
+    export let joinAfterRegister:
+        | CustomEvent<{ group: MultiUserChat; select: boolean }>
+        | undefined = undefined;
+
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -218,6 +223,9 @@
         if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
+            if (joinAfterRegister !== undefined) {
+                joinGroup(joinAfterRegister);
+            }
         }
     }
 
@@ -290,6 +298,7 @@
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
+        let autojoin = false;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -307,6 +316,7 @@
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                autojoin = $querystring.has("autojoin");
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -359,6 +369,10 @@
             $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
+
+            if (autojoin && chat.kind !== "direct_chat") {
+                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+            }
         }
     }
 
@@ -793,8 +807,10 @@
     ): Promise<void> {
         if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
+            joinAfterRegister = ev;
             return;
         }
+        joinAfterRegister = undefined;
         const { group, select } = ev.detail;
         doJoinGroup(group, select, undefined);
     }
