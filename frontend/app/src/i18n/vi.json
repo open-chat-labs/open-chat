@@ -524,9 +524,11 @@
     "login": "Đăng nhập",
     "loginDialog": {
         "back": "Mặt sau",
-        "checkEmail": "Chúng tôi đã gửi cho bạn email có liên kết đăng nhập hợp lệ trong 5 phút. Nhấp vào liên kết để đăng nhập, sau đó quay lại trang này.",
+        "checkEmail": "Nhấp vào liên kết chúng tôi đã gửi cho bạn và nhập mã sau đây",
+        "codeCopiedToClipboard": "Đã sao chép mã vào bảng nhớ tạm",
+        "failedToCopyCodeToClipboard": "Không sao chép được mã vào bảng nhớ tạm",
         "failedToSendEmail": "Chúng tôi không thể gửi email vào lúc này. Vui lòng thử lại sau.",
-        "generatingLink": "Đang tạo liên kết đăng nhập an toàn...",
+        "generatingLink": "Đang tạo liên kết và mã đăng nhập an toàn...",
         "haveAccount": "Bạn co săn san để tạo một tai khoản?",
         "invalidEmail": "Địa chỉ email không hợp lệ.",
         "noAccount": "Bạn chưa có tài khoản?",
@@ -547,7 +549,9 @@
     "lowBandwidth": "Băng thông thấp",
     "magicLink": {
         "closeMessage": "Vui lòng đóng trang này và thử đăng nhập lại.",
+        "code_invalid": "Mã này không hợp lệ.",
         "continueMessage": "Vui lòng đóng trang này và tiếp tục trên trang gốc.",
+        "enterCode": "Nhập mã xác nhận",
         "link_expired": "Liên kết chỉ có hiệu lực trong 5 phút và hiện đã hết hạn.",
         "link_invalid": "Liên kết không hợp lệ.",
         "success": "Thành công! Bây giờ bạn đã đăng nhập.",

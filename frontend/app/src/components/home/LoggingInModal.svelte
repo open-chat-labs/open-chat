@@ -8,6 +8,7 @@
     import Translatable from "../Translatable.svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import Input from "../Input.svelte";
@@ -15,6 +16,8 @@
     import { ECDSAKeyIdentity } from "@dfinity/identity";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -25,6 +28,7 @@
     let showMore = false;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
+    let verificationCode: string | undefined = undefined;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -131,10 +135,13 @@
     }
 
     function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
+        verificationCode = undefined;
+
         client
             .generateMagicLink(email, sessionKey)
             .then((response) => {
                 if (response.kind === "success") {
+                    verificationCode = response.code;
                     client.gaTrack("generated_magic_signin_link", "registration");
                     startPoller(email, sessionKey, response.userKey, response.expiration);
                 } else if (response.kind === "email_invalid") {
@@ -202,6 +209,19 @@
             client.gaTrack("signin_link_clicked", "registration");
         }
         mode = mode === "signin" ? "signup" : "signin";
+    }
+
+    function copyCode() {
+        if (verificationCode === undefined) return;
+
+        navigator.clipboard.writeText(verificationCode).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
+            },
+        );
     }
 </script>
 
@@ -322,6 +342,17 @@
                             ? "loginDialog.generatingLink"
                             : "loginDialog.checkEmail",
                     )} />
+
+                {#if emailSignInPoller !== undefined && verificationCode !== undefined}
+                    <div class="code-wrapper">
+                        <div class="code">
+                            {verificationCode}
+                        </div>
+                        <div class="copy" on:click={copyCode}>
+                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
+                {/if}
             </p>
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
@@ -507,5 +538,25 @@
         .change-mode {
             margin-top: $sp4;
         }
+    }
+
+    .code-wrapper {
+        margin-top: $sp4;
+        display: flex;
+        gap: $sp3;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .code {
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        @include font-size(fs-160);
+    }
+
+    .copy {
+        cursor: pointer;
+        position: relative;
+        top: 2px;
     }
 </style>

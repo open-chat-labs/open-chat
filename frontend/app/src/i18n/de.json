@@ -524,9 +524,11 @@
     "login": "anmelden",
     "loginDialog": {
         "back": "Zurück",
-        "checkEmail": "Wir haben Ihnen eine E-Mail mit einem 5 Minuten gültigen Anmeldelink gesendet. Klicken Sie auf den Link, um sich anzumelden, und kehren Sie dann zu dieser Seite zurück.",
+        "checkEmail": "Klicken Sie auf den Link, den wir Ihnen gesendet haben, und geben Sie den folgenden Code ein",
+        "codeCopiedToClipboard": "Code in die Zwischenablage kopiert",
+        "failedToCopyCodeToClipboard": "Code konnte nicht in die Zwischenablage kopiert werden",
         "failedToSendEmail": "Wir konnten die E-Mail derzeit nicht versenden. Bitte versuchen Sie es später noch einmal.",
-        "generatingLink": "Ein sicherer Anmeldelink wird generiert ...",
+        "generatingLink": "Ein sicherer Anmeldelink und -code wird generiert …",
         "haveAccount": "Sie haben bereits ein Konto?",
         "invalidEmail": "Die e-mail Adresse ist ungültig.",
         "noAccount": "Sie haben noch kein Konto?",
@@ -547,7 +549,9 @@
     "lowBandwidth": "Niedrige Bandbreite",
     "magicLink": {
         "closeMessage": "Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
+        "code_invalid": "Der Code ist ungültig.",
         "continueMessage": "Bitte schließen Sie diese Seite und fahren Sie auf der Originalseite fort.",
+        "enterCode": "Geben Sie den Bestätigungscode ein",
         "link_expired": "Der Link ist nur 5 Minuten gültig und jetzt abgelaufen.",
         "link_invalid": "Der Link ist ungültig.",
         "success": "Erfolg! Sie sind jetzt angemeldet.",

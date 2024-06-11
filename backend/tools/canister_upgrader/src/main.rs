@@ -50,7 +50,10 @@ async fn main() {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
         }
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
-        CanisterName::SignInWithEmail | CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
+        CanisterName::SignInWithEmail => {
+            upgrade_sign_in_with_email_canister(identity, opts.url, opts.sign_in_with_email, opts.version).await
+        }
+        CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
     };
 }
 
@@ -106,6 +109,9 @@ struct Opts {
 
     #[arg(long)]
     event_store: CanisterId,
+
+    #[arg(long)]
+    sign_in_with_email: CanisterId,
 
     #[arg(long)]
     canister_to_upgrade: CanisterName,
