@@ -5,14 +5,35 @@
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { createEventDispatcher, onMount } from "svelte";
 
-    export let date: Date;
+    const dispatch = createEventDispatcher();
+
+    export let busy = false;
 
     let today = new Date();
+    let showDate = new Date();
+    let title = "";
+    let dates: Date[][] = [];
+    let month = 0;
 
-    $: showDate = date || new Date();
-    $: ({ year, month, dates } = getMonthCalendar(showDate));
-    $: title = getTitleText(year, month, $locale ?? "default");
+    $: {
+        getDates(showDate);
+    }
+
+    onMount(() => getDates(showDate));
+
+    function getDates(start: Date) {
+        const resp = getMonthCalendar(start);
+        title = getTitleText(resp.year, resp.month, $locale ?? "default");
+        dates = resp.dates;
+        month = resp.month;
+        const allDates = resp.dates.flatMap((d) => d);
+        dispatch("dateSelected", {
+            date: start,
+            range: [allDates[0], allDates[allDates.length - 1]],
+        });
+    }
 
     function previousMonth() {
         const year = showDate.getFullYear();

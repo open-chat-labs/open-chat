@@ -1391,11 +1391,12 @@ export class UserClient extends CandidService {
         );
     }
 
-    chitEvents({ from, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
+    chitEvents({ from, to, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.userService.chit_events({
                     from: apiOptional(identity, from),
+                    to: apiOptional(identity, to),
                     max,
                     ascending,
                 }),
