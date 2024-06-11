@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { getMonthCalendar, isSameDay, weekDay } from "./utils";
+    import { locale } from "svelte-i18n";
+    import { getMonthCalendar, getTitleText, isSameDay, weekDay } from "./utils";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -8,16 +9,18 @@
     export let date: Date;
 
     let today = new Date();
+
     $: showDate = date || new Date();
-    $: ({ month, year, daysDistribution } = getMonthCalendar(showDate));
+    $: ({ year, month, dates } = getMonthCalendar(showDate));
+    $: title = getTitleText(year, month, $locale ?? "default");
 
     function previousMonth() {
-        const currYear = showDate.getFullYear();
-        const currMonth = showDate.getMonth();
-        if (currMonth - 1 < 0) {
-            showDate = new Date(currYear - 1, 11, 1);
+        const year = showDate.getFullYear();
+        const month = showDate.getMonth();
+        if (month - 1 < 0) {
+            showDate = new Date(year - 1, 11, 1);
         } else {
-            showDate = new Date(currYear, currMonth - 1, 1);
+            showDate = new Date(year, month - 1, 1);
         }
     }
     function nextMonth() {
@@ -36,7 +39,7 @@
         <HoverIcon on:click={previousMonth}>
             <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
-        <h3>Chit earned</h3>
+        <h3>{title}</h3>
         <HoverIcon on:click={nextMonth}>
             <NextIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
@@ -49,17 +52,18 @@
         {/each}
     </div>
     <div class="daily-date-container">
-        {#each daysDistribution as week}
+        {#each dates as week}
             <div class="week-row">
                 {#each week as day, d}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
-                        class:today={typeof day === "string"
-                            ? false
-                            : isSameDay(today, new Date(year, month, day))}
+                        class:disabled={day.getMonth() !== month}
+                        class:today={typeof day === "string" ? false : isSameDay(today, day)}
                         class="block daily-date-block pointer">
-                        {day}
+                        <slot {day}>
+                            {day.getDate()}
+                        </slot>
                     </div>
                 {/each}
             </div>
@@ -73,24 +77,23 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        border-radius: 4px;
-        @include box-shadow(3);
+        border-radius: var(--rd);
+        @include box-shadow(2);
     }
 
     .block {
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: $sp4;
+        min-height: toRem(50);
         @include font(medium, normal, fs-100);
-        transition: border-color 0.25s;
         flex-grow: 0;
         flex-shrink: 0;
-        border-left: 1px solid var(--bd);
-        border-bottom: 1px solid var(--bd);
+        border-left: var(--bw) solid var(--bd);
+        border-bottom: var(--bw) solid var(--bd);
 
         &:last-child {
-            border-right: 1px solid var(--bd);
+            border-right: var(--bw) solid var(--bd);
         }
     }
 
@@ -98,6 +101,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: $sp4;
+        border: solid var(--bw) var(--bd);
     }
 
     .week-days-row,
@@ -106,14 +111,29 @@
         display: flex;
         flex-wrap: wrap;
     }
+
     .weekday-name-block,
     .daily-date-block {
         width: calc(100% / 7);
         font-variant-numeric: tabular-nums;
     }
-    .today {
-        background-color: var(--accent);
+
+    .daily-date-block {
+        transition: background 0.25s ease-in-out;
+        &:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
     }
+
+    .today {
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    .disabled {
+        color: var(--txt-light);
+    }
+
     .weekday-name-block {
         font-weight: bold;
     }

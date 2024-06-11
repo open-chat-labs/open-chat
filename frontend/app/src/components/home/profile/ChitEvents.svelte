@@ -2,6 +2,8 @@
     import { OpenChat, type ChitEarned } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Calendar from "../../calendar/Calendar.svelte";
+    import { isSameDay } from "../../calendar/utils";
+    import ChitEventsForDay from "./ChitEventsForDay.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -26,10 +28,19 @@
             })
             .finally(() => (busy = false));
     });
+
+    function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
+        return events.filter((e) => {
+            const eventDate = new Date(Number(e.timestamp));
+            return isSameDay(date, eventDate);
+        });
+    }
 </script>
 
 <div class="chit-events">
-    <Calendar {date} />
+    <Calendar let:day {date}>
+        <ChitEventsForDay {day} events={chitEventsForDay(events, day)} />
+    </Calendar>
 </div>
 
 <style lang="scss">

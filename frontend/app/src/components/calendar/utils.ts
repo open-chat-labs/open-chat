@@ -1,38 +1,50 @@
-export const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
 export const weekDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-export type ViewType = "month" | "year" | "decade";
+
+export function getTitleText(year: number, month: number, locale: string): string {
+    const date = new Date(year, month, 1);
+    const formatter = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" });
+    return formatter.format(date);
+}
+
+function getCalendarDates(year: number, month: number): Date[] {
+    const dates: Date[] = [];
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    const lastDayDate = lastDayOfMonth.getDate();
+    const lastDayWeekday = lastDayOfMonth.getDay();
+
+    const daysFromPrevMonth = firstDayWeekday;
+    for (let i = 0; i < daysFromPrevMonth; i++) {
+        dates.push(new Date(year, month, i - daysFromPrevMonth + 1));
+    }
+
+    for (let day = 1; day <= lastDayDate; day++) {
+        dates.push(new Date(year, month, day));
+    }
+
+    const daysFromNextMonth = 6 - lastDayWeekday;
+    for (let i = 1; i <= daysFromNextMonth; i++) {
+        dates.push(new Date(year, month + 1, i));
+    }
+
+    while (dates.length % 7 !== 0) {
+        const lastDate = dates[dates.length - 1];
+        dates.push(new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate() + 1));
+    }
+
+    return dates;
+}
 
 export const getMonthCalendar = (currDate: Date) => {
     const date = new Date(currDate);
     const year = date.getFullYear();
     const month = date.getMonth();
-    const noOfDays = new Date(year, month + 1, 0).getDate();
-    const startingDayInWeek = new Date(year, month, 1).getDay() + 1;
-    const daysDistribution = [];
-    for (let i = 1; i < startingDayInWeek + noOfDays; i++) {
-        if (i < startingDayInWeek) {
-            daysDistribution.push("");
-        } else {
-            daysDistribution.push(i - startingDayInWeek + 1);
-        }
-    }
+    const dates = getCalendarDates(year, month);
     return {
         month: month,
         year: year,
-        daysDistribution: chunk(daysDistribution, 7),
+        dates: chunk(dates, 7),
     };
 };
 
@@ -55,24 +67,4 @@ export const isSameDay = (d1: Date, d2: Date) => {
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate()
     );
-};
-
-export const isSameMonth = (d1: Date, d2: Date) => {
-    return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth();
-};
-
-export const getYearRange = (year: number) => {
-    const lastChar = `${year}`.substring(`${year}`.length - 1);
-    const yearToBeDeducted = Number(lastChar);
-    const startYear = year - yearToBeDeducted;
-    const endYear = year + (10 - yearToBeDeducted);
-    const years = [];
-    for (let i = startYear; i <= endYear; i++) {
-        years.push(i);
-    }
-    return {
-        startYear: year - yearToBeDeducted,
-        endYear: year + (10 - yearToBeDeducted),
-        years,
-    };
 };
