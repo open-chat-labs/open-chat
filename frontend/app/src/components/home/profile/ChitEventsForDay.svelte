@@ -21,6 +21,10 @@
                         {#each events as event}
                             {#if event.reason.kind === "daily_claim"}
                                 <p>{`🚀  Daily claim: ${event.amount}`}</p>
+                            {:else if event.reason.kind === "achievement_unlocked"}
+                                <p>{`🔓️ Achievement unlocked: ${event.amount}`}</p>
+                            {:else if event.reason.kind === "meme_contest_winner"}
+                                <p>{`🏆️ Meme context win: ${event.amount}`}</p>
                             {/if}
                         {/each}
                     </div>

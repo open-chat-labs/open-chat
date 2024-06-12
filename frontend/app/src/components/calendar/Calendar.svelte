@@ -99,7 +99,6 @@
         display: flex;
         flex-direction: column;
         border-radius: var(--rd);
-        @include box-shadow(2);
     }
 
     .block {
