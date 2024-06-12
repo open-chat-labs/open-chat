@@ -98,7 +98,7 @@
             <span slot="text"><Translatable resourceKey={i18nKey("logout")} /></span>
         </MenuItem>
     {:else}
-        <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
+        <MenuItem on:click={() => client.updateIdentityState({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
         </MenuItem>

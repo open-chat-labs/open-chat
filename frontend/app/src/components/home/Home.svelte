@@ -108,6 +108,7 @@
     };
 
     const client = getContext<OpenChat>("client");
+
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -219,6 +220,15 @@
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
         }
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_group" &&
+            $chatsInitialised
+        ) {
+            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            client.clearPostLoginState();
+            tick().then(() => joinGroup(ev));
+        }
     }
 
     $: {
@@ -290,6 +300,7 @@
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
+        let autojoin = false;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -307,6 +318,7 @@
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                autojoin = $querystring.has("autojoin");
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -359,6 +371,10 @@
             $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
+
+            if (autojoin && chat.kind !== "direct_chat") {
+                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+            }
         }
     }
 
@@ -403,7 +419,7 @@
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
-                client.identityState.set({ kind: "logging_in" });
+                client.updateIdentityState({ kind: "logging_in" });
                 pageRedirect("/group");
                 return;
             }
@@ -792,7 +808,10 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_group", ...ev.detail },
+            });
             return;
         }
         const { group, select } = ev.detail;
