@@ -103,7 +103,8 @@ export type IdentityState =
     | { kind: "registering" }
     | { kind: "logging_in" }
     | { kind: "upgrading_user" }
-    | { kind: "upgrade_user" };
+    | { kind: "upgrade_user" }
+    | { kind: "challenging" };
 
 export type UserLookup = Record<string, UserSummary>;
 

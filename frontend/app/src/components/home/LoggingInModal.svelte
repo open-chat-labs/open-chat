@@ -56,7 +56,7 @@
         if ($identityState.kind === "anon" && state === "logging-in") {
             dispatch("close");
         }
-        if ($identityState.kind === "logged_in") {
+        if ($identityState.kind === "logged_in" || $identityState.kind === "challenging") {
             dispatch("close");
         }
     }

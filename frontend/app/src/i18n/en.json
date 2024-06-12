@@ -1400,5 +1400,11 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
+    "challenge": {
+        "title": "Prove you're not a robot",
+        "throttled": "Service busy - please close and try again later",
+        "alreadyRegistered": "Please close and try again later",
+        "failed": "Challenge failed. Please try again."
+    }
 }

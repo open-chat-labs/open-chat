@@ -395,6 +395,8 @@ import type {
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
     VideoCallContent,
+    GenerateChallengeResponse,
+    ChallengeAttempt,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -618,12 +620,33 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
-    private loadedAuthenticationIdentity(id: Identity) {
+    private async loadedAuthenticationIdentity(id: Identity) {
         currentUser.set(anonymousUser());
         chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
         this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
+
+        const connectToWorkerResponse = await this.connectToWorker();
+
+        if (this._authPrincipal !== undefined) {
+            if (connectToWorkerResponse === "oc_identity_not_found") {
+                if (this._liveState.selectedAuthProvider === AuthProvider.II) {
+                    this.identityState.set({ kind: "challenging" });
+                    return;
+                }
+
+                await this.sendRequest({
+                    kind: "createOpenChatIdentity",
+                    challengeAttempt: undefined,
+                });
+            }
+
+            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        } else {
+            await this._ocIdentityStorage.remove();
+        }
+
         this.loadUser();
     }
 
@@ -736,26 +759,37 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadUser() {
-        await this.connectToWorker();
-
-        if (this._authPrincipal !== undefined) {
-            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
-        } else {
-            await this._ocIdentityStorage.remove();
+    async submitChallenge(challengeAttempt: ChallengeAttempt): Promise<boolean> {
+        if (this._authPrincipal === undefined) {
+            return false;
         }
 
-        this.startRegistryPoller();
+        let resp = await this.sendRequest({
+            kind: "createOpenChatIdentity",
+            challengeAttempt,
+        });
 
-        this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
-            failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
-        );
+        if (resp !== "success") {
+            return false;
+        }
+
+        this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        this.loadUser();
+        return true;
+    }
+
+    private async loadUser() {
+        this.startRegistryPoller();
 
         if (this._ocIdentity === undefined) {
             // short-circuit if we *know* that the user is anonymous
             this.onCreatedUser(anonymousUser());
             return;
         }
+
+        this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
+            failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
+        );
 
         this.getCurrentUser()
             .then((user) => {
@@ -909,6 +943,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const KEY_STORAGE_IDENTITY = "identity";
         const identity = await this._authClientStorage.get(KEY_STORAGE_IDENTITY);
         return this._liveState.userCreated && identity !== null;
+    }
+
+    generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
+        return this.sendRequest({
+            kind: "generateIdentityChallenge",
+            identityCanister: this.config.identityCanister,
+            icUrl: this.config.icUrl ?? window.location.origin,
+        });
     }
 
     unreadThreadMessageCount(

@@ -5,12 +5,14 @@ import type {
     ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
+    GenerateChallengeResponse,
     GetDelegationResponse,
     PrepareDelegationResponse,
 } from "openchat-shared";
 import {
     checkAuthPrincipalResponse,
     createIdentityResponse,
+    generateChallengeResponse,
     getDelegationResponse,
     prepareDelegationResponse,
 } from "./mappers";
@@ -80,5 +82,9 @@ export class IdentityClient extends CandidService {
             getDelegationResponse,
             args,
         );
+    }
+
+    generateChallenge(): Promise<GenerateChallengeResponse> {
+        return this.handleResponse(this.service.generate_challenge({}), generateChallengeResponse);
     }
 }

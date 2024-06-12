@@ -1,9 +1,10 @@
-import { AnonymousIdentity, type Identity, SignIdentity } from "@dfinity/agent";
+import { AnonymousIdentity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
+    type Init,
     type Logger,
     MessagesReadFromServer,
     StorageUpdated,
@@ -14,6 +15,9 @@ import {
     type WorkerRequest,
     Stream,
     IdentityStorage,
+    type GetOpenChatIdentityResponse,
+    type ChallengeAttempt,
+    type CreateOpenChatIdentityError,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -22,66 +26,75 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-let logger: Logger | undefined = undefined;
-
 const authClient = AuthClient.create({
     idleOptions: {
         disableIdle: true,
     },
     storage: new IdbStorage(),
 });
+
 const ocIdentityStorage = new IdentityStorage();
 
-async function getIdentity(identityCanister: string, icUrl: string): Promise<Identity> {
+let initPayload: Init | undefined = undefined;
+let identityAgent: IdentityAgent | undefined = undefined;
+let authPrincipalString: string | undefined = undefined;
+let logger: Logger | undefined = undefined;
+let agent: OpenChatAgent | undefined = undefined;
+
+async function getOpenChatIdentity(
+    identityCanister: string,
+    icUrl: string,
+): Promise<GetOpenChatIdentityResponse> {
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
     const authPrincipal = authProviderIdentity.getPrincipal();
-    if (!authPrincipal.isAnonymous()) {
-        const authPrincipalString = authPrincipal.toString();
-        const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
-        if (ocIdentity !== undefined) {
-            return ocIdentity;
-        }
-        const identityAgent = new IdentityAgent(
-            authProviderIdentity as SignIdentity,
-            identityCanister,
-            icUrl,
-        );
-        const checkAuthPrincipalResponse = await identityAgent.checkAuthPrincipal();
-        let shouldGetIdentity = false;
-        let shouldCreateIdentity = false;
-        switch (checkAuthPrincipalResponse.kind) {
-            case "success": {
-                shouldGetIdentity = true;
-                break;
-            }
-            case "not_found": {
-                shouldCreateIdentity = true;
-                break;
-            }
-        }
-        if (shouldGetIdentity || shouldCreateIdentity) {
-            const sessionKey = await ECDSAKeyIdentity.generate();
+    if (authPrincipal.isAnonymous()) {
+        return { kind: "auth_identity_not_found" };
+    }
 
-            const identity = shouldGetIdentity
-                ? await identityAgent.getOpenChatIdentity(sessionKey)
-                : await identityAgent.createOpenChatIdentity(sessionKey, undefined);
+    authPrincipalString = authPrincipal.toString();
+    const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
+    if (ocIdentity !== undefined) {
+        return { kind: "success", identity: ocIdentity };
+    }
 
-            if (identity !== undefined && typeof identity !== "string") {
-                await ocIdentityStorage.set(
-                    authPrincipalString,
-                    sessionKey,
-                    identity.getDelegation(),
-                );
-                return (
-                    (await ocIdentityStorage.get(authPrincipalString)) ?? new AnonymousIdentity()
-                );
-            }
+    identityAgent = new IdentityAgent(
+        authProviderIdentity as SignIdentity,
+        identityCanister,
+        icUrl,
+    );
+
+    const ocIdentityExists = await identityAgent.checkOpenChatIdentityExists();
+    if (ocIdentityExists) {
+        const sessionKey = await ECDSAKeyIdentity.generate();
+
+        const identity = await identityAgent.getOpenChatIdentity(sessionKey);
+
+        if (identity !== undefined && typeof identity !== "string") {
+            await ocIdentityStorage.set(authPrincipalString, sessionKey, identity.getDelegation());
+            return { kind: "success", identity };
         }
     }
-    return new AnonymousIdentity();
+
+    return { kind: "oc_identity_not_found" };
 }
 
-let agent: OpenChatAgent | undefined = undefined;
+async function createOpenChatIdentity(
+    challengeAttempt: ChallengeAttempt | undefined,
+): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
+    if (identityAgent === undefined || authPrincipalString === undefined) {
+        throw new Error("IdentityAgent not initialized");
+    }
+
+    const sessionKey = await ECDSAKeyIdentity.generate();
+
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, challengeAttempt);
+
+    if (typeof response !== "string") {
+        await ocIdentityStorage.set(authPrincipalString, sessionKey, response.getDelegation());
+    }
+
+    return response;
+}
 
 function handleAgentEvent(ev: Event): void {
     if (ev instanceof MessagesReadFromServer) {
@@ -187,10 +200,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
     try {
         if (kind === "init") {
+            initPayload = payload;
             executeThenReply(
                 payload,
                 correlationId,
-                getIdentity(payload.identityCanister, payload.icUrl).then((id) => {
+                getOpenChatIdentity(payload.identityCanister, payload.icUrl).then((resp) => {
+                    const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
                         "anon: init worker",
                         id.getPrincipal().toString(),
@@ -207,9 +222,36 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         logger,
                     });
                     agent.addEventListener("openchat_event", handleAgentEvent);
-                    return undefined;
+                    return resp.kind;
                 }),
             );
+            return;
+        }
+
+        if (initPayload === undefined || logger === undefined || identityAgent === undefined) {
+            throw new Error("Worker not initialised");
+        }
+
+        if (payload.kind === "generateIdentityChallenge") {
+            executeThenReply(payload, correlationId, identityAgent.generateChallenge());
+            return;
+        }
+
+        if (kind === "createOpenChatIdentity") {
+            executeThenReply(
+                payload,
+                correlationId,
+                createOpenChatIdentity(payload.challengeAttempt).then((resp) => {
+                    const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                    agent = new OpenChatAgent(id, {
+                        ...initPayload!,
+                        logger: logger!,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return typeof resp !== "string" ? "success" : resp;
+                }),
+            );
+            return;
         }
 
         if (!agent) {
