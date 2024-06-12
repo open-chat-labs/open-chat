@@ -107,6 +107,7 @@
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
         }
+        calculateHeight();
 
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);

@@ -85,7 +85,6 @@
             });
             return;
         }
-        console.log("Creating a community");
         if (!$isDiamond) {
             dispatch("upgrade");
         } else {
