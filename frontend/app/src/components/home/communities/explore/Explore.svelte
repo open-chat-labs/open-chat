@@ -44,6 +44,17 @@
     $: isDiamond = client.isDiamond;
     $: loading = searching && $communitySearchStore.results.length === 0;
     $: offlineStore = client.offlineStore;
+    $: identityState = client.identityState;
+
+    $: {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "create_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => createCommunity());
+        }
+    }
 
     let filters = derived(
         [communityFiltersStore, client.moderationFlags],
@@ -68,9 +79,13 @@
 
     function createCommunity() {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "create_community" },
+            });
             return;
         }
+        console.log("Creating a community");
         if (!$isDiamond) {
             dispatch("upgrade");
         } else {

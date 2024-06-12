@@ -21,7 +21,6 @@
         type ChatSummary,
         type ChatIdentifier,
         routeForChatIdentifier,
-        type MultiUserChat,
     } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
@@ -90,8 +89,6 @@
 
     let profileTrace = client.showTrace();
     let videoCallElement: ActiveCall;
-    let joinAfterRegister: CustomEvent<{ group: MultiUserChat; select: boolean }> | undefined =
-        undefined;
 
     setContext<OpenChat>("client", client);
 
@@ -105,12 +102,14 @@
         (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
         (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
 
+    $: console.log("Identity State: ", $identityState);
+    $: console.log("AnonUser: ", $anonUser);
+
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
         }
-        calculateHeight();
 
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
@@ -436,7 +435,6 @@
             on:hangup={hangup}
             on:askToSpeak={askToSpeak}
             on:startVideoCall={startVideoCall}
-            bind:joinAfterRegister
             {showLandingPage} />
     {/if}
 {/if}

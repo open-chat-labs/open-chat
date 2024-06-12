@@ -109,10 +109,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let joinAfterRegister:
-        | CustomEvent<{ group: MultiUserChat; select: boolean }>
-        | undefined = undefined;
-
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -223,9 +219,15 @@
         if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
-            if (joinAfterRegister !== undefined) {
-                joinGroup(joinAfterRegister);
-            }
+        }
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_group" &&
+            $chatsInitialised
+        ) {
+            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            client.clearPostLoginState();
+            tick().then(() => joinGroup(ev));
         }
     }
 
@@ -417,7 +419,7 @@
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
-                client.identityState.set({ kind: "logging_in" });
+                client.updateIdentityState({ kind: "logging_in" });
                 pageRedirect("/group");
                 return;
             }
@@ -806,11 +808,12 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
-            joinAfterRegister = ev;
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_group", ...ev.detail },
+            });
             return;
         }
-        joinAfterRegister = undefined;
         const { group, select } = ev.detail;
         doJoinGroup(group, select, undefined);
     }

@@ -45,7 +45,7 @@
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
             if ($anonUser && $identityState.kind === "logging_in") {
-                identityState.set({ kind: "anon" });
+                client.updateIdentityState({ kind: "anon" });
             }
 
             emailSignInPoller?.stop();
@@ -63,7 +63,7 @@
 
     function cancel() {
         if ($anonUser && $identityState.kind === "logging_in") {
-            identityState.set({ kind: "anon" });
+            client.updateIdentityState({ kind: "anon" });
         }
         dispatch("close");
     }

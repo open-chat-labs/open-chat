@@ -1,14 +1,11 @@
 <script lang="ts">
     import Home from "./Home.svelte";
     import { getContext } from "svelte";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
 
     export let showLandingPage: boolean;
-    export let joinAfterRegister:
-        | CustomEvent<{ group: MultiUserChat; select: boolean }>
-        | undefined = undefined;
 
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
@@ -27,7 +24,7 @@
         </div>
     </div>
 {:else}
-    <Home bind:joinAfterRegister on:startVideoCall on:askToSpeak on:hangup />
+    <Home on:startVideoCall on:askToSpeak on:hangup />
 {/if}
 
 <style lang="scss">
