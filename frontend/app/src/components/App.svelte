@@ -102,9 +102,6 @@
         (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
         (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
 
-    $: console.log("Identity State: ", $identityState);
-    $: console.log("AnonUser: ", $anonUser);
-
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
