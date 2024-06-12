@@ -1,7 +1,7 @@
 <script lang="ts">
     import GateCheckFailed from "../AccessGateCheckFailed.svelte";
     import Overlay from "../../Overlay.svelte";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat } from "openchat-client";
     import InitiateCredentialCheck from "../InitiateCredentialCheck.svelte";
@@ -11,9 +11,20 @@
     const client = getContext<OpenChat>("client");
 
     $: anonUser = client.anonUser;
+    $: identityState = client.identityState;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: communityGate = $selectedCommunity?.gate;
+
+    $: {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => joinCommunity());
+        }
+    }
 
     let joiningCommunity = false;
     let gateCheckFailed = false;
@@ -26,7 +37,10 @@
 
     function joinCommunity() {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_community" },
+            });
             return;
         }
         doJoinCommunity(undefined);

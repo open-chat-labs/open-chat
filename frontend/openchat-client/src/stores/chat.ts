@@ -220,6 +220,8 @@ export const groupPreviewsStore: Writable<ChatMap<MultiUserChat>> = immutableSto
     new ChatMap<MultiUserChat>(),
 );
 
+type ChatEntry = [ChatIdentifier, ChatSummary];
+
 export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
     [
         myServerChatSummariesStore,
@@ -233,22 +235,25 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
             all = all.concat([...directChats.entries()]);
         }
         if (currentScope.kind === "none") {
-            all = all.concat([...previews.entries()]);
+            all = (previews.entries() as ChatEntry[]).concat(all);
         }
         if (currentScope.kind === "group_chat") {
-            all = all.concat([...previews.filter((c) => c.kind === "group_chat").entries()]);
+            all = (previews.filter((c) => c.kind === "group_chat").entries() as ChatEntry[]).concat(
+                all,
+            );
         }
         if (currentScope.kind === "community") {
             const communityId = currentScope.id.communityId;
             const previewChannels = ChatMap.fromList(
                 communityPreviews.get(currentScope.id)?.channels ?? [],
             );
-            all = all.concat([
-                ...previewChannels.entries(),
-                ...previews
-                    .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
-                    .entries(),
-            ]);
+            all = (previewChannels.entries() as ChatEntry[])
+                .concat(
+                    previews
+                        .filter((c) => c.kind === "channel" && c.id.communityId === communityId)
+                        .entries() as ChatEntry[],
+                )
+                .concat(all);
         }
         return all.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
@@ -260,7 +265,9 @@ export const serverChatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 export const allChats = derived(
     [allServerChats, uninitializedDirectChats, groupPreviewsStore, localChatSummaryUpdates],
     ([$all, $direct, $group, $localSummaryUpdates]) => {
-        const merged = $all.entries().concat([...$direct.entries(), ...$group.entries()]);
+        const merged = ($direct.entries() as ChatEntry[])
+            .concat($group.entries() as ChatEntry[])
+            .concat($all.entries());
         const reduced = merged.reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
             result.set(chatId, summary);
             return result;
