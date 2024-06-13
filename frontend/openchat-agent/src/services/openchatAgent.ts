@@ -203,6 +203,8 @@ import type {
     VideoCallParticipantsResponse,
     AcceptedRules,
     VerifiedCredentialArgs,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3397,5 +3399,9 @@ export class OpenChatAgent extends EventTarget {
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
         return this._userIndexClient.chitLeaderboard();
+    }
+
+    chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.userClient.chitEvents(req);
     }
 }

@@ -296,6 +296,7 @@ export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : string } |
   { 'MemeContestWinner' : null };
 export interface ChitEventsArgs {
+  'to' : [] | [TimestampMillis],
   'max' : number,
   'from' : [] | [TimestampMillis],
   'ascending' : boolean,

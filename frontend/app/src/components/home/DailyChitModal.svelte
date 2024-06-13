@@ -1,7 +1,7 @@
 <script lang="ts">
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
     import type { OpenChat } from "openchat-client";
@@ -31,8 +31,14 @@
     $: userStore = client.userStore;
     $: available = $user.nextDailyChitClaim < $now500;
     $: streak = $userStore[$user.userId]?.streak ?? 0;
+    $: balance = $userStore[$user.userId]?.chitBalance ?? 0;
     $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
+
+    onMount(() => {
+        // no need to do anything with the result explicitly as it will get added to the store automatically
+        client.getUser($user.userId);
+    });
 
     function calculatePercentage(streak: number): number {
         const percent = (streak / 30) * 100;
@@ -48,7 +54,7 @@
 
         busy = true;
 
-        const previousBalance = $user.chitBalance;
+        const previousBalance = balance;
 
         client
             .claimDailyChit()
@@ -105,7 +111,7 @@
             <div class="spacer"></div>
             <div class="current">
                 <div class="chit"></div>
-                {`${$user.chitBalance.toLocaleString()} CHIT`}
+                {`${balance.toLocaleString()} CHIT`}
             </div>
             <div class="additional">
                 {#if additional}

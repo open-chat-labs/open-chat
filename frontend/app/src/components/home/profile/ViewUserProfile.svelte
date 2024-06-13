@@ -478,9 +478,9 @@
 
     .balance {
         padding: $sp2 $sp3;
-        border: 1px solid var(--bd);
         border-radius: var(--rd);
         background-color: var(--button-bg);
+        color: var(--button-txt);
         display: flex;
         gap: $sp3;
         align-items: center;

@@ -1685,6 +1685,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.chitLeaderboard());
                 break;
 
+            case "getChitEvents":
+                executeThenReply(payload, correlationId, agent.chitEvents(payload));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
