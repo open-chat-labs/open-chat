@@ -269,7 +269,7 @@
             on:click={() => (view = "chit")}
             class:selected={view === "chit"}
             class="tab">
-            <Translatable resourceKey={i18nKey("dailyChit.tab")} />
+            <Translatable resourceKey={i18nKey("CHIT")} />
         </div>
     </div>
 {/if}

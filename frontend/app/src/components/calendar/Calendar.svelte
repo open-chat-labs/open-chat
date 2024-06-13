@@ -1,6 +1,6 @@
 <script lang="ts">
     import { locale } from "svelte-i18n";
-    import { getMonthCalendar, getTitleText, isSameDay, weekDay } from "./utils";
+    import { getMonthCalendar, getTitleText, isSameDay, weekDays } from "./utils";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -16,6 +16,8 @@
     let title = "";
     let dates: Date[][] = [];
     let month = 0;
+
+    $: console.log("WeekDays: ", $weekDays);
 
     $: {
         getDates(showDate);
@@ -66,8 +68,8 @@
         </HoverIcon>
     </div>
     <div class="week-days-row">
-        {#each weekDay as d}
-            <div class="block weekday-name-block">
+        {#each $weekDays as d}
+            <div title={d.toUpperCase()} class="block weekday-name-block">
                 {d.charAt(0).toUpperCase()}
             </div>
         {/each}
