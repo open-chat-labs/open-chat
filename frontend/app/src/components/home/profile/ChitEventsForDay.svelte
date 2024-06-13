@@ -48,6 +48,7 @@
 
         &.has-events {
             background-color: var(--button-bg);
+            color: var(--button-txt);
             transition: background-color 300ms ease-in-out;
 
             &:hover {

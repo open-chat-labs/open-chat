@@ -80,6 +80,7 @@
         display: flex;
         flex-direction: column;
         padding-bottom: $sp5;
+        gap: $sp3;
     }
 
     .streak {
@@ -97,9 +98,9 @@
 
     .balance {
         padding: $sp3 $sp4;
-        border: var(--bw) solid var(--bd);
         border-radius: var(--rd);
         background-color: var(--button-bg);
+        color: var(--button-txt);
         display: flex;
         gap: $sp4;
         align-items: center;
