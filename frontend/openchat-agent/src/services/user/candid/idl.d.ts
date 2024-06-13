@@ -159,6 +159,9 @@ import {
     SetVideoCallPresenceResponse,
     SetPinNumberResponse,
     PinNumberSettings,
+    ChitEventsResponse,
+    ChitEarned,
+    ChitEarnedReason,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -320,6 +323,9 @@ export {
     SetVideoCallPresenceResponse as ApiSetVideoCallPresenceResponse,
     SetPinNumberResponse as ApiSetPinNumberResponse,
     PinNumberSettings as ApiPinNumberSettings,
+    ChitEventsResponse as ApiChitEventsResponse,
+    ChitEarned as ApiChitEarned,
+    ChitEarnedReason as ApiChitEarnedReason
 };
 
 export const idlFactory: IDL.InterfaceFactory;

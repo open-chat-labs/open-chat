@@ -54,6 +54,7 @@
     import { menuCloser } from "../../../actions/closeMenu";
     import Translatable from "../../Translatable.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
+    import ChitEvents from "./ChitEvents.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -73,7 +74,7 @@
     let displayName: string | undefined = undefined;
     let displayNameValid = true;
     let checkingUsername: boolean;
-    let view: "global" | "communities" = "global";
+    let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
@@ -261,6 +262,14 @@
             class:selected={view === "communities"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
+        </div>
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (view = "chit")}
+            class:selected={view === "chit"}
+            class="tab">
+            <Translatable resourceKey={i18nKey("CHIT")} />
         </div>
     </div>
 {/if}
@@ -535,7 +544,7 @@
             </CollapsibleCard>
         </div>
     </form>
-{:else}
+{:else if view === "communities"}
     <div class="community-selector">
         <Legend label={i18nKey("communities.communityLabel")} />
         <Select bind:value={selectedCommunityId}>
@@ -549,6 +558,8 @@
     {#if selectedCommunity !== undefined}
         <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
+{:else if view === "chit"}
+    <ChitEvents />
 {/if}
 
 <style lang="scss">

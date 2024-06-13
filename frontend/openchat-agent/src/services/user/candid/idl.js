@@ -147,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'SwapNotFound' : IDL.Null,
   });
   const ChitEventsArgs = IDL.Record({
+    'to' : IDL.Opt(TimestampMillis),
     'max' : IDL.Nat32,
     'from' : IDL.Opt(TimestampMillis),
     'ascending' : IDL.Bool,

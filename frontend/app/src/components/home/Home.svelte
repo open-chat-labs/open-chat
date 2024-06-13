@@ -208,7 +208,6 @@
     $: offlineStore = client.offlineStore;
     $: pinNumberStore = client.capturePinNumberStore;
     $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
-
     $: {
         if ($identityState.kind === "registering") {
             modal = ModalType.Registering;
@@ -815,7 +814,14 @@
             return;
         }
         const { group, select } = ev.detail;
-        doJoinGroup(group, select, undefined);
+
+        // it's possible that we got here via a postLogin capture in which case it's possible
+        // that we are actually already a member of this group, so we should double check here
+        // that we actually *need* to join the group
+        let chat = $chatSummariesStore.get(group.id);
+        if (chat === undefined || chat.membership.role === "none") {
+            doJoinGroup(group, select, undefined);
+        }
     }
 
     function credentialReceived(ev: CustomEvent<string>) {

@@ -395,6 +395,8 @@ import type {
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
     VideoCallContent,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -6850,6 +6852,16 @@ export class OpenChat extends OpenChatAgentWorker {
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
         return this.sendRequest({ kind: "chitLeaderboard" });
+    }
+
+    chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.sendRequest(req).catch((err) => {
+            this.logError("Failed to load chit events", err);
+            return {
+                events: [],
+                total: 0,
+            };
+        });
     }
 
     /**
