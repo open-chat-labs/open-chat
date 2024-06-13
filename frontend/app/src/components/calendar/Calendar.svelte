@@ -75,7 +75,7 @@
     <div class="daily-date-container">
         {#each dates as week}
             <div class="week-row">
-                {#each week as day, d}
+                {#each week as day}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
