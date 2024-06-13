@@ -1,4 +1,4 @@
-import type { PinNumberFailures } from "../chat";
+import type { MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -96,14 +96,34 @@ export type UserGroupDetails = {
     name: string;
 };
 
+export type PostLoginOperation = CreateCommunity | CreateGroup | JoinCommunity | JoinGroup;
+
+export type CreateCommunity = {
+    kind: "create_community";
+};
+
+export type CreateGroup = {
+    kind: "create_group";
+};
+
+export type JoinCommunity = {
+    kind: "join_community";
+};
+
+export type JoinGroup = {
+    kind: "join_group";
+    group: MultiUserChat;
+    select: boolean;
+};
+
 export type IdentityState =
-    | { kind: "anon" }
-    | { kind: "loading_user" }
-    | { kind: "logged_in" }
-    | { kind: "registering" }
-    | { kind: "logging_in" }
-    | { kind: "upgrading_user" }
-    | { kind: "upgrade_user" };
+    | { kind: "anon"; postLogin?: PostLoginOperation }
+    | { kind: "loading_user"; postLogin?: PostLoginOperation }
+    | { kind: "logged_in"; postLogin?: PostLoginOperation }
+    | { kind: "registering"; postLogin?: PostLoginOperation }
+    | { kind: "logging_in"; postLogin?: PostLoginOperation }
+    | { kind: "upgrading_user"; postLogin?: PostLoginOperation }
+    | { kind: "upgrade_user"; postLogin?: PostLoginOperation };
 
 export type UserLookup = Record<string, UserSummary>;
 

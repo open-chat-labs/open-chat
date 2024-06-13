@@ -2,7 +2,7 @@
 import { gaTrack } from "./utils/ga";
 import { type Identity } from "@dfinity/agent";
 import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
-import { get, writable } from "svelte/store";
+import { get, writable, type Readable } from "svelte/store";
 import DRange from "drange";
 import {
     canChangeRoles as canChangeCommunityRoles,
@@ -539,7 +539,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _authPrincipal: string | undefined;
     private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
-    identityState = writable<IdentityState>({ kind: "loading_user" });
+    private _identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -619,12 +619,29 @@ export class OpenChat extends OpenChatAgentWorker {
         this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
+    clearPostLoginState() {
+        this._identityState.update((state) => ({ ...state, postLogin: undefined }));
+    }
+
+    updateIdentityState(newState: IdentityState) {
+        this._identityState.update((previous) => {
+            return {
+                ...newState,
+                postLogin: newState.postLogin ?? previous.postLogin,
+            };
+        });
+    }
+
+    get identityState(): Readable<IdentityState> {
+        return this._identityState;
+    }
+
     private loadedAuthenticationIdentity(id: Identity) {
         currentUser.set(anonymousUser());
         chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
         this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
-        this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
+        this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user" });
         this.loadUser();
     }
 
@@ -641,7 +658,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     login(): void {
-        this.identityState.set({ kind: "logging_in" });
+        this.updateIdentityState({ kind: "logging_in" });
         const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
@@ -650,7 +667,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 derivationOrigin: this.config.iiDerivationOrigin,
                 onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
-                    this.identityState.set({ kind: "anon" });
+                    this.updateIdentityState({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
                 },
             });
@@ -770,7 +787,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 switch (user.kind) {
                     case "unknown_user":
                         this.onCreatedUser(anonymousUser());
-                        this.identityState.set({ kind: "registering" });
+                        this.updateIdentityState({ kind: "registering" });
                         break;
                     case "created_user":
                         this.onCreatedUser(user);
@@ -838,7 +855,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
-            this.identityState.set({ kind: "logged_in" });
+            this.updateIdentityState({ kind: "logged_in" });
             this.dispatchEvent(new UserLoggedIn(user.userId));
         }
     }

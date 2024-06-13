@@ -77,7 +77,6 @@
     let selectedCommunityId = "";
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
-    $: identityState = client.identityState;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
     $: moderationFlags = client.moderationFlags;
@@ -289,7 +288,7 @@
                 {#if $anonUser}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
-                        <Button on:click={() => identityState.set({ kind: "logging_in" })}
+                        <Button on:click={() => client.updateIdentityState({ kind: "logging_in" })}
                             ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}

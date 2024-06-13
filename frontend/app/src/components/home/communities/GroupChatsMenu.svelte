@@ -7,7 +7,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
@@ -16,11 +16,24 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: identityState = client.identityState;
     $: anonUser = client.anonUser;
+    $: {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "create_group"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => newGroup());
+        }
+    }
 
     function newGroup() {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "create_group" },
+            });
         } else {
             dispatch("newGroup");
         }

@@ -18,6 +18,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { toastStore } from "../../stores/toast";
+    import { querystring } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -45,7 +46,7 @@
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
             if ($anonUser && $identityState.kind === "logging_in") {
-                identityState.set({ kind: "anon" });
+                client.updateIdentityState({ kind: "anon" });
             }
 
             emailSignInPoller?.stop();
@@ -63,7 +64,7 @@
 
     function cancel() {
         if ($anonUser && $identityState.kind === "logging_in") {
-            identityState.set({ kind: "anon" });
+            client.updateIdentityState({ kind: "anon" });
         }
         dispatch("close");
     }
@@ -87,6 +88,19 @@
             }
         }
 
+        const restrictTo = new Set($querystring.getAll("auth"));
+        if (restrictTo.size > 0) {
+            options = options.filter((o) => {
+                return (
+                    (o === AuthProvider.II && restrictTo.has("II")) ||
+                    (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
+                    (o === AuthProvider.ETH && restrictTo.has("ETH")) ||
+                    (o === AuthProvider.SOL && restrictTo.has("SOL")) ||
+                    (o === AuthProvider.NFID && restrictTo.has("NFID"))
+                );
+            });
+        }
+
         if (selected !== undefined) {
             let i = options.findIndex((p) => p === selected);
 
@@ -99,7 +113,6 @@
                 options.splice(0, 0, selected);
             }
         }
-
         return options;
     }
 
@@ -247,7 +260,10 @@
             <div class="options">
                 {#each options as provider, i}
                     {#if showAllOptions || i === 0}
-                        <div class={`option ${showAllOptions && i === 0 ? "separate" : ""}`}>
+                        <div
+                            class={`option ${
+                                showAllOptions && options.length > 1 && i === 0 ? "separate" : ""
+                            }`}>
                             {#if provider === AuthProvider.EMAIL}
                                 <div class="email">
                                     <div class="email-icon icon">
@@ -311,7 +327,7 @@
                     {/if}
                 {/each}
 
-                {#if !showAllOptions}
+                {#if !showAllOptions && options.length > 1}
                     <div class="more">
                         <a role="button" tabindex="0" on:click={() => (showMore = true)}>
                             <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
