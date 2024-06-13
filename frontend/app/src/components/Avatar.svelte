@@ -74,7 +74,7 @@
         transition: filter 300ms ease-in-out;
 
         &:hover {
-            filter: saturate(2.5);
+            filter: saturate(2);
         }
     }
 
