@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OpenChat, type ChitEarned } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Calendar from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
@@ -14,6 +14,11 @@
 
     let busy = false;
     let events: ChitEarned[] = [];
+
+    onMount(() => {
+        // no need to do anything with the result explicitly as it will get added to the store automatically
+        client.getUser($user.userId);
+    });
 
     function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
         return events.filter((e) => {
