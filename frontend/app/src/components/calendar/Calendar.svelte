@@ -17,8 +17,6 @@
     let dates: Date[][] = [];
     let month = 0;
 
-    $: console.log("WeekDays: ", $weekDays);
-
     $: {
         getDates(showDate);
     }
