@@ -1,7 +1,12 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { type InterpolationValues, type Level, type MessageFormatter, type ResourceKey } from "openchat-client";
+import {
+    type InterpolationValues,
+    type Level,
+    type MessageFormatter,
+    type ResourceKey,
+} from "openchat-client";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",

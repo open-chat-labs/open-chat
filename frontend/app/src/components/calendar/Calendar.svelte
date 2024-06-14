@@ -1,11 +1,13 @@
 <script lang="ts">
     import { locale } from "svelte-i18n";
-    import { getMonthCalendar, getTitleText, isSameDay, weekDays } from "./utils";
+    import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, onMount } from "svelte";
+    import { translationCodes } from "../../i18n/i18n";
+    import { weekDays } from "./weekdays";
 
     const dispatch = createEventDispatcher();
 
@@ -17,6 +19,7 @@
     let dates: Date[][] = [];
     let month = 0;
 
+    $: translatedLocale = translationCodes[$locale || "en"] || "en";
     $: {
         getDates(showDate);
     }
@@ -25,7 +28,7 @@
 
     function getDates(start: Date) {
         const resp = getMonthCalendar(start);
-        title = getTitleText(resp.year, resp.month, $locale ?? "default");
+        title = getTitleText(resp.year, resp.month, translatedLocale);
         dates = resp.dates;
         month = resp.month;
         const allDates = resp.dates.flatMap((d) => d);
@@ -66,9 +69,9 @@
         </HoverIcon>
     </div>
     <div class="week-days-row">
-        {#each $weekDays as d}
-            <div title={d.toUpperCase()} class="block weekday-name-block">
-                {d.charAt(0).toUpperCase()}
+        {#each $weekDays as [day, d]}
+            <div title={day} class="block weekday-name-block">
+                {d}
             </div>
         {/each}
     </div>
