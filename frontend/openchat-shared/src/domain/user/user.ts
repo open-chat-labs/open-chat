@@ -124,7 +124,7 @@ export type IdentityState =
     | { kind: "logging_in"; postLogin?: PostLoginOperation }
     | { kind: "upgrading_user"; postLogin?: PostLoginOperation }
     | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
-	| { kind: "challenging"; postLogin?: PostLoginOperation };
+    | { kind: "challenging"; postLogin?: PostLoginOperation };
 
 export type UserLookup = Record<string, UserSummary>;
 
