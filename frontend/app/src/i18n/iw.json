@@ -93,6 +93,13 @@
     "blockUserFailed": "לא ניתן לחסום משתמש",
     "blockUserSucceeded": "המשתמש נחסם",
     "cancel": "לְבַטֵל",
+    "challenge": {
+        "alreadyRegistered": "אנא סגור ונסה שוב מאוחר יותר",
+        "failed": "האתגר נכשל. בבקשה נסה שוב.",
+        "prompt": "הקלד את התווים שאתה רואה",
+        "throttled": "השירות תפוס - נא לסגור ולנסות שוב מאוחר יותר",
+        "title": "להוכיח שאתה לא רובוט"
+    },
     "change": "שינוי",
     "changeTheme": "לשנות נושא",
     "channelAlreadyExists": "ערוץ בשם זה כבר קיים",
@@ -590,6 +597,7 @@
     "newGroupDesc": "על מה זה {level}?",
     "newGroupName": "הזן את השם {level}",
     "newLimit": "{limit} / 1GB",
+    "next": "הַבָּא",
     "nMessagesDeleted": "{number} הודעות נמחקו",
     "no": "לא",
     "noAccess": "אין גישה",

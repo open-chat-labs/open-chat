@@ -93,6 +93,13 @@
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "cancel": "Hủy bỏ",
+    "challenge": {
+        "alreadyRegistered": "Vui lòng đóng và thử lại sau",
+        "failed": "Thử thách không thành công. Vui lòng thử lại.",
+        "prompt": "Nhập các ký tự bạn nhìn thấy",
+        "throttled": "Dịch vụ đang bận - vui lòng đóng và thử lại sau",
+        "title": "Hãy chứng minh bạn không phải là robot"
+    },
     "change": "thay đổi",
     "changeTheme": "Thay đổi nền",
     "channelAlreadyExists": "Kênh có tên đó đã tồn tại",
@@ -590,6 +597,7 @@
     "newGroupDesc": "{level} này nói về cái gì?",
     "newGroupName": "nhập tên {level}",
     "newLimit": "{limit} / 1GB",
+    "next": "Kế tiếp",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
     "no": "Không",
     "noAccess": "Không truy cập",
