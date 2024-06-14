@@ -203,6 +203,8 @@ import type {
     VideoCallParticipantsResponse,
     AcceptedRules,
     VerifiedCredentialArgs,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1785,7 +1787,7 @@ export class OpenChatAgent extends EventTarget {
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
-        if (!anyErrors) {
+        if (!anyErrors && this.userClient.userId !== ANON_USER_ID) {
             setCachedChats(this.db, this.principal, state, updatedEvents);
         }
 
@@ -3397,5 +3399,9 @@ export class OpenChatAgent extends EventTarget {
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
         return this._userIndexClient.chitLeaderboard();
+    }
+
+    chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.userClient.chitEvents(req);
     }
 }

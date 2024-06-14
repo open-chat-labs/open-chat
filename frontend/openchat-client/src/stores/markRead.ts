@@ -147,9 +147,11 @@ export class MessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            api.sendRequest({ kind: "markMessagesRead", payload: req }).finally(() =>
-                this.triggerLoop(api),
-            );
+            api.sendRequest({ kind: "markMessagesRead", payload: req })
+                .catch((err) => {
+                    console.log("Error calling markMessagesRead", err);
+                })
+                .finally(() => this.triggerLoop(api));
         } else {
             this.triggerLoop(api);
         }

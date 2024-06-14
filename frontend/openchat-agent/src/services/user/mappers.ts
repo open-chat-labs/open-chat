@@ -63,6 +63,9 @@ import type {
     ApiApproveTransferResponse,
     ApiPinNumberSettings,
     ApiExchangeArgs,
+    ApiChitEventsResponse,
+    ApiChitEarned,
+    ApiChitEarnedReason,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -127,6 +130,9 @@ import type {
     Result,
     ApproveTransferResponse,
     ExchangeTokenSwapArgs,
+    ChitEventsResponse,
+    ChitEarned,
+    ChitEarnedReason,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -159,6 +165,42 @@ import type {
 } from "./candid/types";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponse } from "../common/pinNumberErrorMapper";
+
+export function chitEventsResponse(candid: ApiChitEventsResponse): ChitEventsResponse {
+    if ("Success" in candid) {
+        return {
+            events: candid.Success.events.map(chitEarned),
+            total: candid.Success.total,
+        };
+    } else {
+        console.warn("chitEventsResponse failed with: ", candid);
+        return {
+            events: [],
+            total: 0,
+        };
+    }
+}
+
+export function chitEarned(candid: ApiChitEarned): ChitEarned {
+    return {
+        amount: candid.amount,
+        timestamp: candid.timestamp,
+        reason: chitEarnedReason(candid.reason),
+    };
+}
+
+export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason {
+    if ("DailyClaim" in candid) {
+        return { kind: "daily_claim" };
+    }
+    if ("Achievement" in candid) {
+        return { kind: "achievement_unlocked", text: candid.Achievement };
+    }
+    if ("MemeContestWinner" in candid) {
+        return { kind: "meme_contest_winner" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
+}
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,

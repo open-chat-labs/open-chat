@@ -395,6 +395,8 @@ import type {
     ClaimDailyChitResponse,
     VerifiedCredentialArgs,
     VideoCallContent,
+    ChitEventsRequest,
+    ChitEventsResponse,
     GenerateChallengeResponse,
     ChallengeAttempt,
 } from "openchat-shared";
@@ -667,8 +669,8 @@ export class OpenChat extends OpenChatAgentWorker {
         this.loadUser();
     }
 
-    logError(message?: unknown, ...optionalParams: unknown[]): void {
-        this._logger.error(message, ...optionalParams);
+    logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
+        this._logger.error(message, error, ...optionalParams);
     }
 
     logMessage(message?: unknown, ...optionalParams: unknown[]): void {
@@ -6892,6 +6894,16 @@ export class OpenChat extends OpenChatAgentWorker {
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
         return this.sendRequest({ kind: "chitLeaderboard" });
+    }
+
+    chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.sendRequest(req).catch((err) => {
+            this.logError("Failed to load chit events", err);
+            return {
+                events: [],
+                total: 0,
+            };
+        });
     }
 
     /**

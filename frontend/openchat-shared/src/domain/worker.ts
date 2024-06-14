@@ -111,6 +111,8 @@ import type {
     ApproveTransferResponse,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -369,7 +371,8 @@ export type WorkerRequest =
     | VideoCallParticipants
     | SetPinNumber
     | ClaimDailyChit
-    | ChitLeaderboard;
+    | ChitLeaderboard
+    | ChitEventsRequest;
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -1370,7 +1373,8 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[];
+    | ChitUserBalance[]
+    | ChitEventsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2028,4 +2032,6 @@ export type WorkerResult<T> = T extends Init
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
     ? ChitUserBalance[]
+    : T extends ChitEventsRequest
+    ? ChitEventsResponse
     : never;

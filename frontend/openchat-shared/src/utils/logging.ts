@@ -1,10 +1,10 @@
 export type Logger = {
-    error(message?: unknown, ...optionalParams: unknown[]): void;
+    error(message: unknown, error: unknown, ...optionalParams: unknown[]): void;
     log(message?: unknown, ...optionalParams: unknown[]): void;
     debug(message?: unknown, ...optionalParams: unknown[]): void;
 };
 
-import Rollbar from "rollbar";
+import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
 
 let rollbar: Rollbar | undefined;
@@ -32,10 +32,10 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
         });
     }
     return {
-        error(message?: unknown, ...optionalParams: unknown[]): void {
-            console.error(message as string, optionalParams);
+        error(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
+            console.error(message as string, error, optionalParams);
             if (!offline()) {
-                rollbar?.error(message as string, optionalParams);
+                rollbar?.error(error as LogArgument, message as LogArgument, optionalParams);
             }
         },
         log(message?: unknown, ...optionalParams: unknown[]): void {

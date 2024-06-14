@@ -509,3 +509,37 @@ export type ChitUserBalance = {
     balance: number;
     username: string;
 };
+
+export type DailyClaim = {
+    kind: "daily_claim";
+};
+
+export type MemeContestWinner = {
+    kind: "meme_contest_winner";
+};
+
+export type AchievementUnlocked = {
+    kind: "achievement_unlocked";
+    text: string;
+};
+
+export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked;
+
+export type ChitEarned = {
+    amount: number;
+    timestamp: bigint;
+    reason: ChitEarnedReason;
+};
+
+export type ChitEventsResponse = {
+    events: ChitEarned[];
+    total: number;
+};
+
+export type ChitEventsRequest = {
+    kind: "getChitEvents";
+    from: bigint;
+    to: bigint;
+    max: number;
+    ascending: boolean;
+};
