@@ -109,6 +109,7 @@
     };
 
     const client = getContext<OpenChat>("client");
+
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -209,7 +210,6 @@
     $: offlineStore = client.offlineStore;
     $: pinNumberStore = client.capturePinNumberStore;
     $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
-
     $: {
         if ($identityState.kind === "registering") {
             modal = ModalType.Registering;
@@ -220,6 +220,15 @@
             modal = ModalType.None;
         } else if ($identityState.kind === "challenging") {
             modal = ModalType.Challenge;
+        }
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_group" &&
+            $chatsInitialised
+        ) {
+            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            client.clearPostLoginState();
+            tick().then(() => joinGroup(ev));
         }
     }
 
@@ -292,6 +301,7 @@
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
+        let autojoin = false;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -309,6 +319,7 @@
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                autojoin = $querystring.has("autojoin");
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -361,6 +372,10 @@
             $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
+
+            if (autojoin && chat.kind !== "direct_chat") {
+                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+            }
         }
     }
 
@@ -405,7 +420,7 @@
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
-                client.identityState.set({ kind: "logging_in" });
+                client.updateIdentityState({ kind: "logging_in" });
                 pageRedirect("/group");
                 return;
             }
@@ -794,11 +809,21 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_group", ...ev.detail },
+            });
             return;
         }
         const { group, select } = ev.detail;
-        doJoinGroup(group, select, undefined);
+
+        // it's possible that we got here via a postLogin capture in which case it's possible
+        // that we are actually already a member of this group, so we should double check here
+        // that we actually *need* to join the group
+        let chat = $chatSummariesStore.get(group.id);
+        if (chat === undefined || chat.membership.role === "none") {
+            doJoinGroup(group, select, undefined);
+        }
     }
 
     function credentialReceived(ev: CustomEvent<string>) {
