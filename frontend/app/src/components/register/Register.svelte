@@ -6,7 +6,7 @@
     import UsernameInput from "../UsernameInput.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import type { CreatedUser, OpenChat } from "openchat-client";
+    import { type CreatedUser, type OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -107,6 +107,8 @@
                     isBot: false,
                 };
                 dispatch("createdUser", createdUser);
+            } else {
+                error.set(`Unexpected register user response: ${resp}`);
             }
         });
     }
