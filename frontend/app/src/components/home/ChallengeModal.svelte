@@ -17,6 +17,7 @@
     let challenge: Challenge | undefined = undefined;
     let error: ResourceKey | undefined = undefined;
     let chars: string | undefined = undefined;
+    let submitting = false;
 
     $: valid = challenge !== undefined && chars?.length === 4;
 
@@ -49,6 +50,8 @@
             return;
         }
 
+        submitting = true;
+
         client
             .submitChallenge({
                 key: challenge.key,
@@ -59,7 +62,8 @@
                     error = i18nKey("challenge.failed");
                     generate();
                 }
-            });
+            })
+            .finally(() => (submitting = false));
     }
 </script>
 
@@ -89,8 +93,9 @@
     </div>
     <div slot="footer">
         <ButtonGroup align={"fill"}>
-            <Button disabled={!valid} on:click={submit}>{$_("next")}</Button>
-            <Button secondary={true} on:click={cancel}>{$_("cancel")}</Button>
+            <Button disabled={!valid || submitting} loading={submitting} on:click={submit}
+                >{$_("next")}</Button>
+            <Button secondary on:click={cancel}>{$_("cancel")}</Button>
         </ButtonGroup>
     </div>
 </ModalContent>
