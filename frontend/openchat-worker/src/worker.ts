@@ -228,11 +228,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
-        if (initPayload === undefined || logger === undefined || identityAgent === undefined) {
+        if (initPayload === undefined) {
             throw new Error("Worker not initialised");
         }
 
         if (payload.kind === "generateIdentityChallenge") {
+            if (identityAgent === undefined) {
+                throw new Error("IdentityAgent not initialized");
+            }
+
             executeThenReply(payload, correlationId, identityAgent.generateChallenge());
             return;
         }

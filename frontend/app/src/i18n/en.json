@@ -1405,6 +1405,8 @@
         "title": "Prove you're not a robot",
         "throttled": "Service busy - please close and try again later",
         "alreadyRegistered": "Please close and try again later",
-        "failed": "Challenge failed. Please try again."
-    }
+        "failed": "Challenge failed. Please try again.",
+        "prompt": "Type the characters you see"
+    },
+    "next": "Next"
 }

@@ -12,6 +12,7 @@
     $: chatsLoading = client.chatsLoading;
     $: showLoader =
         $identityState.kind !== "registering" &&
+        $identityState.kind !== "challenging" &&
         ($chatsLoading || $identityState.kind === "loading_user");
 </script>
 

@@ -28,14 +28,22 @@
     export let actualWidth: number = 0;
     export let closeIcon: boolean = false;
     export let square: boolean = false;
+    export let width: number | undefined = undefined;
 
     // if your modal *definitely* overflows on mobile you might need to set height explicitly
     export let overflows: boolean = false;
 
     let divElement: HTMLElement;
+    let style = "";
 
     $: useAlignTo = alignTo !== undefined && !$mobileWidth;
-    $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
+    $: {
+        style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
+
+        if (width !== undefined && !$mobileWidth) {
+            style += ` width: ${width}px`;
+        }
+    }
 
     function closeMenus() {
         menuStore.hideMenu();
@@ -93,7 +101,7 @@
     class:halloween={$currentTheme.name === "halloween"}
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
-    class:fixed-width={fixedWidth}
+    class:fixed-width={fixedWidth && width === undefined}
     class:fit_to_content={fitToContent}>
     {#if !hideHeader}
         <div class="header">

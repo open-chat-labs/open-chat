@@ -10,6 +10,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
+    import Legend from "../Legend.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,8 +18,7 @@
     let error: ResourceKey | undefined = undefined;
     let chars: string | undefined = undefined;
 
-    $: identityState = client.identityState;
-    $: valid = challenge !== undefined && chars?.length === 5;
+    $: valid = challenge !== undefined && chars?.length === 4;
 
     onMount(() => {
         client.gaTrack("opened_challenge_modal", "registration");
@@ -26,7 +26,7 @@
     });
 
     function cancel() {
-        identityState.set({ kind: "logging_in" });
+        client.logout();
     }
 
     function generate() {
@@ -63,25 +63,24 @@
     }
 </script>
 
-<ModalContent on:close={cancel} closeIcon>
+<ModalContent width={400} on:close={cancel} closeIcon>
     <div class="header login" slot="header">
         <Translatable resourceKey={i18nKey("challenge.title")} />
     </div>
     <div class="challenge" slot="body">
         {#if challenge === undefined}
-            <div><FancyLoader /></div>
+            <div class="loader"><FancyLoader /></div>
         {:else}
-            <div class="captcha">
-                <img alt="captcha" src={`data:image/png;base64, ${challenge.pngBase64}`} />
-            </div>
+            <img alt="captcha" src={challenge.pngBase64} />
 
             <form class="chars-wrapper" on:submit|preventDefault={submit}>
+                <Legend label={i18nKey("challenge.prompt")} />
                 <Input
                     invalid={error !== undefined}
                     autofocus
                     bind:value={chars}
-                    minlength={5}
-                    maxlength={5} />
+                    minlength={4}
+                    maxlength={4} />
             </form>
         {/if}
         {#if error !== undefined}
@@ -97,22 +96,25 @@
 </ModalContent>
 
 <style lang="scss">
+    :global(.body) {
+        padding-bottom: 0 !important;
+    }
+
+    .loader {
+        width: 100px;
+    }
     .challenge {
         display: flex;
-        justify-content: center;
         flex-direction: column;
-        gap: $sp4;
-    }
-    .captcha {
-        display: flex;
         justify-content: center;
-        margin-bottom: $sp4;
-        height: 120px;
-    }
-    .chars-wrapper {
-        width: 80%;
-        @include size-below(xs) {
+        align-items: center;
+        gap: $sp6;
+
+        img {
             width: 100%;
         }
+    }
+    .chars-wrapper {
+        width: 100%;
     }
 </style>
