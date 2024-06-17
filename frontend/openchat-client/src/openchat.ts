@@ -650,7 +650,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (this._authPrincipal !== undefined) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (this._liveState.selectedAuthProvider === AuthProvider.II) {
+                if (
+                    this._liveState.selectedAuthProvider !== AuthProvider.II &&
+                    this._liveState.selectedAuthProvider !== AuthProvider.EMAIL
+                ) {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }
@@ -783,7 +786,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return false;
         }
 
-        let resp = await this.sendRequest({
+        const resp = await this.sendRequest({
             kind: "createOpenChatIdentity",
             challengeAttempt,
         });

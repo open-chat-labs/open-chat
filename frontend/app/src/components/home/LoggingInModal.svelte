@@ -41,6 +41,11 @@
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
     $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
     $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
+    $: spinning =
+        state === "logging-in" &&
+        error === undefined &&
+        $selectedAuthProviderStore !== AuthProvider.ETH &&
+        $selectedAuthProviderStore !== AuthProvider.SOL;
 
     onMount(() => {
         client.gaTrack("opened_signin_modal", "registration");
@@ -241,7 +246,7 @@
 <ModalContent hideFooter={!loggingInWithEmail} on:close={cancel} closeIcon>
     <div class="header login" slot="header">
         <div class="logo-img">
-            <FancyLoader loop={state === "logging-in" && error === undefined} />
+            <FancyLoader loop={spinning} />
         </div>
         <div class="title">
             <div>

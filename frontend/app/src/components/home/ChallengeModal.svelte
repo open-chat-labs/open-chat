@@ -67,48 +67,50 @@
     }
 </script>
 
-<ModalContent width={400} on:close={cancel} closeIcon>
-    <div class="header login" slot="header">
-        <Translatable resourceKey={i18nKey("challenge.title")} />
-    </div>
-    <div class="challenge" slot="body">
-        {#if challenge === undefined}
-            <div class="loader"><FancyLoader /></div>
-        {:else}
-            <img alt="captcha" src={challenge.pngBase64} />
+<div class="challenge">
+    <ModalContent width={400} on:close={cancel} closeIcon>
+        <div class="header login" slot="header">
+            <Translatable resourceKey={i18nKey("challenge.title")} />
+        </div>
+        <div class="body" slot="body">
+            {#if challenge === undefined}
+                <div class="loader"><FancyLoader /></div>
+            {:else}
+                <img alt="captcha" src={challenge.pngBase64} />
 
-            <form class="chars-wrapper" on:submit|preventDefault={submit}>
-                <Legend label={i18nKey("challenge.prompt")} />
-                <Input
-                    invalid={error !== undefined}
-                    autofocus
-                    bind:value={chars}
-                    minlength={4}
-                    maxlength={4} />
-            </form>
-        {/if}
-        {#if error !== undefined}
-            <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
-        {/if}
-    </div>
-    <div slot="footer">
-        <ButtonGroup align={"fill"}>
-            <Button disabled={!valid || submitting} loading={submitting} on:click={submit}
-                >{$_("next")}</Button>
-            <Button secondary on:click={cancel}>{$_("cancel")}</Button>
-        </ButtonGroup>
-    </div>
-</ModalContent>
+                <form class="chars-wrapper" on:submit|preventDefault={submit}>
+                    <Legend label={i18nKey("challenge.prompt")} />
+                    <Input
+                        invalid={error !== undefined}
+                        autofocus
+                        bind:value={chars}
+                        minlength={4}
+                        maxlength={4} />
+                </form>
+            {/if}
+            {#if error !== undefined}
+                <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
+            {/if}
+        </div>
+        <div slot="footer">
+            <ButtonGroup align={"fill"}>
+                <Button disabled={!valid || submitting} loading={submitting} on:click={submit}
+                    >{$_("next")}</Button>
+                <Button secondary on:click={cancel}>{$_("cancel")}</Button>
+            </ButtonGroup>
+        </div>
+    </ModalContent>
+</div>
 
 <style lang="scss">
-    :global(.body) {
+    :global(.challenge .body) {
         padding-bottom: 0 !important;
     }
 
     .loader {
         width: 100px;
     }
-    .challenge {
+    .body {
         display: flex;
         flex-direction: column;
         justify-content: center;
