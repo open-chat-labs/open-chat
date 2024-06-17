@@ -1,17 +1,3 @@
-import { locale } from "svelte-i18n";
-import { derived } from "svelte/store";
-
-export const weekDays = derived(locale, (locale) => {
-    const result: string[] = [];
-    const date = new Date();
-    const formatter = new Intl.DateTimeFormat(locale ?? "en", { weekday: "long" });
-    for (let i = 0; i < 7; i++) {
-        date.setDate(date.getDate() - date.getDay() + i);
-        result.push(formatter.format(date));
-    }
-    return result;
-});
-
 export function getTitleText(year: number, month: number, locale: string): string {
     const date = new Date(year, month, 1);
     const formatter = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" });
