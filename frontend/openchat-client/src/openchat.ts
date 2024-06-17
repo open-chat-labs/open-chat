@@ -646,8 +646,8 @@ export class OpenChat extends OpenChatAgentWorker {
         this.loadUser();
     }
 
-    logError(message?: unknown, ...optionalParams: unknown[]): void {
-        this._logger.error(message, ...optionalParams);
+    logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
+        this._logger.error(message, error, ...optionalParams);
     }
 
     logMessage(message?: unknown, ...optionalParams: unknown[]): void {
