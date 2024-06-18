@@ -163,7 +163,11 @@ import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    ChallengeAttempt,
+    CreateOpenChatIdentityResponse,
+    GenerateChallengeResponse,
     GetDelegationResponse,
+    GetOpenChatIdentityResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -243,6 +247,8 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
+    | GenerateIdentityChallenge
+    | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite
@@ -986,8 +992,17 @@ export type RehydrateMessage = {
     kind: "rehydrateMessage";
 };
 
-type Init = Omit<AgentConfig, "logger"> & {
+export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
+};
+
+type GenerateIdentityChallenge = {
+    kind: "generateIdentityChallenge";
+};
+
+type CreateOpenChatIdentity = {
+    kind: "createOpenChatIdentity";
+    challengeAttempt: ChallengeAttempt | undefined;
 };
 
 type CurrentUser = {
@@ -1225,6 +1240,8 @@ export type WorkerResponseInner =
     | string[]
     | undefined
     | [number, number]
+    | GenerateChallengeResponse
+    | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1656,8 +1673,16 @@ type ChitLeaderboard = {
     kind: "chitLeaderboard";
 };
 
+export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+
 // prettier-ignore
-export type WorkerResult<T> = T extends PinMessage
+export type WorkerResult<T> = T extends Init
+    ? ConnectToWorkerResponse
+    : T extends GenerateIdentityChallenge
+    ? GenerateChallengeResponse
+    : T extends CreateOpenChatIdentity
+    ? CreateOpenChatIdentityResponse
+    : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
     ? NamedAccount[]

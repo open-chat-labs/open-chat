@@ -7,6 +7,7 @@ import {
     type WorkerResponse,
     type WorkerError,
     type WorkerResult,
+    type ConnectToWorkerResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -40,10 +41,10 @@ export class OpenChatAgentWorker extends EventTarget {
         super();
     }
 
-    protected connectToWorker(): Promise<boolean> {
+    protected connectToWorker(): Promise<ConnectToWorkerResponse> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
         this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, { type: "module" });
-        const ready = new Promise<boolean>((resolve) => {
+        const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {
             this.sendRequest(
                 {
                     kind: "init",
@@ -73,8 +74,8 @@ export class OpenChatAgentWorker extends EventTarget {
                     groupInvite: this.config.groupInvite,
                 },
                 true,
-            ).then(() => {
-                resolve(true);
+            ).then((resp) => {
+                resolve(resp);
                 this._connectedToWorker = true;
             });
         });
@@ -114,7 +115,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 console.debug("WORKER_CLIENT: unknown message: ", ev);
             }
         };
-        return ready;
+        return initResponse;
     }
 
     private logUnexpected(correlationId: string): void {

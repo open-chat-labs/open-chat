@@ -93,6 +93,13 @@
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
     "cancel": "取消",
+    "challenge": {
+        "alreadyRegistered": "请关闭并稍后重试",
+        "failed": "挑战失败。请重试。",
+        "prompt": "输入您看到的字符",
+        "throttled": "服务繁忙 - 请关闭并稍后重试",
+        "title": "证明你不是个机器人"
+    },
     "change": "更改",
     "changeTheme": "更改主题",
     "channelAlreadyExists": "同名的频道已存在",
@@ -590,6 +597,7 @@
     "newGroupDesc": "这是什么{level}？",
     "newGroupName": "输入 {level} 名称",
     "newLimit": "{limit} / 1GB",
+    "next": "下一个",
     "nMessagesDeleted": "{number} 条消息已删除",
     "no": "不",
     "noAccess": "无法访问",
