@@ -99,6 +99,7 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
+    import ChallengeModal from "./ChallengeModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -164,6 +165,7 @@
         LoggingIn,
         NotFound,
         ClaimDailyChit,
+        Challenge,
     }
 
     let modal = ModalType.None;
@@ -212,13 +214,13 @@
     $: {
         if ($identityState.kind === "registering") {
             modal = ModalType.Registering;
-        }
-        if ($identityState.kind === "logging_in") {
+        } else if ($identityState.kind === "logging_in") {
             modal = ModalType.LoggingIn;
-        }
-        if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+        } else if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
+        } else if ($identityState.kind === "challenging") {
+            modal = ModalType.Challenge;
         }
         if (
             $identityState.kind === "logged_in" &&
@@ -1277,6 +1279,8 @@
             <LoggingInModal on:close={closeModal} />
         {:else if modal === ModalType.ClaimDailyChit}
             <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
+        {:else if modal === ModalType.Challenge}
+            <ChallengeModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

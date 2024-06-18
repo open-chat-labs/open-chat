@@ -93,6 +93,13 @@
     "blockUserFailed": "No se puede bloquear al usuario",
     "blockUserSucceeded": "El usuario ha sido bloqueado",
     "cancel": "Cancelar",
+    "challenge": {
+        "alreadyRegistered": "Cierra y vuelve a intentarlo más tarde.",
+        "failed": "El desafío falló. Inténtalo de nuevo.",
+        "prompt": "Escribe los caracteres que ves",
+        "throttled": "Servicio ocupado: cierre y vuelva a intentarlo más tarde.",
+        "title": "Demuestra que no eres un robot"
+    },
     "change": "cambiar",
     "changeTheme": "Cambiar de tema",
     "channelAlreadyExists": "Ya existe un canal con ese nombre",
@@ -590,6 +597,7 @@
     "newGroupDesc": "¿De qué se trata {level}?",
     "newGroupName": "ingrese el nombre {level}",
     "newLimit": "{limit} / 1GB",
+    "next": "Próximo",
     "nMessagesDeleted": "{number} mensajes eliminados",
     "no": "No",
     "noAccess": "Sin acceso",
