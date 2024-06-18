@@ -4,6 +4,7 @@ import {
     CreateIdentityResponse,
     GetDelegationResponse,
     PrepareDelegationResponse,
+    GenerateChallengeResponse,
     _SERVICE,
 } from "./types";
 export {
@@ -11,6 +12,7 @@ export {
     CreateIdentityResponse as ApiCreateIdentityResponse,
     GetDelegationResponse as ApiGetDelegationResponse,
     PrepareDelegationResponse as ApiPrepareDelegationResponse,
+    GenerateChallengeResponse as ApiGenerateChallengeResponse,
     _SERVICE as IdentityService,
 };
 

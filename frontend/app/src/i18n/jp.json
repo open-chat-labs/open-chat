@@ -93,6 +93,13 @@
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
     "cancel": "キャンセル",
+    "challenge": {
+        "alreadyRegistered": "閉じて、後でもう一度お試しください",
+        "failed": "チャレンジに失敗しました。もう一度お試しください。",
+        "prompt": "表示されている文字を入力してください",
+        "throttled": "サービスはビジー状態です - 閉じて、後でもう一度お試しください",
+        "title": "あなたがロボットではないことを証明してください"
+    },
     "change": "変更",
     "changeTheme": "テーマ変更",
     "channelAlreadyExists": "その名前のチャンネルはすでに存在します",
@@ -590,6 +597,7 @@
     "newGroupDesc": "この {level} は何についてですか?",
     "newGroupName": "{level} の名前を入力してください",
     "newLimit": "{limit} / 1GB",
+    "next": "次",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
     "no": "いいえ",
     "noAccess": "アクセスなし",
