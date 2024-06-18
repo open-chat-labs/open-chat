@@ -975,7 +975,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "generateIdentityChallenge",
             identityCanister: this.config.identityCanister,
             icUrl: this.config.icUrl ?? window.location.origin,
-        }).catch(() => "failed");
+        }).catch(() => ({ kind: "failed" }));
     }
 
     unreadThreadMessageCount(
