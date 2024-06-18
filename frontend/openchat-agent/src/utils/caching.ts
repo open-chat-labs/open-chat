@@ -42,6 +42,7 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     updateCreatedUser,
+    logDuration,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import type { CryptocurrencyContent } from "openchat-shared";
@@ -834,7 +835,9 @@ export async function setCachedCommunityDetails(
     communityId: string,
     communityDetails: CommunityDetails,
 ): Promise<void> {
+    const start = Date.now();
     await (await db).put("community_details", communityDetails, communityId);
+    logDuration("setCachedCommunityDetails complete", start);
 }
 
 export async function setCachedGroupDetails(
@@ -842,7 +845,9 @@ export async function setCachedGroupDetails(
     chatId: string,
     groupDetails: GroupChatDetails,
 ): Promise<void> {
+    const start = Date.now();
     await (await db).put("group_details", groupDetails, chatId);
+    logDuration("setCachedGroupDetails complete", start);
 }
 
 let db: Database | undefined;

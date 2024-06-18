@@ -147,6 +147,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     ResponseTooLargeError,
+    logDuration,
 } from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
@@ -831,7 +832,9 @@ export class CommunityClient extends CandidService {
             }
         }
 
+        const start = Date.now();
         const response = await this.getCommunityDetailsFromBackend();
+        logDuration(`getCommunityDetailsFromBackend complete: ${JSON.stringify(id)}`, start);
         if (response !== "failure") {
             await setCachedCommunityDetails(this.db, id.communityId, response);
         }
@@ -899,7 +902,9 @@ export class CommunityClient extends CandidService {
             }
         }
 
+        const start = Date.now();
         const response = await this.getChannelDetailsFromBackend(chatId);
+        logDuration(`getGroupDetailsFromBackend complete: ${JSON.stringify(chatId)}`, start);
         if (response !== "failure") {
             await setCachedGroupDetails(this.db, cacheKey, response);
         }

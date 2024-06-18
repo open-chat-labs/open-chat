@@ -16,6 +16,7 @@
         type CommunityIdentifier,
         type MultiUserChatIdentifier,
         chatIdentifiersEqual,
+        LARGE_GROUP_THRESHOLD,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import SelectionButton from "../SelectionButton.svelte";
@@ -26,6 +27,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
 
+    const MAX_SEARCH_RESULTS = 1000;
     const client = getContext<OpenChat>("client");
 
     export let closeIcon: "close" | "back";
@@ -41,6 +43,7 @@
     $: userId = $user.userId;
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
+    $: largeGroup = members.length > LARGE_GROUP_THRESHOLD;
     $: me = knownUsers.find((u) => u.userId === userId);
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
@@ -58,6 +61,9 @@
     //$: platformModerator = client.platformModerator;
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
+
+    $: console.debug("PERF: number of members: ", members.length, largeGroup);
+    $: console.debug("PERF: number of known users: ", knownUsers.length);
 
     let searchTermEntered = "";
     let id = collection.id;
@@ -153,6 +159,16 @@
         selectedTab = tab;
         userGroups?.reset();
     }
+
+    function onSearchEntered() {
+        if (largeGroup && knownUsers.length < members.length && searchTerm.length > 0) {
+            // let's kick off the universal usersearch to try to fill in any missing users
+            // no need to process the results, they will automatically get added to the userstore and that
+            // will cause the search results to be reactively recalculated
+            client.searchUsers(searchTerm, MAX_SEARCH_RESULTS);
+        }
+        membersList.reset();
+    }
 </script>
 
 <MembersHeader
@@ -186,7 +202,7 @@
 {#if selectedTab === "users"}
     <div class="search">
         <Search
-            on:searchEntered={() => membersList.reset()}
+            on:searchEntered={onSearchEntered}
             searching={false}
             bind:searchTerm={searchTermEntered}
             placeholder={i18nKey("search")} />

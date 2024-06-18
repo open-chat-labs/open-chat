@@ -59,6 +59,7 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
+    logDuration,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -675,7 +676,9 @@ export class GroupClient extends CandidService {
             }
         }
 
+        const start = Date.now();
         const response = await this.getGroupDetailsFromBackend();
+        logDuration(`getGroupDetailsFromBackend complete: ${JSON.stringify(this.chatId)}`, start);
         if (response !== "failure") {
             await setCachedGroupDetails(this.db, this.chatId.groupId, response);
         }

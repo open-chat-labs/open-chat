@@ -194,9 +194,14 @@ export class UserIndexClient extends CandidService {
             })),
             users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
         };
+
+        const start = Date.now();
         return this.handleQueryResponse(
             () => this.userIndexService.users(args),
-            usersApiResponse,
+            (resp) => {
+                console.debug("PERF: Getting users from backend", args, Date.now() - start);
+                return usersApiResponse(resp);
+            },
             args,
         );
     }

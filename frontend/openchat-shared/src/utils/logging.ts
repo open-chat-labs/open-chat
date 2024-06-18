@@ -55,3 +55,7 @@ export function debug<T>(data: T, msg?: string): T {
     }
     return data;
 }
+
+export function logDuration(msg: string, started: number): void {
+    console.debug(`PERF: ${msg}`, Date.now() - started);
+}

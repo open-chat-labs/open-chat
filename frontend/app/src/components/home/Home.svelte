@@ -196,6 +196,9 @@
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
     $: communities = client.communities;
+    $: userStore = client.userStore;
+    $: console.debug("PERF: UserStore", $userStore);
+
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
             ? $selectedChatStore

@@ -444,6 +444,8 @@ import {
     toDer,
     storeIdentity,
     updateCreatedUser,
+    logDuration,
+    LARGE_GROUP_THRESHOLD,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2192,10 +2194,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
         const allUserIds = new Set<string>();
-        communityStateStore.getProp(id, "members").forEach((m) => allUserIds.add(m.userId));
+        this.getTruncatedUserIdsFromMembers([
+            ...communityStateStore.getProp(id, "members").values(),
+        ]).forEach((m) => allUserIds.add(m.userId));
         communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
         communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
+    }
+
+    // We create add a limited subset of the members to the userstore for performance reasons.
+    // We will already be adding users from events so it's not critical that we get all members
+    // at this point
+    private getTruncatedUserIdsFromMembers(members: Member[]): Member[] {
+        const elevated = members.filter((m) => m.role !== "none" && m.role !== "member");
+        const rest = members.slice(0, LARGE_GROUP_THRESHOLD);
+        return [...elevated, ...rest];
     }
 
     private async updateUserStore(
@@ -2204,7 +2217,9 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<void> {
         const userId = this._liveState.user.userId;
         const allUserIds = new Set<string>();
-        chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
+        this.getTruncatedUserIdsFromMembers(chatStateStore.getProp(chatId, "members")).forEach(
+            (m) => allUserIds.add(m.userId),
+        );
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
         chatStateStore.getProp(chatId, "invitedUsers").forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents) {
@@ -2854,6 +2869,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
+        const start = Date.now();
         const resp: CommunityDetailsResponse = await this.sendRequest({
             kind: "getCommunityDetails",
             id: community.id,
@@ -2869,6 +2885,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
+            logDuration("getCommunityDetails complete", start);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -2876,6 +2893,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
+            const start = Date.now();
             const resp: GroupChatDetailsResponse = await this.sendRequest({
                 kind: "getGroupDetails",
                 chatId: serverChat.id,
@@ -2895,6 +2913,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
+                logDuration("getGroupDetails completed", start);
             }
             await this.updateUserStore(serverChat.id, []);
         }
