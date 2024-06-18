@@ -233,7 +233,6 @@
 
     $: {
         tick().then(() => {
-            console.log("about to run route change: ", $chatsInitialised, $pathParams);
             routeChange($chatsInitialised, $pathParams);
         });
     }

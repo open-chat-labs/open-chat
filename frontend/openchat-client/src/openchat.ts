@@ -6376,7 +6376,6 @@ export class OpenChat extends OpenChatAgentWorker {
         inviteCode: string | null,
         clearChat = true,
     ): Promise<boolean> {
-        console.log("Setting selected community", id);
         let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
