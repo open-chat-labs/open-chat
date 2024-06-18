@@ -444,7 +444,6 @@ import {
     toDer,
     storeIdentity,
     updateCreatedUser,
-    logDuration,
     LARGE_GROUP_THRESHOLD,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -2869,7 +2868,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
-        const start = Date.now();
         const resp: CommunityDetailsResponse = await this.sendRequest({
             kind: "getCommunityDetails",
             id: community.id,
@@ -2885,7 +2883,6 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
-            logDuration("getCommunityDetails complete", start);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -2893,7 +2890,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
-            const start = Date.now();
             const resp: GroupChatDetailsResponse = await this.sendRequest({
                 kind: "getGroupDetails",
                 chatId: serverChat.id,
@@ -2913,7 +2909,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
-                logDuration("getGroupDetails completed", start);
             }
             await this.updateUserStore(serverChat.id, []);
         }
@@ -6381,6 +6376,7 @@ export class OpenChat extends OpenChatAgentWorker {
         inviteCode: string | null,
         clearChat = true,
     ): Promise<boolean> {
+        console.log("Setting selected community", id);
         let community = this._liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up

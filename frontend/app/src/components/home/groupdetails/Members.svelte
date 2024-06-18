@@ -27,7 +27,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
 
-    const MAX_SEARCH_RESULTS = 1000;
+    const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
 
     export let closeIcon: "close" | "back";
@@ -61,9 +61,6 @@
     //$: platformModerator = client.platformModerator;
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
-
-    $: console.debug("PERF: number of members: ", members.length, largeGroup);
-    $: console.debug("PERF: number of known users: ", knownUsers.length);
 
     let searchTermEntered = "";
     let id = collection.id;

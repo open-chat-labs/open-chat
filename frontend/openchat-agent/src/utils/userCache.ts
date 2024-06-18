@@ -65,7 +65,6 @@ export async function writeCachedUsersToDatabase(
     db: UserDatabase,
     users: UserSummary[],
 ): Promise<void> {
-    const start = Date.now();
     // in this one case we will open the db every time because we expect this to be done from the service worker
     const tx = (await db).transaction("users", "readwrite", {
         durability: "relaxed",
@@ -73,7 +72,6 @@ export async function writeCachedUsersToDatabase(
     const store = tx.objectStore("users");
     Promise.all(users.map((u) => store.put(u, u.userId)));
     await tx.done;
-    console.debug("PERF: written users to indexedDB", users.length, Date.now() - start);
 }
 
 export async function setUsernameInCache(userId: string, username: string): Promise<void> {

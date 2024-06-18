@@ -43,11 +43,8 @@
     $: matchingGroups = userGroups.filter((ug) => matchesSearch(searchTermLower, ug));
 
     onMount(() => {
-        const start = Date.now();
         communityUsers = createLookup($communityMembers, $userStore);
         communityUsersList = Object.values(communityUsers);
-        const end = Date.now();
-        console.debug("PERF: Built community member lookup: ", end - start);
     });
 
     function createLookup(
