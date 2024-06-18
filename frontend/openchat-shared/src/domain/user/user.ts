@@ -123,7 +123,8 @@ export type IdentityState =
     | { kind: "registering"; postLogin?: PostLoginOperation }
     | { kind: "logging_in"; postLogin?: PostLoginOperation }
     | { kind: "upgrading_user"; postLogin?: PostLoginOperation }
-    | { kind: "upgrade_user"; postLogin?: PostLoginOperation };
+    | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
+    | { kind: "challenging"; postLogin?: PostLoginOperation };
 
 export type UserLookup = Record<string, UserSummary>;
 

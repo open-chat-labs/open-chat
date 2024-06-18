@@ -93,6 +93,13 @@
     "blockUserFailed": "Impossible de bloquer l'utilisateur",
     "blockUserSucceeded": "L'utilisateur a été bloqué",
     "cancel": "Annuler",
+    "challenge": {
+        "alreadyRegistered": "Veuillez fermer et réessayer plus tard",
+        "failed": "Le défi a échoué. Veuillez réessayer.",
+        "prompt": "Tapez les caractères que vous voyez",
+        "throttled": "Service occupé - veuillez fermer et réessayer plus tard",
+        "title": "Prouve que tu n'es pas un robot"
+    },
     "change": "monnaie",
     "changeTheme": "Change le thème",
     "channelAlreadyExists": "Une chaîne portant ce nom existe déjà",
@@ -590,6 +597,7 @@
     "newGroupDesc": "de quoi parle ce {level} ?",
     "newGroupName": "entrez le nom {level}",
     "newLimit": "{limit} / 1 Go",
+    "next": "Suivant",
     "nMessagesDeleted": "{number} messages supprimés",
     "no": "Non",
     "noAccess": "Pas d'accès",
