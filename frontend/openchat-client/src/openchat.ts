@@ -6860,7 +6860,8 @@ export class OpenChat extends OpenChatAgentWorker {
                         }
 
                         if (this._liveState.currentCommunityRules?.enabled ?? false) {
-                            acceptedRules.community = this._liveState.currentChatRules?.version;
+                            acceptedRules.community =
+                                this._liveState.currentCommunityRules?.version;
                         }
                     }
 
