@@ -70,6 +70,7 @@ export type CreateOpenChatIdentityError =
 export type GenerateChallengeResponse =
     | { kind: "throttled" }
     | { kind: "already_registered" }
+    | { kind: "failed" }
     | ChallengeSuccess;
 
 export type ChallengeSuccess = { kind: "success" } & Challenge;

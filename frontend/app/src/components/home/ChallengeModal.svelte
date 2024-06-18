@@ -11,6 +11,9 @@
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import CloseIcon from "svelte-material-icons/Close.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
 
@@ -39,6 +42,8 @@
                 error = undefined;
             } else if (resp.kind === "throttled") {
                 error = i18nKey("challenge.throttled");
+            } else if (resp.kind === "failed") {
+                error = i18nKey("challenge.failed");
             } else {
                 error = i18nKey("challenge.alreadyRegistered");
             }
@@ -68,9 +73,16 @@
 </script>
 
 <div class="challenge">
-    <ModalContent width={400} on:close={cancel} closeIcon>
+    <ModalContent fitToContent={!$mobileWidth} fixedWidth={$mobileWidth}>
         <div class="header login" slot="header">
-            <Translatable resourceKey={i18nKey("challenge.title")} />
+            <div class="title">
+                <Translatable resourceKey={i18nKey("challenge.title")} />
+            </div>
+            <div title={$_("cancel")} class="close" on:click={cancel}>
+                <HoverIcon>
+                    <CloseIcon size={"1em"} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
         </div>
         <div class="body" slot="body">
             {#if challenge === undefined}
@@ -104,11 +116,37 @@
 
 <style lang="scss">
     :global(.challenge .body) {
-        padding-bottom: 0 !important;
+        padding-top: $sp2;
+        padding-bottom: 0;
     }
 
+    .challenge {
+        @include mobile() {
+            width: 100%;
+        }
+    }
     .loader {
         width: 100px;
+    }
+    .header {
+        display: flex;
+        flex-direction: row;
+        width: 320px;
+
+        @include mobile() {
+            width: 100%;
+        }
+
+        .title {
+            flex: 1;
+        }
+
+        .close {
+            flex: 0;
+            position: relative;
+            top: -$sp3;
+            right: -$sp4;
+        }
     }
     .body {
         display: flex;

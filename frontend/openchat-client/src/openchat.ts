@@ -789,13 +789,16 @@ export class OpenChat extends OpenChatAgentWorker {
         const resp = await this.sendRequest({
             kind: "createOpenChatIdentity",
             challengeAttempt,
-        });
+        }).catch(() => "challenge_failed");
 
         if (resp !== "success") {
             return false;
         }
 
-        this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+        this._ocIdentity = await this._ocIdentityStorage
+            .get(this._authPrincipal)
+            .catch(() => undefined);
+
         this.loadUser();
         return true;
     }
@@ -972,7 +975,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "generateIdentityChallenge",
             identityCanister: this.config.identityCanister,
             icUrl: this.config.icUrl ?? window.location.origin,
-        });
+        }).catch(() => "failed");
     }
 
     unreadThreadMessageCount(

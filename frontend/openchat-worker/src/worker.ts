@@ -41,7 +41,7 @@ let authPrincipalString: string | undefined = undefined;
 let logger: Logger | undefined = undefined;
 let agent: OpenChatAgent | undefined = undefined;
 
-async function getOpenChatIdentity(
+async function initialize(
     identityCanister: string,
     icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
@@ -205,7 +205,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                getOpenChatIdentity(payload.identityCanister, payload.icUrl).then((resp) => {
+                initialize(payload.identityCanister, payload.icUrl).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
                         "anon: init worker",
