@@ -42,6 +42,7 @@ const FILE_ICON =
 
 staticResourceCache({
     matchCallback: ({ request }) => {
+        console.log("Is this caching running?", request.url, request.destination);
         return [
             "style",
             "script",
