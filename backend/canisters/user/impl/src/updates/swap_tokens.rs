@@ -9,7 +9,7 @@ use ic_cdk::update;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use sonic_client::SonicClient;
-use tracing::error;
+use tracing::{error, info};
 use types::{TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
 use utils::consts::MEMO_SWAP;
@@ -25,7 +25,7 @@ async fn swap_tokens(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    process_token_swap(token_swap, 0).await
+    process_token_swap(token_swap, 0, false).await
 }
 
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<TokenSwap, Response> {
@@ -42,7 +42,11 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<TokenSwap, Response> 
     Ok(state.data.token_swaps.push_new(args, now))
 }
 
-pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) -> Response {
+pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32, debug: bool) -> Response {
+    if debug {
+        info!(swap_id = %token_swap.args.swap_id, "Swap started");
+    }
+
     let args = token_swap.args.clone();
     let swap_client = read_state(|state| build_swap_client(&args, state));
 
@@ -186,6 +190,11 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
                 let now = state.env.now();
                 token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(amount_out), now));
                 token_swap.success = Some(Timestamped::new(successful_swap, now));
+
+                if debug {
+                    info!(swap_id = %token_swap.args.swap_id, "Swap succeeded");
+                }
+
                 state.data.token_swaps.upsert(token_swap);
             });
         }
@@ -233,6 +242,7 @@ fn enqueue_token_swap(token_swap: TokenSwap, attempt: u32, now: TimestampMillis,
             TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
                 token_swap,
                 attempt: attempt + 1,
+                debug: false,
             })),
             now + 5 * SECOND_IN_MS,
             now,
@@ -246,6 +256,7 @@ fn extract_result<T>(subtask: &Option<Timestamped<Result<T, String>>>) -> Option
 
 fn log_error(message: &str, error: &str, args: &Args, attempt: u32) {
     error!(
+        swap_id = %args.swap_id,
         exchange_id = %args.exchange_args.exchange_id(),
         input_token = args.input_token.token.token_symbol(),
         output_token = args.output_token.token.token_symbol(),

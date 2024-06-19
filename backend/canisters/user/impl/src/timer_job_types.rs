@@ -62,6 +62,8 @@ pub struct RemoveExpiredEventsJob;
 pub struct ProcessTokenSwapJob {
     pub token_swap: TokenSwap,
     pub attempt: u32,
+    #[serde(default)]
+    pub debug: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -241,7 +243,7 @@ impl Job for RemoveExpiredEventsJob {
 impl Job for ProcessTokenSwapJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
-            process_token_swap(self.token_swap, self.attempt).await;
+            process_token_swap(self.token_swap, self.attempt, self.debug).await;
         });
     }
 }

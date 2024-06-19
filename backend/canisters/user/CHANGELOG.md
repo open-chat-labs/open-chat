@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added optional `to` arg to `chit_events` ([#5929](https://github.com/open-chat-labs/open-chat/pull/5929))
 
+### Changed
+
+- Retry unfinished ICPSwaps + some extra logging ([#5946](https://github.com/open-chat-labs/open-chat/pull/5946))
+
 ## [[2.0.1197](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1197-user)] - 2024-06-06
 
 ### Added
