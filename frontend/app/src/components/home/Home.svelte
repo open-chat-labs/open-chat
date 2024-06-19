@@ -198,6 +198,7 @@
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
     $: communities = client.communities;
+
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
             ? $selectedChatStore
@@ -442,9 +443,10 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
-                await selectCommunity(pathParams.communityId);
                 if (selectFirstChat()) {
                     return;
+                } else {
+                    await selectCommunity(pathParams.communityId);
                 }
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||

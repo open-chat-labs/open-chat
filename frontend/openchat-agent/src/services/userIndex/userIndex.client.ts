@@ -194,6 +194,7 @@ export class UserIndexClient extends CandidService {
             })),
             users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
         };
+
         return this.handleQueryResponse(
             () => this.userIndexService.users(args),
             usersApiResponse,

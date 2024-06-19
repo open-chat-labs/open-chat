@@ -446,6 +446,7 @@ import {
     toDer,
     storeIdentity,
     updateCreatedUser,
+    LARGE_GROUP_THRESHOLD,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2240,10 +2241,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
         const allUserIds = new Set<string>();
-        communityStateStore.getProp(id, "members").forEach((m) => allUserIds.add(m.userId));
+        this.getTruncatedUserIdsFromMembers([
+            ...communityStateStore.getProp(id, "members").values(),
+        ]).forEach((m) => allUserIds.add(m.userId));
         communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
         communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
+    }
+
+    // We create add a limited subset of the members to the userstore for performance reasons.
+    // We will already be adding users from events so it's not critical that we get all members
+    // at this point
+    private getTruncatedUserIdsFromMembers(members: Member[]): Member[] {
+        const elevated = members.filter((m) => m.role !== "none" && m.role !== "member");
+        const rest = members.slice(0, LARGE_GROUP_THRESHOLD);
+        return [...elevated, ...rest];
     }
 
     private async updateUserStore(
@@ -2252,7 +2264,9 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<void> {
         const userId = this._liveState.user.userId;
         const allUserIds = new Set<string>();
-        chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
+        this.getTruncatedUserIdsFromMembers(chatStateStore.getProp(chatId, "members")).forEach(
+            (m) => allUserIds.add(m.userId),
+        );
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
         chatStateStore.getProp(chatId, "invitedUsers").forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents) {
