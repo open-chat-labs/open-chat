@@ -236,6 +236,7 @@ import type { OpenChatConfig } from "./config";
 import {
     ChatsUpdated,
     ChatUpdated,
+    ChitEarnedEvent,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
@@ -5250,6 +5251,16 @@ export class OpenChat extends OpenChatAgentWorker {
             chatsInitialised.set(true);
 
             this.dispatchEvent(new ChatsUpdated());
+
+            this.dispatchEvent(
+                new ChitEarnedEvent([
+                    {
+                        amount: 300,
+                        timestamp: BigInt(Date.now()),
+                        reason: { kind: "achievement_unlocked", text: "First Message Sent!" },
+                    },
+                ]),
+            );
 
             if (initialLoad) {
                 this.startExchangeRatePoller();

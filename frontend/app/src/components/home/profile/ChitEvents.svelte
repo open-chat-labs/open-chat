@@ -4,6 +4,7 @@
     import Calendar from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
+    import ChitBalance from "./ChitBalance.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -57,12 +58,7 @@
                 day streak!
             </div>
         {/if}
-        {#if balance > 0}
-            <div class="balance">
-                <div class="chit"></div>
-                {`${balance.toLocaleString()} CHIT`}
-            </div>
-        {/if}
+        <ChitBalance size={"large"} me {balance} />
     </div>
     <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} {busy} let:day>
         <ChitEventsForDay {day} events={chitEventsForDay(events, day)} />
@@ -99,25 +95,5 @@
     .streak-txt {
         @include font(bold, normal, fs-160);
         color: var(--accent);
-    }
-
-    .balance {
-        padding: $sp3 $sp4;
-        border-radius: var(--rd);
-        background-color: var(--button-bg);
-        color: var(--button-txt);
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-        width: fit-content;
-        align-self: center;
-        @include font(book, normal, fs-120);
-
-        .chit {
-            background-image: url("/assets/chit.svg");
-            background-repeat: no-repeat;
-            width: $sp5;
-            height: $sp5;
-        }
     }
 </style>

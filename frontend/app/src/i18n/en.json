@@ -855,7 +855,8 @@
         "videoCameraOn": "Start with camera on",
         "videoMicOn": "Start with mic on",
         "videoSettings": "Video call settings",
-        "videoSpeakerView": "Start with Active Speaker view"
+        "videoSpeakerView": "Start with Active Speaker view",
+        "earnMore": "Earn more"
     },
     "promoteFailed": "Unable to promote to {role}",
     "promoteTo": "Promote to {role}",

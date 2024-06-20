@@ -100,6 +100,7 @@
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
+    import ChitEarned from "./ChitEarned.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1124,6 +1125,8 @@
         on:openDirectChat={chatWithFromProfileCard}
         on:close={() => (showProfileCard = undefined)} />
 {/if}
+
+<ChitEarned />
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
