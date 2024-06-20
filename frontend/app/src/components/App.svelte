@@ -689,6 +689,13 @@
             @media (hover: none) {
                 @include no_user_select();
             }
+
+            &.chit {
+                background-color: black;
+                background-image: url("/assets/chit_fire.png");
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
         }
 
         h1,

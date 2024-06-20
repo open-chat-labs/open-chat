@@ -1,12 +1,14 @@
 <script lang="ts">
     import { spring, tweened } from "svelte/motion";
-    import { ChitEarnedEvent, type OpenChat } from "openchat-client";
+    import { ChitEarnedEvent, type Achievement, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { Confetti } from "svelte-confetti";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const OFF_SCREEN_OPACITY = 0.0;
-    const SHOW_DURATION = 2500;
+    const SHOW_DURATION = 3000;
     const SLIDE_IN_DURATION = 400;
     const TWEEN_DURATION = 300;
 
@@ -18,9 +20,16 @@
     let msg = tweened({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
     let left = dimensions.width / 2;
     let amount = 0;
+    let labels: Achievement[] = [];
 
-    function trigger(total: number) {
-        amount = total;
+    function trigger(ev: ChitEarnedEvent) {
+        amount = ev.detail.reduce((total, chit) => total + chit.amount, 0);
+        labels = ev.detail.reduce((labels, c) => {
+            if (c.reason.kind === "achievement_unlocked") {
+                labels.push(c.reason.text);
+            }
+            return labels;
+        }, [] as Achievement[]);
         ypos.set(dimensions.height / 2);
         opacity.set(1);
         window.setTimeout(() => {
@@ -60,7 +69,7 @@
 
     function clientEvent(ev: Event): void {
         if (ev instanceof ChitEarnedEvent) {
-            trigger(ev.detail.reduce((total, chit) => total + chit.amount, 0));
+            trigger(ev);
         }
     }
 </script>
@@ -81,8 +90,17 @@
     <div class="coin">
         <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
     </div>
-    <div class="msg" style={`transform: scale(${$msg.scale}); opacity: ${$msg.opacity}`}>
-        {`+${amount} CHIT`}
+    <div class="details" style={`transform: scale(${$msg.scale}); opacity: ${$msg.opacity}`}>
+        <div class="chit">
+            {`+${amount} CHIT`}
+        </div>
+        <div class="msgs">
+            {#each labels as label}
+                <div class="msg">
+                    <Translatable resourceKey={i18nKey(`learnToEarn.${label}`)} />
+                </div>
+            {/each}
+        </div>
     </div>
 </div>
 
@@ -96,6 +114,11 @@
         flex-direction: column;
         gap: $sp4;
         align-items: center;
+
+        padding: $sp7;
+        border-radius: var(--modal-rd);
+        background-color: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
     }
 
     .confetti {
@@ -106,11 +129,23 @@
         transform: translate(-50%, -50%);
     }
 
-    .msg {
+    .chit {
         border-radius: var(--rd);
         background-color: var(--button-bg);
         color: var(--button-txt);
         width: fit-content;
         padding: $sp2 $sp3;
+    }
+
+    .details {
+        display: flex;
+        flex-direction: column;
+        gap: $sp3;
+        align-items: center;
+    }
+
+    .msgs,
+    .msg {
+        text-align: center;
     }
 </style>

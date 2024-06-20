@@ -4767,7 +4767,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         {
                             amount: 300,
                             timestamp: BigInt(Date.now()),
-                            reason: { kind: "achievement_unlocked", text: "Set bio" },
+                            reason: { kind: "achievement_unlocked", text: "set_bio" },
+                        },
+                        {
+                            amount: 300,
+                            timestamp: BigInt(Date.now()),
+                            reason: { kind: "achievement_unlocked", text: "set_avatar" },
                         },
                     ]),
                 );
