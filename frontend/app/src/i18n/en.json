@@ -514,6 +514,12 @@
     "joinGroup": "Join {level}",
     "joinGroupFailed": "Unable to join {level}",
     "lastOnline": "Last online {duration} ago",
+    "learnToEarn": {
+        "set_bio": "Set profile bio",
+        "set_display_name": "Set a display name",
+        "set_avatar": "Upload profile avatar",
+        "set_community_display_name": "Set a community display name"
+    },
     "leave": "Leave",
     "leaveGroup": "Leave {level}",
     "leftGroup": "You have successfully left the group",

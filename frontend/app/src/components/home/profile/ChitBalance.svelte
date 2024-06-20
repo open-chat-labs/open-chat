@@ -32,11 +32,7 @@
     <!-- svelte-ignore a11y-interactive-supports-focus -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-missing-attribute -->
-    <a
-        on:click|preventDefault|stopPropagation={click}
-        role="button"
-        class={size}
-        on:click|preventDefault|stopPropagation>
+    <a on:click|preventDefault|stopPropagation={click} role="button" class={size}>
         <Translatable resourceKey={i18nKey("profile.earnMore")} />
     </a>
 {/if}

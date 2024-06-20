@@ -189,6 +189,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             nextDailyChitClaim: r.next_daily_claim,
             isBot: false,
             updated: BigInt(Date.now()),
+            achievements: new Set(["set_avatar", "set_bio"]),
         };
     }
 

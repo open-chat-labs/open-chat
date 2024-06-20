@@ -4760,7 +4760,20 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.sendRequest({ kind: "setBio", bio });
+        return this.sendRequest({ kind: "setBio", bio }).then((resp) => {
+            if (resp === "success") {
+                this.dispatchEvent(
+                    new ChitEarnedEvent([
+                        {
+                            amount: 300,
+                            timestamp: BigInt(Date.now()),
+                            reason: { kind: "achievement_unlocked", text: "Set bio" },
+                        },
+                    ]),
+                );
+            }
+            return resp;
+        });
     }
 
     getBio(userId?: string): Promise<string> {
@@ -5252,15 +5265,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.dispatchEvent(new ChatsUpdated());
 
-            this.dispatchEvent(
-                new ChitEarnedEvent([
-                    {
-                        amount: 300,
-                        timestamp: BigInt(Date.now()),
-                        reason: { kind: "achievement_unlocked", text: "First Message Sent!" },
-                    },
-                ]),
-            );
+            // this.dispatchEvent(
+            //     new ChitEarnedEvent([
+            //         {
+            //             amount: 300,
+            //             timestamp: BigInt(Date.now()),
+            //             reason: { kind: "achievement_unlocked", text: "First Message Sent!" },
+            //         },
+            //     ]),
+            // );
 
             if (initialLoad) {
                 this.startExchangeRatePoller();

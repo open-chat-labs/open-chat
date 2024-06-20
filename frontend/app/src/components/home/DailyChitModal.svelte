@@ -16,6 +16,7 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import LearnToEarn from "./profile/LearnToEarn.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -23,6 +24,7 @@
     let busy = false;
     let claimed = false;
     let additional: number | undefined = undefined;
+    let learnToEarn = false;
 
     // These are useful for testing
     // $: available = true;
@@ -88,7 +90,15 @@
         close();
         tick().then(() => dispatch("leaderboard"));
     }
+
+    function earnMore() {
+        learnToEarn = true;
+    }
 </script>
+
+{#if learnToEarn}
+    <LearnToEarn on:close={() => (learnToEarn = false)} />
+{/if}
 
 <ModalContent closeIcon on:close={close}>
     <div class="header" slot="header">
@@ -119,6 +129,15 @@
                 {/if}
             </div>
         </div>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-missing-attribute -->
+        <a
+            class="earn-more"
+            tabindex="0"
+            on:click|preventDefault|stopPropagation={earnMore}
+            role="button">
+            <Translatable resourceKey={i18nKey("profile.earnMore")} />
+        </a>
 
         <p>
             <Translatable
@@ -318,6 +337,16 @@
                 height: $sp4;
             }
         }
+    }
+
+    .earn-more {
+        color: var(--txt);
+        text-decoration: underline;
+        text-underline-offset: $sp2;
+        align-self: center;
+        margin: 0 0 $sp3 0;
+        @include font(book, normal, fs-80);
+        color: var(--txt-light);
     }
 
     .leaderboard {

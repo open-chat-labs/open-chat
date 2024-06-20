@@ -1,4 +1,5 @@
 import type { MultiUserChat, PinNumberFailures } from "../chat";
+import type { Achievement } from "../chit";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -235,6 +236,7 @@ export type CreatedUser = CurrentUserCommon & {
     dateCreated: bigint;
     cryptoAccount: string;
     referrals: string[];
+    achievements: Set<Achievement>;
 };
 
 export function anonymousUser(): CreatedUser {
@@ -257,6 +259,7 @@ export function anonymousUser(): CreatedUser {
         nextDailyChitClaim: 0n,
         isBot: false,
         updated: 0n,
+        achievements: new Set(),
     };
 }
 
@@ -492,54 +495,4 @@ export type DiamondMembershipFees = {
     threeMonths: bigint;
     oneYear: bigint;
     lifetime: bigint;
-};
-
-export type ClaimDailyChitResponse =
-    | { kind: "already_claimed"; nextDailyChitClaim: bigint }
-    | {
-          kind: "success";
-          streak: number;
-          chitBalance: number;
-          chitEarned: number;
-          nextDailyChitClaim: bigint;
-      };
-
-export type ChitUserBalance = {
-    userId: string;
-    balance: number;
-    username: string;
-};
-
-export type DailyClaim = {
-    kind: "daily_claim";
-};
-
-export type MemeContestWinner = {
-    kind: "meme_contest_winner";
-};
-
-export type AchievementUnlocked = {
-    kind: "achievement_unlocked";
-    text: string;
-};
-
-export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked;
-
-export type ChitEarned = {
-    amount: number;
-    timestamp: bigint;
-    reason: ChitEarnedReason;
-};
-
-export type ChitEventsResponse = {
-    events: ChitEarned[];
-    total: number;
-};
-
-export type ChitEventsRequest = {
-    kind: "getChitEvents";
-    from: bigint;
-    to: bigint;
-    max: number;
-    ascending: boolean;
 };
