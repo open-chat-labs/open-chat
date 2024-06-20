@@ -79,7 +79,6 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     #[serde(skip)]
