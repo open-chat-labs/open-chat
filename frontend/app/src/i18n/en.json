@@ -515,6 +515,9 @@
     "joinGroupFailed": "Unable to join {level}",
     "lastOnline": "Last online {duration} ago",
     "learnToEarn": {
+        "joined_community": "Joined your first community",
+        "joined_group": "Joined your first group",
+        "percentageComplete": "{perc}% Complete",
         "set_bio": "Updated your profile bio",
         "set_display_name": "Updated your display name",
         "set_avatar": "Uploaded your profile avatar",

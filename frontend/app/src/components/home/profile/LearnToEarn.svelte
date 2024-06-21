@@ -9,13 +9,16 @@
     import Button from "../../Button.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import Progress from "../../Progress.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     $: user = client.user;
-    $: achieved = achievements.filter((a) => $user.achievements.has(a));
-    $: notAchieved = achievements.filter((a) => !$user.achievements.has(a));
+    $: [achieved, notAchieved] = client.partition([...achievements], (a) =>
+        $user.achievements.has(a),
+    );
+    $: percComplete = Math.floor((achieved.length / achievements.length) * 100);
 </script>
 
 <Overlay dismissible>
@@ -41,8 +44,16 @@
             {/each}
         </div>
 
-        <span slot="footer">
-            <Button on:click={() => dispatch("close")}>
+        <span class="footer" slot="footer">
+            <div class="perc">
+                <Progress size={"45px"} percent={percComplete}>
+                    <Translatable
+                        resourceKey={i18nKey("learnToEarn.percentageComplete", {
+                            perc: percComplete,
+                        })} />
+                </Progress>
+            </div>
+            <Button small on:click={() => dispatch("close")}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         </span>
@@ -53,5 +64,17 @@
     .achievement {
         display: flex;
         gap: $sp3;
+    }
+
+    .perc {
+        flex: auto;
+        color: var(--txt);
+    }
+
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $sp4;
     }
 </style>

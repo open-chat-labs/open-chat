@@ -23,6 +23,8 @@ export type MemeContestWinner = {
 };
 
 export const achievements = [
+    "joined_community",
+    "joined_group",
     "set_bio",
     "set_display_name",
     "set_avatar",

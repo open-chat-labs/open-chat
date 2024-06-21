@@ -203,7 +203,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, keepMax, toRecord, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -1592,6 +1592,7 @@ export class OpenChat extends OpenChatAgentWorker {
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
     toRecord = toRecord;
+    partition = partition;
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
