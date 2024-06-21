@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1211-user)] - 2024-06-21
+
 ### Added
 
 - Added optional `to` arg to `chit_events` ([#5929](https://github.com/open-chat-labs/open-chat/pull/5929))

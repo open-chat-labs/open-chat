@@ -1,7 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -10,11 +9,9 @@ use std::time::Duration;
 use tracing::info;
 use types::{Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
-use user_canister::swap_tokens::ExchangeArgs;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::DAY_IN_MS;
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
-const THIRTY_MINS: Milliseconds = 30 * MINUTE_IN_MS;
 
 #[post_upgrade]
 #[trace]
@@ -40,8 +37,6 @@ fn post_upgrade(args: Args) {
             ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
         }
     });
-
-    mutate_state(retry_token_swaps);
 }
 
 fn mark_user_canister_empty() {
@@ -53,39 +48,4 @@ fn mark_user_canister_empty() {
             msgpack::serialize_then_unwrap(Empty {}),
         );
     })
-}
-
-fn retry_token_swaps(state: &mut RuntimeState) {
-    for swap in state.data.token_swaps.iter() {
-        let now = state.env.now();
-        // Retry swaps that started > 30 mins ago and didn't finish
-        // Only try ICPSwap until Sonic fixes their API
-        if swap.success.is_none()
-            && now > (swap.started + THIRTY_MINS)
-            && matches!(swap.args.exchange_args, ExchangeArgs::ICPSwap(_))
-        {
-            let swap_id = swap.args.swap_id;
-
-            // Remove this swap job from the queue if by some chance it is already there
-            state.data.timer_jobs.cancel_job(|j| {
-                if let TimerJob::ProcessTokenSwap(swap_job) = j {
-                    swap_job.token_swap.args.swap_id == swap_id
-                } else {
-                    false
-                }
-            });
-
-            info!(?swap_id, "Queue incomplete swap");
-
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
-                    token_swap: swap.clone(),
-                    attempt: 0,
-                    debug: true,
-                })),
-                now,
-                now,
-            );
-        }
-    }
 }
