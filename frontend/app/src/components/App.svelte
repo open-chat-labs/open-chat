@@ -45,6 +45,7 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
+    import { reviewingTranslations } from "../i18n/i18n";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -428,7 +429,7 @@
 {:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
-    {#if !$isLoading}
+    {#if !$isLoading || $reviewingTranslations}
         <Router
             on:hangup={hangup}
             on:askToSpeak={askToSpeak}
