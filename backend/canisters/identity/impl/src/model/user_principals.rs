@@ -7,7 +7,6 @@ use types::CanisterId;
 pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
-    #[serde(default)]
     originating_canisters: HashMap<CanisterId, u32>,
 }
 
@@ -34,16 +33,6 @@ struct AuthPrincipalInternal {
 }
 
 impl UserPrincipals {
-    pub fn populate_originating_canisters(&mut self) {
-        self.originating_canisters.clear();
-        for auth_principal in self.auth_principals.values() {
-            *self
-                .originating_canisters
-                .entry(auth_principal.originating_canister)
-                .or_default() += 1;
-        }
-    }
-
     pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal, originating_canister: CanisterId) {
         assert_eq!(index, self.next_index());
         assert!(!self.auth_principals.contains_key(&auth_principal));

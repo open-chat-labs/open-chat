@@ -11,9 +11,10 @@ use tracing::info;
 use types::{Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
 use user_canister::swap_tokens::ExchangeArgs;
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
+const THIRTY_MINS: Milliseconds = 30 * MINUTE_IN_MS;
 
 #[post_upgrade]
 #[trace]
@@ -56,12 +57,26 @@ fn mark_user_canister_empty() {
 
 fn retry_token_swaps(state: &mut RuntimeState) {
     for swap in state.data.token_swaps.iter() {
-        // Retry swaps that didn't finish
+        let now = state.env.now();
+        // Retry swaps that started > 30 mins ago and didn't finish
         // Only try ICPSwap until Sonic fixes their API
-        if swap.success.is_none() && matches!(swap.args.exchange_args, ExchangeArgs::ICPSwap(_)) {
-            info!(swap_id = %swap.args.swap_id, "Queue incomplete swap");
+        if swap.success.is_none()
+            && now > (swap.started + THIRTY_MINS)
+            && matches!(swap.args.exchange_args, ExchangeArgs::ICPSwap(_))
+        {
+            let swap_id = swap.args.swap_id;
 
-            let now = state.env.now();
+            // Remove this swap job from the queue if by some chance it is already there
+            state.data.timer_jobs.cancel_job(|j| {
+                if let TimerJob::ProcessTokenSwap(swap_job) = j {
+                    swap_job.token_swap.args.swap_id == swap_id
+                } else {
+                    false
+                }
+            });
+
+            info!(?swap_id, "Queue incomplete swap");
+
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
                     token_swap: swap.clone(),
