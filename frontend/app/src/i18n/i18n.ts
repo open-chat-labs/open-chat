@@ -154,6 +154,7 @@ export function interpolate(
 
 export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
+export const reviewingTranslations = writable<boolean>(false);
 
 export function i18nKey(
     key: string,
