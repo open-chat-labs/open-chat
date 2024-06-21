@@ -37,6 +37,7 @@
     let searching = false;
     let showFab = false;
     let scrollableElement: HTMLElement | null;
+    let initialised = false;
 
     $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
@@ -134,9 +135,10 @@
             onScroll();
         });
         return filters.subscribe((_) => {
-            if ($communitySearchStore.results.length === 0) {
+            if (initialised || $communitySearchStore.results.length === 0) {
                 search(true);
             }
+            initialised = true;
         });
     });
 
