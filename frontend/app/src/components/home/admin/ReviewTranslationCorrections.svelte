@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { _, locale, isLoading } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import MenuIcon from "../../MenuIcon.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
