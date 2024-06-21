@@ -21,6 +21,7 @@
     let left = dimensions.width / 2;
     let amount = 0;
     let labels: Achievement[] = [];
+    let active = false;
 
     function trigger(ev: ChitEarnedEvent) {
         amount = ev.detail.reduce((total, chit) => total + chit.amount, 0);
@@ -32,6 +33,7 @@
         }, [] as Achievement[]);
         ypos.set(dimensions.height / 2);
         opacity.set(1);
+        active = true;
         window.setTimeout(() => {
             confetti = true;
             msg.set({ scale: 1, opacity: 1 });
@@ -51,6 +53,7 @@
         opacity = tweened(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
         msg = tweened({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
         confetti = false;
+        active = false;
     }
 
     function getDimension() {
@@ -76,30 +79,32 @@
 
 <svelte:window on:resize={reset} />
 
-<div class="wrapper" style={`top: ${$ypos}px; left: ${left}px; opacity: ${$opacity}`}>
-    {#if confetti}
-        <div class="confetti">
-            <Confetti
-                amount={100}
-                x={[-1.5, 1.5]}
-                y={[-1.5, 1.5]}
-                size={20}
-                colorArray={["url(/assets/chit.svg)"]} />
+<div class="overlay" class:active>
+    <div class="wrapper" style={`top: ${$ypos}px; left: ${left}px; opacity: ${$opacity}`}>
+        {#if confetti}
+            <div class="confetti">
+                <Confetti
+                    amount={100}
+                    x={[-1.5, 1.5]}
+                    y={[-1.5, 1.5]}
+                    size={20}
+                    colorArray={["url(/assets/chit.svg)"]} />
+            </div>
+        {/if}
+        <div class="coin">
+            <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
         </div>
-    {/if}
-    <div class="coin">
-        <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
-    </div>
-    <div class="details" style={`transform: scale(${$msg.scale}); opacity: ${$msg.opacity}`}>
-        <div class="chit">
-            {`+${amount} CHIT`}
-        </div>
-        <div class="msgs">
-            {#each labels as label}
-                <div class="msg">
-                    <Translatable resourceKey={i18nKey(`learnToEarn.${label}`)} />
-                </div>
-            {/each}
+        <div class="details" style={`transform: scale(${$msg.scale}); opacity: ${$msg.opacity}`}>
+            <div class="chit">
+                {`+${amount} CHIT`}
+            </div>
+            <div class="msgs">
+                {#each labels as label}
+                    <div class="msg">
+                        <Translatable resourceKey={i18nKey(`learnToEarn.${label}`)} />
+                    </div>
+                {/each}
+            </div>
         </div>
     </div>
 </div>
@@ -115,10 +120,19 @@
         gap: $sp4;
         align-items: center;
 
-        padding: $sp7;
-        border-radius: var(--modal-rd);
-        background-color: rgba(255, 255, 255, 0.05);
+        padding: $sp8;
+        // background-color: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
+
+        background: var(--modal-bg);
+        border: var(--modal-bd);
+        border-radius: var(--modal-rd);
+        box-shadow: var(--modal-sh);
+
+        @include mobile() {
+            width: calc(100% - 80px);
+            padding: $sp6;
+        }
     }
 
     .confetti {
@@ -147,5 +161,27 @@
     .msgs,
     .msg {
         text-align: center;
+        @include mobile() {
+            @include font(book, normal, fs-90);
+        }
+    }
+
+    .overlay {
+        @include z-index("overlay");
+        position: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 0;
+        left: 0;
+        @include fullHeight();
+        width: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        transition: backdrop-filter 300ms ease-in-out;
+
+        &.active {
+            backdrop-filter: saturate(0.3);
+        }
     }
 </style>
