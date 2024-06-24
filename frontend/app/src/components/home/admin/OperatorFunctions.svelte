@@ -24,7 +24,7 @@
     const client = getContext<OpenChat>("client");
 
     let error: ResourceKey | undefined = undefined;
-    let groupUpgradeConcurrency = 10;
+    let groupUpgradeConcurrency = "10";
     let communityUpgradeConcurrency = 10;
     let userUpgradeConcurrency = 10;
     let busy: Set<number> = new Set();
@@ -99,7 +99,7 @@
         error = undefined;
         addBusy(0);
         client
-            .setGroupUpgradeConcurrency(groupUpgradeConcurrency)
+            .setGroupUpgradeConcurrency(Number(groupUpgradeConcurrency))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -243,7 +243,10 @@
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={groupUpgradeConcurrency} />
+            <Input
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                bind:value={groupUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(0)}
