@@ -1,4 +1,5 @@
 export { getTimeUntilSessionExpiryMs } from "./session";
+export * from "./emailSignInSessionStorage";
 export * from "./i18n";
 export * from "./identity";
 export * from "./identityStorage";

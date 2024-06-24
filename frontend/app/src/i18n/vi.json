@@ -561,7 +561,7 @@
         "enterCode": "Nhập mã xác nhận",
         "link_expired": "Liên kết chỉ có hiệu lực trong 5 phút và hiện đã hết hạn.",
         "link_invalid": "Liên kết không hợp lệ.",
-        "success": "Thành công! Bây giờ bạn đã đăng nhập.",
+        "session_not_found": "Thành công! Bây giờ bạn đã đăng nhập.",
         "title": "Đăng nhập bằng liên kết email..."
     },
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
