@@ -147,16 +147,19 @@
     }
 
     function setDiamondMembershipFees(): void {
+        // TODO this is not going to work because we have to supply both CHAT and ICP fees not one or the other
         error = undefined;
         addBusy(3);
         client
             .setDiamondMembershipFees([fees])
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set ${fees}`));
+                    toastStore.showSuccessToast(
+                        i18nKey(`Diamond membership fees set ${JSON.stringify(fees)}`),
+                    );
                 } else {
                     error = i18nKey(
-                        `Failed to set diamond membership fees ${userUpgradeConcurrency}`,
+                        `Failed to set diamond membership fees ${JSON.stringify(fees)}`,
                     );
                     toastStore.showFailureToast(error);
                 }
