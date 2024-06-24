@@ -46,7 +46,7 @@ export async function getEmailSignInSession(
         email: context.email,
         userKey: Uint8Array.from(context.userKey),
         expiration: BigInt(context.expiration),
-    } as EmailSignInSession;
+    };
 }
 
 export async function removeEmailSignInSession(storage: AuthClientStorage): Promise<void> {
