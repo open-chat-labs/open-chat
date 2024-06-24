@@ -18,7 +18,6 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
-use model::token_swaps::TokenSwap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
