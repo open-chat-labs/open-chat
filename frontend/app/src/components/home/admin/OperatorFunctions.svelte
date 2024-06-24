@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DiamondMembershipFees, OpenChat, ResourceKey } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import NumberInput from "../../NumberInput.svelte";
     import Input from "../../Input.svelte";
     import Button from "../../Button.svelte";
@@ -11,6 +11,16 @@
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
+    const MIN_LENGTH = 0;
+    const MAX_LENGTH = 100;
+    type Fees = {
+        token: "CHAT" | "ICP";
+        oneMonth: string;
+        threeMonths: string;
+        oneYear: string;
+        lifetime: string;
+    };
+
     const client = getContext<OpenChat>("client");
 
     let error: ResourceKey | undefined = undefined;
@@ -18,11 +28,6 @@
     let communityUpgradeConcurrency = 10;
     let userUpgradeConcurrency = 10;
     let busy: Set<number> = new Set();
-    let feeToken = "ICP";
-    let oneMonthFees = 0;
-    let threeMonthFees = 0;
-    let oneYearFees = 0;
-    let lifetimeFees = 0;
     let governanceCanisterId = "";
     let stake = 0;
 
@@ -38,6 +43,26 @@
     let maxOrdersPerDirection: string = "";
     let maxOrdersToMakePerIteration: string = "";
     let maxOrdersToCancelPerIteration: string = "";
+    let currentFees: Record<"ICP" | "CHAT", Fees>;
+    let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
+    let feesTab: "ICP" | "CHAT" = "ICP";
+
+    onMount(() => {
+        client.diamondMembershipFees().then((fees) => {
+            originalFees = client.toRecord(fees, (f) => f.token);
+            currentFees = client.toRecord2(
+                fees,
+                (f) => f.token,
+                (f) => ({
+                    token: f.token,
+                    oneMonth: f.oneMonth.toString(),
+                    threeMonths: f.threeMonths.toString(),
+                    oneYear: f.oneYear.toString(),
+                    lifetime: f.lifetime.toString(),
+                }),
+            );
+        });
+    });
 
     $: markerMakerConfig = {
         exchangeId: exchangeId,
@@ -59,14 +84,6 @@
                 ? undefined
                 : Number(maxOrdersToCancelPerIteration),
     };
-
-    $: fees = {
-        token: feeToken,
-        oneMonth: BigInt(oneMonthFees),
-        threeMonths: BigInt(threeMonthFees),
-        oneYear: BigInt(oneYearFees),
-        lifetime: BigInt(lifetimeFees),
-    } as DiamondMembershipFees;
 
     function addBusy(n: number) {
         busy.add(n);
@@ -146,21 +163,37 @@
             });
     }
 
+    function strToBigInt(str: string): bigint | undefined {
+        const n = Number(str);
+        return isNaN(n) ? undefined : BigInt(n);
+    }
+
+    function mapFees(): DiamondMembershipFees[] {
+        const mapped = Object.values(currentFees).reduce((res, val) => {
+            res[val.token] = {
+                token: val.token,
+                oneMonth: strToBigInt(val.oneMonth) ?? res[val.token].oneMonth,
+                threeMonths: strToBigInt(val.threeMonths) ?? res[val.token].threeMonths,
+                oneYear: strToBigInt(val.oneYear) ?? res[val.token].oneYear,
+                lifetime: strToBigInt(val.lifetime) ?? res[val.token].lifetime,
+            };
+            return res;
+        }, originalFees);
+        return Object.values(mapped);
+    }
+
     function setDiamondMembershipFees(): void {
-        // TODO this is not going to work because we have to supply both CHAT and ICP fees not one or the other
         error = undefined;
         addBusy(3);
+        const mappedFees = mapFees();
         client
-            .setDiamondMembershipFees([fees])
+            .setDiamondMembershipFees(mappedFees)
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`Diamond membership fees set ${JSON.stringify(fees)}`),
-                    );
+                    originalFees = client.toRecord(mappedFees, (f) => f.token);
+                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set`));
                 } else {
-                    error = i18nKey(
-                        `Failed to set diamond membership fees ${JSON.stringify(fees)}`,
-                    );
+                    error = i18nKey(`Failed to set diamond membership fees`);
                     toastStore.showFailureToast(error);
                 }
             })
@@ -243,47 +276,61 @@
         </ButtonGroup>
     </section>
 
-    <section class="operator-function">
-        <div class="title">Set Diamond membership fees</div>
-        <div class="name-value">
-            <div class="label">Token:</div>
-            <div class="value">
-                <Select bind:value={feeToken}>
-                    <option value="ICP">ICP</option>
-                    <option value="CHAT">CHAT</option>
-                </Select>
+    {#if currentFees !== undefined}
+        <section class="operator-function">
+            <div class="title">Set Diamond membership fees</div>
+            <div class="name-value">
+                <div class="label">Token:</div>
+                <div class="value">
+                    <Select bind:value={feesTab}>
+                        <option value="ICP">ICP</option>
+                        <option value="CHAT">CHAT</option>
+                    </Select>
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">One month:</div>
-            <div class="value">
-                <NumberInput bind:value={oneMonthFees} />
+            <div class="name-value">
+                <div class="label">One month:</div>
+                <div class="value">
+                    <Input
+                        minlength={MIN_LENGTH}
+                        maxlength={MAX_LENGTH}
+                        bind:value={currentFees[feesTab].oneMonth} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Three month:</div>
-            <div class="value">
-                <NumberInput bind:value={threeMonthFees} />
+            <div class="name-value">
+                <div class="label">Three month:</div>
+                <div class="value">
+                    <Input
+                        minlength={MIN_LENGTH}
+                        maxlength={MAX_LENGTH}
+                        bind:value={currentFees[feesTab].threeMonths} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">One year:</div>
-            <div class="value">
-                <NumberInput bind:value={oneYearFees} />
+            <div class="name-value">
+                <div class="label">One year:</div>
+                <div class="value">
+                    <Input
+                        minlength={MIN_LENGTH}
+                        maxlength={MAX_LENGTH}
+                        bind:value={currentFees[feesTab].oneYear} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Lifetime:</div>
-            <div class="value">
-                <NumberInput bind:value={lifetimeFees} />
+            <div class="name-value">
+                <div class="label">Lifetime:</div>
+                <div class="value">
+                    <Input
+                        minlength={MIN_LENGTH}
+                        maxlength={MAX_LENGTH}
+                        bind:value={currentFees[feesTab].lifetime} />
+                </div>
             </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(3)}
-            loading={busy.has(3)}
-            on:click={setDiamondMembershipFees}>Apply</Button>
-    </section>
+            <Button
+                tiny
+                disabled={busy.has(3)}
+                loading={busy.has(3)}
+                on:click={setDiamondMembershipFees}>Apply</Button>
+        </section>
+    {/if}
 
     <section class="operator-function">
         <div class="title">Stake neuron for submitting proposals</div>
