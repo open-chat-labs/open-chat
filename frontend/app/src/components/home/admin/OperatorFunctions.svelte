@@ -10,6 +10,7 @@
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 0;
     const MAX_LENGTH = 100;
@@ -25,11 +26,11 @@
 
     let error: ResourceKey | undefined = undefined;
     let groupUpgradeConcurrency = "10";
-    let communityUpgradeConcurrency = 10;
-    let userUpgradeConcurrency = 10;
+    let communityUpgradeConcurrency = "10";
+    let userUpgradeConcurrency = "10";
     let busy: Set<number> = new Set();
     let governanceCanisterId = "";
-    let stake = 0;
+    let stake = "0";
 
     let exchangeId: number = 0;
     let enabled: boolean = true;
@@ -46,6 +47,10 @@
     let currentFees: Record<"ICP" | "CHAT", Fees>;
     let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
     let feesTab: "ICP" | "CHAT" = "ICP";
+
+    $: groupUpgradeConcurrencyInvalid = isNaN(parseInt(groupUpgradeConcurrency, 0));
+    $: communityUpgradeConcurrencyInvalid = isNaN(parseInt(communityUpgradeConcurrency, 0));
+    $: userUpgradeConcurrencyInvalid = isNaN(parseInt(userUpgradeConcurrency, 0));
 
     onMount(() => {
         client.diamondMembershipFees().then((fees) => {
@@ -99,7 +104,7 @@
         error = undefined;
         addBusy(0);
         client
-            .setGroupUpgradeConcurrency(Number(groupUpgradeConcurrency))
+            .setGroupUpgradeConcurrency(parseInt(groupUpgradeConcurrency, 0))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -121,7 +126,7 @@
         error = undefined;
         addBusy(1);
         client
-            .setCommunityUpgradeConcurrency(communityUpgradeConcurrency)
+            .setCommunityUpgradeConcurrency(parseInt(communityUpgradeConcurrency, 10))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -145,7 +150,7 @@
         error = undefined;
         addBusy(2);
         client
-            .setUserUpgradeConcurrency(userUpgradeConcurrency)
+            .setUserUpgradeConcurrency(parseInt(userUpgradeConcurrency, 10))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -204,20 +209,23 @@
 
     function stakeNeuronForSubmittingProposals(): void {
         error = undefined;
-        addBusy(4);
-        client
-            .stakeNeuronForSubmittingProposals(governanceCanisterId, BigInt(stake))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
-                } else {
-                    error = i18nKey("Failed to stake neuron");
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(4);
-            });
+        const stakeVal = strToBigInt(stake);
+        if (stakeVal !== undefined) {
+            addBusy(4);
+            client
+                .stakeNeuronForSubmittingProposals(governanceCanisterId, stakeVal)
+                .then((success) => {
+                    if (success) {
+                        toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
+                    } else {
+                        error = i18nKey("Failed to stake neuron");
+                        toastStore.showFailureToast(error);
+                    }
+                })
+                .finally(() => {
+                    removeBusy(4);
+                });
+        }
     }
 
     function updateMarketMakerConfig(): void {
@@ -244,12 +252,13 @@
         <div class="title">Set group upgrade concurrency</div>
         <ButtonGroup align="fill">
             <Input
+                invalid={groupUpgradeConcurrencyInvalid}
                 minlength={MIN_LENGTH}
                 maxlength={MAX_LENGTH}
                 bind:value={groupUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(0)}
+                disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
                 on:click={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
@@ -258,10 +267,14 @@
     <section class="operator-function">
         <div class="title">Set community upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={communityUpgradeConcurrency} />
+            <Input
+                invalid={communityUpgradeConcurrencyInvalid}
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(1)}
+                disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
                 on:click={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
@@ -270,10 +283,14 @@
     <section class="operator-function">
         <div class="title">Set user upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={userUpgradeConcurrency} />
+            <Input
+                invalid={userUpgradeConcurrencyInvalid}
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                bind:value={userUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(2)}
+                disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
                 on:click={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
@@ -340,13 +357,16 @@
         <div class="name-value">
             <div class="label">Governance Canister Id:</div>
             <div class="value">
-                <Input bind:value={governanceCanisterId} />
+                <Input
+                    minlength={MIN_LENGTH}
+                    maxlength={MAX_LENGTH}
+                    bind:value={governanceCanisterId} />
             </div>
         </div>
         <div class="name-value">
             <div class="label">Stake:</div>
             <div class="value">
-                <NumberInput bind:value={stake} />
+                <Input minlength={MIN_LENGTH} maxlength={MAX_LENGTH} bind:value={stake} />
             </div>
         </div>
         <Button
@@ -449,7 +469,9 @@
     </section>
 
     {#if error}
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>
+            <Translatable resourceKey={error} />
+        </ErrorMessage>
     {/if}
 </div>
 
