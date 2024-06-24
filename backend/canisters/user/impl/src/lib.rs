@@ -147,22 +147,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        // TODO: Remove token_swaps from Metrics after next release
-        let mut token_swaps: Vec<TokenSwap> = Vec::new();
-        let my_user_id: UserId = self.env.canister_id().into();
-        let debug_user: UserId = Principal::from_text("pzg6u-5qaaa-aaaar-azjpa-cai").unwrap().into();
-
-        if my_user_id == debug_user {
-            // Show swaps from 2024/06/06 12:00 to 2024/06/07 12:00
-            token_swaps = self
-                .data
-                .token_swaps
-                .iter()
-                .filter(|ts| ts.started > 1717671600000 && ts.started < 1717758000000)
-                .cloned()
-                .collect();
-        }
-
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
@@ -188,7 +172,6 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
-            token_swaps,
         }
     }
 }
@@ -353,7 +336,6 @@ pub struct Metrics {
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
-    pub token_swaps: Vec<TokenSwap>,
 }
 
 fn run_regular_jobs() {
