@@ -561,7 +561,7 @@
         "enterCode": "Inserisci il codice di verifica",
         "link_expired": "Il collegamento è valido solo per 5 minuti e ora è scaduto.",
         "link_invalid": "Il collegamento non è valido.",
-        "session_not_found": "Successo! Ora hai effettuato l'accesso.",
+        "success": "Successo! Ora hai effettuato l'accesso.",
         "title": "Accesso con collegamento e-mail..."
     },
     "makeGroupPrivate": "Rendi il gruppo privato",

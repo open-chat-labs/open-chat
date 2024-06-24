@@ -37,11 +37,13 @@
         client
             .handleMagicLink(qs)
             .then((resp) => {
-                status = "magicLink." + resp.kind;
                 if (resp.kind === "success") {
                     dispatch("close");
                 } else if (resp.kind === "session_not_found") {
                     message = "magicLink.continueMessage";
+                    status = "magicLink.success";
+                } else {
+                    status = "magicLink." + resp.kind;
                 }
             })
             .catch((_) => {

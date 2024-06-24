@@ -561,7 +561,7 @@
         "enterCode": "Introduzca el código de verificación",
         "link_expired": "El enlace sólo es válido durante 5 minutos y ya ha caducado.",
         "link_invalid": "El enlace no es válido.",
-        "session_not_found": "¡Éxito! Ya has iniciado sesión.",
+        "success": "¡Éxito! Ya has iniciado sesión.",
         "title": "Iniciando sesión con un enlace de correo electrónico..."
     },
     "makeGroupPrivate": "Hacer que el grupo sea privado",

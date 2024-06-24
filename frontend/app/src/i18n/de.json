@@ -561,7 +561,7 @@
         "enterCode": "Geben Sie den Bestätigungscode ein",
         "link_expired": "Der Link ist nur 5 Minuten gültig und jetzt abgelaufen.",
         "link_invalid": "Der Link ist ungültig.",
-        "session_not_found": "Erfolg! Sie sind jetzt angemeldet.",
+        "success": "Erfolg! Sie sind jetzt angemeldet.",
         "title": "Mit E-Mail-Link anmelden …"
     },
     "makeGroupPrivate": "Gruppe privat machen",

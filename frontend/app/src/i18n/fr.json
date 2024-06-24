@@ -561,7 +561,7 @@
         "enterCode": "Entrer le code de vérification",
         "link_expired": "Le lien n'est valable que 5 minutes et a maintenant expiré.",
         "link_invalid": "Le lien n'est pas valide.",
-        "session_not_found": "Succès! Vous êtes maintenant inscrit.",
+        "success": "Succès! Vous êtes maintenant inscrit.",
         "title": "Connexion avec le lien e-mail..."
     },
     "makeGroupPrivate": "Rendre le groupe privé",
