@@ -17,6 +17,7 @@
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
+    import YukuMetaverse from "./YukuMetaverse.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,6 +31,13 @@
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
+
+    $: yukuMetaverseUrl =
+        $selectedChatStore !== undefined &&
+        $selectedChatStore.kind !== "direct_chat" &&
+        $selectedChatStore.name === "YUKU"
+            ? $selectedChatStore.description
+            : undefined;
 
     $: {
         if (middlePanel) {
@@ -106,6 +114,8 @@
                 <NoChatSelected on:newchat />
             </div>
         {/if}
+    {:else if yukuMetaverseUrl}
+        <YukuMetaverse url={yukuMetaverseUrl} />
     {:else if $selectedChatStore !== undefined}
         <CurrentChat
             bind:currentChatMessages
