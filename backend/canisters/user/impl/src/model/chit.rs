@@ -174,7 +174,7 @@ mod tests {
 
     fn init_test_data() -> ChitEarnedEvents {
         ChitEarnedEvents {
-            streak: Streak::new(),
+            streak: Streak::default(),
             events: vec![
                 ChitEarned {
                     amount: 200,
