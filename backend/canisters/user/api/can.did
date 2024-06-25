@@ -857,6 +857,7 @@ type InitialStateResponse = variant {
         suspended : bool;
         pin_number_settings : opt PinNumberSettings;
         local_user_index_canister_id : CanisterId;
+        achievements : vec ChitEarned;
     };
 };
 
@@ -911,6 +912,7 @@ type UpdatesResponse = variant {
             NoChange;
         };
         suspended : opt bool;
+        achievements : vec ChitEarned;
     };
     SuccessNoUpdates;
 };

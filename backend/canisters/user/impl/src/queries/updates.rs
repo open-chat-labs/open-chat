@@ -45,7 +45,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
-        || state.data.communities.any_updated(updates_since);
+        || state.data.communities.any_updated(updates_since)
+        || state.data.chit_events.has_achievements_since(updates_since);
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -123,6 +124,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         OptionUpdate::NoChange
     };
 
+    let achievements = state.data.chit_events.achievements(Some(updates_since));
+
     Success(SuccessResult {
         timestamp: now,
         username,
@@ -135,5 +138,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         blocked_users,
         suspended,
         pin_number_settings,
+        achievements,
     })
 }

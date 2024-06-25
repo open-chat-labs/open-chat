@@ -1,5 +1,4 @@
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
-use crate::model::streak::Streak;
 use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -7,6 +6,7 @@ use types::{
     is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile,
 };
+use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {

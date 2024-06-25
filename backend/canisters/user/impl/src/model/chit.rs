@@ -1,12 +1,30 @@
 use serde::{Deserialize, Serialize};
-use types::{ChitEarned, TimestampMillis};
+use std::cmp::max;
+use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
+use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEarnedEvents {
     events: Vec<ChitEarned>,
+    #[serde(default)]
+    streak: Streak,
 }
 
 impl ChitEarnedEvents {
+    pub fn init_streak(&mut self) -> u16 {
+        let mut max_streak: u16 = 0;
+
+        for event in self.events.iter() {
+            if matches!(event.reason, ChitEarnedReason::DailyClaim) {
+                self.streak.claim(event.timestamp);
+
+                max_streak = max(max_streak, self.streak.days(event.timestamp))
+            }
+        }
+
+        max_streak
+    }
+
     pub fn push(&mut self, event: ChitEarned) {
         let mut sort = false;
 
@@ -14,6 +32,10 @@ impl ChitEarnedEvents {
             if latest.timestamp > event.timestamp {
                 sort = true;
             }
+        }
+
+        if matches!(event.reason, ChitEarnedReason::DailyClaim) {
+            self.streak.claim(event.timestamp);
         }
 
         self.events.push(event);
@@ -51,11 +73,33 @@ impl ChitEarnedEvents {
 
         (page, self.events.len() as u32)
     }
+
+    pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEarned> {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| since.map_or(true, |ts| e.timestamp > ts))
+            .filter(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+            .cloned()
+            .collect()
+    }
+
+    pub fn has_achievements_since(&self, since: TimestampMillis) -> bool {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| e.timestamp > since)
+            .any(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+    }
+
+    pub fn streak(&self, now: TimestampMillis) -> u16 {
+        self.streak.days(now)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use types::ChitEarnedReason;
+    use types::{Achievement, ChitEarnedReason};
 
     use super::*;
 
@@ -130,6 +174,7 @@ mod tests {
 
     fn init_test_data() -> ChitEarnedEvents {
         ChitEarnedEvents {
+            streak: Streak::new(),
             events: vec![
                 ChitEarned {
                     amount: 200,
@@ -149,7 +194,7 @@ mod tests {
                 ChitEarned {
                     amount: 500,
                     timestamp: 13,
-                    reason: ChitEarnedReason::Achievement("Bio".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SetBio),
                 },
                 ChitEarned {
                     amount: 300,
@@ -159,12 +204,12 @@ mod tests {
                 ChitEarned {
                     amount: 500,
                     timestamp: 15,
-                    reason: ChitEarnedReason::Achievement("Avatar".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SetAvatar),
                 },
                 ChitEarned {
                     amount: 500,
                     timestamp: 16,
-                    reason: ChitEarnedReason::Achievement("First message".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SentDirectMessage),
                 },
             ],
         }
