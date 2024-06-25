@@ -458,7 +458,9 @@ export class UserIndexClient extends CandidService {
 
         return this.handleQueryResponse(
             () => this.userIndexService.set_diamond_membership_fees(args),
-            (res) => "Success" in res,
+            (res) => {
+                return "Success" in res;
+            },
         );
     }
 
