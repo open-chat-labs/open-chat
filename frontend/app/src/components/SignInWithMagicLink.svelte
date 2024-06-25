@@ -1,12 +1,16 @@
 <script lang="ts">
     import { onMount, getContext, createEventDispatcher } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
     import { Pincode, PincodeInput } from "svelte-pincode";
+    import ButtonGroup from "./ButtonGroup.svelte";
+    import Button from "./Button.svelte";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -15,22 +19,24 @@
     let status: string | undefined = undefined;
     let message = "magicLink.closeMessage";
     let busy = false;
+    let value: string;
+    let code: string[];
 
     onMount(() => {
         pageReplace("/home");
     });
 
-    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
-        if (!isCodeComplete(ev.detail.code)) {
+    function submit() {
+        if (!isCodeComplete(code)) {
             return;
         }
 
-        if (!isCodeValid(ev.detail.code)) {
+        if (!isCodeValid(code)) {
             status = "magicLink.code_invalid";
             return;
         }
 
-        qs += "&u=" + ev.detail.value;
+        qs += "&u=" + value;
 
         busy = true;
 
@@ -38,7 +44,8 @@
             .handleMagicLink(qs)
             .then((resp) => {
                 if (resp.kind === "success") {
-                    dispatch("close");
+                    page("/communities");
+                    close();
                 } else if (resp.kind === "session_not_found") {
                     message = "magicLink.continueMessage";
                     status = "magicLink.success";
@@ -59,10 +66,14 @@
     function isCodeValid(code: string[]): boolean {
         return code.filter((c) => /^[0-9]$/.test(c)).length === 3;
     }
+
+    function close() {
+        dispatch("close");
+    }
 </script>
 
 <div class="magic-link">
-    <ModalContent hideFooter>
+    <ModalContent>
         <div class="header" slot="header">
             <Translatable resourceKey={i18nKey("magicLink.title")} />
         </div>
@@ -75,7 +86,7 @@
                 {:else if status === undefined}
                     <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
 
-                    <Pincode on:complete={onCodeEntered}>
+                    <Pincode bind:value bind:code on:complete={submit}>
                         <PincodeInput />
                         <PincodeInput />
                         <PincodeInput />
@@ -85,6 +96,16 @@
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
                 {/if}
             </div>
+        </div>
+        <div class="footer" slot="footer">
+            <ButtonGroup align="center">
+                <Button disabled={busy} on:click={close} secondary>
+                    {$_("cancel")}
+                </Button>
+                <Button loading={busy} disabled={busy} on:click={submit}>
+                    {$_("submit")}
+                </Button>
+            </ButtonGroup>
         </div>
     </ModalContent>
 </div>
