@@ -6,5 +6,6 @@ export type GenerateMagicLinkResponse =
 
 export type HandleMagicLinkResponse =
     | { kind: "success" }
+    | { kind: "session_not_found" }
     | { kind: "link_invalid" }
     | { kind: "link_expired" };

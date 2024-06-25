@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
+    import { onMount, getContext, createEventDispatcher } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
@@ -9,6 +9,7 @@
     import { Pincode, PincodeInput } from "svelte-pincode";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     let qs = window.location.search;
     let status: string | undefined = undefined;
@@ -36,9 +37,13 @@
         client
             .handleMagicLink(qs)
             .then((resp) => {
-                status = "magicLink." + resp.kind;
                 if (resp.kind === "success") {
+                    dispatch("close");
+                } else if (resp.kind === "session_not_found") {
                     message = "magicLink.continueMessage";
+                    status = "magicLink.success";
+                } else {
+                    status = "magicLink." + resp.kind;
                 }
             })
             .catch((_) => {

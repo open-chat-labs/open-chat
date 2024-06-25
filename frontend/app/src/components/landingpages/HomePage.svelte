@@ -50,7 +50,7 @@
 
 {#if showSignInWithMagicLinkModal}
     <Overlay>
-        <SignInWithMagicLink />
+        <SignInWithMagicLink on:close={() => (showSignInWithMagicLinkModal = false)} />
     </Overlay>
 {/if}
 
