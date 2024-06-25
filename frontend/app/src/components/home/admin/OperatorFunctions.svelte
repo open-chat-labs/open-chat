@@ -1,7 +1,11 @@
 <script lang="ts">
-    import type { DiamondMembershipFees, OpenChat, ResourceKey } from "openchat-client";
+    import type {
+        DiamondMembershipFees,
+        OpenChat,
+        ResourceKey,
+        UpdateMarketMakerConfigArgs,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import NumberInput from "../../NumberInput.svelte";
     import Input from "../../Input.svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -12,8 +16,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    const MIN_LENGTH = 0;
-    const MAX_LENGTH = 100;
     type Fees = {
         token: "CHAT" | "ICP";
         oneMonth: string;
@@ -32,7 +34,7 @@
     let governanceCanisterId = "";
     let stake = "0";
 
-    let exchangeId: number = 0;
+    let exchangeId: string = "";
     let enabled: boolean = true;
     let priceIncrement: string = "";
     let orderSize: string = "";
@@ -51,6 +53,7 @@
     $: groupUpgradeConcurrencyInvalid = isNaN(parseInt(groupUpgradeConcurrency, 0));
     $: communityUpgradeConcurrencyInvalid = isNaN(parseInt(communityUpgradeConcurrency, 0));
     $: userUpgradeConcurrencyInvalid = isNaN(parseInt(userUpgradeConcurrency, 0));
+    $: exchangeIdInvalid = isNaN(parseInt(exchangeId, 0));
 
     onMount(() => {
         client.diamondMembershipFees().then((fees) => {
@@ -69,26 +72,40 @@
         });
     });
 
-    $: markerMakerConfig = {
-        exchangeId: exchangeId,
-        enabled: enabled,
-        priceIncrement: priceIncrement === "" ? undefined : BigInt(priceIncrement),
-        orderSize: orderSize === "" ? undefined : BigInt(orderSize),
-        minOrderSize: minOrderSize === "" ? undefined : BigInt(minOrderSize),
-        maxBuyPrice: maxBuyPrice === "" ? undefined : BigInt(maxBuyPrice),
-        minSellPrice: minSellPrice === "" ? undefined : BigInt(minSellPrice),
-        spread: spread === "" ? undefined : BigInt(spread),
-        minOrdersPerDirection:
-            minOrdersPerDirection === "" ? undefined : Number(minOrdersPerDirection),
-        maxOrdersPerDirection:
-            maxOrdersPerDirection === "" ? undefined : Number(maxOrdersPerDirection),
-        maxOrdersToMakePerIteration:
-            maxOrdersToMakePerIteration === "" ? undefined : Number(maxOrdersToMakePerIteration),
-        maxOrdersToCancelPerIteration:
-            maxOrdersToCancelPerIteration === ""
-                ? undefined
-                : Number(maxOrdersToCancelPerIteration),
-    };
+    function buildMarketMakerConfig(): UpdateMarketMakerConfigArgs | undefined {
+        let config;
+        if (exchangeIdInvalid) return undefined;
+
+        try {
+            config = {
+                exchangeId: parseInt(exchangeId, 0),
+                enabled: enabled,
+                priceIncrement: priceIncrement === "" ? undefined : BigInt(priceIncrement),
+                orderSize: orderSize === "" ? undefined : BigInt(orderSize),
+                minOrderSize: minOrderSize === "" ? undefined : BigInt(minOrderSize),
+                maxBuyPrice: maxBuyPrice === "" ? undefined : BigInt(maxBuyPrice),
+                minSellPrice: minSellPrice === "" ? undefined : BigInt(minSellPrice),
+                spread: spread === "" ? undefined : BigInt(spread),
+                minOrdersPerDirection:
+                    minOrdersPerDirection === "" ? undefined : Number(minOrdersPerDirection),
+                maxOrdersPerDirection:
+                    maxOrdersPerDirection === "" ? undefined : Number(maxOrdersPerDirection),
+                maxOrdersToMakePerIteration:
+                    maxOrdersToMakePerIteration === ""
+                        ? undefined
+                        : Number(maxOrdersToMakePerIteration),
+                maxOrdersToCancelPerIteration:
+                    maxOrdersToCancelPerIteration === ""
+                        ? undefined
+                        : Number(maxOrdersToCancelPerIteration),
+            };
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey("Failed to create market maker config"), err);
+            return undefined;
+        }
+
+        return config;
+    }
 
     function addBusy(n: number) {
         busy.add(n);
@@ -230,20 +247,23 @@
 
     function updateMarketMakerConfig(): void {
         error = undefined;
-        addBusy(5);
-        client
-            .updateMarketMakerConfig(markerMakerConfig)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast(i18nKey("Market maker config updated"));
-                } else {
-                    error = i18nKey(`Failed to update market maker config: ${resp}`);
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(5);
-            });
+        const config = buildMarketMakerConfig();
+        if (config !== undefined) {
+            addBusy(5);
+            client
+                .updateMarketMakerConfig(config)
+                .then((resp) => {
+                    if (resp === "success") {
+                        toastStore.showSuccessToast(i18nKey("Market maker config updated"));
+                    } else {
+                        error = i18nKey(`Failed to update market maker config: ${resp}`);
+                        toastStore.showFailureToast(error);
+                    }
+                })
+                .finally(() => {
+                    removeBusy(5);
+                });
+        }
     }
 </script>
 
@@ -251,11 +271,7 @@
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <Input
-                invalid={groupUpgradeConcurrencyInvalid}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                bind:value={groupUpgradeConcurrency} />
+            <Input invalid={groupUpgradeConcurrencyInvalid} bind:value={groupUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
@@ -269,8 +285,6 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
                 bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
@@ -283,11 +297,7 @@
     <section class="operator-function">
         <div class="title">Set user upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <Input
-                invalid={userUpgradeConcurrencyInvalid}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                bind:value={userUpgradeConcurrency} />
+            <Input invalid={userUpgradeConcurrencyInvalid} bind:value={userUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
@@ -311,37 +321,25 @@
             <div class="name-value">
                 <div class="label">One month:</div>
                 <div class="value">
-                    <Input
-                        minlength={MIN_LENGTH}
-                        maxlength={MAX_LENGTH}
-                        bind:value={currentFees[feesTab].oneMonth} />
+                    <Input bind:value={currentFees[feesTab].oneMonth} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">Three month:</div>
                 <div class="value">
-                    <Input
-                        minlength={MIN_LENGTH}
-                        maxlength={MAX_LENGTH}
-                        bind:value={currentFees[feesTab].threeMonths} />
+                    <Input bind:value={currentFees[feesTab].threeMonths} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">One year:</div>
                 <div class="value">
-                    <Input
-                        minlength={MIN_LENGTH}
-                        maxlength={MAX_LENGTH}
-                        bind:value={currentFees[feesTab].oneYear} />
+                    <Input bind:value={currentFees[feesTab].oneYear} />
                 </div>
             </div>
             <div class="name-value">
                 <div class="label">Lifetime:</div>
                 <div class="value">
-                    <Input
-                        minlength={MIN_LENGTH}
-                        maxlength={MAX_LENGTH}
-                        bind:value={currentFees[feesTab].lifetime} />
+                    <Input bind:value={currentFees[feesTab].lifetime} />
                 </div>
             </div>
             <Button
@@ -357,16 +355,13 @@
         <div class="name-value">
             <div class="label">Governance Canister Id:</div>
             <div class="value">
-                <Input
-                    minlength={MIN_LENGTH}
-                    maxlength={MAX_LENGTH}
-                    bind:value={governanceCanisterId} />
+                <Input bind:value={governanceCanisterId} />
             </div>
         </div>
         <div class="name-value">
             <div class="label">Stake:</div>
             <div class="value">
-                <Input minlength={MIN_LENGTH} maxlength={MAX_LENGTH} bind:value={stake} />
+                <Input bind:value={stake} />
             </div>
         </div>
         <Button
@@ -381,7 +376,7 @@
         <div class="name-value">
             <div class="label">Exchange Id:</div>
             <div class="value">
-                <NumberInput bind:value={exchangeId} />
+                <Input invalid={exchangeIdInvalid} bind:value={exchangeId} />
             </div>
         </div>
         <div class="name-value">
@@ -450,8 +445,11 @@
                 <Input bind:value={maxOrdersToCancelPerIteration} />
             </div>
         </div>
-        <Button tiny disabled={busy.has(5)} loading={busy.has(5)} on:click={updateMarketMakerConfig}
-            >Apply</Button>
+        <Button
+            tiny
+            disabled={busy.has(5) || exchangeIdInvalid}
+            loading={busy.has(5)}
+            on:click={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
