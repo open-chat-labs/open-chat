@@ -4776,25 +4776,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.sendRequest({ kind: "setBio", bio }).then((resp) => {
-            if (resp === "success") {
-                this.dispatchEvent(
-                    new ChitEarnedEvent([
-                        {
-                            amount: 300,
-                            timestamp: BigInt(Date.now()),
-                            reason: { kind: "achievement_unlocked", text: "set_bio" },
-                        },
-                        {
-                            amount: 300,
-                            timestamp: BigInt(Date.now()),
-                            reason: { kind: "achievement_unlocked", text: "set_avatar" },
-                        },
-                    ]),
-                );
-            }
-            return resp;
-        });
+        return this.sendRequest({ kind: "setBio", bio });
     }
 
     getBio(userId?: string): Promise<string> {
