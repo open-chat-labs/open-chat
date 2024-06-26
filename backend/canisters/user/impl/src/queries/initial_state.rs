@@ -47,5 +47,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         pin_number_settings: state.data.pin_number.enabled().then(|| state.data.pin_number.settings(now)),
         local_user_index_canister_id: state.data.local_user_index_canister_id,
         achievements: state.data.chit_events.achievements(None),
+        achievements_last_seen: state.data.achievements_last_seen,
     })
 }

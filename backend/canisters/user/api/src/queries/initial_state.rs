@@ -22,6 +22,7 @@ pub struct SuccessResult {
     pub pin_number_settings: Option<PinNumberSettings>,
     pub local_user_index_canister_id: CanisterId,
     pub achievements: Vec<ChitEarned>,
+    pub achievements_last_seen: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

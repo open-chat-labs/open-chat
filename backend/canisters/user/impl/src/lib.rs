@@ -226,6 +226,8 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     #[serde(default)]
     pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub achievements_last_seen: TimestampMillis,
     pub rng_seed: [u8; 32],
 }
 
@@ -285,6 +287,7 @@ impl Data {
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),
             achievements: HashSet::new(),
+            achievements_last_seen: 0,
             rng_seed: [0; 32],
         }
     }

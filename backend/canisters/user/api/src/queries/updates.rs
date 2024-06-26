@@ -31,6 +31,7 @@ pub struct SuccessResult {
     pub suspended: Option<bool>,
     pub pin_number_settings: OptionUpdate<PinNumberSettings>,
     pub achievements: Vec<ChitEarned>,
+    pub achievements_last_seen: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
