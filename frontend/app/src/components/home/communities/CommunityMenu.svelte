@@ -1,6 +1,7 @@
 <script lang="ts">
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -21,6 +22,7 @@
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
+    export let canMarkAllRead: boolean;
 
     const dispatch = createEventDispatcher();
 
@@ -51,6 +53,10 @@
 
     function communityDetails() {
         dispatch("communityDetails", community);
+    }
+
+    function markAllRead() {
+        dispatch("markAllRead");
     }
 
     function newChannel() {
@@ -115,6 +121,14 @@
                         ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
                 </MenuItem>
             {/if}
+            <MenuItem disabled={!canMarkAllRead} on:click={markAllRead}>
+                <CheckboxMultipleMarked
+                    size={$iconSize}
+                    color={"var(--icon-inverted-txt)"}
+                    slot="icon" />
+                <span slot="text"
+                    ><Translatable resourceKey={i18nKey("communities.markAllRead")} /></span>
+            </MenuItem>
             {#if member}
                 <MenuItem separator />
                 {#if canDelete}
