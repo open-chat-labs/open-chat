@@ -13,6 +13,7 @@
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
+    export let canMarkAllRead: boolean;
 
     function showCommunityMembers() {
         pushRightPanelHistory({ kind: "show_community_members" });
@@ -50,6 +51,8 @@
             on:leaveCommunity
             on:editCommunity
             on:deleteCommunity
+            on:markAllRead
+            {canMarkAllRead}
             {community} />
     </span>
 </SectionHeader>

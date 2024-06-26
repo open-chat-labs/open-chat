@@ -3739,6 +3739,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messagesRead.markAllRead(chat);
     }
 
+    markAllReadForCurrentScope() {
+        this._liveState.chatSummariesList.forEach((chat) => messagesRead.markAllRead(chat));
+    }
+
     getDisplayDate = getDisplayDate;
     isSocialVideoLink = isSocialVideoLink;
     containsSocialVideoLink = containsSocialVideoLink;
