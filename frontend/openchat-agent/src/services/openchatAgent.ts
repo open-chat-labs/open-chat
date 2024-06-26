@@ -1581,7 +1581,7 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
-            newAchievements = userResponse.achievements;
+            newAchievements = userResponse.achievements ?? [];
             achievements = new Set<Achievement>(
                 newAchievements.reduce((all, a) => {
                     if (a.reason.kind === "achievement_unlocked") {
@@ -1650,7 +1650,7 @@ export class OpenChatAgent extends EventTarget {
                     userResponse.pinNumberSettings,
                 );
                 achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
-                newAchievements = userResponse.achievements;
+                newAchievements = userResponse.achievements ?? [];
                 newAchievements.forEach((a) => {
                     if (a.reason.kind === "achievement_unlocked") {
                         achievements.add(a.reason.type);
