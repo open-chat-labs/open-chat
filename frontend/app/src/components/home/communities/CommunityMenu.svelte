@@ -126,8 +126,7 @@
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}
                     slot="icon" />
-                <span slot="text"
-                    ><Translatable resourceKey={i18nKey("communities.markAllRead")} /></span>
+                <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
             </MenuItem>
             {#if member}
                 <MenuItem separator />

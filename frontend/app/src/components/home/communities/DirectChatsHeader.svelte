@@ -42,8 +42,7 @@
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
                             <span slot="text"
-                                ><Translatable
-                                    resourceKey={i18nKey("communities.markAllRead")} /></span>
+                                ><Translatable resourceKey={i18nKey("markAllRead")} /></span>
                         </MenuItem>
                     </Menu>
                 </span>
