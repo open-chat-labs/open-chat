@@ -2,7 +2,7 @@
     export let url: string;
 </script>
 
-<iframe title={"Yuku Metaverse"} src={url} />
+<iframe title={"Cubetopia Parkour"} src={url} />
 
 <style lang="scss">
     iframe {
