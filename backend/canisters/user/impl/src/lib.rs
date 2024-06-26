@@ -26,8 +26,8 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
-    TimestampMillis, Timestamped, UserId,
+    Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
+    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId,
 };
 use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -173,6 +173,16 @@ impl RuntimeState {
             },
         }
     }
+
+    pub fn insert_achievement(&mut self, achievement: Achievement) {
+        if self.data.achievements.insert(achievement.clone()) {
+            self.data.chit_events.push(ChitEarned {
+                amount: achievement.chit_reward() as i32,
+                timestamp: self.env.now(),
+                reason: ChitEarnedReason::Achievement(achievement),
+            });
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -214,6 +224,10 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
+    #[serde(default)]
+    pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub achievements_last_seen: TimestampMillis,
     pub rng_seed: [u8; 32],
 }
 
@@ -272,6 +286,8 @@ impl Data {
             pin_number: PinNumber::default(),
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),
+            achievements: HashSet::new(),
+            achievements_last_seen: 0,
             rng_seed: [0; 32],
         }
     }

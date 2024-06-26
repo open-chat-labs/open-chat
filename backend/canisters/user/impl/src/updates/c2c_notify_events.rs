@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::{MessageContentInitial, Timestamped};
+use types::{Achievement, ChitEarnedReason, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
@@ -29,6 +29,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         Event::DisplayNameChanged(ev) => {
             let now = state.env.now();
             state.data.display_name = Timestamped::new(ev.display_name, now);
+            state.insert_achievement(types::Achievement::SetDisplayName);
         }
         Event::PhoneNumberConfirmed(ev) => {
             state.data.phone_is_verified = true;
@@ -59,6 +60,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 .group_chats
                 .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
             state.data.hot_group_exclusions.remove(&ev.chat_id, now);
+            state.insert_achievement(types::Achievement::JoinedGroup);
         }
         Event::UserJoinedCommunityOrChannel(ev) => {
             let now = state.env.now();
@@ -78,8 +80,15 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                     .collect(),
                 now,
             );
+            state.insert_achievement(types::Achievement::JoinedCommunity);
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
+            state.insert_achievement(types::Achievement::UpgradedToDiamond);
+
+            if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                state.insert_achievement(types::Achievement::UpgradedToGoldDiamond);
+            }
+
             state.data.diamond_membership_expires_at = Some(ev.expires_at);
 
             if ev.send_bot_message {
@@ -92,7 +101,30 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::ChitEarned(ev) => {
+            let timestamp = ev.timestamp;
+            let is_daily_claim = matches!(ev.reason, ChitEarnedReason::DailyClaim);
+
             state.data.chit_events.push(*ev);
+
+            if is_daily_claim {
+                let streak = state.data.chit_events.streak(timestamp);
+
+                if streak >= 3 {
+                    state.insert_achievement(Achievement::Streak3);
+                }
+
+                if streak >= 7 {
+                    state.insert_achievement(Achievement::Streak7);
+                }
+
+                if streak >= 14 {
+                    state.insert_achievement(Achievement::Streak14);
+                }
+
+                if streak >= 30 {
+                    state.insert_achievement(Achievement::Streak30);
+                }
+            }
         }
     }
 }

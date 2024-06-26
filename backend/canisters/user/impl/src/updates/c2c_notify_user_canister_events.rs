@@ -11,7 +11,9 @@ use chat_events::{
 };
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence};
+use types::{
+    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence,
+};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
@@ -46,6 +48,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
     match event {
         UserCanisterEvent::SendMessages(args) => {
             send_messages(*args, caller_user_id, state);
+            state.insert_achievement(Achievement::ReceivedDirectMessage);
         }
         UserCanisterEvent::EditMessage(args) => {
             edit_message(*args, caller_user_id, state);

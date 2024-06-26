@@ -3,7 +3,7 @@ use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use types::{CanisterId, Timestamped};
+use types::{Achievement, CanisterId, Timestamped};
 use user_canister::set_avatar::*;
 use utils::document_validation::validate_avatar;
 
@@ -28,6 +28,8 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     state.data.avatar = Timestamped::new(args.avatar, now);
+
+    state.insert_achievement(Achievement::SetAvatar);
 
     ic_cdk::spawn(update_index_canister(state.data.user_index_canister_id, id));
 

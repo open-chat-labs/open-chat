@@ -1,7 +1,6 @@
+use crate::{Achievement, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-
-use crate::TimestampMillis;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChitEarned {
@@ -13,6 +12,6 @@ pub struct ChitEarned {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChitEarnedReason {
     DailyClaim,
-    Achievement(String),
+    Achievement(Achievement),
     MemeContestWinner,
 }

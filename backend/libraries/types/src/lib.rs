@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 mod access_tokens;
+mod achievement;
 mod avatar;
 mod bots;
 mod build_version;
@@ -73,6 +74,7 @@ mod versioned;
 mod video_calls;
 
 pub use access_tokens::*;
+pub use achievement::*;
 pub use avatar::*;
 pub use bots::*;
 pub use build_version::*;

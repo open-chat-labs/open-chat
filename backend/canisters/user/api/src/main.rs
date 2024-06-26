@@ -41,6 +41,7 @@ fn main() {
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, manage_favourite_chats, update);
+    generate_candid_method!(user, mark_achievements_seen, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat_v2, update);
