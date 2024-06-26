@@ -21,6 +21,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface AddPlatformModeratorArgs { 'user_id' : UserId }
 export type AddPlatformModeratorResponse = {
     'AlreadyPlatformModerator' : null
@@ -219,7 +232,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
 export interface ChitUserBalance {

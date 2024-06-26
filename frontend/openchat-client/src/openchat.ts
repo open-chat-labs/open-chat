@@ -203,7 +203,15 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
+import {
+    findLast,
+    groupBy,
+    groupWhile,
+    keepMax,
+    partition,
+    toRecord,
+    toRecord2,
+} from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -5278,15 +5286,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.dispatchEvent(new ChatsUpdated());
 
-            // this.dispatchEvent(
-            //     new ChitEarnedEvent([
-            //         {
-            //             amount: 300,
-            //             timestamp: BigInt(Date.now()),
-            //             reason: { kind: "achievement_unlocked", text: "First Message Sent!" },
-            //         },
-            //     ]),
-            // );
+            if (chatsResponse.newAchievements.length > 0) {
+                this.dispatchEvent(new ChitEarnedEvent(chatsResponse.newAchievements));
+            }
 
             if (initialLoad) {
                 this.startExchangeRatePoller();

@@ -152,9 +152,24 @@ export const idlFactory = ({ IDL }) => {
     'from' : IDL.Opt(TimestampMillis),
     'ascending' : IDL.Bool,
   });
+  const Achievement = IDL.Variant({
+    'JoinedCommunity' : IDL.Null,
+    'JoinedGroup' : IDL.Null,
+    'Streak14' : IDL.Null,
+    'Streak30' : IDL.Null,
+    'UpgradedToDiamond' : IDL.Null,
+    'ReceivedDirectMessage' : IDL.Null,
+    'SetDisplayName' : IDL.Null,
+    'SetBio' : IDL.Null,
+    'Streak3' : IDL.Null,
+    'Streak7' : IDL.Null,
+    'UpgradedToGoldDiamond' : IDL.Null,
+    'SentDirectMessage' : IDL.Null,
+    'SetAvatar' : IDL.Null,
+  });
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
-    'Achievement' : IDL.Text,
+    'Achievement' : Achievement,
     'MemeContestWinner' : IDL.Null,
   });
   const ChitEarned = IDL.Record({
@@ -1230,12 +1245,14 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesInitial,
       'blocked_users' : IDL.Vec(UserId),
       'favourite_chats' : FavouriteChatsInitial,
+      'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsInitial,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
       'suspended' : IDL.Bool,
+      'achievements_last_seen' : TimestampMillis,
     }),
   });
   const JoinVideoCallArgs = IDL.Record({
@@ -1284,6 +1301,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const MarkAchievementsSeenArgs = IDL.Record({
+    'last_seen' : TimestampMillis,
+  });
+  const MarkAchievementsSeenResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
@@ -1873,11 +1894,13 @@ export const idlFactory = ({ IDL }) => {
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
+      'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : IDL.Opt(IDL.Bool),
+      'achievements_last_seen' : IDL.Opt(TimestampMillis),
     }),
     'SuccessNoUpdates' : IDL.Null,
   });
@@ -2000,6 +2023,11 @@ export const idlFactory = ({ IDL }) => {
     'manage_favourite_chats' : IDL.Func(
         [ManageFavouriteChatsArgs],
         [ManageFavouriteChatsResponse],
+        [],
+      ),
+    'mark_achievements_seen' : IDL.Func(
+        [MarkAchievementsSeenArgs],
+        [MarkAchievementsSeenResponse],
         [],
       ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),

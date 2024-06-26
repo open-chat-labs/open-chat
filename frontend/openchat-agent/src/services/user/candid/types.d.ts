@@ -39,6 +39,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface AddHotGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
   'groups' : Array<ChatId>,
@@ -293,7 +306,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export interface ChitEventsArgs {
   'to' : [] | [TimestampMillis],
@@ -1244,12 +1257,14 @@ export type InitialStateResponse = {
       'communities' : CommunitiesInitial,
       'blocked_users' : Array<UserId>,
       'favourite_chats' : FavouriteChatsInitial,
+      'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsInitial,
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
       'suspended' : boolean,
+      'achievements_last_seen' : TimestampMillis,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1296,6 +1311,8 @@ export interface ManageFavouriteChatsArgs {
 }
 export type ManageFavouriteChatsResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface MarkAchievementsSeenArgs { 'last_seen' : TimestampMillis }
+export type MarkAchievementsSeenResponse = { 'Success' : null };
 export interface MarkReadArgs {
   'community_messages_read' : Array<CommunityMessagesRead>,
   'messages_read' : Array<ChatMessagesRead>,
@@ -2268,11 +2285,13 @@ export type UpdatesResponse = {
       'blocked_users' : [] | [Array<UserId>],
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
+      'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : [] | [boolean],
+      'achievements_last_seen' : [] | [TimestampMillis],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -2501,6 +2520,10 @@ export interface _SERVICE {
   'manage_favourite_chats' : ActorMethod<
     [ManageFavouriteChatsArgs],
     ManageFavouriteChatsResponse
+  >,
+  'mark_achievements_seen' : ActorMethod<
+    [MarkAchievementsSeenArgs],
+    MarkAchievementsSeenResponse
   >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<

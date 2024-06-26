@@ -205,6 +205,8 @@ import type {
     VerifiedCredentialArgs,
     ChitEventsRequest,
     ChitEventsResponse,
+    Achievement,
+    ChitEarned,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1548,6 +1550,9 @@ export class OpenChatAgent extends EventTarget {
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
         let userCanisterLocalUserIndex: string;
+        let achievements: Set<Achievement>;
+        let newAchievements: ChitEarned[];
+        let achievementsLastSeen: bigint;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1576,6 +1581,16 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
+            newAchievements = userResponse.achievements;
+            achievements = new Set<Achievement>(
+                newAchievements.reduce((all, a) => {
+                    if (a.reason.kind === "achievement_unlocked") {
+                        all.push(a.reason.type);
+                    }
+                    return all;
+                }, [] as Achievement[]),
+            );
+            achievementsLastSeen = userResponse.achievementsLastSeen;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1599,6 +1614,9 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
             pinNumberSettings = current.pinNumberSettings;
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
+            achievementsLastSeen = current.achievementsLastSeen;
+            achievements = current.achievements;
+            newAchievements = [];
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1631,6 +1649,13 @@ export class OpenChatAgent extends EventTarget {
                     pinNumberSettings,
                     userResponse.pinNumberSettings,
                 );
+                achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
+                newAchievements = userResponse.achievements;
+                newAchievements.forEach((a) => {
+                    if (a.reason.kind === "achievement_unlocked") {
+                        achievements.add(a.reason.type);
+                    }
+                });
                 anyUpdates = true;
             }
         }
@@ -1783,6 +1808,8 @@ export class OpenChatAgent extends EventTarget {
             favouriteChats,
             pinNumberSettings,
             userCanisterLocalUserIndex,
+            achievementsLastSeen,
+            achievements,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -1802,6 +1829,7 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
             suspensionChanged,
+            newAchievements,
         };
     }
 
@@ -1816,6 +1844,7 @@ export class OpenChatAgent extends EventTarget {
                         updatedEvents: new Map(),
                         anyUpdates: false,
                         suspensionChanged: undefined,
+                        newAchievements: [],
                     },
                     isOffline,
                 );

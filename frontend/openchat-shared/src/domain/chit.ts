@@ -25,17 +25,24 @@ export type MemeContestWinner = {
 export const achievements = [
     "joined_community",
     "joined_group",
-    "set_bio",
+    "streak_14",
+    "streak_30",
+    "upgraded_to_diamond",
+    "received_direct_message",
     "set_display_name",
+    "set_bio",
+    "streak_3",
+    "streak_7",
+    "upgrade_to_gold_diamond",
+    "sent_direct_message",
     "set_avatar",
-    "set_community_display_name",
 ] as const;
 type AchievementType = typeof achievements;
 export type Achievement = AchievementType[number];
 
 export type AchievementUnlocked = {
     kind: "achievement_unlocked";
-    text: Achievement;
+    type: Achievement;
 };
 
 export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked;
