@@ -92,7 +92,6 @@
         "svelte-easy-crop": "^2.0.1",
         "svelte-i18n": "^3.7.0",
         "svelte-material-icons": "^3.0.5",
-        "svelte-pincode": "^2.2.0",
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "usergeek-ic-js": "git+https://github.com/hpeebles/usergeek-ic-js.git#b7e56319447c26e4f8f18779859435137aafc4c2",
         "uuid": "^9.0.0",

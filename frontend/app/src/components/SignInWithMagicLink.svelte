@@ -7,10 +7,9 @@
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
-    import { Pincode, PincodeInput } from "svelte-pincode";
-    import ButtonGroup from "./ButtonGroup.svelte";
-    import Button from "./Button.svelte";
     import page from "page";
+    import Pincode from "./pincode/Pincode.svelte";
+    import PincodeInput from "./pincode/PincodeInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,24 +18,22 @@
     let status: string | undefined = undefined;
     let message = "magicLink.closeMessage";
     let busy = false;
-    let value: string;
-    let code: string[];
 
     onMount(() => {
         pageReplace("/home");
     });
 
-    function submit() {
-        if (!isCodeComplete(code)) {
+    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
+        if (!isCodeComplete(ev.detail.code)) {
             return;
         }
 
-        if (!isCodeValid(code)) {
+        if (!isCodeValid(ev.detail.code)) {
             status = "magicLink.code_invalid";
             return;
         }
 
-        qs += "&u=" + value;
+        qs += "&u=" + ev.detail.value;
 
         busy = true;
 
@@ -73,7 +70,7 @@
 </script>
 
 <div class="magic-link">
-    <ModalContent>
+    <ModalContent hideFooter>
         <div class="header" slot="header">
             <Translatable resourceKey={i18nKey("magicLink.title")} />
         </div>
@@ -86,7 +83,7 @@
                 {:else if status === undefined}
                     <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
 
-                    <Pincode bind:value bind:code on:complete={submit}>
+                    <Pincode on:complete={onCodeEntered}>
                         <PincodeInput />
                         <PincodeInput />
                         <PincodeInput />
@@ -96,16 +93,6 @@
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
                 {/if}
             </div>
-        </div>
-        <div class="footer" slot="footer">
-            <ButtonGroup align="center">
-                <Button disabled={busy} on:click={close} secondary>
-                    {$_("cancel")}
-                </Button>
-                <Button loading={busy} disabled={busy} on:click={submit}>
-                    {$_("submit")}
-                </Button>
-            </ButtonGroup>
         </div>
     </ModalContent>
 </div>

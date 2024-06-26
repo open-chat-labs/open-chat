@@ -3,13 +3,14 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
-    import { Pincode, PincodeInput } from "svelte-pincode";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import { pinNumberFailureStore, type OpenChat } from "openchat-client";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { toastStore } from "../../../stores/toast";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
+    import Pincode from "../../pincode/Pincode.svelte";
+    import PincodeInput from "../../pincode/PincodeInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

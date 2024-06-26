@@ -3,7 +3,8 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
-    import { Pincode, PincodeInput } from "svelte-pincode";
+    import Pincode from "../pincode/Pincode.svelte";
+    import PincodeInput from "../pincode/PincodeInput.svelte";
 
     const dispatch = createEventDispatcher();
 
