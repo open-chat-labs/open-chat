@@ -1845,7 +1845,7 @@ type ChitEarned = record {
 
 type ChitEarnedReason = variant {
     DailyClaim;
-    Achievement : text;
+    Achievement : Achievement;
     MemeContestWinner;
 };
 
@@ -1896,4 +1896,20 @@ type SuspensionDetails = record {
 type SuspensionAction = variant {
     Unsuspend : TimestampMillis;
     Delete : TimestampMillis;
+};
+
+type Achievement = variant {
+    JoinedGroup;
+    JoinedCommunity;
+    SentDirectMessage;
+    ReceivedDirectMessage;
+    SetAvatar;
+    SetBio;
+    SetDisplayName;
+    UpgradedToDiamond;
+    UpgradedToGoldDiamond;
+    Streak3;
+    Streak7;
+    Streak14;
+    Streak30;
 };

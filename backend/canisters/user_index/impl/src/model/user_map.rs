@@ -1,3 +1,4 @@
+use super::user::{ClaimDailyChitResult, SuspensionDetails};
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
@@ -8,9 +9,7 @@ use std::ops::RangeFrom;
 use tracing::info;
 use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-
-use super::streak::Streak;
-use super::user::{ClaimDailyChitResult, SuspensionDetails};
+use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]

@@ -524,6 +524,9 @@ import {
     shouldThrottle,
     throttleDeadline,
 } from "./stores/throttling";
+import { storeEmailSignInSession } from "openchat-shared";
+import { getEmailSignInSession } from "openchat-shared";
+import { removeEmailSignInSession } from "openchat-shared";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -3738,6 +3741,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messagesRead.markAllRead(chat);
     }
 
+    markAllReadForCurrentScope() {
+        this._liveState.chatSummariesList.forEach((chat) => messagesRead.markAllRead(chat));
+    }
+
     getDisplayDate = getDisplayDate;
     isSocialVideoLink = isSocialVideoLink;
     containsSocialVideoLink = containsSocialVideoLink;
@@ -6301,12 +6308,36 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "updateBtcBalance", userId: this._liveState.user.userId });
     }
 
-    generateMagicLink(
+    async generateMagicLink(
         email: string,
         sessionKey: ECDSAKeyIdentity,
     ): Promise<GenerateMagicLinkResponse> {
         const sessionKeyDer = toDer(sessionKey);
-        return this.sendRequest({ kind: "generateMagicLink", email, sessionKey: sessionKeyDer });
+
+        const resp = await this.sendRequest({
+            kind: "generateMagicLink",
+            email,
+            sessionKey: sessionKeyDer,
+        }).catch(
+            (error) =>
+                ({
+                    kind: "failed_to_send_email",
+                    error: error.toString(),
+                }) as GenerateMagicLinkResponse,
+        );
+
+        if (resp.kind === "success") {
+            await storeEmailSignInSession(this._authClientStorage, {
+                key: sessionKey,
+                email,
+                userKey: resp.userKey,
+                expiration: resp.expiration,
+            });
+        } else {
+            await removeEmailSignInSession(this._authClientStorage);
+        }
+
+        return resp;
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
@@ -6315,15 +6346,30 @@ export class OpenChat extends OpenChatAgentWorker {
         const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
 
         if (response.ok) {
-            return { kind: "success" } as HandleMagicLinkResponse;
+            const session = await getEmailSignInSession(this._authClientStorage);
+            if (session === undefined) {
+                return { kind: "session_not_found" };
+            }
+
+            await this.getSignInWithEmailDelegation(
+                session.email,
+                session.userKey,
+                session.key,
+                session.expiration,
+            ).catch((error) => ({
+                kind: "error",
+                error: error.toString(),
+            }));
+
+            return { kind: "success" };
         } else if (response.status === 400) {
             const body = await response.text();
             if (body === "Link expired") {
-                return { kind: "link_expired" } as HandleMagicLinkResponse;
+                return { kind: "link_expired" };
             }
         }
 
-        return { kind: "link_invalid" } as HandleMagicLinkResponse;
+        return { kind: "link_invalid" };
     }
 
     async getSignInWithEmailDelegation(

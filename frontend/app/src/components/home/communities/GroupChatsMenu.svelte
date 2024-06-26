@@ -1,6 +1,7 @@
 <script lang="ts">
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
@@ -15,6 +16,8 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+
+    export let canMarkAllRead: boolean;
 
     $: identityState = client.identityState;
     $: anonUser = client.anonUser;
@@ -58,6 +61,13 @@
             <MenuItem on:click={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("exploreGroups")} /></span>
+            </MenuItem>
+            <MenuItem disabled={!canMarkAllRead} on:click={() => dispatch("markAllRead")}>
+                <CheckboxMultipleMarked
+                    size={$iconSize}
+                    color={"var(--icon-inverted-txt)"}
+                    slot="icon" />
+                <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
             </MenuItem>
         </Menu>
     </span>

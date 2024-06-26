@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Chat, ChatId, DirectChatSummary, Empty, GroupChatSummary, TimestampMillis, UserId};
+use types::{CanisterId, Chat, ChatId, ChitEarned, DirectChatSummary, Empty, GroupChatSummary, TimestampMillis, UserId};
 
 pub type Args = Empty;
 
@@ -21,6 +21,8 @@ pub struct SuccessResult {
     pub suspended: bool,
     pub pin_number_settings: Option<PinNumberSettings>,
     pub local_user_index_canister_id: CanisterId,
+    pub achievements: Vec<ChitEarned>,
+    pub achievements_last_seen: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

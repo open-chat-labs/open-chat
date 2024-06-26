@@ -15,6 +15,7 @@ pub mod iterator_extensions;
 pub mod memory;
 pub mod mentions;
 pub mod regular_jobs;
+pub mod streak;
 pub mod text_validation;
 pub mod time;
 pub mod timestamped_map;

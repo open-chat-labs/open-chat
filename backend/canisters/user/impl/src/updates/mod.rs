@@ -35,6 +35,7 @@ pub mod join_video_call;
 pub mod leave_community;
 pub mod leave_group;
 pub mod manage_favourite_chats;
+pub mod mark_achievements_seen;
 pub mod mark_read;
 pub mod mute_notifications;
 pub mod pin_chat_v2;

@@ -1,20 +1,18 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
+use chat_events::Reader;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{Empty, Milliseconds};
+use types::{Achievement, Empty, Milliseconds, UserId};
 use user_canister::post_upgrade::Args;
-use user_canister::swap_tokens::ExchangeArgs;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::DAY_IN_MS;
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
-const THIRTY_MINS: Milliseconds = 30 * MINUTE_IN_MS;
 
 #[post_upgrade]
 #[trace]
@@ -41,7 +39,7 @@ fn post_upgrade(args: Args) {
         }
     });
 
-    mutate_state(retry_token_swaps);
+    mutate_state(initialize_achievements);
 }
 
 fn mark_user_canister_empty() {
@@ -55,37 +53,71 @@ fn mark_user_canister_empty() {
     })
 }
 
-fn retry_token_swaps(state: &mut RuntimeState) {
-    for swap in state.data.token_swaps.iter() {
-        let now = state.env.now();
-        // Retry swaps that started > 30 mins ago and didn't finish
-        // Only try ICPSwap until Sonic fixes their API
-        if swap.success.is_none()
-            && now > (swap.started + THIRTY_MINS)
-            && matches!(swap.args.exchange_args, ExchangeArgs::ICPSwap(_))
-        {
-            let swap_id = swap.args.swap_id;
+fn initialize_achievements(state: &mut RuntimeState) {
+    let longest_streak = state.data.chit_events.init_streak();
 
-            // Remove this swap job from the queue if by some chance it is already there
-            state.data.timer_jobs.cancel_job(|j| {
-                if let TimerJob::ProcessTokenSwap(swap_job) = j {
-                    swap_job.token_swap.args.swap_id == swap_id
-                } else {
-                    false
-                }
-            });
+    let me: UserId = state.env.canister_id().into();
+    let now = state.env.now();
 
-            info!(?swap_id, "Queue incomplete swap");
+    if state.data.group_chats.len() > 0 {
+        state.insert_achievement(Achievement::JoinedGroup);
+    }
 
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
-                    token_swap: swap.clone(),
-                    attempt: 0,
-                    debug: true,
-                })),
-                now,
-                now,
-            );
+    if state.data.communities.len() > 0 {
+        state.insert_achievement(Achievement::JoinedCommunity);
+    }
+
+    if state.data.direct_chats.iter().any(|c| {
+        c.events
+            .main_events_reader()
+            .iter_latest_messages(None)
+            .any(|m| m.event.sender == me)
+    }) {
+        state.insert_achievement(Achievement::SentDirectMessage);
+    }
+
+    if state.data.direct_chats.iter().any(|c| {
+        c.events
+            .main_events_reader()
+            .iter_latest_messages(None)
+            .any(|m| m.event.sender == c.them)
+    }) {
+        state.insert_achievement(Achievement::ReceivedDirectMessage);
+    }
+
+    if state.data.avatar.value.is_some() {
+        state.insert_achievement(Achievement::SetAvatar);
+    }
+
+    if !state.data.bio.value.is_empty() {
+        state.insert_achievement(Achievement::SetBio);
+    }
+
+    if state.data.display_name.value.is_some() {
+        state.insert_achievement(Achievement::SetDisplayName);
+    }
+
+    if let Some(diamond_expires) = state.data.diamond_membership_expires_at {
+        state.insert_achievement(Achievement::UpgradedToDiamond);
+
+        if (diamond_expires - now) > (5 * 365 * DAY_IN_MS) {
+            state.insert_achievement(Achievement::UpgradedToGoldDiamond);
         }
+    }
+
+    if longest_streak >= 3 {
+        state.insert_achievement(Achievement::Streak3);
+    }
+
+    if longest_streak >= 7 {
+        state.insert_achievement(Achievement::Streak7);
+    }
+
+    if longest_streak >= 14 {
+        state.insert_achievement(Achievement::Streak14);
+    }
+
+    if longest_streak >= 30 {
+        state.insert_achievement(Achievement::Streak30);
     }
 }

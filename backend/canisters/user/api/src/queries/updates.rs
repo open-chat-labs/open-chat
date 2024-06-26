@@ -1,7 +1,9 @@
 use crate::initial_state::PinNumberSettings;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Chat, ChatId, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId};
+use types::{
+    Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, TimestampMillis, UserId,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -28,6 +30,8 @@ pub struct SuccessResult {
     pub blocked_users: Option<Vec<UserId>>,
     pub suspended: Option<bool>,
     pub pin_number_settings: OptionUpdate<PinNumberSettings>,
+    pub achievements: Vec<ChitEarned>,
+    pub achievements_last_seen: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

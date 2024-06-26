@@ -329,6 +329,14 @@ type TipMessageResponse = variant {
     InternalError : record { text; CompletedCryptoTransaction };
 };
 
+type MarkAchievementsSeenArgs = record {
+    last_seen : TimestampMillis;
+};
+
+type MarkAchievementsSeenResponse = variant {
+    Success;
+};
+
 type MarkReadArgs = record {
     messages_read : vec ChatMessagesRead;
     community_messages_read : vec CommunityMessagesRead;
@@ -857,6 +865,8 @@ type InitialStateResponse = variant {
         suspended : bool;
         pin_number_settings : opt PinNumberSettings;
         local_user_index_canister_id : CanisterId;
+        achievements : vec ChitEarned;
+        achievements_last_seen : TimestampMillis;
     };
 };
 
@@ -911,6 +921,8 @@ type UpdatesResponse = variant {
             NoChange;
         };
         suspended : opt bool;
+        achievements : vec ChitEarned;
+        achievements_last_seen : opt TimestampMillis;
     };
     SuccessNoUpdates;
 };
@@ -1159,6 +1171,7 @@ service : {
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     tip_message : (TipMessageArgs) -> (TipMessageResponse);
+    mark_achievements_seen : (MarkAchievementsSeenArgs) -> (MarkAchievementsSeenResponse);
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);

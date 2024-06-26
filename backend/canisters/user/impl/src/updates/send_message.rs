@@ -10,9 +10,9 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use ic_cdk::update;
 use rand::Rng;
 use types::{
-    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
-    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
-    UserId,
+    Achievement, BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError,
+    CryptoTransaction, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation,
+    TimestampMillis, UserId,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -288,6 +288,8 @@ fn send_message_impl(
                 })),
             );
         }
+
+        state.insert_achievement(Achievement::SentDirectMessage);
     }
 
     register_timer_jobs(
