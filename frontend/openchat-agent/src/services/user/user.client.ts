@@ -1403,4 +1403,15 @@ export class UserClient extends CandidService {
             chitEventsResponse,
         );
     }
+
+    markAchievementsSeen(lastSeen: bigint): Promise<void> {
+        return this.handleResponse(
+            this.userService.mark_achievements_seen({
+                last_seen: lastSeen,
+            }),
+            (res) => {
+                console.log("Set Achievements Last seen", lastSeen, res);
+            },
+        );
+    }
 }

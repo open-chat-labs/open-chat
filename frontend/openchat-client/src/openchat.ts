@@ -456,6 +456,7 @@ import {
     storeIdentity,
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
+    achievements,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -5211,6 +5212,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     community: chatsResponse.state.pinnedChannels,
                     none: [],
                 },
+                chatsResponse.state.achievements,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -5269,7 +5271,13 @@ export class OpenChat extends OpenChatAgentWorker {
             this.dispatchEvent(new ChatsUpdated());
 
             if (chatsResponse.newAchievements.length > 0) {
-                this.dispatchEvent(new ChitEarnedEvent(chatsResponse.newAchievements));
+                this.dispatchEvent(
+                    new ChitEarnedEvent(
+                        chatsResponse.newAchievements.filter(
+                            (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                        ),
+                    ),
+                );
             }
 
             if (initialLoad) {
@@ -5297,7 +5305,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe(async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
-                        initialLoad,
+                        !this._liveState.chatsInitialised,
                         resp as UpdatesResult,
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
@@ -6322,6 +6330,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         return resp;
+    }
+
+    markAchievementsSeen() {
+        this.sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
+            console.error("markAchievementsSeen", err);
+        });
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {

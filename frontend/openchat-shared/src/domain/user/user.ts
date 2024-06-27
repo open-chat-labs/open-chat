@@ -1,5 +1,4 @@
 import type { MultiUserChat, PinNumberFailures } from "../chat";
-import type { Achievement } from "../chit";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -236,7 +235,6 @@ export type CreatedUser = CurrentUserCommon & {
     dateCreated: bigint;
     cryptoAccount: string;
     referrals: string[];
-    achievements: Set<Achievement>;
 };
 
 export function anonymousUser(): CreatedUser {
@@ -259,7 +257,6 @@ export function anonymousUser(): CreatedUser {
         nextDailyChitClaim: 0n,
         isBot: false,
         updated: 0n,
-        achievements: new Set(),
     };
 }
 

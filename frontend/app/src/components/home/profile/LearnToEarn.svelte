@@ -14,9 +14,9 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    $: user = client.user;
+    $: globalState = client.globalStateStore;
     $: [achieved, notAchieved] = client.partition([...achievements], (a) =>
-        $user.achievements.has(a),
+        $globalState.achievements.has(a),
     );
     $: percComplete = Math.floor((achieved.length / achievements.length) * 100);
 </script>

@@ -2,6 +2,9 @@
     import type { ChitEarned } from "openchat-client";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { mobileWidth } from "../../../stores/screenDimensions";
 
     export let events: ChitEarned[];
     export let day: Date;
@@ -11,7 +14,7 @@
     <div class="day">{day.getDate()}</div>
 {:else}
     <div class="day has-events">
-        <TooltipWrapper fill position="top" align="middle">
+        <TooltipWrapper fill position="top" align={$mobileWidth ? "middle" : "end"}>
             <div slot="target">
                 {day.getDate()}
             </div>
@@ -20,11 +23,16 @@
                     <div class="tt">
                         {#each events as event}
                             {#if event.reason.kind === "daily_claim"}
-                                <p>{`🚀  Daily claim: ${event.amount}`}</p>
+                                <p>{`🚀  Daily claim: ${event.amount.toLocaleString()}`}</p>
                             {:else if event.reason.kind === "achievement_unlocked"}
-                                <p>{`🔓️ Achievement unlocked: ${event.amount}`}</p>
+                                <p>
+                                    🔓 <Translatable
+                                        resourceKey={i18nKey(
+                                            `learnToEarn.${event.reason.type}`,
+                                        )} />: {event.amount.toLocaleString()}
+                                </p>
                             {:else if event.reason.kind === "meme_contest_winner"}
-                                <p>{`🏆️ Meme context win: ${event.amount}`}</p>
+                                <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
                             {/if}
                         {/each}
                     </div>
@@ -58,6 +66,7 @@
     }
 
     .tt {
+        text-align: start;
         @include font(book, normal, fs-100);
         padding: $sp3;
     }

@@ -111,6 +111,8 @@ export class AnonUserClient {
             suspended: false,
             pinNumberSettings: undefined,
             localUserIndex: "",
+            achievements: [],
+            achievementsLastSeen: 0n,
         });
     }
 
@@ -453,6 +455,10 @@ export class AnonUserClient {
     }
 
     chitEvents(_req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    markAchievementsSeen(_lastSeen: bigint): Promise<void> {
         throw new AnonymousOperationError();
     }
 }

@@ -517,11 +517,19 @@
     "learnToEarn": {
         "joined_community": "Joined your first community",
         "joined_group": "Joined your first group",
+        "streak_14": "Achieved a 14 day streak",
+        "streak_30": "Achieved a 30 day streak",
+        "upgraded_to_diamond": "Upgraded to Diamond membership",
         "percentageComplete": "{perc}% Complete",
-        "set_bio": "Updated your profile bio",
+        "received_direct_message": "Received your first direct message",
         "set_display_name": "Updated your display name",
-        "set_avatar": "Uploaded your profile avatar",
-        "set_community_display_name": "Updated your community display name"
+        "set_bio": "Updated your profile bio",
+        "showChitPopup": "Notify me of my achievements",
+        "streak_3": "Achieved a 3 day streak",
+        "streak_7": "Achieved a 7 day streak",
+        "upgrade_to_gold_diamond": "Upgrade to Lifetime Diamond membership",
+        "sent_direct_message": "Sent your first direct message",
+        "set_avatar": "Uploaded your profile avatar"
     },
     "leave": "Leave",
     "leaveGroup": "Leave {level}",

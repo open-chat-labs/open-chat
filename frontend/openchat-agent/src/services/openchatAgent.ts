@@ -3433,4 +3433,11 @@ export class OpenChatAgent extends EventTarget {
     chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
         return this.userClient.chitEvents(req);
     }
+
+    async markAchievementsSeen(): Promise<void> {
+        const cachedState = await getCachedChats(this.db, this.principal);
+        if (cachedState !== undefined) {
+            return this.userClient.markAchievementsSeen(cachedState.latestUserCanisterUpdates);
+        }
+    }
 }

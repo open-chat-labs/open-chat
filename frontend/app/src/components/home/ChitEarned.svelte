@@ -27,7 +27,7 @@
         amount = ev.detail.reduce((total, chit) => total + chit.amount, 0);
         labels = ev.detail.reduce((labels, c) => {
             if (c.reason.kind === "achievement_unlocked") {
-                labels.push(c.reason.text);
+                labels.push(c.reason.type);
             }
             return labels;
         }, [] as Achievement[]);
@@ -44,6 +44,9 @@
                 window.setTimeout(reset, TWEEN_DURATION);
             }, SHOW_DURATION);
         }, SLIDE_IN_DURATION);
+
+        // update the backend so we don't get notified again
+        client.markAchievementsSeen();
     }
 
     function reset() {
@@ -167,7 +170,7 @@
     }
 
     .overlay {
-        @include z-index("overlay");
+        @include z-index("chit");
         position: fixed;
         display: flex;
         justify-content: center;

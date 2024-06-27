@@ -101,6 +101,7 @@
     import DailyChitModal from "./DailyChitModal.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
+    import { chitPopup } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1126,8 +1127,6 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<ChitEarned />
-
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
         <LeftNav
@@ -1311,6 +1310,10 @@
 {/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
+
+{#if $chitPopup}
+    <ChitEarned />
+{/if}
 
 <style lang="scss">
     :global(.edited-msg) {

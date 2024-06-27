@@ -5,6 +5,9 @@
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
     import ChitBalance from "./ChitBalance.svelte";
+    import Toggle from "../../Toggle.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { chitPopup } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -63,6 +66,12 @@
     <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} {busy} let:day>
         <ChitEventsForDay {day} events={chitEventsForDay(events, day)} />
     </Calendar>
+    <Toggle
+        id={"chit-popup"}
+        small
+        on:change={() => chitPopup.set(!$chitPopup)}
+        label={i18nKey("learnToEarn.showChitPopup")}
+        checked={$chitPopup} />
 </div>
 
 <style lang="scss">

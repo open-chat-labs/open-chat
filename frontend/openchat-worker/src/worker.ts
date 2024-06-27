@@ -1732,6 +1732,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.chitEvents(payload));
                 break;
 
+            case "markAchievementsSeen":
+                executeThenReply(payload, correlationId, agent.markAchievementsSeen());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

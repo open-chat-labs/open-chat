@@ -23,19 +23,19 @@ export type MemeContestWinner = {
 };
 
 export const achievements = [
-    "joined_community",
-    "joined_group",
-    "streak_14",
-    "streak_30",
-    "upgraded_to_diamond",
-    "received_direct_message",
-    "set_display_name",
-    "set_bio",
     "streak_3",
     "streak_7",
-    "upgrade_to_gold_diamond",
-    "sent_direct_message",
+    "streak_14",
+    "streak_30",
+    "set_bio",
     "set_avatar",
+    "joined_group",
+    "joined_community",
+    "sent_direct_message",
+    "received_direct_message",
+    "upgraded_to_diamond",
+    "set_display_name",
+    "upgrade_to_gold_diamond",
 ] as const;
 type AchievementType = typeof achievements;
 export type Achievement = AchievementType[number];
