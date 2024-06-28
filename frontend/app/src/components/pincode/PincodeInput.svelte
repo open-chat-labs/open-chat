@@ -1,17 +1,17 @@
-<script>
-    /** @type {any} */
-    export let value = "";
-    export let id = "input" + Math.random().toString(36);
-    export let ref = null;
-
+<script lang="ts">
     import { getContext, onMount } from "svelte";
+    import { type PincodeContext, type PincodeType } from "./Pincode.svelte";
 
-    let type;
-    let selectTextOnFocus;
+    export let value: string = "";
+    export let id: string = "input" + Math.random().toString(36);
+
+    let ref: HTMLInputElement | undefined;
+    let type: PincodeType;
+    let selectTextOnFocus: boolean;
     let userAgent = navigator.userAgent;
 
     const android = userAgent?.match(/android/i);
-    const ctx = getContext("Pincode");
+    const ctx = getContext<PincodeContext>("Pincode");
     const unsubscribeType = ctx._type.subscribe((_type) => {
         type = _type;
     });
@@ -26,13 +26,12 @@
         BACKSPACE: "Backspace",
     };
 
-    let unsubscribe = undefined;
     let modifierKeyDown = false;
 
     onMount(() => {
         ctx.add(id, value);
 
-        unsubscribe = ctx._valuesById.subscribe((_) => {
+        let unsubscribe = ctx._valuesById.subscribe((_) => {
             value = _[id] || "";
         });
 
@@ -43,6 +42,21 @@
             unsubscribeSelectTextOnFocus();
         };
     });
+
+    function onInput(e: Event) {
+        const target = e.target as HTMLInputElement;
+        if (android) {
+            // Get latest char from the input value
+            const latestChar = target.value[target.value.length - 1];
+            // Update value according to input type, as was done on the on:keyup event
+            if (type === "numeric" && /^[0-9]$/.test(latestChar)) {
+                ctx.update(id, latestChar);
+            }
+            if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(latestChar)) {
+                ctx.update(id, latestChar);
+            }
+        }
+    }
 </script>
 
 <input
@@ -55,23 +69,11 @@
     {value}
     on:focus
     on:focus={() => {
-        if (selectTextOnFocus) ref.select();
+        if (selectTextOnFocus) ref?.select();
     }}
     on:blur
     on:input
-    on:input={(e) => {
-        if (android) {
-            // Get latest char from the input value
-            const latestChar = e?.target?.value[(e?.target?.value?.length ?? 0) - 1];
-            // Update value according to input type, as was done on the on:keyup event
-            if (type === "numeric" && /^[0-9]$/.test(latestChar)) {
-                ctx.update(id, latestChar);
-            }
-            if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(latestChar)) {
-                ctx.update(id, latestChar);
-            }
-        }
-    }}
+    on:input={onInput}
     on:keydown
     on:keydown={(e) => {
         if (e.key === KEYBOARD.BACKSPACE) {
@@ -107,7 +109,7 @@
         }
     }} />
 
-<style>
+<style lang="scss">
     input {
         width: 3rem;
         padding: 0.5rem 1rem;

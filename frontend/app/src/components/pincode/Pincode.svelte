@@ -1,102 +1,107 @@
-<script>
-    /**
-     * @typedef {string[]} Code
-     * @event {{ code: Code; value: string; }} complete
-     */
-
-    /** @type {Code} */
-    export let code = [];
-
-    export let value = "";
-
-    /** @type {"alphanumeric" | "numeric"} */
-    export let type = "alphanumeric";
-
-    /** `true` if all inputs have a value */
-    export let complete = false;
-
-    export let selectTextOnFocus = false;
-
-    /** @type {() => void} */
-    export const focusFirstInput = () => {
-        ref.querySelector("input").focus();
+<script lang="ts" context="module">
+    export type PincodeType = "alphanumeric" | "numeric";
+    export type PincodeContext = {
+        _type: Readable<PincodeType>;
+        _selectTextOnFocus: Writable<boolean>;
+        _valuesById: Readable<Record<string, string>>;
+        focusNextInput: (id: string) => void;
+        add: (id: string, value: string) => void;
+        remove: (id: string) => void;
+        update: (id: string, input_value: string) => void;
+        clear: (id: string) => void;
     };
+</script>
 
-    /** @type {() => void} */
+<script lang="ts">
+    import { setContext, createEventDispatcher, afterUpdate } from "svelte";
+    import { writable, derived, type Writable, type Readable } from "svelte/store";
+
+    export let code: string[] = [];
+    export let value: string = "";
+    export let type: PincodeType = "alphanumeric";
+    export let complete: boolean = false;
+    export let selectTextOnFocus: boolean = false;
+    export const focusFirstInput = () => {
+        ref?.querySelector("input")?.focus();
+    };
     export const focusNextEmptyInput = () => {
-        for (const input of ref.querySelectorAll("input")) {
-            if (input.value.length === 0) {
-                input.focus();
-                break;
+        const inputs = ref?.querySelectorAll("input");
+        if (inputs !== undefined) {
+            for (const input of inputs) {
+                if (input.value.length === 0) {
+                    input.focus();
+                    break;
+                }
             }
         }
     };
-
-    /** @type {() => void} */
     export const focusLastInput = () => {
-        ref.querySelector("input:last-of-type").focus();
+        const lastInp = ref?.querySelector("input:last-of-type") as HTMLInputElement | null;
+        lastInp?.focus();
     };
 
-    import { setContext, createEventDispatcher, afterUpdate } from "svelte";
-    import { writable, derived } from "svelte/store";
+    type Id = {
+        id: string;
+        value: string;
+    };
 
     const dispatch = createEventDispatcher();
-    const _ids = writable([]);
+    const _ids = writable<Id[]>([]);
     const _valuesById = derived(_ids, (_) => {
-        return _.reduce((a, c) => ({ ...a, [c.id]: c.value }), {});
+        return _.reduce((a, c) => ({ ...a, [c.id]: c.value }), {} as Record<string, string>);
     });
     const _type = writable(type);
     const _selectTextOnFocus = writable(selectTextOnFocus);
 
-    let ref = null;
+    let ref: HTMLDivElement | undefined = undefined;
     let prevValue = value;
 
     function setCode() {
         code = $_ids.map((_) => _.value || "");
     }
 
-    function focusNextInput(idx) {
-        const inputs = ref.querySelectorAll("input");
-        const nextInput = inputs[idx + 1];
-
-        if (nextInput) nextInput.focus();
+    function focusNextInput(idx: number) {
+        const inputs = ref?.querySelectorAll("input");
+        if (inputs) {
+            const nextInput = inputs[idx + 1];
+            nextInput?.focus();
+        }
     }
 
-    setContext("Pincode", {
+    setContext<PincodeContext>("Pincode", {
         _type,
         _selectTextOnFocus,
         _valuesById,
-        focusNextInput: (id) => {
-            const idx = $_ids.map((_) => _.id).indexOf(id);
-
+        focusNextInput: (id: string) => {
+            const idx = $_ids.map((id) => id.id).indexOf(id);
             focusNextInput(idx);
         },
-        add: (id, value) => {
+        add: (id: string, value: string) => {
             const _code = [...code];
 
-            _ids.update((_) => {
-                if (code[_.length] === undefined) {
-                    _code[_.length] = value;
+            _ids.update((ids) => {
+                if (code[ids.length] === undefined) {
+                    _code[ids.length] = value;
                 } else {
-                    _code[_.length] = _code[_.length] || value;
+                    _code[ids.length] = _code[ids.length] || value;
                 }
 
                 return [
-                    ..._,
+                    ...ids,
                     {
                         id,
-                        value: code[_.length] || value,
+                        value: code[ids.length] || value,
                     },
                 ];
             });
 
             code = _code;
         },
-        remove: (id) => {
-            _ids.update((_) => _.filter((_id) => _id.id !== id));
+        remove: (id: string) => {
+            _ids.update((ids) => ids.filter((_id) => _id.id !== id));
             setCode();
         },
-        update: async (id, input_value) => {
+        update: (id: string, input_value: string) => {
             const idx = $_ids.map((_) => _.id).indexOf(id);
 
             _ids.update((_) => {
@@ -109,16 +114,15 @@
             setCode();
             focusNextInput(idx);
         },
-        clear: (id) => {
+        clear: (id: string) => {
             const idx = $_ids.map((_) => _.id).indexOf(id);
 
             if (!$_ids[idx].value) {
-                const inputs = ref.querySelectorAll("input");
-                const prevInput = inputs[idx - 1];
-
-                if (prevInput) {
-                    prevInput.focus();
-                    prevInput.select();
+                const inputs = ref?.querySelectorAll("input");
+                if (inputs) {
+                    const prevInput = inputs[idx - 1];
+                    prevInput?.focus();
+                    prevInput?.select();
                 }
             }
 
@@ -137,8 +141,9 @@
         if (complete) dispatch("complete", { code, value });
     });
 
-    function handleInput(e) {
-        let input = e.data || e.target.value;
+    function handleInput(e: Event) {
+        const target = e.target as HTMLInputElement;
+        let input = target.value;
         if (!input) return;
         input = input.trim();
         if (input.length === 1) return;
@@ -146,12 +151,13 @@
         code = input.split("");
     }
 
-    function handlePaste(e) {
+    function handlePaste(e: ClipboardEvent) {
         e.preventDefault();
-        code = e.clipboardData
-            .getData("text")
-            .split("")
-            .filter((it) => it !== " ");
+        code =
+            e.clipboardData
+                ?.getData("text")
+                .split("")
+                .filter((it) => it !== " ") ?? [];
     }
 
     $: _type.set(type);
@@ -181,9 +187,10 @@
     <slot />
 </div>
 
-<style>
+<style lang="scss">
     [data-pincode] {
         display: inline-flex;
-        border: 1px solid #e0e0e0;
+        // border: 1px solid #e0e0e0;
+        border: var(--bw) solid var(--input-bd);
     }
 </style>
