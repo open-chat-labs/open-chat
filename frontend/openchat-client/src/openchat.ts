@@ -3909,6 +3909,7 @@ export class OpenChat extends OpenChatAgentWorker {
                                 chatId,
                                 this._liveState.user.userId,
                                 ev.event as Message<VideoCallContent>,
+                                ev.timestamp,
                             ),
                         );
                     }
