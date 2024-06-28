@@ -456,7 +456,6 @@ import {
     storeIdentity,
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
-    achievements,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
