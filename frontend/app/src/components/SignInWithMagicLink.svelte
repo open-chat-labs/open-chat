@@ -83,11 +83,7 @@
                 {:else if status === undefined}
                     <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
 
-                    <Pincode on:complete={onCodeEntered}>
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                    </Pincode>
+                    <Pincode length={3} on:complete={onCodeEntered}></Pincode>
                 {:else}
                     <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
@@ -98,11 +94,6 @@
 </div>
 
 <style lang="scss">
-    :global([data-pincode]) {
-        gap: $sp3;
-        border: none !important;
-    }
-
     :global(.magic-link .modal-content) {
         min-width: 576px;
         color: var(--txt);

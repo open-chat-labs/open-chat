@@ -4,7 +4,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
-    import PincodeInput from "../pincode/PincodeInput.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -45,14 +44,7 @@
                 <Translatable resourceKey={i18nKey(message)} />
             </p>
         {/if}
-        <Pincode bind:value={pin} on:complete={onPinComplete}>
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-        </Pincode>
+        <Pincode length={6} bind:value={pin} on:complete={onPinComplete} />
         {#if showError}
             <div class="error">
                 <Translatable resourceKey={i18nKey("pinNumber.invalid")} />

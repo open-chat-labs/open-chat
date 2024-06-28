@@ -1,23 +1,17 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import { type PincodeContext, type PincodeType } from "./Pincode.svelte";
+    import { createEventDispatcher } from "svelte";
+    import { type PincodeChar, type PincodeType } from "./Pincode.svelte";
 
-    export let value: string = "";
-    export let id: string = "input" + Math.random().toString(36);
+    const dispatch = createEventDispatcher();
+
+    export let char: PincodeChar;
+    export let type: PincodeType;
+    export let selectTextOnFocus: boolean = false;
 
     let ref: HTMLInputElement | undefined;
-    let type: PincodeType;
-    let selectTextOnFocus: boolean;
     let userAgent = navigator.userAgent;
 
     const android = userAgent?.match(/android/i);
-    const ctx = getContext<PincodeContext>("Pincode");
-    const unsubscribeType = ctx._type.subscribe((_type) => {
-        type = _type;
-    });
-    const unsubscribeSelectTextOnFocus = ctx._selectTextOnFocus.subscribe((_selectTextOnFocus) => {
-        selectTextOnFocus = _selectTextOnFocus;
-    });
     const KEYBOARD = {
         CONTROL: "Control",
         COMMAND: "Meta",
@@ -28,21 +22,6 @@
 
     let modifierKeyDown = false;
 
-    onMount(() => {
-        ctx.add(id, value);
-
-        let unsubscribe = ctx._valuesById.subscribe((_) => {
-            value = _[id] || "";
-        });
-
-        return () => {
-            ctx.remove(id);
-            unsubscribe();
-            unsubscribeType();
-            unsubscribeSelectTextOnFocus();
-        };
-    });
-
     function onInput(e: Event) {
         const target = e.target as HTMLInputElement;
         if (android) {
@@ -50,10 +29,10 @@
             const latestChar = target.value[target.value.length - 1];
             // Update value according to input type, as was done on the on:keyup event
             if (type === "numeric" && /^[0-9]$/.test(latestChar)) {
-                ctx.update(id, latestChar);
+                dispatch("update", { ...char, value: latestChar });
             }
             if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(latestChar)) {
-                ctx.update(id, latestChar);
+                dispatch("update", { ...char, value: latestChar });
             }
         }
     }
@@ -61,24 +40,21 @@
 
 <input
     bind:this={ref}
-    {...$$restProps}
     type={type === "numeric" ? "number" : "text"}
     inputmode={type === "numeric" ? "numeric" : "text"}
     pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
     maxlength="1"
-    {value}
-    on:focus
+    value={char.value}
     on:focus={() => {
         if (selectTextOnFocus) ref?.select();
     }}
     on:blur
-    on:input
     on:input={onInput}
-    on:keydown
     on:keydown={(e) => {
         if (e.key === KEYBOARD.BACKSPACE) {
             e.preventDefault();
-            return ctx.clear(id);
+            dispatch("clear", char);
+            return;
         }
 
         if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
@@ -96,10 +72,10 @@
         // Do not try to update the value from the keydown event if on android, leave that to the input event
         if (!android) {
             if (type === "numeric" && /^[0-9]$/.test(e.key)) {
-                ctx.update(id, e.key);
+                dispatch("update", { ...char, value: e.key });
             }
             if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(e.key)) {
-                ctx.update(id, e.key);
+                dispatch("update", { ...char, value: e.key });
             }
         }
     }}

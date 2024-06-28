@@ -10,7 +10,6 @@
     import { toastStore } from "../../../stores/toast";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import Pincode from "../../pincode/Pincode.svelte";
-    import PincodeInput from "../../pincode/PincodeInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -77,14 +76,7 @@
                 {#if type === "change"}
                     <div><Translatable resourceKey={i18nKey("pinNumber.currentPin")} /></div>
                 {/if}
-                <Pincode bind:code={currPinArray}>
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                </Pincode>
+                <Pincode length={6} bind:code={currPinArray}></Pincode>
             </div>
         {/if}
         {#if type !== "clear"}
@@ -93,14 +85,7 @@
                     <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
                     <!-- <Legend label={i18nKey("pinNumber.newPin")}></Legend> -->
                 {/if}
-                <Pincode bind:code={newPinArray}>
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                    <PincodeInput />
-                </Pincode>
+                <Pincode length={6} bind:code={newPinArray}></Pincode>
             </div>
         {/if}
         {#if errorMessage !== undefined}
@@ -120,11 +105,6 @@
 </ModalContent>
 
 <style lang="scss">
-    :global([data-pincode]) {
-        gap: $sp3;
-        border: none !important;
-    }
-
     .header {
         text-align: center;
     }
