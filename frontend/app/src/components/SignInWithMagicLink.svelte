@@ -9,7 +9,6 @@
     import { pageReplace } from "../routes";
     import page from "page";
     import Pincode from "./pincode/Pincode.svelte";
-    import PincodeInput from "./pincode/PincodeInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
