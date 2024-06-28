@@ -45,6 +45,7 @@
 
     $: {
         if (inputElement !== undefined) {
+            trimDecimals();
             const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
             if (validateResult.amount !== amount) {
                 inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
@@ -61,9 +62,18 @@
     }
 
     function onKeyup() {
-        const inputAmount = Math.round(Number(inputElement.value) * Math.pow(10, tokenDecimals));
+        trimDecimals();
+        const value = inputElement.value;
+        const inputAmount = Math.round(Number(value) * Math.pow(10, tokenDecimals));
         if (!isNaN(inputAmount)) {
-            amount = BigInt(inputAmount);
+            const [integral, fractional] = value.split(".");
+            let units = BigInt(integral) * (BigInt(10) ** BigInt(tokenDecimals));
+
+            if (fractional !== undefined) {
+                units += BigInt(fractional.padEnd(tokenDecimals, "0"));
+            }
+
+            amount = units;
         }
     }
 
@@ -85,6 +95,17 @@
             state = "ok";
         }
         valid = state === "ok";
+    }
+
+    function trimDecimals() {
+        const value = inputElement.value;
+        const fractional = value.split(".")[1];
+        if (fractional !== undefined) {
+            const toTrim = fractional.length - tokenDecimals;
+            if (toTrim > 0) {
+                inputElement.value = value.substring(0, value.length - toTrim);
+            }
+        }
     }
 </script>
 

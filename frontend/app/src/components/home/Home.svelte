@@ -291,7 +291,8 @@
     }
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
-        if (!ev.detail.currentUserIsParticipant) {
+        // Check user is not already in the call and it started less than an hour ago
+        if (!ev.detail.currentUserIsParticipant && Number(ev.detail.timestamp) > Date.now() - 60 * 60 * 1000) {
             incomingVideoCall.set(ev.detail);
         }
     }

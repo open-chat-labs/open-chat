@@ -89,6 +89,7 @@ export class CachePrimer {
                                     request.context.chatId,
                                     this.userId,
                                     e.event as Message<VideoCallContent>,
+                                    e.timestamp,
                                 ),
                             );
                         }
