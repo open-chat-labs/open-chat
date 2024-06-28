@@ -18,7 +18,7 @@
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoTokensSorted = client.cryptoTokensSorted;
-    $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => filter(t));
+    $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => t.enabled && filter(t));
 
     $: {
         if (ledger === undefined && cryptoTokensFiltered.length > 0) {
