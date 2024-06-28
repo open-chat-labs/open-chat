@@ -130,6 +130,7 @@
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
             setDiamondMembershipFees,
+            setTokenEnabled,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -314,6 +315,17 @@
                 console.log("Diamond membership fees set", fees);
             } else {
                 console.log("Failed to set diamond membership fees", fees);
+            }
+        });
+    }
+
+    function setTokenEnabled(ledger: string, enabled: boolean): void {
+        client.setTokenEnabled(ledger, enabled).then((success) => {
+            const status = enabled ? "enabled" : "disabled";
+            if (success) {
+                console.log(`Token ${status}`);
+            } else {
+                console.log(`Failed to set token ${status}`);
             }
         });
     }

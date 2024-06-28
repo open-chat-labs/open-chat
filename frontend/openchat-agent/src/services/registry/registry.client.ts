@@ -1,4 +1,5 @@
 import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import type { RegistryUpdatesResponse } from "openchat-shared";
 import { idlFactory, type RegistryService } from "./candid/idl";
 import { CandidService } from "../candidService";
@@ -53,6 +54,16 @@ export class RegistryClient extends CandidService {
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this.handleResponse(
             this.service.remove_message_filter({ id }),
+            (resp) => "Success" in resp,
+        );
+    }
+
+    setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
+        return this.handleResponse(
+            this.service.set_token_enabled({
+                ledger_canister_id: Principal.fromText(ledger),
+                enabled,
+            }),
             (resp) => "Success" in resp,
         );
     }

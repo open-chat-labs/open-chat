@@ -3197,6 +3197,10 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.removeMessageFilter(id);
     }
 
+    setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
+        return this._registryClient.setTokenEnabled(ledger, enabled);
+    }
+
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return isMainnet(this.config.icUrl)
             ? this._icpcoinsClient.exchangeRates()
