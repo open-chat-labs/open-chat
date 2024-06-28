@@ -2919,7 +2919,7 @@ export class OpenChatAgent extends EventTarget {
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ).filter((t) => t.enabled),
+                            ),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,
@@ -3195,6 +3195,10 @@ export class OpenChatAgent extends EventTarget {
 
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this._registryClient.removeMessageFilter(id);
+    }
+
+    setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
+        return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {

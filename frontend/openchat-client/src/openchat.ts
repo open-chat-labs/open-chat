@@ -4993,6 +4993,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
+    setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setTokenEnabled", ledger, enabled });
+    }
+
     stakeNeuronForSubmittingProposals(
         governanceCanisterId: string,
         stake: bigint,

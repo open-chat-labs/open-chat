@@ -7,7 +7,7 @@ import {
     DEFAULT_TOKENS,
     type TokenExchangeRates,
 } from "openchat-shared";
-import { toRecord } from "../utils/list";
+import { toRecordFiltered } from "../utils/list";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -81,7 +81,12 @@ export const enhancedCryptoLookup = derived(
             };
         });
 
-        return toRecord(accounts, (a) => a.ledger);
+        return toRecordFiltered(
+            accounts,
+            (a) => a.ledger,
+            (a) => a,
+            (a) => a.enabled || !a.zero,
+        );
     },
 );
 
