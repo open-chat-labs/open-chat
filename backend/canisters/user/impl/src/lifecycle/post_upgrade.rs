@@ -39,7 +39,7 @@ fn post_upgrade(args: Args) {
         }
     });
 
-    mutate_state(initialize_achievements);
+    mutate_state(initialize_chit_and_achievements);
 }
 
 fn mark_user_canister_empty() {
@@ -53,18 +53,18 @@ fn mark_user_canister_empty() {
     })
 }
 
-fn initialize_achievements(state: &mut RuntimeState) {
-    let longest_streak = state.data.chit_events.init_streak();
-
+fn initialize_chit_and_achievements(state: &mut RuntimeState) {
     let me: UserId = state.env.canister_id().into();
     let now = state.env.now();
 
+    let longest_streak = state.data.init_streak_and_chit_balance(now);
+
     if state.data.group_chats.len() > 0 {
-        state.insert_achievement(Achievement::JoinedGroup);
+        state.data.award_achievement(Achievement::JoinedGroup, now);
     }
 
     if state.data.communities.len() > 0 {
-        state.insert_achievement(Achievement::JoinedCommunity);
+        state.data.award_achievement(Achievement::JoinedCommunity, now);
     }
 
     if state.data.direct_chats.iter().any(|c| {
@@ -73,7 +73,7 @@ fn initialize_achievements(state: &mut RuntimeState) {
             .iter_latest_messages(None)
             .any(|m| m.event.sender == me)
     }) {
-        state.insert_achievement(Achievement::SentDirectMessage);
+        state.data.award_achievement(Achievement::SentDirectMessage, now);
     }
 
     if state.data.direct_chats.iter().any(|c| {
@@ -82,42 +82,46 @@ fn initialize_achievements(state: &mut RuntimeState) {
             .iter_latest_messages(None)
             .any(|m| m.event.sender == c.them)
     }) {
-        state.insert_achievement(Achievement::ReceivedDirectMessage);
+        state.data.award_achievement(Achievement::ReceivedDirectMessage, now);
     }
 
     if state.data.avatar.value.is_some() {
-        state.insert_achievement(Achievement::SetAvatar);
+        state.data.award_achievement(Achievement::SetAvatar, now);
     }
 
     if !state.data.bio.value.is_empty() {
-        state.insert_achievement(Achievement::SetBio);
+        state.data.award_achievement(Achievement::SetBio, now);
     }
 
     if state.data.display_name.value.is_some() {
-        state.insert_achievement(Achievement::SetDisplayName);
+        state.data.award_achievement(Achievement::SetDisplayName, now);
     }
 
     if let Some(diamond_expires) = state.data.diamond_membership_expires_at {
-        state.insert_achievement(Achievement::UpgradedToDiamond);
+        state.data.award_achievement(Achievement::UpgradedToDiamond, now);
 
         if (diamond_expires - now) > (5 * 365 * DAY_IN_MS) {
-            state.insert_achievement(Achievement::UpgradedToGoldDiamond);
+            state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now);
         }
     }
 
     if longest_streak >= 3 {
-        state.insert_achievement(Achievement::Streak3);
+        state.data.award_achievement(Achievement::Streak3, now);
     }
 
     if longest_streak >= 7 {
-        state.insert_achievement(Achievement::Streak7);
+        state.data.award_achievement(Achievement::Streak7, now);
     }
 
     if longest_streak >= 14 {
-        state.insert_achievement(Achievement::Streak14);
+        state.data.award_achievement(Achievement::Streak14, now);
     }
 
     if longest_streak >= 30 {
-        state.insert_achievement(Achievement::Streak30);
+        state.data.award_achievement(Achievement::Streak30, now);
+    }
+
+    if state.data.chit_balance.value > 0 {
+        state.data.notify_user_index_of_chit(now);
     }
 }

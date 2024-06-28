@@ -21,6 +21,10 @@ impl Streak {
         0
     }
 
+    pub fn ends(&self) -> TimestampMillis {
+        Streak::day_to_timestamp(self.end_day + 1)
+    }
+
     pub fn claim(&mut self, now: TimestampMillis) -> bool {
         if let Some(today) = Streak::timestamp_to_day(now) {
             if today > self.end_day {
@@ -49,6 +53,10 @@ impl Streak {
         today == self.end_day + 2
     }
 
+    pub fn expired_yesterday_v2(&self, now: TimestampMillis) -> bool {
+        Streak::timestamp_to_day(now).map_or(false, |today| today == self.end_day + 2)
+    }
+
     pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {
         if ts < DAY_ZERO {
             return None;
@@ -65,6 +73,10 @@ impl Streak {
 
     fn is_new_streak(&self, today: u16) -> bool {
         today > (self.end_day + 1)
+    }
+
+    fn day_to_timestamp(day: u16) -> TimestampMillis {
+        DAY_ZERO + MS_IN_DAY * day as u64
     }
 }
 

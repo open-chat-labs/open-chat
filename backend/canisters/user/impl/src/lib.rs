@@ -22,6 +22,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::cmp::max;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
@@ -33,6 +34,7 @@ use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
+use utils::streak::Streak;
 use utils::time::MINUTE_IN_MS;
 
 mod crypto;
@@ -173,16 +175,6 @@ impl RuntimeState {
             },
         }
     }
-
-    pub fn insert_achievement(&mut self, achievement: Achievement) {
-        if self.data.achievements.insert(achievement.clone()) {
-            self.data.chit_events.push(ChitEarned {
-                amount: achievement.chit_reward() as i32,
-                timestamp: self.env.now(),
-                reason: ChitEarnedReason::Achievement(achievement),
-            });
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -224,6 +216,10 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
+    #[serde(default)]
+    pub chit_balance: Timestamped<i32>,
+    #[serde(default)]
+    pub streak: Streak,
     #[serde(default)]
     pub achievements: HashSet<Achievement>,
     #[serde(default)]
@@ -286,6 +282,8 @@ impl Data {
             pin_number: PinNumber::default(),
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),
+            chit_balance: Timestamped::default(),
+            streak: Streak::default(),
             achievements: HashSet::new(),
             achievements_last_seen: 0,
             rng_seed: [0; 32],
@@ -330,6 +328,57 @@ impl Data {
             timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
             timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+    }
+
+    pub fn award_achievement_and_notify(&mut self, achievement: Achievement, now: TimestampMillis) {
+        if self.award_achievement(achievement, now) {
+            self.notify_user_index_of_chit(now);
+        }
+    }
+
+    pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
+        if self.achievements.insert(achievement.clone()) {
+            let amount = achievement.chit_reward() as i32;
+            self.chit_events.push(ChitEarned {
+                amount,
+                timestamp: now,
+                reason: ChitEarnedReason::Achievement(achievement),
+            });
+            self.chit_balance = Timestamped::new(self.chit_balance.value + amount, now);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
+        let args = user_index_canister::c2c_notify_chit::Args {
+            chit_balance: self.chit_balance.value,
+            streak: self.streak.days(now),
+            streak_ends: self.streak.ends(),
+        };
+
+        self.fire_and_forget_handler.send(
+            self.user_index_canister_id,
+            "c2c_notify_chit".to_string(),
+            msgpack::serialize_then_unwrap(args),
+        );
+    }
+
+    pub fn init_streak_and_chit_balance(&mut self, now: TimestampMillis) -> u16 {
+        let mut max_streak: u16 = 0;
+
+        for event in self.chit_events.iter() {
+            self.chit_balance = Timestamped::new(self.chit_balance.value + event.amount, now);
+
+            if matches!(event.reason, ChitEarnedReason::DailyClaim) {
+                self.streak.claim(event.timestamp);
+
+                max_streak = max(max_streak, self.streak.days(event.timestamp))
+            }
+        }
+
+        max_streak
     }
 }
 

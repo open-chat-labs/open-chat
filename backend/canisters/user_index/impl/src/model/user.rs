@@ -68,10 +68,18 @@ pub struct User {
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "chit_balance", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
+    #[serde(rename = "c2", alias = "chit_balance_v2", default, skip_serializing_if = "is_default")]
+    pub chit_balance_v2: i32,
     #[serde(rename = "st", alias = "streak", default, skip_serializing_if = "is_default")]
     pub streak: Streak,
+    #[serde(rename = "s2", alias = "streak_v2", default, skip_serializing_if = "is_default")]
+    pub streak_v2: u16,
+    #[serde(rename = "s2", alias = "streak_ends", default, skip_serializing_if = "is_default")]
+    pub streak_ends: TimestampMillis,
     #[serde(rename = "dv", alias = "date_updated_volatile", default)]
     pub date_updated_volatile: TimestampMillis,
+    #[serde(rename = "d2", alias = "date_updated_volatile_v2", default)]
+    pub date_updated_volatile_v2: TimestampMillis,
 }
 
 impl User {
@@ -163,6 +171,7 @@ impl User {
             date_created: now,
             date_updated: now,
             date_updated_volatile: now,
+            date_updated_volatile_v2: now,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
@@ -175,7 +184,10 @@ impl User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_balance_v2: 0,
             streak: Streak::default(),
+            streak_v2: 0,
+            streak_ends: 0,
         }
     }
 
