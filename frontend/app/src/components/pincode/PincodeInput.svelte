@@ -22,18 +22,21 @@
 
     let modifierKeyDown = false;
 
+    function dispatchUpdate(value: string) {
+        if (type === "numeric" && /^[0-9]$/.test(value)) {
+            dispatch("update", { ...char, value });
+        }
+        if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(value)) {
+            dispatch("update", { ...char, value });
+        }
+    }
+
     function onInput(e: Event) {
-        const target = e.target as HTMLInputElement;
         if (android) {
             // Get latest char from the input value
+            const target = e.target as HTMLInputElement;
             const latestChar = target.value[target.value.length - 1];
-            // Update value according to input type, as was done on the on:keyup event
-            if (type === "numeric" && /^[0-9]$/.test(latestChar)) {
-                dispatch("update", { ...char, value: latestChar });
-            }
-            if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(latestChar)) {
-                dispatch("update", { ...char, value: latestChar });
-            }
+            dispatchUpdate(latestChar);
         }
     }
 </script>
@@ -71,12 +74,7 @@
 
         // Do not try to update the value from the keydown event if on android, leave that to the input event
         if (!android) {
-            if (type === "numeric" && /^[0-9]$/.test(e.key)) {
-                dispatch("update", { ...char, value: e.key });
-            }
-            if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(e.key)) {
-                dispatch("update", { ...char, value: e.key });
-            }
+            dispatchUpdate(e.key);
         }
     }}
     on:keyup={(e) => {
