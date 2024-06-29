@@ -288,7 +288,11 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_balance_v2: 0,
             streak: Streak::default(),
+            streak_v2: 0,
+            streak_ends: 0,
+            date_updated_volatile_v2: 0,
         }
     }
 }
