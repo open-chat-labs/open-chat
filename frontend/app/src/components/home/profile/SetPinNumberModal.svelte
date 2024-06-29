@@ -76,7 +76,7 @@
                 {#if type === "change"}
                     <div><Translatable resourceKey={i18nKey("pinNumber.currentPin")} /></div>
                 {/if}
-                <Pincode length={6} bind:code={currPinArray}></Pincode>
+                <Pincode type="numeric" length={6} bind:code={currPinArray} />
             </div>
         {/if}
         {#if type !== "clear"}
@@ -85,7 +85,7 @@
                     <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
                     <!-- <Legend label={i18nKey("pinNumber.newPin")}></Legend> -->
                 {/if}
-                <Pincode length={6} bind:code={newPinArray}></Pincode>
+                <Pincode type="numeric" length={6} bind:code={newPinArray} />
             </div>
         {/if}
         {#if errorMessage !== undefined}

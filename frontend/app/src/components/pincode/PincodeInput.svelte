@@ -43,7 +43,7 @@
 
 <input
     bind:this={ref}
-    type={type === "numeric" ? "number" : "text"}
+    type="text"
     inputmode={type === "numeric" ? "numeric" : "text"}
     pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
     maxlength="1"

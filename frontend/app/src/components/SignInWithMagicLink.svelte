@@ -23,15 +23,6 @@
     });
 
     function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
-        if (!isCodeComplete(ev.detail.code)) {
-            return;
-        }
-
-        if (!isCodeValid(ev.detail.code)) {
-            status = "magicLink.code_invalid";
-            return;
-        }
-
         qs += "&u=" + ev.detail.value;
 
         busy = true;
@@ -55,14 +46,6 @@
             .finally(() => (busy = false));
     }
 
-    function isCodeComplete(code: string[]): boolean {
-        return code.filter((c) => c.length > 0).length === 3;
-    }
-
-    function isCodeValid(code: string[]): boolean {
-        return code.filter((c) => /^[0-9]$/.test(c)).length === 3;
-    }
-
     function close() {
         dispatch("close");
     }
@@ -82,7 +65,7 @@
                 {:else if status === undefined}
                     <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
 
-                    <Pincode length={3} on:complete={onCodeEntered}></Pincode>
+                    <Pincode type="numeric" length={3} on:complete={onCodeEntered} />
                 {:else}
                     <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
