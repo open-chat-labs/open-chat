@@ -9,9 +9,10 @@
     export let selectTextOnFocus: boolean = false;
 
     let ref: HTMLInputElement | undefined;
-    let userAgent = navigator.userAgent;
 
-    const android = userAgent?.match(/android/i);
+    const android = (navigator.userAgent?.match(/android/i) ?? undefined) !== undefined;
+    const androidHack = type === "alphanumeric" && android;
+
     const KEYBOARD = {
         CONTROL: "Control",
         COMMAND: "Meta",
@@ -32,7 +33,7 @@
     }
 
     function onInput(e: Event) {
-        if (android) {
+        if (androidHack) {
             // Get latest char from the input value
             const target = e.target as HTMLInputElement;
             const latestChar = target.value[target.value.length - 1];
@@ -73,7 +74,7 @@
         }
 
         // Do not try to update the value from the keydown event if on android, leave that to the input event
-        if (!android) {
+        if (!androidHack) {
             dispatchUpdate(e.key);
         }
     }}
