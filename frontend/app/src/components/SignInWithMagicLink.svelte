@@ -7,10 +7,8 @@
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
-    import { Pincode, PincodeInput } from "svelte-pincode";
-    import ButtonGroup from "./ButtonGroup.svelte";
-    import Button from "./Button.svelte";
     import page from "page";
+    import Pincode from "./pincode/Pincode.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,24 +17,13 @@
     let status: string | undefined = undefined;
     let message = "magicLink.closeMessage";
     let busy = false;
-    let value: string;
-    let code: string[];
 
     onMount(() => {
         pageReplace("/home");
     });
 
-    function submit() {
-        if (!isCodeComplete(code)) {
-            return;
-        }
-
-        if (!isCodeValid(code)) {
-            status = "magicLink.code_invalid";
-            return;
-        }
-
-        qs += "&u=" + value;
+    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
+        qs += "&u=" + ev.detail.value;
 
         busy = true;
 
@@ -59,21 +46,13 @@
             .finally(() => (busy = false));
     }
 
-    function isCodeComplete(code: string[]): boolean {
-        return code.filter((c) => c.length > 0).length === 3;
-    }
-
-    function isCodeValid(code: string[]): boolean {
-        return code.filter((c) => /^[0-9]$/.test(c)).length === 3;
-    }
-
     function close() {
         dispatch("close");
     }
 </script>
 
 <div class="magic-link">
-    <ModalContent>
+    <ModalContent hideFooter>
         <div class="header" slot="header">
             <Translatable resourceKey={i18nKey("magicLink.title")} />
         </div>
@@ -86,36 +65,17 @@
                 {:else if status === undefined}
                     <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
 
-                    <Pincode bind:value bind:code on:complete={submit}>
-                        <PincodeInput />
-                        <PincodeInput />
-                        <PincodeInput />
-                    </Pincode>
+                    <Pincode type="numeric" length={3} on:complete={onCodeEntered} />
                 {:else}
                     <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
                 {/if}
             </div>
         </div>
-        <div class="footer" slot="footer">
-            <ButtonGroup align="center">
-                <Button disabled={busy} on:click={close} secondary>
-                    {$_("cancel")}
-                </Button>
-                <Button loading={busy} disabled={busy} on:click={submit}>
-                    {$_("submit")}
-                </Button>
-            </ButtonGroup>
-        </div>
     </ModalContent>
 </div>
 
 <style lang="scss">
-    :global([data-pincode]) {
-        gap: $sp3;
-        border: none !important;
-    }
-
     :global(.magic-link .modal-content) {
         min-width: 576px;
         color: var(--txt);

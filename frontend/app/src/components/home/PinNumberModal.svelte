@@ -3,7 +3,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
-    import { Pincode, PincodeInput } from "svelte-pincode";
+    import Pincode from "../pincode/Pincode.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -13,24 +13,7 @@
     let showError = false;
 
     function onPinComplete(ev: CustomEvent<{ code: string[]; value: string }>) {
-        if (!isPinComplete(ev.detail.code)) {
-            return;
-        }
-
-        if (!isPinValid(ev.detail.code)) {
-            showError = true;
-            return;
-        }
-
         dispatch("complete", ev.detail.value);
-    }
-
-    function isPinValid(pin: string[]): boolean {
-        return pin.filter((c) => /^[0-9]$/.test(c)).length === 6;
-    }
-
-    function isPinComplete(pin: string[]): boolean {
-        return pin.filter((c) => c.length > 0).length === 6;
     }
 </script>
 
@@ -44,14 +27,7 @@
                 <Translatable resourceKey={i18nKey(message)} />
             </p>
         {/if}
-        <Pincode bind:value={pin} on:complete={onPinComplete}>
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-            <PincodeInput />
-        </Pincode>
+        <Pincode type="numeric" length={6} bind:value={pin} on:complete={onPinComplete} />
         {#if showError}
             <div class="error">
                 <Translatable resourceKey={i18nKey("pinNumber.invalid")} />
