@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Get payload renderings for SNS proposals ([#5977](https://github.com/open-chat-labs/open-chat/pull/5977))
+
 ### Changed
 
 - Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
