@@ -135,9 +135,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     };
 
     let chit_balance = state.data.chit_balance.value;
-    let streak = state.data.streak.days(now);
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
-    let streak_ends = state.data.streak.ends();
+    let streak = state.data.streak.days(now);
 
     Success(SuccessResult {
         timestamp: now,
@@ -155,7 +154,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         achievements_last_seen,
         chit_balance,
         streak,
-        streak_ends,
         next_daily_claim,
     })
 }
