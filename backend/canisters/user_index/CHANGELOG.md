@@ -6,10 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `c2c_notify_chit` to sync chit balance and streak from user canister ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
+
+### Changed
+
+- In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+
+## [[2.0.1200](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1200-user_index)] - 2024-06-07
+
 ### Changed
 
 - Get volatile data for users created since timestamp ([#5921](https://github.com/open-chat-labs/open-chat/pull/5921))
-- In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
 
 ## [[2.0.1199](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1199-user_index)] - 2024-06-07
 

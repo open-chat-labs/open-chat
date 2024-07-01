@@ -23,6 +23,10 @@ pub struct SuccessResult {
     pub local_user_index_canister_id: CanisterId,
     pub achievements: Vec<ChitEarned>,
     pub achievements_last_seen: TimestampMillis,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+    pub next_daily_claim: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

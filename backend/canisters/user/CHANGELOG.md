@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Added `achievements` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+- Maintains chit balance and streak and notifies user_index ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
 
 ## [[2.0.1213](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1213-user)] - 2024-06-24
 

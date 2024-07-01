@@ -206,6 +206,32 @@ impl UserMap {
         }
     }
 
+    pub fn set_chit(
+        &mut self,
+        user_id: &UserId,
+        chit_event_timestamp: TimestampMillis,
+        chit_balance: i32,
+        streak: u16,
+        streak_ends: TimestampMillis,
+        now: TimestampMillis,
+    ) -> bool {
+        let Some(user) = self.users.get_mut(user_id) else {
+            return false;
+        };
+
+        if chit_event_timestamp <= user.lastest_chit_event {
+            return false;
+        }
+
+        user.lastest_chit_event = chit_event_timestamp;
+        user.chit_balance_v2 = chit_balance;
+        user.streak_v2 = streak;
+        user.streak_ends = streak_ends;
+        user.chit_updated = now;
+
+        true
+    }
+
     #[allow(dead_code)]
     pub fn give_chit_reward(&mut self, user_id: &UserId, amount: i32, now: TimestampMillis) {
         if let Some(user) = self.users.get_mut(user_id) {
