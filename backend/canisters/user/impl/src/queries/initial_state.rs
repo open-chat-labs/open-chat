@@ -51,6 +51,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         achievements_last_seen: state.data.achievements_last_seen,
         chit_balance: state.data.chit_balance.value,
         streak: state.data.streak.days(now),
+        streak_ends: state.data.streak.ends(),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
     })
 }

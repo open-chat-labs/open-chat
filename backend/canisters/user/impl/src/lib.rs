@@ -176,6 +176,7 @@ impl RuntimeState {
             },
             chit_balance: self.data.chit_balance.value,
             streak: self.data.streak.days(now),
+            streak_ends: self.data.streak.ends(),
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
         }
@@ -408,6 +409,7 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
     pub chit_balance: i32,
     pub streak: u16,
+    pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
 }
