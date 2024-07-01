@@ -35,7 +35,7 @@ use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::streak::Streak;
-use utils::time::MINUTE_IN_MS;
+use utils::time::{today, tomorrow, MINUTE_IN_MS};
 
 mod crypto;
 mod governance_clients;
@@ -148,10 +148,11 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -173,6 +174,10 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            chit_balance: self.data.chit_balance.value,
+            streak: self.data.streak.days(now),
+            streak_ends: self.data.streak.ends(),
+            next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         }
     }
 }
@@ -400,6 +405,10 @@ pub struct Metrics {
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+    pub next_daily_claim: TimestampMillis,
 }
 
 fn run_regular_jobs() {

@@ -16,6 +16,7 @@ use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
+use model::user::SuspensionDetails;
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
@@ -157,8 +158,31 @@ impl RuntimeState {
         jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
+    pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
+        self.data.users.get_by_user_id(&user_id).map(|user| {
+            let now = self.env.now();
+            UserMetrics {
+                now,
+                username: user.username.clone(),
+                date_created: user.date_created,
+                date_updated: user.date_updated,
+                is_bot: user.is_bot,
+                suspension_details: user.suspension_details.clone(),
+                moderation_flags_enabled: user.moderation_flags_enabled,
+                chit_balance: user.chit_balance,
+                chit_balance_v2: user.chit_balance_v2,
+                streak: user.streak.days(now),
+                streak_v2: user.streak_v2,
+                streak_ends: user.streak_ends,
+                date_updated_volatile: user.date_updated_volatile,
+                date_updated_volatile_v2: user.date_updated_volatile_v2,
+            }
+        })
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
+
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         let event_store_client_info = self.data.event_store_client.info();
         let event_relay_canister_id = event_store_client_info.event_store_canister_id;
@@ -166,7 +190,7 @@ impl RuntimeState {
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -449,6 +473,24 @@ pub struct Metrics {
     pub oc_public_key: String,
     pub empty_users: Vec<UserId>,
     pub empty_users_length: usize,
+}
+
+#[derive(Serialize, Debug)]
+pub struct UserMetrics {
+    pub now: TimestampMillis,
+    pub username: String,
+    pub date_created: TimestampMillis,
+    pub date_updated: TimestampMillis,
+    pub is_bot: bool,
+    pub suspension_details: Option<SuspensionDetails>,
+    pub moderation_flags_enabled: u32,
+    pub chit_balance: i32,
+    pub chit_balance_v2: i32,
+    pub streak: u16,
+    pub streak_v2: u16,
+    pub streak_ends: TimestampMillis,
+    pub date_updated_volatile: TimestampMillis,
+    pub date_updated_volatile_v2: TimestampMillis,
 }
 
 #[derive(Serialize, Debug, Default)]

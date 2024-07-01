@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `c2c_notify_chit` to sync chit balance and streak from user canister ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
+
 ### Changed
 
 - In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
