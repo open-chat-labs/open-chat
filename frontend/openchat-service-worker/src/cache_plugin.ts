@@ -9,7 +9,7 @@ class CustomCachePlugin implements WorkboxPlugin {
         }
 
         const responseContentType = response.headers.get("content-type");
-        if (responseContentType && responseContentType.includes("text/html")) {
+        if (responseContentType && responseContentType.toLocaleLowerCase().includes("text/html")) {
             console.log("Received fallback content type of text/html, response will not be cached");
             return null;
         }
