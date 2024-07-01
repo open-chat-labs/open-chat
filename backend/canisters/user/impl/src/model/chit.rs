@@ -1,30 +1,12 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
 use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
-use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEarnedEvents {
     events: Vec<ChitEarned>,
-    #[serde(default)]
-    streak: Streak,
 }
 
 impl ChitEarnedEvents {
-    pub fn init_streak(&mut self) -> u16 {
-        let mut max_streak: u16 = 0;
-
-        for event in self.events.iter() {
-            if matches!(event.reason, ChitEarnedReason::DailyClaim) {
-                self.streak.claim(event.timestamp);
-
-                max_streak = max(max_streak, self.streak.days(event.timestamp))
-            }
-        }
-
-        max_streak
-    }
-
     pub fn push(&mut self, event: ChitEarned) {
         let mut sort = false;
 
@@ -32,10 +14,6 @@ impl ChitEarnedEvents {
             if latest.timestamp > event.timestamp {
                 sort = true;
             }
-        }
-
-        if matches!(event.reason, ChitEarnedReason::DailyClaim) {
-            self.streak.claim(event.timestamp);
         }
 
         self.events.push(event);
@@ -74,6 +52,10 @@ impl ChitEarnedEvents {
         (page, self.events.len() as u32)
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &ChitEarned> {
+        self.events.iter()
+    }
+
     pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEarned> {
         self.events
             .iter()
@@ -90,10 +72,6 @@ impl ChitEarnedEvents {
             .rev()
             .take_while(|e| e.timestamp > since)
             .any(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
-    }
-
-    pub fn streak(&self, now: TimestampMillis) -> u16 {
-        self.streak.days(now)
     }
 }
 
@@ -174,7 +152,6 @@ mod tests {
 
     fn init_test_data() -> ChitEarnedEvents {
         ChitEarnedEvents {
-            streak: Streak::default(),
             events: vec![
                 ChitEarned {
                     amount: 200,
