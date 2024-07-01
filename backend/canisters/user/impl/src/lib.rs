@@ -359,6 +359,7 @@ impl Data {
 
     pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
         let args = user_index_canister::c2c_notify_chit::Args {
+            timestamp: now,
             chit_balance: self.chit_balance.value,
             streak: self.streak.days(now),
             streak_ends: self.streak.ends(),

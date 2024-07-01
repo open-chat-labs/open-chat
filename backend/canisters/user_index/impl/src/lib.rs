@@ -175,7 +175,7 @@ impl RuntimeState {
                 streak_v2: user.streak_v2,
                 streak_ends: user.streak_ends,
                 date_updated_volatile: user.date_updated_volatile,
-                date_updated_volatile_v2: user.date_updated_volatile_v2,
+                date_updated_volatile_v2: user.chit_updated,
             }
         })
     }

@@ -209,6 +209,7 @@ impl UserMap {
     pub fn set_chit(
         &mut self,
         user_id: &UserId,
+        chit_event_timestamp: TimestampMillis,
         chit_balance: i32,
         streak: u16,
         streak_ends: TimestampMillis,
@@ -218,10 +219,15 @@ impl UserMap {
             return false;
         };
 
+        if chit_event_timestamp <= user.lastest_chit_event {
+            return false;
+        }
+
+        user.lastest_chit_event = chit_event_timestamp;
         user.chit_balance_v2 = chit_balance;
         user.streak_v2 = streak;
         user.streak_ends = streak_ends;
-        user.date_updated_volatile_v2 = now;
+        user.chit_updated = now;
 
         true
     }

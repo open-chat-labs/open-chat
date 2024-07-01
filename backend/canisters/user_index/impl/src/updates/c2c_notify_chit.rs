@@ -14,11 +14,14 @@ fn c2c_notify_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let user_id: UserId = state.env.caller().into();
 
-    if state
-        .data
-        .users
-        .set_chit(&user_id, args.chit_balance, args.streak, args.streak_ends, now)
-    {
+    if state.data.users.set_chit(
+        &user_id,
+        args.timestamp,
+        args.chit_balance,
+        args.streak,
+        args.streak_ends,
+        now,
+    ) {
         Success
     } else {
         UserNotFound

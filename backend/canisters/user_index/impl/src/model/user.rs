@@ -78,8 +78,10 @@ pub struct User {
     pub streak_ends: TimestampMillis,
     #[serde(rename = "dv", alias = "date_updated_volatile", default)]
     pub date_updated_volatile: TimestampMillis,
-    #[serde(rename = "d2", alias = "date_updated_volatile_v2", default)]
-    pub date_updated_volatile_v2: TimestampMillis,
+    #[serde(rename = "d2", alias = "chit_updated", alias = "date_updated_volatile_v2", default)]
+    pub chit_updated: TimestampMillis,
+    #[serde(rename = "lc", alias = "lastest_chit_event", default)]
+    pub lastest_chit_event: TimestampMillis,
 }
 
 impl User {
@@ -171,7 +173,7 @@ impl User {
             date_created: now,
             date_updated: now,
             date_updated_volatile: now,
-            date_updated_volatile_v2: now,
+            chit_updated: now,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
@@ -188,6 +190,7 @@ impl User {
             streak: Streak::default(),
             streak_v2: 0,
             streak_ends: 0,
+            lastest_chit_event: 0,
         }
     }
 
@@ -292,7 +295,8 @@ impl Default for User {
             streak: Streak::default(),
             streak_v2: 0,
             streak_ends: 0,
-            date_updated_volatile_v2: 0,
+            chit_updated: 0,
+            lastest_chit_event: 0,
         }
     }
 }
