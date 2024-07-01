@@ -53,10 +53,6 @@ impl Streak {
         today == self.end_day + 2
     }
 
-    pub fn expired_yesterday_v2(&self, now: TimestampMillis) -> bool {
-        Streak::timestamp_to_day(now).map_or(false, |today| today == self.end_day + 2)
-    }
-
     pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {
         if ts < DAY_ZERO {
             return None;
