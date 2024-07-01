@@ -55,7 +55,7 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     state.data.event_store_client.push(
         EventBuilder::new("user_claimed_daily_chit", now)
             .with_user(user_id.to_string(), true)
-            .with_source(user_id.to_string(), false)
+            .with_source(user_id.to_string(), true)
             .with_json_payload(&UserClaimedDailyChitEventPayload { streak, chit_earned })
             .build(),
     );
