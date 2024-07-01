@@ -25,6 +25,7 @@
     import Badges from "./Badges.svelte";
     import WithRole from "./WithRole.svelte";
     import RoleIcon from "./RoleIcon.svelte";
+    import ChitBalance from "./ChitBalance.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -310,10 +311,7 @@
                     <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
                 {#if user !== undefined}
-                    <div class="balance">
-                        <div class="chit"></div>
-                        {`${user.chitBalance.toLocaleString()} CHIT`}
-                    </div>
+                    <ChitBalance size={"small"} {me} balance={user.chitBalance} />
                 {/if}
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
@@ -474,25 +472,5 @@
 
     .suspend {
         margin-top: $sp3;
-    }
-
-    .balance {
-        padding: $sp2 $sp3;
-        border-radius: var(--rd);
-        background-color: var(--button-bg);
-        color: var(--button-txt);
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-        align-self: center;
-        margin: 0 0 $sp4 0;
-        z-index: 0;
-
-        .chit {
-            background-image: url("/assets/chit.svg");
-            background-repeat: no-repeat;
-            width: $sp4;
-            height: $sp4;
-        }
     }
 </style>

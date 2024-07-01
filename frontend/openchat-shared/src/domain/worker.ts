@@ -109,10 +109,6 @@ import type {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
-    ClaimDailyChitResponse,
-    ChitUserBalance,
-    ChitEventsRequest,
-    ChitEventsResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -183,6 +179,12 @@ import type {
     RejectResponse,
     TranslationCorrections,
 } from "./i18n";
+import type {
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitUserBalance,
+    ClaimDailyChitResponse,
+} from "./chit";
 /**
  * Worker request types
  */
@@ -373,7 +375,12 @@ export type WorkerRequest =
     | SetPinNumber
     | ClaimDailyChit
     | ChitLeaderboard
-    | ChitEventsRequest;
+    | ChitEventsRequest
+    | MarkAchievementsSeen;
+
+type MarkAchievementsSeen = {
+    kind: "markAchievementsSeen";
+};
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -1241,6 +1248,7 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | void
     | bigint
     | boolean
     | string
@@ -2043,4 +2051,6 @@ export type WorkerResult<T> = T extends Init
     ? ChitUserBalance[]
     : T extends ChitEventsRequest
     ? ChitEventsResponse
+    : T extends MarkAchievementsSeen
+    ? void
     : never;

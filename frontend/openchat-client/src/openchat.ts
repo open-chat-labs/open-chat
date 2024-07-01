@@ -203,7 +203,15 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, keepMax, toRecord, toRecord2 } from "./utils/list";
+import {
+    findLast,
+    groupBy,
+    groupWhile,
+    keepMax,
+    partition,
+    toRecord,
+    toRecord2,
+} from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -236,6 +244,7 @@ import type { OpenChatConfig } from "./config";
 import {
     ChatsUpdated,
     ChatUpdated,
+    ChitEarnedEvent,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
@@ -1594,6 +1603,7 @@ export class OpenChat extends OpenChatAgentWorker {
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
     toRecord = toRecord;
+    partition = partition;
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
@@ -5206,6 +5216,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     community: chatsResponse.state.pinnedChannels,
                     none: [],
                 },
+                chatsResponse.state.achievements,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -5263,6 +5274,16 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.dispatchEvent(new ChatsUpdated());
 
+            if (chatsResponse.newAchievements.length > 0) {
+                this.dispatchEvent(
+                    new ChitEarnedEvent(
+                        chatsResponse.newAchievements.filter(
+                            (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                        ),
+                    ),
+                );
+            }
+
             if (initialLoad) {
                 this.startExchangeRatePoller();
                 if (!this._liveState.anonUser) {
@@ -5288,7 +5309,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe(async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
-                        initialLoad,
+                        !this._liveState.chatsInitialised,
                         resp as UpdatesResult,
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
@@ -6313,6 +6334,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         return resp;
+    }
+
+    markAchievementsSeen() {
+        this.sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
+            console.error("markAchievementsSeen", err);
+        });
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {

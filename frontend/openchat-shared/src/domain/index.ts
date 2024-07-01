@@ -31,3 +31,4 @@ export * from "./version";
 export * from "./webrtc/webrtc";
 export * from "./worker";
 export * from "./feature";
+export * from "./chit";

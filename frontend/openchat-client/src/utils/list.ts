@@ -15,7 +15,7 @@ export function groupWhile<T>(predicate: (a1: T, a2: T) => boolean, items: T[]):
                 return [item, groups];
             }
         },
-        [undefined, [[]]]
+        [undefined, [[]]],
     );
     return grouped;
 }
@@ -41,7 +41,7 @@ export function flatMap<A, B>(things: A[], fn: (thing: A) => B[]): B[] {
     }, [] as B[]);
 }
 
-export function distinctBy<T, K>(things: T[], keyFn: ((thing: T) => K)): T[] {
+export function distinctBy<T, K>(things: T[], keyFn: (thing: T) => K): T[] {
     if (things.length == 0) return things;
 
     const set = new Set<K>();
@@ -90,7 +90,7 @@ export function findLast<T>(array: T[], predicate: (item: T) => boolean): T | un
 
 export function toRecord<T, K extends string | number | symbol>(
     xs: T[],
-    keyFn: (x: T) => K
+    keyFn: (x: T) => K,
 ): Record<K, T> {
     return toRecord2(xs, keyFn, (x) => x);
 }
@@ -98,9 +98,9 @@ export function toRecord<T, K extends string | number | symbol>(
 export function toRecord2<T, K extends string | number | symbol, V>(
     xs: T[],
     keyFn: (x: T) => K,
-    valFn: (x: T) => V
+    valFn: (x: T) => V,
 ): Record<K, V> {
-    return toRecordFiltered(xs, keyFn, valFn, _ => true);
+    return toRecordFiltered(xs, keyFn, valFn, (_) => true);
 }
 
 export function toRecordFiltered<T, K extends string | number | symbol, V>(
@@ -109,12 +109,15 @@ export function toRecordFiltered<T, K extends string | number | symbol, V>(
     valueFn: (x: T) => V,
     filterFn: (x: T) => boolean,
 ): Record<K, V> {
-    return xs.reduce((rec, x) => {
-        if (filterFn(x)) {
-            rec[keyFn(x)] = valueFn(x);
-        }
-        return rec;
-    }, {} as Record<K, V>);
+    return xs.reduce(
+        (rec, x) => {
+            if (filterFn(x)) {
+                rec[keyFn(x)] = valueFn(x);
+            }
+            return rec;
+        },
+        {} as Record<K, V>,
+    );
 }
 
 export function keepMax<T>(items: T[], keep: (item: T) => boolean, max: number) {
@@ -128,4 +131,18 @@ export function keepMax<T>(items: T[], keep: (item: T) => boolean, max: number) 
             items.splice(i, 1);
         }
     }
+}
+
+export function partition<T>(items: T[], fn: (item: T) => boolean): [T[], T[]] {
+    return items.reduce(
+        ([yes, no], thing) => {
+            if (fn(thing)) {
+                yes.push(thing);
+            } else {
+                no.push(thing);
+            }
+            return [yes, no];
+        },
+        [[] as T[], [] as T[]],
+    );
 }

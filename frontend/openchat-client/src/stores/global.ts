@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import type {
+    Achievement,
     ChannelSummary,
     ChatIdentifier,
     ChatListScope,
@@ -26,6 +27,7 @@ export type GlobalState = {
     groupChats: ChatMap<GroupChatSummary>;
     favourites: ObjectSet<ChatIdentifier>;
     pinnedChats: PinnedByScope;
+    achievements: Set<Achievement>;
 };
 
 /**
@@ -43,6 +45,7 @@ export const globalStateStore = immutableStore<GlobalState>({
         community: [],
         none: [],
     },
+    achievements: new Set(),
 });
 
 export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
@@ -322,6 +325,7 @@ export function setGlobalState(
     allChats: ChatSummary[],
     favourites: ChatIdentifier[],
     pinnedChats: PinnedByScope,
+    achievements: Set<Achievement>,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -331,6 +335,7 @@ export function setGlobalState(
         groupChats: ChatMap.fromList(groupChats),
         favourites: ObjectSet.fromList(favourites),
         pinnedChats,
+        achievements,
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };

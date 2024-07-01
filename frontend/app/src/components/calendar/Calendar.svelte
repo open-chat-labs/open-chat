@@ -102,6 +102,7 @@
         display: flex;
         flex-direction: column;
         border-radius: var(--rd);
+        margin-bottom: $sp4;
     }
 
     .block {

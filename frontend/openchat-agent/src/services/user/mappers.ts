@@ -66,6 +66,7 @@ import type {
     ApiChitEventsResponse,
     ApiChitEarned,
     ApiChitEarnedReason,
+    ApiAchievement,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -133,6 +134,7 @@ import type {
     ChitEventsResponse,
     ChitEarned,
     ChitEarnedReason,
+    Achievement,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -194,12 +196,55 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
         return { kind: "daily_claim" };
     }
     if ("Achievement" in candid) {
-        return { kind: "achievement_unlocked", text: candid.Achievement };
+        return { kind: "achievement_unlocked", type: achievementType(candid.Achievement) };
     }
     if ("MemeContestWinner" in candid) {
         return { kind: "meme_contest_winner" };
     }
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
+}
+
+export function achievementType(candid: ApiAchievement): Achievement {
+    if ("JoinedCommunity" in candid) {
+        return "joined_community";
+    }
+    if ("JoinedGroup" in candid) {
+        return "joined_group";
+    }
+    if ("Streak14" in candid) {
+        return "streak_14";
+    }
+    if ("Streak30" in candid) {
+        return "streak_30";
+    }
+    if ("UpgradedToDiamond" in candid) {
+        return "upgraded_to_diamond";
+    }
+    if ("ReceivedDirectMessage" in candid) {
+        return "received_direct_message";
+    }
+    if ("SetDisplayName" in candid) {
+        return "set_display_name";
+    }
+    if ("SetBio" in candid) {
+        return "set_bio";
+    }
+    if ("Streak3" in candid) {
+        return "streak_3";
+    }
+    if ("Streak7" in candid) {
+        return "streak_7";
+    }
+    if ("UpgradedToGoldDiamond" in candid) {
+        return "upgrade_to_gold_diamond";
+    }
+    if ("SentDirectMessage" in candid) {
+        return "sent_direct_message";
+    }
+    if ("SetAvatar" in candid) {
+        return "set_avatar";
+    }
+    throw new UnsupportedValueError("Unexpected ApiAchievement received", candid);
 }
 
 export function saveCryptoAccountResponse(
@@ -676,6 +721,8 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             suspended: result.suspended,
             pinNumberSettings: optional(result.pin_number_settings, pinNumberSettings),
             localUserIndex: result.local_user_index_canister_id.toString(),
+            achievementsLastSeen: result.achievements_last_seen,
+            achievements: result.achievements.map(chitEarned),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -782,6 +829,8 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             directChats: directChatsUpdates(candid.Success.direct_chats),
             suspended: optional(candid.Success.suspended, identity),
             pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
+            achievementsLastSeen: optional(candid.Success.achievements_last_seen, identity),
+            achievements: candid.Success.achievements.map(chitEarned),
         };
     }
 

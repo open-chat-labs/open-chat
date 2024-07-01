@@ -32,6 +32,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
+import type { Achievement, ChitEarned } from "../chit";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -955,6 +956,7 @@ export type UpdatesResult = {
     updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
     suspensionChanged: boolean | undefined;
+    newAchievements: ChitEarned[];
 };
 
 export type ChatStateFull = {
@@ -972,6 +974,8 @@ export type ChatStateFull = {
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
+    achievements: Set<Achievement>;
+    achievementsLastSeen: bigint;
 };
 
 export type CurrentChatState = {
@@ -1122,6 +1126,8 @@ export type InitialStateResponse = {
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
     localUserIndex: string;
+    achievements: ChitEarned[];
+    achievementsLastSeen: bigint;
 };
 
 export type PinNumberSettings = {
@@ -1157,6 +1163,8 @@ export type UpdatesSuccessResponse = {
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
+    achievements: ChitEarned[];
+    achievementsLastSeen: bigint | undefined;
 };
 
 export type DirectChatsUpdates = {
