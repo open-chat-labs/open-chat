@@ -3919,6 +3919,7 @@ export class OpenChat extends OpenChatAgentWorker {
                                 chatId,
                                 this._liveState.user.userId,
                                 ev.event as Message<VideoCallContent>,
+                                ev.timestamp,
                             ),
                         );
                     }
@@ -5001,6 +5002,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
+    }
+
+    setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "setTokenEnabled", ledger, enabled });
     }
 
     stakeNeuronForSubmittingProposals(

@@ -280,6 +280,7 @@ export type WorkerRequest =
     | RemoveHotGroupExclusion
     | AddMessageFilter
     | RemoveMessageFilter
+    | SetTokenEnabled
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
@@ -1076,6 +1077,12 @@ type RemoveMessageFilter = {
     kind: "removeMessageFilter";
 };
 
+type SetTokenEnabled = {
+    ledger: string;
+    enabled: boolean;
+    kind: "setTokenEnabled";
+};
+
 type SuspendUser = {
     userId: string;
     reason: string;
@@ -1865,6 +1872,8 @@ export type WorkerResult<T> = T extends Init
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter
+    ? boolean
+    : T extends SetTokenEnabled
     ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse

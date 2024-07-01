@@ -972,6 +972,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
                 break;
 
+            case "setTokenEnabled":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTokenEnabled(payload.ledger, payload.enabled),
+                );
+                break;
+
             case "suspendUser":
                 executeThenReply(
                     payload,
