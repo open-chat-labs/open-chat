@@ -19,14 +19,6 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 
-    fn get_user_metrics_impl(user_id: UserId, state: &RuntimeState) -> HttpResponse {
-        if let Some(metrics) = state.user_metrics(user_id) {
-            build_json_response(&metrics)
-        } else {
-            HttpResponse::not_found()
-        }
-    }
-
     fn get_bot_users(state: &RuntimeState) -> HttpResponse {
         let bots: Vec<_> = state
             .data
@@ -49,22 +41,27 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&grouped)
     }
 
+    fn handle_other_path(path: String, state: &RuntimeState) -> HttpResponse {
+        let parts: Vec<_> = path.split('/').collect();
+        if parts[0] == "usermetrics" {
+            let user_id: Option<UserId> = parts.get(1).and_then(|p| Principal::from_text(*p).ok()).map(|p| p.into());
+            if let Some(user_id) = user_id {
+                if let Some(metrics) = state.user_metrics(user_id) {
+                    return build_json_response(&metrics);
+                }
+            }
+        }
+
+        HttpResponse::not_found()
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, _) if path == "bots" => read_state(get_bot_users),
         Route::Other(path, _) if path == "new_users_per_day" => read_state(get_new_users_per_day),
-        Route::Other(path, _) => {
-            let parts: Vec<_> = path.split('/').collect();
-            if parts[0] == "usermetrics" {
-                let user_id: Option<UserId> = parts.get(1).and_then(|p| Principal::from_text(*p).ok()).map(|p| p.into());
-                if let Some(user_id) = user_id {
-                    return read_state(|state| get_user_metrics_impl(user_id, state));
-                }
-            }
-            HttpResponse::not_found()
-        }
+        Route::Other(path, _) => read_state(|state| handle_other_path(path, state)),
         _ => HttpResponse::not_found(),
     }
 }
