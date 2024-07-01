@@ -3,6 +3,7 @@ use crate::{read_state, RuntimeState};
 use ic_cdk::query;
 use types::UserId;
 use user_canister::initial_state::{Response::*, *};
+use utils::time::{today, tomorrow};
 
 #[query(guard = "caller_is_owner")]
 fn initial_state(_args: Args) -> Response {
@@ -48,5 +49,9 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         local_user_index_canister_id: state.data.local_user_index_canister_id,
         achievements: state.data.chit_events.achievements(None),
         achievements_last_seen: state.data.achievements_last_seen,
+        chit_balance: state.data.chit_balance.value,
+        streak: state.data.streak.days(now),
+        streak_ends: state.data.streak.ends(),
+        next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
     })
 }

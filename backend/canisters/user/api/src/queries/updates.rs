@@ -32,6 +32,10 @@ pub struct SuccessResult {
     pub pin_number_settings: OptionUpdate<PinNumberSettings>,
     pub achievements: Vec<ChitEarned>,
     pub achievements_last_seen: Option<TimestampMillis>,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+    pub next_daily_claim: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
