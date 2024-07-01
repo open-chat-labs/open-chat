@@ -53,7 +53,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                     }
                 }
             }
-            "bots" => return get_new_users_per_day(state),
+            "bots" => return get_bot_users(state),
             "new_users_per_day" => return get_new_users_per_day(state),
             _ => (),
         }
