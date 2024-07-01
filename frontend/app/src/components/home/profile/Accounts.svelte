@@ -146,7 +146,11 @@
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">
-                    <img class="icon" src={token.logo} />
+                    <img
+                        alt={token.name}
+                        class:disabled={!token.enabled}
+                        class="icon"
+                        src={token.logo} />
                     <div>
                         {token.symbol}
                     </div>
@@ -200,7 +204,9 @@
                                                     slot="icon" />
                                                 <div slot="text">
                                                     <Translatable
-                                                        resourceKey={i18nKey("cryptoAccount.swap")} />
+                                                        resourceKey={i18nKey(
+                                                            "cryptoAccount.swap",
+                                                        )} />
                                                 </div>
                                             </MenuItem>
                                         {/if}
@@ -324,6 +330,10 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
+
+            &.disabled {
+                filter: grayscale(1);
+            }
         }
     }
 </style>
