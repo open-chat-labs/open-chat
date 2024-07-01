@@ -49,11 +49,14 @@
     let currentFees: Record<"ICP" | "CHAT", Fees>;
     let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
     let feesTab: "ICP" | "CHAT" = "ICP";
+    let tokenLedger = "";
+    let tokenEnabled = true;
 
     $: groupUpgradeConcurrencyInvalid = isNaN(parseInt(groupUpgradeConcurrency, 0));
     $: communityUpgradeConcurrencyInvalid = isNaN(parseInt(communityUpgradeConcurrency, 0));
     $: userUpgradeConcurrencyInvalid = isNaN(parseInt(userUpgradeConcurrency, 0));
     $: exchangeIdInvalid = isNaN(parseInt(exchangeId, 0));
+    $: tokenLedgerValid = tokenLedger.length > 0;
 
     onMount(() => {
         client.diamondMembershipFees().then((fees) => {
@@ -265,6 +268,26 @@
                 });
         }
     }
+
+    function setTokenEnabled(): void {
+        error = undefined;
+        addBusy(6);
+        client
+            .setTokenEnabled(tokenLedger, tokenEnabled)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(`Token enabled set successfully: ${tokenLedger}, ${tokenEnabled}`),
+                    );
+                } else {
+                    error = i18nKey(`Failed to set token enabled: ${tokenLedger}, ${tokenEnabled}`);
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => {
+                removeBusy(6);
+            });
+    }
 </script>
 
 <div class="operator">
@@ -450,6 +473,19 @@
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
             on:click={updateMarketMakerConfig}>Apply</Button>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set token enabled</div>
+        <ButtonGroup align="fill">
+            <Input invalid={!tokenLedgerValid} bind:value={tokenLedger} />
+            <Toggle small id="token-enabled" bind:checked={tokenEnabled} />
+            <Button
+                tiny
+                disabled={busy.has(6) || !tokenLedgerValid}
+                loading={busy.has(6)}
+                on:click={setTokenEnabled}>Apply</Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">
