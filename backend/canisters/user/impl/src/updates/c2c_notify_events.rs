@@ -102,7 +102,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 );
             }
         }
-        // TODO: LEGACY - delete this once user canisters are upgraded
+        // TODO: LEGACY - delete this once the website has switched to calling the new user::claim_daily_chit endpoint
         Event::ChitEarned(ev) => {
             let timestamp = ev.timestamp;
             let is_daily_claim = matches!(ev.reason, ChitEarnedReason::DailyClaim);
@@ -111,7 +111,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
 
             state.data.chit_events.push(*ev);
 
-            if is_daily_claim {
+            if is_daily_claim && state.data.streak.claim(timestamp) {
                 let streak = state.data.streak.days(timestamp);
 
                 if streak >= 3 {

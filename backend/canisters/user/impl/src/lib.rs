@@ -178,6 +178,7 @@ impl RuntimeState {
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+            achievements: self.data.achievements.iter().cloned().collect(),
         }
     }
 }
@@ -365,20 +366,21 @@ impl Data {
 
         self.fire_and_forget_handler.send(
             self.user_index_canister_id,
-            "c2c_notify_chit".to_string(),
+            "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
     }
 
     pub fn init_streak_and_chit_balance(&mut self, now: TimestampMillis) -> u16 {
         let mut max_streak: u16 = 0;
+        self.chit_balance = Timestamped::new(0, now);
 
         for event in self.chit_events.iter() {
             self.chit_balance = Timestamped::new(self.chit_balance.value + event.amount, now);
 
-            if matches!(event.reason, ChitEarnedReason::DailyClaim) {
-                self.streak.claim(event.timestamp);
+            let is_daily_claim = matches!(event.reason, ChitEarnedReason::DailyClaim);
 
+            if is_daily_claim && self.streak.claim(event.timestamp) {
                 max_streak = max(max_streak, self.streak.days(event.timestamp))
             }
         }
@@ -409,6 +411,7 @@ pub struct Metrics {
     pub streak: u16,
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
+    pub achievements: Vec<Achievement>,
 }
 
 fn run_regular_jobs() {

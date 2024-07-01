@@ -122,6 +122,12 @@ fn initialize_chit_and_achievements(state: &mut RuntimeState) {
     }
 
     if state.data.chit_balance.value > 0 {
-        state.data.notify_user_index_of_chit(now);
+        ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
     }
+}
+
+fn notify_user_index_of_chit() {
+    mutate_state(|state| {
+        state.data.notify_user_index_of_chit(state.env.now());
+    })
 }
