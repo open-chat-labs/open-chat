@@ -73,11 +73,11 @@ pub struct User {
         skip_serializing_if = "is_default"
     )]
     pub chit_balance: i32,
-    #[serde(rename = "s2", alias = "streak_v2", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "s", alias = "streak_v2", default, skip_serializing_if = "is_default")]
     pub streak_v2: u16,
-    #[serde(rename = "s2", alias = "streak_ends", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "se", alias = "streak_ends", default, skip_serializing_if = "is_default")]
     pub streak_ends: TimestampMillis,
-    #[serde(rename = "d2", alias = "chit_updated", default)]
+    #[serde(rename = "cu", alias = "d2", default)]
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", alias = "lastest_chit_event", default)]
     pub lastest_chit_event: TimestampMillis,
