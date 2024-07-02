@@ -18,6 +18,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -34,7 +35,6 @@ use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::streak::Streak;
 use utils::time::{today, tomorrow, MINUTE_IN_MS};
 
 mod crypto;

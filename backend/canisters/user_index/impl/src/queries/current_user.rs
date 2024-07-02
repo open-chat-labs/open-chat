@@ -3,7 +3,6 @@ use ic_cdk::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};
-use utils::time::{today, tomorrow};
 
 #[query]
 fn current_user(_args: Args) -> Response {
@@ -36,8 +35,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             diamond_membership_status: u.diamond_membership_details.status_full(now),
             moderation_flags_enabled: u.moderation_flags_enabled,
             chit_balance: u.chit_balance,
-            streak: u.streak.days(now),
-            next_daily_claim: if u.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+            streak: u.streak(now),
         })
     } else {
         UserNotFound

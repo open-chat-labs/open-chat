@@ -60,7 +60,11 @@ fn register_user_with_duplicate_username_appends_suffix() {
     let user_summaries =
         client::user_index::happy_path::users(env, first_user_principal.unwrap(), canister_ids.user_index, user_ids);
 
-    let usernames: Vec<_> = user_summaries.into_iter().map(|u| u.username).sorted_unstable().collect();
+    let usernames: Vec<_> = user_summaries
+        .into_iter()
+        .filter_map(|u| u.stable.map(|stable| stable.username))
+        .sorted_unstable()
+        .collect();
 
     let expected_usernames: Vec<_> = (1..=user_count)
         .map(|i| if i == 1 { username.clone() } else { format!("{username}{i}") })
