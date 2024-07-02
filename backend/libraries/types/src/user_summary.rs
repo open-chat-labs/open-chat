@@ -1,10 +1,7 @@
-use crate::{
-    DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, TimestampMillis, UserId,
-};
+use crate::{DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-// Deprecated
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummary {
     pub user_id: UserId,
@@ -56,7 +53,4 @@ pub struct CurrentUserSummary {
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
-    pub chit_balance: i32,
-    pub streak: u16,
-    pub next_daily_claim: TimestampMillis,
 }

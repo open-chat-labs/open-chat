@@ -35,5 +35,4 @@ pub struct SuccessResult {
     pub moderation_flags_enabled: u32,
     pub chit_balance: i32,
     pub streak: u16,
-    pub next_daily_claim: TimestampMillis,
 }

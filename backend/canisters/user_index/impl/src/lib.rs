@@ -170,12 +170,9 @@ impl RuntimeState {
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
                 chit_balance: user.chit_balance,
-                chit_balance_v2: user.chit_balance_v2,
-                streak: user.streak.days(now),
-                streak_v2: user.streak_v2,
+                streak: user.streak(now),
                 streak_ends: user.streak_ends,
-                date_updated_volatile: user.date_updated_volatile,
-                date_updated_volatile_v2: user.chit_updated,
+                chit_updated: user.chit_updated,
             }
         })
     }
@@ -485,12 +482,9 @@ pub struct UserMetrics {
     pub suspension_details: Option<SuspensionDetails>,
     pub moderation_flags_enabled: u32,
     pub chit_balance: i32,
-    pub chit_balance_v2: i32,
+    pub chit_updated: TimestampMillis,
     pub streak: u16,
-    pub streak_v2: u16,
     pub streak_ends: TimestampMillis,
-    pub date_updated_volatile: TimestampMillis,
-    pub date_updated_volatile_v2: TimestampMillis,
 }
 
 #[derive(Serialize, Debug, Default)]

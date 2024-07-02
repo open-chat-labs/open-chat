@@ -13,6 +13,7 @@ generate_query_call!(updates);
 generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
+generate_update_call!(claim_daily_chit);
 generate_update_call!(cancel_message_reminder);
 generate_update_call!(cancel_p2p_swap);
 generate_update_call!(create_community);
@@ -46,8 +47,8 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_message_id;
     use types::{
-        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
+        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, Empty, EventIndex, EventsResponse, MessageContentInitial,
+        MessageId, Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
 
     pub fn send_text_message(
@@ -409,6 +410,15 @@ pub mod happy_path {
 
         match response {
             user_canister::chit_events::Response::Success(result) => result,
+        }
+    }
+
+    pub fn claim_daily_chit(env: &mut PocketIc, sender: &User) -> user_canister::claim_daily_chit::SuccessResult {
+        let response = super::claim_daily_chit(env, sender.principal, sender.canister(), &Empty {});
+
+        match response {
+            user_canister::claim_daily_chit::Response::Success(result) => result,
+            response => panic!("'claim_daily_chit' error: {response:?}"),
         }
     }
 }

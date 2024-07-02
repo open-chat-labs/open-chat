@@ -9,7 +9,7 @@ generate_query_call!(platform_moderators);
 generate_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
 generate_query_call!(user);
-generate_query_call!(users_v2);
+generate_query_call!(users);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -17,7 +17,6 @@ generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
-generate_update_call!(claim_daily_chit);
 generate_update_call!(delete_user);
 generate_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
@@ -34,9 +33,9 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, UserId, UserSummary,
+        DiamondMembershipPlanDuration, Empty, UserId, UserSummaryV2,
     };
-    use user_index_canister::users_v2::UserGroup;
+    use user_index_canister::users::UserGroup;
 
     pub fn current_user(
         env: &PocketIc,
@@ -105,12 +104,12 @@ pub mod happy_path {
         }
     }
 
-    pub fn users(env: &PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserId>) -> Vec<UserSummary> {
-        let user_index_canister::users_v2::Response::Success(result) = super::users_v2(
+    pub fn users(env: &PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserId>) -> Vec<UserSummaryV2> {
+        let user_index_canister::users::Response::Success(result) = super::users(
             env,
             sender,
             canister_id,
-            &user_index_canister::users_v2::Args {
+            &user_index_canister::users::Args {
                 user_groups: vec![UserGroup { users, updated_since: 0 }],
                 users_suspended_since: None,
             },
@@ -207,19 +206,6 @@ pub mod happy_path {
 
         match response {
             user_index_canister::add_platform_operator::Response::Success => {}
-        }
-    }
-
-    pub fn claim_daily_chit(
-        env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
-    ) -> user_index_canister::claim_daily_chit::SuccessResult {
-        let response = super::claim_daily_chit(env, sender, user_index_canister_id, &Empty {});
-
-        match response {
-            user_index_canister::claim_daily_chit::Response::Success(result) => result,
-            response => panic!("'claim_daily_chit' error: {response:?}"),
         }
     }
 }
