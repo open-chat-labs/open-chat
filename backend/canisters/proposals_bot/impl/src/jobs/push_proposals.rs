@@ -3,6 +3,7 @@ use crate::{generate_message_id, mutate_state, read_state, RuntimeState};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
+use sns_governance_canister::types::{get_proposal_response, ProposalId};
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -40,14 +41,43 @@ async fn push_proposal(
         proposal,
     }: ProposalToPush,
 ) {
-    match chat_id {
-        MultiUserChat::Group(group_id) => {
-            push_group_proposal(governance_canister_id, group_id, proposal).await;
-        }
-        MultiUserChat::Channel(community_id, channel_id) => {
-            push_channel_proposal(governance_canister_id, community_id, channel_id, proposal).await;
+    if let Ok(proposal) = fetch_payload_rendering_if_required(governance_canister_id, proposal).await {
+        match chat_id {
+            MultiUserChat::Group(group_id) => {
+                push_group_proposal(governance_canister_id, group_id, proposal).await;
+            }
+            MultiUserChat::Channel(community_id, channel_id) => {
+                push_channel_proposal(governance_canister_id, community_id, channel_id, proposal).await;
+            }
         }
     }
+}
+
+async fn fetch_payload_rendering_if_required(governance_canister_id: CanisterId, proposal: Proposal) -> CallResult<Proposal> {
+    if let Proposal::SNS(p) = &proposal {
+        // If not a motion proposal, call `get_proposal` to get the payload rendering.
+        if p.action != 1 {
+            match sns_governance_canister_c2c_client::get_proposal(
+                governance_canister_id,
+                &sns_governance_canister::get_proposal::Args {
+                    proposal_id: Some(ProposalId { id: proposal.id() }),
+                },
+            )
+            .await
+            {
+                Ok(response) => {
+                    if let Some(get_proposal_response::Result::Proposal(p)) = response.result {
+                        return Ok(p.try_into().unwrap());
+                    }
+                }
+                Err(error) => {
+                    mark_proposal_pushed(governance_canister_id, proposal, None);
+                    return Err(error);
+                }
+            }
+        }
+    }
+    Ok(proposal)
 }
 
 async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatId, proposal: Proposal) {
@@ -73,7 +103,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
 
     let response = group_canister_c2c_client::c2c_send_message(group_id.into(), &send_message_args).await;
 
-    mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
+    mark_proposal_pushed(governance_canister_id, proposal, is_success(response).then_some(message_id));
 }
 
 async fn push_channel_proposal(
@@ -105,31 +135,31 @@ async fn push_channel_proposal(
 
     let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;
 
-    mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
+    mark_proposal_pushed(governance_canister_id, proposal, is_success(response).then_some(message_id));
 }
 
-fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id: MessageId, failed: bool) {
+fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id_if_success: Option<MessageId>) {
     mutate_state(|state| {
-        if failed {
-            state
-                .data
-                .nervous_systems
-                .mark_proposal_push_failed(&governance_canister_id, proposal);
-        } else {
+        if let Some(message_id) = message_id_if_success {
             state
                 .data
                 .nervous_systems
                 .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
+        } else {
+            state
+                .data
+                .nervous_systems
+                .mark_proposal_push_failed(&governance_canister_id, proposal);
         }
         start_job_if_required(state);
     });
 }
 
-fn is_failure<T>(response: CallResult<T>) -> bool {
+fn is_success<T>(response: CallResult<T>) -> bool {
     match response {
         // If the messageId has already been used, treat that as success
-        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => false,
-        Err(_) => true,
-        _ => false,
+        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => true,
+        Err(_) => false,
+        _ => true,
     }
 }
