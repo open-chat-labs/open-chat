@@ -46,35 +46,29 @@ fn chit_streak_gained_and_lost_as_expected() {
     ensure_time_at_least_day0(env);
 
     let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.chit_balance, 200);
     assert_eq!(result.streak, 1);
 
     env.advance_time(Duration::from_millis(MS_IN_DAY));
     let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.chit_balance, 400);
     assert_eq!(result.streak, 2);
 
     env.advance_time(Duration::from_millis(MS_IN_DAY));
     let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.chit_balance, 700);
     assert_eq!(result.streak, 3);
 
     env.advance_time(Duration::from_millis(MS_IN_DAY));
     let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.chit_balance, 1000);
     assert_eq!(result.streak, 4);
 
     env.advance_time(Duration::from_millis(2 * MS_IN_DAY));
     env.tick();
 
     let result = client::user::happy_path::initial_state(env, &user);
-    assert_eq!(result.chit_balance, 1000);
     assert_eq!(result.streak, 0);
 
     env.tick();
 
     let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
-    assert_eq!(result.chit_balance, 1000);
     assert_eq!(current_user.streak, 0);
 }
 

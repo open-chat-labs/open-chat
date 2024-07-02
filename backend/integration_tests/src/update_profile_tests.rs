@@ -23,9 +23,9 @@ fn update_username_succeeds() {
 
     // Check that the user index is updated
     let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
-        .pop()
+        .current_user
         .unwrap();
-    assert_eq!(user_summary.stable.unwrap().username, username);
+    assert_eq!(user_summary.username, username);
 
     // Check that the user canister is updated
     let now = now_millis(env);
@@ -54,9 +54,9 @@ fn update_display_name_succeeds() {
 
     // Check that the user index is updated
     let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
-        .pop()
+        .current_user
         .unwrap();
-    assert_eq!(user_summary.stable.unwrap().display_name, Some(display_name.clone()));
+    assert_eq!(user_summary.display_name, Some(display_name.clone()));
 
     // Check that the user canister is updated
     let now = now_millis(env);

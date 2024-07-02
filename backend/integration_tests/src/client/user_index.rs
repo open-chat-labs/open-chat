@@ -104,7 +104,12 @@ pub mod happy_path {
         }
     }
 
-    pub fn users(env: &PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserId>) -> Vec<UserSummaryV2> {
+    pub fn users(
+        env: &PocketIc,
+        sender: Principal,
+        canister_id: CanisterId,
+        users: Vec<UserId>,
+    ) -> user_index_canister::users::Result {
         let user_index_canister::users::Response::Success(result) = super::users(
             env,
             sender,
@@ -115,7 +120,7 @@ pub mod happy_path {
             },
         );
 
-        result.users
+        result
     }
 
     pub fn upgrade_local_user_index_canister_wasm(

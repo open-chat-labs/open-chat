@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::{client, TestEnv};
-use itertools::Itertools;
 use std::ops::Deref;
 use testing::rng::{random_delegated_principal, random_string};
 
@@ -20,7 +19,8 @@ fn register_users() {
         users.iter().map(|u| u.user_id).collect(),
     );
 
-    assert_eq!(user_summaries.len(), user_count);
+    assert!(user_summaries.current_user.is_some());
+    assert_eq!(user_summaries.users.len(), user_count - 1);
 }
 
 #[test]
@@ -57,14 +57,19 @@ fn register_user_with_duplicate_username_appends_suffix() {
 
     env.tick();
 
-    let user_summaries =
-        client::user_index::happy_path::users(env, first_user_principal.unwrap(), canister_ids.user_index, user_ids);
+    let result = client::user_index::happy_path::users(env, first_user_principal.unwrap(), canister_ids.user_index, user_ids);
 
-    let usernames: Vec<_> = user_summaries
+    let mut usernames: Vec<_> = result
+        .users
         .into_iter()
         .filter_map(|u| u.stable.map(|stable| stable.username))
-        .sorted_unstable()
         .collect();
+
+    assert!(result.current_user.is_some());
+
+    usernames.push(result.current_user.unwrap().username);
+
+    usernames.sort_unstable();
 
     let expected_usernames: Vec<_> = (1..=user_count)
         .map(|i| if i == 1 { username.clone() } else { format!("{username}{i}") })
