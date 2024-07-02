@@ -92,13 +92,22 @@ export const enhancedCryptoLookup = derived(
 
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup).sort((a, b) => {
-        const aDollarBalance = a.dollarBalance ?? -1;
-        const bDollarBalance = b.dollarBalance ?? -1;
-
-        // Sort by $ balance
+        // Sort by non-zero balances first
+        // Then by $ balance
         // Then by whether token is a default
         // Then by default precedence
         // Then alphabetically by symbol
+
+        const aNonZero = a.balance > 0;
+        const bNonZero = b.balance > 0;
+
+        if (aNonZero !== bNonZero) {
+            return aNonZero ? -1 : 1;
+        }
+
+        const aDollarBalance = a.dollarBalance ?? -1;
+        const bDollarBalance = b.dollarBalance ?? -1;
+
         if (aDollarBalance < bDollarBalance) {
             return 1;
         } else if (aDollarBalance > bDollarBalance) {

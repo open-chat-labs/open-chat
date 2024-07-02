@@ -3,6 +3,7 @@ use crate::{read_state, RuntimeState};
 use ic_cdk::query;
 use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
+use utils::time::{today, tomorrow};
 
 #[query(guard = "caller_is_owner")]
 fn updates(args: Args) -> Response {
@@ -47,7 +48,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.favourite_chats.any_updated(updates_since)
         || state.data.communities.any_updated(updates_since)
         || state.data.chit_events.has_achievements_since(updates_since)
-        || state.data.achievements_last_seen > updates_since;
+        || state.data.achievements_last_seen > updates_since
+        || state.data.chit_balance.timestamp > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -132,6 +134,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         None
     };
 
+    let chit_balance = state.data.chit_balance.value;
+    let streak = state.data.streak.days(now);
+    let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
+    let streak_ends = state.data.streak.ends();
+
     Success(SuccessResult {
         timestamp: now,
         username,
@@ -146,5 +153,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pin_number_settings,
         achievements,
         achievements_last_seen,
+        chit_balance,
+        streak,
+        streak_ends,
+        next_daily_claim,
     })
 }

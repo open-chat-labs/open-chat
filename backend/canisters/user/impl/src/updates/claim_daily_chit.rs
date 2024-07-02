@@ -1,0 +1,94 @@
+use crate::guards::caller_is_owner;
+use crate::{mutate_state, RuntimeState};
+use canister_tracing_macros::trace;
+use event_store_producer::EventBuilder;
+use ic_cdk::update;
+use serde::Serialize;
+use types::{Achievement, ChitEarned, ChitEarnedReason, Timestamped, UserId};
+use user_index_canister::claim_daily_chit::{Response::*, *};
+use utils::time::tomorrow;
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+fn claim_daily_chit(_args: Args) -> Response {
+    mutate_state(claim_daily_chit_impl)
+}
+
+fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    let tomorrow = tomorrow(now);
+
+    if !state.data.streak.claim(now) {
+        return AlreadyClaimed(tomorrow);
+    }
+
+    let user_id: UserId = state.env.canister_id().into();
+    let streak = state.data.streak.days(now);
+    let chit_earned = chit_for_streak(streak);
+
+    state.data.chit_balance = Timestamped::new(state.data.chit_balance.value + chit_earned as i32, now);
+
+    state.data.chit_events.push(ChitEarned {
+        amount: chit_earned as i32,
+        timestamp: now,
+        reason: ChitEarnedReason::DailyClaim,
+    });
+
+    if streak >= 3 {
+        state.data.award_achievement(Achievement::Streak3, now);
+    }
+
+    if streak >= 7 {
+        state.data.award_achievement(Achievement::Streak7, now);
+    }
+
+    if streak >= 14 {
+        state.data.award_achievement(Achievement::Streak14, now);
+    }
+
+    if streak >= 30 {
+        state.data.award_achievement(Achievement::Streak30, now);
+    }
+
+    state.data.notify_user_index_of_chit(now);
+
+    state.data.event_store_client.push(
+        EventBuilder::new("user_claimed_daily_chit", now)
+            .with_user(user_id.to_string(), true)
+            .with_source(user_id.to_string(), true)
+            .with_json_payload(&UserClaimedDailyChitEventPayload { streak, chit_earned })
+            .build(),
+    );
+
+    Success(SuccessResult {
+        chit_earned,
+        chit_balance: state.data.chit_balance.value,
+        streak,
+        next_claim: tomorrow,
+    })
+}
+
+fn chit_for_streak(days: u16) -> u32 {
+    if days == 0 {
+        return 0;
+    }
+    if days < 3 {
+        return 200;
+    }
+    if days < 7 {
+        return 300;
+    }
+    if days < 14 {
+        return 400;
+    }
+    if days < 30 {
+        return 500;
+    }
+    600
+}
+
+#[derive(Serialize)]
+struct UserClaimedDailyChitEventPayload {
+    streak: u16,
+    chit_earned: u32,
+}

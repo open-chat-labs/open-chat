@@ -45,10 +45,14 @@ fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, stat
 }
 
 fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut RuntimeState) {
+    let now = state.env.now();
+
     match event {
         UserCanisterEvent::SendMessages(args) => {
             send_messages(*args, caller_user_id, state);
-            state.insert_achievement(Achievement::ReceivedDirectMessage);
+            state
+                .data
+                .award_achievement_and_notify(Achievement::ReceivedDirectMessage, now);
         }
         UserCanisterEvent::EditMessage(args) => {
             edit_message(*args, caller_user_id, state);
@@ -67,13 +71,12 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::MarkMessagesRead(args) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                let now = state.env.now();
                 chat.mark_read_up_to(args.read_up_to, false, now);
             }
         }
         UserCanisterEvent::P2PSwapStatusChange(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.events.set_p2p_swap_status(None, c.message_id, c.status, state.env.now());
+                chat.events.set_p2p_swap_status(None, c.message_id, c.status, now);
             }
         }
         UserCanisterEvent::JoinVideoCall(c) => {
@@ -83,7 +86,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                     c.message_id,
                     VideoCallPresence::Default,
                     EventIndex::default(),
-                    state.env.now(),
+                    now,
                 );
             }
         }

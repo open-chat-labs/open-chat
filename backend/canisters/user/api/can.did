@@ -298,6 +298,16 @@ type JoinVideoCallResponse = variant {
     ChatNotFound;
 };
 
+type ClaimDailyChitResponse = variant {
+    Success : record {
+        chit_earned : nat32;
+        chit_balance : int32;
+        streak : nat16;
+        next_claim : TimestampMillis;
+    };
+    AlreadyClaimed : TimestampMillis;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -867,6 +877,10 @@ type InitialStateResponse = variant {
         local_user_index_canister_id : CanisterId;
         achievements : vec ChitEarned;
         achievements_last_seen : TimestampMillis;
+        chit_balance : int32;
+        streak : nat16;
+        streak_ends : TimestampMillis;
+        next_daily_claim : TimestampMillis;
     };
 };
 
@@ -923,6 +937,10 @@ type UpdatesResponse = variant {
         suspended : opt bool;
         achievements : vec ChitEarned;
         achievements_last_seen : opt TimestampMillis;
+        chit_balance : int32;
+        streak : nat16;
+        streak_ends : TimestampMillis;
+        next_daily_claim : TimestampMillis;
     };
     SuccessNoUpdates;
 };
@@ -1209,6 +1227,7 @@ service : {
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
     end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
