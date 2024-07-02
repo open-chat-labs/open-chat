@@ -33,7 +33,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, UserId, UserSummaryV2,
+        DiamondMembershipPlanDuration, Empty, UserId,
     };
     use user_index_canister::users::UserGroup;
 
