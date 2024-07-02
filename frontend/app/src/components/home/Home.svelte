@@ -292,7 +292,10 @@
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
         // Check user is not already in the call and it started less than an hour ago
-        if (!ev.detail.currentUserIsParticipant && Number(ev.detail.timestamp) > Date.now() - 60 * 60 * 1000) {
+        if (
+            !ev.detail.currentUserIsParticipant &&
+            Number(ev.detail.timestamp) > Date.now() - 60 * 60 * 1000
+        ) {
             incomingVideoCall.set(ev.detail);
         }
     }
@@ -411,12 +414,13 @@
         return false;
     }
 
+    let communityLoaded = false;
+
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
-
             if (
                 $anonUser &&
                 pathParams.kind === "chat_list_route" &&
@@ -444,17 +448,20 @@
                 client.clearSelectedChat();
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
+                await selectCommunity(pathParams.communityId);
                 if (selectFirstChat()) {
+                    communityLoaded = true;
                     return;
-                } else {
-                    await selectCommunity(pathParams.communityId);
                 }
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"
             ) {
                 if (pathParams.kind === "selected_channel_route") {
-                    await selectCommunity(pathParams.communityId, false);
+                    if (!communityLoaded) {
+                        await selectCommunity(pathParams.communityId, false);
+                    }
+                    communityLoaded = false;
                 }
 
                 // first close any open thread
