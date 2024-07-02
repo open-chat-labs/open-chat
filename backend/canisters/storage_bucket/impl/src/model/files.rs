@@ -554,6 +554,7 @@ impl From<PutChunkArgs> for PendingFile {
     }
 }
 
+#[allow(dead_code)]
 pub enum PutChunkResult {
     Success(PutChunkResultSuccess),
     FileAlreadyExists,
@@ -581,6 +582,7 @@ pub enum ForwardFileResult {
     NotFound,
 }
 
+#[allow(dead_code)]
 pub struct HashMismatch {
     pub provided_hash: Hash,
     pub actual_hash: Hash,
