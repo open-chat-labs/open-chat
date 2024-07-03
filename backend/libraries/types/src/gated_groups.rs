@@ -9,6 +9,7 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
+    LifetimeDiamondMember,
     VerifiedCredential(VerifiedCredentialGate),
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
@@ -17,7 +18,10 @@ pub enum AccessGate {
 
 impl AccessGate {
     pub fn synchronous(&self) -> bool {
-        matches!(self, AccessGate::DiamondMember | AccessGate::VerifiedCredential(_))
+        matches!(
+            self,
+            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::VerifiedCredential(_)
+        )
     }
 
     pub fn is_payment_gate(&self) -> bool {
@@ -27,6 +31,7 @@ impl AccessGate {
     pub fn gate_type(&self) -> &'static str {
         match self {
             AccessGate::DiamondMember => "diamond",
+            AccessGate::LifetimeDiamondMember => "lifetime_diamond",
             AccessGate::VerifiedCredential(_) => "verified_credential",
             AccessGate::SnsNeuron(_) => "sns_neuron",
             AccessGate::Payment(_) => "payment",
@@ -73,6 +78,7 @@ pub struct TokenBalanceGate {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
+    NotLifetimeDiamondMember,
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
