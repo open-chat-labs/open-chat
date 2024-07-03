@@ -64,6 +64,8 @@ import type {
     TipMessageResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
     JoinVideoCallResponse,
     VideoCallPresence,
     SetVideoCallPresenceResponse,
@@ -109,6 +111,8 @@ import type {
     ApproveTransferResponse,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -159,7 +163,11 @@ import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    ChallengeAttempt,
+    CreateOpenChatIdentityResponse,
+    GenerateChallengeResponse,
     GetDelegationResponse,
+    GetOpenChatIdentityResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -227,6 +235,7 @@ export type WorkerRequest =
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
+    | ChatEventsBatch
     | ChatEventsByEventIndex
     | ChatEventsWindow
     | LastOnline
@@ -238,6 +247,8 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
+    | GenerateIdentityChallenge
+    | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite
@@ -267,6 +278,7 @@ export type WorkerRequest =
     | RemoveHotGroupExclusion
     | AddMessageFilter
     | RemoveMessageFilter
+    | SetTokenEnabled
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
@@ -323,7 +335,6 @@ export type WorkerRequest =
     | DeleteUserGroups
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
@@ -361,7 +372,8 @@ export type WorkerRequest =
     | VideoCallParticipants
     | SetPinNumber
     | ClaimDailyChit
-    | ChitLeaderboard;
+    | ChitLeaderboard
+    | ChitEventsRequest;
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -949,6 +961,13 @@ type SearchUsers = {
     kind: "searchUsers";
 };
 
+type ChatEventsBatch = {
+    localUserIndex: string;
+    requests: ChatEventsArgs[];
+    cachePrimer: boolean;
+    kind: "chatEventsBatch";
+};
+
 type ChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: ChatIdentifier;
@@ -974,8 +993,17 @@ export type RehydrateMessage = {
     kind: "rehydrateMessage";
 };
 
-type Init = Omit<AgentConfig, "logger"> & {
+export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
+};
+
+type GenerateIdentityChallenge = {
+    kind: "generateIdentityChallenge";
+};
+
+type CreateOpenChatIdentity = {
+    kind: "createOpenChatIdentity";
+    challengeAttempt: ChallengeAttempt | undefined;
 };
 
 type CurrentUser = {
@@ -1040,6 +1068,12 @@ type AddMessageFilter = {
 type RemoveMessageFilter = {
     id: bigint;
     kind: "removeMessageFilter";
+};
+
+type SetTokenEnabled = {
+    ledger: string;
+    enabled: boolean;
+    kind: "setTokenEnabled";
 };
 
 type SuspendUser = {
@@ -1150,12 +1184,6 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
-type SetCachePrimerTimestamp = {
-    chatIdentifierString: string;
-    timestamp: bigint;
-    kind: "setCachePrimerTimestamp";
-};
-
 type UpdateBtcBalance = {
     userId: string;
     kind: "updateBtcBalance";
@@ -1219,6 +1247,8 @@ export type WorkerResponseInner =
     | string[]
     | undefined
     | [number, number]
+    | GenerateChallengeResponse
+    | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1266,6 +1296,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
@@ -1349,7 +1380,8 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[];
+    | ChitUserBalance[]
+    | ChitEventsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1648,8 +1680,16 @@ type ChitLeaderboard = {
     kind: "chitLeaderboard";
 };
 
+export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+
 // prettier-ignore
-export type WorkerResult<T> = T extends PinMessage
+export type WorkerResult<T> = T extends Init
+    ? ConnectToWorkerResponse
+    : T extends GenerateIdentityChallenge
+    ? GenerateChallengeResponse
+    : T extends CreateOpenChatIdentity
+    ? CreateOpenChatIdentityResponse
+    : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
     ? NamedAccount[]
@@ -1685,6 +1725,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record<string, number>
     : T extends MarkAsOnline
     ? void
+    : T extends ChatEventsBatch
+    ? ChatEventsResponse[]
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
@@ -1823,6 +1865,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? boolean
     : T extends RemoveMessageFilter
     ? boolean
+    : T extends SetTokenEnabled
+    ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse
     : T extends SuspendUser
@@ -1933,8 +1977,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
     ? Record< string, bigint >
-    : T extends SetCachePrimerTimestamp
-    ? void
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
     : T extends CanSwap
@@ -1999,4 +2041,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
     ? ChitUserBalance[]
+    : T extends ChitEventsRequest
+    ? ChitEventsResponse
     : never;

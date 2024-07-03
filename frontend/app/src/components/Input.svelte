@@ -13,7 +13,7 @@
     export let placeholder: ResourceKey | undefined = undefined;
     export let type: "text" | "number" | "password" = "text";
     export let minlength: number = 0;
-    export let maxlength: number = Number.MAX_VALUE;
+    export let maxlength: number = 10000;
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
@@ -136,7 +136,6 @@
 
         &.invalid {
             border: 1px solid var(--error);
-            box-shadow: 0 0 5px 1px var(--error);
         }
 
         &::placeholder {

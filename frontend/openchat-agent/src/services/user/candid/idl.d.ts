@@ -58,6 +58,7 @@ import {
     EventsResponse,
     EventsSuccessResult,
     EventsArgs,
+    ExchangeArgs,
     SendMessageV2Args,
     SendMessageResponse,
     EditMessageResponse,
@@ -158,6 +159,9 @@ import {
     SetVideoCallPresenceResponse,
     SetPinNumberResponse,
     PinNumberSettings,
+    ChitEventsResponse,
+    ChitEarned,
+    ChitEarnedReason,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -200,6 +204,7 @@ export {
     EventsResponse as ApiEventsResponse,
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
+    ExchangeArgs as ApiExchangeArgs,
     BlockUserResponse as ApiBlockUserResponse,
     UnblockUserResponse as ApiUnblockUserResponse,
     LeaveGroupResponse as ApiLeaveGroupResponse,
@@ -318,6 +323,9 @@ export {
     SetVideoCallPresenceResponse as ApiSetVideoCallPresenceResponse,
     SetPinNumberResponse as ApiSetPinNumberResponse,
     PinNumberSettings as ApiPinNumberSettings,
+    ChitEventsResponse as ApiChitEventsResponse,
+    ChitEarned as ApiChitEarned,
+    ChitEarnedReason as ApiChitEarnedReason
 };
 
 export const idlFactory: IDL.InterfaceFactory;

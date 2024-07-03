@@ -22,18 +22,20 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::cmp::max;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
-    TimestampMillis, Timestamped, UserId,
+    Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
+    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId,
 };
 use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::MINUTE_IN_MS;
+use utils::streak::Streak;
+use utils::time::{today, tomorrow, MINUTE_IN_MS};
 
 mod crypto;
 mod governance_clients;
@@ -139,17 +141,18 @@ impl RuntimeState {
     }
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
-        if canister_id != OPENCHAT_BOT_USER_ID.into() {
+        if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
             self.data.user_canister_events_queue.push(canister_id, event);
             jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
         }
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -171,6 +174,11 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
+            chit_balance: self.data.chit_balance.value,
+            streak: self.data.streak.days(now),
+            streak_ends: self.data.streak.ends(),
+            next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+            achievements: self.data.achievements.iter().cloned().collect(),
         }
     }
 }
@@ -214,6 +222,14 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
+    #[serde(default)]
+    pub chit_balance: Timestamped<i32>,
+    #[serde(default)]
+    pub streak: Streak,
+    #[serde(default)]
+    pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub achievements_last_seen: TimestampMillis,
     pub rng_seed: [u8; 32],
 }
 
@@ -272,6 +288,10 @@ impl Data {
             pin_number: PinNumber::default(),
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),
+            chit_balance: Timestamped::default(),
+            streak: Streak::default(),
+            achievements: HashSet::new(),
+            achievements_last_seen: 0,
             rng_seed: [0; 32],
         }
     }
@@ -315,6 +335,59 @@ impl Data {
             timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
     }
+
+    pub fn award_achievement_and_notify(&mut self, achievement: Achievement, now: TimestampMillis) {
+        if self.award_achievement(achievement, now) {
+            self.notify_user_index_of_chit(now);
+        }
+    }
+
+    pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
+        if self.achievements.insert(achievement.clone()) {
+            let amount = achievement.chit_reward() as i32;
+            self.chit_events.push(ChitEarned {
+                amount,
+                timestamp: now,
+                reason: ChitEarnedReason::Achievement(achievement),
+            });
+            self.chit_balance = Timestamped::new(self.chit_balance.value + amount, now);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
+        let args = user_index_canister::c2c_notify_chit::Args {
+            timestamp: now,
+            chit_balance: self.chit_balance.value,
+            streak: self.streak.days(now),
+            streak_ends: self.streak.ends(),
+        };
+
+        self.fire_and_forget_handler.send(
+            self.user_index_canister_id,
+            "c2c_notify_chit_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(args),
+        );
+    }
+
+    pub fn init_streak_and_chit_balance(&mut self, now: TimestampMillis) -> u16 {
+        let mut max_streak: u16 = 0;
+        self.chit_balance = Timestamped::new(0, now);
+
+        for event in self.chit_events.iter() {
+            self.chit_balance = Timestamped::new(self.chit_balance.value + event.amount, now);
+
+            let is_daily_claim = matches!(event.reason, ChitEarnedReason::DailyClaim);
+
+            if is_daily_claim && self.streak.claim(event.timestamp) {
+                max_streak = max(max_streak, self.streak.days(event.timestamp))
+            }
+        }
+
+        max_streak
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -335,6 +408,11 @@ pub struct Metrics {
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+    pub next_daily_claim: TimestampMillis,
+    pub achievements: Vec<Achievement>,
 }
 
 fn run_regular_jobs() {

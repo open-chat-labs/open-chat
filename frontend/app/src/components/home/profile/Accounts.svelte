@@ -64,13 +64,13 @@
     ): string {
         switch (conversion) {
             case "usd":
-                return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+                return sum(Object.values(lookup).map((c) => c.dollarBalance ?? 0)).toFixed(2);
             case "icp":
-                return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+                return sum(Object.values(lookup).map((c) => c.icpBalance ?? 0)).toFixed(3);
             case "btc":
-                return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+                return sum(Object.values(lookup).map((c) => c.btcBalance ?? 0)).toFixed(6);
             case "eth":
-                return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+                return sum(Object.values(lookup).map((c) => c.ethBalance ?? 0)).toFixed(6);
         }
     }
 
@@ -146,7 +146,11 @@
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">
-                    <img class="icon" src={token.logo} />
+                    <img
+                        alt={token.name}
+                        class:disabled={!token.enabled}
+                        class="icon"
+                        src={token.logo} />
                     <div>
                         {token.symbol}
                     </div>
@@ -180,30 +184,34 @@
                                         <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
                                     </div>
                                 </MenuItem>
-                                <MenuItem on:click={() => showReceive(token.ledger)}>
-                                    <ArrowLeftBoldCircle
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable
-                                            resourceKey={i18nKey("cryptoAccount.receive")} />
-                                    </div>
-                                </MenuItem>
-                                {#await swappableTokensPromise then swappableTokens}
-                                    {#if swappableTokens.has(token.ledger)}
-                                        <MenuItem on:click={() => showSwap(token.ledger)}>
-                                            <SwapIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                <Translatable
-                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
-                                            </div>
-                                        </MenuItem>
-                                    {/if}
-                                {/await}
+                                {#if token.enabled}
+                                    <MenuItem on:click={() => showReceive(token.ledger)}>
+                                        <ArrowLeftBoldCircle
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("cryptoAccount.receive")} />
+                                        </div>
+                                    </MenuItem>
+                                    {#await swappableTokensPromise then swappableTokens}
+                                        {#if swappableTokens.has(token.ledger)}
+                                            <MenuItem on:click={() => showSwap(token.ledger)}>
+                                                <SwapIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"}
+                                                    slot="icon" />
+                                                <div slot="text">
+                                                    <Translatable
+                                                        resourceKey={i18nKey(
+                                                            "cryptoAccount.swap",
+                                                        )} />
+                                                </div>
+                                            </MenuItem>
+                                        {/if}
+                                    {/await}
+                                {/if}
                                 {#if snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
@@ -322,6 +330,10 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
+
+            &.disabled {
+                filter: grayscale(1);
+            }
         }
     }
 </style>

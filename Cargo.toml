@@ -10,9 +10,10 @@ members = [
     "backend/bots/examples/satoshi_dice/impl",
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
-    "backend/canister_installer",
-    "backend/canister_upgrade_proposal_builder",
-    "backend/canister_upgrader",
+    "backend/tools/account_id",
+    "backend/tools/canister_installer",
+    "backend/tools/canister_upgrade_proposal_builder",
+    "backend/tools/canister_upgrader",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",
     "backend/canisters/community/impl",
@@ -149,7 +150,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/translation_tool",
+    "backend/tools/translation_tool",
 ]
 resolver = "2"
 
@@ -219,8 +220,8 @@ serde_repr = "0.1.19"
 serde_tokenstream = "0.2.0"
 sha2 = "0.10.8"
 sha3 = "0.10.8"
-sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.9.0" }
-sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.9.0" }
+sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.11.0" }
+sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.11.0" }
 syn = "2.0.65"
 test-case = "3.3.1"
 time = "0.3.36"

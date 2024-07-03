@@ -10,7 +10,7 @@
 <div
     role="button"
     tabindex="0"
-    on:click={() => client.identityState.set({ kind: "logging_in" })}
+    on:click={() => client.updateIdentityState({ kind: "logging_in" })}
     class="anon">
     <Translatable resourceKey={i18nKey("tapToLogin")} />
 </div>

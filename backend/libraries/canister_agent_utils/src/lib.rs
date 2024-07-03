@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::reqwest_transport::ReqwestHttpReplicaV2Transport;
-use ic_agent::identity::BasicIdentity;
+use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;
@@ -147,7 +147,13 @@ pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
     if !Path::exists(pem_path.as_path()) {
         panic!("Pem file not found at: {}", pem_path.as_path().display());
     }
-    Box::new(BasicIdentity::from_pem_file(pem_path.as_path()).unwrap())
+    if let Ok(identity) = BasicIdentity::from_pem_file(pem_path.as_path()) {
+        Box::new(identity)
+    } else if let Ok(identity) = Secp256k1Identity::from_pem_file(pem_path.as_path()) {
+        Box::new(identity)
+    } else {
+        panic!("Failed to create identity from pem file: {}", pem_path.as_path().display());
+    }
 }
 
 pub async fn build_ic_agent(url: String, identity: Box<dyn Identity>) -> Agent {
@@ -221,7 +227,7 @@ pub fn is_mainnet(url: &str) -> bool {
 }
 
 fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
-    let dir = std::fs::read_dir(dir).unwrap();
+    let dir = std::fs::read_dir(dir).unwrap_or_else(|_| panic!("Expect to read_dir {:#?}", dir));
 
     dir.filter_map(|f| f.ok())
         .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))

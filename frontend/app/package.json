@@ -48,6 +48,7 @@
         "node-fetch": "^3.3.2",
         "prettier": "^3.0.1",
         "process": "^0.11.10",
+        "rollup-plugin-dev": "^2.0.3",
         "sass": "^1.65.1",
         "stream-browserify": "3.0.0",
         "svelte": "^4.2.0",
@@ -60,18 +61,23 @@
         "util": "0.12.5"
     },
     "dependencies": {
-        "@dfinity/agent": "^1.3.0",
-        "@dfinity/auth-client": "^1.3.0",
-        "@dfinity/candid": "^1.3.0",
-        "@dfinity/identity": "^1.3.0",
-        "@dfinity/principal": "^1.3.0",
+        "@daily-co/daily-js": "^0.57.2",
+        "@dfinity/agent": "^1.4.0",
+        "@dfinity/auth-client": "^1.4.0",
+        "@dfinity/candid": "^1.4.0",
+        "@dfinity/identity": "^1.4.0",
+        "@dfinity/principal": "^1.4.0",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",
+        "@solana/wallet-adapter-wallets": "^0.19.32",
+        "@solana/web3.js": "^1.91.8",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@wagmi/chains": "^1.8.0",
         "@wagmi/connectors": "^4.3.9",
         "@wagmi/core": "^2.9.7",
+        "bs58": "^5.0.0",
         "emoji-picker-element": "git+https://github.com/hpeebles/emoji-picker-element.git#716e3a30a87e7f7e471f90bebe1af93d90d866ff",
+        "i18next": "^23.11.4",
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
         "jsqr-es6": "^1.4.0-1",
@@ -88,6 +94,7 @@
         "svelte-material-icons": "^3.0.5",
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "usergeek-ic-js": "git+https://github.com/hpeebles/usergeek-ic-js.git#b7e56319447c26e4f8f18779859435137aafc4c2",
-        "uuid": "^9.0.0"
+        "uuid": "^9.0.0",
+        "wavesurfer.js": "^7.7.5"
     }
 }

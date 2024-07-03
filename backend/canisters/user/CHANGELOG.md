@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Added `achievements` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+- Maintains chit balance and streak and notifies user_index ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
+
+## [[2.0.1213](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1213-user)] - 2024-06-24
+
+### Changed
+
+- Debug potential swap slippage for single user ([#5957](https://github.com/open-chat-labs/open-chat/pull/5957))
+
+## [[2.0.1211](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1211-user)] - 2024-06-21
+
+### Added
+
+- Added optional `to` arg to `chit_events` ([#5929](https://github.com/open-chat-labs/open-chat/pull/5929))
+
+### Changed
+
+- Retry unfinished ICPSwaps + some extra logging ([#5946](https://github.com/open-chat-labs/open-chat/pull/5946))
+
+## [[2.0.1197](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1197-user)] - 2024-06-06
+
+### Added
+
+- Support sending transactions using ICRC2 ([#5854](https://github.com/open-chat-labs/open-chat/pull/5854))
+- Integrate with Sonic for token swaps ([#5908](https://github.com/open-chat-labs/open-chat/pull/5908))
+
+### Changed
+
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+- Use `thread_root_message_index` when checking for duplicate messageId ([#5890](https://github.com/open-chat-labs/open-chat/pull/5890))
+- Disallow starting video call with yourself ([#5892](https://github.com/open-chat-labs/open-chat/pull/5892))
+- Ensure user canisters don't push events to themselves ([#5893](https://github.com/open-chat-labs/open-chat/pull/5893))
+
 ## [[2.0.1178](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1178-user)] - 2024-05-23
 
 ### Added

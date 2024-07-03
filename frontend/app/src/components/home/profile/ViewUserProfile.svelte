@@ -2,6 +2,7 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
+    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Markdown from "../Markdown.svelte";
     import {
         AvatarSize,
@@ -19,11 +20,11 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
-    import Diamond from "../../icons/Diamond.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import ProfileRole from "./ProfileRole.svelte";
-    import Streak from "./Streak.svelte";
+    import Badges from "./Badges.svelte";
+    import WithRole from "./WithRole.svelte";
+    import RoleIcon from "./RoleIcon.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,6 +33,8 @@
     export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
     export let inGlobalContext = false;
+
+    // this is the next thing on the list
 
     let profile: PublicProfile | undefined = undefined;
     let user: UserSummary | undefined;
@@ -43,18 +46,16 @@
     $: me = userId === $createdUser.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
-    $: status =
+    $: [status, online] =
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-            : "";
+            : ["", false];
     $: avatarUrl =
         profile !== undefined
             ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
             : "/assets/unknownUserAvatar.svg";
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
-    $: isPremium = profile?.isPremium ?? false;
-    $: phoneIsVerified = profile?.phoneIsVerified ?? false;
     $: selectedChat = client.selectedChatStore;
     $: blockedUsers = client.blockedUsers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
@@ -279,56 +280,60 @@
             on:close>
             <div class="header" slot="header">
                 <div class="handle">
-                    <span>
+                    <div class="display_name">
                         {displayName}
-                    </span>
-                    <Diamond status={diamondStatus} />
-                    <span class="username">
-                        @{profile.username}
-                    </span>
+                    </div>
+                    <div class="name_and_badges">
+                        <div class="username">
+                            @{profile.username}
+                        </div>
+                        <Badges {diamondStatus} streak={user?.streak ?? 0} />
+                        {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
+                            <WithRole
+                                userId={user.userId}
+                                chatMembers={$chatMembersMap}
+                                communityMembers={$communityMembers}
+                                let:chatRole
+                                let:communityRole>
+                                <RoleIcon level="community" popup role={communityRole} />
+                                <RoleIcon
+                                    level={$selectedChat.kind === "channel" ? "channel" : "group"}
+                                    popup
+                                    role={chatRole} />
+                            </WithRole>
+                        {/if}
+                    </div>
                 </div>
             </div>
             <div slot="body" class="body" class:modal>
                 <div class="avatar">
                     <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
+                {#if user !== undefined}
+                    <div class="balance">
+                        <div class="chit"></div>
+                        {`${user.chitBalance.toLocaleString()} CHIT`}
+                    </div>
+                {/if}
                 {#if profile.bio.length > 0}
-                    <p class="bio"><Markdown text={profile.bio} /></p>
+                    <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
                 {/if}
                 <div class="meta">
                     <div class="left" class:suspended={isSuspended}>
                         {#if isSuspended}
                             <Translatable resourceKey={i18nKey("accountSuspended")} />
                         {:else}
+                            {#if online}
+                                <div class="online"></div>
+                            {/if}
                             {status === "" ? "..." : status}
                         {/if}
                     </div>
                     <div class="right">
+                        <ClockOutline size={"12px"} color={"var(--txt)"} />
                         {joined}
                     </div>
-                    {#if $platformModerator}
-                        {#if isPremium}
-                            <p class="left">PREMIUM</p>
-                        {/if}
-                        {#if phoneIsVerified}
-                            <p class="right">VERIFIED</p>
-                        {/if}
-                    {/if}
                 </div>
-                {#if user !== undefined}
-                    <div class="chit">
-                        <div>{$_("chitBalance")} <strong>{user.chitBalance}</strong></div>
-                        <div><Streak days={user.streak} showTooltip={false} /></div>
-                    </div>
-                {/if}
-                {#if $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
-                    <ProfileRole
-                        {userId}
-                        chatMembers={$chatMembersMap}
-                        communityMembers={$communityMembers}
-                        community={$selectedCommunity}
-                        chat={$selectedChat} />
-                {/if}
             </div>
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
@@ -376,10 +381,17 @@
         @include font-size(fs-90);
         word-wrap: break-word;
         width: 320px;
-        padding: $sp4 $sp5 0 $sp5;
+        padding: 0 $sp5 0 $sp5;
 
         .avatar {
             padding: 0 0 $sp4 0;
+            -webkit-box-reflect: below -24px linear-gradient(hsla(0, 0%, 100%, 0), hsla(
+                            0,
+                            0%,
+                            100%,
+                            0
+                        )
+                        45%, hsla(0, 0%, 100%, 0.2));
         }
 
         .bio {
@@ -405,6 +417,13 @@
             grid-template-columns: 1fr 1fr;
             column-gap: $sp3;
 
+            .left,
+            .right {
+                display: flex;
+                align-items: center;
+                gap: $sp2;
+            }
+
             .left {
                 justify-self: flex-start;
             }
@@ -423,6 +442,13 @@
             .suspended {
                 color: var(--menu-warn);
             }
+
+            .online {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: green;
+            }
         }
     }
 
@@ -438,22 +464,35 @@
                 color: var(--txt-light);
             }
         }
+
+        .name_and_badges {
+            display: inline-flex;
+            gap: $sp2;
+            align-items: center;
+        }
     }
 
     .suspend {
         margin-top: $sp3;
     }
 
-    .chit {
-        @include font(light, normal, fs-60);
+    .balance {
+        padding: $sp2 $sp3;
+        border-radius: var(--rd);
+        background-color: var(--button-bg);
+        color: var(--button-txt);
         display: flex;
-        justify-content: space-between;
+        gap: $sp3;
         align-items: center;
-        gap: $sp2;
-        margin-bottom: $sp3;
+        align-self: center;
+        margin: 0 0 $sp4 0;
+        z-index: 0;
 
-        @include mobile() {
-            @include font(light, normal, fs-90);
+        .chit {
+            background-image: url("/assets/chit.svg");
+            background-repeat: no-repeat;
+            width: $sp4;
+            height: $sp4;
         }
     }
 </style>

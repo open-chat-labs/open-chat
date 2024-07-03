@@ -54,6 +54,7 @@
     import { menuCloser } from "../../../actions/closeMenu";
     import Translatable from "../../Translatable.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
+    import ChitEvents from "./ChitEvents.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -73,11 +74,10 @@
     let displayName: string | undefined = undefined;
     let displayNameValid = true;
     let checkingUsername: boolean;
-    let view: "global" | "communities" = "global";
+    let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
-    $: identityState = client.identityState;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
     $: moderationFlags = client.moderationFlags;
@@ -263,6 +263,14 @@
             class="tab">
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (view = "chit")}
+            class:selected={view === "chit"}
+            class="tab">
+            <Translatable resourceKey={i18nKey("CHIT")} />
+        </div>
     </div>
 {/if}
 
@@ -289,7 +297,7 @@
                 {#if $anonUser}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
-                        <Button on:click={() => identityState.set({ kind: "logging_in" })}
+                        <Button on:click={() => client.updateIdentityState({ kind: "logging_in" })}
                             ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}
@@ -512,11 +520,13 @@
                     <Stats showReported stats={$userMetrics} />
                 </CollapsibleCard>
             </div>
-            <div class="advanced">
-                <CollapsibleCard
-                    on:toggle={advancedSectionOpen.toggle}
-                    open={$advancedSectionOpen}
-                    headerText={i18nKey("advanced")}>
+        {/if}
+        <div class="advanced">
+            <CollapsibleCard
+                on:toggle={advancedSectionOpen.toggle}
+                open={$advancedSectionOpen}
+                headerText={i18nKey("advanced")}>
+                {#if !$anonUser}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
@@ -526,15 +536,15 @@
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
-                        <div>{version}</div>
-                    </div>
-                </CollapsibleCard>
-            </div>
-        {/if}
+                {/if}
+                <div>
+                    <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
+                    <div>{version}</div>
+                </div>
+            </CollapsibleCard>
+        </div>
     </form>
-{:else}
+{:else if view === "communities"}
     <div class="community-selector">
         <Legend label={i18nKey("communities.communityLabel")} />
         <Select bind:value={selectedCommunityId}>
@@ -548,6 +558,8 @@
     {#if selectedCommunity !== undefined}
         <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
+{:else if view === "chit"}
+    <ChitEvents />
 {/if}
 
 <style lang="scss">

@@ -183,13 +183,16 @@ type SwapTokensArgs = record {
     output_token : TokenInfo;
     input_amount : nat;
     exchange_args : variant {
-        ICPSwap : record {
-            swap_canister_id : CanisterId;
-            zero_for_one : bool;
-        };
+        ICPSwap : ExchangeArgs;
+        Sonic : ExchangeArgs;
     };
     min_output_amount : nat;
     pin : opt text;
+};
+
+type ExchangeArgs = record {
+    swap_canister_id : CanisterId;
+    zero_for_one : bool;
 };
 
 type SwapTokensResponse = variant {
@@ -295,6 +298,16 @@ type JoinVideoCallResponse = variant {
     ChatNotFound;
 };
 
+type ClaimDailyChitResponse = variant {
+    Success : record {
+        chit_earned : nat32;
+        chit_balance : int32;
+        streak : nat16;
+        next_claim : TimestampMillis;
+    };
+    AlreadyClaimed : TimestampMillis;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -324,6 +337,14 @@ type TipMessageResponse = variant {
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : record { text; CompletedCryptoTransaction };
+};
+
+type MarkAchievementsSeenArgs = record {
+    last_seen : TimestampMillis;
+};
+
+type MarkAchievementsSeenResponse = variant {
+    Success;
 };
 
 type MarkReadArgs = record {
@@ -854,6 +875,12 @@ type InitialStateResponse = variant {
         suspended : bool;
         pin_number_settings : opt PinNumberSettings;
         local_user_index_canister_id : CanisterId;
+        achievements : vec ChitEarned;
+        achievements_last_seen : TimestampMillis;
+        chit_balance : int32;
+        streak : nat16;
+        streak_ends : TimestampMillis;
+        next_daily_claim : TimestampMillis;
     };
 };
 
@@ -908,6 +935,12 @@ type UpdatesResponse = variant {
             NoChange;
         };
         suspended : opt bool;
+        achievements : vec ChitEarned;
+        achievements_last_seen : opt TimestampMillis;
+        chit_balance : int32;
+        streak : nat16;
+        streak_ends : TimestampMillis;
+        next_daily_claim : TimestampMillis;
     };
     SuccessNoUpdates;
 };
@@ -1114,6 +1147,7 @@ type LocalUserIndexResponse = variant {
 
 type ChitEventsArgs = record {
     from : opt TimestampMillis;
+    to : opt TimestampMillis;
     max : nat32;
     ascending : bool;
 };
@@ -1155,6 +1189,7 @@ service : {
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     tip_message : (TipMessageArgs) -> (TipMessageResponse);
+    mark_achievements_seen : (MarkAchievementsSeenArgs) -> (MarkAchievementsSeenResponse);
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
@@ -1192,6 +1227,7 @@ service : {
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
     end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

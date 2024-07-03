@@ -58,17 +58,10 @@
         "turbo": "^1.10.13"
     },
     "dependencies": {
-        "@daily-co/daily-js": "^0.57.2",
-        "@wagmi/connectors": "^4.3.9",
-        "@wagmi/core": "^2.9.7",
-        "i18next": "^23.11.4",
-        "rollup-plugin-dev": "^2.0.3",
-        "svelte-pincode": "^2.2.0",
-        "wavesurfer.js": "^7.7.5",
-        "workbox-cacheable-response": "^7.0.0",
-        "workbox-expiration": "^7.0.0",
-        "workbox-recipes": "^7.0.0",
-        "workbox-routing": "^7.0.0",
-        "workbox-strategies": "^7.0.0"
+        "workbox-core": "^7.1.0",
+        "workbox-expiration": "^7.1.0",
+        "workbox-recipes": "^7.1.0",
+        "workbox-routing": "^7.1.0",
+        "workbox-strategies": "^7.1.0"
     }
 }

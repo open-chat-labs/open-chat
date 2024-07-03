@@ -7,8 +7,10 @@ use types::CanisterId;
 pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
+    originating_canisters: HashMap<CanisterId, u32>,
 }
 
+#[allow(dead_code)]
 pub struct UserPrincipal {
     pub index: u32,
     pub principal: Principal,
@@ -47,6 +49,7 @@ impl UserPrincipals {
                 user_principal_index: index,
             },
         );
+        *self.originating_canisters.entry(originating_canister).or_default() += 1;
     }
 
     pub fn link_auth_principal_with_existing_user(
@@ -84,6 +87,10 @@ impl UserPrincipals {
 
     pub fn auth_principals_count(&self) -> u32 {
         self.auth_principals.len() as u32
+    }
+
+    pub fn originating_canisters(&self) -> &HashMap<CanisterId, u32> {
+        &self.originating_canisters
     }
 
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {

@@ -16,12 +16,14 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
+    Sonic(SonicArgs),
 }
 
 impl ExchangeArgs {
     pub fn exchange_id(&self) -> ExchangeId {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
+            ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
         }
     }
 }
@@ -31,6 +33,8 @@ pub struct ICPSwapArgs {
     pub swap_canister_id: CanisterId,
     pub zero_for_one: bool,
 }
+
+pub type SonicArgs = ICPSwapArgs;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

@@ -17,6 +17,11 @@
 <div class="menu-items">
     <div class="nav">
         <div class="menu-item">
+            <a href={"https://openchat.myspreadshop.com"} target="_blank" rel="noreferrer">
+                Shop
+            </a>
+        </div>
+        <div class="menu-item">
             <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
         </div>
         <div class="menu-item">
@@ -48,6 +53,10 @@
 </div>
 
 <style lang="scss">
+    a {
+        color: inherit;
+    }
+
     .menu-items {
         @include font(bold, normal, fs-100);
         display: flex;

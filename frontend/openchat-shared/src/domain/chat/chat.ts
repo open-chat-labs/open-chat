@@ -33,11 +33,6 @@ import type {
     CommunitySummary,
 } from "../community";
 
-export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
-export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
-export const HotOrNotGovernanceCanisterId = "6wcax-haaaa-aaaaq-aaava-cai";
-export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
-
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
 
@@ -612,12 +607,12 @@ type LedgerId = string;
 type UserId = string;
 export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
 
-export type Message = {
+export type Message<T extends MessageContent = MessageContent> = {
     kind: "message";
     messageId: bigint;
     messageIndex: number;
     sender: string;
-    content: MessageContent;
+    content: T;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
     tips: TipsReceived;
@@ -976,6 +971,7 @@ export type ChatStateFull = {
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
+    userCanisterLocalUserIndex: string;
 };
 
 export type CurrentChatState = {
@@ -1125,6 +1121,7 @@ export type InitialStateResponse = {
     timestamp: bigint;
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
+    localUserIndex: string;
 };
 
 export type PinNumberSettings = {
@@ -2135,6 +2132,49 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           kind: "not_found";
       }
     | { kind: "error"; error: string };
+
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          ascending: boolean;
+          startIndex: number;
+          eventIndexRange: [number, number];
+      }
+    | {
+          kind: "by_index";
+          events: number[];
+      }
+    | {
+          kind: "window";
+          midPoint: number;
+          eventIndexRange: [number, number];
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string };
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }

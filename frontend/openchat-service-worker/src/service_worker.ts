@@ -27,9 +27,9 @@ import {
     routeForChatIdentifier,
     toTitleCase,
 } from "openchat-shared";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { pageCache, staticResourceCache } from "workbox-recipes";
+import { CustomCachePlugin } from "./cache_plugin";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-expect-error
@@ -56,9 +56,7 @@ staticResourceCache({
     },
     cacheName: "openchat_stale_while_revalidate",
     plugins: [
-        new CacheableResponsePlugin({
-            statuses: [200],
-        }),
+        new CustomCachePlugin(),
         new ExpirationPlugin({
             maxAgeSeconds: 30 * 24 * 60 * 60,
         }),

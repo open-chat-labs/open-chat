@@ -1102,16 +1102,19 @@ type CryptoTransaction = variant {
 type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
+    ICRC2 : Icrc2PendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
     NNS : NnsCompletedCryptoTransaction;
     ICRC1 : Icrc1CompletedCryptoTransaction;
+    ICRC2 : Icrc2CompletedCryptoTransaction;
 };
 
 type FailedCryptoTransaction = variant {
     NNS : NnsFailedCryptoTransaction;
     ICRC1 : Icrc1FailedCryptoTransaction;
+    ICRC2 : Icrc2FailedCryptoTransaction;
 };
 
 type NnsPendingCryptoTransaction = record {
@@ -1197,6 +1200,43 @@ type Icrc1FailedCryptoTransaction = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    error_message : text;
+};
+
+type Icrc2PendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    from : Icrc1Account;
+    to : Icrc1Account;
+    memo : opt Memo;
+    created : TimestampNanos;
+};
+
+type Icrc2CompletedCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : BlockIndex;
+};
+
+type Icrc2FailedCryptoTransaction = record {
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
     from : Icrc1AccountOrMint;
     to : Icrc1AccountOrMint;
     memo : opt Memo;
@@ -1497,7 +1537,11 @@ type VerifiedCredentialGate = record {
     issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments : vec record { text; variant { String : text; Int : int32 } };
+    credential_name : text;
+    credential_arguments : vec record {
+        text;
+        variant { String : text; Int : int32 };
+    };
 };
 
 type SnsNeuronGate = record {
@@ -1801,6 +1845,71 @@ type ChitEarned = record {
 
 type ChitEarnedReason = variant {
     DailyClaim;
-    Achievement : text;
+    Achievement : Achievement;
     MemeContestWinner;
+};
+
+type UserSummaryV2 = record {
+    user_id : UserId;
+    stable : opt UserSummaryStable;
+    volatile : opt UserSummaryVolatile;
+};
+
+type UserSummaryStable = record {
+    username : text;
+    display_name : opt text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
+    diamond_membership_status : DiamondMembershipStatus;
+};
+
+type UserSummaryVolatile = record {
+    chit_balance : int32;
+    streak : nat16;
+};
+
+type CurrentUserSummary = record {
+    user_id : UserId;
+    username : text;
+    display_name : opt text;
+    avatar_id : opt nat;
+    is_bot : bool;
+    is_platform_moderator : bool;
+    is_platform_operator : bool;
+    suspension_details : opt SuspensionDetails;
+    is_suspected_bot : bool;
+    diamond_membership_details : opt DiamondMembershipDetails;
+    diamond_membership_status : DiamondMembershipStatusFull;
+    moderation_flags_enabled : nat32;
+    chit_balance : int32;
+    streak : nat16;
+    next_daily_claim : TimestampMillis;
+};
+
+type SuspensionDetails = record {
+    reason : text;
+    action : SuspensionAction;
+    suspended_by : UserId;
+};
+
+type SuspensionAction = variant {
+    Unsuspend : TimestampMillis;
+    Delete : TimestampMillis;
+};
+
+type Achievement = variant {
+    JoinedGroup;
+    JoinedCommunity;
+    SentDirectMessage;
+    ReceivedDirectMessage;
+    SetAvatar;
+    SetBio;
+    SetDisplayName;
+    UpgradedToDiamond;
+    UpgradedToGoldDiamond;
+    Streak3;
+    Streak7;
+    Streak14;
+    Streak30;
 };

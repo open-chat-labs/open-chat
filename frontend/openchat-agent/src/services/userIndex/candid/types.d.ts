@@ -219,7 +219,8 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string };
+  { 'Achievement' : string } |
+  { 'MemeContestWinner' : null };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
 export interface ChitUserBalance {
   'username' : string,
@@ -374,7 +375,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction } |
+  { 'ICRC2' : Icrc2CompletedCryptoTransaction };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -413,6 +415,23 @@ export type CurrentUserResponse = {
     }
   } |
   { 'UserNotFound' : null };
+export interface CurrentUserSummary {
+  'streak' : number,
+  'username' : string,
+  'is_platform_operator' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatusFull,
+  'next_daily_claim' : TimestampMillis,
+  'user_id' : UserId,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'moderation_flags_enabled' : number,
+  'chit_balance' : number,
+  'is_suspected_bot' : boolean,
+  'suspension_details' : [] | [SuspensionDetails],
+  'is_platform_moderator' : boolean,
+  'diamond_membership_details' : [] | [DiamondMembershipDetails],
+}
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -565,7 +584,8 @@ export interface EventsTimeToLiveUpdated {
   'updated_by' : UserId,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'ICRC1' : Icrc1FailedCryptoTransaction };
+  { 'ICRC1' : Icrc1FailedCryptoTransaction } |
+  { 'ICRC2' : Icrc2FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -951,6 +971,40 @@ export interface Icrc1PendingCryptoTransaction {
   'ledger' : CanisterId,
   'amount' : bigint,
 }
+export interface Icrc2CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1Account,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+}
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -1291,7 +1345,8 @@ export interface PaymentGate {
   'amount' : bigint,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'ICRC1' : Icrc1PendingCryptoTransaction };
+  { 'ICRC1' : Icrc1PendingCryptoTransaction } |
+  { 'ICRC2' : Icrc2PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
   { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1347,7 +1402,6 @@ export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
-  'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
 }
@@ -1679,6 +1733,29 @@ export interface UserSummary {
   'chit_balance' : number,
   'suspended' : boolean,
 }
+export interface UserSummaryStable {
+  'username' : string,
+  'diamond_membership_status' : DiamondMembershipStatus,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'suspended' : boolean,
+}
+export interface UserSummaryV2 {
+  'stable' : [] | [UserSummaryStable],
+  'user_id' : UserId,
+  'volatile' : [] | [UserSummaryVolatile],
+}
+export interface UserSummaryVolatile {
+  'streak' : number,
+  'chit_balance' : number,
+}
+export interface UsersArgs {
+  'user_groups' : Array<
+    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
+  >,
+  'users_suspended_since' : [] | [TimestampMillis],
+}
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
@@ -1687,6 +1764,13 @@ export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
+export type UsersResponse = {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'users' : Array<UserSummaryV2>,
+      'current_user' : [] | [CurrentUserSummary],
+    }
+  };
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1710,6 +1794,7 @@ export interface VerifiedCredentialGate {
   >,
   'issuer_origin' : string,
   'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
 }
 export interface VerifiedCredentialGateArgs {
@@ -1848,6 +1933,7 @@ export interface _SERVICE {
     [EmptyArgs],
     UserRegistrationCanisterResponse
   >,
+  'users' : ActorMethod<[UsersArgs], UsersResponse>,
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

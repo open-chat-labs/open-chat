@@ -8,6 +8,7 @@
     import Translatable from "../Translatable.svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import Input from "../Input.svelte";
@@ -15,6 +16,9 @@
     import { ECDSAKeyIdentity } from "@dfinity/identity";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { toastStore } from "../../stores/toast";
+    import { querystring } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -25,6 +29,7 @@
     let showMore = false;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
+    let verificationCode: string | undefined = undefined;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -36,12 +41,17 @@
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
     $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
     $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
+    $: spinning =
+        state === "logging-in" &&
+        error === undefined &&
+        $selectedAuthProviderStore !== AuthProvider.ETH &&
+        $selectedAuthProviderStore !== AuthProvider.SOL;
 
     onMount(() => {
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
             if ($anonUser && $identityState.kind === "logging_in") {
-                identityState.set({ kind: "anon" });
+                client.updateIdentityState({ kind: "anon" });
             }
 
             emailSignInPoller?.stop();
@@ -52,14 +62,14 @@
         if ($identityState.kind === "anon" && state === "logging-in") {
             dispatch("close");
         }
-        if ($identityState.kind === "logged_in") {
+        if ($identityState.kind === "logged_in" || $identityState.kind === "challenging") {
             dispatch("close");
         }
     }
 
     function cancel() {
         if ($anonUser && $identityState.kind === "logging_in") {
-            identityState.set({ kind: "anon" });
+            client.updateIdentityState({ kind: "anon" });
         }
         dispatch("close");
     }
@@ -76,11 +86,24 @@
         if (supportsII) {
             options.push(AuthProvider.II);
             options.push(AuthProvider.ETH);
-            // options.push(AuthProvider.SOL);
+            options.push(AuthProvider.SOL);
 
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
             }
+        }
+
+        const restrictTo = new Set($querystring.getAll("auth"));
+        if (restrictTo.size > 0) {
+            options = options.filter((o) => {
+                return (
+                    (o === AuthProvider.II && restrictTo.has("II")) ||
+                    (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
+                    (o === AuthProvider.ETH && restrictTo.has("ETH")) ||
+                    (o === AuthProvider.SOL && restrictTo.has("SOL")) ||
+                    (o === AuthProvider.NFID && restrictTo.has("NFID"))
+                );
+            });
         }
 
         if (selected !== undefined) {
@@ -95,7 +118,6 @@
                 options.splice(0, 0, selected);
             }
         }
-
         return options;
     }
 
@@ -131,10 +153,13 @@
     }
 
     function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
+        verificationCode = undefined;
+
         client
             .generateMagicLink(email, sessionKey)
             .then((response) => {
                 if (response.kind === "success") {
+                    verificationCode = response.code;
                     client.gaTrack("generated_magic_signin_link", "registration");
                     startPoller(email, sessionKey, response.userKey, response.expiration);
                 } else if (response.kind === "email_invalid") {
@@ -203,12 +228,25 @@
         }
         mode = mode === "signin" ? "signup" : "signin";
     }
+
+    function copyCode() {
+        if (verificationCode === undefined) return;
+
+        navigator.clipboard.writeText(verificationCode).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
+            },
+        );
+    }
 </script>
 
 <ModalContent hideFooter={!loggingInWithEmail} on:close={cancel} closeIcon>
     <div class="header login" slot="header">
         <div class="logo-img">
-            <FancyLoader loop={state === "logging-in" && error === undefined} />
+            <FancyLoader loop={spinning} />
         </div>
         <div class="title">
             <div>
@@ -227,7 +265,10 @@
             <div class="options">
                 {#each options as provider, i}
                     {#if showAllOptions || i === 0}
-                        <div class={`option ${showAllOptions && i === 0 ? "separate" : ""}`}>
+                        <div
+                            class={`option ${
+                                showAllOptions && options.length > 1 && i === 0 ? "separate" : ""
+                            }`}>
                             {#if provider === AuthProvider.EMAIL}
                                 <div class="email">
                                     <div class="email-icon icon">
@@ -291,7 +332,7 @@
                     {/if}
                 {/each}
 
-                {#if !showAllOptions}
+                {#if !showAllOptions && options.length > 1}
                     <div class="more">
                         <a role="button" tabindex="0" on:click={() => (showMore = true)}>
                             <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
@@ -322,6 +363,17 @@
                             ? "loginDialog.generatingLink"
                             : "loginDialog.checkEmail",
                     )} />
+
+                {#if emailSignInPoller !== undefined && verificationCode !== undefined}
+                    <div class="code-wrapper">
+                        <div class="code">
+                            {verificationCode}
+                        </div>
+                        <div class="copy" on:click={copyCode}>
+                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
+                {/if}
             </p>
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
@@ -333,10 +385,10 @@
                 <SigninWithEth />
             {/await}
         {:else if loggingInWithSol}
-            {#await import("./SigninWithEth.svelte")}
+            {#await import("./SigninWithSol.svelte")}
                 <div class="loading">...</div>
-            {:then { default: SigninWithEth }}
-                <SigninWithEth />
+            {:then { default: SigninWithSol }}
+                <SigninWithSol />
             {/await}
         {/if}
     </div>
@@ -507,5 +559,25 @@
         .change-mode {
             margin-top: $sp4;
         }
+    }
+
+    .code-wrapper {
+        margin-top: $sp4;
+        display: flex;
+        gap: $sp3;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .code {
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        @include font-size(fs-160);
+    }
+
+    .copy {
+        cursor: pointer;
+        position: relative;
+        top: 2px;
     }
 </style>

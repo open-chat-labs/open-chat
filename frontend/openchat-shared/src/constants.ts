@@ -16,3 +16,4 @@ export const ONE_MINUTE_MILLIS = 60 * 1000;
 export const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 export const ONE_DAY = 24 * ONE_HOUR;
 export const ONE_YEAR = 365 * ONE_DAY;
+export const LARGE_GROUP_THRESHOLD = 1000;

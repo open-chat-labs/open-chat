@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `c2c_notify_chit` to sync chit balance and streak from user canister ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
+
+### Changed
+
+- In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+
+## [[2.0.1200](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1200-user_index)] - 2024-06-07
+
+### Changed
+
+- Get volatile data for users created since timestamp ([#5921](https://github.com/open-chat-labs/open-chat/pull/5921))
+
+## [[2.0.1199](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1199-user_index)] - 2024-06-07
+
+### Changed
+
+- Increase user limit from 150,000 to 200,000 ([#5916](https://github.com/open-chat-labs/open-chat/pull/5916))
+
+## [[2.0.1196](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1196-user_index)] - 2024-06-06
+
+### Changed
+
+- Clear the `empty_users` list ([#5912](https://github.com/open-chat-labs/open-chat/pull/5912))
+- Changed `users` args to match `users_v2` args ([#5913](https://github.com/open-chat-labs/open-chat/pull/5913))
+
+## [[2.0.1192](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1192-user_index)] - 2024-06-04
+
+### Added
+
+New `users` endpoint to handle volatile user data ([#5900](https://github.com/open-chat-labs/open-chat/pull/5900))
+
+### Changed
+
+- Add 14 day CHIT streak ([#5902](https://github.com/open-chat-labs/open-chat/pull/5902))
+- Push `user_claimed_daily_chit` event ([#5906](https://github.com/open-chat-labs/open-chat/pull/5906))
+
+## [[2.0.1186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1186-user_index)] - 2024-06-04
+
+### Changed
+
+- Job to update users whose streak ended yesterday ([#5896](https://github.com/open-chat-labs/open-chat/pull/5896))
+
 ## [[2.0.1182](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1182-user_index)] - 2024-05-23
 
 ### Added

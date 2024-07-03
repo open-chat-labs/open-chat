@@ -196,7 +196,8 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string };
+  { 'Achievement' : string } |
+  { 'MemeContestWinner' : null };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -336,7 +337,8 @@ export type CommunityRole = { 'Member' : null } |
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
-  { 'ICRC1' : Icrc1CompletedCryptoTransaction };
+  { 'ICRC1' : Icrc1CompletedCryptoTransaction } |
+  { 'ICRC2' : Icrc2CompletedCryptoTransaction };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -351,6 +353,23 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'KINIC' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
+export interface CurrentUserSummary {
+  'streak' : number,
+  'username' : string,
+  'is_platform_operator' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatusFull,
+  'next_daily_claim' : TimestampMillis,
+  'user_id' : UserId,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'moderation_flags_enabled' : number,
+  'chit_balance' : number,
+  'is_suspected_bot' : boolean,
+  'suspension_details' : [] | [SuspensionDetails],
+  'is_platform_moderator' : boolean,
+  'diamond_membership_details' : [] | [DiamondMembershipDetails],
+}
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -486,7 +505,8 @@ export interface EventsTimeToLiveUpdated {
   'updated_by' : UserId,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'ICRC1' : Icrc1FailedCryptoTransaction };
+  { 'ICRC1' : Icrc1FailedCryptoTransaction } |
+  { 'ICRC2' : Icrc2FailedCryptoTransaction };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -872,6 +892,40 @@ export interface Icrc1PendingCryptoTransaction {
   'ledger' : CanisterId,
   'amount' : bigint,
 }
+export interface Icrc2CompletedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'block_index' : BlockIndex,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2FailedCryptoTransaction {
+  'to' : Icrc1AccountOrMint,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1AccountOrMint,
+  'memo' : [] | [Memo],
+  'error_message' : string,
+  'ledger' : CanisterId,
+  'amount' : bigint,
+  'spender' : UserId,
+}
+export interface Icrc2PendingCryptoTransaction {
+  'to' : Icrc1Account,
+  'fee' : bigint,
+  'created' : TimestampNanos,
+  'token' : Cryptocurrency,
+  'from' : Icrc1Account,
+  'memo' : [] | [Memo],
+  'ledger' : CanisterId,
+  'amount' : bigint,
+}
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -1193,7 +1247,8 @@ export interface PaymentGate {
   'amount' : bigint,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'ICRC1' : Icrc1PendingCryptoTransaction };
+  { 'ICRC1' : Icrc1PendingCryptoTransaction } |
+  { 'ICRC2' : Icrc2PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
   { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1241,7 +1296,6 @@ export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
-  'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
 }
@@ -1378,6 +1432,13 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
+  { 'Delete' : TimestampMillis };
+export interface SuspensionDetails {
+  'action' : SuspensionAction,
+  'suspended_by' : UserId,
+  'reason' : string,
+}
 export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
   { 'Accepted' : SwapStatusErrorAccepted } |
   { 'Cancelled' : SwapStatusErrorCancelled } |
@@ -1470,6 +1531,23 @@ export interface UserSummary {
   'chit_balance' : number,
   'suspended' : boolean,
 }
+export interface UserSummaryStable {
+  'username' : string,
+  'diamond_membership_status' : DiamondMembershipStatus,
+  'is_bot' : boolean,
+  'display_name' : [] | [string],
+  'avatar_id' : [] | [bigint],
+  'suspended' : boolean,
+}
+export interface UserSummaryV2 {
+  'stable' : [] | [UserSummaryStable],
+  'user_id' : UserId,
+  'volatile' : [] | [UserSummaryVolatile],
+}
+export interface UserSummaryVolatile {
+  'streak' : number,
+  'chit_balance' : number,
+}
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
@@ -1492,6 +1570,7 @@ export interface VerifiedCredentialGate {
   >,
   'issuer_origin' : string,
   'issuer_canister_id' : CanisterId,
+  'credential_name' : string,
   'credential_type' : string,
 }
 export interface VerifiedCredentialGateArgs {

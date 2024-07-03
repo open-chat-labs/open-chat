@@ -11,7 +11,9 @@ use chat_events::{
 };
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence};
+use types::{
+    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence,
+};
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
@@ -43,9 +45,14 @@ fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, stat
 }
 
 fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut RuntimeState) {
+    let now = state.env.now();
+
     match event {
         UserCanisterEvent::SendMessages(args) => {
             send_messages(*args, caller_user_id, state);
+            state
+                .data
+                .award_achievement_and_notify(Achievement::ReceivedDirectMessage, now);
         }
         UserCanisterEvent::EditMessage(args) => {
             edit_message(*args, caller_user_id, state);
@@ -64,13 +71,12 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::MarkMessagesRead(args) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                let now = state.env.now();
                 chat.mark_read_up_to(args.read_up_to, false, now);
             }
         }
         UserCanisterEvent::P2PSwapStatusChange(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.events.set_p2p_swap_status(None, c.message_id, c.status, state.env.now());
+                chat.events.set_p2p_swap_status(None, c.message_id, c.status, now);
             }
         }
         UserCanisterEvent::JoinVideoCall(c) => {
@@ -80,7 +86,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                     c.message_id,
                     VideoCallPresence::Default,
                     EventIndex::default(),
-                    state.env.now(),
+                    now,
                 );
             }
         }
@@ -103,7 +109,9 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
         if let Some(chat) = state.data.direct_chats.get(&sender.into()) {
-            if chat.events.contains_message_id(None, message.message_id) {
+            let thread_root_message_index = message.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
+            if chat.events.contains_message_id(thread_root_message_index, message.message_id) {
                 continue;
             }
         }

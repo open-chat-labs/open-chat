@@ -61,6 +61,7 @@ fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
                 headers: vec![
                     HeaderField("Content-Type".to_string(), file.mime_type.clone()),
                     HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
+                    HeaderField("X-Cacheable-Resource".to_string(), "true".to_string()),
                     HeaderField("Access-Control-Allow-Origin".to_string(), "*".to_string()),
                     HeaderField(
                         "Content-Security-Policy".to_string(),

@@ -1,33 +1,54 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
+    import { onMount, getContext, createEventDispatcher } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
+    import page from "page";
+    import Pincode from "./pincode/Pincode.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
+    let qs = window.location.search;
     let status: string | undefined = undefined;
-    let message = "";
+    let message = "magicLink.closeMessage";
+    let busy = false;
 
     onMount(() => {
-        const qs = window.location.search;
-
         pageReplace("/home");
+    });
+
+    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
+        qs += "&u=" + ev.detail.value;
+
+        busy = true;
 
         client
             .handleMagicLink(qs)
             .then((resp) => {
-                status = "magicLink." + resp.kind;
-                message =
-                    "magicLink." + (resp.kind === "success" ? "continueMessage" : "closeMessage");
+                if (resp.kind === "success") {
+                    page("/communities");
+                    close();
+                } else if (resp.kind === "session_not_found") {
+                    message = "magicLink.continueMessage";
+                    status = "magicLink.success";
+                } else {
+                    status = "magicLink." + resp.kind;
+                }
             })
             .catch((_) => {
                 status = "magicLink.link_invalid";
-            });
-    });
+            })
+            .finally(() => (busy = false));
+    }
+
+    function close() {
+        dispatch("close");
+    }
 </script>
 
 <div class="magic-link">
@@ -37,10 +58,14 @@
         </div>
         <div class="body" slot="body">
             <div>
-                {#if status === undefined}
+                {#if busy}
                     <div class="loading">
                         <FancyLoader />
                     </div>
+                {:else if status === undefined}
+                    <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
+
+                    <Pincode type="numeric" length={3} on:complete={onCodeEntered} />
                 {:else}
                     <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
                     <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
@@ -83,6 +108,9 @@
 
     .status {
         font-weight: bold;
+    }
+
+    p {
         margin-bottom: $sp4;
     }
 </style>

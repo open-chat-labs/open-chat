@@ -11,6 +11,7 @@ generate_c2c_call!(user);
 // Updates
 generate_c2c_call!(c2c_mark_user_canister_empty);
 generate_c2c_call!(c2c_report_message);
+generate_c2c_call!(c2c_notify_chit);
 generate_c2c_call!(c2c_notify_events);
 generate_candid_c2c_call_with_payment!(c2c_register_bot);
 generate_c2c_call!(c2c_send_openchat_bot_messages);

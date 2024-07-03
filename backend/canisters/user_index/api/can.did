@@ -81,17 +81,6 @@ type SetModerationFlagsResponse = variant {
     Success;
 };
 
-type SuspensionDetails = record {
-    reason : text;
-    action : SuspensionAction;
-    suspended_by : UserId;
-};
-
-type SuspensionAction = variant {
-    Unsuspend : TimestampMillis;
-    Delete : TimestampMillis;
-};
-
 type UserArgs = record {
     user_id : opt UserId;
     username : opt text;
@@ -100,6 +89,22 @@ type UserArgs = record {
 type UserResponse = variant {
     Success : UserSummary;
     UserNotFound;
+};
+
+type UsersArgs = record {
+    user_groups : vec record {
+        users : vec UserId;
+        updated_since : TimestampMillis;
+    };
+    users_suspended_since : opt TimestampMillis;
+};
+
+type UsersResponse = variant {
+    Success : record {
+        users : vec UserSummaryV2;
+        current_user : opt CurrentUserSummary;
+        timestamp : TimestampMillis;
+    };
 };
 
 type UsersV2Args = record {
@@ -406,6 +411,7 @@ service : {
     user : (UserArgs) -> (UserResponse) query;
 
     // Gets some users by id
+    users : (UsersArgs) -> (UsersResponse) query;
     users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query

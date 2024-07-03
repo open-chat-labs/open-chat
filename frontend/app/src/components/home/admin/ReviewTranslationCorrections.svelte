@@ -16,10 +16,10 @@
         RejectReason,
         TranslationCorrection,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
     import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
@@ -35,11 +35,14 @@
     $: formattedBalance = client.formatTokens(chatBalance, 8);
 
     onMount(async () => {
+        reviewingTranslations.set(true);
         await client.getProposedTranslationCorrections().then(async (res) => {
             corrections = await loadRequiredLocales(flattenCorrections(res));
         });
         refreshBalance();
     });
+
+    onDestroy(() => reviewingTranslations.set(false));
 
     // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
     // and trigger the loading of the current translations for each of those locales.
@@ -51,9 +54,9 @@
             all.add(c.locale);
             return all;
         }, new Set<string>());
-        await [...locales].reduce((p, l) => {
-            return p.then(() => locale.set(l));
-        }, Promise.resolve());
+        for (const l of locales) {
+            await locale.set(l);
+        }
         await locale.set(currentLocale);
         return corrections;
     }

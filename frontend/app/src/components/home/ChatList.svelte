@@ -16,11 +16,11 @@
         chatIdentifiersEqual,
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
+        type CombinedUnreadCounts,
     } from "openchat-client";
     import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
-    import NotificationsBar from "./NotificationsBar.svelte";
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
@@ -103,10 +103,22 @@
         }
     }
 
+    $: canMarkAllRead = anythingUnread(unreadCounts);
+
     $: {
         if (view === "threads" && searchTerm !== "") {
             view = "chats";
         }
+    }
+
+    function anythingUnread(unread: CombinedUnreadCounts): boolean {
+        return (
+            unread.chats.muted +
+                unread.chats.unmuted +
+                unread.threads.muted +
+                unread.threads.unmuted >
+            0
+        );
     }
 
     function cancelPreview() {
@@ -199,19 +211,25 @@
         const scrollTop = view === "chats" ? chatsScrollTop : 0;
         tick().then(() => (chatListElement.scrollTop = scrollTop));
     }
+
+    function markAllRead() {
+        client.markAllReadForCurrentScope();
+    }
 </script>
 
 <!-- svelte-ignore missing-declaration -->
 {#if user}
     {#if $chatListScope.kind === "favourite"}
-        <FavouriteChatsHeader />
+        <FavouriteChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:newGroup />
+        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} on:newGroup />
     {:else if $chatListScope.kind === "direct_chat"}
-        <DirectChatsHeader />
+        <DirectChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $selectedCommunity && $chatListScope.kind === "community"}
         <SelectedCommunityHeader
             community={$selectedCommunity}
+            {canMarkAllRead}
+            on:markAllRead={markAllRead}
             on:leaveCommunity
             on:deleteCommunity
             on:editCommunity
@@ -279,7 +297,9 @@
                                                     {searchTerm}
                                                     username={user.displayName ?? user.username} />
 
-                                                <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
+                                                <Badges
+                                                    diamondStatus={user.diamondStatus}
+                                                    streak={user.streak} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername
@@ -337,7 +357,6 @@
         {/if}
     </div>
     <ActiveCallSummary on:askToSpeak on:hangup />
-    <NotificationsBar />
     {#if showPreview}
         <PreviewWrapper let:joiningCommunity let:joinCommunity>
             <div class="join">

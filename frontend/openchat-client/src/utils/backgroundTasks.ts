@@ -5,6 +5,6 @@ export function runOnceIdle(action: () => Promise<void>): Promise<void> {
             ? window.requestIdleCallback(callback)
             : // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               //@ts-ignore
-              window.setTimeout(callback, 100);
+              window.setTimeout(callback, 1000);
     });
 }

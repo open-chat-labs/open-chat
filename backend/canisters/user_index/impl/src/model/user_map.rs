@@ -1,15 +1,15 @@
+use super::user::{ClaimDailyChitResult, SuspensionDetails};
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
-use crate::model::user::{SuspensionDetails, SuspensionDuration, User};
+use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
+use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-
-use super::user::ClaimDailyChitResult;
+use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -196,6 +196,42 @@ impl UserMap {
             .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
     }
 
+    pub fn update_streaks(&mut self, now: TimestampMillis) {
+        if let Some(today) = Streak::timestamp_to_day(now) {
+            for user in self.users.values_mut() {
+                if user.streak.expired_yesterday(today) {
+                    user.date_updated_volatile = now;
+                }
+            }
+        }
+    }
+
+    pub fn set_chit(
+        &mut self,
+        user_id: &UserId,
+        chit_event_timestamp: TimestampMillis,
+        chit_balance: i32,
+        streak: u16,
+        streak_ends: TimestampMillis,
+        now: TimestampMillis,
+    ) -> bool {
+        let Some(user) = self.users.get_mut(user_id) else {
+            return false;
+        };
+
+        if chit_event_timestamp <= user.lastest_chit_event {
+            return false;
+        }
+
+        user.lastest_chit_event = chit_event_timestamp;
+        user.chit_balance_v2 = chit_balance;
+        user.streak_v2 = streak;
+        user.streak_ends = streak_ends;
+        user.chit_updated = now;
+
+        true
+    }
+
     #[allow(dead_code)]
     pub fn give_chit_reward(&mut self, user_id: &UserId, amount: i32, now: TimestampMillis) {
         if let Some(user) = self.users.get_mut(user_id) {
@@ -360,9 +396,6 @@ pub enum UpdateUserResult {
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
     suspected_bots: BTreeSet<UserId>,
-    #[serde(default)]
-    user_id_to_principal_backup: HashMap<UserId, Principal>,
-    #[serde(default)]
     deleted_users: HashMap<UserId, TimestampMillis>,
 }
 
@@ -371,12 +404,9 @@ impl From<UserMapTrimmed> for UserMap {
         let mut user_map = UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
-            user_id_to_principal_backup: value.user_id_to_principal_backup,
             deleted_users: value.deleted_users,
             ..Default::default()
         };
-
-        let populate_backup = user_map.user_id_to_principal_backup.is_empty();
 
         for (user_id, user) in user_map.users.iter() {
             if let Some(referred_by) = user.referred_by {
@@ -389,10 +419,6 @@ impl From<UserMapTrimmed> for UserMap {
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
-            }
-
-            if populate_backup {
-                user_map.user_id_to_principal_backup.insert(*user_id, user.principal);
             }
         }
 

@@ -1,4 +1,6 @@
+use crate::updates::c2c_notify_low_balance::top_up_user;
 use crate::{mutate_state, RuntimeState};
+use ic_cdk::api::call::RejectionCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -63,6 +65,10 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
 async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
     let args = user_canister::c2c_notify_events::Args { events: events.clone() };
     if let Err((code, msg)) = user_canister_c2c_client::c2c_notify_events(canister_id, &args).await {
+        if code == RejectionCode::SysTransient && msg.starts_with("IC0207:") {
+            // Canister is out of cycles
+            top_up_user(Some(canister_id.into())).await;
+        }
         if should_retry_failed_c2c_call(code, &msg) {
             mutate_state(|state| {
                 state.data.user_event_sync_queue.requeue_failed_events(canister_id, events);

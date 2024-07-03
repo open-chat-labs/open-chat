@@ -70,6 +70,7 @@ impl Tokens {
                 token.transaction_url_format = transaction_url_format;
             }
             if let Some(logo) = args.logo {
+                token.logo_id = logo_id(&logo);
                 token.logo = logo;
             }
             token.last_updated = now;

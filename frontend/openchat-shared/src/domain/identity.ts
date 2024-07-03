@@ -1,10 +1,15 @@
 import { Delegation } from "@dfinity/identity";
-import type { Signature } from "@dfinity/agent";
+import type { Identity, Signature } from "@dfinity/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 
 export type HasIdentity = {
     id: string;
 };
+
+export type GetOpenChatIdentityResponse =
+    | { kind: "success"; identity: Identity }
+    | { kind: "auth_identity_not_found" }
+    | { kind: "oc_identity_not_found" };
 
 export type CreateIdentityResponse =
     | PrepareDelegationSuccess
@@ -61,3 +66,18 @@ export type CreateOpenChatIdentityError =
     | "challenge_failed"
     | "challenge_required"
     | "public_key_invalid";
+
+export type GenerateChallengeResponse =
+    | { kind: "throttled" }
+    | { kind: "already_registered" }
+    | { kind: "failed" }
+    | ChallengeSuccess;
+
+export type ChallengeSuccess = { kind: "success" } & Challenge;
+
+export type Challenge = {
+    key: number;
+    pngBase64: string;
+};
+
+export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityError;

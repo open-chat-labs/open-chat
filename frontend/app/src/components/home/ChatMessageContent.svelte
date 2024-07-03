@@ -50,24 +50,24 @@
 
 {#if content.kind === "text_content"}
     <TextContent
-        {blockLevelMarkdown}
         {me}
         {fill}
         {truncate}
         {pinned}
         {content}
         {edited}
+        {blockLevelMarkdown}
         on:removePreview />
 {:else if content.kind === "image_content"}
-    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
-    <VideoContent {edited} {fill} {content} {reply} {height} />
+    <VideoContent {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent on:startVideoCall {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
-    <AudioContent {edited} {content} />
+    <AudioContent {edited} {content} {blockLevelMarkdown} />
 {:else if content.kind === "file_content"}
-    <FileContent {edited} {me} {content} {reply} />
+    <FileContent {edited} {me} {content} {blockLevelMarkdown} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} {undeleting} />
 {:else if content.kind === "blocked_content"}
@@ -99,7 +99,7 @@
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
+    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}

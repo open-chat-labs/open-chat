@@ -56,7 +56,7 @@ SIGN_IN_WITH_ETHEREUM_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_w
 SIGN_IN_WITH_SOLANA_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_solana)
 
 cargo run \
-  --manifest-path backend/canister_installer/Cargo.toml -- \
+  --manifest-path backend/tools/canister_installer/Cargo.toml -- \
   --url $IC_URL \
   --test-mode $TEST_MODE \
   --controller $IDENTITY \

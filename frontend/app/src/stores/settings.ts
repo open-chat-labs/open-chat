@@ -1,9 +1,13 @@
-import { isTouchDevice } from "../utils/devices";
+import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "openchat-client";
 
 export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
 
+export const showHomeScreenPrompt = createLsBoolStore(
+    configKeys.showHomeScreenPrompt,
+    mobileOperatingSystem === "iOS",
+);
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);
@@ -31,7 +35,6 @@ export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroups
 export const browseChannels = createLsBoolStore(configKeys.browseChannels, true);
 export const useBlockLevelMarkdown = createLsBoolStore(configKeys.useBlockLevelMarkdown, false);
 export const pinEnabledStore = createLsBoolStore(configKeys.pinEnabled, false);
-export const chitEnabledStore = createLsBoolStore(configKeys.chitEnabled, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

@@ -9,6 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c71b1793ee61086797f5c80b6efa2b8ffa6d5dd703f118545808a7f2e27f7046"
 
 [[package]]
+name = "account_id"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "clap 4.5.4",
+ "ic-ledger-types",
+]
+
+[[package]]
 name = "activity_notification_state"
 version = "0.1.0"
 dependencies = [
@@ -1085,6 +1094,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sign_in_with_email_canister",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -3999,20 +4009,21 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "magic_links"
-version = "0.9.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.9.0#9e9f020d14b7878da66712e3bac96333254e0a9a"
+version = "0.11.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
 dependencies = [
  "aes-gcm",
  "clap 4.5.4",
  "hex",
  "ic_principal",
  "rand 0.8.5",
+ "rmp-serde",
  "rsa 0.9.6",
  "serde",
  "serde_json",
  "serde_with",
  "sign_in_with_email_canister",
- "utils 0.9.0",
+ "utils 0.11.0",
 ]
 
 [[package]]
@@ -6083,8 +6094,8 @@ dependencies = [
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.9.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.9.0#9e9f020d14b7878da66712e3bac96333254e0a9a"
+version = "0.11.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -6727,14 +6738,14 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.9.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.9.0#9e9f020d14b7878da66712e3bac96333254e0a9a"
+version = "0.11.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
 dependencies = [
  "magic_links",
  "rand 0.8.5",
  "rsa 0.9.6",
  "sign_in_with_email_canister",
- "utils 0.9.0",
+ "utils 0.11.0",
 ]
 
 [[package]]
@@ -7455,8 +7466,8 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "0.9.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.9.0#9e9f020d14b7878da66712e3bac96333254e0a9a"
+version = "0.11.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
 dependencies = [
  "email_address",
  "rsa 0.9.6",

@@ -28,6 +28,7 @@ fn main() {
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);
     generate_candid_method!(user, cancel_p2p_swap, update);
+    generate_candid_method!(user, claim_daily_chit, update);
     generate_candid_method!(user, create_community, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_community, update);
@@ -41,6 +42,7 @@ fn main() {
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, manage_favourite_chats, update);
+    generate_candid_method!(user, mark_achievements_seen, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat_v2, update);

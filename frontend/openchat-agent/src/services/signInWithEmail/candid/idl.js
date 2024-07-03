@@ -7,6 +7,7 @@ export const idlFactory = ({ IDL }) => {
   const GenerateMagicLinkSuccess = IDL.Record({
     'created' : IDL.Nat64,
     'user_key' : IDL.Vec(IDL.Nat8),
+    'code' : IDL.Text,
     'expiration' : IDL.Nat64,
   });
   const GenerateMagicLinkResponse = IDL.Variant({

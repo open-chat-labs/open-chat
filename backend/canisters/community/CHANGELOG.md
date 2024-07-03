@@ -5,15 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1194](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1194-community)] - 2024-06-06
+
 ### Added
 
 - Implement validation of verified credential gates ([#5825](https://github.com/open-chat-labs/open-chat/pull/5825))
+- Support sending transactions using ICRC2 ([#5854](https://github.com/open-chat-labs/open-chat/pull/5854))
 
 ### Changed
 
 - Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
 - Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
 - Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
 
 ### Removed
 

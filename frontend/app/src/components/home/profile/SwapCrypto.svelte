@@ -46,8 +46,6 @@
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
     $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
-    $: minAmountOut =
-        bestQuote !== undefined ? (bestQuote[1] * BigInt(98)) / BigInt(100) : BigInt(0);
 
     $: {
         valid =
@@ -138,7 +136,7 @@
     }
 
     function swap() {
-        if (!valid) return;
+        if (!valid || bestQuote === undefined) return;
 
         busy = true;
         error = undefined;
@@ -146,8 +144,10 @@
 
         swapId = random128();
 
+        let minAmountOut = (bestQuote[1] * BigInt(98)) / BigInt(100);
+
         client
-            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0])
+            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote[0])
             .catch(() => (swapId = undefined))
             .finally(() => (busy = false));
     }
@@ -156,6 +156,9 @@
         switch (dex) {
             case "icpswap":
                 return "ICPSwap";
+
+            case "sonic":
+                return "Sonic";
         }
     }
 

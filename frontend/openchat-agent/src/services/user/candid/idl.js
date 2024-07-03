@@ -147,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'SwapNotFound' : IDL.Null,
   });
   const ChitEventsArgs = IDL.Record({
+    'to' : IDL.Opt(TimestampMillis),
     'max' : IDL.Nat32,
     'from' : IDL.Opt(TimestampMillis),
     'ascending' : IDL.Bool,
@@ -154,6 +155,7 @@ export const idlFactory = ({ IDL }) => {
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : IDL.Text,
+    'MemeContestWinner' : IDL.Null,
   });
   const ChitEarned = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -198,6 +200,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     'issuer_origin' : IDL.Text,
     'issuer_canister_id' : CanisterId,
+    'credential_name' : IDL.Text,
     'credential_type' : IDL.Text,
   });
   const SnsNeuronGate = IDL.Record({
@@ -618,9 +621,22 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2CompletedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+    'spender' : UserId,
+  });
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
+    'ICRC2' : Icrc2CompletedCryptoTransaction,
   });
   const PrizeWinnerContent = IDL.Record({
     'transaction' : CompletedCryptoTransaction,
@@ -655,9 +671,22 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2FailedCryptoTransaction = IDL.Record({
+    'to' : Icrc1AccountOrMint,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1AccountOrMint,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+    'spender' : UserId,
+  });
   const FailedCryptoTransaction = IDL.Variant({
     'NNS' : NnsFailedCryptoTransaction,
     'ICRC1' : Icrc1FailedCryptoTransaction,
+    'ICRC2' : Icrc2FailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -681,9 +710,20 @@ export const idlFactory = ({ IDL }) => {
     'ledger' : CanisterId,
     'amount' : IDL.Nat,
   });
+  const Icrc2PendingCryptoTransaction = IDL.Record({
+    'to' : Icrc1Account,
+    'fee' : IDL.Nat,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'from' : Icrc1Account,
+    'memo' : IDL.Opt(Memo),
+    'ledger' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const PendingCryptoTransaction = IDL.Variant({
     'NNS' : NnsPendingCryptoTransaction,
     'ICRC1' : Icrc1PendingCryptoTransaction,
+    'ICRC2' : Icrc2PendingCryptoTransaction,
   });
   const CryptoTransaction = IDL.Variant({
     'Failed' : FailedCryptoTransaction,
@@ -757,7 +797,6 @@ export const idlFactory = ({ IDL }) => {
     'prizes_v2' : IDL.Vec(IDL.Nat),
     'end_date' : TimestampMillis,
     'caption' : IDL.Opt(IDL.Text),
-    'prizes' : IDL.Vec(Tokens),
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
@@ -1643,6 +1682,10 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const ExchangeArgs = IDL.Record({
+    'zero_for_one' : IDL.Bool,
+    'swap_canister_id' : CanisterId,
+  });
   const SwapTokensArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
     'input_amount' : IDL.Nat,
@@ -1650,10 +1693,8 @@ export const idlFactory = ({ IDL }) => {
     'swap_id' : IDL.Nat,
     'input_token' : TokenInfo,
     'exchange_args' : IDL.Variant({
-      'ICPSwap' : IDL.Record({
-        'zero_for_one' : IDL.Bool,
-        'swap_canister_id' : CanisterId,
-      }),
+      'Sonic' : ExchangeArgs,
+      'ICPSwap' : ExchangeArgs,
     }),
     'output_token' : TokenInfo,
   });

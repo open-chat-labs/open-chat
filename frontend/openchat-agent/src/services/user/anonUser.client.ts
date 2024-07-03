@@ -1,7 +1,9 @@
 import type {
     CancelP2PSwapResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
     JoinVideoCallResponse,
-	SetPinNumberResponse,
+    SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     VideoCallPresence,
 } from "openchat-shared";
@@ -64,9 +66,14 @@ import type {
     TokenSwapStatusResponse,
     ApproveTransferResponse,
 } from "openchat-shared";
+import { ANON_USER_ID } from "openchat-shared";
 import { AnonymousOperationError } from "openchat-shared";
 
 export class AnonUserClient {
+    public get userId(): string {
+        return ANON_USER_ID;
+    }
+
     static create(): AnonUserClient {
         console.debug("ANON: creating anonymous user client");
         return new AnonUserClient();
@@ -103,6 +110,7 @@ export class AnonUserClient {
             timestamp: BigInt(Date.now()),
             suspended: false,
             pinNumberSettings: undefined,
+            localUserIndex: "",
         });
     }
 
@@ -437,7 +445,14 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    setPinNumber(_currentPin: string | undefined, _newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        _currentPin: string | undefined,
+        _newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    chitEvents(_req: ChitEventsRequest): Promise<ChitEventsResponse> {
         throw new AnonymousOperationError();
     }
 }

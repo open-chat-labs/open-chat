@@ -332,6 +332,56 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CanisterId,
     'NewRegistrationsClosed' : IDL.Null,
   });
+  const UsersArgs = IDL.Record({
+    'user_groups' : IDL.Vec(
+      IDL.Record({
+        'users' : IDL.Vec(UserId),
+        'updated_since' : TimestampMillis,
+      })
+    ),
+    'users_suspended_since' : IDL.Opt(TimestampMillis),
+  });
+  const UserSummaryStable = IDL.Record({
+    'username' : IDL.Text,
+    'diamond_membership_status' : DiamondMembershipStatus,
+    'is_bot' : IDL.Bool,
+    'display_name' : IDL.Opt(IDL.Text),
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'suspended' : IDL.Bool,
+  });
+  const UserSummaryVolatile = IDL.Record({
+    'streak' : IDL.Nat16,
+    'chit_balance' : IDL.Int32,
+  });
+  const UserSummaryV2 = IDL.Record({
+    'stable' : IDL.Opt(UserSummaryStable),
+    'user_id' : UserId,
+    'volatile' : IDL.Opt(UserSummaryVolatile),
+  });
+  const CurrentUserSummary = IDL.Record({
+    'streak' : IDL.Nat16,
+    'username' : IDL.Text,
+    'is_platform_operator' : IDL.Bool,
+    'diamond_membership_status' : DiamondMembershipStatusFull,
+    'next_daily_claim' : TimestampMillis,
+    'user_id' : UserId,
+    'is_bot' : IDL.Bool,
+    'display_name' : IDL.Opt(IDL.Text),
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'moderation_flags_enabled' : IDL.Nat32,
+    'chit_balance' : IDL.Int32,
+    'is_suspected_bot' : IDL.Bool,
+    'suspension_details' : IDL.Opt(SuspensionDetails),
+    'is_platform_moderator' : IDL.Bool,
+    'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
+  });
+  const UsersResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'users' : IDL.Vec(UserSummaryV2),
+      'current_user' : IDL.Opt(CurrentUserSummary),
+    }),
+  });
   const UsersV2Args = IDL.Record({
     'user_groups' : IDL.Vec(
       IDL.Record({
@@ -480,6 +530,7 @@ export const idlFactory = ({ IDL }) => {
         [UserRegistrationCanisterResponse],
         ['query'],
       ),
+    'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
     'users_v2' : IDL.Func([UsersV2Args], [UsersV2Response], ['query']),
   });
 };

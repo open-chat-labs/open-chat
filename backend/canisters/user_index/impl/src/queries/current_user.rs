@@ -1,4 +1,4 @@
-use crate::{model::user::SuspensionDuration, read_state, RuntimeState, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
+use crate::{read_state, RuntimeState};
 use ic_cdk::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
@@ -16,16 +16,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
     if let Some(u) = state.data.users.get_by_principal(&caller) {
         let now = state.env.now();
 
-        let suspension_details = u.suspension_details.as_ref().map(|d| SuspensionDetails {
-            reason: d.reason.to_owned(),
-            action: match d.duration {
-                SuspensionDuration::Duration(ms) => SuspensionAction::Unsuspend(d.timestamp + ms),
-                SuspensionDuration::Indefinitely => {
-                    SuspensionAction::Delete(d.timestamp + TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS)
-                }
-            },
-            suspended_by: d.suspended_by,
-        });
+        let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
         Success(SuccessResult {
             user_id: u.user_id,

@@ -37,6 +37,7 @@
     let searching = false;
     let showFab = false;
     let scrollableElement: HTMLElement | null;
+    let initialised = false;
 
     $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
@@ -44,6 +45,17 @@
     $: isDiamond = client.isDiamond;
     $: loading = searching && $communitySearchStore.results.length === 0;
     $: offlineStore = client.offlineStore;
+    $: identityState = client.identityState;
+
+    $: {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "create_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => createCommunity());
+        }
+    }
 
     let filters = derived(
         [communityFiltersStore, client.moderationFlags],
@@ -68,7 +80,10 @@
 
     function createCommunity() {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "create_community" },
+            });
             return;
         }
         if (!$isDiamond) {
@@ -120,9 +135,10 @@
             onScroll();
         });
         return filters.subscribe((_) => {
-            if ($communitySearchStore.results.length === 0) {
+            if (initialised || $communitySearchStore.results.length === 0) {
                 search(true);
             }
+            initialised = true;
         });
     });
 

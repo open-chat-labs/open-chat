@@ -73,6 +73,8 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -110,6 +112,8 @@ import {
     swapTokensResponse,
     tokenSwapStatusResponse,
     approveTransferResponse,
+    apiExchangeArgs,
+    chitEventsResponse,
 } from "./mappers";
 import {
     type Database,
@@ -1279,12 +1283,7 @@ export class UserClient extends CandidService {
                     fee: outputToken.transferFee,
                 },
                 input_amount: amountIn,
-                exchange_args: {
-                    ICPSwap: {
-                        swap_canister_id: Principal.fromText(exchangeArgs.swapCanisterId),
-                        zero_for_one: exchangeArgs.zeroForOne,
-                    },
-                },
+                exchange_args: apiExchangeArgs(exchangeArgs),
                 min_output_amount: minAmountOut,
                 pin: apiOptional(identity, pin),
             }),
@@ -1379,13 +1378,29 @@ export class UserClient extends CandidService {
         );
     }
 
-    setPinNumber(currentPin: string | undefined, newPin: string | undefined): Promise<SetPinNumberResponse> {
+    setPinNumber(
+        currentPin: string | undefined,
+        newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
                 current: apiOptional(identity, currentPin),
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,
-        );        
+        );
+    }
+
+    chitEvents({ from, to, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.userService.chit_events({
+                    from: apiOptional(identity, from),
+                    to: apiOptional(identity, to),
+                    max,
+                    ascending,
+                }),
+            chitEventsResponse,
+        );
     }
 }

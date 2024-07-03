@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1188](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1188-group_index)] - 2024-06-04
+
 ### Changed
 
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
@@ -12,6 +14,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
 - Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
 - Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+
+### Fixed
+
+- Add `serde(default)` attribute to fix upgrade ([#5857](https://github.com/open-chat-labs/open-chat/pull/5857))
 
 ## [[2.0.1135](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1135-group_index)] - 2024-04-10
 

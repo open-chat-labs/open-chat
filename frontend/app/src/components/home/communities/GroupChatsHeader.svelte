@@ -5,6 +5,8 @@
     import GroupChatsMenu from "./GroupChatsMenu.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+
+    export let canMarkAllRead: boolean;
 </script>
 
 <SectionHeader slim border={false}>
@@ -19,7 +21,7 @@
         </div>
     </div>
     <span class="menu">
-        <GroupChatsMenu on:newGroup />
+        <GroupChatsMenu {canMarkAllRead} on:markAllRead on:newGroup />
     </span>
 </SectionHeader>
 

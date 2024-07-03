@@ -15,6 +15,7 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
+    #[serde(default)]
     pub block_level_markdown: bool,
 }
 

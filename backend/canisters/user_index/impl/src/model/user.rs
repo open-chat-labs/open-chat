@@ -1,12 +1,12 @@
-use crate::model::account_billing::AccountBilling;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
-use crate::model::streak::Streak;
+use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis,
-    UserId, UserSummary,
+    is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
+    SuspensionDuration, TimestampMillis, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile,
 };
+use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -68,8 +68,20 @@ pub struct User {
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "chit_balance", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
+    #[serde(rename = "c2", alias = "chit_balance_v2", default, skip_serializing_if = "is_default")]
+    pub chit_balance_v2: i32,
     #[serde(rename = "st", alias = "streak", default, skip_serializing_if = "is_default")]
     pub streak: Streak,
+    #[serde(rename = "s", alias = "streak_v2", default, skip_serializing_if = "is_default")]
+    pub streak_v2: u16,
+    #[serde(rename = "se", alias = "streak_ends", default, skip_serializing_if = "is_default")]
+    pub streak_ends: TimestampMillis,
+    #[serde(rename = "dv", alias = "date_updated_volatile", default)]
+    pub date_updated_volatile: TimestampMillis,
+    #[serde(rename = "d2", alias = "chit_updated", alias = "date_updated_volatile_v2", default)]
+    pub chit_updated: TimestampMillis,
+    #[serde(rename = "lc", alias = "lastest_chit_event", default)]
+    pub lastest_chit_event: TimestampMillis,
 }
 
 impl User {
@@ -93,10 +105,13 @@ impl User {
             if days < 7 {
                 return 300;
             }
-            if days < 30 {
+            if days < 14 {
                 return 400;
             }
-            500
+            if days < 30 {
+                return 500;
+            }
+            600
         }
 
         if !self.streak.claim(now) {
@@ -108,7 +123,7 @@ impl User {
         let chit_balance = self.chit_balance + chit_earned as i32;
 
         self.chit_balance = chit_balance;
-        self.date_updated = now;
+        self.date_updated_volatile = now;
 
         Some(ClaimDailyChitResult {
             user_id: self.user_id,
@@ -157,6 +172,8 @@ impl User {
             display_name_upper: None,
             date_created: now,
             date_updated: now,
+            date_updated_volatile: now,
+            chit_updated: now,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
@@ -169,7 +186,11 @@ impl User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_balance_v2: 0,
             streak: Streak::default(),
+            streak_v2: 0,
+            streak_ends: 0,
+            lastest_chit_event: 0,
         }
     }
 
@@ -183,6 +204,32 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
+            chit_balance: self.chit_balance,
+            streak: self.streak.days(now),
+        }
+    }
+
+    pub fn to_summary_v2(&self, now: TimestampMillis) -> UserSummaryV2 {
+        UserSummaryV2 {
+            user_id: self.user_id,
+            stable: Some(self.to_summary_stable(now)),
+            volatile: Some(self.to_summary_volatile(now)),
+        }
+    }
+
+    pub fn to_summary_stable(&self, now: TimestampMillis) -> UserSummaryStable {
+        UserSummaryStable {
+            username: self.username.clone(),
+            display_name: self.display_name.clone(),
+            avatar_id: self.avatar_id,
+            is_bot: self.is_bot,
+            suspended: self.suspension_details.is_some(),
+            diamond_membership_status: self.diamond_membership_details.status(now),
+        }
+    }
+
+    pub fn to_summary_volatile(&self, now: TimestampMillis) -> UserSummaryVolatile {
+        UserSummaryVolatile {
             chit_balance: self.chit_balance,
             streak: self.streak.days(now),
         }
@@ -205,18 +252,17 @@ pub struct SuspensionDetails {
     pub suspended_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum SuspensionDuration {
-    Duration(Milliseconds),
-    Indefinitely,
-}
-
-impl From<SuspensionDuration> for Option<Milliseconds> {
-    fn from(value: SuspensionDuration) -> Self {
-        if let SuspensionDuration::Duration(duration) = value {
-            Some(duration)
-        } else {
-            None
+impl From<&SuspensionDetails> for types::SuspensionDetails {
+    fn from(value: &SuspensionDetails) -> Self {
+        types::SuspensionDetails {
+            reason: value.reason.to_owned(),
+            action: match value.duration {
+                SuspensionDuration::Duration(ms) => SuspensionAction::Unsuspend(value.timestamp + ms),
+                SuspensionDuration::Indefinitely => {
+                    SuspensionAction::Delete(value.timestamp + TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS)
+                }
+            },
+            suspended_by: value.suspended_by,
         }
     }
 }
@@ -232,6 +278,7 @@ impl Default for User {
             display_name_upper: None,
             date_created: 0,
             date_updated: 0,
+            date_updated_volatile: 0,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
@@ -244,7 +291,12 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_balance_v2: 0,
             streak: Streak::default(),
+            streak_v2: 0,
+            streak_ends: 0,
+            chit_updated: 0,
+            lastest_chit_event: 0,
         }
     }
 }

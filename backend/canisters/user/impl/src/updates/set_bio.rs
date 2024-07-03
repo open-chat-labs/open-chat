@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use types::{FieldTooLongResult, Timestamped};
+use types::{Achievement, FieldTooLongResult, Timestamped};
 use user_canister::set_bio::{Response::*, *};
 
 const MAX_BIO_LEN: u32 = 2000;
@@ -30,5 +30,8 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
     state.data.bio = Timestamped::new(args.text, now);
+
+    state.data.award_achievement_and_notify(Achievement::SetBio, now);
+
     Success
 }

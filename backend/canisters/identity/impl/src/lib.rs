@@ -68,6 +68,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
+            originating_canisters: self.data.user_principals.originating_canisters().clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -81,7 +82,6 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     #[serde(default)]
@@ -183,6 +183,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub user_principals: u32,
     pub auth_principals: u32,
+    pub originating_canisters: HashMap<CanisterId, u32>,
     pub canister_ids: CanisterIds,
 }
 

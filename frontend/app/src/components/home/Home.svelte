@@ -99,7 +99,7 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
-    import { chitEnabledStore } from "../../stores/settings";
+    import ChallengeModal from "./ChallengeModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -109,6 +109,7 @@
     };
 
     const client = getContext<OpenChat>("client");
+
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -164,6 +165,7 @@
         LoggingIn,
         NotFound,
         ClaimDailyChit,
+        Challenge,
     }
 
     let modal = ModalType.None;
@@ -196,6 +198,7 @@
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
     $: communities = client.communities;
+
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
             ? $selectedChatStore
@@ -208,17 +211,25 @@
     $: offlineStore = client.offlineStore;
     $: pinNumberStore = client.capturePinNumberStore;
     $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
-
     $: {
         if ($identityState.kind === "registering") {
             modal = ModalType.Registering;
-        }
-        if ($identityState.kind === "logging_in") {
+        } else if ($identityState.kind === "logging_in") {
             modal = ModalType.LoggingIn;
-        }
-        if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+        } else if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
+        } else if ($identityState.kind === "challenging") {
+            modal = ModalType.Challenge;
+        }
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_group" &&
+            $chatsInitialised
+        ) {
+            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            client.clearPostLoginState();
+            tick().then(() => joinGroup(ev));
         }
     }
 
@@ -280,7 +291,13 @@
     }
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
-        incomingVideoCall.set(ev.detail);
+        // Check user is not already in the call and it started less than an hour ago
+        if (
+            !ev.detail.currentUserIsParticipant &&
+            Number(ev.detail.timestamp) > Date.now() - 60 * 60 * 1000
+        ) {
+            incomingVideoCall.set(ev.detail);
+        }
     }
 
     async function newChatSelected(
@@ -289,6 +306,7 @@
         threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
+        let autojoin = false;
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
@@ -306,6 +324,7 @@
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+                autojoin = $querystring.has("autojoin");
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -358,6 +377,10 @@
             $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
+
+            if (autojoin && chat.kind !== "direct_chat") {
+                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+            }
         }
     }
 
@@ -391,18 +414,19 @@
         return false;
     }
 
+    let communityLoaded = false;
+
     // extracting to a function to try to control more tightly what this reacts to
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
-
             if (
                 $anonUser &&
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
-                client.identityState.set({ kind: "logging_in" });
+                client.updateIdentityState({ kind: "logging_in" });
                 pageRedirect("/group");
                 return;
             }
@@ -426,6 +450,7 @@
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
                 if (selectFirstChat()) {
+                    communityLoaded = true;
                     return;
                 }
             } else if (
@@ -433,7 +458,10 @@
                 pathParams.kind === "selected_channel_route"
             ) {
                 if (pathParams.kind === "selected_channel_route") {
-                    await selectCommunity(pathParams.communityId, false);
+                    if (!communityLoaded) {
+                        await selectCommunity(pathParams.communityId, false);
+                    }
+                    communityLoaded = false;
                 }
 
                 // first close any open thread
@@ -493,9 +521,7 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                if ($chitEnabledStore) {
-                    modal = ModalType.HallOfFame;
-                }
+                modal = ModalType.HallOfFame;
                 pageReplace(removeQueryStringParam("hof"));
             }
 
@@ -537,6 +563,10 @@
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
         waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+    }
+
+    function leaderboard() {
+        modal = ModalType.HallOfFame;
     }
 
     function closeModal() {
@@ -789,11 +819,21 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_group", ...ev.detail },
+            });
             return;
         }
         const { group, select } = ev.detail;
-        doJoinGroup(group, select, undefined);
+
+        // it's possible that we got here via a postLogin capture in which case it's possible
+        // that we are actually already a member of this group, so we should double check here
+        // that we actually *need* to join the group
+        let chat = $chatSummariesStore.get(group.id);
+        if (chat === undefined || chat.membership.role === "none") {
+            doJoinGroup(group, select, undefined);
+        }
     }
 
     function credentialReceived(ev: CustomEvent<string>) {
@@ -1105,7 +1145,9 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade}
-            on:claimDailyChit={() => {modal = ModalType.ClaimDailyChit}} />
+            on:claimDailyChit={() => {
+                modal = ModalType.ClaimDailyChit;
+            }} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1236,13 +1278,17 @@
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
-            <HallOfFame on:close={closeModal} />
+            <HallOfFame
+                on:streak={() => (modal = ModalType.ClaimDailyChit)}
+                on:close={closeModal} />
         {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {:else if modal === ModalType.LoggingIn}
             <LoggingInModal on:close={closeModal} />
         {:else if modal === ModalType.ClaimDailyChit}
-            <DailyChitModal on:close={closeModal} />
+            <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
+        {:else if modal === ModalType.Challenge}
+            <ChallengeModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

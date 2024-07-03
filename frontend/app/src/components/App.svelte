@@ -43,6 +43,9 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
+    import InstallPrompt from "./home/InstallPrompt.svelte";
+    import NotificationsBar from "./home/NotificationsBar.svelte";
+    import { reviewingTranslations } from "../i18n/i18n";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -103,7 +106,7 @@
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
-            pageReplace(removeQueryStringParam("ref"))
+            pageReplace(removeQueryStringParam("ref"));
         }
         calculateHeight();
 
@@ -127,6 +130,7 @@
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
             setDiamondMembershipFees,
+            setTokenEnabled,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -315,6 +319,17 @@
         });
     }
 
+    function setTokenEnabled(ledger: string, enabled: boolean): void {
+        client.setTokenEnabled(ledger, enabled).then((success) => {
+            const status = enabled ? "enabled" : "disabled";
+            if (success) {
+                console.log(`Token ${status}`);
+            } else {
+                console.log(`Failed to set token ${status}`);
+            }
+        });
+    }
+
     function stakeNeuronForSubmittingProposals(governanceCanisterId: string, stake: bigint): void {
         client.stakeNeuronForSubmittingProposals(governanceCanisterId, stake).then((success) => {
             if (success) {
@@ -417,12 +432,16 @@
 
 <Witch background />
 
+<InstallPrompt />
+
+<NotificationsBar />
+
 {#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
     <Upgrading />
-{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
-    {#if !$isLoading}
+{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
+    {#if !$isLoading || $reviewingTranslations}
         <Router
             on:hangup={hangup}
             on:askToSpeak={askToSpeak}

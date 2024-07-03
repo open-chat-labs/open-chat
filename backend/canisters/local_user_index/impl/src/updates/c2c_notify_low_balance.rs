@@ -10,7 +10,11 @@ use utils::cycles::can_spend_cycles;
 #[update_msgpack(guard = "caller_is_local_user_canister")]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
-    let prepare_ok = match read_state(prepare) {
+    top_up_user(None).await
+}
+
+pub(crate) async fn top_up_user(user_id: Option<UserId>) -> NotifyLowBalanceResponse {
+    let prepare_ok = match read_state(|state| prepare(user_id, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -29,9 +33,8 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
-    let caller = state.env.caller();
-    let user_id = caller.into();
+fn prepare(user_id: Option<UserId>, state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+    let user_id = user_id.unwrap_or_else(|| state.env.caller().into());
     let top_up_amount = USER_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
         date: state.env.now(),

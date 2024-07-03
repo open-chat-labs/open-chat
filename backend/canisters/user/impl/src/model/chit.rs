@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{ChitEarned, TimestampMillis};
+use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEarnedEvents {
@@ -23,11 +23,18 @@ impl ChitEarnedEvents {
         }
     }
 
-    pub fn events(&self, from: Option<TimestampMillis>, max: u32, ascending: bool) -> (Vec<ChitEarned>, u32) {
+    pub fn events(
+        &self,
+        from: Option<TimestampMillis>,
+        to: Option<TimestampMillis>,
+        max: u32,
+        ascending: bool,
+    ) -> (Vec<ChitEarned>, u32) {
         let page = if ascending {
             self.events
                 .iter()
                 .skip_while(|e| from.map_or(false, |ts| e.timestamp <= ts))
+                .take_while(|e| to.map_or(true, |ts| e.timestamp <= ts))
                 .take(max as usize)
                 .cloned()
                 .collect()
@@ -36,6 +43,7 @@ impl ChitEarnedEvents {
                 .iter()
                 .rev()
                 .skip_while(|e| from.map_or(false, |ts| e.timestamp >= ts))
+                .take_while(|e| to.map_or(true, |ts| e.timestamp >= ts))
                 .take(max as usize)
                 .cloned()
                 .collect()
@@ -43,11 +51,33 @@ impl ChitEarnedEvents {
 
         (page, self.events.len() as u32)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &ChitEarned> {
+        self.events.iter()
+    }
+
+    pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEarned> {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| since.map_or(true, |ts| e.timestamp > ts))
+            .filter(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+            .cloned()
+            .collect()
+    }
+
+    pub fn has_achievements_since(&self, since: TimestampMillis) -> bool {
+        self.events
+            .iter()
+            .rev()
+            .take_while(|e| e.timestamp > since)
+            .any(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use types::ChitEarnedReason;
+    use types::{Achievement, ChitEarnedReason};
 
     use super::*;
 
@@ -55,7 +85,7 @@ mod tests {
     fn first_page_matches_expected() {
         let store = init_test_data();
 
-        let (events, total) = store.events(None, 3, true);
+        let (events, total) = store.events(None, None, 3, true);
 
         assert_eq!(total, 7);
         assert_eq!(events.len(), 3);
@@ -67,8 +97,8 @@ mod tests {
     fn next_page_matches_expected() {
         let store = init_test_data();
 
-        let (events, _) = store.events(None, 3, true);
-        let (events, _) = store.events(Some(events[2].timestamp), 3, true);
+        let (events, _) = store.events(None, None, 3, true);
+        let (events, _) = store.events(Some(events[2].timestamp), None, 3, true);
 
         assert_eq!(events.len(), 3);
         assert_eq!(events[0].timestamp, 13);
@@ -79,7 +109,7 @@ mod tests {
     fn first_page_desc_matches_expected() {
         let store = init_test_data();
 
-        let (events, _) = store.events(None, 3, false);
+        let (events, _) = store.events(None, None, 3, false);
 
         assert_eq!(events.len(), 3);
         assert_eq!(events[0].timestamp, 16);
@@ -90,12 +120,34 @@ mod tests {
     fn next_page_desc_matches_expected() {
         let store = init_test_data();
 
-        let (events, _) = store.events(None, 3, false);
-        let (events, _) = store.events(Some(events[2].timestamp), 3, false);
+        let (events, _) = store.events(None, None, 3, false);
+        let (events, _) = store.events(Some(events[2].timestamp), None, 3, false);
 
         assert_eq!(events.len(), 3);
         assert_eq!(events[0].timestamp, 13);
         assert_eq!(events[2].timestamp, 11);
+    }
+
+    #[test]
+    fn range_matches_expected() {
+        let store = init_test_data();
+
+        let (events, _) = store.events(Some(11), Some(15), 99, true);
+
+        assert_eq!(events.len(), 4);
+        assert_eq!(events[0].timestamp, 12);
+        assert_eq!(events[3].timestamp, 15);
+    }
+
+    #[test]
+    fn range_desc_matches_expected() {
+        let store = init_test_data();
+
+        let (events, _) = store.events(Some(15), Some(11), 99, false);
+
+        assert_eq!(events.len(), 4);
+        assert_eq!(events[0].timestamp, 14);
+        assert_eq!(events[3].timestamp, 11);
     }
 
     fn init_test_data() -> ChitEarnedEvents {
@@ -119,7 +171,7 @@ mod tests {
                 ChitEarned {
                     amount: 500,
                     timestamp: 13,
-                    reason: ChitEarnedReason::Achievement("Bio".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SetBio),
                 },
                 ChitEarned {
                     amount: 300,
@@ -129,12 +181,12 @@ mod tests {
                 ChitEarned {
                     amount: 500,
                     timestamp: 15,
-                    reason: ChitEarnedReason::Achievement("Avatar".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SetAvatar),
                 },
                 ChitEarned {
                     amount: 500,
                     timestamp: 16,
-                    reason: ChitEarnedReason::Achievement("First message".to_string()),
+                    reason: ChitEarnedReason::Achievement(Achievement::SentDirectMessage),
                 },
             ],
         }
