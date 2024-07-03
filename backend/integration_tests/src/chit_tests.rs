@@ -16,6 +16,7 @@ fn claim_daily_chit_reflected_in_user_index() {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
     let result = client::user::happy_path::claim_daily_chit(env, &user);
@@ -31,10 +32,14 @@ fn claim_daily_chit_reflected_in_user_index() {
 
     env.tick();
 
-    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user.user_id]);
 
-    assert_eq!(current_user.chit_balance, 200);
-    assert_eq!(current_user.streak, 1);
+    assert_eq!(result.users.len(), 1);
+
+    let user1_summary = result.users[0].volatile.as_ref().unwrap();
+
+    assert_eq!(user1_summary.chit_balance, 200);
+    assert_eq!(user1_summary.streak, 1);
 }
 
 #[test]
@@ -43,6 +48,7 @@ fn chit_streak_gained_and_lost_as_expected() {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
     let result = client::user::happy_path::claim_daily_chit(env, &user);
@@ -68,8 +74,10 @@ fn chit_streak_gained_and_lost_as_expected() {
 
     env.tick();
 
-    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
-    assert_eq!(current_user.streak, 0);
+    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user.user_id]);
+
+    assert_eq!(result.users.len(), 1);
+    assert_eq!(result.users[0].volatile.as_ref().unwrap().streak, 0);
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {
