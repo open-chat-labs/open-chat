@@ -1521,6 +1521,11 @@ type AccessGate = variant {
     SnsNeuron : SnsNeuronGate;
     Payment : PaymentGate;
     TokenBalance : TokenBalanceGate;
+    Composite : record {
+        left : AccessGate;
+        right : AccessGate;
+        and : bool;
+    };
 };
 
 type AccessGateUpdate = variant {

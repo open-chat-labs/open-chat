@@ -14,14 +14,14 @@ pub enum AccessGate {
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
     TokenBalance(TokenBalanceGate),
-    CompositeGate(CompositeGate),
+    Composite(CompositeGate),
 }
 
 impl AccessGate {
     pub fn synchronous(&self) -> bool {
         match self {
             AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::VerifiedCredential(_) => true,
-            AccessGate::CompositeGate(c) => c.synchronous(),
+            AccessGate::Composite(c) => c.synchronous(),
             _ => false,
         }
     }
@@ -38,7 +38,7 @@ impl AccessGate {
             AccessGate::SnsNeuron(_) => "sns_neuron",
             AccessGate::Payment(_) => "payment",
             AccessGate::TokenBalance(_) => "token_balance",
-            AccessGate::CompositeGate(_) => "composite",
+            AccessGate::Composite(_) => "composite",
         }
     }
 }
