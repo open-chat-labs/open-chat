@@ -6981,20 +6981,19 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {
-                this.user.update((user) => ({
-                    ...user,
+                this.chitStateStore.set({
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
-                }));
+                });
                 this.overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
                 }));
             } else if (resp.kind === "already_claimed") {
-                this.user.update((user) => ({
-                    ...user,
+                this.chitStateStore.update((state) => ({
+                    ...state,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 }));
             }
