@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1217](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1217-proposals_bot)] - 2024-07-02
+
 ### Added
 
 - Get payload renderings for SNS proposals ([#5977](https://github.com/open-chat-labs/open-chat/pull/5977))
@@ -13,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
 - Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+
+## [[2.0.1183](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1183-proposals_bot)] - 2024-05-31
 
 ### Fixed
 
