@@ -33,6 +33,4 @@ pub struct SuccessResult {
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
-    pub chit_balance: i32,
-    pub streak: u16,
 }
