@@ -23,7 +23,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let events_ttl = data.chat.events.get_events_time_to_live();
 
     // You can't see private group messages unless you are a member of the group
-    let latest_message = if (is_public && !data.chat.has_payment_gate()) || state.data.get_member(caller).is_some() {
+    let latest_message = if (is_public && data.chat.gate.is_none()) || state.data.get_member(caller).is_some() {
         events_reader.latest_message_event(None)
     } else {
         None

@@ -462,14 +462,6 @@ impl Data {
         .unwrap()
     }
 
-    pub fn has_payment_gate(&self) -> bool {
-        self.gate
-            .value
-            .as_ref()
-            .map(|g| matches!(g, AccessGate::Payment(_)))
-            .unwrap_or_default()
-    }
-
     pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
         if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
             self.next_event_expiry = Some(expiry);
