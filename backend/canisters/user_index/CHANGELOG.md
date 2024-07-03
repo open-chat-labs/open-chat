@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1221](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1221-user_index)] - 2024-07-03
+
 ### Added
 
 - Added `c2c_notify_chit` to sync chit balance and streak from user canister ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
