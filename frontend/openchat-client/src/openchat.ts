@@ -497,6 +497,7 @@ import {
     directVideoCallCounts,
     favouritesVideoCallCounts,
     communityChannelVideoCallCounts,
+    chitStateStore,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -4691,7 +4692,12 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         }
 
-        return this.sendRequest({ kind: "getUsers", users: { userGroups }, allowStale })
+        return this.sendRequest({
+            kind: "getUsers",
+            chitState: this._liveState.chitState,
+            users: { userGroups },
+            allowStale,
+        })
             .then((resp) => {
                 userStore.addMany(resp.users);
                 if (resp.serverTimestamp !== undefined) {
@@ -4713,7 +4719,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.sendRequest({ kind: "getUser", userId, allowStale })
+        return this.sendRequest({
+            kind: "getUser",
+            chitState: this._liveState.chitState,
+            userId,
+            allowStale,
+        })
             .then((resp) => {
                 if (resp !== undefined) {
                     userStore.add(resp);
@@ -5129,6 +5140,7 @@ export class OpenChat extends OpenChatAgentWorker {
         initialLoad: boolean,
         chatsResponse: UpdatesResult,
     ): Promise<void> {
+        console.log("ChatsResponse: ", chatsResponse);
         if (initialLoad || chatsResponse.anyUpdates) {
             if (chatsResponse.suspensionChanged !== undefined) {
                 this.dispatchEvent(new UserSuspensionChanged());
@@ -5217,6 +5229,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     none: [],
                 },
                 chatsResponse.state.achievements,
+                chatsResponse.state.chitState,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -5275,13 +5288,12 @@ export class OpenChat extends OpenChatAgentWorker {
             this.dispatchEvent(new ChatsUpdated());
 
             if (chatsResponse.newAchievements.length > 0) {
-                this.dispatchEvent(
-                    new ChitEarnedEvent(
-                        chatsResponse.newAchievements.filter(
-                            (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
-                        ),
-                    ),
+                const filtered = chatsResponse.newAchievements.filter(
+                    (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
                 );
+                if (filtered.length > 0) {
+                    this.dispatchEvent(new ChitEarnedEvent(filtered));
+                }
             }
 
             if (initialLoad) {
@@ -6967,7 +6979,7 @@ export class OpenChat extends OpenChatAgentWorker {
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = this._liveState.user.userId;
 
-        return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
+        return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {
                 this.user.update((user) => ({
                     ...user,
@@ -7094,6 +7106,7 @@ export class OpenChat extends OpenChatAgentWorker {
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
+    chitStateStore = chitStateStore;
     unreadGroupCounts = unreadGroupCounts;
     groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;

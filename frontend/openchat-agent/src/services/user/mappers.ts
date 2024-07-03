@@ -67,6 +67,7 @@ import type {
     ApiChitEarned,
     ApiChitEarnedReason,
     ApiAchievement,
+    ApiClaimDailyChitResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -135,6 +136,7 @@ import type {
     ChitEarned,
     ChitEarnedReason,
     Achievement,
+    ClaimDailyChitResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -723,6 +725,10 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             localUserIndex: result.local_user_index_canister_id.toString(),
             achievementsLastSeen: result.achievements_last_seen,
             achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -831,6 +837,10 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
             achievementsLastSeen: optional(candid.Success.achievements_last_seen, identity),
             achievements: candid.Success.achievements.map(chitEarned),
+            streakEnds: candid.Success.streak_ends,
+            streak: candid.Success.streak,
+            nextDailyClaim: candid.Success.next_daily_claim,
+            chitBalance: candid.Success.chit_balance,
         };
     }
 
@@ -1358,4 +1368,23 @@ export function apiExchangeArgs(
         };
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);
+}
+
+export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): ClaimDailyChitResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            streak: candid.Success.streak,
+            chitBalance: candid.Success.chit_balance,
+            chitEarned: candid.Success.chit_earned,
+            nextDailyChitClaim: candid.Success.next_claim,
+        };
+    }
+    if ("AlreadyClaimed" in candid) {
+        return {
+            kind: "already_claimed",
+            nextDailyChitClaim: candid.AlreadyClaimed,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
 }

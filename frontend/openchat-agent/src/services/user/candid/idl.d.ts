@@ -163,6 +163,7 @@ import {
     ChitEarned,
     ChitEarnedReason,
     Achievement,
+    ClaimDailyChitResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -327,7 +328,8 @@ export {
     ChitEventsResponse as ApiChitEventsResponse,
     ChitEarned as ApiChitEarned,
     ChitEarnedReason as ApiChitEarnedReason,
-    Achievement as ApiAchievement
+    Achievement as ApiAchievement,
+    ClaimDailyChitResponse as ApiClaimDailyChitResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

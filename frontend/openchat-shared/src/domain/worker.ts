@@ -72,6 +72,7 @@ import type {
     VideoCallParticipantsResponse,
     SetPinNumberResponse,
     AcceptedRules,
+    ChitState,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -641,6 +642,7 @@ type GetPublicProfile = {
 };
 
 type GetUser = {
+    chitState: ChitState;
     userId: string;
     allowStale: boolean;
     kind: "getUser";
@@ -1127,6 +1129,7 @@ type StakeNeuronForSubmittingProposals = {
 };
 
 type GetUsers = {
+    chitState: ChitState;
     users: UsersArgs;
     allowStale: boolean;
     kind: "getUsers";
@@ -1680,7 +1683,6 @@ type SetPinNumber = {
 };
 
 type ClaimDailyChit = {
-    userId: string;
     kind: "claimDailyChit";
 };
 

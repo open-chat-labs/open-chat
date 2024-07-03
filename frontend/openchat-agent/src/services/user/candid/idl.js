@@ -183,6 +183,16 @@ export const idlFactory = ({ IDL }) => {
       'events' : IDL.Vec(ChitEarned),
     }),
   });
+  const EmptyArgs = IDL.Record({});
+  const ClaimDailyChitResponse = IDL.Variant({
+    'AlreadyClaimed' : TimestampMillis,
+    'Success' : IDL.Record({
+      'streak' : IDL.Nat16,
+      'chit_earned' : IDL.Nat32,
+      'chit_balance' : IDL.Int32,
+      'next_claim' : TimestampMillis,
+    }),
+  });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -1058,7 +1068,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
-  const EmptyArgs = IDL.Record({});
   const GetBtcAddressResponse = IDL.Variant({
     'Success' : IDL.Text,
     'InternalError' : IDL.Text,
@@ -1241,13 +1250,17 @@ export const idlFactory = ({ IDL }) => {
   });
   const InitialStateResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'streak_ends' : TimestampMillis,
+      'streak' : IDL.Nat16,
       'pin_number_settings' : IDL.Opt(PinNumberSettings),
       'communities' : CommunitiesInitial,
       'blocked_users' : IDL.Vec(UserId),
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
       'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsInitial,
       'avatar_id' : IDL.Opt(IDL.Nat),
+      'chit_balance' : IDL.Int32,
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
@@ -1884,6 +1897,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'streak_ends' : TimestampMillis,
+      'streak' : IDL.Nat16,
       'pin_number_settings' : IDL.Variant({
         'NoChange' : IDL.Null,
         'SetToNone' : IDL.Null,
@@ -1892,11 +1907,13 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesUpdates,
       'username' : IDL.Opt(IDL.Text),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
       'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
+      'chit_balance' : IDL.Int32,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : IDL.Opt(IDL.Bool),
@@ -1951,6 +1968,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'chit_events' : IDL.Func([ChitEventsArgs], [ChitEventsResponse], ['query']),
+    'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_community' : IDL.Func(
         [CreateCommunityArgs],

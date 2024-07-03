@@ -5,6 +5,7 @@ import type {
     ChatIdentifier,
     ChatListScope,
     ChatSummary,
+    ChitState,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatSummary,
@@ -29,6 +30,12 @@ export type GlobalState = {
     pinnedChats: PinnedByScope;
     achievements: Set<Achievement>;
 };
+
+export const chitStateStore = immutableStore<ChitState>({
+    chitBalance: 0,
+    streak: 0,
+    nextDailyChitClaim: 0n,
+});
 
 /**
  * This is the root of the
@@ -326,6 +333,7 @@ export function setGlobalState(
     favourites: ChatIdentifier[],
     pinnedChats: PinnedByScope,
     achievements: Set<Achievement>,
+    chitState: ChitState,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -349,6 +357,7 @@ export function setGlobalState(
     });
 
     globalStateStore.set(state);
+    chitStateStore.set(chitState);
 }
 
 function partitionChats(

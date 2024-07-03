@@ -134,12 +134,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     105: async (principal, tx) => {
         const key = principal.toString();
         const store = tx.objectStore("chats");
-        const state = await store.get(key);
-        if (state) {
-            state.achievementsLastSeen = 0n;
-            state.achievements = new Set();
-            await store.put(state, key);
-        }
+        store.delete(key);
     },
 };
 

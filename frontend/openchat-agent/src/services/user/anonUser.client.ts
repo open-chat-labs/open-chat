@@ -2,6 +2,7 @@ import type {
     CancelP2PSwapResponse,
     ChitEventsRequest,
     ChitEventsResponse,
+    ClaimDailyChitResponse,
     JoinVideoCallResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
@@ -113,6 +114,10 @@ export class AnonUserClient {
             localUserIndex: "",
             achievements: [],
             achievementsLastSeen: 0n,
+            streakEnds: 0n,
+            streak: 0,
+            nextDailyClaim: 0n,
+            chitBalance: 0,
         });
     }
 
@@ -459,6 +464,10 @@ export class AnonUserClient {
     }
 
     markAchievementsSeen(_lastSeen: bigint): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    claimDailyChit(): Promise<ClaimDailyChitResponse> {
         throw new AnonymousOperationError();
     }
 }

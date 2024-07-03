@@ -976,6 +976,13 @@ export type ChatStateFull = {
     userCanisterLocalUserIndex: string;
     achievements: Set<Achievement>;
     achievementsLastSeen: bigint;
+    chitState: ChitState;
+};
+
+export type ChitState = {
+    streak: number;
+    nextDailyChitClaim: bigint;
+    chitBalance: number;
 };
 
 export type CurrentChatState = {
@@ -1128,6 +1135,10 @@ export type InitialStateResponse = {
     localUserIndex: string;
     achievements: ChitEarned[];
     achievementsLastSeen: bigint;
+    streakEnds: bigint;
+    streak: number;
+    nextDailyClaim: bigint;
+    chitBalance: number;
 };
 
 export type PinNumberSettings = {
@@ -1165,6 +1176,10 @@ export type UpdatesSuccessResponse = {
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
     achievements: ChitEarned[];
     achievementsLastSeen: bigint | undefined;
+    chitBalance: number;
+    streakEnds: bigint;
+    streak: number;
+    nextDailyClaim: bigint;
 };
 
 export type DirectChatsUpdates = {

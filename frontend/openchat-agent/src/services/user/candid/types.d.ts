@@ -317,6 +317,15 @@ export interface ChitEventsArgs {
 export type ChitEventsResponse = {
     'Success' : { 'total' : number, 'events' : Array<ChitEarned> }
   };
+export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
+  {
+    'Success' : {
+      'streak' : number,
+      'chit_earned' : number,
+      'chit_balance' : number,
+      'next_claim' : TimestampMillis,
+    }
+  };
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
 }
@@ -1253,13 +1262,17 @@ export interface IndexedNotification {
 }
 export type InitialStateResponse = {
     'Success' : {
+      'streak_ends' : TimestampMillis,
+      'streak' : number,
       'pin_number_settings' : [] | [PinNumberSettings],
       'communities' : CommunitiesInitial,
       'blocked_users' : Array<UserId>,
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
       'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsInitial,
       'avatar_id' : [] | [bigint],
+      'chit_balance' : number,
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
@@ -2277,17 +2290,21 @@ export interface UpdatedRules {
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
+      'streak_ends' : TimestampMillis,
+      'streak' : number,
       'pin_number_settings' : { 'NoChange' : null } |
         { 'SetToNone' : null } |
         { 'SetToSome' : PinNumberSettings },
       'communities' : CommunitiesUpdates,
       'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
       'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
+      'chit_balance' : number,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : [] | [boolean],
@@ -2481,6 +2498,7 @@ export interface _SERVICE {
   >,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'chit_events' : ActorMethod<[ChitEventsArgs], ChitEventsResponse>,
+  'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],
