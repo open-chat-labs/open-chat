@@ -8,7 +8,7 @@ use types::{
     VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
-use utils::time::NANOS_PER_MILLISECOND;
+use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 // use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
 // use vc_util::VcFlowSigners;
 
@@ -39,6 +39,7 @@ pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResul
     match args.gate {
         AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now).await,
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
@@ -60,6 +61,18 @@ fn check_diamond_member_gate(
         CheckIfPassesGateResult::Success
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotDiamondMember)
+    }
+}
+
+fn check_lifetime_diamond_member_gate(
+    diamond_membership_expires_at: Option<TimestampMillis>,
+    now: TimestampMillis,
+) -> CheckIfPassesGateResult {
+    // Check diamond membership expires in > 100 years
+    if diamond_membership_expires_at > Some(now + 100 * 365 * DAY_IN_MS) {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotLifetimeDiamondMember)
     }
 }
 
