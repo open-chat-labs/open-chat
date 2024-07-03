@@ -12,7 +12,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
@@ -235,12 +235,21 @@ struct Data {
     pub oc_secret_key_der: Option<Vec<u8>>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
+    #[serde(default)]
+    pub users_to_delete_queue: VecDeque<UserToDelete>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct FailedMessageUsers {
     pub sender: UserId,
     pub recipient: UserId,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserToDelete {
+    pub user_id: UserId,
+    pub triggered_by_user: bool,
+    pub attempt: usize,
 }
 
 impl Data {
@@ -291,6 +300,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
+            users_to_delete_queue: VecDeque::new(),
         }
     }
 }

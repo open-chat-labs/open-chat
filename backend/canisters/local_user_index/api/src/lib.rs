@@ -33,7 +33,7 @@ pub enum Event {
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
-    UserDeleted(UserDeleted),
+    DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
     ChitEarned(ChitEarned),
 }
@@ -151,8 +151,9 @@ pub struct ReferralCodeAdded {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserDeleted {
+pub struct DeleteUser {
     pub user_id: UserId,
+    pub triggered_by_user: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
