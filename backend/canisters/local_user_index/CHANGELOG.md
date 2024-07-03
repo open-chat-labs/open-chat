@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+- Delete user accounts that are empty and dormant ([#5985](https://github.com/open-chat-labs/open-chat/pull/5985))
 
 ## [[2.0.1198](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1198-local_user_index)] - 2024-06-07
 
