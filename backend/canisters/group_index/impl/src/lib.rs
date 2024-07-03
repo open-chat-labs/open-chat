@@ -376,6 +376,8 @@ pub struct AccessGateMetrics {
     pub sns_neuron: u32,
     pub payment: u32,
     pub token_balance: u32,
+    #[serde(default)]
+    pub composite: u32,
 }
 
 impl AccessGateMetrics {
@@ -387,6 +389,7 @@ impl AccessGateMetrics {
             AccessGate::SnsNeuron(_) => self.sns_neuron += 1,
             AccessGate::Payment(_) => self.payment += 1,
             AccessGate::TokenBalance(_) => self.token_balance += 1,
+            AccessGate::CompositeGate(_) => self.composite += 1,
         }
     }
 }

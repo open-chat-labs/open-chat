@@ -67,8 +67,11 @@ pub(crate) fn join_channel_synchronously(
 ) {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, diamond_membership_expires_at, None, state)) {
         Ok(None) => {}
-        Ok(Some(args)) if args.gate.synchronous() => {
-            if !matches!(check_if_passes_gate_synchronously(args), CheckIfPassesGateResult::Success) {
+        Ok(Some((gate, args))) if gate.synchronous() => {
+            if !matches!(
+                check_if_passes_gate_synchronously(gate, args),
+                CheckIfPassesGateResult::Success
+            ) {
                 return;
             }
         }
@@ -88,7 +91,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             state,
         )
     }) {
-        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
@@ -106,7 +109,7 @@ fn is_permitted_to_join(
     diamond_membership_expires_at: Option<TimestampMillis>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
     state: &RuntimeState,
-) -> Result<Option<CheckGateArgs>, Response> {
+) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
@@ -130,19 +133,23 @@ fn is_permitted_to_join(
             } else if channel.chat.members.is_blocked(&member.user_id) {
                 Err(UserBlocked)
             } else {
-                Ok(channel.chat.gate.as_ref().map(|g| CheckGateArgs {
-                    gate: g.clone(),
-                    user_id: member.user_id,
-                    diamond_membership_expires_at,
-                    this_canister: state.env.canister_id(),
-                    verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
-                        user_ii_principal: vc.user_ii_principal,
-                        credential_jwt: vc.credential_jwt,
-                        ic_root_key: state.data.ic_root_key.clone(),
-                        ii_canister_id: state.data.internet_identity_canister_id,
-                        ii_origin: vc.ii_origin,
-                    }),
-                    now: state.env.now(),
+                Ok(channel.chat.gate.as_ref().map(|g| {
+                    (
+                        g.clone(),
+                        CheckGateArgs {
+                            user_id: member.user_id,
+                            diamond_membership_expires_at,
+                            this_canister: state.env.canister_id(),
+                            verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
+                                user_ii_principal: vc.user_ii_principal,
+                                credential_jwt: vc.credential_jwt,
+                                ic_root_key: state.data.ic_root_key.clone(),
+                                ii_canister_id: state.data.internet_identity_canister_id,
+                                ii_origin: vc.ii_origin,
+                            }),
+                            now: state.env.now(),
+                        },
+                    )
                 }))
             }
         } else {

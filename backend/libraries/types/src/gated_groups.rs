@@ -14,14 +14,16 @@ pub enum AccessGate {
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
     TokenBalance(TokenBalanceGate),
+    CompositeGate(CompositeGate),
 }
 
 impl AccessGate {
     pub fn synchronous(&self) -> bool {
-        matches!(
-            self,
-            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::VerifiedCredential(_)
-        )
+        match self {
+            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::VerifiedCredential(_) => true,
+            AccessGate::CompositeGate(c) => c.synchronous(),
+            _ => false,
+        }
     }
 
     pub fn is_payment_gate(&self) -> bool {
@@ -36,6 +38,7 @@ impl AccessGate {
             AccessGate::SnsNeuron(_) => "sns_neuron",
             AccessGate::Payment(_) => "payment",
             AccessGate::TokenBalance(_) => "token_balance",
+            AccessGate::CompositeGate(_) => "composite",
         }
     }
 }
@@ -73,6 +76,19 @@ pub struct PaymentGate {
 pub struct TokenBalanceGate {
     pub ledger_canister_id: CanisterId,
     pub min_balance: u128,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct CompositeGate {
+    pub left: Box<AccessGate>,
+    pub right: Box<AccessGate>,
+    pub and: bool,
+}
+
+impl CompositeGate {
+    pub fn synchronous(&self) -> bool {
+        self.left.synchronous() && self.right.synchronous()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

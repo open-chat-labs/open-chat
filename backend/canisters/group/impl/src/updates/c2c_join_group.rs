@@ -15,7 +15,7 @@ async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
     match read_state(|state| is_permitted_to_join(&args, state)) {
-        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
@@ -27,7 +27,7 @@ async fn c2c_join_group(args: Args) -> Response {
     mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<CheckGateArgs>, Response> {
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks
@@ -43,22 +43,25 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
         let summary = state.summary(member);
         Err(AlreadyInGroupV2(Box::new(summary)))
     } else {
-        Ok(state.data.chat.gate.as_ref().map(|g| CheckGateArgs {
-            gate: g.clone(),
-            user_id: args.user_id,
-            diamond_membership_expires_at: args.diamond_membership_expires_at,
-            this_canister: state.env.canister_id(),
-            verified_credential_args: args
-                .verified_credential_args
-                .as_ref()
-                .map(|vc| CheckVerifiedCredentialGateArgs {
-                    user_ii_principal: vc.user_ii_principal,
-                    credential_jwt: vc.credential_jwt.clone(),
-                    ic_root_key: state.data.ic_root_key.clone(),
-                    ii_canister_id: state.data.internet_identity_canister_id,
-                    ii_origin: vc.ii_origin.clone(),
-                }),
-            now: state.env.now(),
+        Ok(state.data.chat.gate.as_ref().map(|g| {
+            (
+                g.clone(),
+                CheckGateArgs {
+                    user_id: args.user_id,
+                    diamond_membership_expires_at: args.diamond_membership_expires_at,
+                    this_canister: state.env.canister_id(),
+                    verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
+                        CheckVerifiedCredentialGateArgs {
+                            user_ii_principal: vc.user_ii_principal,
+                            credential_jwt: vc.credential_jwt.clone(),
+                            ic_root_key: state.data.ic_root_key.clone(),
+                            ii_canister_id: state.data.internet_identity_canister_id,
+                            ii_origin: vc.ii_origin.clone(),
+                        }
+                    }),
+                    now: state.env.now(),
+                },
+            )
         }))
     }
 }
