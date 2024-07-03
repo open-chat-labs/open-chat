@@ -66,8 +66,6 @@ type CurrentUserResponse = variant {
         diamond_membership_details : opt DiamondMembershipDetails;
         diamond_membership_status : DiamondMembershipStatusFull;
         moderation_flags_enabled : nat32;
-        chit_balance : int32;
-        streak : nat16;
     };
     UserNotFound;
 };
