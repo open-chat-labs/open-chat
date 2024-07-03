@@ -26,7 +26,7 @@ fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &Run
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
     let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
-    if user_id.is_none() && (!state.data.is_public || state.data.gate.is_some()) {
+    if user_id.is_none() && (!state.data.is_public || state.data.has_payment_gate()) {
         return UserNotInCommunity;
     }
 
