@@ -367,17 +367,14 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
 export interface CurrentUserSummary {
-  'streak' : number,
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
-  'next_daily_claim' : TimestampMillis,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
-  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,
