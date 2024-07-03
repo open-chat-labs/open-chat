@@ -142,12 +142,12 @@
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
         $selectedCommunity.membership.role === "none" &&
-        (!$selectedCommunity.public || $selectedCommunity.gate.kind === "payment_gate");
+        (!$selectedCommunity.public || $selectedCommunity.gate !== undefined);
 
     $: privateChatPreview =
         (chat.kind === "group_chat" || chat.kind === "channel") &&
         chat.membership.role === "none" &&
-        (!chat.public || chat.gate.kind === "payment_gate");
+        (!chat.public || chat.gate !== undefined);
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
