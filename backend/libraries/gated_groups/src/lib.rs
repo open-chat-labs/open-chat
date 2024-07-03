@@ -139,7 +139,7 @@ fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) 
         return left_result;
     }
 
-    return check_if_passes_gate_synchronously(*gate.right, args);
+    check_if_passes_gate_synchronously(*gate.right, args)
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
