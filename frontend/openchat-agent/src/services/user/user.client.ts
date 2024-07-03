@@ -1424,6 +1424,7 @@ export class UserClient extends CandidService {
             claimDailyChitResponse,
         ).then((res) => {
             if (res.kind === "success") {
+                // Note this only updates the users db, the chats db will be updated by the updates loop
                 setChitInfoInCache(this.userId, res.chitBalance, res.streak);
             }
             return res;
