@@ -389,7 +389,7 @@ impl AccessGateMetrics {
             AccessGate::SnsNeuron(_) => self.sns_neuron += 1,
             AccessGate::Payment(_) => self.payment += 1,
             AccessGate::TokenBalance(_) => self.token_balance += 1,
-            AccessGate::CompositeGate(_) => self.composite += 1,
+            AccessGate::Composite(_) => self.composite += 1,
         }
     }
 }
