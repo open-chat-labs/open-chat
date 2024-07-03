@@ -10,6 +10,7 @@ pub struct UserPrincipals {
     originating_canisters: HashMap<CanisterId, u32>,
 }
 
+#[allow(dead_code)]
 pub struct UserPrincipal {
     pub index: u32,
     pub principal: Principal,
