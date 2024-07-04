@@ -14,7 +14,7 @@ use gated_groups::{
     CheckVerifiedCredentialGateArgs,
 };
 use group_chat_core::AddResult;
-use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis, VerifiedCredentialGateArgs};
+use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -32,7 +32,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             is_bot: args.is_bot,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             verified_credential_args: args.verified_credential_args.clone(),
-            unique_human_proof: args.unique_human_proof.clone(),
+            unique_person_proof: args.unique_person_proof.clone(),
         })
         .await
         {
@@ -65,8 +65,18 @@ pub(crate) fn join_channel_synchronously(
     channel_id: ChannelId,
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
+    unique_person_proof: Option<UniquePersonProof>,
 ) {
-    match read_state(|state| is_permitted_to_join(channel_id, user_principal, diamond_membership_expires_at, None, state)) {
+    match read_state(|state| {
+        is_permitted_to_join(
+            channel_id,
+            user_principal,
+            diamond_membership_expires_at,
+            unique_person_proof,
+            None,
+            state,
+        )
+    }) {
         Ok(None) => {}
         Ok(Some(args)) if args.gate.synchronous() => {
             if !matches!(check_if_passes_gate_synchronously(args), CheckIfPassesGateResult::Success) {
@@ -85,6 +95,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.channel_id,
             args.principal,
             args.diamond_membership_expires_at,
+            args.unique_person_proof.clone(),
             args.verified_credential_args.clone(),
             state,
         )
@@ -105,6 +116,7 @@ fn is_permitted_to_join(
     channel_id: ChannelId,
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
+    unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
     state: &RuntimeState,
 ) -> Result<Option<CheckGateArgs>, Response> {
@@ -136,6 +148,7 @@ fn is_permitted_to_join(
                     user_id: member.user_id,
                     diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),
+                    unique_person_proof,
                     verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
                         user_ii_principal: vc.user_ii_principal,
                         credential_jwt: vc.credential_jwt,
