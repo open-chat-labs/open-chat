@@ -385,6 +385,22 @@ impl Data {
             .await;
         }
     }
+
+    pub fn chit_bands(&self) -> HashMap<u32, u32> {
+        let mut bands = HashMap::new();
+
+        for chit in self
+            .users
+            .iter()
+            .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
+        {
+            let band = (chit / 2500) * 2500;
+
+            bands.entry(band).and_modify(|e| *e += 1).or_insert(1);
+        }
+
+        bands
+    }
 }
 
 #[cfg(test)]
