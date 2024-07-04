@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
+- Add `unique_human_proof` to join community / channel args ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 
 ## [[2.0.1194](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1194-community)] - 2024-06-06
 
