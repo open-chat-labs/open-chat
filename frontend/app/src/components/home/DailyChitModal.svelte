@@ -1,7 +1,7 @@
 <script lang="ts">
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
     import type { OpenChat } from "openchat-client";
@@ -16,6 +16,7 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import LearnToEarn from "./profile/LearnToEarn.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -23,22 +24,12 @@
     let busy = false;
     let claimed = false;
     let additional: number | undefined = undefined;
+    let learnToEarn = false;
 
-    // These are useful for testing
-    // $: available = true;
-    // $: streak = 2;
-    $: user = client.user;
-    $: userStore = client.userStore;
-    $: available = $user.nextDailyChitClaim < $now500;
-    $: streak = $userStore[$user.userId]?.streak ?? 0;
-    $: balance = $userStore[$user.userId]?.chitBalance ?? 0;
-    $: percent = calculatePercentage(streak);
-    $: remaining = client.formatTimeRemaining($now500, Number($user.nextDailyChitClaim), true);
-
-    onMount(() => {
-        // no need to do anything with the result explicitly as it will get added to the store automatically
-        client.getUser($user.userId);
-    });
+    $: chitState = client.chitStateStore;
+    $: available = $chitState.nextDailyChitClaim < $now500;
+    $: percent = calculatePercentage($chitState.streak);
+    $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
 
     function calculatePercentage(streak: number): number {
         const percent = (streak / 30) * 100;
@@ -54,14 +45,14 @@
 
         busy = true;
 
-        const previousBalance = balance;
+        const previousBalance = $chitState.chitBalance;
 
         client
             .claimDailyChit()
             .then((resp) => {
                 if (resp.kind === "success") {
                     claimed = true;
-                    additional = $user.chitBalance - previousBalance;
+                    additional = $chitState.chitBalance - previousBalance;
                     window.setTimeout(() => {
                         additional = undefined;
                     }, 2000);
@@ -88,7 +79,15 @@
         close();
         tick().then(() => dispatch("leaderboard"));
     }
+
+    function earnMore() {
+        learnToEarn = true;
+    }
 </script>
+
+{#if learnToEarn}
+    <LearnToEarn on:close={() => (learnToEarn = false)} />
+{/if}
 
 <ModalContent closeIcon on:close={close}>
     <div class="header" slot="header">
@@ -104,14 +103,14 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class:available class="logo" on:click={claim}>
             <FancyLoader loop={busy} />
-            <div class="streak">{streak}</div>
+            <div class="streak">{$chitState.streak}</div>
         </div>
 
         <div class="balance">
             <div class="spacer"></div>
             <div class="current">
                 <div class="chit"></div>
-                {`${balance.toLocaleString()} CHIT`}
+                {`${$chitState.chitBalance.toLocaleString()} CHIT`}
             </div>
             <div class="additional">
                 {#if additional}
@@ -119,6 +118,15 @@
                 {/if}
             </div>
         </div>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-missing-attribute -->
+        <a
+            class="earn-more"
+            tabindex="0"
+            on:click|preventDefault|stopPropagation={earnMore}
+            role="button">
+            <Translatable resourceKey={i18nKey("profile.earnMore")} />
+        </a>
 
         <p>
             <Translatable
@@ -138,16 +146,16 @@
                 </div>
                 <div class="badges">
                     <div class="badge three">
-                        <Streak disabled={streak < 3} days={3} />
+                        <Streak disabled={$chitState.streak < 3} days={3} />
                     </div>
                     <div class="badge seven">
-                        <Streak disabled={streak < 7} days={7} />
+                        <Streak disabled={$chitState.streak < 7} days={7} />
                     </div>
                     <div class="badge fourteen">
-                        <Streak disabled={streak < 14} days={14} />
+                        <Streak disabled={$chitState.streak < 14} days={14} />
                     </div>
                     <div class="badge thirty">
-                        <Streak disabled={streak < 30} days={30} />
+                        <Streak disabled={$chitState.streak < 30} days={30} />
                     </div>
                 </div>
             </div>
@@ -318,6 +326,16 @@
                 height: $sp4;
             }
         }
+    }
+
+    .earn-more {
+        color: var(--txt);
+        text-decoration: underline;
+        text-underline-offset: $sp2;
+        align-self: center;
+        margin: 0 0 $sp3 0;
+        @include font(book, normal, fs-80);
+        color: var(--txt-light);
     }
 
     .leaderboard {

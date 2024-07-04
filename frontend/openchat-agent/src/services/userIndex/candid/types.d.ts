@@ -21,6 +21,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface AddPlatformModeratorArgs { 'user_id' : UserId }
 export type AddPlatformModeratorResponse = {
     'AlreadyPlatformModerator' : null
@@ -219,7 +232,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
 export interface ChitUserBalance {
@@ -393,7 +406,6 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'Other' : string };
 export type CurrentUserResponse = {
     'Success' : {
-      'streak' : number,
       'username' : string,
       'date_created' : TimestampMillis,
       'is_platform_operator' : boolean,
@@ -401,12 +413,10 @@ export type CurrentUserResponse = {
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
-      'next_daily_claim' : TimestampMillis,
       'user_id' : UserId,
       'display_name' : [] | [string],
       'avatar_id' : [] | [bigint],
       'moderation_flags_enabled' : number,
-      'chit_balance' : number,
       'is_suspected_bot' : boolean,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : [] | [SuspensionDetails],
@@ -416,17 +426,14 @@ export type CurrentUserResponse = {
   } |
   { 'UserNotFound' : null };
 export interface CurrentUserSummary {
-  'streak' : number,
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
-  'next_daily_claim' : TimestampMillis,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
-  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,

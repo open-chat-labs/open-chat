@@ -72,6 +72,7 @@ import type {
     VideoCallParticipantsResponse,
     SetPinNumberResponse,
     AcceptedRules,
+    ChitState,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -109,10 +110,6 @@ import type {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
-    ClaimDailyChitResponse,
-    ChitUserBalance,
-    ChitEventsRequest,
-    ChitEventsResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -183,6 +180,12 @@ import type {
     RejectResponse,
     TranslationCorrections,
 } from "./i18n";
+import type {
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitUserBalance,
+    ClaimDailyChitResponse,
+} from "./chit";
 /**
  * Worker request types
  */
@@ -373,7 +376,12 @@ export type WorkerRequest =
     | SetPinNumber
     | ClaimDailyChit
     | ChitLeaderboard
-    | ChitEventsRequest;
+    | ChitEventsRequest
+    | MarkAchievementsSeen;
+
+type MarkAchievementsSeen = {
+    kind: "markAchievementsSeen";
+};
 
 type VideoCallParticipants = {
     kind: "videoCallParticipants";
@@ -634,6 +642,7 @@ type GetPublicProfile = {
 };
 
 type GetUser = {
+    chitState: ChitState;
     userId: string;
     allowStale: boolean;
     kind: "getUser";
@@ -1120,6 +1129,7 @@ type StakeNeuronForSubmittingProposals = {
 };
 
 type GetUsers = {
+    chitState: ChitState;
     users: UsersArgs;
     allowStale: boolean;
     kind: "getUsers";
@@ -1241,6 +1251,7 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | void
     | bigint
     | boolean
     | string
@@ -1672,7 +1683,6 @@ type SetPinNumber = {
 };
 
 type ClaimDailyChit = {
-    userId: string;
     kind: "claimDailyChit";
 };
 
@@ -2043,4 +2053,6 @@ export type WorkerResult<T> = T extends Init
     ? ChitUserBalance[]
     : T extends ChitEventsRequest
     ? ChitEventsResponse
+    : T extends MarkAchievementsSeen
+    ? void
     : never;

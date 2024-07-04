@@ -90,7 +90,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
-      'streak' : IDL.Nat16,
       'username' : IDL.Text,
       'date_created' : TimestampMillis,
       'is_platform_operator' : IDL.Bool,
@@ -98,12 +97,10 @@ export const idlFactory = ({ IDL }) => {
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
-      'next_daily_claim' : TimestampMillis,
       'user_id' : UserId,
       'display_name' : IDL.Opt(IDL.Text),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'moderation_flags_enabled' : IDL.Nat32,
-      'chit_balance' : IDL.Int32,
       'is_suspected_bot' : IDL.Bool,
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'suspension_details' : IDL.Opt(SuspensionDetails),
@@ -359,17 +356,14 @@ export const idlFactory = ({ IDL }) => {
     'volatile' : IDL.Opt(UserSummaryVolatile),
   });
   const CurrentUserSummary = IDL.Record({
-    'streak' : IDL.Nat16,
     'username' : IDL.Text,
     'is_platform_operator' : IDL.Bool,
     'diamond_membership_status' : DiamondMembershipStatusFull,
-    'next_daily_claim' : TimestampMillis,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'moderation_flags_enabled' : IDL.Nat32,
-    'chit_balance' : IDL.Int32,
     'is_suspected_bot' : IDL.Bool,
     'suspension_details' : IDL.Opt(SuspensionDetails),
     'is_platform_moderator' : IDL.Bool,

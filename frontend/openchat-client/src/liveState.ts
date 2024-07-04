@@ -18,6 +18,7 @@ import type {
     VersionedRules,
     CreatedUser,
     DiamondMembershipStatus,
+    ChitState,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -60,7 +61,12 @@ import {
     selectedCommunity,
     currentCommunityRules,
 } from "./stores/community";
-import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
+import {
+    type GlobalState,
+    chatListScopeStore,
+    globalStateStore,
+    chitStateStore,
+} from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { locale } from "svelte-i18n";
@@ -121,8 +127,10 @@ export class LiveState {
     locale!: string;
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
+    chitState!: ChitState;
 
     constructor() {
+        chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
         anonUser.subscribe((anon) => (this.anonUser = anon));

@@ -18,10 +18,10 @@ import type {
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
     DiamondMembershipFees,
-    ClaimDailyChitResponse,
     ChitUserBalance,
     UsersApiResponse,
     UserSummaryUpdate,
+    ChitState,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -44,7 +44,6 @@ import {
     userRegistrationCanisterResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
-    claimDailyChitResponse,
     chitLeaderboardResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
@@ -53,7 +52,6 @@ import {
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedUsers,
-    setChitInfoInCache,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
     setUserDiamondStatusInCache,
@@ -136,7 +134,11 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
+    async getUsers(
+        chitState: ChitState,
+        users: UsersArgs,
+        allowStale: boolean,
+    ): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
@@ -152,6 +154,7 @@ export class UserIndexClient extends CandidService {
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
+            chitState,
             allUsers,
             requestedFromServer,
             apiResponse,
@@ -238,6 +241,7 @@ export class UserIndexClient extends CandidService {
 
     // Merges the cached values into the response
     private mergeGetUsersResponse(
+        chitState: ChitState,
         allUsersRequested: string[],
         requestedFromServer: Set<string>,
         apiResponse: UsersApiResponse,
@@ -299,7 +303,7 @@ export class UserIndexClient extends CandidService {
 
         // let's see if we got the current user back from the server
         if (apiResponse.currentUser !== undefined) {
-            users.push(userSummaryFromCurrentUserSummary(apiResponse.currentUser));
+            users.push(userSummaryFromCurrentUserSummary(chitState, apiResponse.currentUser));
         }
 
         return {
@@ -472,18 +476,6 @@ export class UserIndexClient extends CandidService {
                 }),
             (res) => res.Success.json,
         );
-    }
-
-    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.claim_daily_chit({}),
-            claimDailyChitResponse,
-        ).then((res) => {
-            if (res.kind === "success") {
-                setChitInfoInCache(userId, res.chitBalance, res.streak);
-            }
-            return res;
-        });
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {

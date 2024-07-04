@@ -39,6 +39,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface AddHotGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
   'groups' : Array<ChatId>,
@@ -293,7 +306,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export interface ChitEventsArgs {
   'to' : [] | [TimestampMillis],
@@ -303,6 +316,15 @@ export interface ChitEventsArgs {
 }
 export type ChitEventsResponse = {
     'Success' : { 'total' : number, 'events' : Array<ChitEarned> }
+  };
+export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
+  {
+    'Success' : {
+      'streak' : number,
+      'chit_earned' : number,
+      'chit_balance' : number,
+      'next_claim' : TimestampMillis,
+    }
   };
 export interface CommunitiesInitial {
   'summaries' : Array<UserCanisterCommunitySummary>,
@@ -532,17 +554,14 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
 export interface CurrentUserSummary {
-  'streak' : number,
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
-  'next_daily_claim' : TimestampMillis,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
-  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,
@@ -1240,16 +1259,22 @@ export interface IndexedNotification {
 }
 export type InitialStateResponse = {
     'Success' : {
+      'streak_ends' : TimestampMillis,
+      'streak' : number,
       'pin_number_settings' : [] | [PinNumberSettings],
       'communities' : CommunitiesInitial,
       'blocked_users' : Array<UserId>,
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
+      'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsInitial,
       'avatar_id' : [] | [bigint],
+      'chit_balance' : number,
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
       'suspended' : boolean,
+      'achievements_last_seen' : TimestampMillis,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1296,6 +1321,8 @@ export interface ManageFavouriteChatsArgs {
 }
 export type ManageFavouriteChatsResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface MarkAchievementsSeenArgs { 'last_seen' : TimestampMillis }
+export type MarkAchievementsSeenResponse = { 'Success' : null };
 export interface MarkReadArgs {
   'community_messages_read' : Array<CommunityMessagesRead>,
   'messages_read' : Array<ChatMessagesRead>,
@@ -2260,19 +2287,25 @@ export interface UpdatedRules {
 export interface UpdatesArgs { 'updates_since' : TimestampMillis }
 export type UpdatesResponse = {
     'Success' : {
+      'streak_ends' : TimestampMillis,
+      'streak' : number,
       'pin_number_settings' : { 'NoChange' : null } |
         { 'SetToNone' : null } |
         { 'SetToSome' : PinNumberSettings },
       'communities' : CommunitiesUpdates,
       'username' : [] | [string],
       'blocked_users' : [] | [Array<UserId>],
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
+      'achievements' : Array<ChitEarned>,
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
+      'chit_balance' : number,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : [] | [boolean],
+      'achievements_last_seen' : [] | [TimestampMillis],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -2462,6 +2495,7 @@ export interface _SERVICE {
   >,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'chit_events' : ActorMethod<[ChitEventsArgs], ChitEventsResponse>,
+  'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],
@@ -2501,6 +2535,10 @@ export interface _SERVICE {
   'manage_favourite_chats' : ActorMethod<
     [ManageFavouriteChatsArgs],
     ManageFavouriteChatsResponse
+  >,
+  'mark_achievements_seen' : ActorMethod<
+    [MarkAchievementsSeenArgs],
+    MarkAchievementsSeenResponse
   >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
