@@ -32,7 +32,12 @@ pub(crate) async fn join_community(args: Args) -> Response {
     match mutate_state(|state| join_community_impl(&args, state)) {
         Ok(public_channel_ids) => {
             for c in public_channel_ids {
-                join_channel_synchronously(c, args.principal, args.diamond_membership_expires_at);
+                join_channel_synchronously(
+                    c,
+                    args.principal,
+                    args.diamond_membership_expires_at,
+                    args.unique_person_proof.clone(),
+                );
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
@@ -68,6 +73,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
             user_id: args.user_id,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             this_canister: state.env.canister_id(),
+            unique_person_proof: args.unique_person_proof.clone(),
             verified_credential_args: args
                 .verified_credential_args
                 .as_ref()

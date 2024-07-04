@@ -4,8 +4,8 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
-    VerifiedCredentialGate,
+    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate,
+    UniquePersonProof, UserId, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
@@ -23,6 +23,7 @@ pub struct CheckGateArgs {
     pub user_id: UserId,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
+    pub unique_person_proof: Option<UniquePersonProof>,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
     pub now: TimestampMillis,
 }
@@ -37,9 +38,10 @@ pub struct CheckVerifiedCredentialGateArgs {
 
 pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResult {
     match args.gate {
-        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now).await,
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        AccessGate::UniquePerson => check_unique_person_gate(args.unique_person_proof),
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now),
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
@@ -49,6 +51,9 @@ pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResul
 pub fn check_if_passes_gate_synchronously(args: CheckGateArgs) -> CheckIfPassesGateResult {
     match args.gate {
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        AccessGate::UniquePerson => check_unique_person_gate(args.unique_person_proof),
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now),
         _ => CheckIfPassesGateResult::InternalError("Gate check could not be performed synchronously".to_string()),
     }
 }
@@ -76,7 +81,15 @@ fn check_lifetime_diamond_member_gate(
     }
 }
 
-async fn check_verified_credential_gate(
+fn check_unique_person_gate(proof: Option<UniquePersonProof>) -> CheckIfPassesGateResult {
+    if proof.is_some() {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
+    }
+}
+
+fn check_verified_credential_gate(
     _gate: &VerifiedCredentialGate,
     args: Option<CheckVerifiedCredentialGateArgs>,
     _now: TimestampMillis,

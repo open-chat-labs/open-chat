@@ -1517,6 +1517,7 @@ type DiamondMembershipStatusFull = variant {
 type AccessGate = variant {
     DiamondMember;
     LifetimeDiamondMember;
+    UniquePerson;
     VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
     Payment : PaymentGate;
@@ -1565,6 +1566,7 @@ type TokenBalanceGate = record {
 type GateCheckFailedReason = variant {
     NotDiamondMember;
     NotLifetimeDiamondMember;
+    NoUniquePersonProof;
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
