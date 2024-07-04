@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Fix CHIT leaderboard in post_upgrade ([#5991](https://github.com/open-chat-labs/open-chat/pull/5991))
+
+## [[2.0.1224](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1224-user_index)] - 2024-07-04
+
+### Changed
+
 - Wire up user_index to use synced chit and streak ([#5979](https://github.com/open-chat-labs/open-chat/pull/5979))
 
 ## [[2.0.1221](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1221-user_index)] - 2024-07-03

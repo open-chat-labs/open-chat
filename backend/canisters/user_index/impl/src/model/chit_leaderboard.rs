@@ -16,6 +16,12 @@ pub struct ChitUserBalance {
 const MAX_LEADERS: usize = 50;
 
 impl ChitLeaderboard {
+    pub fn init(&mut self, list: Vec<ChitUserBalance>) {
+        self.list = list;
+        self.list.sort_unstable_by_key(|i| Reverse(i.balance));
+        self.list.truncate(MAX_LEADERS);
+    }
+
     pub fn update_position(&mut self, user_id: UserId, latest_balance: i32) {
         if latest_balance <= 0 {
             self.list.retain(|i| i.user_id != user_id);
