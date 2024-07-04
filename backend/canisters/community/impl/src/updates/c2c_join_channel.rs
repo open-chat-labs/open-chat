@@ -32,6 +32,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             is_bot: args.is_bot,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             verified_credential_args: args.verified_credential_args.clone(),
+            unique_human_proof: args.unique_human_proof.clone(),
         })
         .await
         {

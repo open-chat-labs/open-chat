@@ -1,6 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis, UserId, VerifiedCredentialGateArgs};
+use types::{
+    CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis, UniqueHumanProof, UserId,
+    VerifiedCredentialGateArgs,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,6 +14,7 @@ pub struct Args {
     pub is_bot: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
+    pub unique_human_proof: Option<UniqueHumanProof>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

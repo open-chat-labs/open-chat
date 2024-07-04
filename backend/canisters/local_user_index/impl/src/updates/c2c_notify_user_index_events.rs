@@ -193,5 +193,8 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 })),
             );
         }
+        Event::NotifyUniqueHumanProof(user_id, proof) => {
+            state.data.global_users.insert_unique_human_proof(user_id, proof);
+        }
     }
 }

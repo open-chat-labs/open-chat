@@ -4,7 +4,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
-    SuspensionDuration, TimestampMillis, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile,
+    SuspensionDuration, TimestampMillis, UniqueHumanProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
+    UserSummaryVolatile,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -58,7 +59,9 @@ pub struct User {
     #[serde(rename = "cu", default)]
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", default)]
-    pub lastest_chit_event: TimestampMillis,
+    pub latest_chit_event: TimestampMillis,
+    #[serde(rename = "uh", default, skip_serializing_if = "Option::is_none")]
+    pub unique_human_proof: Option<UniqueHumanProof>,
 }
 
 impl User {
@@ -112,7 +115,8 @@ impl User {
             chit_updated: now,
             streak: 0,
             streak_ends: 0,
-            lastest_chit_event: 0,
+            latest_chit_event: 0,
+            unique_human_proof: None,
         }
     }
 
@@ -223,7 +227,8 @@ impl Default for User {
             streak: 0,
             streak_ends: 0,
             chit_updated: 0,
-            lastest_chit_event: 0,
+            latest_chit_event: 0,
+            unique_human_proof: None,
         }
     }
 }
