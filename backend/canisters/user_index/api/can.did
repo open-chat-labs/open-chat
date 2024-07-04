@@ -104,21 +104,6 @@ type UsersResponse = variant {
     };
 };
 
-type UsersV2Args = record {
-    user_groups : vec record {
-        users : vec UserId;
-        updated_since : TimestampMillis;
-    };
-    users_suspended_since : opt TimestampMillis;
-};
-
-type UsersV2Response = variant {
-    Success : record {
-        users : vec UserSummary;
-        timestamp : TimestampMillis;
-    };
-};
-
 type SearchArgs = record {
     search_term : text;
     max_results : nat8;
@@ -323,16 +308,6 @@ type ReferralStats = record {
     total_users : nat32;
 };
 
-type ClaimDailyChitResponse = variant {
-    Success : record {
-        chit_earned : nat32;
-        chit_balance : int32;
-        streak : nat16;
-        next_claim : TimestampMillis;
-    };
-    AlreadyClaimed : TimestampMillis;
-};
-
 type ChitLeaderboardResponse = variant {
     Success : vec ChitUserBalance;
 };
@@ -409,7 +384,6 @@ service : {
 
     // Gets some users by id
     users : (UsersArgs) -> (UsersResponse) query;
-    users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;
@@ -424,7 +398,6 @@ service : {
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
-    claim_daily_chit : (EmptyArgs) -> (ClaimDailyChitResponse);
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators

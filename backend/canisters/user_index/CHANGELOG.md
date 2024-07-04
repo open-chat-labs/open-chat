@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Wire up user_index to use synced chit and streak ([#5979](https://github.com/open-chat-labs/open-chat/pull/5979))
+
 ## [[2.0.1221](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1221-user_index)] - 2024-07-03
 
 ### Added
