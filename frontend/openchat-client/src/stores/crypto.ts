@@ -7,7 +7,7 @@ import {
     DEFAULT_TOKENS,
     type TokenExchangeRates,
 } from "openchat-shared";
-import { toRecordFiltered } from "../utils/list";
+import { toRecord } from "../utils/list";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -81,50 +81,47 @@ export const enhancedCryptoLookup = derived(
             };
         });
 
-        return toRecordFiltered(
-            accounts,
-            (a) => a.ledger,
-            (a) => a,
-            (a) => a.enabled || !a.zero,
-        );
+        return toRecord(accounts, (a) => a.ledger);
     },
 );
 
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
-    return Object.values($lookup).sort((a, b) => {
-        // Sort by non-zero balances first
-        // Then by $ balance
-        // Then by whether token is a default
-        // Then by default precedence
-        // Then alphabetically by symbol
+    return Object.values($lookup)
+        .filter((t) => t.enabled || !t.zero)
+        .sort((a, b) => {
+            // Sort by non-zero balances first
+            // Then by $ balance
+            // Then by whether token is a default
+            // Then by default precedence
+            // Then alphabetically by symbol
 
-        const aNonZero = a.balance > 0;
-        const bNonZero = b.balance > 0;
+            const aNonZero = a.balance > 0;
+            const bNonZero = b.balance > 0;
 
-        if (aNonZero !== bNonZero) {
-            return aNonZero ? -1 : 1;
-        }
+            if (aNonZero !== bNonZero) {
+                return aNonZero ? -1 : 1;
+            }
 
-        const aDollarBalance = a.dollarBalance ?? -1;
-        const bDollarBalance = b.dollarBalance ?? -1;
+            const aDollarBalance = a.dollarBalance ?? -1;
+            const bDollarBalance = b.dollarBalance ?? -1;
 
-        if (aDollarBalance < bDollarBalance) {
-            return 1;
-        } else if (aDollarBalance > bDollarBalance) {
-            return -1;
-        } else {
-            const defA = DEFAULT_TOKENS.indexOf(a.symbol);
-            const defB = DEFAULT_TOKENS.indexOf(b.symbol);
-
-            if (defA >= 0 && defB >= 0) {
-                return defA < defB ? 1 : -1;
-            } else if (defA >= 0) {
+            if (aDollarBalance < bDollarBalance) {
                 return 1;
-            } else if (defB >= 0) {
+            } else if (aDollarBalance > bDollarBalance) {
                 return -1;
             } else {
-                return a.symbol.localeCompare(b.symbol);
+                const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+                const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+                if (defA >= 0 && defB >= 0) {
+                    return defA < defB ? 1 : -1;
+                } else if (defA >= 0) {
+                    return 1;
+                } else if (defB >= 0) {
+                    return -1;
+                } else {
+                    return a.symbol.localeCompare(b.symbol);
+                }
             }
-        }
-    });
+        });
 });
