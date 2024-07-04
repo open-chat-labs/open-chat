@@ -23,7 +23,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
@@ -386,17 +386,17 @@ impl Data {
         }
     }
 
-    pub fn chit_bands(&self) -> HashMap<u32, u32> {
-        let mut bands = HashMap::new();
+    pub fn chit_bands(&self, size: u32) -> BTreeMap<u32, u32> {
+        let mut bands = BTreeMap::new();
 
         for chit in self
             .users
             .iter()
             .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
         {
-            let band = (chit / 2500) * 2500;
+            let band = (chit / size) * size;
 
-            bands.entry(band).and_modify(|e| *e += 1).or_insert(1);
+            bands.entry((chit / band) * band).and_modify(|e| *e += 1).or_insert(1);
         }
 
         bands
