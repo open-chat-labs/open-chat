@@ -5140,7 +5140,6 @@ export class OpenChat extends OpenChatAgentWorker {
         initialLoad: boolean,
         chatsResponse: UpdatesResult,
     ): Promise<void> {
-        console.log("ChatsResponse: ", chatsResponse);
         if (initialLoad || chatsResponse.anyUpdates) {
             if (chatsResponse.suspensionChanged !== undefined) {
                 this.dispatchEvent(new UserSuspensionChanged());
