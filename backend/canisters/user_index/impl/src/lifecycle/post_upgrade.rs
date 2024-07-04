@@ -31,7 +31,7 @@ fn post_upgrade(args: Args) {
             .data
             .users
             .iter()
-            .filter(|u| u.chit_balance <= 0)
+            .filter(|u| u.chit_balance > 0)
             .map(|u| ChitUserBalance {
                 user_id: u.user_id,
                 balance: u.chit_balance as u32,
