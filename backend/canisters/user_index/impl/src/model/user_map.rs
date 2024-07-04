@@ -208,7 +208,7 @@ impl UserMap {
 
         user.lastest_chit_event = chit_event_timestamp;
         user.chit_balance = chit_balance;
-        user.streak_v2 = streak;
+        user.streak = streak;
         user.streak_ends = streak_ends;
         user.chit_updated = now;
 

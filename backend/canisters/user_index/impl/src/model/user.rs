@@ -9,77 +9,55 @@ use types::{
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
-    #[serde(rename = "pr", alias = "principal")]
+    #[serde(rename = "pr")]
     pub principal: Principal,
-    #[serde(rename = "id", alias = "user_id")]
+    #[serde(rename = "id")]
     pub user_id: UserId,
-    #[serde(rename = "un", alias = "username")]
+    #[serde(rename = "un")]
     pub username: String,
-    #[serde(rename = "dn", alias = "display_name", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "dn", default, skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
-    #[serde(
-        rename = "dnu",
-        alias = "display_name_upper",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "dnu", default, skip_serializing_if = "Option::is_none")]
     pub display_name_upper: Option<String>,
-    #[serde(rename = "dc", alias = "date_created")]
+    #[serde(rename = "dc")]
     pub date_created: TimestampMillis,
-    #[serde(rename = "du", alias = "date_updated")]
+    #[serde(rename = "du")]
     pub date_updated: TimestampMillis,
-    #[serde(rename = "ct", alias = "cycle_top_ups")]
+    #[serde(rename = "ct")]
     pub cycle_top_ups: Vec<CyclesTopUpInternal>,
-    #[serde(rename = "av", alias = "avatar_id", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "av", default, skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
-    #[serde(rename = "rf", alias = "registration_fee", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rf", default, skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
-    #[serde(rename = "ab", alias = "account_billing")]
+    #[serde(rename = "ab")]
     pub account_billing: AccountBilling,
-    #[serde(rename = "ps", alias = "phone_status", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "ps", default, skip_serializing_if = "is_default")]
     pub phone_status: PhoneStatus,
-    #[serde(rename = "rb", alias = "referred_by", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rb", default, skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    #[serde(rename = "ib", alias = "is_bot", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "ib", default, skip_serializing_if = "is_default")]
     pub is_bot: bool,
-    #[serde(
-        rename = "sd",
-        alias = "suspension_details",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
     pub suspension_details: Option<SuspensionDetails>,
     #[serde(
         rename = "dm",
-        alias = "diamond_membership_details",
         default,
         skip_serializing_if = "DiamondMembershipDetailsInternal::has_never_been_diamond_member"
     )]
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
-    #[serde(
-        rename = "mf",
-        alias = "moderation_flags_enabled",
-        default,
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "mf", default, skip_serializing_if = "is_default")]
     pub moderation_flags_enabled: u32,
-    #[serde(rename = "rm", alias = "reported_messages", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(
-        rename = "c2",
-        alias = "chit_balance",
-        alias = "chit_balance_v2",
-        default,
-        skip_serializing_if = "is_default"
-    )]
+    #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
-    #[serde(rename = "s", alias = "streak_v2", default, skip_serializing_if = "is_default")]
-    pub streak_v2: u16,
-    #[serde(rename = "se", alias = "streak_ends", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
+    pub streak: u16,
+    #[serde(rename = "se", default, skip_serializing_if = "is_default")]
     pub streak_ends: TimestampMillis,
-    #[serde(rename = "cu", alias = "d2", default)]
+    #[serde(rename = "cu", default)]
     pub chit_updated: TimestampMillis,
-    #[serde(rename = "lc", alias = "lastest_chit_event", default)]
+    #[serde(rename = "lc", default)]
     pub lastest_chit_event: TimestampMillis,
 }
 
@@ -132,7 +110,7 @@ impl User {
             reported_messages: Vec::new(),
             chit_balance: 0,
             chit_updated: now,
-            streak_v2: 0,
+            streak: 0,
             streak_ends: 0,
             lastest_chit_event: 0,
         }
@@ -181,7 +159,7 @@ impl User {
 
     pub fn streak(&self, now: TimestampMillis) -> u16 {
         if self.streak_ends > now {
-            self.streak_v2
+            self.streak
         } else {
             0
         }
@@ -242,7 +220,7 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
-            streak_v2: 0,
+            streak: 0,
             streak_ends: 0,
             chit_updated: 0,
             lastest_chit_event: 0,
