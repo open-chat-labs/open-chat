@@ -4,7 +4,7 @@ use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, User, UserId,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
 };
 
 mod lifecycle;
@@ -36,6 +36,7 @@ pub enum Event {
     UserDeleted(UserDeleted),
     SecretKeySet(Vec<u8>),
     ChitEarned(ChitEarned),
+    NotifyUniqueHumanProof(UserId, UniquePersonProof),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -162,6 +163,7 @@ pub struct GlobalUser {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    pub unique_person_proof: Option<UniquePersonProof>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

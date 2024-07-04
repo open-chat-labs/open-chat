@@ -202,11 +202,11 @@ impl UserMap {
             return false;
         };
 
-        if chit_event_timestamp <= user.lastest_chit_event {
+        if chit_event_timestamp <= user.latest_chit_event {
             return false;
         }
 
-        user.lastest_chit_event = chit_event_timestamp;
+        user.latest_chit_event = chit_event_timestamp;
         user.chit_balance = chit_balance;
         user.streak = streak;
         user.streak_ends = streak_ends;
