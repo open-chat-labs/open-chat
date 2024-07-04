@@ -23,7 +23,7 @@
     });
 
     function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
-        qs += "&u=" + ev.detail.value;
+        qs += "&c=" + ev.detail.value;
 
         busy = true;
 
