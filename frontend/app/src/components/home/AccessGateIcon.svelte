@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -18,6 +19,7 @@
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
     import GoldDiamond from "../icons/GoldDiamond.svelte";
     import BlueDiamond from "../icons/BlueDiamond.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -92,7 +94,7 @@
     {:else if gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <Diamond show={"gold"} />
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
