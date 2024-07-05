@@ -72,15 +72,8 @@ pub struct TokenBalanceGate {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CompositeGate {
-    pub left: Box<AccessGate>,
-    pub right: Box<AccessGate>,
+    pub inner: Vec<AccessGate>,
     pub and: bool,
-}
-
-impl CompositeGate {
-    pub fn synchronous(&self) -> bool {
-        self.left.synchronous() && self.right.synchronous()
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

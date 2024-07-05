@@ -18,6 +18,12 @@ pub enum CheckIfPassesGateResult {
     InternalError(String),
 }
 
+impl CheckIfPassesGateResult {
+    pub fn success(&self) -> bool {
+        matches!(self, CheckIfPassesGateResult::Success)
+    }
+}
+
 #[derive(Clone)]
 pub struct CheckGateArgs {
     pub user_id: UserId,
@@ -44,10 +50,7 @@ pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
-        AccessGate::Composite(g) if g.synchronous() => check_composite_gate_synchronously(g, args),
-        AccessGate::Composite(_) => {
-            CheckIfPassesGateResult::InternalError("Composite gate check could not be performed synchronously".to_string())
-        }
+        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
     }
 }
 
@@ -56,7 +59,7 @@ pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs)
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now),
-        AccessGate::Composite(g) if g.synchronous() => check_composite_gate_synchronously(g, args),
+        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
         _ => CheckIfPassesGateResult::InternalError("Gate check could not be performed synchronously".to_string()),
     }
 }
@@ -132,14 +135,18 @@ fn check_verified_credential_gate(
 }
 
 fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
-    let left_result = check_if_passes_gate_synchronously(*gate.left, args.clone());
-    let left_success = matches!(left_result, CheckIfPassesGateResult::Success);
+    let count = gate.inner.len();
+    for (index, inner) in gate.inner.into_iter().enumerate() {
+        let result = check_if_passes_gate_synchronously(inner, args.clone());
+        let success = result.success();
+        let last = index + 1 == count;
 
-    if (left_success && !gate.and) || (!left_success && gate.and) {
-        return left_result;
+        if (gate.and && !success) || (!gate.and && success) || last {
+            return result;
+        }
     }
 
-    check_if_passes_gate_synchronously(*gate.right, args)
+    CheckIfPassesGateResult::InternalError("This shouldn't be possible".to_string())
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
