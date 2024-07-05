@@ -36,6 +36,8 @@
         "diamondMember": "钻石会员",
         "gate": "门禁",
         "gateCheckFailed": "未满足访问门禁",
+        "lifetimeDiamondGateInfo": "只有终身钻石会员才允许加入",
+        "lifetimeDiamondMember": "终身钻石会员",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minimumBalance": "最低代币余额",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} 神经元支架",
         "tokenPayment": "{token}付款",
         "tokenPaymentInfo": "用户只有使用 {token} 代币支付一定金额才能加入。",
+        "uniquePerson": "独特的人",
+        "uniquePersonInfo": "只有提供唯一身份证明的用户才允许加入",
         "verify": "核实",
         "visibility": "能见度"
     },

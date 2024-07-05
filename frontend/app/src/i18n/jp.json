@@ -36,6 +36,8 @@
         "diamondMember": "ダイヤモンド会員",
         "gate": "アクセスゲート",
         "gateCheckFailed": "アクセスゲートが満たされていません",
+        "lifetimeDiamondGateInfo": "生涯ダイヤモンド会員のみ参加できます",
+        "lifetimeDiamondMember": "生涯ダイヤモンド会員",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
         "minimumBalance": "最小トークン残高",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} ニューロン ホルダー",
         "tokenPayment": "{token} の支払い",
         "tokenPaymentInfo": "ユーザーは、{token} トークンで金額を支払った場合にのみ参加できます。",
+        "uniquePerson": "ユニークな人",
+        "uniquePersonInfo": "固有の人格証明を提出したユーザーのみが参加できます",
         "verify": "確認する",
         "visibility": "アクセス"
     },

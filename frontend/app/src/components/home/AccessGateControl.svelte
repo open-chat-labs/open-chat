@@ -290,9 +290,16 @@
 
             <Legend label={i18nKey("access.minimumBalance")} required />
             <Input maxlength={100} invalid={invalidMinBalance} bind:value={minBalanceText} />
-        {/if}
-        {#if candidate.gate.kind === "diamond_gate"}
+        {:else if candidate.gate.kind === "diamond_gate"}
             <div class="info"><Translatable resourceKey={i18nKey("access.diamondGateInfo")} /></div>
+        {:else if candidate.gate.kind === "lifetime_diamond_gate"}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
+            </div>
+        {:else if candidate.gate.kind === "unique_person_gate"}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
+            </div>
         {:else if isNeuronGate(candidate.gate)}
             <div class="info">
                 <Translatable
