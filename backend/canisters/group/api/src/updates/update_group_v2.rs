@@ -30,6 +30,7 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    AccessGateInvalid,
     NameTaken,
     UserSuspended,
     ChatFrozen,
