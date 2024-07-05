@@ -1,13 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{Empty, Milliseconds};
+use types::{Achievement, Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
@@ -37,6 +37,8 @@ fn post_upgrade(args: Args) {
             ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
         }
     });
+
+    mutate_state(fix_achievements);
 }
 
 fn mark_user_canister_empty() {
@@ -47,5 +49,23 @@ fn mark_user_canister_empty() {
             "c2c_mark_user_canister_empty_msgpack",
             msgpack::serialize_then_unwrap(Empty {}),
         );
+    })
+}
+
+fn fix_achievements(state: &mut RuntimeState) {
+    let now = state.env.now();
+
+    if let Some(diamond_expires) = state.data.diamond_membership_expires_at {
+        if (diamond_expires - now) > (5 * 365 * DAY_IN_MS) {
+            if state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now) {
+                notify_user_index_of_chit();
+            }
+        }
+    }
+}
+
+fn notify_user_index_of_chit() {
+    mutate_state(|state| {
+        state.data.notify_user_index_of_chit(state.env.now());
     })
 }
