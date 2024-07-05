@@ -27,14 +27,14 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
+    if let Some(name) = &args.name {
+        if state.data.channels.is_name_taken(name, Some(args.channel_id)) {
+            return NameTaken;
+        }
+    }
+
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let caller = state.env.caller();
-
-        if let Some(name) = &args.name {
-            if name.to_lowercase() != channel.chat.name.to_lowercase() && state.data.channels.is_name_taken(name) {
-                return NameTaken;
-            }
-        }
 
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
