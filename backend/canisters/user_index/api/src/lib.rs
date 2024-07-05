@@ -21,6 +21,7 @@ pub enum Event {
     JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
+    UserDeleted(Box<UserDeleted>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -67,4 +68,9 @@ pub struct OpenChatBotMessageV2 {
     pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
     pub mentioned: Vec<User>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserDeleted {
+    pub user_id: UserId,
 }

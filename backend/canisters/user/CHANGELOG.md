@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disable notifying about empty users until known empty users deleted ([#5996](https://github.com/open-chat-labs/open-chat/pull/5996))
+- Delete user accounts that are empty and dormant ([#5985](https://github.com/open-chat-labs/open-chat/pull/5985))
 
 ## [[2.0.1222](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1222-user)] - 2024-07-03
 
