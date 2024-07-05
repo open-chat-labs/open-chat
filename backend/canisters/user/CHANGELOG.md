@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix `LifetimeDiamondMembership` achievement ([#5995](https://github.com/open-chat-labs/open-chat/pull/5995))
 - Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
 
+### Changed
+
+- Disable notifying about empty users until known empty users deleted ([#5996](https://github.com/open-chat-labs/open-chat/pull/5996))
+
 ## [[2.0.1222](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1222-user)] - 2024-07-03
 
 ### Changed
