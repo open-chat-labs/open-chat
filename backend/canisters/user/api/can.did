@@ -431,6 +431,7 @@ type CreateGroupResponse = variant {
     NameReserved;
     DescriptionTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     MaxGroupsCreated : nat32;
     NameTaken;
     Throttled;
@@ -496,6 +497,7 @@ type CreateCommunityResponse = variant {
     DescriptionTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
     BannerTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     MaxCommunitiesCreated : nat32;
     NameTaken;
     Throttled;

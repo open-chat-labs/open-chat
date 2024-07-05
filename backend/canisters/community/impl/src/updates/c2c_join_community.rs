@@ -20,7 +20,7 @@ async fn c2c_join_community(args: Args) -> Response {
 
 pub(crate) async fn join_community(args: Args) -> Response {
     match read_state(|state| is_permitted_to_join(&args, state)) {
-        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
@@ -51,7 +51,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
     }
 }
 
-fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<CheckGateArgs>, Response> {
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks
@@ -68,23 +68,26 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
     } else if let Some(limit) = state.data.members.user_limit_reached() {
         Err(MemberLimitReached(limit))
     } else {
-        Ok(state.data.gate.as_ref().map(|g| CheckGateArgs {
-            gate: g.clone(),
-            user_id: args.user_id,
-            diamond_membership_expires_at: args.diamond_membership_expires_at,
-            this_canister: state.env.canister_id(),
-            unique_person_proof: args.unique_person_proof.clone(),
-            verified_credential_args: args
-                .verified_credential_args
-                .as_ref()
-                .map(|vc| CheckVerifiedCredentialGateArgs {
-                    user_ii_principal: vc.user_ii_principal,
-                    credential_jwt: vc.credential_jwt.clone(),
-                    ic_root_key: state.data.ic_root_key.clone(),
-                    ii_canister_id: state.data.internet_identity_canister_id,
-                    ii_origin: vc.ii_origin.clone(),
-                }),
-            now: state.env.now(),
+        Ok(state.data.gate.as_ref().map(|g| {
+            (
+                g.clone(),
+                CheckGateArgs {
+                    user_id: args.user_id,
+                    diamond_membership_expires_at: args.diamond_membership_expires_at,
+                    this_canister: state.env.canister_id(),
+                    unique_person_proof: args.unique_person_proof.clone(),
+                    verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
+                        CheckVerifiedCredentialGateArgs {
+                            user_ii_principal: vc.user_ii_principal,
+                            credential_jwt: vc.credential_jwt.clone(),
+                            ic_root_key: state.data.ic_root_key.clone(),
+                            ii_canister_id: state.data.internet_identity_canister_id,
+                            ii_origin: vc.ii_origin.clone(),
+                        }
+                    }),
+                    now: state.env.now(),
+                },
+            )
         }))
     }
 }
