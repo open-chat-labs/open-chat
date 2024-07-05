@@ -48,6 +48,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 is_bot: true,
                 diamond_membership_expires_at: None,
                 verified_credential_args: None,
+                unique_person_proof: None,
             },
             state,
         )

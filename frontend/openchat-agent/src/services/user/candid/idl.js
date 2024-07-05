@@ -152,9 +152,24 @@ export const idlFactory = ({ IDL }) => {
     'from' : IDL.Opt(TimestampMillis),
     'ascending' : IDL.Bool,
   });
+  const Achievement = IDL.Variant({
+    'JoinedCommunity' : IDL.Null,
+    'JoinedGroup' : IDL.Null,
+    'Streak14' : IDL.Null,
+    'Streak30' : IDL.Null,
+    'UpgradedToDiamond' : IDL.Null,
+    'ReceivedDirectMessage' : IDL.Null,
+    'SetDisplayName' : IDL.Null,
+    'SetBio' : IDL.Null,
+    'Streak3' : IDL.Null,
+    'Streak7' : IDL.Null,
+    'UpgradedToGoldDiamond' : IDL.Null,
+    'SentDirectMessage' : IDL.Null,
+    'SetAvatar' : IDL.Null,
+  });
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
-    'Achievement' : IDL.Text,
+    'Achievement' : Achievement,
     'MemeContestWinner' : IDL.Null,
   });
   const ChitEarned = IDL.Record({
@@ -166,6 +181,16 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({
       'total' : IDL.Nat32,
       'events' : IDL.Vec(ChitEarned),
+    }),
+  });
+  const EmptyArgs = IDL.Record({});
+  const ClaimDailyChitResponse = IDL.Variant({
+    'AlreadyClaimed' : TimestampMillis,
+    'Success' : IDL.Record({
+      'streak' : IDL.Nat16,
+      'chit_earned' : IDL.Nat32,
+      'chit_balance' : IDL.Int32,
+      'next_claim' : TimestampMillis,
     }),
   });
   const ContactsArgs = IDL.Record({});
@@ -1043,7 +1068,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
-  const EmptyArgs = IDL.Record({});
   const GetBtcAddressResponse = IDL.Variant({
     'Success' : IDL.Text,
     'InternalError' : IDL.Text,
@@ -1226,16 +1250,22 @@ export const idlFactory = ({ IDL }) => {
   });
   const InitialStateResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'streak_ends' : TimestampMillis,
+      'streak' : IDL.Nat16,
       'pin_number_settings' : IDL.Opt(PinNumberSettings),
       'communities' : CommunitiesInitial,
       'blocked_users' : IDL.Vec(UserId),
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
+      'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsInitial,
       'avatar_id' : IDL.Opt(IDL.Nat),
+      'chit_balance' : IDL.Int32,
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
       'local_user_index_canister_id' : CanisterId,
       'suspended' : IDL.Bool,
+      'achievements_last_seen' : TimestampMillis,
     }),
   });
   const JoinVideoCallArgs = IDL.Record({
@@ -1284,6 +1314,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const MarkAchievementsSeenArgs = IDL.Record({
+    'last_seen' : TimestampMillis,
+  });
+  const MarkAchievementsSeenResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
@@ -1863,6 +1897,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'streak_ends' : TimestampMillis,
+      'streak' : IDL.Nat16,
       'pin_number_settings' : IDL.Variant({
         'NoChange' : IDL.Null,
         'SetToNone' : IDL.Null,
@@ -1871,13 +1907,17 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesUpdates,
       'username' : IDL.Opt(IDL.Text),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
+      'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
+      'achievements' : IDL.Vec(ChitEarned),
       'group_chats' : GroupChatsUpdates,
       'avatar_id' : DocumentIdUpdate,
+      'chit_balance' : IDL.Int32,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
       'suspended' : IDL.Opt(IDL.Bool),
+      'achievements_last_seen' : IDL.Opt(TimestampMillis),
     }),
     'SuccessNoUpdates' : IDL.Null,
   });
@@ -1928,6 +1968,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'chit_events' : IDL.Func([ChitEventsArgs], [ChitEventsResponse], ['query']),
+    'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_community' : IDL.Func(
         [CreateCommunityArgs],
@@ -2000,6 +2041,11 @@ export const idlFactory = ({ IDL }) => {
     'manage_favourite_chats' : IDL.Func(
         [ManageFavouriteChatsArgs],
         [ManageFavouriteChatsResponse],
+        [],
+      ),
+    'mark_achievements_seen' : IDL.Func(
+        [MarkAchievementsSeenArgs],
+        [MarkAchievementsSeenResponse],
         [],
       ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),

@@ -5,7 +5,7 @@ use event_store_producer::EventBuilder;
 use ic_cdk::update;
 use serde::Serialize;
 use types::{Achievement, ChitEarned, ChitEarnedReason, Timestamped, UserId};
-use user_index_canister::claim_daily_chit::{Response::*, *};
+use user_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 
 #[update(guard = "caller_is_owner")]

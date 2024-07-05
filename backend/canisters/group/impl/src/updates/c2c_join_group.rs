@@ -50,6 +50,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                     user_id: args.user_id,
                     diamond_membership_expires_at: args.diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),
+                    unique_person_proof: args.unique_person_proof.clone(),
                     verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
                         CheckVerifiedCredentialGateArgs {
                             user_ii_principal: vc.user_ii_principal,

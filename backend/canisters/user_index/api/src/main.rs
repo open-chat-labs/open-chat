@@ -18,13 +18,11 @@ fn main() {
     generate_candid_method!(user_index, user, query);
     generate_candid_method!(user_index, user_registration_canister, query);
     generate_candid_method!(user_index, users, query);
-    generate_candid_method!(user_index, users_v2, query);
 
     generate_candid_method!(user_index, add_platform_moderator, update);
     generate_candid_method!(user_index, add_platform_operator, update);
     generate_candid_method!(user_index, add_referral_codes, update);
     generate_candid_method!(user_index, assign_platform_moderators_group, update);
-    generate_candid_method!(user_index, claim_daily_chit, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);

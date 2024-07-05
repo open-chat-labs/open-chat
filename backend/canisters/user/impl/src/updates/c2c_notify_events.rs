@@ -84,7 +84,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             let mut awarded = state.data.award_achievement(Achievement::UpgradedToDiamond, now);
 
             if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
-                awarded = awarded || state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now);
+                awarded |= state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now);
             }
 
             if awarded {

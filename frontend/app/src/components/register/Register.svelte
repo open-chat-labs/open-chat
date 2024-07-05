@@ -100,9 +100,6 @@
                     isSuspectedBot: false,
                     diamondStatus: { kind: "inactive" },
                     moderationFlagsEnabled: 0,
-                    chitBalance: 0,
-                    streak: 0,
-                    nextDailyChitClaim: 0n,
                     updated: 0n,
                     isBot: false,
                 };

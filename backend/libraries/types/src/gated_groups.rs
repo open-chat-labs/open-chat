@@ -10,6 +10,7 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
+    UniquePerson,
     VerifiedCredential(VerifiedCredentialGate),
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
@@ -38,6 +39,7 @@ impl AccessGate {
         match self {
             AccessGate::DiamondMember => "diamond",
             AccessGate::LifetimeDiamondMember => "lifetime_diamond",
+            AccessGate::UniquePerson => "unique_person",
             AccessGate::VerifiedCredential(_) => "verified_credential",
             AccessGate::SnsNeuron(_) => "sns_neuron",
             AccessGate::Payment(_) => "payment",
@@ -92,6 +94,7 @@ pub struct CompositeGate {
 pub enum GateCheckFailedReason {
     NotDiamondMember,
     NotLifetimeDiamondMember,
+    NoUniquePersonProof,
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,

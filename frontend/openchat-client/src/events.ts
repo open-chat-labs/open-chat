@@ -1,5 +1,6 @@
 import type {
     ChatIdentifier,
+    ChitEarned,
     EventWrapper,
     Message,
     MessageContext,
@@ -153,6 +154,14 @@ export class UserLoggedIn extends CustomEvent<string> {
     constructor(userId: string) {
         super("openchat_event", {
             detail: userId,
+        });
+    }
+}
+
+export class ChitEarnedEvent extends CustomEvent<ChitEarned[]> {
+    constructor(earned: ChitEarned[]) {
+        super("openchat_event", {
+            detail: earned,
         });
     }
 }

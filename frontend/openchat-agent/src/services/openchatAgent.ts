@@ -205,6 +205,9 @@ import type {
     VerifiedCredentialArgs,
     ChitEventsRequest,
     ChitEventsResponse,
+    Achievement,
+    ChitEarned,
+    ChitState,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1462,8 +1465,13 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
 
-    async getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
+    async getUser(
+        chitState: ChitState,
+        userId: string,
+        allowStale = false,
+    ): Promise<UserSummary | undefined> {
         const response = await this.getUsers(
+            chitState,
             {
                 userGroups: [
                     {
@@ -1482,8 +1490,8 @@ export class OpenChatAgent extends EventTarget {
         return response.users[0];
     }
 
-    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this._userIndexClient.getUsers(users, allowStale).then((resp) => ({
+    getUsers(chitState: ChitState, users: UsersArgs, allowStale = false): Promise<UsersResponse> {
+        return this._userIndexClient.getUsers(chitState, users, allowStale).then((resp) => ({
             ...resp,
             users: resp.users.map((u) => this.rehydrateUserSummary(u)),
         }));
@@ -1548,10 +1556,15 @@ export class OpenChatAgent extends EventTarget {
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
         let userCanisterLocalUserIndex: string;
+        let achievements: Set<Achievement>;
+        let newAchievements: ChitEarned[];
+        let achievementsLastSeen: bigint;
+        let chitState: ChitState;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
+        const now = BigInt(Date.now());
 
         if (current === undefined) {
             const userResponse = await this.userClient.getInitialState();
@@ -1576,6 +1589,21 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
+            newAchievements = userResponse.achievements ?? [];
+            achievements = new Set<Achievement>(
+                newAchievements.reduce((all, a) => {
+                    if (a.reason.kind === "achievement_unlocked") {
+                        all.push(a.reason.type);
+                    }
+                    return all;
+                }, [] as Achievement[]),
+            );
+            achievementsLastSeen = userResponse.achievementsLastSeen;
+            chitState = {
+                streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                chitBalance: userResponse.chitBalance,
+                nextDailyChitClaim: userResponse.nextDailyClaim,
+            };
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1599,6 +1627,10 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
             pinNumberSettings = current.pinNumberSettings;
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
+            achievementsLastSeen = current.achievementsLastSeen;
+            achievements = current.achievements;
+            newAchievements = [];
+            chitState = current.chitState;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1631,6 +1663,18 @@ export class OpenChatAgent extends EventTarget {
                     pinNumberSettings,
                     userResponse.pinNumberSettings,
                 );
+                achievementsLastSeen = userResponse.achievementsLastSeen ?? achievementsLastSeen;
+                newAchievements = userResponse.achievements ?? [];
+                newAchievements.forEach((a) => {
+                    if (a.reason.kind === "achievement_unlocked") {
+                        achievements.add(a.reason.type);
+                    }
+                });
+                chitState = {
+                    streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                    chitBalance: userResponse.chitBalance,
+                    nextDailyChitClaim: userResponse.nextDailyClaim,
+                };
                 anyUpdates = true;
             }
         }
@@ -1783,6 +1827,9 @@ export class OpenChatAgent extends EventTarget {
             favouriteChats,
             pinNumberSettings,
             userCanisterLocalUserIndex,
+            achievementsLastSeen,
+            achievements,
+            chitState,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -1802,6 +1849,7 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
             suspensionChanged,
+            newAchievements,
         };
     }
 
@@ -1816,6 +1864,7 @@ export class OpenChatAgent extends EventTarget {
                         updatedEvents: new Map(),
                         anyUpdates: false,
                         suspensionChanged: undefined,
+                        newAchievements: [],
                     },
                     isOffline,
                 );
@@ -3397,8 +3446,8 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setPinNumber(currentPin, newPin);
     }
 
-    claimDailyChit(userId: string): Promise<ClaimDailyChitResponse> {
-        return this._userIndexClient.claimDailyChit(userId);
+    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+        return this.userClient.claimDailyChit();
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
@@ -3407,5 +3456,12 @@ export class OpenChatAgent extends EventTarget {
 
     chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
         return this.userClient.chitEvents(req);
+    }
+
+    async markAchievementsSeen(): Promise<void> {
+        const cachedState = await getCachedChats(this.db, this.principal);
+        if (cachedState !== undefined) {
+            return this.userClient.markAchievementsSeen(cachedState.latestUserCanisterUpdates);
+        }
     }
 }

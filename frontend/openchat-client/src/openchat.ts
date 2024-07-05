@@ -203,7 +203,15 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, keepMax, toRecord, toRecord2 } from "./utils/list";
+import {
+    findLast,
+    groupBy,
+    groupWhile,
+    keepMax,
+    partition,
+    toRecord,
+    toRecord2,
+} from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -236,6 +244,7 @@ import type { OpenChatConfig } from "./config";
 import {
     ChatsUpdated,
     ChatUpdated,
+    ChitEarnedEvent,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
@@ -488,6 +497,7 @@ import {
     directVideoCallCounts,
     favouritesVideoCallCounts,
     communityChannelVideoCallCounts,
+    chitStateStore,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -1594,6 +1604,7 @@ export class OpenChat extends OpenChatAgentWorker {
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
     toRecord = toRecord;
+    partition = partition;
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
@@ -4681,7 +4692,12 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         }
 
-        return this.sendRequest({ kind: "getUsers", users: { userGroups }, allowStale })
+        return this.sendRequest({
+            kind: "getUsers",
+            chitState: this._liveState.chitState,
+            users: { userGroups },
+            allowStale,
+        })
             .then((resp) => {
                 userStore.addMany(resp.users);
                 if (resp.serverTimestamp !== undefined) {
@@ -4703,7 +4719,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.sendRequest({ kind: "getUser", userId, allowStale })
+        return this.sendRequest({
+            kind: "getUser",
+            chitState: this._liveState.chitState,
+            userId,
+            allowStale,
+        })
             .then((resp) => {
                 if (resp !== undefined) {
                     userStore.add(resp);
@@ -5206,6 +5227,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     community: chatsResponse.state.pinnedChannels,
                     none: [],
                 },
+                chatsResponse.state.achievements,
+                chatsResponse.state.chitState,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -5263,6 +5286,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.dispatchEvent(new ChatsUpdated());
 
+            if (chatsResponse.newAchievements.length > 0) {
+                const filtered = chatsResponse.newAchievements.filter(
+                    (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
+                );
+                if (filtered.length > 0) {
+                    this.dispatchEvent(new ChitEarnedEvent(filtered));
+                }
+            }
+
             if (initialLoad) {
                 this.startExchangeRatePoller();
                 if (!this._liveState.anonUser) {
@@ -5288,7 +5320,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe(async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
-                        initialLoad,
+                        !this._liveState.chatsInitialised,
                         resp as UpdatesResult,
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
@@ -6315,6 +6347,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return resp;
     }
 
+    markAchievementsSeen() {
+        this.sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
+            console.error("markAchievementsSeen", err);
+        });
+    }
+
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
         const signInWithEmailCanister = this.config.signInWithEmailCanister;
 
@@ -6940,22 +6978,21 @@ export class OpenChat extends OpenChatAgentWorker {
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = this._liveState.user.userId;
 
-        return this.sendRequest({ kind: "claimDailyChit", userId }).then((resp) => {
+        return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {
-                this.user.update((user) => ({
-                    ...user,
+                this.chitStateStore.set({
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
-                }));
+                });
                 this.overwriteUserInStore(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
                 }));
             } else if (resp.kind === "already_claimed") {
-                this.user.update((user) => ({
-                    ...user,
+                this.chitStateStore.update((state) => ({
+                    ...state,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 }));
             }
@@ -7067,6 +7104,7 @@ export class OpenChat extends OpenChatAgentWorker {
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
+    chitStateStore = chitStateStore;
     unreadGroupCounts = unreadGroupCounts;
     groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;

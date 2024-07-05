@@ -1,4 +1,4 @@
-import type { MultiUserChat, PinNumberFailures } from "../chat";
+import type { ChitState, MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
 import type {
     Failure,
@@ -53,20 +53,24 @@ export function mergeUserSummaryWithUpdates(
     };
 }
 
-export function userSummaryFromCurrentUserSummary(current: CurrentUserSummary): UserSummary {
+// problem - we can no longer create a UserSummary from a CurrentUserSummary
+export function userSummaryFromCurrentUserSummary(
+    chitState: ChitState,
+    currentSummary: CurrentUserSummary,
+): UserSummary {
     return {
-        kind: current.isBot ? "bot" : "user",
-        userId: current.userId,
-        username: current.username,
-        displayName: current.displayName,
-        updated: current.updated,
-        suspended: current.suspensionDetails !== undefined,
-        diamondStatus: current.diamondStatus.kind,
-        chitBalance: current.chitBalance,
-        streak: current.streak,
-        blobReference: current.blobReference,
-        blobData: current.blobData,
-        blobUrl: current.blobUrl,
+        kind: currentSummary.isBot ? "bot" : "user",
+        userId: currentSummary.userId,
+        username: currentSummary.username,
+        displayName: currentSummary.displayName,
+        updated: currentSummary.updated,
+        suspended: currentSummary.suspensionDetails !== undefined,
+        diamondStatus: currentSummary.diamondStatus.kind,
+        chitBalance: chitState.chitBalance,
+        streak: chitState.streak,
+        blobReference: currentSummary.blobReference,
+        blobData: currentSummary.blobData,
+        blobUrl: currentSummary.blobUrl,
     };
 }
 
@@ -209,16 +213,13 @@ export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
 type CurrentUserCommon = DataContent & {
-    streak: number;
     username: string;
     isPlatformOperator: boolean;
     diamondStatus: DiamondMembershipStatus;
-    nextDailyChitClaim: bigint;
     userId: string;
     isBot: boolean;
     displayName: string | undefined;
     moderationFlagsEnabled: number;
-    chitBalance: number;
     isSuspectedBot: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isPlatformModerator: boolean;
@@ -252,9 +253,6 @@ export function anonymousUser(): CreatedUser {
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
-        chitBalance: 0,
-        streak: 0,
-        nextDailyChitClaim: 0n,
         isBot: false,
         updated: 0n,
     };
@@ -492,54 +490,4 @@ export type DiamondMembershipFees = {
     threeMonths: bigint;
     oneYear: bigint;
     lifetime: bigint;
-};
-
-export type ClaimDailyChitResponse =
-    | { kind: "already_claimed"; nextDailyChitClaim: bigint }
-    | {
-          kind: "success";
-          streak: number;
-          chitBalance: number;
-          chitEarned: number;
-          nextDailyChitClaim: bigint;
-      };
-
-export type ChitUserBalance = {
-    userId: string;
-    balance: number;
-    username: string;
-};
-
-export type DailyClaim = {
-    kind: "daily_claim";
-};
-
-export type MemeContestWinner = {
-    kind: "meme_contest_winner";
-};
-
-export type AchievementUnlocked = {
-    kind: "achievement_unlocked";
-    text: string;
-};
-
-export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked;
-
-export type ChitEarned = {
-    amount: number;
-    timestamp: bigint;
-    reason: ChitEarnedReason;
-};
-
-export type ChitEventsResponse = {
-    events: ChitEarned[];
-    total: number;
-};
-
-export type ChitEventsRequest = {
-    kind: "getChitEvents";
-    from: bigint;
-    to: bigint;
-    max: number;
-    ascending: boolean;
 };

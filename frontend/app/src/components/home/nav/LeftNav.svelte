@@ -35,6 +35,7 @@
     const dispatch = createEventDispatcher();
     const flipDurationMs = 300;
 
+    $: chitState = client.chitStateStore;
     $: createdUser = client.user;
     $: userStore = client.userStore;
     $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
@@ -54,7 +55,7 @@
     $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
     $: globalState = client.globalStateStore;
-    $: claimChitAvailable = $createdUser.nextDailyChitClaim < $now;
+    $: claimChitAvailable = $chitState.nextDailyChitClaim < $now;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
