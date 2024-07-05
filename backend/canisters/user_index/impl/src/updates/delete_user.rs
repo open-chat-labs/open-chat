@@ -23,7 +23,7 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     state.data.users.delete_user(args.user_id, now);
     state.data.deleted_users.push(DeletedUser {
-        user_id: user.user_id,
+        user_id: args.user_id,
         triggered_by_user: true,
         timestamp: now,
     });
