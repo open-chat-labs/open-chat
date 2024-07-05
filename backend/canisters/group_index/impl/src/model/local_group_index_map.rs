@@ -57,11 +57,19 @@ impl LocalGroupIndexMap {
         false
     }
 
-    pub fn index_for_new_canister(&self) -> Option<CanisterId> {
+    pub fn index_for_new_community(&self) -> Option<CanisterId> {
         self.index_map
             .iter()
             .filter(|(_, v)| !v.full)
-            .min_by_key(|(_, v)| v.group_count + v.community_count)
+            .min_by_key(|(_, v)| v.community_count)
+            .map(|(k, _)| *k)
+    }
+
+    pub fn index_for_new_group(&self) -> Option<CanisterId> {
+        self.index_map
+            .iter()
+            .filter(|(_, v)| !v.full)
+            .min_by_key(|(_, v)| v.group_count)
             .map(|(k, _)| *k)
     }
 
@@ -99,8 +107,8 @@ impl LocalGroupIndex {
         self.wasm_version = wasm_version;
     }
 
-    pub fn mark_full(&mut self) {
-        self.full = true;
+    pub fn set_full(&mut self, full: bool) {
+        self.full = full;
     }
 
     pub fn wasm_version(&self) -> BuildVersion {

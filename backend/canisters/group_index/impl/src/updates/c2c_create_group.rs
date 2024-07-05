@@ -100,7 +100,7 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_canister() {
+    if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_group() {
         Ok(PrepareResult {
             local_group_index_canister,
         })
