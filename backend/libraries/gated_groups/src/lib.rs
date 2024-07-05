@@ -148,6 +148,10 @@ fn check_verified_credential_gate(
 fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
     let count = gate.inner.len();
     for (index, inner) in gate.inner.into_iter().enumerate() {
+        if matches!(inner, AccessGate::Composite(_)) {
+            return CheckIfPassesGateResult::InternalError("Cannot have nested composite gates".to_string());
+        }
+
         let result = check_if_passes_gate_synchronously(inner, args.clone());
         let success = result.success();
         let last = index + 1 == count;
