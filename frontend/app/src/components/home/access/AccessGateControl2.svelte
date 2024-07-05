@@ -3,11 +3,12 @@
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { fade } from "svelte/transition";
-    import AccessGateSummary from "./AccessGateSummary.svelte";
+    import AccessGateSummary from "./AccessGateSummary2.svelte";
     import type { CandidateGroupChat, CommunitySummary } from "openchat-client";
 
     export let candidate: CandidateGroupChat | CommunitySummary;
     export let original: CandidateGroupChat | CommunitySummary;
+    export let valid: boolean;
 </script>
 
 <div transition:fade|local={{ duration: 250 }} class="wrapper">
@@ -17,7 +18,11 @@
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>
         <div class="choose-gate">
-            <AccessGateSummary gate={candidate.gate} />
+            <AccessGateSummary
+                bind:valid
+                level={candidate.level}
+                editable
+                bind:gate={candidate.gate} />
         </div>
     </div>
 </div>

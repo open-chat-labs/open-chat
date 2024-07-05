@@ -1,5 +1,6 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
@@ -24,6 +25,7 @@
     export let position: Position = "top";
     export let align: Alignment = "start";
     export let small = false;
+    export let showNoGate = false;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -67,106 +69,115 @@
     }
 </script>
 
-{#if gate.kind !== "no_gate"}
-    {#if gate.kind === "diamond_gate"}
-        <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <BlueDiamond />
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if gate.kind === "lifetime_diamond_gate"}
-        <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <GoldDiamond />
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if gate.kind === "unique_person_gate"}
-        <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if gate.kind === "credential_gate"}
-        <TooltipWrapper {position} {align}>
-            <div slot="target" class="credential">🔒️</div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <CredentialGatePopup {gate} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if isNeuronGate(gate)}
-        <TooltipWrapper {position} {align}>
-            <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <p>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "access.neuronHolderInfo",
-                                tokenDetails ? { token: tokenDetails.symbol } : undefined,
-                            )} />
-                    </p>
-                    <p class="params">{params}</p>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if isPaymentGate(gate)}
-        <TooltipWrapper {position} {align}>
-            <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <p>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "access.tokenPaymentInfo",
-                                tokenDetails ? { token: tokenDetails.symbol } : undefined,
-                            )} />
-                    </p>
-                    <p class="params">{params}</p>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if isBalanceGate(gate)}
-        <TooltipWrapper {position} {align}>
-            <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <p>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "access.minimumBalanceInfo2",
-                                tokenDetails
-                                    ? {
-                                          token: tokenDetails.symbol,
-                                          n: client.formatTokens(
-                                              gate.minBalance,
-                                              tokenDetails?.decimals ?? 8,
-                                          ),
-                                      }
-                                    : undefined,
-                            )} />
-                    </p>
-                    <p class="params">{params}</p>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {/if}
+{#if gate.kind === "no_gate" && showNoGate}
+    <TooltipWrapper {position} {align}>
+        <div slot="target" class="open">
+            <ShieldLockOpenOutline size={$iconSize} color={"var(--txt)"} />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if gate.kind === "diamond_gate"}
+    <TooltipWrapper {position} {align}>
+        <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+            <BlueDiamond />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if gate.kind === "lifetime_diamond_gate"}
+    <TooltipWrapper {position} {align}>
+        <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+            <GoldDiamond />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if gate.kind === "unique_person_gate"}
+    <TooltipWrapper {position} {align}>
+        <div slot="target" class="unique">
+            <AccountCheck size={$iconSize} color={"var(--txt)"} />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if gate.kind === "credential_gate"}
+    <TooltipWrapper {position} {align}>
+        <div slot="target" class="credential">🔒️</div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <CredentialGatePopup {gate} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if isNeuronGate(gate)}
+    <TooltipWrapper {position} {align}>
+        <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <p>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.neuronHolderInfo",
+                            tokenDetails ? { token: tokenDetails.symbol } : undefined,
+                        )} />
+                </p>
+                <p class="params">{params}</p>
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if isPaymentGate(gate)}
+    <TooltipWrapper {position} {align}>
+        <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <p>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.tokenPaymentInfo",
+                            tokenDetails ? { token: tokenDetails.symbol } : undefined,
+                        )} />
+                </p>
+                <p class="params">{params}</p>
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if isBalanceGate(gate)}
+    <TooltipWrapper {position} {align}>
+        <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <p>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.minimumBalanceInfo2",
+                            tokenDetails
+                                ? {
+                                      token: tokenDetails.symbol,
+                                      n: client.formatTokens(
+                                          gate.minBalance,
+                                          tokenDetails?.decimals ?? 8,
+                                      ),
+                                  }
+                                : undefined,
+                        )} />
+                </p>
+                <p class="params">{params}</p>
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
 {/if}
 
 <style lang="scss">

@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const MessageId = IDL.Nat;
@@ -242,15 +243,21 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'SnsNeuron' : SnsNeuronGate,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
+  AccessGate.fill(
+    IDL.Variant({
+      'UniquePerson' : IDL.Null,
+      'VerifiedCredential' : VerifiedCredentialGate,
+      'SnsNeuron' : SnsNeuronGate,
+      'TokenBalance' : TokenBalanceGate,
+      'Composite' : IDL.Record({
+        'and' : IDL.Bool,
+        'inner' : IDL.Vec(AccessGate),
+      }),
+      'DiamondMember' : IDL.Null,
+      'Payment' : PaymentGate,
+      'LifetimeDiamondMember' : IDL.Null,
+    })
+  );
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -287,6 +294,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'AccessGateInvalid' : IDL.Null,
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateCommunitySuccessResult,
@@ -356,6 +364,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'AccessGateInvalid' : IDL.Null,
     'Throttled' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,

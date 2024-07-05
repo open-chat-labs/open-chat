@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const AccessGate = IDL.Rec();
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
@@ -842,15 +843,21 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'SnsNeuron' : SnsNeuronGate,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
+  AccessGate.fill(
+    IDL.Variant({
+      'UniquePerson' : IDL.Null,
+      'VerifiedCredential' : VerifiedCredentialGate,
+      'SnsNeuron' : SnsNeuronGate,
+      'TokenBalance' : TokenBalanceGate,
+      'Composite' : IDL.Record({
+        'and' : IDL.Bool,
+        'inner' : IDL.Vec(AccessGate),
+      }),
+      'DiamondMember' : IDL.Null,
+      'Payment' : PaymentGate,
+      'LifetimeDiamondMember' : IDL.Null,
+    })
+  );
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
@@ -1611,6 +1618,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'AccessGateInvalid' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,

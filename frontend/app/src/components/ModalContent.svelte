@@ -98,7 +98,7 @@
     {#if !hideHeader}
         <div class="header">
             <h4>
-                <slot name="header" />
+                <slot {onClose} name="header" />
             </h4>
             {#if closeIcon}
                 <span title={$_("close")} class="close" class:rtl={$rtlStore} on:click={onClose}>
@@ -111,12 +111,12 @@
     {/if}
     {#if !hideBody}
         <div class="body" class:fill>
-            <slot name="body" />
+            <slot {onClose} name="body" />
         </div>
     {/if}
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
-            <slot name="footer">
+            <slot {onClose} name="footer">
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>

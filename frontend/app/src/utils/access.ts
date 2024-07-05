@@ -119,21 +119,33 @@ const uniquePersonGate: GateBinding = {
 const neuronGateFolder: GateBinding = {
     label: "access.neuronHolder",
     key: "neuron_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "neuron_gate",
+        governanceCanister: "",
+    },
     enabled: true,
 };
 
 const paymentGateFolder: GateBinding = {
     label: "access.payment",
     key: "payment_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "payment_gate",
+        ledgerCanister: "",
+        amount: 0n,
+        fee: 0n,
+    },
     enabled: true,
 };
 
 const balanceGateFolder: GateBinding = {
     label: "access.minimumBalance",
     key: "balance_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "token_balance_gate",
+        ledgerCanister: "",
+        minBalance: 0n,
+    },
     enabled: true,
 };
 
