@@ -36,6 +36,8 @@
         "diamondMember": "Adhésion Diamant",
         "gate": "Porte d'accès",
         "gateCheckFailed": "Porte d'accès non rencontrée",
+        "lifetimeDiamondGateInfo": "Seuls les utilisateurs disposant d'un abonnement Diamond à vie seront autorisés à rejoindre",
+        "lifetimeDiamondMember": "Adhésion Diamant à vie",
         "minDissolveDelay": "Délai de dissolution min (jours)",
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
         "minimumBalance": "Solde minimum de jetons",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} détenteur de neurones",
         "tokenPayment": "paiement {token}",
         "tokenPaymentInfo": "Les utilisateurs ne peuvent adhérer que s&#39;ils paient un montant en jetons {token}.",
+        "uniquePerson": "Personne unique",
+        "uniquePersonInfo": "Seuls les utilisateurs ayant fourni une preuve de personnalité unique seront autorisés à rejoindre",
         "verify": "Vérifier",
         "visibility": "Accès"
     },

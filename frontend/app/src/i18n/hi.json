@@ -36,6 +36,8 @@
         "diamondMember": "हीरे की सदस्यता",
         "gate": "प्रवेश द्वार",
         "gateCheckFailed": "प्रवेश द्वार नहीं मिला",
+        "lifetimeDiamondGateInfo": "केवल आजीवन डायमंड सदस्यता वाले उपयोगकर्ताओं को ही इसमें शामिल होने की अनुमति होगी",
+        "lifetimeDiamondMember": "आजीवन डायमंड सदस्यता",
         "minDissolveDelay": "न्यूनतम विघटित विलंब (दिन)",
         "minDissolveDelayN": "न्यूनतम विघटन विलंब {n} दिन",
         "minimumBalance": "न्यूनतम टोकन शेष",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} न्यूरॉन धारक",
         "tokenPayment": "{token} भुगतान",
         "tokenPaymentInfo": "उपयोगकर्ता केवल तभी शामिल हो सकते हैं जब वे {token} टोकन में राशि का भुगतान करते हैं।",
+        "uniquePerson": "अद्वितीय व्यक्ति",
+        "uniquePersonInfo": "केवल वे उपयोगकर्ता ही इसमें शामिल हो सकेंगे जिन्होंने अपना विशिष्ट व्यक्तित्व प्रमाण प्रस्तुत किया होगा।",
         "verify": "सत्यापित करें",
         "visibility": "पहुँच"
     },

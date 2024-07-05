@@ -36,6 +36,8 @@
         "diamondMember": "Diamond membership",
         "gate": "Access gate",
         "gateCheckFailed": "Access gate not met",
+        "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
+        "lifetimeDiamondMember": "Lifetime Diamond membership",
         "minDissolveDelay": "Min dissolve delay (days)",
         "minDissolveDelayN": "Min dissolve delay {n} days",
         "minimumBalance": "Minimum token balance",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} neuron holder",
         "tokenPayment": "{token} payment",
         "tokenPaymentInfo": "Users can only join if they pay an amount in {token} tokens.",
+        "uniquePerson": "Unique person",
+        "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
         "verify": "Verify",
         "visibility": "Access"
     },

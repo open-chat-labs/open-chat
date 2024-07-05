@@ -3,11 +3,13 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
+export type AccessGate = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate };
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -240,15 +242,6 @@ export interface ChitUserBalance {
   'balance' : number,
   'user_id' : UserId,
 }
-export type ClaimDailyChitResponse = { 'AlreadyClaimed' : TimestampMillis } |
-  {
-    'Success' : {
-      'streak' : number,
-      'chit_earned' : number,
-      'chit_balance' : number,
-      'next_claim' : TimestampMillis,
-    }
-  };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -617,11 +610,13 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
-export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
@@ -1782,15 +1777,6 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
-export interface UsersV2Args {
-  'user_groups' : Array<
-    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
-  >,
-  'users_suspended_since' : [] | [TimestampMillis],
-}
-export type UsersV2Response = {
-    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
-  };
 export type Value = { 'Int' : bigint } |
   { 'Nat' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
@@ -1869,7 +1855,6 @@ export interface _SERVICE {
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
-  'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<
     [EmptyArgs],
@@ -1941,7 +1926,6 @@ export interface _SERVICE {
     UserRegistrationCanisterResponse
   >,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
-  'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -36,6 +36,8 @@
         "diamondMember": "חברות יהלום",
         "gate": "שער גישה",
         "gateCheckFailed": "שער הגישה לא נפגש",
+        "lifetimeDiamondGateInfo": "רק משתמשים עם חברות Diamond לכל החיים יורשו להצטרף",
+        "lifetimeDiamondMember": "חברות יהלום לכל החיים",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
         "minimumBalance": "יתרה סמלית מינימלית",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "מחזיק נוירון {token}",
         "tokenPayment": "תשלום {token}",
         "tokenPaymentInfo": "משתמשים יכולים להצטרף רק אם הם משלמים סכום באסימונים של {token}.",
+        "uniquePerson": "אדם ייחודי",
+        "uniquePersonInfo": "רק משתמשים שסיפקו הוכחת אישיות ייחודית יורשו להצטרף",
         "verify": "תאשר",
         "visibility": "גִישָׁה"
     },

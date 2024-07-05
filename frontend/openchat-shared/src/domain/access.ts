@@ -5,9 +5,11 @@ export type AccessGate =
     | NeuronGate
     | PaymentGate
     | DiamondGate
+    | LifetimeDiamondGate
     | NftGate
     | CredentialGate
-    | TokenBalanceGate;
+    | TokenBalanceGate
+    | UniquePersonGate;
 
 export type NoGate = { kind: "no_gate" };
 
@@ -69,6 +71,10 @@ export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
 }
 
 export type DiamondGate = { kind: "diamond_gate" };
+
+export type LifetimeDiamondGate = { kind: "lifetime_diamond_gate" };
+
+export type UniquePersonGate = { kind: "unique_person_gate" };
 
 export type AccessControlled = {
     gate: AccessGate;

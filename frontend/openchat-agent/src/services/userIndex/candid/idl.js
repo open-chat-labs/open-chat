@@ -43,15 +43,6 @@ export const idlFactory = ({ IDL }) => {
   const ChitLeaderboardResponse = IDL.Variant({
     'Success' : IDL.Vec(ChitUserBalance),
   });
-  const ClaimDailyChitResponse = IDL.Variant({
-    'AlreadyClaimed' : TimestampMillis,
-    'Success' : IDL.Record({
-      'streak' : IDL.Nat16,
-      'chit_earned' : IDL.Nat32,
-      'chit_balance' : IDL.Int32,
-      'next_claim' : TimestampMillis,
-    }),
-  });
   const DiamondMembershipSubscription = IDL.Variant({
     'OneYear' : IDL.Null,
     'ThreeMonths' : IDL.Null,
@@ -376,21 +367,6 @@ export const idlFactory = ({ IDL }) => {
       'current_user' : IDL.Opt(CurrentUserSummary),
     }),
   });
-  const UsersV2Args = IDL.Record({
-    'user_groups' : IDL.Vec(
-      IDL.Record({
-        'users' : IDL.Vec(UserId),
-        'updated_since' : TimestampMillis,
-      })
-    ),
-    'users_suspended_since' : IDL.Opt(TimestampMillis),
-  });
-  const UsersV2Response = IDL.Variant({
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'users' : IDL.Vec(UserSummary),
-    }),
-  });
   return IDL.Service({
     'add_platform_moderator' : IDL.Func(
         [AddPlatformModeratorArgs],
@@ -422,7 +398,6 @@ export const idlFactory = ({ IDL }) => {
         [ChitLeaderboardResponse],
         ['query'],
       ),
-    'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
     'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
     'diamond_membership_fees' : IDL.Func(
         [EmptyArgs],
@@ -525,7 +500,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
-    'users_v2' : IDL.Func([UsersV2Args], [UsersV2Response], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };
