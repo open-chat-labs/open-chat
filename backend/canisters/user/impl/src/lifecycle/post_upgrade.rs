@@ -56,10 +56,10 @@ fn fix_achievements(state: &mut RuntimeState) {
     let now = state.env.now();
 
     if let Some(diamond_expires) = state.data.diamond_membership_expires_at {
-        if (diamond_expires - now) > (5 * 365 * DAY_IN_MS) {
-            if state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now) {
-                ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
-            }
+        let lifetime_diamond = (diamond_expires - now) > (5 * 365 * DAY_IN_MS);
+
+        if lifetime_diamond && state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now) {
+            ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
         }
     }
 }
