@@ -10,7 +10,7 @@ use tracing::info;
 fn mark_local_group_index_full(args: Args) -> Response {
     mutate_state(|state| match state.data.local_index_map.get_mut(&args.canister_id) {
         Some(index) => {
-            index.mark_full();
+            index.mark_full(args.full);
             info!(%args.canister_id, "Local group index canister marked full");
             Success
         }
