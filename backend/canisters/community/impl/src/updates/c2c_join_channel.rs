@@ -81,7 +81,7 @@ pub(crate) fn join_channel_synchronously(
         Ok(Some((gate, args))) => {
             if !matches!(
                 check_if_passes_gate_synchronously(gate, args),
-                CheckIfPassesGateResult::Success
+                Some(CheckIfPassesGateResult::Success)
             ) {
                 return;
             }

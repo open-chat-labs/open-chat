@@ -45,6 +45,20 @@ pub struct CheckVerifiedCredentialGateArgs {
 
 pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
     match gate {
+        AccessGate::Composite(g) => check_composite_gate(g, args).await,
+        g => check_non_composite_gate(g, args).await,
+    }
+}
+
+pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    match gate {
+        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
+        g => check_non_composite_gate_synchronously(g, args),
+    }
+}
+
+async fn check_non_composite_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+    match gate {
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::UniquePerson => check_unique_person_gate(args.unique_person_proof),
@@ -52,18 +66,21 @@ pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
-        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
+        AccessGate::Composite(_) => unreachable!(),
     }
 }
 
-pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+fn check_non_composite_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
     match gate {
-        AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
-        AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
-        AccessGate::UniquePerson => check_unique_person_gate(args.unique_person_proof),
-        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now),
-        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
-        _ => CheckIfPassesGateResult::InternalError("Gate check could not be performed synchronously".to_string()),
+        AccessGate::DiamondMember => Some(check_diamond_member_gate(args.diamond_membership_expires_at, args.now)),
+        AccessGate::LifetimeDiamondMember => Some(check_lifetime_diamond_member_gate(
+            args.diamond_membership_expires_at,
+            args.now,
+        )),
+        AccessGate::UniquePerson => Some(check_unique_person_gate(args.unique_person_proof)),
+        AccessGate::VerifiedCredential(g) => Some(check_verified_credential_gate(&g, args.verified_credential_args, args.now)),
+        AccessGate::Composite(_) => unreachable!(),
+        _ => None,
     }
 }
 
@@ -145,23 +162,58 @@ fn check_verified_credential_gate(
     CheckIfPassesGateResult::Success
 }
 
-fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
+        return result;
+    }
+
     let count = gate.inner.len();
     for (index, inner) in gate.inner.into_iter().enumerate() {
         if matches!(inner, AccessGate::Composite(_)) {
             return CheckIfPassesGateResult::InternalError("Cannot have nested composite gates".to_string());
         }
 
-        let result = check_if_passes_gate_synchronously(inner, args.clone());
-        let success = result.success();
         let last = index + 1 == count;
+        let result = Box::new(check_non_composite_gate(inner, args.clone()).await);
+        let success = result.success();
 
         if (gate.and && !success) || (!gate.and && success) || last {
-            return result;
+            return *result;
         }
     }
 
     CheckIfPassesGateResult::InternalError("This shouldn't be possible".to_string())
+}
+
+fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    let count = gate.inner.len();
+    let mut any_require_async = false;
+    for (index, inner) in gate.inner.into_iter().enumerate() {
+        if matches!(inner, AccessGate::Composite(_)) {
+            return Some(CheckIfPassesGateResult::InternalError(
+                "Cannot have nested composite gates".to_string(),
+            ));
+        }
+
+        let last = index + 1 == count;
+        if let Some(result) = check_non_composite_gate_synchronously(inner, args.clone()) {
+            let success = result.success();
+
+            if (gate.and && !success) || (!gate.and && success) || (last && !any_require_async) {
+                return Some(result);
+            }
+        } else {
+            any_require_async = true;
+        }
+
+        if last && any_require_async {
+            return None;
+        }
+    }
+
+    Some(CheckIfPassesGateResult::InternalError(
+        "This shouldn't be possible".to_string(),
+    ))
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
