@@ -9,7 +9,7 @@ use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
     Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
-    OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
+    OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::text_validation::{
@@ -109,6 +109,12 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
+    }
+
+    if let OptionUpdate::SetToSome(gate) = &args.gate {
+        if !gate.validate() {
+            return Err(AccessGateInvalid);
+        }
     }
 
     let caller = state.env.caller();

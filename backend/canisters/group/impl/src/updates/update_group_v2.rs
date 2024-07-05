@@ -7,7 +7,7 @@ use group_chat_core::UpdateResult;
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use ic_cdk::update;
 use tracing::error;
-use types::{AccessGate, CanisterId, ChatId, Document, UserId};
+use types::{AccessGate, CanisterId, ChatId, Document, OptionUpdate, UserId};
 
 #[update]
 #[trace]
@@ -85,6 +85,11 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if state.data.is_frozen() {
         return Err(ChatFrozen);
+    }
+    if let OptionUpdate::SetToSome(gate) = &args.gate {
+        if !gate.validate() {
+            return Err(AccessGateInvalid);
+        }
     }
 
     let caller = state.env.caller();

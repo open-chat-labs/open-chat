@@ -18,6 +18,15 @@ pub enum AccessGate {
 }
 
 impl AccessGate {
+    pub fn validate(&self) -> bool {
+        if let AccessGate::Composite(g) = self {
+            if g.inner.iter().any(|i| matches!(i, AccessGate::Composite(_))) {
+                return false;
+            }
+        }
+        true
+    }
+
     pub fn is_payment_gate(&self) -> bool {
         matches!(self, AccessGate::Payment(_))
     }
