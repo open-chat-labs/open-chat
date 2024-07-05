@@ -1,13 +1,13 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
+use crate::{mutate_state, DeletedUser, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    DeleteUser, Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, UserId};
@@ -85,6 +85,22 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
+            );
+        }
+        Event::UserDeleted(ev) => {
+            let now = state.env.now();
+            state.data.users.delete_user(ev.user_id, now);
+            state.data.deleted_users.push(DeletedUser {
+                user_id: ev.user_id,
+                triggered_by_user: false,
+                timestamp: now,
+            });
+            state.push_event_to_all_local_user_indexes(
+                LocalUserIndexEvent::DeleteUser(DeleteUser {
+                    user_id: ev.user_id,
+                    triggered_by_user: false,
+                }),
+                Some(caller),
             );
         }
     }

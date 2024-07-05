@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use types::Empty;
@@ -24,7 +25,7 @@ fn delete_user_succeeds() {
         user_index_canister::delete_user::Response::Success
     ));
 
-    env.tick();
+    tick_many(env, 3);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
 
@@ -32,4 +33,9 @@ fn delete_user_succeeds() {
         current_user_response,
         user_index_canister::current_user::Response::UserNotFound
     ));
+
+    let canister_status = env
+        .canister_status(user.canister(), Some(canister_ids.local_user_index))
+        .unwrap();
+    assert!(canister_status.module_hash.is_none());
 }

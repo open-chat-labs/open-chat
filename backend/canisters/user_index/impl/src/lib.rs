@@ -278,6 +278,8 @@ struct Data {
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
+    #[serde(default)]
+    pub deleted_users: Vec<DeletedUser>,
 }
 
 impl Data {
@@ -344,6 +346,7 @@ impl Data {
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
+            deleted_users: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -448,6 +451,7 @@ impl Default for Data {
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
+            deleted_users: Vec::new(),
         }
     }
 }
@@ -534,6 +538,13 @@ pub struct NnsNeuron {
 struct UserRegisteredEventPayload {
     referred: bool,
     is_bot: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DeletedUser {
+    pub user_id: UserId,
+    pub triggered_by_user: bool,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Debug)]
