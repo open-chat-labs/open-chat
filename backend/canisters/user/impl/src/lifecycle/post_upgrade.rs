@@ -12,6 +12,7 @@ use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
+const NOTIFY_IF_EMPTY: bool = false;
 
 #[post_upgrade]
 #[trace]
@@ -28,16 +29,19 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| {
-        if state.data.user_created + SIX_MONTHS < state.env.now()
-            && state.data.direct_chats.len() <= 1
-            && state.data.group_chats.len() == 0
-            && state.data.communities.len() == 0
-        {
-            ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
-        }
-    });
-
+    // Disable this for now until all existing empty users have been deleted
+    if NOTIFY_IF_EMPTY {
+        mutate_state(|state| {
+            if state.data.user_created + SIX_MONTHS < state.env.now()
+                && state.data.direct_chats.len() <= 1
+                && state.data.group_chats.len() == 0
+                && state.data.communities.len() == 0
+            {
+                ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
+            }
+        });
+    }
+    
     mutate_state(fix_achievements);
 }
 
