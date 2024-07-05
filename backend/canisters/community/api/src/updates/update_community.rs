@@ -29,6 +29,7 @@ pub enum Response {
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
     BannerTooBig(FieldTooLongResult),
+    AccessGateInvalid,
     NameTaken,
     InternalError,
     RulesTooLong(FieldTooLongResult),

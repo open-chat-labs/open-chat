@@ -36,6 +36,8 @@
         "diamondMember": "Membresía Diamante",
         "gate": "Puerta de acceso",
         "gateCheckFailed": "Puerta de acceso no cumplida",
+        "lifetimeDiamondGateInfo": "Solo los usuarios con membresía Diamond vitalicia podrán unirse",
+        "lifetimeDiamondMember": "Membresía Diamante de por vida",
         "minDissolveDelay": "Retraso mínimo de disolución (días)",
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minimumBalance": "Saldo mínimo de tokens",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} soporte de neurona",
         "tokenPayment": "pago {token}",
         "tokenPaymentInfo": "Los usuarios solo pueden unirse si pagan una cantidad en tokens {token}.",
+        "uniquePerson": "Persona unica",
+        "uniquePersonInfo": "Solo se permitirá unirse a los usuarios que hayan proporcionado una prueba única de personalidad.",
         "verify": "Verificar",
         "visibility": "Acceso"
     },

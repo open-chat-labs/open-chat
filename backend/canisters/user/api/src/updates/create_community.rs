@@ -29,6 +29,7 @@ pub enum Response {
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
     BannerTooBig(FieldTooLongResult),
+    AccessGateInvalid,
     MaxCommunitiesCreated(u32),
     NameTaken,
     Throttled,

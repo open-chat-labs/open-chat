@@ -36,6 +36,8 @@
         "diamondMember": "Adesione diamante",
         "gate": "Cancello di accesso",
         "gateCheckFailed": "Cancello di accesso non rispettato",
+        "lifetimeDiamondGateInfo": "Solo gli utenti con abbonamento Diamond a vita potranno iscriversi",
+        "lifetimeDiamondMember": "Abbonamento Diamond a vita",
         "minDissolveDelay": "Ritardo dissolvenza minimo (giorni)",
         "minDissolveDelayN": "Ritardo dissolvenza minimo {n} giorni",
         "minimumBalance": "Saldo minimo dei gettoni",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "titolare del neurone {token}",
         "tokenPayment": "pagamento {token}",
         "tokenPaymentInfo": "Gli utenti possono iscriversi solo se pagano un importo in token {token}.",
+        "uniquePerson": "Persona unica",
+        "uniquePersonInfo": "Solo gli utenti che hanno fornito una prova univoca della propria personalità potranno partecipare",
         "verify": "Verificare",
         "visibility": "Accesso"
     },

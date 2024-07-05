@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
 - Fix `LifetimeDiamondMembership` achievement ([#5995](https://github.com/open-chat-labs/open-chat/pull/5995))
+- Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
 
 ### Changed
 

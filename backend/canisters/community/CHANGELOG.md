@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
 - Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
+- Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
+
+### Fixed
+
+- Allow changing casing of channel names ([#5999](https://github.com/open-chat-labs/open-chat/pull/5999))
 
 ## [[2.0.1194](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1194-community)] - 2024-06-06
 

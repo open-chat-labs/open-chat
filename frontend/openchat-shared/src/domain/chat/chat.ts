@@ -1736,7 +1736,9 @@ export type GateCheckFailedReason =
     | "min_stake_not_met"
     | "payment_failed"
     | "insufficient_balance"
-    | "failed_verified_credential_check";
+    | "failed_verified_credential_check"
+    | "no_unique_person_proof"
+    | "not_lifetime_diamond";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

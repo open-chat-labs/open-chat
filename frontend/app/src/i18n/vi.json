@@ -36,6 +36,8 @@
         "diamondMember": "thành viên kim cương",
         "gate": "cổng ra vào",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
+        "lifetimeDiamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương trọn đời mới được phép tham gia",
+        "lifetimeDiamondMember": "Thành viên kim cương trọn đời",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
         "minimumBalance": "Số dư mã thông báo tối thiểu",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} người giữ nơ-ron",
         "tokenPayment": "thanh toán {token}",
         "tokenPaymentInfo": "Người dùng chỉ có thể tham gia nếu họ trả một số tiền bằng mã thông báo {token}.",
+        "uniquePerson": "Người độc nhất",
+        "uniquePersonInfo": "Chỉ những người dùng đã cung cấp bằng chứng cá nhân duy nhất mới được phép tham gia",
         "verify": "Xác minh",
         "visibility": "Truy cập"
     },
