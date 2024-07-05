@@ -26,15 +26,16 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| {
-        for user_id in state.data.empty_users.iter().copied() {
-            state.push_event_to_local_user_index(
-                user_id,
-                Event::DeleteUser(DeleteUser {
-                    user_id,
-                    triggered_by_user: false,
-                }),
-            );
-        }
-    })
+    // Enable this code block once Users and LocalUserIndexes have been upgraded
+    // mutate_state(|state| {
+    //     for user_id in state.data.empty_users.iter().copied() {
+    //         state.push_event_to_local_user_index(
+    //             user_id,
+    //             Event::DeleteUser(DeleteUser {
+    //                 user_id,
+    //                 triggered_by_user: false,
+    //             }),
+    //         );
+    //     }
+    // })
 }
