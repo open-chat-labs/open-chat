@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::{client, env, TestEnv};
+use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
