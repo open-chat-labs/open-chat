@@ -13,7 +13,6 @@
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
-    import Diamond from "../icons/Diamond.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
