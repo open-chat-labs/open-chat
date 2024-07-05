@@ -16,6 +16,8 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
+    import GoldDiamond from "../icons/GoldDiamond.svelte";
+    import BlueDiamond from "../icons/BlueDiamond.svelte";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -68,11 +70,33 @@
     {#if gate.kind === "diamond_gate"}
         <TooltipWrapper {position} {align}>
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <Diamond />
+                <BlueDiamond />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "lifetime_diamond_gate"}
+        <TooltipWrapper {position} {align}>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+                <GoldDiamond />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "unique_person_gate"}
+        <TooltipWrapper {position} {align}>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+                <Diamond show={"gold"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>

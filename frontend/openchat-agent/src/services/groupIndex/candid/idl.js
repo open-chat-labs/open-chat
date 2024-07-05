@@ -84,11 +84,13 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
   });
   const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
   });
   const CommunityMatch = IDL.Record({
     'id' : CommunityId,

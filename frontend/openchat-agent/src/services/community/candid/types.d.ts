@@ -24,11 +24,13 @@ export type AcceptP2PSwapResponse = {
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
+export type AccessGate = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate };
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -864,11 +866,13 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
-export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {

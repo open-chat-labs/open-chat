@@ -36,6 +36,8 @@
         "diamondMember": "Діамантове членство",
         "gate": "Під’їздні ворота",
         "gateCheckFailed": "Ворота доступу не зустрічаються",
+        "lifetimeDiamondGateInfo": "Приєднатися зможуть лише користувачі з довічним членством Diamond",
+        "lifetimeDiamondMember": "Довічне Діамантове членство",
         "minDissolveDelay": "Мінімальна затримка розчинення (дні)",
         "minDissolveDelayN": "Мінімальна затримка розчинення {n} днів",
         "minimumBalance": "Мінімальний баланс токенів",
@@ -64,6 +66,8 @@
         "tokenNeuronHolder": "{token} тримач нейрона",
         "tokenPayment": "{token} платіж",
         "tokenPaymentInfo": "Користувачі можуть приєднатися, лише якщо вони сплатять суму в {token} жетонах.",
+        "uniquePerson": "Унікальна людина",
+        "uniquePersonInfo": "Лише користувачі, які надали унікальний доказ особистості, зможуть приєднатися",
         "verify": "Підтвердити",
         "visibility": "Доступ"
     },

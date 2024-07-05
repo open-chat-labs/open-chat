@@ -1654,6 +1654,8 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
+    if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
+    if (domain.kind === "unique_person_gate") return { UniquePerson: null };
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
@@ -1733,6 +1735,16 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("DiamondMember" in candid) {
         return {
             kind: "diamond_gate",
+        };
+    }
+    if ("LifetimeDiamondMember" in candid) {
+        return {
+            kind: "lifetime_diamond_gate",
+        };
+    }
+    if ("UniquePerson" in candid) {
+        return {
+            kind: "unique_person_gate",
         };
     }
     if ("VerifiedCredential" in candid) {
@@ -2090,6 +2102,12 @@ export function threadSyncDetails(candid: ApiGroupCanisterThreadDetails): Thread
 }
 
 export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
+    if ("NoUniquePersonProof" in candid) {
+        return "no_unique_person_proof";
+    }
+    if ("NotLifetimeDiamondMember" in candid) {
+        return "not_lifetime_diamond";
+    }
     if ("NotDiamondMember" in candid) {
         return "not_diamond";
     }

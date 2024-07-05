@@ -23,6 +23,10 @@
             <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
                 <p><Translatable resourceKey={i18nKey("access.diamondMember")} /></p>
+            {:else if gate.kind === "lifetime_diamond_gate"}
+                <p><Translatable resourceKey={i18nKey("access.lifetimeDiamondMember")} /></p>
+            {:else if gate.kind === "unique_person_gate"}
+                <p><Translatable resourceKey={i18nKey("access.uniquePerson")} /></p>
             {:else if isNeuronGate(gate) || gate.kind === "credential_gate" || isPaymentGate(gate) || isBalanceGate(gate)}
                 <AccessGateParameters {gate} />
             {/if}
