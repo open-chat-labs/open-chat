@@ -49,14 +49,17 @@ async fn add_members_to_channel(args: Args) -> Response {
             .users_to_add
             .iter()
             .map(|user_id| {
-                check_if_passes_gate(CheckGateArgs {
-                    gate: gate.clone(),
-                    user_id: *user_id,
-                    diamond_membership_expires_at: diamond_membership_expiry_dates.get(user_id).copied(),
-                    this_canister: prepare_result.this_canister,
-                    verified_credential_args: None,
-                    now: prepare_result.now_nanos,
-                })
+                check_if_passes_gate(
+                    gate.clone(),
+                    CheckGateArgs {
+                        user_id: *user_id,
+                        diamond_membership_expires_at: diamond_membership_expiry_dates.get(user_id).copied(),
+                        this_canister: prepare_result.this_canister,
+                        unique_person_proof: None,
+                        verified_credential_args: None,
+                        now: prepare_result.now_nanos,
+                    },
+                )
             })
             .collect();
 

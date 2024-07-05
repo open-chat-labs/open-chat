@@ -297,17 +297,23 @@ fn suspended_users_returned_from_user_index_users() {
         user_index_canister_id: CanisterId,
         mut expected: Vec<(UserId, bool)>,
     ) {
-        let user_index_canister::users_v2::Response::Success(result) = client::user_index::users_v2(
+        let user_index_canister::users::Response::Success(result) = client::user_index::users(
             env,
             Principal::anonymous(),
             user_index_canister_id,
-            &user_index_canister::users_v2::Args {
+            &user_index_canister::users::Args {
                 user_groups: Vec::new(),
                 users_suspended_since: Some(since),
             },
         );
 
-        let actual: Vec<_> = result.users.into_iter().map(|u| (u.user_id, u.suspended)).sorted().collect();
+        let actual: Vec<_> = result
+            .users
+            .into_iter()
+            .filter_map(|u| u.stable.map(|stable| (u.user_id, stable.suspended)))
+            .sorted()
+            .collect();
+
         expected.sort();
 
         assert_eq!(actual, expected);

@@ -18,10 +18,12 @@ export function getGateBindings(): GateBinding[] {
     return [
         noGate,
         diamondGate,
+        lifetimeDiamondGate,
         neuronGateFolder,
         paymentGateFolder,
         balanceGateFolder,
         credentialGate,
+        uniquePersonGate,
         nftGate,
     ];
 }
@@ -97,6 +99,20 @@ const diamondGate: GateBinding = {
     key: "diamond_gate",
     gate: { kind: "diamond_gate" },
     enabled: true,
+};
+
+const lifetimeDiamondGate: GateBinding = {
+    label: "access.lifetimeDiamondMember",
+    key: "lifetime_diamond_gate",
+    gate: { kind: "lifetime_diamond_gate" },
+    enabled: true,
+};
+
+const uniquePersonGate: GateBinding = {
+    label: "access.uniquePerson",
+    key: "unique_person_gate",
+    gate: { kind: "unique_person_gate" },
+    enabled: false,
 };
 
 const neuronGateFolder: GateBinding = {

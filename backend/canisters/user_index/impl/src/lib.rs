@@ -23,7 +23,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
@@ -170,12 +170,9 @@ impl RuntimeState {
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
                 chit_balance: user.chit_balance,
-                chit_balance_v2: user.chit_balance_v2,
-                streak: user.streak.days(now),
-                streak_v2: user.streak_v2,
+                streak: user.streak(now),
                 streak_ends: user.streak_ends,
-                date_updated_volatile: user.date_updated_volatile,
-                date_updated_volatile_v2: user.chit_updated,
+                chit_updated: user.chit_updated,
             }
         })
     }
@@ -391,6 +388,22 @@ impl Data {
             .await;
         }
     }
+
+    pub fn chit_bands(&self, size: u32) -> BTreeMap<u32, u32> {
+        let mut bands = BTreeMap::new();
+
+        for chit in self
+            .users
+            .iter()
+            .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
+        {
+            let band = (chit / size) * size;
+
+            bands.entry((chit / band) * band).and_modify(|e| *e += 1).or_insert(1);
+        }
+
+        bands
+    }
 }
 
 #[cfg(test)]
@@ -489,12 +502,9 @@ pub struct UserMetrics {
     pub suspension_details: Option<SuspensionDetails>,
     pub moderation_flags_enabled: u32,
     pub chit_balance: i32,
-    pub chit_balance_v2: i32,
+    pub chit_updated: TimestampMillis,
     pub streak: u16,
-    pub streak_v2: u16,
     pub streak_ends: TimestampMillis,
-    pub date_updated_volatile: TimestampMillis,
-    pub date_updated_volatile_v2: TimestampMillis,
 }
 
 #[derive(Serialize, Debug, Default)]

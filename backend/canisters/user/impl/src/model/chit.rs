@@ -52,10 +52,6 @@ impl ChitEarnedEvents {
         (page, self.events.len() as u32)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &ChitEarned> {
-        self.events.iter()
-    }
-
     pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEarned> {
         self.events
             .iter()

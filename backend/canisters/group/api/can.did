@@ -332,6 +332,7 @@ type UpdateGroupV2Response = variant {
     NameReserved;
     DescriptionTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     NameTaken;
     InternalError;
     RulesTooLong : FieldTooLongResult;

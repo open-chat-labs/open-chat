@@ -9,15 +9,26 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
+    LifetimeDiamondMember,
+    UniquePerson,
     VerifiedCredential(VerifiedCredentialGate),
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
     TokenBalance(TokenBalanceGate),
+    Composite(CompositeGate),
 }
 
 impl AccessGate {
-    pub fn synchronous(&self) -> bool {
-        matches!(self, AccessGate::DiamondMember | AccessGate::VerifiedCredential(_))
+    pub fn validate(&self) -> bool {
+        if let AccessGate::Composite(g) = self {
+            if g.inner.is_empty() || g.inner.len() > 10 {
+                return false;
+            }
+            if g.inner.iter().any(|i| matches!(i, AccessGate::Composite(_))) {
+                return false;
+            }
+        }
+        true
     }
 
     pub fn is_payment_gate(&self) -> bool {
@@ -27,10 +38,13 @@ impl AccessGate {
     pub fn gate_type(&self) -> &'static str {
         match self {
             AccessGate::DiamondMember => "diamond",
+            AccessGate::LifetimeDiamondMember => "lifetime_diamond",
+            AccessGate::UniquePerson => "unique_person",
             AccessGate::VerifiedCredential(_) => "verified_credential",
             AccessGate::SnsNeuron(_) => "sns_neuron",
             AccessGate::Payment(_) => "payment",
             AccessGate::TokenBalance(_) => "token_balance",
+            AccessGate::Composite(_) => "composite",
         }
     }
 }
@@ -70,9 +84,17 @@ pub struct TokenBalanceGate {
     pub min_balance: u128,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct CompositeGate {
+    pub inner: Vec<AccessGate>,
+    pub and: bool,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
+    NotLifetimeDiamondMember,
+    NoUniquePersonProof,
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,

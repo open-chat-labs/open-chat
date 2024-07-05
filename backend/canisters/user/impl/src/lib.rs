@@ -18,11 +18,11 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
-use std::cmp::max;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
@@ -34,7 +34,6 @@ use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::streak::Streak;
 use utils::time::{today, tomorrow, MINUTE_IN_MS};
 
 mod crypto;
@@ -370,23 +369,6 @@ impl Data {
             "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
-    }
-
-    pub fn init_streak_and_chit_balance(&mut self, now: TimestampMillis) -> u16 {
-        let mut max_streak: u16 = 0;
-        self.chit_balance = Timestamped::new(0, now);
-
-        for event in self.chit_events.iter() {
-            self.chit_balance = Timestamped::new(self.chit_balance.value + event.amount, now);
-
-            let is_daily_claim = matches!(event.reason, ChitEarnedReason::DailyClaim);
-
-            if is_daily_claim && self.streak.claim(event.timestamp) {
-                max_streak = max(max_streak, self.streak.days(event.timestamp))
-            }
-        }
-
-        max_streak
     }
 }
 

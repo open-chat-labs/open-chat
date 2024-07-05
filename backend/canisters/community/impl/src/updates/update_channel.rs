@@ -21,8 +21,14 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
+    if let OptionUpdate::SetToSome(gate) = &args.gate {
+        if !gate.validate() {
+            return AccessGateInvalid;
+        }
+    }
+
     if let Some(name) = &args.name {
-        if state.data.channels.is_name_taken(name) {
+        if state.data.channels.is_name_taken(name, Some(args.channel_id)) {
             return NameTaken;
         }
     }
