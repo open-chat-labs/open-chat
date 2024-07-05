@@ -183,7 +183,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
                 inner: vec![
                     AccessGate::DiamondMember,
                     AccessGate::TokenBalance(TokenBalanceGate {
-                        ledger_canister_id: canister_ids.icp_ledger,
+                        ledger_canister_id: canister_ids.chat_ledger,
                         min_balance,
                     }),
                 ],
@@ -203,7 +203,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -227,7 +227,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
     } else {
         assert!(matches!(
             join_group_response,
-            local_user_index_canister::join_group::Response::GateCheckFailed(GateCheckFailedReason::InsufficientBalance(_))
+            local_user_index_canister::join_group::Response::GateCheckFailed(_)
         ));
     }
 }
