@@ -20,6 +20,9 @@ pub enum AccessGate {
 impl AccessGate {
     pub fn validate(&self) -> bool {
         if let AccessGate::Composite(g) = self {
+            if g.inner.is_empty() || g.inner.len() > 10 {
+                return false;
+            }
             if g.inner.iter().any(|i| matches!(i, AccessGate::Composite(_))) {
                 return false;
             }
