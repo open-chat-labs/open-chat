@@ -18,14 +18,6 @@ pub enum AccessGate {
 }
 
 impl AccessGate {
-    pub fn synchronous(&self) -> bool {
-        match self {
-            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::VerifiedCredential(_) => true,
-            AccessGate::Composite(c) => c.synchronous(),
-            _ => false,
-        }
-    }
-
     pub fn is_payment_gate(&self) -> bool {
         matches!(self, AccessGate::Payment(_))
     }

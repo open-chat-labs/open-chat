@@ -67,7 +67,7 @@ pub(crate) fn join_channel_synchronously(
 ) {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, diamond_membership_expires_at, None, state)) {
         Ok(None) => {}
-        Ok(Some((gate, args))) if gate.synchronous() => {
+        Ok(Some((gate, args))) => {
             if !matches!(
                 check_if_passes_gate_synchronously(gate, args),
                 CheckIfPassesGateResult::Success
