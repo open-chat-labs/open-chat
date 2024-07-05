@@ -112,7 +112,7 @@ fn create_channel_impl(
             AvatarTooBig(error)
         } else if args.gate.as_ref().map(|g| !g.validate()).unwrap_or_default() {
             AccessGateInvalid
-        } else if state.data.channels.is_name_taken(&args.name) {
+        } else if state.data.channels.is_name_taken(&args.name, None) {
             NameTaken
         } else {
             let now = state.env.now();
