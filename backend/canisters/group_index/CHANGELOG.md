@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Allow platform operators to set LocalGroupIndexes full ([#6000](https://github.com/open-chat-labs/open-chat/pull/6000))
+- Allow platform operators to mark LocalGroupIndexes full ([#6000](https://github.com/open-chat-labs/open-chat/pull/6000))
 
 ## [[2.0.1188](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1188-group_index)] - 2024-06-04
 
