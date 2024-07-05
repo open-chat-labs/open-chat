@@ -8,12 +8,12 @@
         type GateBinding,
         getPaymentGateBindings,
         getBalanceGateBindings,
-    } from "../../utils/access";
+    } from "../../../utils/access";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
-    import Select from "../Select.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import Legend from "../Legend.svelte";
-    import Input from "../Input.svelte";
+    import Select from "../../Select.svelte";
+    import { iconSize } from "../../../stores/iconSize";
+    import Legend from "../../Legend.svelte";
+    import Input from "../../Input.svelte";
     import { fade } from "svelte/transition";
     import {
         type CandidateGroupChat,
@@ -29,9 +29,9 @@
         isBalanceGate,
         type TokenBalanceGate,
     } from "openchat-client";
-    import Markdown from "./Markdown.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

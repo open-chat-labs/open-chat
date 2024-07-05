@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import GroupGateIcon from "./AccessGateIcon.svelte";
+    import GroupGateIcon from "./access/AccessGateIcon.svelte";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import GateCheckFailed from "../AccessGateCheckFailed.svelte";
+    import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
     import Overlay from "../../Overlay.svelte";
     import { getContext, tick } from "svelte";
     import { toastStore } from "../../../stores/toast";

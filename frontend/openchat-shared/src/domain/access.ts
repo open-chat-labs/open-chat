@@ -1,6 +1,8 @@
 import type { Level } from "./structure";
 
-export type AccessGate =
+export type AccessGate = LeafGate | CompositeGate;
+
+export type LeafGate =
     | NoGate
     | NeuronGate
     | PaymentGate
@@ -10,6 +12,12 @@ export type AccessGate =
     | CredentialGate
     | TokenBalanceGate
     | UniquePersonGate;
+
+export type CompositeGate = {
+    kind: "composite_gate";
+    gates: LeafGate[];
+    operator: "and" | "or";
+};
 
 export type NoGate = { kind: "no_gate" };
 

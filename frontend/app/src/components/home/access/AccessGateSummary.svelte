@@ -2,8 +2,8 @@
     import { isNeuronGate, type AccessGate, isPaymentGate, isBalanceGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import AccessGateParameters from "./AccessGateParameters.svelte";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let gate: AccessGate;
     export let showHeader = true;

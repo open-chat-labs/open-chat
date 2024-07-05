@@ -1,8 +1,8 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { CredentialGate } from "openchat-client";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let gate: CredentialGate;
 </script>

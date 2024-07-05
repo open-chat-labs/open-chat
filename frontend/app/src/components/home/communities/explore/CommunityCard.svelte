@@ -11,7 +11,7 @@
     import { AvatarSize, ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
-    import AccessGateIcon from "../../AccessGateIcon.svelte";
+    import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
 

@@ -1,8 +1,8 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { _ } from "svelte-i18n";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import TooltipPopup from "../../TooltipPopup.svelte";
     import {
         type AccessGate,
         isNeuronGate,
@@ -12,13 +12,13 @@
         isBalanceGate,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { Alignment, Position } from "../../utils/alignment";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import type { Alignment, Position } from "../../../utils/alignment";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
-    import GoldDiamond from "../icons/GoldDiamond.svelte";
-    import BlueDiamond from "../icons/BlueDiamond.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import GoldDiamond from "../../icons/GoldDiamond.svelte";
+    import BlueDiamond from "../../icons/BlueDiamond.svelte";
+    import { iconSize } from "../../../stores/iconSize";
 
     export let gate: AccessGate;
     export let position: Position = "top";

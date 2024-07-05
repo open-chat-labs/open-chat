@@ -8,6 +8,7 @@
         "chooseGate": "Choose an access gate",
         "chooseNervousSystem": "Choose nervous system",
         "chooseToken": "Choose token",
+        "compositeGate": "Combined access gate",
         "credential": {
             "addArgument": "Add an argument",
             "argumentName": "Name",

@@ -78,7 +78,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./AccessGateCheckFailed.svelte";
+    import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";

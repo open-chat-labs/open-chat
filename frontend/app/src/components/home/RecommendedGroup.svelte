@@ -16,7 +16,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import AccessGateIcon from "./AccessGateIcon.svelte";
+    import AccessGateIcon from "./access/AccessGateIcon.svelte";
     import page from "page";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";

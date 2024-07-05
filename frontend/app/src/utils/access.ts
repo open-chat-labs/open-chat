@@ -23,6 +23,7 @@ export function getGateBindings(): GateBinding[] {
         paymentGateFolder,
         balanceGateFolder,
         credentialGate,
+        compositeGate,
         uniquePersonGate,
         nftGate,
     ];
@@ -141,6 +142,17 @@ const nftGate: GateBinding = {
     key: "nft_gate",
     gate: { kind: "nft_gate" },
     enabled: false,
+};
+
+const compositeGate: GateBinding = {
+    label: "access.compositeGate",
+    key: "composite_gate",
+    gate: {
+        kind: "composite_gate",
+        gates: [],
+        operator: "and",
+    },
+    enabled: true,
 };
 
 const credentialGate: GateBinding = {

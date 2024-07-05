@@ -7,7 +7,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
-    import AccessGateControl from "./AccessGateControl.svelte";
+    import AccessGateControl from "./access/AccessGateControl2.svelte";
 
     type T = $$Generic;
 
