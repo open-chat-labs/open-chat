@@ -576,14 +576,14 @@
     "logout": "サインアウト",
     "lowBandwidth": "低帯域幅",
     "magicLink": {
-        "closeMessage": "このページを閉じて、もう一度サインインしてください。",
-        "code_invalid": "コードが無効です。",
-        "continueMessage": "このページを閉じて、元のページに戻ってください。",
+        "closeMessage": "このページを閉じて、もう一度サインインしてください",
+        "code_invalid": "コードが無効です",
+        "continueMessage": "このページを閉じて元のページに戻ってください",
         "enterCode": "認証コードを入力してください",
-        "link_expired": "リンクは 5 分間のみ有効で、期限切れになっています。",
-        "link_invalid": "リンクが無効です。",
-        "success": "成功しました。これでサインインできました。",
-        "title": "メールリンクでサインインしています..."
+        "link_expired": "リンクは5分間のみ有効で、期限切れになりました",
+        "link_invalid": "リンクが無効です",
+        "success": "成功しました。サインインしました",
+        "title": "メールリンクでサインイン"
     },
     "makeGroupPrivate": "グループをプライベートにする",
     "makeGroupPrivateFailed": "{level} を非公開にできませんでした",
