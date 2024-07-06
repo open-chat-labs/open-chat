@@ -205,7 +205,11 @@
         <Translatable resourceKey={i18nKey("access.chooseGate")} />
     </div>
     <div class="choose-gate">
-        <Select margin={false} on:change={updateGate} bind:value={selectedGateKey}>
+        <Select
+            disabled={!editable}
+            margin={false}
+            on:change={updateGate}
+            bind:value={selectedGateKey}>
             {#each gateBindings as gate}
                 <option disabled={!gate.enabled} value={gate.key}
                     ><Translatable resourceKey={i18nKey(gate.label)} /></option>
@@ -215,7 +219,11 @@
     {#if selectedGateKey === "neuron_gate_folder"}
         <Legend label={i18nKey("access.chooseNervousSystem")} />
         <div class="choose-gate">
-            <Select margin={false} on:change={updateGate} bind:value={selectedNeuronGateKey}>
+            <Select
+                disabled={!editable}
+                margin={false}
+                on:change={updateGate}
+                bind:value={selectedNeuronGateKey}>
                 {#each neuronGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
                 {/each}
@@ -224,6 +232,7 @@
 
         <Legend label={i18nKey("access.minDissolveDelay")} />
         <Input
+            disabled={!editable}
             maxlength={100}
             placeholder={i18nKey("access.optional")}
             invalid={invalidDissolveDelay}
@@ -231,6 +240,7 @@
 
         <Legend label={i18nKey("access.minStake")} />
         <Input
+            disabled={!editable}
             maxlength={100}
             placeholder={i18nKey("access.optional")}
             invalid={invalidMinStake}
@@ -238,7 +248,11 @@
     {:else if selectedGateKey === "payment_gate_folder"}
         <Legend label={i18nKey("access.chooseToken")} />
         <div class="choose-gate">
-            <Select margin={false} on:change={updateGate} bind:value={selectedPaymentGateKey}>
+            <Select
+                disabled={!editable}
+                margin={false}
+                on:change={updateGate}
+                bind:value={selectedPaymentGateKey}>
                 {#each paymentGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
                 {/each}
@@ -246,11 +260,19 @@
         </div>
 
         <Legend label={i18nKey("access.amount")} required />
-        <Input maxlength={100} invalid={invalidAmount} bind:value={amountText} />
+        <Input
+            disabled={!editable}
+            maxlength={100}
+            invalid={invalidAmount}
+            bind:value={amountText} />
     {:else if selectedGateKey === "balance_gate_folder"}
         <Legend label={i18nKey("access.chooseToken")} />
         <div class="choose-gate">
-            <Select margin={false} on:change={updateGate} bind:value={selectedBalanceGateKey}>
+            <Select
+                disabled={!editable}
+                margin={false}
+                on:change={updateGate}
+                bind:value={selectedBalanceGateKey}>
                 {#each balanceGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
                 {/each}
@@ -258,7 +280,11 @@
         </div>
 
         <Legend label={i18nKey("access.minimumBalance")} required />
-        <Input maxlength={100} invalid={invalidMinBalance} bind:value={minBalanceText} />
+        <Input
+            disabled={!editable}
+            maxlength={100}
+            invalid={invalidMinBalance}
+            bind:value={minBalanceText} />
     {:else if gate.kind === "diamond_gate"}
         <div class="info">
             <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
@@ -289,7 +315,7 @@
         </div>
     {/if}
     {#if gate.kind === "credential_gate"}
-        <CredentialSelector bind:valid={credentialIssuerValid} bind:gate />
+        <CredentialSelector {editable} bind:valid={credentialIssuerValid} bind:gate />
     {/if}
 
     <pre>{JSON.stringify(gate, null, 4)}</pre>

@@ -317,7 +317,10 @@
             <div class="info"><Translatable resourceKey={i18nKey("access.openAccessInfo")} /></div>
         {/if}
         {#if candidate.gate.kind === "credential_gate"}
-            <CredentialSelector bind:valid={credentialIssuerValid} bind:gate={candidate.gate} />
+            <CredentialSelector
+                editable
+                bind:valid={credentialIssuerValid}
+                bind:gate={candidate.gate} />
         {/if}
     </div>
 </div>

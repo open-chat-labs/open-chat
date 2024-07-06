@@ -15,6 +15,7 @@
 
     export let gate: CredentialGate;
     export let valid: boolean;
+    export let editable: boolean;
 
     let selectedCredentialIssuer: Credential;
     let credentialArguments: [string, string][] = [];
@@ -105,6 +106,7 @@
     <Input
         bind:value={selectedCredentialIssuer.credentialName}
         on:change={sync}
+        disabled={!editable}
         invalid={!nameValid}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -115,6 +117,7 @@
         bind:value={selectedCredentialIssuer.issuerCanisterId}
         invalid={!canisterValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerCanisterIdPlaceholder")} />
@@ -124,6 +127,7 @@
         bind:value={selectedCredentialIssuer.issuerOrigin}
         invalid={!originValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerOriginPlaceholder")} />
@@ -133,6 +137,7 @@
         bind:value={selectedCredentialIssuer.credentialType}
         invalid={!typeValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.credentialTypePlaceholder")} />
@@ -145,6 +150,7 @@
                     bind:value={name}
                     invalid={!stringValid(name)}
                     on:change={sync}
+                    disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
                     placeholder={i18nKey("access.credential.argumentNamePlaceholder")} />
@@ -155,21 +161,26 @@
                     bind:value
                     invalid={!stringValid(value)}
                     on:change={sync}
+                    disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
                     placeholder={i18nKey("access.credential.argumentValuePlaceholder")} />
             </div>
-            <div on:click={() => deleteArgument(name)} class="delete-icon">
-                <Delete size={$iconSize} color={"var(--icon-txt)"} />
-            </div>
+            {#if editable}
+                <div on:click={() => deleteArgument(name)} class="delete-icon">
+                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
         </div>
     {/each}
 
-    <div class="add">
-        <Button tiny on:click={addArgument}>
-            <Translatable resourceKey={i18nKey("access.credential.addArgument")} />
-        </Button>
-    </div>
+    {#if editable}
+        <div class="add">
+            <Button tiny on:click={addArgument}>
+                <Translatable resourceKey={i18nKey("access.credential.addArgument")} />
+            </Button>
+        </div>
+    {/if}
 {/if}
 
 <!-- <Legend label={i18nKey("access.predefinedCredentialIssuer")} />
