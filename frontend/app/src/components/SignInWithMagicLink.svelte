@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, getContext, createEventDispatcher } from "svelte";
+    import { onMount, getContext, createEventDispatcher, tick } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
@@ -17,9 +17,14 @@
     let message = "magicLink.closeMessage";
     let busy = false;
     let code: string | undefined;
+    let codeRef: HTMLInputElement | undefined;
 
     onMount(() => {
         pageReplace("/home");
+
+        tick().then(() => {
+            codeRef?.focus();
+        });
     });
 
     $: {
@@ -84,6 +89,7 @@
                 {/if}
 
                 <input
+                    bind:this={codeRef}
                     type="text"
                     inputmode="numeric"
                     pattern={"[0-9]{1}"}
