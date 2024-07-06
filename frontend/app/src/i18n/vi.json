@@ -572,14 +572,14 @@
     "logout": "Đăng xuất",
     "lowBandwidth": "Băng thông thấp",
     "magicLink": {
-        "closeMessage": "Vui lòng đóng trang này và thử đăng nhập lại.",
-        "code_invalid": "Mã này không hợp lệ.",
-        "continueMessage": "Vui lòng đóng trang này và tiếp tục trên trang gốc.",
+        "closeMessage": "Vui lòng đóng trang này và thử đăng nhập lại",
+        "code_invalid": "Mã không hợp lệ",
+        "continueMessage": "Vui lòng đóng trang này và tiếp tục trên trang gốc",
         "enterCode": "Nhập mã xác nhận",
-        "link_expired": "Liên kết chỉ có hiệu lực trong 5 phút và hiện đã hết hạn.",
-        "link_invalid": "Liên kết không hợp lệ.",
-        "success": "Thành công! Bây giờ bạn đã đăng nhập.",
-        "title": "Đăng nhập bằng liên kết email..."
+        "link_expired": "Link chỉ có hiệu lực trong 5 phút và hiện đã hết hạn",
+        "link_invalid": "Liên kết không hợp lệ",
+        "success": "Thành công! Bây giờ bạn đã đăng nhập",
+        "title": "Đăng nhập bằng liên kết email"
     },
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
     "makeGroupPrivateFailed": "Không thể đặt {level} ở chế độ riêng tư",

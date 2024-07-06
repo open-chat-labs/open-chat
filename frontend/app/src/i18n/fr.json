@@ -572,14 +572,14 @@
     "logout": "se déconnecter",
     "lowBandwidth": "Bas débit",
     "magicLink": {
-        "closeMessage": "Veuillez fermer cette page et réessayer de vous connecter.",
-        "code_invalid": "Le code n'est pas valide.",
-        "continueMessage": "Veuillez fermer cette page et continuer sur la page d'origine.",
+        "closeMessage": "Veuillez fermer cette page et réessayer de vous connecter",
+        "code_invalid": "Le code n'est pas valide",
+        "continueMessage": "Veuillez fermer cette page et continuer sur la page d'origine",
         "enterCode": "Entrer le code de vérification",
-        "link_expired": "Le lien n'est valable que 5 minutes et a maintenant expiré.",
-        "link_invalid": "Le lien n'est pas valide.",
-        "success": "Succès! Vous êtes maintenant inscrit.",
-        "title": "Connexion avec le lien e-mail..."
+        "link_expired": "Le lien n'est valable que 5 minutes et a maintenant expiré",
+        "link_invalid": "Le lien n'est pas valide",
+        "success": "Succès! Vous êtes maintenant inscrit",
+        "title": "Connectez-vous avec le lien e-mail"
     },
     "makeGroupPrivate": "Rendre le groupe privé",
     "makeGroupPrivateFailed": "Impossible de rendre {level} privé",

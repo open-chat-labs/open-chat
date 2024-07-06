@@ -572,14 +572,14 @@
     "logout": "disconnessione",
     "lowBandwidth": "Bassa larghezza di banda",
     "magicLink": {
-        "closeMessage": "Chiudi questa pagina e prova ad accedere di nuovo.",
-        "code_invalid": "Il codice non è valido.",
-        "continueMessage": "Chiudi questa pagina e continua dalla pagina originale.",
+        "closeMessage": "Chiudi questa pagina e prova ad accedere di nuovo",
+        "code_invalid": "Il codice non è valido",
+        "continueMessage": "Per favore chiudi questa pagina e continua sulla pagina originale",
         "enterCode": "Inserisci il codice di verifica",
-        "link_expired": "Il collegamento è valido solo per 5 minuti e ora è scaduto.",
-        "link_invalid": "Il collegamento non è valido.",
-        "success": "Successo! Ora hai effettuato l'accesso.",
-        "title": "Accesso con collegamento e-mail..."
+        "link_expired": "Il collegamento è valido solo per 5 minuti e ora è scaduto",
+        "link_invalid": "Il collegamento non è valido",
+        "success": "Successo! Ora hai effettuato l'accesso",
+        "title": "Accedi con il collegamento e-mail"
     },
     "makeGroupPrivate": "Rendi il gruppo privato",
     "makeGroupPrivateFailed": "Impossibile rendere privato {level}",
