@@ -22,7 +22,7 @@ impl Streak {
     }
 
     pub fn ends(&self) -> TimestampMillis {
-        Streak::day_to_timestamp(self.end_day + 1)
+        Streak::day_to_timestamp(self.end_day + 2)
     }
 
     pub fn claim(&mut self, now: TimestampMillis) -> bool {

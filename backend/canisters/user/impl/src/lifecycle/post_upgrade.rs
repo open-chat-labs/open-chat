@@ -64,7 +64,13 @@ fn fix_achievements(state: &mut RuntimeState) {
 
         if lifetime_diamond && state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now) {
             ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
+            return;
         }
+    }
+
+    if state.data.streak.days(now) > 0 {
+        // Fix the streak_ends for the user record in the user_index
+        ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
     }
 }
 
