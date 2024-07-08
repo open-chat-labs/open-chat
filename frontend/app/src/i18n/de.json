@@ -576,14 +576,14 @@
     "logout": "Abmelden",
     "lowBandwidth": "Niedrige Bandbreite",
     "magicLink": {
-        "closeMessage": "Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden.",
-        "code_invalid": "Der Code ist ungültig.",
-        "continueMessage": "Bitte schließen Sie diese Seite und fahren Sie auf der Originalseite fort.",
+        "closeMessage": "Bitte schließen Sie diese Seite und versuchen Sie erneut, sich anzumelden",
+        "code_invalid": "Der Code ist ungültig",
+        "continueMessage": "Bitte schließen Sie diese Seite und fahren Sie auf der Originalseite fort",
         "enterCode": "Geben Sie den Bestätigungscode ein",
-        "link_expired": "Der Link ist nur 5 Minuten gültig und jetzt abgelaufen.",
-        "link_invalid": "Der Link ist ungültig.",
+        "link_expired": "Der Link ist nur 5 Minuten gültig und ist nun abgelaufen",
+        "link_invalid": "Der Link ist ungültig",
         "success": "Erfolg! Sie sind jetzt angemeldet.",
-        "title": "Mit E-Mail-Link anmelden …"
+        "title": "Mit E-Mail-Link anmelden"
     },
     "makeGroupPrivate": "Gruppe privat machen",
     "makeGroupPrivateFailed": "{level} konnte nicht privat gemacht werden",
