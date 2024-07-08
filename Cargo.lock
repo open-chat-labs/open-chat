@@ -3905,8 +3905,8 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "magic_links"
-version = "0.11.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
+version = "0.12.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.12.0#ac46795a24d6a0ef7d53f8ac8a2cb3e9d6e19782"
 dependencies = [
  "aes-gcm",
  "clap 4.5.4",
@@ -3919,7 +3919,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sign_in_with_email_canister",
- "utils 0.11.0",
+ "utils 0.12.0",
 ]
 
 [[package]]
@@ -5984,8 +5984,8 @@ dependencies = [
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.11.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
+version = "0.12.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.12.0#ac46795a24d6a0ef7d53f8ac8a2cb3e9d6e19782"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -6628,14 +6628,14 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.11.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
+version = "0.12.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.12.0#ac46795a24d6a0ef7d53f8ac8a2cb3e9d6e19782"
 dependencies = [
  "magic_links",
  "rand 0.8.5",
  "rsa 0.9.6",
  "sign_in_with_email_canister",
- "utils 0.11.0",
+ "utils 0.12.0",
 ]
 
 [[package]]
@@ -7356,8 +7356,8 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "0.11.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.11.0#fc2604444753d3c2f7138e580364d3f7ed35c634"
+version = "0.12.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.12.0#ac46795a24d6a0ef7d53f8ac8a2cb3e9d6e19782"
 dependencies = [
  "email_address",
  "rsa 0.9.6",
