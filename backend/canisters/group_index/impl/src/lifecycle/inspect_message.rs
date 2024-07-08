@@ -17,7 +17,6 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "add_local_group_index_canister"
-        | "mark_local_group_index_full"
         | "reinstall_group"
         | "set_max_concurrent_community_canister_upgrades"
         | "set_max_concurrent_group_canister_upgrades"
