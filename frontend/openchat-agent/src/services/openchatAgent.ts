@@ -1564,7 +1564,6 @@ export class OpenChatAgent extends EventTarget {
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
-        const now = BigInt(Date.now());
 
         if (current === undefined) {
             const userResponse = await this.userClient.getInitialState();
