@@ -45,7 +45,7 @@ export class GroupIndexClient extends CandidService {
         this.groupIndexService = this.createServiceClient<GroupIndexService>(
             idlFactory,
             config.groupIndexCanister,
-            config
+            config,
         );
     }
 
@@ -56,7 +56,7 @@ export class GroupIndexClient extends CandidService {
     activeGroups(
         communityIds: CommunityIdentifier[],
         groupIds: GroupChatIdentifier[],
-        activeSince: bigint
+        activeSince: bigint,
     ): Promise<ActiveGroupsResponse> {
         const args = {
             group_ids: groupIds.map((c) => Principal.fromText(c.groupId)),
@@ -66,7 +66,7 @@ export class GroupIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupIndexService.active_groups(args),
             activeGroupsResponse,
-            args
+            args,
         );
     }
 
@@ -78,7 +78,7 @@ export class GroupIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupIndexService.recommended_groups(args),
             recommendedGroupsResponse,
-            args
+            args,
         );
     }
 
@@ -90,7 +90,7 @@ export class GroupIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupIndexService.search(args),
             searchGroupsResponse,
-            args
+            args,
         );
     }
 
@@ -100,7 +100,7 @@ export class GroupIndexClient extends CandidService {
                 this.groupIndexService.lookup_channel_by_group_id({
                     group_id: Principal.fromText(id.groupId),
                 }),
-            lookupChannelResponse
+            lookupChannelResponse,
         );
     }
 
@@ -109,7 +109,7 @@ export class GroupIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number,
         flags: number,
-        languages: string[]
+        languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
         const args = {
             languages,
@@ -121,7 +121,7 @@ export class GroupIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupIndexService.explore_communities(args),
             exploreCommunitiesResponse,
-            args
+            args,
         );
     }
 
@@ -132,28 +132,28 @@ export class GroupIndexClient extends CandidService {
                 chat_id: Principal.fromText(chatId),
                 reason: apiOptional(identity, reason),
             }),
-            freezeGroupResponse
+            freezeGroupResponse,
         );
     }
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this.handleResponse(
             this.groupIndexService.unfreeze_group({ chat_id: Principal.fromText(chatId) }),
-            unfreezeGroupResponse
+            unfreezeGroupResponse,
         );
     }
 
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
         return this.handleResponse(
             this.groupIndexService.delete_frozen_group({ chat_id: Principal.fromText(chatId) }),
-            deleteFrozenGroupResponse
+            deleteFrozenGroupResponse,
         );
     }
 
     addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
         return this.handleResponse(
             this.groupIndexService.add_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
-            addHotGroupExclusionResponse
+            addHotGroupExclusionResponse,
         );
     }
 
@@ -162,28 +162,44 @@ export class GroupIndexClient extends CandidService {
             this.groupIndexService.remove_hot_group_exclusion({
                 chat_id: Principal.fromText(chatId),
             }),
-            removeHotGroupExclusionResponse
+            removeHotGroupExclusionResponse,
         );
     }
 
-    setCommunityModerationFlags(communityId: string, flags: number): Promise<SetCommunityModerationFlagsResponse> {
+    setCommunityModerationFlags(
+        communityId: string,
+        flags: number,
+    ): Promise<SetCommunityModerationFlagsResponse> {
         return this.handleResponse(
-            this.groupIndexService.set_community_moderation_flags({ community_id: Principal.fromText(communityId), flags }),
-            setCommunityModerationFlagsResponse
+            this.groupIndexService.set_community_moderation_flags({
+                community_id: Principal.fromText(communityId),
+                flags,
+            }),
+            setCommunityModerationFlagsResponse,
         );
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.groupIndexService.set_group_upgrade_concurrency({ value }),
-            setUpgradeConcurrencyResponse
+            setUpgradeConcurrencyResponse,
         );
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.groupIndexService.set_community_upgrade_concurrency({ value }),
-            setUpgradeConcurrencyResponse
+            setUpgradeConcurrencyResponse,
+        );
+    }
+
+    markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
+        return this.handleResponse(
+            this.groupIndexService.mark_local_group_index_full({
+                canister_id: Principal.fromText(canisterId),
+                full,
+            }),
+            (resp) => "Success" in resp,
         );
     }
 }

@@ -1024,6 +1024,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "markLocalGroupIndexFull":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markLocalGroupIndexFull(payload.canisterId, payload.full),
+                );
+                break;
+
             case "setDiamondMembershipFees":
                 executeThenReply(
                     payload,

@@ -201,6 +201,16 @@ export const idlFactory = ({ IDL }) => {
       'community_id' : CommunityId,
     }),
   });
+  const MarkLocalGroupIndexFullArgs = IDL.Record({
+    'full' : IDL.Bool,
+    'canister_id' : CanisterId,
+  });
+  const MarkLocalGroupIndexFullResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'LocalGroupIndexNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const RecommendedGroupsArgs = IDL.Record({
     'count' : IDL.Nat8,
     'exclusions' : IDL.Vec(ChatId),
@@ -782,6 +792,11 @@ export const idlFactory = ({ IDL }) => {
         [LookupChannelByGroupIdArgs],
         [LookupChannelByGroupIdResponse],
         ['query'],
+      ),
+    'mark_local_group_index_full' : IDL.Func(
+        [MarkLocalGroupIndexFullArgs],
+        [MarkLocalGroupIndexFullResponse],
+        [],
       ),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],
