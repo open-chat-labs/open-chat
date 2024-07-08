@@ -1600,7 +1600,8 @@ export class OpenChatAgent extends EventTarget {
             );
             achievementsLastSeen = userResponse.achievementsLastSeen;
             chitState = {
-                streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                streakEnds: userResponse.streakEnds,
+                streak: userResponse.streak,
                 chitBalance: userResponse.chitBalance,
                 nextDailyChitClaim: userResponse.nextDailyClaim,
             };
@@ -1671,7 +1672,8 @@ export class OpenChatAgent extends EventTarget {
                     }
                 });
                 chitState = {
-                    streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                    streakEnds: userResponse.streakEnds,
+                    streak: userResponse.streak,
                     chitBalance: userResponse.chitBalance,
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                 };
