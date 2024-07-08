@@ -198,7 +198,7 @@
                     userId: chatSummary.them.userId,
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
-                    streak: them.streak,
+                    streak: client.getStreak(them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                     username: "@" + them.username,

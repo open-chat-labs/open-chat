@@ -28,7 +28,8 @@
 
     $: chitState = client.chitStateStore;
     $: available = $chitState.nextDailyChitClaim < $now500;
-    $: percent = calculatePercentage($chitState.streak);
+    $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
+    $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
 
     function calculatePercentage(streak: number): number {
@@ -103,7 +104,7 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class:available class="logo" on:click={claim}>
             <FancyLoader loop={busy} />
-            <div class="streak">{$chitState.streak}</div>
+            <div class="streak">{streak}</div>
         </div>
 
         <div class="balance">
@@ -146,16 +147,16 @@
                 </div>
                 <div class="badges">
                     <div class="badge three">
-                        <Streak disabled={$chitState.streak < 3} days={3} />
+                        <Streak disabled={streak < 3} days={3} />
                     </div>
                     <div class="badge seven">
-                        <Streak disabled={$chitState.streak < 7} days={7} />
+                        <Streak disabled={streak < 7} days={7} />
                     </div>
                     <div class="badge fourteen">
-                        <Streak disabled={$chitState.streak < 14} days={14} />
+                        <Streak disabled={streak < 14} days={14} />
                     </div>
                     <div class="badge thirty">
-                        <Streak disabled={$chitState.streak < 30} days={30} />
+                        <Streak disabled={streak < 30} days={30} />
                     </div>
                 </div>
             </div>
