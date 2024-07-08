@@ -62,6 +62,14 @@ export type TokenBalanceGate = {
     minBalance: bigint;
 };
 
+export function isLeafGate(gate: AccessGate): gate is LeafGate {
+    return gate.kind !== "composite_gate";
+}
+
+export function isCompositeGate(gate: AccessGate): gate is CompositeGate {
+    return gate.kind === "composite_gate";
+}
+
 export function isNeuronGate(gate: AccessGate): gate is NeuronGate {
     return gate.kind === "neuron_gate";
 }

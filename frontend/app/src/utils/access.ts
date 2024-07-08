@@ -113,7 +113,7 @@ const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: false,
+    enabled: true,
 };
 
 const neuronGateFolder: GateBinding = {

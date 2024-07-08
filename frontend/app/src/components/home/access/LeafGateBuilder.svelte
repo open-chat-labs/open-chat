@@ -16,13 +16,7 @@
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Select from "../../Select.svelte";
-    import {
-        getBalanceGateBindings,
-        getGateBindings,
-        getNeuronGateBindings,
-        getPaymentGateBindings,
-        type GateBinding,
-    } from "../../../utils/access";
+    import { type GateBinding } from "../../../utils/access";
     import { afterUpdate, getContext, onMount } from "svelte";
     import Legend from "../../Legend.svelte";
     import Input from "../../Input.svelte";
@@ -35,8 +29,12 @@
     export let editable: boolean;
     export let level: Level;
     export let valid: boolean;
+    export let allowNone: boolean;
+    export let neuronGateBindings: GateBinding[];
+    export let paymentGateBindings: GateBinding[];
+    export let balanceGateBindings: GateBinding[];
+    export let gateBindings: GateBinding[];
 
-    let gateBindings: GateBinding[] = getGateBindings();
     let selectedGateKey: string | undefined = undefined;
     let selectedNeuronGateKey: string | undefined = undefined;
     let selectedPaymentGateKey: string | undefined = undefined;
@@ -48,12 +46,6 @@
     let credentialIssuerValid = true;
 
     $: candidateTokenDetails = client.getTokenDetailsForAccessGate(gate);
-    $: nervousSystemLookup = client.nervousSystemLookup;
-    $: cryptoLookup = client.cryptoLookup;
-    $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));
-    $: neuronGateBindings = getNeuronGateBindings($nervousSystemLookup);
-    $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
-    $: balanceGateBindings = getBalanceGateBindings($cryptoLookup);
     $: amount = amountFromText(amountText, candidateTokenDetails);
     $: invalidAmount = amount === undefined || amount < minPayment;
     $: minBalance = amountFromText(minBalanceText, candidateTokenDetails);
@@ -63,6 +55,7 @@
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
     $: {
         valid =
+            !(!allowNone && selectedGateKey === "no_gate") &&
             !(
                 selectedGateKey === "neuron_gate_folder" &&
                 (invalidDissolveDelay || invalidMinStake)
@@ -206,6 +199,7 @@
     </div>
     <div class="choose-gate">
         <Select
+            invalid={!allowNone && selectedGateKey === "no_gate"}
             disabled={!editable}
             margin={false}
             on:change={updateGate}
@@ -317,8 +311,6 @@
     {#if gate.kind === "credential_gate"}
         <CredentialSelector {editable} bind:valid={credentialIssuerValid} bind:gate />
     {/if}
-
-    <pre>{JSON.stringify(gate, null, 4)}</pre>
 </section>
 
 <style lang="scss">

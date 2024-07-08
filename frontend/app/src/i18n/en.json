@@ -1,11 +1,13 @@
 {
     "aboutOpenChat": "About OpenChat",
     "access": {
+        "addGate": "Add gate",
+        "and": "Require all gates",
         "amount": "Amount (tokens)",
         "amountN": "Amount {n} tokens",
         "approvePaymentTitle": "Approve payment",
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
-        "chooseGate": "Choose an access gate",
+        "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
         "chooseToken": "Choose token",
         "compositeGate": "Combined access gate",
@@ -54,6 +56,7 @@
         "openAccess": "None (open access)",
         "openAccessInfo": "There are no special access requirements to join",
         "optional": "Optional",
+        "or": "Require any gate",
         "payAndJoin": "Pay and join",
         "payment": "Payment",
         "paymentApprovalMessage": "In order to join this {level} you are required to pay **{amount}** {token} tokens.",
