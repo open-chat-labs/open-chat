@@ -66,6 +66,7 @@
         "private": "Private",
         "public": "Public",
         "subscriptionComingSoon": "Subscription model coming soon.",
+        "tokenBalance": "Token balance",
         "tokenComingSoon": "{token} (coming soon)",
         "tokenNeuronHolder": "{token} neuron holder",
         "tokenPayment": "{token} payment",

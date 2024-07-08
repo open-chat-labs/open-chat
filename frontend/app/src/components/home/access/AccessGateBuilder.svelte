@@ -18,6 +18,7 @@
     import Select from "../../Select.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import {
+        gateLabel,
         getBalanceGateBindings,
         getGateBindings,
         getNeuronGateBindings,
@@ -37,10 +38,6 @@
     let gateValidity: boolean[] = [];
     let selectedGateIndex: number | undefined = undefined;
     let gateBindings: GateBinding[] = getGateBindings();
-    $: gateBindingsMap = client.toRecord(gateBindings, (b) => b.gate.kind) as Record<
-        AccessGate["kind"],
-        GateBinding
-    >;
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: cryptoLookup = client.cryptoLookup;
     $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));
@@ -83,11 +80,8 @@
     }
 
     function getGateText(gate: AccessGate) {
-        const binding = gateBindingsMap[gate.kind];
-        if (binding) {
-            return i18nKey(binding.label);
-        }
-        return i18nKey("access.unknownGate");
+        const label = gateLabel[gate.kind];
+        return label ? i18nKey(label) : i18nKey("access.unknownGate");
     }
 </script>
 
@@ -107,7 +101,7 @@
                     {level}
                     bind:valid={gateValidity[0]} />
             {:else if isCompositeGate(gate)}
-                {#each gate.gates as subgate, i (subgate.kind)}
+                {#each gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
                     <CollapsibleCard
                         transition={false}
                         open={selectedGateIndex === i}
@@ -136,7 +130,7 @@
         </div>
 
         <div let:onClose slot="footer">
-            <div class="footer">
+            <div class="access-gate-builder footer">
                 {#if isCompositeGate(gate)}
                     <div class="operator">
                         <Select margin={false} bind:value={gate.operator}>
@@ -168,6 +162,10 @@
     :global(.access-gate-builder .card .body) {
         padding: $sp4;
         background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    :global(.access-gate-builder.footer .button-group) {
+        flex: auto;
     }
 
     .operator {

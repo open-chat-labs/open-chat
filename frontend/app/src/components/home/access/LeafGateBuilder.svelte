@@ -16,7 +16,12 @@
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Select from "../../Select.svelte";
-    import { type GateBinding } from "../../../utils/access";
+    import {
+        balanceGateFolder,
+        neuronGateFolder,
+        paymentGateFolder,
+        type GateBinding,
+    } from "../../../utils/access";
     import { afterUpdate, getContext, onMount } from "svelte";
     import Legend from "../../Legend.svelte";
     import Input from "../../Input.svelte";
@@ -126,15 +131,24 @@
 
         if (selectedGateKey === "neuron_gate_folder") {
             selectedGate = neuronGateBindings.find((g) => g.key === selectedNeuronGateKey);
+            if (selectedGate === undefined) {
+                selectedGate = neuronGateFolder;
+            }
         } else if (selectedGateKey === "payment_gate_folder") {
             selectedGate = paymentGateBindings.find((g) => g.key === selectedPaymentGateKey);
+            if (selectedGate === undefined) {
+                selectedGate = paymentGateFolder;
+            }
         } else if (selectedGateKey === "balance_gate_folder") {
             selectedGate = balanceGateBindings.find((g) => g.key === selectedBalanceGateKey);
+            if (selectedGate === undefined) {
+                selectedGate = balanceGateFolder;
+            }
         } else {
             selectedGate = gateBindings.find((g) => g.key === selectedGateKey);
         }
 
-        gate = (selectedGate?.gate as AccessGate) ?? { kind: "no_gate" };
+        gate = selectedGate?.gate ?? { kind: "no_gate" };
         minDissolveDelay = "";
         minStake = "";
     }

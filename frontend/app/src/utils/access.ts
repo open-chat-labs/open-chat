@@ -14,6 +14,19 @@ export type GateBinding = {
     gate: AccessGate;
 };
 
+export const gateLabel: Record<AccessGate["kind"], string> = {
+    no_gate: "access.openAccess",
+    composite_gate: "access.compositeGate",
+    credential_gate: "access.credential.label",
+    diamond_gate: "access.diamondMember",
+    lifetime_diamond_gate: "access.lifetimeDiamondMember",
+    neuron_gate: "access.neuronHolder",
+    nft_gate: "access.nftHolder",
+    payment_gate: "access.payment",
+    token_balance_gate: "access.tokenBalance",
+    unique_person_gate: "access.uniquePerson",
+};
+
 export function getGateBindings(): GateBinding[] {
     return [
         noGate,
@@ -23,7 +36,6 @@ export function getGateBindings(): GateBinding[] {
         paymentGateFolder,
         balanceGateFolder,
         credentialGate,
-        compositeGate,
         uniquePersonGate,
         nftGate,
     ];
@@ -116,7 +128,7 @@ const uniquePersonGate: GateBinding = {
     enabled: true,
 };
 
-const neuronGateFolder: GateBinding = {
+export const neuronGateFolder: GateBinding = {
     label: "access.neuronHolder",
     key: "neuron_gate_folder",
     gate: {
@@ -126,7 +138,7 @@ const neuronGateFolder: GateBinding = {
     enabled: true,
 };
 
-const paymentGateFolder: GateBinding = {
+export const paymentGateFolder: GateBinding = {
     label: "access.payment",
     key: "payment_gate_folder",
     gate: {
@@ -138,7 +150,7 @@ const paymentGateFolder: GateBinding = {
     enabled: true,
 };
 
-const balanceGateFolder: GateBinding = {
+export const balanceGateFolder: GateBinding = {
     label: "access.minimumBalance",
     key: "balance_gate_folder",
     gate: {
@@ -154,17 +166,6 @@ const nftGate: GateBinding = {
     key: "nft_gate",
     gate: { kind: "nft_gate" },
     enabled: false,
-};
-
-const compositeGate: GateBinding = {
-    label: "access.compositeGate",
-    key: "composite_gate",
-    gate: {
-        kind: "composite_gate",
-        gates: [],
-        operator: "and",
-    },
-    enabled: true,
 };
 
 const credentialGate: GateBinding = {
