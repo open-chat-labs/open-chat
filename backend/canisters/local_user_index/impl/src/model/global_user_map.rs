@@ -8,7 +8,6 @@ use types::{TimestampMillis, UniquePersonProof, UserId};
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: HashMap<Principal, UserId>,
-    #[serde(default)]
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
