@@ -5011,6 +5011,12 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "markLocalGroupIndexFull", canisterId, full }).catch(
+            () => false,
+        );
+    }
+
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }

@@ -2883,6 +2883,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setUserUpgradeConcurrency(value);
     }
 
+    markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
+        return this._groupIndexClient.markLocalGroupIndexFull(canisterId, full);
+    }
+
     stakeNeuronForSubmittingProposals(
         governanceCanisterId: string,
         stake: bigint,
