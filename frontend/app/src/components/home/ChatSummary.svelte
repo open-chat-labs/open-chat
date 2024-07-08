@@ -81,7 +81,7 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
-                    streak: them.streak,
+                    streak: client.getStreak(them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
