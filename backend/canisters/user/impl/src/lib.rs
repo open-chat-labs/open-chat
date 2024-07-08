@@ -221,13 +221,9 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
-    #[serde(default)]
     pub chit_balance: Timestamped<i32>,
-    #[serde(default)]
     pub streak: Streak,
-    #[serde(default)]
     pub achievements: HashSet<Achievement>,
-    #[serde(default)]
     pub achievements_last_seen: TimestampMillis,
     pub rng_seed: [u8; 32],
 }
@@ -356,7 +352,7 @@ impl Data {
         }
     }
 
-    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
+    pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
         let args = user_index_canister::c2c_notify_chit::Args {
             timestamp: now,
             chit_balance: self.chit_balance.value,

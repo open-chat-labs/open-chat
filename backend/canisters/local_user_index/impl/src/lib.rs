@@ -235,7 +235,6 @@ struct Data {
     pub oc_secret_key_der: Option<Vec<u8>>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
-    #[serde(default)]
     pub users_to_delete_queue: VecDeque<UserToDelete>,
 }
 

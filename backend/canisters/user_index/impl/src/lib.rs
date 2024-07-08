@@ -278,7 +278,6 @@ struct Data {
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
-    #[serde(default)]
     pub deleted_users: Vec<DeletedUser>,
 }
 

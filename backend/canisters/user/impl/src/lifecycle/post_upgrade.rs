@@ -1,13 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{Achievement, Empty, Milliseconds};
+use types::{Empty, Milliseconds};
 use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
@@ -41,8 +41,6 @@ fn post_upgrade(args: Args) {
             }
         });
     }
-
-    mutate_state(fix_achievements);
 }
 
 fn mark_user_canister_empty() {
@@ -53,29 +51,5 @@ fn mark_user_canister_empty() {
             "c2c_mark_user_canister_empty_msgpack",
             msgpack::serialize_then_unwrap(Empty {}),
         );
-    })
-}
-
-fn fix_achievements(state: &mut RuntimeState) {
-    let now = state.env.now();
-
-    if let Some(diamond_expires) = state.data.diamond_membership_expires_at {
-        let lifetime_diamond = (diamond_expires - now) > (5 * 365 * DAY_IN_MS);
-
-        if lifetime_diamond && state.data.award_achievement(Achievement::UpgradedToGoldDiamond, now) {
-            ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
-            return;
-        }
-    }
-
-    if state.data.streak.days(now) > 0 {
-        // Fix the streak_ends for the user record in the user_index
-        ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_chit);
-    }
-}
-
-fn notify_user_index_of_chit() {
-    mutate_state(|state| {
-        state.data.notify_user_index_of_chit(state.env.now());
     })
 }
