@@ -20,7 +20,7 @@
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
-    import AccessGateSummary from "../access/AccessGateSummary.svelte";
+    import AccessGateSummary from "../access/AccessGateSummary2.svelte";
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -143,7 +143,7 @@
                 {/if}
             </div>
             <DisappearingMessagesSummary ttl={chat.eventsTTL} />
-            <AccessGateSummary gate={chat.gate} />
+            <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
             <CollapsibleCard

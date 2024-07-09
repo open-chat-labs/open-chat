@@ -27,6 +27,7 @@
     } from "../../../utils/access";
     import { afterUpdate, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import AccessGateIcon from "./AccessGateIcon.svelte";
 
     const MAX_GATES = 5;
     const client = getContext<OpenChat>("client");
@@ -46,9 +47,7 @@
     $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
     $: balanceGateBindings = getBalanceGateBindings($cryptoLookup);
     $: canAdd = isLeafGate(gate) || gate.gates.length < MAX_GATES;
-
-    $: console.log("GateValidity: ", gateValidity);
-    $: console.log("Gate: ", gate);
+    $: title = !editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title");
 
     afterUpdate(() => {
         valid = gateValidity.every((v) => v);
@@ -89,7 +88,9 @@
 
 <Overlay>
     <ModalContent closeIcon on:close>
-        <div slot="header">Create an access gate</div>
+        <div slot="header">
+            <Translatable resourceKey={title} />
+        </div>
         <div class="body access-gate-builder" slot="body">
             {#if isLeafGate(gate)}
                 <LeafGateBuilder
@@ -109,12 +110,15 @@
                         open={selectedGateIndex === i}
                         on:opened={() => (selectedGateIndex = i)}>
                         <div class="sub-header" slot="titleSlot" class:invalid={!gateValidity[i]}>
+                            <AccessGateIcon showNoGate gate={subgate} />
                             <Translatable resourceKey={getGateText(subgate)} />
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <!-- svelte-ignore a11y-no-static-element-interactions -->
-                            <div on:click={() => deleteGate(i)} class="delete">
-                                <Delete size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
+                            {#if editable}
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                <div on:click={() => deleteGate(i)} class="delete">
+                                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                                </div>
+                            {/if}
                         </div>
                         <LeafGateBuilder
                             {gateBindings}
@@ -135,7 +139,7 @@
             <div class="access-gate-builder footer">
                 {#if isCompositeGate(gate)}
                     <div class="operator">
-                        <Select margin={false} bind:value={gate.operator}>
+                        <Select disabled={!editable} margin={false} bind:value={gate.operator}>
                             <option value={"and"}
                                 ><Translatable resourceKey={i18nKey("access.and")} /></option>
                             <option value={"or"}
@@ -144,9 +148,11 @@
                     </div>
                 {/if}
                 <ButtonGroup>
-                    <Button disabled={!canAdd} on:click={addLeaf}>
-                        <Translatable resourceKey={i18nKey("access.addGate")} />
-                    </Button>
+                    {#if editable}
+                        <Button disabled={!canAdd} on:click={addLeaf}>
+                            <Translatable resourceKey={i18nKey("access.addGate")} />
+                        </Button>
+                    {/if}
                     <Button on:click={onClose} disabled={!valid}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>

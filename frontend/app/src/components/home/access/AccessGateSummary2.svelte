@@ -10,7 +10,7 @@
     export let gate: AccessGate;
     export let editable: boolean;
     export let level: Level;
-    export let valid: boolean;
+    export let valid: boolean = true;
 
     let showDetail = false;
 
@@ -45,7 +45,7 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={open} class:editable class="summary">
+<div class:invalid={!valid} on:click={open} class:editable class="summary">
     <div class="icon">
         <AccessGateIcon showNoGate {gate} />
     </div>
@@ -54,9 +54,6 @@
             <Translatable resourceKey={gateText} />
         {/if}
     </div>
-    {#if !valid}
-        <div title={"invalid"} class="invalid">!</div>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -71,6 +68,7 @@
         transition:
             background ease-in-out 200ms,
             color ease-in-out 200ms;
+        cursor: pointer;
 
         @media (hover: hover) {
             &:hover {
@@ -79,12 +77,13 @@
             }
         }
 
-        &.editable {
-            cursor: pointer;
-        }
-
-        .invalid {
-            color: var(--menu-warn);
+        &.invalid {
+            background-color: var(--menu-warn);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--menu-warn);
+                }
+            }
         }
     }
 </style>
