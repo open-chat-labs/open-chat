@@ -67,8 +67,9 @@
 <section>
     <h2>How to enter the airdrops?</h2>
     <p>
-        To enter the airdrop you must join a community called <a href="/">CHIT for CHAT</a> which
-        requires either <em>lifetime diamond membership</em> or (coming very soon) a
+        To enter the airdrop you must join a community called <a
+            href="https://oc.app/community/txydz-jyaaa-aaaaf-bifea-cai">CHIT for CHAT</a>
+        which requires either <em>lifetime diamond membership</em> or (coming very soon) a
         <em>proof of unique personhood credential</em>
         from <ExternalLink href="https://decideai.xyz/">Decide AI</ExternalLink>. Within the
         community is a channel for the upcoming airdrop which requires standard diamond membership
@@ -127,9 +128,8 @@
     <h2>Wrapping up</h2>
     <p>
         The next step is to make a proposal to the DAO for the 100,000 CHAT to be transferred to the
-        OpenChat <ExternalLink href="https://4bkt6-4aaaa-aaaaf-aaaiq-cai.raw.ic0.app/metrics"
-            >User Index</ExternalLink> canister smart contract which will run the airdrop as described
-        in this article.
+        OpenChat "User Index" canister smart contract which will run the airdrop as described in
+        this article.
     </p>
     <p>Now get chit-chatting!</p>
 </section>
