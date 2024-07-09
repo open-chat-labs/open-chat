@@ -456,6 +456,7 @@ import {
     storeIdentity,
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
+    isCompositeGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2706,6 +2707,9 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         if (isCredentialGate(current) && isCredentialGate(original)) {
             return JSON.stringify(current.credential) !== JSON.stringify(original.credential);
+        }
+        if (isCompositeGate(current) && isCompositeGate(original)) {
+            return JSON.stringify(current) !== JSON.stringify(original);
         }
         return false;
     }

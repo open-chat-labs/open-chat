@@ -1,5 +1,6 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
@@ -77,6 +78,17 @@
         <div let:position let:align slot="tooltip">
             <TooltipPopup {position} {align}>
                 <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
+{:else if gate.kind === "composite_gate"}
+    <TooltipWrapper {position} {align}>
+        <div slot="target" class="composite">
+            <VectorCombine size={$iconSize} color={"var(--txt)"} />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                <Translatable resourceKey={i18nKey("access.compositeGate")} />
             </TooltipPopup>
         </div>
     </TooltipWrapper>

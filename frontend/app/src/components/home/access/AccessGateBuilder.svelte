@@ -28,6 +28,7 @@
     import { afterUpdate, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
 
+    const MAX_GATES = 5;
     const client = getContext<OpenChat>("client");
 
     export let gate: AccessGate;
@@ -44,6 +45,7 @@
     $: neuronGateBindings = getNeuronGateBindings($nervousSystemLookup);
     $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
     $: balanceGateBindings = getBalanceGateBindings($cryptoLookup);
+    $: canAdd = isLeafGate(gate) || gate.gates.length < MAX_GATES;
 
     $: console.log("GateValidity: ", gateValidity);
     $: console.log("Gate: ", gate);
@@ -142,7 +144,7 @@
                     </div>
                 {/if}
                 <ButtonGroup>
-                    <Button on:click={addLeaf}>
+                    <Button disabled={!canAdd} on:click={addLeaf}>
                         <Translatable resourceKey={i18nKey("access.addGate")} />
                     </Button>
                     <Button on:click={onClose} disabled={!valid}>

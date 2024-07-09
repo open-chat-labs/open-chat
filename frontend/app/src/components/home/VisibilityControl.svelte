@@ -15,7 +15,6 @@
     const dispatch = createEventDispatcher();
 
     export let candidate: CandidateGroupChat | CommunitySummary;
-    export let original: CandidateGroupChat | CommunitySummary;
     export let editing: boolean;
     export let history: boolean;
     export let canEditDisappearingMessages: boolean;
@@ -143,7 +142,7 @@
 {/if}
 
 {#if !requiresUpgrade}
-    <AccessGateControl {original} bind:candidate bind:valid />
+    <AccessGateControl bind:gate={candidate.gate} level={candidate.level} bind:valid />
 {/if}
 
 {#if requiresUpgrade}

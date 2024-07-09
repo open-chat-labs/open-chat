@@ -4,10 +4,10 @@
     import { iconSize } from "../../../stores/iconSize";
     import { fade } from "svelte/transition";
     import AccessGateSummary from "./AccessGateSummary2.svelte";
-    import type { CandidateGroupChat, CommunitySummary } from "openchat-client";
+    import type { AccessGate, Level } from "openchat-client";
 
-    export let candidate: CandidateGroupChat | CommunitySummary;
-    export let original: CandidateGroupChat | CommunitySummary;
+    export let gate: AccessGate;
+    export let level: Level;
     export let valid: boolean;
 </script>
 
@@ -18,11 +18,7 @@
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>
         <div class="choose-gate">
-            <AccessGateSummary
-                bind:valid
-                level={candidate.level}
-                editable
-                bind:gate={candidate.gate} />
+            <AccessGateSummary bind:valid {level} editable bind:gate />
         </div>
     </div>
 </div>

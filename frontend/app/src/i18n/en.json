@@ -39,6 +39,7 @@
         "diamondMember": "Diamond membership",
         "gate": "Access gate",
         "gateCheckFailed": "Access gate not met",
+        "gateInvalid": "Access gate is invalid",
         "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
         "lifetimeDiamondMember": "Lifetime Diamond membership",
         "minDissolveDelay": "Min dissolve delay (days)",

@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { OpenChat, type AccessGate, type Level } from "openchat-client";
+    import { type AccessGate, type Level } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
-    import { getGateBindings, type GateBinding } from "../../../utils/access";
-    import { getContext } from "svelte";
+    import { gateLabel } from "../../../utils/access";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import { _ } from "svelte-i18n";
 
     export let gate: AccessGate;
     export let editable: boolean;
@@ -18,21 +16,21 @@
 
     $: gateText = getGateText(gate);
 
-    let gateBindings: Record<AccessGate["kind"], GateBinding> = client.toRecord(
-        getGateBindings(),
-        (b) => b.gate.kind,
-    );
-
     function open() {
         showDetail = true;
     }
 
+    function getGateResourceKey(gate: AccessGate) {
+        return gateLabel[gate.kind] ?? "access.unknownGate";
+    }
+
     function getGateText(gate: AccessGate) {
-        const binding = gateBindings[gate.kind];
-        if (binding) {
-            return i18nKey(binding.label);
+        if (gate.kind === "composite_gate") {
+            return i18nKey(
+                gate.gates.map((g) => $_(getGateResourceKey(g))).join(` ${gate.operator} `),
+            );
         }
-        return undefined;
+        return i18nKey(getGateResourceKey(gate));
     }
 </script>
 
