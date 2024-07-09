@@ -5,6 +5,7 @@ import Governance from "./Governance.svelte";
 import WebsiteReleases from "./WebsiteReleases.svelte";
 import Translation from "./Translation.svelte";
 import Video from "./VideoCallsReleased.svelte";
+import Chit from "./Chit.svelte";
 import ICFootprint from "./ICFootprint.svelte";
 import SignIn from "./SignIn.svelte";
 
@@ -17,6 +18,13 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    chit: {
+        slug: "chit",
+        title: "CHIT Rewards",
+        author: "@Matt",
+        date: new Date(2024, 7, 9),
+        component: Chit,
+    },
     signin: {
         slug: "signin",
         title: "Sign-in / sign-up to OpenChat",
