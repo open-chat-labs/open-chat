@@ -20,6 +20,12 @@
         },
     },
     {
+        match: "index.html",
+        headers: {
+            "Cache-Control": "no-cache",
+        },
+    },
+    {
         match: ".well-known",
         ignore: false,
     },
