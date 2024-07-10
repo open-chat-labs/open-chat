@@ -496,6 +496,7 @@ type CreateChannelResponse = variant {
     RulesTooShort : FieldTooShortResult;
     RulesTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     MaxChannelsCreated : nat32;
     NameTaken;
     UserSuspended;
@@ -972,6 +973,7 @@ type UpdateChannelResponse = variant {
     NameReserved;
     DescriptionTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     NameTaken;
     RulesTooLong : FieldTooLongResult;
     RulesTooShort : FieldTooShortResult;
@@ -1003,6 +1005,7 @@ type UpdateCommunityResponse = variant {
     DescriptionTooLong : FieldTooLongResult;
     AvatarTooBig : FieldTooLongResult;
     BannerTooBig : FieldTooLongResult;
+    AccessGateInvalid;
     NameTaken;
     InternalError;
     RulesTooLong : FieldTooLongResult;

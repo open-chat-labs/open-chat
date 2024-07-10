@@ -42,6 +42,7 @@ mod send_direct_message_tests;
 mod set_message_reminder_tests;
 mod setup;
 mod storage;
+mod storage_tests;
 mod suspend_user_tests;
 mod tip_message_tests;
 mod update_group_tests;

@@ -100,6 +100,8 @@
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
+    import ChitEarned from "./ChitEarned.svelte";
+    import { chitPopup } from "../../stores/settings";
 
     type ViewProfileConfig = {
         userId: string;
@@ -291,13 +293,14 @@
     }
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
-        // Check user is not already in the call and it started less than an hour ago
-        if (
-            !ev.detail.currentUserIsParticipant &&
-            Number(ev.detail.timestamp) > Date.now() - 60 * 60 * 1000
-        ) {
-            incomingVideoCall.set(ev.detail);
+        // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
+        if ($activeVideoCall?.chatId === ev.detail.chatId ||
+            ev.detail.currentUserIsParticipant ||
+            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000) {
+            return;
         }
+
+        incomingVideoCall.set(ev.detail);
     }
 
     async function newChatSelected(
@@ -1316,6 +1319,10 @@
 {/if}
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
+
+{#if $chitPopup}
+    <ChitEarned />
+{/if}
 
 <style lang="scss">
     :global(.edited-msg) {

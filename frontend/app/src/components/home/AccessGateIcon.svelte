@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -12,10 +13,12 @@
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
-    import Diamond from "../icons/Diamond.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
+    import GoldDiamond from "../icons/GoldDiamond.svelte";
+    import BlueDiamond from "../icons/BlueDiamond.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -68,11 +71,33 @@
     {#if gate.kind === "diamond_gate"}
         <TooltipWrapper {position} {align}>
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
-                <Diamond />
+                <BlueDiamond />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "lifetime_diamond_gate"}
+        <TooltipWrapper {position} {align}>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+                <GoldDiamond />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "unique_person_gate"}
+        <TooltipWrapper {position} {align}>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>

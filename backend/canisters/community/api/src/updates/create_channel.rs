@@ -29,6 +29,7 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    AccessGateInvalid,
     MaxChannelsCreated(u32),
     NameTaken,
     UserSuspended,

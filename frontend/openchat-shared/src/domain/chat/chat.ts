@@ -32,6 +32,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
+import type { Achievement, ChitEarned } from "../chit";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -955,6 +956,7 @@ export type UpdatesResult = {
     updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
     suspensionChanged: boolean | undefined;
+    newAchievements: ChitEarned[];
 };
 
 export type ChatStateFull = {
@@ -972,6 +974,16 @@ export type ChatStateFull = {
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
+    achievements: Set<Achievement>;
+    achievementsLastSeen: bigint;
+    chitState: ChitState;
+};
+
+export type ChitState = {
+    streak: number;
+    streakEnds: bigint;
+    nextDailyChitClaim: bigint;
+    chitBalance: number;
 };
 
 export type CurrentChatState = {
@@ -1122,6 +1134,12 @@ export type InitialStateResponse = {
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
     localUserIndex: string;
+    achievements: ChitEarned[];
+    achievementsLastSeen: bigint;
+    streakEnds: bigint;
+    streak: number;
+    nextDailyClaim: bigint;
+    chitBalance: number;
 };
 
 export type PinNumberSettings = {
@@ -1157,6 +1175,12 @@ export type UpdatesSuccessResponse = {
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
+    achievements: ChitEarned[];
+    achievementsLastSeen: bigint | undefined;
+    chitBalance: number;
+    streakEnds: bigint;
+    streak: number;
+    nextDailyClaim: bigint;
 };
 
 export type DirectChatsUpdates = {
@@ -1713,7 +1737,9 @@ export type GateCheckFailedReason =
     | "min_stake_not_met"
     | "payment_failed"
     | "insufficient_balance"
-    | "failed_verified_credential_check";
+    | "failed_verified_credential_check"
+    | "no_unique_person_proof"
+    | "not_lifetime_diamond";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

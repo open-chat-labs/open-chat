@@ -18,11 +18,11 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
-use std::cmp::max;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
@@ -34,7 +34,6 @@ use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::streak::Streak;
 use utils::time::{today, tomorrow, MINUTE_IN_MS};
 
 mod crypto;
@@ -222,13 +221,9 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
-    #[serde(default)]
     pub chit_balance: Timestamped<i32>,
-    #[serde(default)]
     pub streak: Streak,
-    #[serde(default)]
     pub achievements: HashSet<Achievement>,
-    #[serde(default)]
     pub achievements_last_seen: TimestampMillis,
     pub rng_seed: [u8; 32],
 }
@@ -357,7 +352,7 @@ impl Data {
         }
     }
 
-    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
+    pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
         let args = user_index_canister::c2c_notify_chit::Args {
             timestamp: now,
             chit_balance: self.chit_balance.value,
@@ -370,23 +365,6 @@ impl Data {
             "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
-    }
-
-    pub fn init_streak_and_chit_balance(&mut self, now: TimestampMillis) -> u16 {
-        let mut max_streak: u16 = 0;
-        self.chit_balance = Timestamped::new(0, now);
-
-        for event in self.chit_events.iter() {
-            self.chit_balance = Timestamped::new(self.chit_balance.value + event.amount, now);
-
-            let is_daily_claim = matches!(event.reason, ChitEarnedReason::DailyClaim);
-
-            if is_daily_claim && self.streak.claim(event.timestamp) {
-                max_streak = max(max_streak, self.streak.days(event.timestamp))
-            }
-        }
-
-        max_streak
     }
 }
 

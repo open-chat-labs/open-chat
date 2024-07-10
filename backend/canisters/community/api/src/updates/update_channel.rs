@@ -30,6 +30,7 @@ pub enum Response {
     NameReserved,
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    AccessGateInvalid,
     NameTaken,
     RulesTooLong(FieldTooLongResult),
     RulesTooShort(FieldTooShortResult),

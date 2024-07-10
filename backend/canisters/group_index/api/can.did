@@ -230,6 +230,18 @@ type RemoveHotGroupExclusionResponse = variant {
     InternalError : text;
 };
 
+type MarkLocalGroupIndexFullArgs = record {
+    canister_id : CanisterId;
+    full : bool;
+};
+
+type MarkLocalGroupIndexFullResponse = variant {
+    Success;
+    LocalGroupIndexNotFound;
+    NotAuthorized;
+    InternalError : text;
+};
+
 type SetCommunityModerationFlagsArgs = record {
     community_id : CommunityId;
     flags : nat32;
@@ -273,6 +285,7 @@ service : {
     set_community_moderation_flags : (SetCommunityModerationFlagsArgs) -> (SetCommunityModerationFlagsResponse);
 
     // Only callable by "platform operators"
+    mark_local_group_index_full : (MarkLocalGroupIndexFullArgs) -> (MarkLocalGroupIndexFullResponse);
     set_group_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
     set_community_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
 };

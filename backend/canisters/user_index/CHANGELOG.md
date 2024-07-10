@@ -8,6 +8,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Uninstall canisters of empty users ([#6018](https://github.com/open-chat-labs/open-chat/pull/6018))
+- Add `submit_proof_of_unique_personhood` ([#6023](https://github.com/open-chat-labs/open-chat/pull/6023))
+
+## [[2.0.1231](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1231-user_index)] - 2024-07-08
+
+### Fixed
+
+- Fix `chitbands` endpoint ([#6007](https://github.com/open-chat-labs/open-chat/pull/6007))
+
+## [[2.0.1227](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1227-user_index)] - 2024-07-08
+
+### Added
+
+- Store `unique_person_proof` alongside each relevant account ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
+- CHIT histogram endpoint to determine airdrop bands ([#5994](https://github.com/open-chat-labs/open-chat/pull/5994))
+
+## [[2.0.1225](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1225-user_index)] - 2024-07-04
+
+### Changed
+
+- Fix CHIT leaderboard in post_upgrade ([#5991](https://github.com/open-chat-labs/open-chat/pull/5991))
+
+## [[2.0.1223](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1223-user_index)] - 2024-07-04
+
+### Changed
+
+- Wire up user_index to use synced chit and streak ([#5979](https://github.com/open-chat-labs/open-chat/pull/5979))
+
+## [[2.0.1221](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1221-user_index)] - 2024-07-03
+
+### Added
+
 - Added `c2c_notify_chit` to sync chit balance and streak from user canister ([#5972](https://github.com/open-chat-labs/open-chat/pull/5972))
 
 ### Changed

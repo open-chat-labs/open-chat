@@ -2,12 +2,13 @@ use candid::Principal;
 use local_user_index_canister::GlobalUser;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use types::{TimestampMillis, UserId};
+use types::{TimestampMillis, UniquePersonProof, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: HashMap<Principal, UserId>,
+    unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
@@ -77,6 +78,10 @@ impl GlobalUserMap {
         }
     }
 
+    pub fn insert_unique_person_proof(&mut self, user_id: UserId, proof: UniquePersonProof) {
+        self.unique_person_proofs.insert(user_id, proof);
+    }
+
     pub fn is_bot(&self, user_id: &UserId) -> bool {
         self.bots.contains(user_id)
     }
@@ -96,6 +101,7 @@ impl GlobalUserMap {
             is_bot: self.bots.contains(&user_id),
             is_platform_moderator: self.platform_moderators.contains(&user_id),
             diamond_membership_expires_at: self.diamond_membership_expiry_dates.get(&user_id).copied(),
+            unique_person_proof: self.unique_person_proofs.get(&user_id).cloned(),
         }
     }
 }

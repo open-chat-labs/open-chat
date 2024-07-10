@@ -8,6 +8,7 @@ export const showHomeScreenPrompt = createLsBoolStore(
     configKeys.showHomeScreenPrompt,
     mobileOperatingSystem === "iOS",
 );
+export const chitPopup = createLsBoolStore(configKeys.chitPopup, true);
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);

@@ -24,11 +24,13 @@ export type AcceptP2PSwapResponse = {
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
+export type AccessGate = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate };
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -42,6 +44,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface AddMembersToChannelArgs {
   'channel_id' : ChannelId,
   'user_ids' : Array<UserId>,
@@ -337,7 +352,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
@@ -549,17 +564,14 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
 export interface CurrentUserSummary {
-  'streak' : number,
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
-  'next_daily_claim' : TimestampMillis,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
-  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,
@@ -854,11 +866,13 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
-export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {

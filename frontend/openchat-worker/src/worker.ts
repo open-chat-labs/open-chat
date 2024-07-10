@@ -313,7 +313,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getUsers(payload.users, payload.allowStale),
+                    agent.getUsers(payload.chitState, payload.users, payload.allowStale),
                 );
                 break;
 
@@ -846,7 +846,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getUser(payload.userId, payload.allowStale),
+                    agent.getUser(payload.chitState, payload.userId, payload.allowStale),
                 );
                 break;
 
@@ -1021,6 +1021,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.setUserUpgradeConcurrency(payload.value),
+                );
+                break;
+
+            case "markLocalGroupIndexFull":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markLocalGroupIndexFull(payload.canisterId, payload.full),
                 );
                 break;
 
@@ -1729,7 +1737,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "claimDailyChit":
-                executeThenReply(payload, correlationId, agent.claimDailyChit(payload.userId));
+                executeThenReply(payload, correlationId, agent.claimDailyChit());
                 break;
 
             case "chitLeaderboard":
@@ -1738,6 +1746,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getChitEvents":
                 executeThenReply(payload, correlationId, agent.chitEvents(payload));
+                break;
+
+            case "markAchievementsSeen":
+                executeThenReply(payload, correlationId, agent.markAchievementsSeen());
                 break;
 
             default:

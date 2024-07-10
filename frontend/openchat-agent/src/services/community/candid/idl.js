@@ -72,11 +72,13 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
   });
   const GateCheckFailedReason = IDL.Variant({
+    'NotLifetimeDiamondMember' : IDL.Null,
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'NoUniquePersonProof' : IDL.Null,
     'FailedVerifiedCredentialCheck' : IDL.Text,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
   });
@@ -316,11 +318,13 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
   });
   const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
   });
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,

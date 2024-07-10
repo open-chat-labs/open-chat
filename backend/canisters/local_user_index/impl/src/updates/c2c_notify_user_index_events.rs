@@ -1,6 +1,5 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::timer_job_types::{DeleteUserJob, TimerJob};
-use crate::{mutate_state, RuntimeState};
+use crate::{jobs, mutate_state, RuntimeState, UserToDelete};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
@@ -166,18 +165,16 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
         }
-        Event::UserDeleted(ev) => {
-            state.data.global_users.remove(&ev.user_id);
-            if state.data.local_users.remove(&ev.user_id) {
-                let now = state.env.now();
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::DeleteUser(DeleteUserJob {
-                        user_id: ev.user_id,
-                        attempt: 0,
-                    }),
-                    now,
-                    now,
-                );
+        Event::DeleteUser(ev) => {
+            if state.data.local_users.contains(&ev.user_id) {
+                state.data.users_to_delete_queue.push_back(UserToDelete {
+                    user_id: ev.user_id,
+                    triggered_by_user: ev.triggered_by_user,
+                    attempt: 0,
+                });
+                jobs::delete_users::start_job_if_required(state);
+            } else {
+                state.data.global_users.remove(&ev.user_id);
             }
         }
         Event::SecretKeySet(sk_der) => {
@@ -192,6 +189,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     reason: ev.reason,
                 })),
             );
+        }
+        Event::NotifyUniqueHumanProof(user_id, proof) => {
+            state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
     }
 }

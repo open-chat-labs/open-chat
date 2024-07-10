@@ -75,6 +75,7 @@ import type {
     JoinVideoCallResponse,
     ChitEventsRequest,
     ChitEventsResponse,
+    ClaimDailyChitResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -114,6 +115,7 @@ import {
     approveTransferResponse,
     apiExchangeArgs,
     chitEventsResponse,
+    claimDailyChitResponse,
 } from "./mappers";
 import {
     type Database,
@@ -158,6 +160,7 @@ import {
     chunkedChatEventsWindowFromBackend,
 } from "../common/chunked";
 import type { SetPinNumberResponse } from "openchat-shared";
+import { setChitInfoInCache } from "../../utils/userCache";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -1402,5 +1405,29 @@ export class UserClient extends CandidService {
                 }),
             chitEventsResponse,
         );
+    }
+
+    markAchievementsSeen(lastSeen: bigint): Promise<void> {
+        return this.handleResponse(
+            this.userService.mark_achievements_seen({
+                last_seen: lastSeen,
+            }),
+            (res) => {
+                console.log("Set Achievements Last seen", lastSeen, res);
+            },
+        );
+    }
+
+    claimDailyChit(): Promise<ClaimDailyChitResponse> {
+        return this.handleQueryResponse(
+            () => this.userService.claim_daily_chit({}),
+            claimDailyChitResponse,
+        ).then((res) => {
+            if (res.kind === "success") {
+                // Note this only updates the users db, the chats db will be updated by the updates loop
+                setChitInfoInCache(this.userId, res.chitBalance, res.streak);
+            }
+            return res;
+        });
     }
 }

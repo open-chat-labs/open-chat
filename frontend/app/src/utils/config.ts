@@ -6,6 +6,7 @@ export const configKeys = {
     lastCryptoSent: "openchat_lastcryptosent",
     fontSize: "openchat_font_size",
     enterSend: "openchat_entersend",
+    chitPopup: "openchat_chit_popup",
     showHomeScreenPrompt: "openchat_show_home_screen_prompt",
     userInfoSection: "openchat_userinfo_section",
     appearanceSection: "openchat_appearance_section",

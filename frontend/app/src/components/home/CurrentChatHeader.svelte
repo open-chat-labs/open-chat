@@ -50,6 +50,7 @@
     $: selectedChatId = client.selectedChatId;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
+    $: anonUser = client.anonUser;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -76,7 +77,7 @@
                 return {
                     name: client.displayName(them),
                     diamondStatus: them.diamondStatus,
-                    streak: them.streak,
+                    streak: client.getStreak(them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
@@ -203,7 +204,7 @@
         </div>
     </div>
     <ActiveVideoCallResume />
-    {#if !readonly}
+    {#if !readonly && !$anonUser}
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}

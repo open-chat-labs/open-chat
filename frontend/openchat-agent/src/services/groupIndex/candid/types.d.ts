@@ -3,11 +3,13 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
+export type AccessGate = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate };
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -21,6 +23,19 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export type Achievement = { 'JoinedCommunity' : null } |
+  { 'JoinedGroup' : null } |
+  { 'Streak14' : null } |
+  { 'Streak30' : null } |
+  { 'UpgradedToDiamond' : null } |
+  { 'ReceivedDirectMessage' : null } |
+  { 'SetDisplayName' : null } |
+  { 'SetBio' : null } |
+  { 'Streak3' : null } |
+  { 'Streak7' : null } |
+  { 'UpgradedToGoldDiamond' : null } |
+  { 'SentDirectMessage' : null } |
+  { 'SetAvatar' : null };
 export interface ActiveGroupsArgs {
   'community_ids' : Array<CommunityId>,
   'active_since' : [] | [TimestampMillis],
@@ -216,7 +231,7 @@ export interface ChitEarned {
   'reason' : ChitEarnedReason,
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : string } |
+  { 'Achievement' : Achievement } |
   { 'MemeContestWinner' : null };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
@@ -374,17 +389,14 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
 export interface CurrentUserSummary {
-  'streak' : number,
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
-  'next_daily_claim' : TimestampMillis,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
-  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,
@@ -641,11 +653,13 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
-export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
@@ -1057,6 +1071,14 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export interface LookupChannelByGroupIdArgs { 'group_id' : ChatId }
 export type LookupChannelByGroupIdResponse = { 'NotFound' : null } |
   { 'Success' : { 'channel_id' : ChannelId, 'community_id' : CommunityId } };
+export interface MarkLocalGroupIndexFullArgs {
+  'full' : boolean,
+  'canister_id' : CanisterId,
+}
+export type MarkLocalGroupIndexFullResponse = { 'NotAuthorized' : null } |
+  { 'LocalGroupIndexNotFound' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1808,6 +1830,10 @@ export interface _SERVICE {
   'lookup_channel_by_group_id' : ActorMethod<
     [LookupChannelByGroupIdArgs],
     LookupChannelByGroupIdResponse
+  >,
+  'mark_local_group_index_full' : ActorMethod<
+    [MarkLocalGroupIndexFullArgs],
+    MarkLocalGroupIndexFullResponse
   >,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],

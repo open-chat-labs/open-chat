@@ -84,11 +84,13 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
   });
   const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
   });
   const CommunityMatch = IDL.Record({
     'id' : CommunityId,
@@ -198,6 +200,16 @@ export const idlFactory = ({ IDL }) => {
       'channel_id' : ChannelId,
       'community_id' : CommunityId,
     }),
+  });
+  const MarkLocalGroupIndexFullArgs = IDL.Record({
+    'full' : IDL.Bool,
+    'canister_id' : CanisterId,
+  });
+  const MarkLocalGroupIndexFullResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'LocalGroupIndexNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const RecommendedGroupsArgs = IDL.Record({
     'count' : IDL.Nat8,
@@ -780,6 +792,11 @@ export const idlFactory = ({ IDL }) => {
         [LookupChannelByGroupIdArgs],
         [LookupChannelByGroupIdResponse],
         ['query'],
+      ),
+    'mark_local_group_index_full' : IDL.Func(
+        [MarkLocalGroupIndexFullArgs],
+        [MarkLocalGroupIndexFullResponse],
+        [],
       ),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],

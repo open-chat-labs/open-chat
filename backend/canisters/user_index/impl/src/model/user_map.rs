@@ -1,4 +1,4 @@
-use super::user::{ClaimDailyChitResult, SuspensionDetails};
+use super::user::SuspensionDetails;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
@@ -7,9 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UserId};
+use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::streak::Streak;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -190,22 +189,6 @@ impl UserMap {
         }
     }
 
-    pub fn claim_daily_chit(&mut self, principal: &Principal, now: TimestampMillis) -> Option<ClaimDailyChitResult> {
-        self.principal_to_user_id
-            .get(principal)
-            .and_then(|u| self.users.get_mut(u).unwrap().claim_daily_chit(now))
-    }
-
-    pub fn update_streaks(&mut self, now: TimestampMillis) {
-        if let Some(today) = Streak::timestamp_to_day(now) {
-            for user in self.users.values_mut() {
-                if user.streak.expired_yesterday(today) {
-                    user.date_updated_volatile = now;
-                }
-            }
-        }
-    }
-
     pub fn set_chit(
         &mut self,
         user_id: &UserId,
@@ -219,24 +202,17 @@ impl UserMap {
             return false;
         };
 
-        if chit_event_timestamp <= user.lastest_chit_event {
+        if chit_event_timestamp <= user.latest_chit_event {
             return false;
         }
 
-        user.lastest_chit_event = chit_event_timestamp;
-        user.chit_balance_v2 = chit_balance;
-        user.streak_v2 = streak;
+        user.latest_chit_event = chit_event_timestamp;
+        user.chit_balance = chit_balance;
+        user.streak = streak;
         user.streak_ends = streak_ends;
         user.chit_updated = now;
 
         true
-    }
-
-    #[allow(dead_code)]
-    pub fn give_chit_reward(&mut self, user_id: &UserId, amount: i32, now: TimestampMillis) {
-        if let Some(user) = self.users.get_mut(user_id) {
-            user.give_chit_reward(amount, now);
-        }
     }
 
     pub fn suspend_user(
@@ -363,6 +339,15 @@ impl UserMap {
     pub fn push_reported_message(&mut self, user_id: UserId, report_index: u64) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             user.reported_messages.push(report_index);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.unique_person_proof = Some(proof);
             true
         } else {
             false

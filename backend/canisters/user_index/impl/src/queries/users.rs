@@ -3,7 +3,6 @@ use ic_cdk::query;
 use std::collections::HashSet;
 use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
-use utils::time::{today, tomorrow};
 
 #[query]
 fn users(args: Args) -> Response {
@@ -25,7 +24,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             .find(|g| g.users.contains(&u.user_id))
             .map(|g| g.updated_since)
         {
-            if u.date_updated > updated_since || u.date_updated_volatile > updated_since {
+            if u.date_updated > updated_since || u.chit_updated > updated_since {
                 let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
                 current_user = Some(CurrentUserSummary {
@@ -41,9 +40,6 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     diamond_membership_details: u.diamond_membership_details.hydrate(now),
                     diamond_membership_status: u.diamond_membership_details.status_full(now),
                     moderation_flags_enabled: u.moderation_flags_enabled,
-                    chit_balance: u.chit_balance,
-                    streak: u.streak.days(now),
-                    next_daily_claim: if u.streak.can_claim(now) { today(now) } else { tomorrow(now) },
                 });
             }
         }
@@ -57,14 +53,16 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .into_iter()
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
                 .filter(move |u| {
-                    (u.date_updated > updated_since || u.date_updated_volatile > updated_since) && u.principal != caller
+                    (u.date_updated > updated_since
+                        || u.chit_updated > updated_since
+                        || (now > u.streak_ends && u.streak_ends > updated_since))
+                        && u.principal != caller
                 })
                 .filter(|u| user_ids.insert(u.user_id))
                 .map(|u| UserSummaryV2 {
                     user_id: u.user_id,
                     stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: (u.date_created > updated_since || u.date_updated_volatile > updated_since)
-                        .then(|| u.to_summary_volatile(now)),
+                    volatile: Some(u.to_summary_volatile(now)),
                 }),
         );
     }

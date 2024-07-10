@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Handle `mark_local_group_index_full` in `inspect_message` ([#6010](https://github.com/open-chat-labs/open-chat/pull/6010))
+
+## [[2.0.1228](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1228-group_index)] - 2024-07-08
+
+### Added
+
+- Allow platform operators to mark LocalGroupIndexes full ([#6000](https://github.com/open-chat-labs/open-chat/pull/6000))
+
 ## [[2.0.1188](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1188-group_index)] - 2024-06-04
 
 ### Changed

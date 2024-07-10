@@ -4,7 +4,7 @@ use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, User, UserId,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
 };
 
 mod lifecycle;
@@ -33,9 +33,10 @@ pub enum Event {
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
-    UserDeleted(UserDeleted),
+    DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
     ChitEarned(ChitEarned),
+    NotifyUniqueHumanProof(UserId, UniquePersonProof),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -151,8 +152,9 @@ pub struct ReferralCodeAdded {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserDeleted {
+pub struct DeleteUser {
     pub user_id: UserId,
+    pub triggered_by_user: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -162,6 +164,7 @@ pub struct GlobalUser {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    pub unique_person_proof: Option<UniquePersonProof>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

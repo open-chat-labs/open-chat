@@ -4,11 +4,11 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
-    VerifiedCredentialGate,
+    AccessGate, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis,
+    TokenBalanceGate, UniquePersonProof, UserId, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
-use utils::time::NANOS_PER_MILLISECOND;
+use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 // use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
 // use vc_util::VcFlowSigners;
 
@@ -18,15 +18,23 @@ pub enum CheckIfPassesGateResult {
     InternalError(String),
 }
 
+impl CheckIfPassesGateResult {
+    pub fn success(&self) -> bool {
+        matches!(self, CheckIfPassesGateResult::Success)
+    }
+}
+
+#[derive(Clone)]
 pub struct CheckGateArgs {
-    pub gate: AccessGate,
     pub user_id: UserId,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
+    pub unique_person_proof: Option<UniquePersonProof>,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
     pub now: TimestampMillis,
 }
 
+#[derive(Clone)]
 pub struct CheckVerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
@@ -35,20 +43,44 @@ pub struct CheckVerifiedCredentialGateArgs {
     pub ii_origin: String,
 }
 
-pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResult {
-    match args.gate {
-        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now).await,
-        AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
-        AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
-        AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
-        AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
+pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+    match gate {
+        AccessGate::Composite(g) => check_composite_gate(g, args).await,
+        g => check_non_composite_gate(g, args).await,
     }
 }
 
-pub fn check_if_passes_gate_synchronously(args: CheckGateArgs) -> CheckIfPassesGateResult {
-    match args.gate {
+pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    match gate {
+        AccessGate::Composite(g) => check_composite_gate_synchronously(g, args),
+        g => check_non_composite_gate_synchronously(g, args),
+    }
+}
+
+async fn check_non_composite_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+    match gate {
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
-        _ => CheckIfPassesGateResult::InternalError("Gate check could not be performed synchronously".to_string()),
+        AccessGate::LifetimeDiamondMember => check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        AccessGate::UniquePerson => check_unique_person_gate(args.unique_person_proof),
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.verified_credential_args, args.now),
+        AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
+        AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
+        AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
+        AccessGate::Composite(_) => unreachable!(),
+    }
+}
+
+fn check_non_composite_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    match gate {
+        AccessGate::DiamondMember => Some(check_diamond_member_gate(args.diamond_membership_expires_at, args.now)),
+        AccessGate::LifetimeDiamondMember => Some(check_lifetime_diamond_member_gate(
+            args.diamond_membership_expires_at,
+            args.now,
+        )),
+        AccessGate::UniquePerson => Some(check_unique_person_gate(args.unique_person_proof)),
+        AccessGate::VerifiedCredential(g) => Some(check_verified_credential_gate(&g, args.verified_credential_args, args.now)),
+        AccessGate::Composite(_) => unreachable!(),
+        _ => None,
     }
 }
 
@@ -63,7 +95,27 @@ fn check_diamond_member_gate(
     }
 }
 
-async fn check_verified_credential_gate(
+fn check_lifetime_diamond_member_gate(
+    diamond_membership_expires_at: Option<TimestampMillis>,
+    now: TimestampMillis,
+) -> CheckIfPassesGateResult {
+    // Check diamond membership expires in > 100 years
+    if diamond_membership_expires_at > Some(now + 100 * 365 * DAY_IN_MS) {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotLifetimeDiamondMember)
+    }
+}
+
+fn check_unique_person_gate(proof: Option<UniquePersonProof>) -> CheckIfPassesGateResult {
+    if proof.is_some() {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
+    }
+}
+
+fn check_verified_credential_gate(
     _gate: &VerifiedCredentialGate,
     args: Option<CheckVerifiedCredentialGateArgs>,
     _now: TimestampMillis,
@@ -108,6 +160,60 @@ async fn check_verified_credential_gate(
     //     CheckIfPassesGateResult::Success
     // }
     CheckIfPassesGateResult::Success
+}
+
+async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
+    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
+        return result;
+    }
+
+    let count = gate.inner.len();
+    for (index, inner) in gate.inner.into_iter().enumerate() {
+        if matches!(inner, AccessGate::Composite(_)) {
+            return CheckIfPassesGateResult::InternalError("Cannot have nested composite gates".to_string());
+        }
+
+        let last = index + 1 == count;
+        let result = Box::new(check_non_composite_gate(inner, args.clone()).await);
+        let success = result.success();
+
+        if (gate.and && !success) || (!gate.and && success) || last {
+            return *result;
+        }
+    }
+
+    CheckIfPassesGateResult::InternalError("This shouldn't be possible".to_string())
+}
+
+fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    let count = gate.inner.len();
+    let mut any_require_async = false;
+    for (index, inner) in gate.inner.into_iter().enumerate() {
+        if matches!(inner, AccessGate::Composite(_)) {
+            return Some(CheckIfPassesGateResult::InternalError(
+                "Cannot have nested composite gates".to_string(),
+            ));
+        }
+
+        let last = index + 1 == count;
+        if let Some(result) = check_non_composite_gate_synchronously(inner, args.clone()) {
+            let success = result.success();
+
+            if (gate.and && !success) || (!gate.and && success) || (last && !any_require_async) {
+                return Some(result);
+            }
+        } else {
+            any_require_async = true;
+        }
+
+        if last && any_require_async {
+            return None;
+        }
+    }
+
+    Some(CheckIfPassesGateResult::InternalError(
+        "This shouldn't be possible".to_string(),
+    ))
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
@@ -171,10 +277,8 @@ async fn try_transfer_from(
     )
     .await
     {
-        Ok(icrc_ledger_canister::icrc2_transfer_from::Response::Ok(_)) => CheckIfPassesGateResult::Success,
-        Ok(icrc_ledger_canister::icrc2_transfer_from::Response::Err(err)) => {
-            CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err))
-        }
+        Ok(Ok(_)) => CheckIfPassesGateResult::Success,
+        Ok(Err(err)) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err)),
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
     }
 }

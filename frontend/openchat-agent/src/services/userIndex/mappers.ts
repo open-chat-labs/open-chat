@@ -16,7 +16,6 @@ import type {
     SetDisplayNameResponse,
     DiamondMembershipSubscription,
     DiamondMembershipStatus,
-    ClaimDailyChitResponse,
     ChitUserBalance,
     CurrentUserSummary,
     UsersApiResponse,
@@ -26,7 +25,6 @@ import { UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiChitUserBalance,
-    ApiClaimDailyChitResponse,
     ApiCurrentUserResponse,
     ApiCurrentUserSummary,
     ApiDiamondMembershipDetails,
@@ -82,16 +80,13 @@ export function currentUserSummary(
 ): CurrentUserSummary {
     return {
         kind: "current_user_summary",
-        streak: candid.streak,
         username: candid.username,
         isPlatformOperator: candid.is_platform_operator,
         diamondStatus: diamondMembershipStatus(candid.diamond_membership_status),
-        nextDailyChitClaim: candid.next_daily_claim,
         userId: candid.user_id.toString(),
         isBot: candid.is_bot,
         displayName: optional(candid.display_name, identity),
         moderationFlagsEnabled: candid.moderation_flags_enabled,
-        chitBalance: candid.chit_balance,
         isSuspectedBot: candid.is_suspected_bot,
         suspensionDetails: optional(candid.suspension_details, suspensionDetails),
         isPlatformModerator: candid.is_platform_moderator,
@@ -184,9 +179,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
-            chitBalance: r.chit_balance,
-            streak: r.streak,
-            nextDailyChitClaim: r.next_daily_claim,
             isBot: false,
             updated: BigInt(Date.now()),
         };
@@ -476,25 +468,6 @@ export function diamondMembershipFeesResponse(
         "Unexpected ApiDiamondMembershipFeesResponse type received",
         candid,
     );
-}
-
-export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): ClaimDailyChitResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            streak: candid.Success.streak,
-            chitBalance: candid.Success.chit_balance,
-            chitEarned: candid.Success.chit_earned,
-            nextDailyChitClaim: candid.Success.next_claim,
-        };
-    }
-    if ("AlreadyClaimed" in candid) {
-        return {
-            kind: "already_claimed",
-            nextDailyChitClaim: candid.AlreadyClaimed,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
 }
 
 export function chitLeaderboardResponse(candid: ChitLeaderboardResponse): ChitUserBalance[] {

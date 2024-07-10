@@ -370,20 +370,29 @@ pub struct CanisterIds {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AccessGateMetrics {
     pub diamond_membership: u32,
+    #[serde(default)]
+    pub lifetime_diamond_membership: u32,
+    #[serde(default)]
+    pub unique_person: u32,
     pub verified_credential: u32,
     pub sns_neuron: u32,
     pub payment: u32,
     pub token_balance: u32,
+    #[serde(default)]
+    pub composite: u32,
 }
 
 impl AccessGateMetrics {
     pub fn add(&mut self, gate: &AccessGate) {
         match gate {
             AccessGate::DiamondMember => self.diamond_membership += 1,
+            AccessGate::LifetimeDiamondMember => self.lifetime_diamond_membership += 1,
+            AccessGate::UniquePerson => self.unique_person += 1,
             AccessGate::VerifiedCredential(_) => self.verified_credential += 1,
             AccessGate::SnsNeuron(_) => self.sns_neuron += 1,
             AccessGate::Payment(_) => self.payment += 1,
             AccessGate::TokenBalance(_) => self.token_balance += 1,
+            AccessGate::Composite(_) => self.composite += 1,
         }
     }
 }
