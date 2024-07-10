@@ -1111,6 +1111,7 @@
     "sendGif": "שלח GIF",
     "sendMessage": "לשלוח הודעה",
     "sendTextDisabled": "הודעות טקסט מושבתות",
+    "sendMessageDisabledAnon": "אנא היכנס כדי לשלוח הודעה",
     "sendTo": "לשלוח ל...",
     "sessionExpired": "פג תוקף ההפעלה",
     "sessionExpiredBlurb": "נא להיכנס שוב",

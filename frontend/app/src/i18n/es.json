@@ -1111,6 +1111,7 @@
     "sendGif": "Enviar gif",
     "sendMessage": "Enviar mensaje",
     "sendTextDisabled": "Los mensajes de texto están deshabilitados",
+    "sendMessageDisabledAnon": "Por favor inicia sesión para enviar un mensaje",
     "sendTo": "Enviar a...",
     "sessionExpired": "La sesión ha expirado",
     "sessionExpiredBlurb": "Inicia sesión de nuevo",
