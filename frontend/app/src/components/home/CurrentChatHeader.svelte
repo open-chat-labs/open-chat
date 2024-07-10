@@ -50,6 +50,7 @@
     $: selectedChatId = client.selectedChatId;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
+    $: anonUser = client.anonUser;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -203,7 +204,7 @@
         </div>
     </div>
     <ActiveVideoCallResume />
-    {#if !readonly}
+    {#if !readonly && !$anonUser}
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}

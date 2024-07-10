@@ -1111,6 +1111,7 @@
     "sendGif": "gifを送信",
     "sendMessage": "メッセージを送る",
     "sendTextDisabled": "テキストメッセージが無効になっています",
+    "sendMessageDisabledAnon": "メッセージを送信するにはサインインしてください",
     "sendTo": "に送る...",
     "sessionExpired": "セッションは終了しました",
     "sessionExpiredBlurb": "再度サインインしてください",

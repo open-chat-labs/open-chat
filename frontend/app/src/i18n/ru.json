@@ -1111,6 +1111,7 @@
     "sendGif": "Отправить гифку",
     "sendMessage": "Отправить сообщение",
     "sendTextDisabled": "Текстовые сообщения отключены",
+    "sendMessageDisabledAnon": "Пожалуйста авторизируйтесь, чтобы отправить сообщение",
     "sendTo": "Отправить...",
     "sessionExpired": "Сессия истекла",
     "sessionExpiredBlurb": "Пожалуйста, войдите еще раз",

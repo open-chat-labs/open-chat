@@ -1111,6 +1111,7 @@
     "sendGif": "जीआईएफ भेजें",
     "sendMessage": "मेसेज भेजें",
     "sendTextDisabled": "पाठ संदेश अक्षम हैं",
+    "sendMessageDisabledAnon": "एक संदेश भेजने के लिए साइन इन करें",
     "sendTo": "भेजना...",
     "sessionExpired": "सत्र समाप्त हुआ",
     "sessionExpiredBlurb": "कृपया पुनः साइन इन करें",
