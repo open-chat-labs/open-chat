@@ -90,6 +90,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::UserDeleted(ev) => {
             let now = state.env.now();
             state.data.users.delete_user(ev.user_id, now);
+            state.data.local_index_map.remove_user(&ev.user_id);
             state.data.empty_users.remove(&ev.user_id);
             state.data.deleted_users.push(DeletedUser {
                 user_id: ev.user_id,
