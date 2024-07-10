@@ -7,7 +7,7 @@ use types::{CanisterId, UniquePersonProof, UniquePersonProofProvider};
 use user_index_canister::submit_proof_of_unique_personhood::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
-const ISSUER_CANISTER_ID: CanisterId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 240, 24, 172, 1, 1]);
+const ISSUER_CANISTER_ID: CanisterId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 240, 24, 173, 1, 1]);
 const ISSUER_ORIGIN: &str = "id.decideai.xyz";
 
 #[update]
@@ -57,6 +57,6 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
 
 #[test]
 fn signing_canister_id() {
-    let canister_id = CanisterId::from_text("qbw6f-caaaa-aaaah-qdcwa-cai").unwrap();
-    panic!("{:?}", canister_id.as_slice());
+    let canister_id = CanisterId::from_text("qgxyr-pyaaa-aaaah-qdcwq-cai").unwrap();
+    assert_eq!(canister_id, ISSUER_CANISTER_ID);
 }
