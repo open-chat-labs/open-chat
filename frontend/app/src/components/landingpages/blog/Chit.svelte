@@ -75,8 +75,16 @@
         community is a channel for the upcoming airdrop which requires standard diamond membership
         to join. The consequence of this double layer of gates is that to enter the airdrop you will
         need either lifetime diamond membership, or proof of unique personhood and standard diamond
-        membership. The reason is to discourage mercenary users from farming tokens by creating
-        multiple accounts.
+        membership.
+    </p>
+    <p>
+        The reason for these gates is to discourage mercenary users from farming tokens by creating
+        multiple accounts. Some users are uncomfortable about proving they are a unique person
+        because they feel it is an invasion of privacy. This is why there is the option to enter the
+        airdrop by having lifetime diamond membership. It is unlikely a single person will try to
+        farm CHAT by buying multiple lifetime diamond memberships because they are quite expensive.
+        However, for future airdrops, if this does seem to be happening, we might remove this
+        option.
     </p>
     <p>
         We are confident these measures will be sufficient but the development team also reserves
@@ -96,7 +104,9 @@
     </p>
     <p>
         For example, if you have earned 36,500 CHIT then you will receive 7 shares. Say there are
-        10,000 shares altogether you would receive (80,000 x 7 / 10,000) = 56 CHAT.
+        10,000 shares altogether you would receive (80,000 x 7 / 10,000) = 56 CHAT. Bear in mind
+        that the total amount of CHAT in each airdrop is fixed so the more users that enter the
+        lower the amount of CHAT per user.
     </p>
     <p>
         In addition, for every 25,000 CHIT you have earned you will receive 1 ticket in a lottery
