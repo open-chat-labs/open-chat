@@ -27,7 +27,7 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        for user_id in state.data.empty_users.iter().copied() {
+        for user_id in std::mem::take(&mut state.data.empty_users) {
             if let Some(canister_id) = state.data.local_index_map.get_index_canister(&user_id) {
                 state.data.user_index_event_sync_queue.push(
                     canister_id,
