@@ -1111,6 +1111,7 @@
     "sendGif": "Надіслати gif",
     "sendMessage": "Відправити повідомлення",
     "sendTextDisabled": "Текстові повідомлення вимкнено",
+    "sendMessageDisabledAnon": "Будь ласка, увійдіть, щоб надіслати повідомлення",
     "sendTo": "Відправити...",
     "sessionExpired": "Сеанс закінчився",
     "sessionExpiredBlurb": "Увійдіть знову",

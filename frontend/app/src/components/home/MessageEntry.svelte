@@ -90,8 +90,8 @@
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
-
-    $: canSendAny = client.canSendMessage(chat.id, mode);
+    $: anonUser = client.anonUser;
+    $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
     $: canEnterText =
         (permittedMessages.get("text") ?? false) ||
@@ -561,7 +561,13 @@
     {:else if !canSendAny}
         <div class="disabled">
             <Translatable
-                resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
+                resourceKey={i18nKey(
+                    $anonUser
+                        ? "sendMessageDisabledAnon"
+                        : mode === "thread"
+                          ? "readOnlyThread"
+                          : "readOnlyChat",
+                )} />
         </div>
     {:else if $throttleDeadline > 0}
         <ThrottleCountdown deadline={$throttleDeadline} />
