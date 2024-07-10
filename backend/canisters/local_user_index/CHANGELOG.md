@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Added lots more achievements to enum ([#6020](https://github.com/open-chat-labs/open-chat/pull/6020))
+
 ## [[2.0.1229](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1229-local_user_index)] - 2024-07-08
 
 ### Added
