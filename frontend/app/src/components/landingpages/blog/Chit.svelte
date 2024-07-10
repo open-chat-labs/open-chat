@@ -91,6 +91,11 @@
         the right to exclude users from this community if we determine they are deliberately trying
         to farm tokens.
     </p>
+    <p>
+        Note, the proof of unique personhood gate is not yet available but it will be in time for
+        the first airdrop so it is not necessary to buy lifetime membership. If necessary we will
+        postpone the airdrop until this gate is ready.
+    </p>
 </section>
 <section>
     <h2>How much CHAT do I get for my CHIT?</h2>
