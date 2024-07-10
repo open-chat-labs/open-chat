@@ -887,6 +887,7 @@
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
                 } else if (resp.kind === "gate_check_failed") {
+                    // TODO - we are ignoring the actual failure reason
                     modal = ModalType.GateCheckFailed;
                 } else if (resp.kind !== "success") {
                     toastStore.showFailureToast(
@@ -1257,7 +1258,8 @@
         {:else if modal === ModalType.NotFound}
             <NotFound on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
-            <GateCheckFailed on:close={closeModal} gate={joining.gate} />
+            <!-- this is not going to work for a community gate at the moment -->
+            <GateCheckFailed level={joining.level} on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}
             <InitiateCredentialCheck
                 level={credentialCheck.group.level}

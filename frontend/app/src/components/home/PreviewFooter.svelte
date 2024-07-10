@@ -66,7 +66,7 @@
 
 <div class="preview">
     <div class="gate">
-        <GroupGateIcon on:upgrade gate={chat.gate} />
+        <GroupGateIcon clickable level={chat.level} on:upgrade gate={chat.gate} />
     </div>
     {#if $platformModerator}
         {#if isFrozen}

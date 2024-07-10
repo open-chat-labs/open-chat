@@ -82,7 +82,7 @@
     </div>
     <Footer align="end">
         <div class="gate">
-            <AccessGateIcon on:upgrade gate={group.gate} />
+            <AccessGateIcon clickable level={group.level} gate={group.gate} />
         </div>
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}

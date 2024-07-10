@@ -71,7 +71,7 @@
                 {/if}
             {/if}
         </div>
-        <AccessGateSummary gate={community.gate} />
+        <AccessGateSummary editable={false} level={community.level} gate={community.gate} />
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard

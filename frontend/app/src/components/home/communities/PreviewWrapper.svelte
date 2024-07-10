@@ -98,7 +98,10 @@
 
 {#if communityGate !== undefined && gateCheckFailed}
     <Overlay dismissible on:close={() => (gateCheckFailed = false)}>
-        <GateCheckFailed on:close={() => (gateCheckFailed = false)} gate={communityGate} />
+        <GateCheckFailed
+            level={"community"}
+            on:close={() => (gateCheckFailed = false)}
+            gate={communityGate} />
     </Overlay>
 {/if}
 

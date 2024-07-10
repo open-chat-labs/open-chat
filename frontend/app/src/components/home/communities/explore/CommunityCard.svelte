@@ -50,7 +50,12 @@
     <IntersectionObserver let:intersecting>
         <CommunityBanner {intersecting} square={header} {banner}>
             <div class="gate">
-                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+                <AccessGateIcon
+                    clickable
+                    level={"community"}
+                    position={"bottom"}
+                    align={"end"}
+                    {gate} />
             </div>
             <div class="avatar">
                 <Avatar

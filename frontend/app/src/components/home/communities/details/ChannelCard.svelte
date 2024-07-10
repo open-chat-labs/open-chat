@@ -51,10 +51,11 @@
                 </div>
                 <div class="gate">
                     <AccessGateIcon
+                        clickable
+                        level={"channel"}
                         small
                         position={"bottom"}
                         align={"middle"}
-                        on:upgrade
                         gate={channel.gate} />
                 </div>
             </div>

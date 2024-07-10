@@ -1,56 +1,92 @@
 <script lang="ts">
-    import { isNeuronGate, type AccessGate, isPaymentGate, isBalanceGate } from "openchat-client";
+    import { type AccessGate, type Level } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
-    import AccessGateParameters from "./AccessGateParameters.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { gateLabel } from "../../../utils/access";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import AccessGateBuilder from "./AccessGateBuilder.svelte";
+    import { _ } from "svelte-i18n";
 
     export let gate: AccessGate;
-    export let showHeader = true;
+    export let editable: boolean;
+    export let level: Level;
+    export let valid: boolean = true;
+    export let showNoGate: boolean = false;
 
-    $: showDetails =
-        isPaymentGate(gate) ||
-        (isNeuronGate(gate) &&
-            (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined));
+    let showDetail = false;
+
+    $: gateText = getGateText(gate);
+
+    function open() {
+        showDetail = true;
+    }
+
+    function getGateResourceKey(gate: AccessGate) {
+        return gateLabel[gate.kind] ?? "access.unknownGate";
+    }
+
+    function getGateText(gate: AccessGate) {
+        if (gate.kind === "composite_gate") {
+            return i18nKey(
+                gate.gates.map((g) => $_(getGateResourceKey(g))).join(` ${gate.operator} `),
+            );
+        }
+        return i18nKey(getGateResourceKey(gate));
+    }
 </script>
 
-{#if gate.kind !== "no_gate"}
-    <div class="wrapper">
-        {#if showHeader}
-            <h4><Translatable resourceKey={i18nKey("access.gate")} /></h4>
-        {/if}
-        <div class="gate" class:showDetails>
-            <AccessGateIcon {gate} />
-            {#if gate.kind === "diamond_gate"}
-                <p><Translatable resourceKey={i18nKey("access.diamondMember")} /></p>
-            {:else if gate.kind === "lifetime_diamond_gate"}
-                <p><Translatable resourceKey={i18nKey("access.lifetimeDiamondMember")} /></p>
-            {:else if gate.kind === "unique_person_gate"}
-                <p><Translatable resourceKey={i18nKey("access.uniquePerson")} /></p>
-            {:else if isNeuronGate(gate) || gate.kind === "credential_gate" || isPaymentGate(gate) || isBalanceGate(gate)}
-                <AccessGateParameters {gate} />
+{#if showDetail}
+    <AccessGateBuilder
+        bind:valid
+        {level}
+        on:close={() => (showDetail = false)}
+        bind:gate
+        {editable} />
+{/if}
+
+{#if gate.kind !== "no_gate" || showNoGate}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class:invalid={!valid} on:click={open} class:editable class="summary">
+        <div class="icon">
+            <AccessGateIcon {level} showNoGate {gate} />
+        </div>
+        <div class="name">
+            {#if gateText !== undefined}
+                <Translatable resourceKey={gateText} />
             {/if}
         </div>
     </div>
 {/if}
 
 <style lang="scss">
-    .wrapper {
-        margin-bottom: $sp4;
-    }
-    h4 {
-        margin-bottom: $sp3;
-    }
-
-    .gate {
-        @include font(light, normal, fs-90);
-
+    .summary {
+        width: fit-content;
+        padding: $sp3 $sp4;
         display: flex;
-        gap: $sp4;
         align-items: center;
+        gap: $sp3;
+        background-color: var(--button-bg);
+        border-radius: var(--button-rd);
+        transition:
+            background ease-in-out 200ms,
+            color ease-in-out 200ms;
+        cursor: pointer;
 
-        &.showDetails {
-            align-items: start;
+        @media (hover: hover) {
+            &:hover {
+                background: var(--button-hv);
+                color: var(--button-hv-txt);
+            }
+        }
+
+        &.invalid {
+            background-color: var(--menu-warn);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--menu-warn);
+                }
+            }
         }
     }
 </style>

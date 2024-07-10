@@ -110,13 +110,16 @@
                         open={selectedGateIndex === i}
                         on:opened={() => (selectedGateIndex = i)}>
                         <div class="sub-header" slot="titleSlot" class:invalid={!gateValidity[i]}>
-                            <AccessGateIcon showNoGate gate={subgate} />
+                            <AccessGateIcon {level} showNoGate gate={subgate} />
                             <Translatable resourceKey={getGateText(subgate)} />
                             {#if editable}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div on:click={() => deleteGate(i)} class="delete">
-                                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                                    <Delete
+                                        viewBox={"0 -3 24 24"}
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"} />
                                 </div>
                             {/if}
                         </div>
@@ -190,6 +193,7 @@
     .sub-header {
         display: flex;
         gap: $sp3;
+        align-items: center;
 
         .delete {
             cursor: pointer;
