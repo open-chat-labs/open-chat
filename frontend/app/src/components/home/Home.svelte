@@ -887,7 +887,6 @@
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
                 } else if (resp.kind === "gate_check_failed") {
-                    // TODO - we are ignoring the actual failure reason
                     modal = ModalType.GateCheckFailed;
                 } else if (resp.kind !== "success") {
                     toastStore.showFailureToast(
