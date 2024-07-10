@@ -37,12 +37,14 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     }
 
     let invalid_subscriptions = Arc::new(RwLock::default());
+    let throttled_subscriptions = Arc::new(RwLock::default());
     for _ in 0..pusher_count {
         let pusher = Pusher::new(
             receiver.clone(),
             &vapid_private_pem,
             subscriptions_to_remove_sender.clone(),
             invalid_subscriptions.clone(),
+            throttled_subscriptions.clone(),
         );
         tokio::spawn(pusher.run());
     }
