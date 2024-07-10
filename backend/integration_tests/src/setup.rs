@@ -139,6 +139,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
+        ic_root_key: env.root_key().unwrap(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };

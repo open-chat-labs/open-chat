@@ -281,6 +281,8 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
+    #[serde(default)]
+    pub ic_root_key: Vec<u8>,
 }
 
 impl Data {
@@ -301,6 +303,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -348,6 +351,7 @@ impl Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
             deleted_users: Vec::new(),
+            ic_root_key,
         };
 
         // Register the ProposalsBot
@@ -454,6 +458,7 @@ impl Default for Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
             deleted_users: Vec::new(),
+            ic_root_key: Vec::new(),
         }
     }
 }

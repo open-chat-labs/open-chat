@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UserId};
+use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -339,6 +339,15 @@ impl UserMap {
     pub fn push_reported_message(&mut self, user_id: UserId, report_index: u64) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             user.reported_messages.push(report_index);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.unique_person_proof = Some(proof);
             true
         } else {
             false
