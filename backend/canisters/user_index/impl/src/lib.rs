@@ -231,6 +231,8 @@ impl RuntimeState {
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.iter().take(100).copied().collect(),
             empty_users_length: self.data.empty_users.len(),
+            deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
+            deleted_users_length: self.data.deleted_users.len(),
         }
     }
 }
@@ -490,6 +492,8 @@ pub struct Metrics {
     pub oc_public_key: String,
     pub empty_users: Vec<UserId>,
     pub empty_users_length: usize,
+    pub deleted_users: Vec<UserId>,
+    pub deleted_users_length: usize,
 }
 
 #[derive(Serialize, Debug)]

@@ -4,13 +4,14 @@ use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{error, info};
-use types::{Error, TimestampMillis, UserId};
+use types::{Error, Milliseconds, TimestampMillis, UserId};
 use web_push::{
     ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature,
     VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
 const MAX_PAYLOAD_LENGTH_BYTES: usize = 3 * 1000; // Just under 3KB
+const ONE_MINUTE: Milliseconds = 60 * 1000;
 
 pub struct Pusher {
     receiver: Receiver<Notification>,
@@ -18,6 +19,7 @@ pub struct Pusher {
     sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
+    throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
 }
 
 impl Pusher {
@@ -26,6 +28,7 @@ impl Pusher {
         vapid_private_pem: &str,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
+        throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     ) -> Self {
         Self {
             receiver,
@@ -33,6 +36,7 @@ impl Pusher {
             sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
             subscriptions_to_remove_sender,
             invalid_subscriptions,
+            throttled_subscriptions,
         }
     }
 
@@ -41,6 +45,15 @@ impl Pusher {
             if let Ok(map) = self.invalid_subscriptions.read() {
                 if map.contains_key(&notification.subscription_info.endpoint) {
                     continue;
+                }
+            }
+            if let Ok(map) = self.throttled_subscriptions.read() {
+                if let Some(until) = map.get(&notification.subscription_info.endpoint) {
+                    let timestamp = timestamp();
+                    if *until > timestamp {
+                        info!("Notification skipped due to subscription being throttled");
+                        continue;
+                    }
                 }
             }
             if let Err(error) = self.push_notification(&notification).await {
@@ -68,13 +81,11 @@ impl Pusher {
                             .subscriptions_to_remove_sender
                             .try_send((notification.recipient, subscription.keys.p256dh.clone()));
 
-                        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
-
                         if let Ok(mut map) = self.invalid_subscriptions.write() {
                             if map.len() > 10000 {
                                 prune_invalid_subscriptions(&mut map);
                             }
-                            map.insert(subscription.endpoint.clone(), timestamp);
+                            map.insert(subscription.endpoint.clone(), timestamp());
                         }
 
                         info!(
@@ -83,7 +94,17 @@ impl Pusher {
                         );
                         Ok(())
                     }
-                    _ => Err(error.into()),
+                    _ => {
+                        if let Ok(mut map) = self.throttled_subscriptions.write() {
+                            if map.len() > 100 {
+                                let timestamp = timestamp();
+                                map.retain(|_, ts| *ts > timestamp);
+                            }
+                            info!(subscription.endpoint, "Subscription throttled for 1 minute");
+                            map.insert(subscription.endpoint.clone(), timestamp() + ONE_MINUTE);
+                        }
+                        Err(error.into())
+                    }
                 }
             } else {
                 Ok(())
@@ -134,6 +155,10 @@ fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
     for (_, subscription) in heap {
         map.remove(&subscription);
     }
+}
+
+fn timestamp() -> TimestampMillis {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64
 }
 
 #[derive(Debug)]
