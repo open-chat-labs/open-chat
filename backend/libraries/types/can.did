@@ -1926,7 +1926,7 @@ type Achievement = variant {
     ReactedToMessage;
     HadMessageReactedTo;
     TippedMessage;
-    HadsMessageTipped;
+    HadMessageTipped;
     SwappedFromWallet;
     SentP2PSwapOffer;
     AcceptedP2PSwapOffer;
