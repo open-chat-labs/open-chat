@@ -1,10 +1,12 @@
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import type {
-    AccessGate,
-    Credential,
-    CryptocurrencyDetails,
-    NervousSystemDetails,
+import {
+    isCompositeGate,
+    type AccessGate,
+    type CreatedUser,
+    type Credential,
+    type CryptocurrencyDetails,
+    type NervousSystemDetails,
 } from "openchat-client";
 
 export type GateBinding = {
@@ -203,3 +205,13 @@ export const credentialIssuers: Credential[] = [
         },
     },
 ];
+
+/**
+ * We need a sort of state machine to help us deal with evaluating access gates.
+ *
+ * First question what do the state types look like?
+ */
+
+class EvaluatingGate {
+    constructor(private gate: AccessGate) {}
+}

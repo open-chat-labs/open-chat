@@ -12,9 +12,11 @@
     <select class:invalid class:margin {disabled} bind:value class={`select`} on:change>
         <slot />
     </select>
-    <div class="icon">
-        <MenuDown color={"var(--primary)"} size="1.8em" />
-    </div>
+    {#if !disabled}
+        <div class="icon">
+            <MenuDown color={"var(--primary)"} size="1.8em" />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">

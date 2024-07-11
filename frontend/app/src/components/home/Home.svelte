@@ -31,6 +31,7 @@
         CredentialGate,
         PaymentGate,
         ResourceKey,
+        NervousSystemDetails,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -102,6 +103,7 @@
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
+    import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -112,9 +114,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    let candidateGroup: CandidateGroupChat | undefined;
-    let candidateCommunity: CommunitySummary | undefined;
-    let candidateCommunityRules: Rules = defaultChatRules("community");
     let convertGroup: GroupChatSummary | undefined = undefined;
     let showProfileCard: ViewProfileConfig | undefined = undefined;
 
@@ -150,35 +149,29 @@
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
-    enum ModalType {
-        None,
-        SelectChat,
-        Suspended,
-        NoAccess,
-        NewGroup,
-        Wallet,
-        GateCheckFailed,
-        VerifyCredential,
-        ApproveJoinPayment,
-        HallOfFame,
-        EditCommunity,
-        MakeProposal,
-        Registering,
-        LoggingIn,
-        NotFound,
-        ClaimDailyChit,
-        Challenge,
-    }
+    type ModalType =
+        | { kind: "none" }
+        | { kind: "select_chat" }
+        | { kind: "suspended" }
+        | { kind: "no_access" }
+        | { kind: "new_group"; candidate: CandidateGroupChat }
+        | { kind: "wallet" }
+        | { kind: "gate_check_failed"; group: MultiUserChat }
+        | { kind: "verify_credential"; group: MultiUserChat; gate: CredentialGate; select: boolean }
+        | { kind: "approve_join_payment"; group: MultiUserChat; gate: PaymentGate; select: boolean }
+        | { kind: "hall_of_fame" }
+        | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
+        | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
+        | { kind: "registering" }
+        | { kind: "logging_in" }
+        | { kind: "not_found" }
+        | { kind: "claim_daily_chit" }
+        | { kind: "challenge" }
+        | { kind: "evaluating_access_gates" };
 
-    let modal = ModalType.None;
+    let modal: ModalType = { kind: "none" };
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let joining: MultiUserChat | undefined = undefined;
-    let credentialCheck:
-        | { group: MultiUserChat; gate: CredentialGate; select: boolean }
-        | undefined = undefined;
-    let joinPaymentDetails:
-        | { group: MultiUserChat; gate: PaymentGate; select: boolean }
-        | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
@@ -215,14 +208,14 @@
     $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
     $: {
         if ($identityState.kind === "registering") {
-            modal = ModalType.Registering;
+            modal = { kind: "registering" };
         } else if ($identityState.kind === "logging_in") {
-            modal = ModalType.LoggingIn;
-        } else if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+            modal = { kind: "logging_in" };
+        } else if ($identityState.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
-            modal = ModalType.None;
+            closeModal();
         } else if ($identityState.kind === "challenging") {
-            modal = ModalType.Challenge;
+            modal = { kind: "challenge" };
         }
         if (
             $identityState.kind === "logged_in" &&
@@ -246,7 +239,7 @@
         client.addEventListener("openchat_event", clientEvent);
 
         if ($suspendedUser) {
-            modal = ModalType.Suspended;
+            modal = { kind: "suspended" };
         }
 
         return () => {
@@ -361,7 +354,7 @@
                         pageReplace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
-                    modal = ModalType.NotFound;
+                    modal = { kind: "not_found" };
                     return;
                 }
             }
@@ -400,7 +393,7 @@
     async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
         const found = await client.setSelectedCommunity(id, $querystring.get("code"), clearChat);
         if (!found) {
-            modal = ModalType.NoAccess;
+            modal = { kind: "no_access" };
         }
         return found;
     }
@@ -499,7 +492,7 @@
                         files: [],
                     };
                     pageReplace(routeForScope(client.getDefaultScope()));
-                    modal = ModalType.SelectChat;
+                    modal = { kind: "select_chat" };
                 }
             }
 
@@ -512,7 +505,7 @@
 
             const wallet = $querystring.get("wallet");
             if (wallet !== null) {
-                modal = ModalType.Wallet;
+                modal = { kind: "wallet" };
                 pageReplace(removeQueryStringParam("wallet"));
             }
 
@@ -523,7 +516,7 @@
 
             const hof = $querystring.get("hof");
             if (hof !== null) {
-                modal = ModalType.HallOfFame;
+                modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
             }
 
@@ -568,16 +561,12 @@
     }
 
     function leaderboard() {
-        modal = ModalType.HallOfFame;
+        modal = { kind: "hall_of_fame" };
     }
 
     function closeModal() {
-        modal = ModalType.None;
-        candidateGroup = undefined;
-        candidateCommunity = undefined;
+        modal = { kind: "none" };
         joining = undefined;
-        credentialCheck = undefined;
-        joinPaymentDetails = undefined;
     }
 
     function closeNoAccess() {
@@ -753,7 +742,7 @@
 
     function forwardMessage(ev: CustomEvent<Message>) {
         messageToForward = ev.detail;
-        modal = ModalType.SelectChat;
+        modal = { kind: "select_chat" };
     }
 
     function showGroupMembers(ev: CustomEvent<boolean>) {
@@ -813,7 +802,7 @@
 
     function showMakeProposalModal() {
         if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
-            modal = ModalType.MakeProposal;
+            modal = { kind: "make_proposal", chat: selectedMultiUserChat, nervousSystem };
         }
     }
 
@@ -839,19 +828,27 @@
     }
 
     function credentialReceived(ev: CustomEvent<string>) {
-        if (credentialCheck !== undefined) {
-            const { group, select } = credentialCheck;
+        if (modal.kind === "verify_credential") {
+            const { group, select } = modal;
             closeModal();
             doJoinGroup(group, select, ev.detail);
         }
     }
 
     function onJoined() {
-        if (joinPaymentDetails?.select) {
-            page(routeForChatIdentifier($chatListScope.kind, joinPaymentDetails.group.id));
+        if (modal.kind === "approve_join_payment" && modal.select) {
+            page(routeForChatIdentifier($chatListScope.kind, modal.group.id));
         }
         closeModal();
     }
+
+    /**
+     * When we try to join a group we need to first scrutinise the access gates and
+     * see whether any of them require client side action before we can proceed with the
+     * call to the back end. I there are gates which require action, we need to perform
+     * those actions one by one until they are all done and then feed their results
+     * back into this function.
+     */
 
     async function doJoinGroup(
         group: MultiUserChat,
@@ -859,48 +856,63 @@
         credential: string | undefined,
     ): Promise<void> {
         joining = group;
-        if (group.gate.kind === "credential_gate" && credential === undefined) {
-            credentialCheck = { group, select, gate: group.gate };
-            modal = ModalType.VerifyCredential;
-            return Promise.resolve();
-        } else if (group.gate.kind === "payment_gate") {
-            joinPaymentDetails = { group, select, gate: group.gate };
-            modal = ModalType.ApproveJoinPayment;
-            return Promise.resolve();
-        } else if (group.kind === "channel") {
-            const community = client.getCommunityForChannel(group.id);
-            if (community?.gate.kind === "credential_gate" && credential === undefined) {
-                credentialCheck = { group, select, gate: community.gate };
-                modal = ModalType.VerifyCredential;
-                return Promise.resolve();
-            } else if (community?.gate.kind === "payment_gate") {
-                joinPaymentDetails = { group, select, gate: community.gate };
-                modal = ModalType.ApproveJoinPayment;
-                return Promise.resolve();
-            }
-        }
 
-        return client
-            .joinGroup(group, credential)
-            .then((resp) => {
-                if (resp.kind === "blocked") {
-                    toastStore.showFailureToast(i18nKey("youreBlocked"));
-                    joining = undefined;
-                } else if (resp.kind === "gate_check_failed") {
-                    modal = ModalType.GateCheckFailed;
-                } else if (resp.kind !== "success") {
-                    toastStore.showFailureToast(
-                        i18nKey("joinGroupFailed", undefined, group.level, true),
-                    );
-                    joining = undefined;
-                } else if (select) {
-                    joining = undefined;
-                    page(routeForChatIdentifier($chatListScope.kind, group.id));
-                } else {
-                    joining = undefined;
-                }
-            })
-            .catch(() => (joining = undefined));
+        const gates = client.accessGatesForChat(group);
+        const passed = client.doesUserMeetAccessGates(gates);
+
+        if (!passed) {
+            // we can't tell that the user has definitely passed the required gates
+            /**
+             * There will always be two lists of gates. A list of gates that we must have and a list of gates that we must have one of.
+             * We can then filter out any gates that we can already verify on the client.
+             * Then we let them choose the gate they want to use from the or list and add it the and list giving the total list of
+             * all gates that must be verified. Then we filter that list for those that require FE action (VC & payment)
+             */
+            // let's get all of the mandatory FE actioned gates
+            const mandatory = client.getAllMandatoryFrontEndLeafGates(gates);
+
+            // check - does this logic still work if we have two or groups.
+            console.log("We need to deal with some gates", mandatory);
+            modal = { kind: "evaluating_access_gates" };
+        } else {
+            // if (group.gate.kind === "credential_gate" && credential === undefined) {
+            //     modal = { kind: "verify_credential", group, select, gate: group.gate };
+            //     return Promise.resolve();
+            // } else if (group.gate.kind === "payment_gate") {
+            //     modal = { kind: "approve_join_payment", group, select, gate: group.gate };
+            //     return Promise.resolve();
+            // } else if (group.kind === "channel") {
+            //     const community = client.getCommunityForChannel(group.id);
+            //     if (community?.gate.kind === "credential_gate" && credential === undefined) {
+            //         modal = { kind: "verify_credential", group, select, gate: community.gate };
+            //     } else if (community?.gate.kind === "payment_gate") {
+            //         modal = { kind: "approve_join_payment", group, select, gate: community.gate };
+            //         return Promise.resolve();
+            //     }
+            // }
+
+            return client
+                .joinGroup(group, credential)
+                .then((resp) => {
+                    if (resp.kind === "blocked") {
+                        toastStore.showFailureToast(i18nKey("youreBlocked"));
+                        joining = undefined;
+                    } else if (resp.kind === "gate_check_failed") {
+                        modal = { kind: "gate_check_failed", group };
+                    } else if (resp.kind !== "success") {
+                        toastStore.showFailureToast(
+                            i18nKey("joinGroupFailed", undefined, group.level, true),
+                        );
+                        joining = undefined;
+                    } else if (select) {
+                        joining = undefined;
+                        page(routeForChatIdentifier($chatListScope.kind, group.id));
+                    } else {
+                        joining = undefined;
+                    }
+                })
+                .catch(() => (joining = undefined));
+        }
     }
 
     function upgrade() {
@@ -968,7 +980,7 @@
     }
 
     function showWallet() {
-        modal = ModalType.Wallet;
+        modal = { kind: "wallet" };
     }
 
     function newChannel() {
@@ -984,66 +996,70 @@
                 ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: "" }
                 : { kind: "group_chat", groupId: "" };
 
-        modal = ModalType.NewGroup;
-        candidateGroup = {
-            id,
-            kind: "candidate_group_chat",
-            name: "",
-            description: "",
-            historyVisible: true,
-            public: false,
-            frozen: false,
-            members: [],
-            permissions: {
-                changeRoles: "admin",
-                removeMembers: "moderator",
-                deleteMessages: "moderator",
-                updateGroup: "admin",
-                pinMessages: "admin",
-                inviteUsers: "admin",
-                mentionAllMembers: "member",
-                reactToMessages: "member",
-                startVideoCall: "member",
-                messagePermissions: {
-                    default: "member",
-                    p2pSwap: "none",
+        modal = {
+            kind: "new_group",
+            candidate: {
+                id,
+                kind: "candidate_group_chat",
+                name: "",
+                description: "",
+                historyVisible: true,
+                public: false,
+                frozen: false,
+                members: [],
+                permissions: {
+                    changeRoles: "admin",
+                    removeMembers: "moderator",
+                    deleteMessages: "moderator",
+                    updateGroup: "admin",
+                    pinMessages: "admin",
+                    inviteUsers: "admin",
+                    mentionAllMembers: "member",
+                    reactToMessages: "member",
+                    startVideoCall: "member",
+                    messagePermissions: {
+                        default: "member",
+                        p2pSwap: "none",
+                    },
+                    threadPermissions: undefined,
                 },
-                threadPermissions: undefined,
-            },
-            rules: { ...defaultChatRules(level), newVersion: false },
-            gate: { kind: "no_gate" },
-            level,
-            membership: {
-                ...nullMembership(),
-                role: "owner",
+                rules: { ...defaultChatRules(level), newVersion: false },
+                gate: { kind: "no_gate" },
+                level,
+                membership: {
+                    ...nullMembership(),
+                    role: "owner",
+                },
             },
         };
     }
 
     function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: UpdatedRules | undefined }>) {
-        modal = ModalType.NewGroup;
         const chat = ev.detail.chat;
         let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
-        candidateGroup = {
-            id: chat.id,
-            kind: "candidate_group_chat",
-            name: chat.name,
-            description: chat.description,
-            historyVisible: chat.historyVisible,
-            public: chat.public,
-            frozen: chat.frozen,
-            members: [],
-            permissions: { ...chat.permissions },
-            rules,
-            avatar: {
-                blobUrl: chat.blobUrl,
-                blobData: chat.blobData,
+        modal = {
+            kind: "new_group",
+            candidate: {
+                id: chat.id,
+                kind: "candidate_group_chat",
+                name: chat.name,
+                description: chat.description,
+                historyVisible: chat.historyVisible,
+                public: chat.public,
+                frozen: chat.frozen,
+                members: [],
+                permissions: { ...chat.permissions },
+                rules,
+                avatar: {
+                    blobUrl: chat.blobUrl,
+                    blobData: chat.blobData,
+                },
+                gate: chat.gate,
+                level,
+                membership: chat.membership,
+                eventsTTL: chat.eventsTTL,
             },
-            gate: chat.gate,
-            level,
-            membership: chat.membership,
-            eventsTTL: chat.eventsTTL,
         };
     }
 
@@ -1062,7 +1078,7 @@
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
-            modal = ModalType.NotFound;
+            modal = { kind: "not_found" };
             return false;
         }
 
@@ -1074,15 +1090,19 @@
         const maxIndex = $communities
             .values()
             .reduce((m, c) => (c.membership.index > m ? c.membership.index : m), 0);
-        candidateCommunity = createCandidateCommunity("", maxIndex + 1);
-        candidateCommunityRules = defaultChatRules("community");
-        modal = ModalType.EditCommunity;
+        modal = {
+            kind: "edit_community",
+            community: createCandidateCommunity("", maxIndex + 1),
+            communityRules: defaultChatRules("community"),
+        };
     }
 
     function editCommunity(ev: CustomEvent<CommunitySummary>) {
-        candidateCommunity = ev.detail;
-        candidateCommunityRules = $currentCommunityRules ?? defaultChatRules("community");
-        modal = ModalType.EditCommunity;
+        modal = {
+            kind: "edit_community",
+            community: ev.detail,
+            communityRules: $currentCommunityRules ?? defaultChatRules("community"),
+        };
     }
 
     function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
@@ -1140,7 +1160,7 @@
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
-            on:halloffame={() => (modal = ModalType.HallOfFame)}
+            on:halloffame={() => (modal = { kind: "hall_of_fame" })}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
             on:newChannel={newChannel}
@@ -1148,14 +1168,14 @@
             on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade}
             on:claimDailyChit={() => {
-                modal = ModalType.ClaimDailyChit;
+                modal = { kind: "claim_daily_chit" };
             }} />
     {/if}
 
     {#if $layoutStore.showLeft}
         <LeftPanel
             on:chatWith={chatWith}
-            on:halloffame={() => (modal = ModalType.HallOfFame)}
+            on:halloffame={() => (modal = { kind: "hall_of_fame" })}
             on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
             on:communityDetails={communityDetails}
@@ -1234,63 +1254,71 @@
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
-{#if modal === ModalType.Registering}
+{#if modal.kind === "registering"}
     <Overlay>
         <Register
             on:logout={() => client.logout()}
             on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
     </Overlay>
-{:else if modal !== ModalType.None}
+{:else if modal.kind !== "none"}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat &&
-            modal !== ModalType.Wallet &&
-            modal !== ModalType.NotFound &&
-            modal !== ModalType.MakeProposal}
-        alignLeft={modal === ModalType.SelectChat}
+        dismissible={modal.kind !== "select_chat" &&
+            modal.kind !== "wallet" &&
+            modal.kind !== "not_found" &&
+            modal.kind !== "make_proposal"}
+        alignLeft={modal.kind === "select_chat"}
         on:close={closeModal}>
-        {#if modal === ModalType.SelectChat}
+        {#if modal.kind === "select_chat"}
             <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
-        {:else if modal === ModalType.Suspended}
+        {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
-        {:else if modal === ModalType.NoAccess}
+        {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
-        {:else if modal === ModalType.NotFound}
+        {:else if modal.kind === "not_found"}
             <NotFound on:close={closeNoAccess} />
-        {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
+        {:else if modal.kind === "gate_check_failed"}
             <!-- this is not going to work for a community gate at the moment -->
-            <GateCheckFailed level={joining.level} on:close={closeModal} gate={joining.gate} />
-        {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}
+            <GateCheckFailed
+                level={modal.group.level}
+                on:close={closeModal}
+                gate={modal.group.gate} />
+        {:else if modal.kind === "verify_credential"}
             <InitiateCredentialCheck
-                level={credentialCheck.group.level}
+                level={modal.group.level}
                 on:close={closeModal}
                 on:credentialReceived={credentialReceived}
-                gate={credentialCheck.gate} />
-        {:else if modal === ModalType.ApproveJoinPayment && joinPaymentDetails !== undefined}
+                gate={modal.gate} />
+        {:else if modal.kind === "approve_join_payment"}
             <ApproveJoiningPaymentModal
                 on:close={closeModal}
                 on:joined={onJoined}
-                group={joinPaymentDetails.group}
-                gate={joinPaymentDetails.gate} />
-        {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
-            <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
-        {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
+                group={modal.group}
+                gate={modal.gate} />
+        {:else if modal.kind === "evaluating_access_gates"}
+            <AccessGateEvaluator on:close={closeModal} on:success={closeModal} />
+        {:else if modal.kind === "new_group"}
+            <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
+        {:else if modal.kind === "edit_community"}
             <EditCommunity
-                originalRules={candidateCommunityRules}
-                original={candidateCommunity}
+                originalRules={modal.communityRules}
+                original={modal.community}
                 on:close={closeModal} />
-        {:else if modal === ModalType.Wallet}
+        {:else if modal.kind === "wallet"}
             <AccountsModal on:close={closeModal} />
-        {:else if modal === ModalType.HallOfFame}
+        {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
-                on:streak={() => (modal = ModalType.ClaimDailyChit)}
+                on:streak={() => (modal = { kind: "claim_daily_chit" })}
                 on:close={closeModal} />
-        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
-            <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
-        {:else if modal === ModalType.LoggingIn}
+        {:else if modal.kind === "make_proposal"}
+            <MakeProposalModal
+                selectedMultiUserChat={modal.chat}
+                nervousSystem={modal.nervousSystem}
+                on:close={closeModal} />
+        {:else if modal.kind === "logging_in"}
             <LoggingInModal on:close={closeModal} />
-        {:else if modal === ModalType.ClaimDailyChit}
+        {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
-        {:else if modal === ModalType.Challenge}
+        {:else if modal.kind === "challenge"}
             <ChallengeModal on:close={closeModal} />
         {/if}
     </Overlay>

@@ -408,6 +408,9 @@ import type {
     ChitEventsResponse,
     GenerateChallengeResponse,
     ChallengeAttempt,
+    AccessGateWithLevel,
+    LeafGate,
+    ActiveLeafGate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4002,6 +4005,74 @@ export class OpenChat extends OpenChatAgentWorker {
                 userId: message.userId,
             });
         }
+    }
+
+    /**
+     * We *may* be able to conclude that the user meets the gate purely through
+     * reference to the user data in which case we don't need to do anything else
+     */
+    doesUserMeetAccessGates(gates: AccessGate[]): boolean {
+        return gates.every((g) => this.doesUserMeetAccessGate(g));
+    }
+
+    doesUserMeetAccessGate(gate: AccessGate): boolean {
+        if (isCompositeGate(gate)) {
+            return gate.operator === "and"
+                ? gate.gates.every((g) => this.doesUserMeetAccessGate(g))
+                : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
+        } else {
+            if (gate.kind === "diamond_gate") {
+                return this._liveState.user.diamondStatus.kind !== "inactive";
+            } else if (gate.kind === "lifetime_diamond_gate") {
+                return this._liveState.user.diamondStatus.kind === "lifetime";
+            } else {
+                // TODO we will be able to check the human flag here too
+                return false;
+            }
+        }
+    }
+
+    /**
+     * This returns all of the gates the user definitely needs to pass (i.e. gates that belong to an "and")
+     * *and* that need to be handled on the front end before we attempt to join the chat
+     */
+    getAllMandatoryFrontEndLeafGates(gates: AccessGate[]): ActiveLeafGate[] {
+        return gates.reduce((all, g) => {
+            if (isCompositeGate(g) && g.operator === "and") {
+                all.push(...this.getAllMandatoryFrontEndLeafGates(g.gates));
+            } else {
+                if (
+                    g.kind === "credential_gate" ||
+                    g.kind === "payment_gate" ||
+                    g.kind === "unique_person_gate" // this is really a special kind of VC gate
+                ) {
+                    all.push(g);
+                }
+            }
+            return all;
+        }, [] as ActiveLeafGate[]);
+    }
+
+    /**
+     * When joining a channel it is possible that both the channel & the community
+     * have access gates so we need to work out all applicable gates for the chat
+     * Note that we only return gates if we are not already a member.
+     */
+    accessGatesForChat(chat: MultiUserChat): AccessGateWithLevel[] {
+        const gates: AccessGateWithLevel[] = [];
+        const community =
+            chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
+        if (
+            community !== undefined &&
+            community.gate.kind !== "no_gate" &&
+            community.membership.role === "none"
+        ) {
+            gates.push({ level: "community", ...community.gate });
+        }
+        if (chat.gate.kind !== "no_gate" && chat.membership.role === "none") {
+            gates.push({ level: chat.level, ...chat.gate });
+        }
+        return gates;
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {

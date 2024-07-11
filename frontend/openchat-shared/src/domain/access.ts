@@ -1,6 +1,10 @@
 import type { Level } from "./structure";
 
+export type AccessGateWithLevel = { level: Level } & AccessGate;
+
 export type AccessGate = LeafGate | CompositeGate;
+
+export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
 
 export type LeafGate =
     | NoGate
