@@ -17,6 +17,7 @@ use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
+mod guards;
 mod hash;
 mod lifecycle;
 mod memory;
@@ -38,6 +39,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
     }
 
     pub fn der_encode_canister_sig_key(&self, seed: [u8; 32]) -> Vec<u8> {

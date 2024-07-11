@@ -28,6 +28,8 @@ pub struct UserMap {
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
     deleted_users: HashMap<UserId, TimestampMillis>,
+    #[serde(default)]
+    unique_person_proofs_submitted: u32,
 }
 
 impl UserMap {
@@ -146,19 +148,16 @@ impl UserMap {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
     }
 
-    pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if let Some(user) = self.users.remove(&user_id) {
-            if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
-                self.principal_to_user_id.remove(&user.principal);
-            }
-            if self.username_to_user_id.get(&user.username) == Some(&user_id) {
-                self.username_to_user_id.remove(&user.username);
-            }
-            self.deleted_users.insert(user_id, now);
-            true
-        } else {
-            false
+    pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> Option<User> {
+        let user = self.users.remove(&user_id)?;
+        if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
+            self.principal_to_user_id.remove(&user.principal);
         }
+        if self.username_to_user_id.get(&user.username) == Some(&user_id) {
+            self.username_to_user_id.remove(&user.username);
+        }
+        self.deleted_users.insert(user_id, now);
+        Some(user)
     }
 
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
@@ -347,11 +346,18 @@ impl UserMap {
 
     pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
+            if user.unique_person_proof.is_none() {
+                self.unique_person_proofs_submitted += 1;
+            }
             user.unique_person_proof = Some(proof);
             true
         } else {
             false
         }
+    }
+
+    pub fn unique_person_proofs_submitted(&self) -> u32 {
+        self.unique_person_proofs_submitted
     }
 
     #[cfg(test)]

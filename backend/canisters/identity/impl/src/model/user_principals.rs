@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::CanisterId;
+use types::{CanisterId, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -23,6 +23,8 @@ struct UserPrincipalInternal {
     principal: Principal,
     #[serde(rename = "a")]
     auth_principals: Vec<Principal>,
+    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    user_id: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -41,6 +43,7 @@ impl UserPrincipals {
         self.user_principals.push(UserPrincipalInternal {
             principal,
             auth_principals: vec![auth_principal],
+            user_id: None,
         });
         self.auth_principals.insert(
             auth_principal,
@@ -91,6 +94,17 @@ impl UserPrincipals {
 
     pub fn originating_canisters(&self) -> &HashMap<CanisterId, u32> {
         &self.originating_canisters
+    }
+
+    // This is O(number of users) so we may need to revisit this in the future, but it is only
+    // called once per user so is fine for now.
+    pub fn set_user_id(&mut self, principal: Principal, user_id: Option<UserId>) -> bool {
+        if let Some(user) = self.user_principals.iter_mut().find(|u| u.principal == principal) {
+            user.user_id = user_id;
+            true
+        } else {
+            false
+        }
     }
 
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {

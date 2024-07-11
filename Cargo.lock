@@ -4461,6 +4461,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "identity_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "ic-cdk 0.14.0",
+ "identity_canister",
+ "msgpack",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "identity_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -4479,6 +4491,7 @@ dependencies = [
  "ic-certification 2.5.0",
  "ic-stable-structures 0.6.4",
  "identity_canister",
+ "msgpack",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
@@ -8798,6 +8811,8 @@ dependencies = [
  "ic-verifiable-credentials",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "identity_canister",
+ "identity_canister_c2c_client",
  "itertools 0.13.0",
  "ledger_utils",
  "local_user_index_canister",
