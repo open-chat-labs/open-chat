@@ -23,7 +23,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
@@ -160,28 +160,32 @@ impl RuntimeState {
 
     pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) {
         let now = self.env.now();
-        self.data.users.delete_user(user_id, now);
-        self.data.local_index_map.remove_user(&user_id);
-        self.data.empty_users.remove(&user_id);
+        if let Some(user) = self.data.users.delete_user(user_id, now) {
+            self.data.local_index_map.remove_user(&user_id);
+            self.data.empty_users.remove(&user_id);
 
-        #[derive(Serialize)]
-        struct EventPayload {
-            triggered_by_user: bool,
+            #[derive(Serialize)]
+            struct EventPayload {
+                triggered_by_user: bool,
+            }
+
+            self.data.event_store_client.push(
+                EventBuilder::new("user_deleted", now)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(self.env.canister_id().to_string(), false)
+                    .with_json_payload(&EventPayload { triggered_by_user })
+                    .build(),
+            );
+
+            self.data.deleted_users.push(DeletedUser {
+                user_id,
+                triggered_by_user,
+                timestamp: now,
+            });
+
+            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
+            jobs::sync_users_to_identity_canister::try_run_now(self);
         }
-
-        self.data.event_store_client.push(
-            EventBuilder::new("user_deleted", now)
-                .with_user(user_id.to_string(), true)
-                .with_source(self.env.canister_id().to_string(), false)
-                .with_json_payload(&EventPayload { triggered_by_user })
-                .build(),
-        );
-
-        self.data.deleted_users.push(DeletedUser {
-            user_id,
-            triggered_by_user,
-            timestamp: now,
-        });
     }
 
     pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
@@ -310,6 +314,8 @@ struct Data {
     pub deleted_users: Vec<DeletedUser>,
     #[serde(default)]
     pub ic_root_key: Vec<u8>,
+    #[serde(default)]
+    pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
 }
 
 impl Data {
@@ -379,6 +385,7 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::default(),
             deleted_users: Vec::new(),
             ic_root_key,
+            identity_canister_user_sync_queue: VecDeque::new(),
         };
 
         // Register the ProposalsBot
@@ -486,6 +493,7 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::default(),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
         }
     }
 }
