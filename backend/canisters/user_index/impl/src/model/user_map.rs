@@ -28,6 +28,8 @@ pub struct UserMap {
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
     deleted_users: HashMap<UserId, TimestampMillis>,
+    #[serde(default)]
+    unique_person_proofs_submitted: u32,
 }
 
 impl UserMap {
@@ -347,11 +349,18 @@ impl UserMap {
 
     pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
+            if user.unique_person_proof.is_none() {
+                self.unique_person_proofs_submitted += 1;
+            }
             user.unique_person_proof = Some(proof);
             true
         } else {
             false
         }
+    }
+
+    pub fn unique_person_proofs_submitted(&self) -> u32 {
+        self.unique_person_proofs_submitted
     }
 
     #[cfg(test)]
