@@ -188,6 +188,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(),
             event_store_client_info,
             canister_ids: CanisterIds {
@@ -324,6 +325,7 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
+    pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
