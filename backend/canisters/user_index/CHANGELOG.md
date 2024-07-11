@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Track event each time a proof of uniqueness is submitted ([#6024](https://github.com/open-chat-labs/open-chat/pull/6024))
+- Track event each time a user is deleted ([#6025](https://github.com/open-chat-labs/open-chat/pull/6025))
 
 ## [[2.0.1231](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1231-user_index)] - 2024-07-08
 
