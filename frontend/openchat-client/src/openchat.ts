@@ -411,6 +411,7 @@ import type {
     AccessGateWithLevel,
     LeafGate,
     ActiveLeafGate,
+    PreprocessedGate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -460,6 +461,7 @@ import {
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
     isCompositeGate,
+    shouldPreprocessGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4032,25 +4034,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    /**
-     * This returns all of the gates the user definitely needs to pass (i.e. gates that belong to an "and")
-     * *and* that need to be handled on the front end before we attempt to join the chat
-     */
-    getAllMandatoryFrontEndLeafGates(gates: AccessGate[]): ActiveLeafGate[] {
+    gatePreprocessingRequired(gates: AccessGate[]): boolean {
+        return this.getAllPreprocessLeafGates(gates).length > 0;
+    }
+
+    private getAllPreprocessLeafGates(gates: AccessGate[]): PreprocessedGate[] {
         return gates.reduce((all, g) => {
-            if (isCompositeGate(g) && g.operator === "and") {
-                all.push(...this.getAllMandatoryFrontEndLeafGates(g.gates));
+            if (isCompositeGate(g)) {
+                all.push(...this.getAllPreprocessLeafGates(g.gates));
             } else {
-                if (
-                    g.kind === "credential_gate" ||
-                    g.kind === "payment_gate" ||
-                    g.kind === "unique_person_gate" // this is really a special kind of VC gate
-                ) {
+                if (shouldPreprocessGate(g)) {
                     all.push(g);
                 }
             }
             return all;
-        }, [] as ActiveLeafGate[]);
+        }, [] as PreprocessedGate[]);
     }
 
     /**

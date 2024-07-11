@@ -6,6 +6,8 @@ export type AccessGate = LeafGate | CompositeGate;
 
 export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
 
+export type PreprocessedGate = CredentialGate | PaymentGate | UniquePersonGate;
+
 export type LeafGate =
     | NoGate
     | NeuronGate
@@ -70,6 +72,10 @@ export function isLeafGate(gate: AccessGate): gate is LeafGate {
     return gate.kind !== "composite_gate";
 }
 
+export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate {
+    return ["unique_person_gate", "credential_gate", "payment_gate"].includes(gate.kind);
+}
+
 export function isCompositeGate(gate: AccessGate): gate is CompositeGate {
     return gate.kind === "composite_gate";
 }
@@ -88,6 +94,10 @@ export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
 
 export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
     return gate.kind === "credential_gate";
+}
+
+export function isUniquePersonGate(gate: AccessGate): gate is UniquePersonGate {
+    return gate.kind === "unique_person_gate";
 }
 
 export type DiamondGate = { kind: "diamond_gate" };

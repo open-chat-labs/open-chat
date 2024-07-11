@@ -1,12 +1,12 @@
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
 import {
-    isCompositeGate,
     type AccessGate,
-    type CreatedUser,
     type Credential,
+    type CredentialGate,
     type CryptocurrencyDetails,
     type NervousSystemDetails,
+    type UniquePersonGate,
 } from "openchat-client";
 
 export type GateBinding = {
@@ -170,6 +170,17 @@ const nftGate: GateBinding = {
     enabled: false,
 };
 
+// TODO - we need to hard-code this with the DecideAI details
+export const uniquePersonCredentialGate: CredentialGate = {
+    kind: "credential_gate",
+    credential: {
+        credentialName: "",
+        issuerCanisterId: "",
+        issuerOrigin: "",
+        credentialType: "",
+    },
+};
+
 const credentialGate: GateBinding = {
     label: "access.credential.label",
     key: "credential_gate",
@@ -205,13 +216,3 @@ export const credentialIssuers: Credential[] = [
         },
     },
 ];
-
-/**
- * We need a sort of state machine to help us deal with evaluating access gates.
- *
- * First question what do the state types look like?
- */
-
-class EvaluatingGate {
-    constructor(private gate: AccessGate) {}
-}

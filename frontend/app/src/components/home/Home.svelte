@@ -32,6 +32,7 @@
         PaymentGate,
         ResourceKey,
         NervousSystemDetails,
+        AccessGateWithLevel,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -167,7 +168,7 @@
         | { kind: "not_found" }
         | { kind: "claim_daily_chit" }
         | { kind: "challenge" }
-        | { kind: "evaluating_access_gates" };
+        | { kind: "evaluating_access_gates"; gates: AccessGateWithLevel[]; level: Level };
 
     let modal: ModalType = { kind: "none" };
     let confirmActionEvent: ConfirmActionEvent | undefined;
@@ -842,6 +843,14 @@
         closeModal();
     }
 
+    function accessGatesEvaluated(ev: CustomEvent<string[]>) {
+        if (modal.kind === "evaluating_access_gates") {
+            console.log("Received the following credentials: ", ev.detail);
+            console.log("This is where we will try to join the group again");
+            closeModal();
+        }
+    }
+
     /**
      * When we try to join a group we need to first scrutinise the access gates and
      * see whether any of them require client side action before we can proceed with the
@@ -868,12 +877,10 @@
              * Then we let them choose the gate they want to use from the or list and add it the and list giving the total list of
              * all gates that must be verified. Then we filter that list for those that require FE action (VC & payment)
              */
-            // let's get all of the mandatory FE actioned gates
-            const mandatory = client.getAllMandatoryFrontEndLeafGates(gates);
-
-            // check - does this logic still work if we have two or groups.
-            console.log("We need to deal with some gates", mandatory);
-            modal = { kind: "evaluating_access_gates" };
+            if (client.gatePreprocessingRequired(gates)) {
+                modal = { kind: "evaluating_access_gates", gates, level: group.level };
+                return Promise.resolve();
+            }
         } else {
             // if (group.gate.kind === "credential_gate" && credential === undefined) {
             //     modal = { kind: "verify_credential", group, select, gate: group.gate };
@@ -1295,7 +1302,11 @@
                 group={modal.group}
                 gate={modal.gate} />
         {:else if modal.kind === "evaluating_access_gates"}
-            <AccessGateEvaluator on:close={closeModal} on:success={closeModal} />
+            <AccessGateEvaluator
+                level={modal.level}
+                gates={modal.gates}
+                on:close={closeModal}
+                on:complete={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal.kind === "edit_community"}

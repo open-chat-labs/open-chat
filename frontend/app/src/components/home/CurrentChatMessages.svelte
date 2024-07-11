@@ -309,60 +309,62 @@
             <PrivatePreview />
         {/if}
     {/if}
-    {#each timeline as timelineItem}
-        {#if timelineItem.kind === "timeline_date"}
-            <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
-        {:else}
-            {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
-                {#each innerGroup as evt, i (eventKey(evt))}
-                    <ChatEvent
-                        observer={messageObserver}
-                        focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $focusMessageIndex &&
-                            !isFailed($failedMessagesStore, evt)}
-                        confirmed={isConfirmed($unconfirmed, evt)}
-                        failed={isFailed($failedMessagesStore, evt)}
-                        readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
-                        readByMe={isReadByMe($messagesRead, evt)}
-                        chatId={chat.id}
-                        chatType={chat.kind}
-                        user={$user}
-                        me={isMe(evt)}
-                        first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
-                        last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
-                        {readonly}
-                        {canPin}
-                        {canBlockUsers}
-                        {canDelete}
-                        {canSendAny}
-                        {canReact}
-                        {canInvite}
-                        {canReplyInThread}
-                        collapsed={isCollapsed(evt, filteredProposals)}
-                        supportsEdit
-                        supportsReply
-                        threadRootMessage={undefined}
-                        publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
-                            chat.public}
-                        pinned={isPinned($currentChatPinnedMessages, evt)}
-                        editing={$currentChatEditingEvent === evt}
-                        on:chatWith
-                        on:replyTo={replyTo}
-                        on:replyPrivatelyTo
-                        on:removePreview
-                        on:editEvent={onEditEvent}
-                        on:goToMessageIndex={goToMessageIndex}
-                        on:expandMessage={() => toggleMessageExpansion(evt, true)}
-                        on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                        on:upgrade
-                        on:forward
-                        on:retrySend
-                        on:startVideoCall
-                        event={evt} />
+    {#if !privatePreview}
+        {#each timeline as timelineItem}
+            {#if timelineItem.kind === "timeline_date"}
+                <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+            {:else}
+                {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
+                    {#each innerGroup as evt, i (eventKey(evt))}
+                        <ChatEvent
+                            observer={messageObserver}
+                            focused={evt.event.kind === "message" &&
+                                evt.event.messageIndex === $focusMessageIndex &&
+                                !isFailed($failedMessagesStore, evt)}
+                            confirmed={isConfirmed($unconfirmed, evt)}
+                            failed={isFailed($failedMessagesStore, evt)}
+                            readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
+                            readByMe={isReadByMe($messagesRead, evt)}
+                            chatId={chat.id}
+                            chatType={chat.kind}
+                            user={$user}
+                            me={isMe(evt)}
+                            first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
+                            last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
+                            {readonly}
+                            {canPin}
+                            {canBlockUsers}
+                            {canDelete}
+                            {canSendAny}
+                            {canReact}
+                            {canInvite}
+                            {canReplyInThread}
+                            collapsed={isCollapsed(evt, filteredProposals)}
+                            supportsEdit
+                            supportsReply
+                            threadRootMessage={undefined}
+                            publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
+                                chat.public}
+                            pinned={isPinned($currentChatPinnedMessages, evt)}
+                            editing={$currentChatEditingEvent === evt}
+                            on:chatWith
+                            on:replyTo={replyTo}
+                            on:replyPrivatelyTo
+                            on:removePreview
+                            on:editEvent={onEditEvent}
+                            on:goToMessageIndex={goToMessageIndex}
+                            on:expandMessage={() => toggleMessageExpansion(evt, true)}
+                            on:collapseMessage={() => toggleMessageExpansion(evt, false)}
+                            on:upgrade
+                            on:forward
+                            on:retrySend
+                            on:startVideoCall
+                            event={evt} />
+                    {/each}
                 {/each}
-            {/each}
-        {/if}
-    {/each}
+            {/if}
+        {/each}
+    {/if}
     {#if reverseScroll}
         {#if privatePreview}
             <PrivatePreview />
