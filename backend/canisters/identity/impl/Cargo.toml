@@ -23,6 +23,7 @@ ic-cdk-timers = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
+msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

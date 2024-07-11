@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -24,4 +24,14 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        for user in state.data.users.iter() {
+            state
+                .data
+                .identity_canister_user_sync_queue
+                .push_back((user.principal, Some(user.user_id)));
+        }
+        crate::jobs::sync_users_to_identity_canister::start_job_if_required(state);
+    })
 }

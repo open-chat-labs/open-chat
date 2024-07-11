@@ -175,6 +175,12 @@ You can change your username at any time by clicking \"Profile settings\" from t
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
 
+    state
+        .data
+        .identity_canister_user_sync_queue
+        .push_back((caller, Some(user_id)));
+    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
+
     if let Some(referrer) = referred_by {
         state.data.user_referral_leaderboards.add_referral(referrer, now);
     }
