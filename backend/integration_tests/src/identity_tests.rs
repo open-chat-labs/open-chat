@@ -41,7 +41,7 @@ fn link_auth_identities(delay: bool) {
     );
 
     if delay {
-        env.advance_time(Duration::from_secs(300));
+        env.advance_time(Duration::from_secs(301));
     }
 
     let approve_identity_link_response = client::identity::approve_identity_link(
@@ -91,7 +91,7 @@ fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Princi
     };
 
     let magic_link = sign_in_with_email_canister_test_utils::generate_magic_link(
-        &email,
+        email,
         session_key.clone(),
         generate_magic_link_success.created * NANOS_PER_MILLISECOND,
         generate_magic_link_success.expiration,

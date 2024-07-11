@@ -33,7 +33,7 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
     let Some(CborValue::ByteString(certificate_bytes)) = map.get("certificate") else {
         return MalformedSignature("Couldn't find certificate".to_string());
     };
-    let Ok(certificate) = Certificate::from_cbor(&certificate_bytes) else {
+    let Ok(certificate) = Certificate::from_cbor(certificate_bytes) else {
         return MalformedSignature("Unable to parse certificate".to_string());
     };
     if certificate
