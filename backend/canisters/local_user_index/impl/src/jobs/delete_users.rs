@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState, UserToDelete};
+use crate::{mutate_state, read_state, RuntimeState, UserToDelete};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -42,7 +42,7 @@ async fn process_user(user: UserToDelete) {
         match user_canister_c2c_client::c2c_is_empty_and_dormant(canister_id, &Empty {}).await {
             Ok(true) => {}
             Ok(false) => {
-                mutate_state(start_job_if_required);
+                read_state(start_job_if_required);
                 return;
             }
             Err(_) => error = true,
