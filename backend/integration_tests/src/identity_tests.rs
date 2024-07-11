@@ -103,7 +103,7 @@ fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Princi
         Principal::anonymous(),
         canister_ids.sign_in_with_email,
         &sign_in_with_email_canister::HandleMagicLinkArgs {
-            link: magic_link.build_querystring(),
+            link: format!("{}&c={}", magic_link.build_querystring(), magic_link.magic_link.code()),
         },
     );
     assert!(matches!(
