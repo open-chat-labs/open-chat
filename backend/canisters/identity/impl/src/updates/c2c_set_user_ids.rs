@@ -9,7 +9,7 @@ use identity_canister::c2c_set_user_ids::{Response::*, *};
 fn c2c_set_user_ids(args: Args) -> Response {
     // This function runs in O(number of users registered x batch size),
     // so we need to ensure each batch is fairly small
-    assert!(args.users.len() < 100);
+    assert!(args.users.len() <= 100);
 
     mutate_state(|state| c2c_set_user_ids_impl(args, state))
 }
