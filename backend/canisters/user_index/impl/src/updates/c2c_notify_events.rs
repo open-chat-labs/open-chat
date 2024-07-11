@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::{mutate_state, DeletedUser, RuntimeState, UserRegisteredEventPayload, ONE_MB};
+use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -88,15 +88,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             );
         }
         Event::UserDeleted(ev) => {
-            let now = state.env.now();
-            state.data.users.delete_user(ev.user_id, now);
-            state.data.local_index_map.remove_user(&ev.user_id);
-            state.data.empty_users.remove(&ev.user_id);
-            state.data.deleted_users.push(DeletedUser {
-                user_id: ev.user_id,
-                triggered_by_user: false,
-                timestamp: now,
-            });
+            state.delete_user(ev.user_id, false);
             state.push_event_to_all_local_user_indexes(
                 LocalUserIndexEvent::DeleteUser(DeleteUser {
                     user_id: ev.user_id,
