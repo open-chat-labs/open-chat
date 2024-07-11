@@ -1,4 +1,5 @@
 use crate::{extract_originating_canister, mutate_state, RuntimeState};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use identity_canister::initiate_identity_link::{Response::*, *};
@@ -12,17 +13,11 @@ fn initiate_identity_link(args: Args) -> Response {
 fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
+    if is_registered_as_user(&caller, state) {
         return AlreadyRegistered;
     }
-
-    if state
-        .data
-        .user_principals
-        .get_by_auth_principal(&args.link_to_principal)
-        .is_none()
-    {
-        return TargetPrincipalNotFound;
+    if !is_registered_as_user(&args.link_to_principal, state) {
+        return TargetUserNotFound;
     }
 
     let originating_canister = match extract_originating_canister(caller, &args.public_key) {
@@ -36,4 +31,12 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         .push(caller, originating_canister, args.link_to_principal, state.env.now());
 
     Success
+}
+
+fn is_registered_as_user(auth_principal: &Principal, state: &RuntimeState) -> bool {
+    state
+        .data
+        .user_principals
+        .get_by_auth_principal(auth_principal)
+        .is_some_and(|u| u.user_id.is_some())
 }

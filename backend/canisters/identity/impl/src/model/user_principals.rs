@@ -15,6 +15,7 @@ pub struct UserPrincipal {
     pub index: u32,
     pub principal: Principal,
     pub auth_principals: Vec<Principal>,
+    pub user_id: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -114,6 +115,7 @@ impl UserPrincipals {
                 index: user_principal_index,
                 principal: u.principal,
                 auth_principals: u.auth_principals.clone(),
+                user_id: u.user_id,
             })
     }
 }

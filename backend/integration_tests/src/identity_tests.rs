@@ -5,11 +5,14 @@ use identity_canister::{Delegation, SignedDelegation};
 use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
+use std::time::Duration;
+use test_case::test_case;
 use testing::rng::random_internet_identity_principal;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[test]
-fn link_auth_identities_succeeds() {
+#[test_case(false)]
+#[test_case(true)]
+fn link_auth_identities(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -36,21 +39,34 @@ fn link_auth_identities_succeeds() {
         public_key2,
         auth_principal1,
     );
-    client::identity::happy_path::approve_identity_link(
+
+    if delay {
+        env.advance_time(Duration::from_secs(300));
+    }
+
+    let approve_identity_link_response = client::identity::approve_identity_link(
         env,
         auth_principal1,
         canister_ids.identity,
-        delegation1,
-        public_key1,
-        auth_principal2,
+        &identity_canister::approve_identity_link::Args {
+            delegation: delegation1,
+            public_key: public_key1,
+            link_initiated_by: auth_principal2,
+        },
     );
 
-    let prepare_delegation_response =
-        client::identity::happy_path::prepare_delegation(env, auth_principal2, canister_ids.identity, session_key2);
+    match approve_identity_link_response {
+        identity_canister::approve_identity_link::Response::Success if !delay => {
+            let prepare_delegation_response =
+                client::identity::happy_path::prepare_delegation(env, auth_principal2, canister_ids.identity, session_key2);
 
-    let oc_principal2 = Principal::self_authenticating(prepare_delegation_response.user_key);
+            let oc_principal2 = Principal::self_authenticating(prepare_delegation_response.user_key);
 
-    assert_eq!(oc_principal1, oc_principal2);
+            assert_eq!(oc_principal1, oc_principal2);
+        }
+        identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
+        response => panic!("{response:?}"),
+    };
 }
 
 fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {
@@ -79,6 +95,7 @@ fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Princi
         session_key.clone(),
         generate_magic_link_success.created * NANOS_PER_MILLISECOND,
         generate_magic_link_success.expiration,
+        generate_magic_link_success.code,
     );
 
     let handle_magic_link_response = client::sign_in_with_email::handle_magic_link(
