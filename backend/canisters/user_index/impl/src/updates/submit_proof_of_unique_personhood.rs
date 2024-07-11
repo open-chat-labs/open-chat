@@ -1,8 +1,10 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
+use event_store_producer::EventBuilder;
 use ic_cdk::update;
 use ic_verifiable_credentials::issuer_api::CredentialSpec;
 use ic_verifiable_credentials::VcFlowSigners;
+use serde::Serialize;
 use types::{CanisterId, UniquePersonProof, UniquePersonProofProvider};
 use user_index_canister::submit_proof_of_unique_personhood::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
@@ -49,10 +51,24 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
                 local_user_index_canister::Event::NotifyUniqueHumanProof(user_id, proof),
                 None,
             );
+            state.data.event_store_client.push(
+                EventBuilder::new("proof_of_uniqueness_submitted", now)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(state.env.canister_id().to_string(), false)
+                    .with_json_payload(&EventPayload {
+                        provider: UniquePersonProofProvider::DecideAI,
+                    })
+                    .build(),
+            );
             Success
         }
         Err(error) => Invalid(format!("{error:?}")),
     }
+}
+
+#[derive(Serialize)]
+struct EventPayload {
+    provider: UniquePersonProofProvider,
 }
 
 #[test]

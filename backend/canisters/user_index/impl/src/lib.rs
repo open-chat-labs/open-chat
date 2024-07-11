@@ -233,6 +233,7 @@ impl RuntimeState {
             empty_users_length: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
+            unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
         }
     }
 }
@@ -499,6 +500,7 @@ pub struct Metrics {
     pub empty_users_length: usize,
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
+    pub unique_person_proofs_submitted: u32,
 }
 
 #[derive(Serialize, Debug)]
