@@ -32,6 +32,7 @@ fn main() {
     generate_candid_method!(user_index, set_user_upgrade_concurrency, update);
     generate_candid_method!(user_index, set_moderation_flags, update);
     generate_candid_method!(user_index, set_username, update);
+    generate_candid_method!(user_index, submit_proof_of_unique_personhood, update);
     generate_candid_method!(user_index, suspend_user, update);
     generate_candid_method!(user_index, unsuspend_user, update);
     generate_candid_method!(user_index, update_diamond_membership_subscription, update);

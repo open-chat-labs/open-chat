@@ -12,6 +12,8 @@
     const client = getContext<OpenChat>("client");
 
     $: chitState = client.chitStateStore;
+    $: user = client.user;
+    $: streak = client.getStreak($user.userId);
 
     let busy = false;
     let events: ChitEarned[] = [];
@@ -46,10 +48,10 @@
 
 <div class="chit-events">
     <div class="header">
-        {#if $chitState.streak > 0}
+        {#if streak > 0}
             <div class="streak">
                 You are on a
-                <div class="streak-txt">{$chitState.streak}</div>
+                <div class="streak-txt">{streak}</div>
                 day streak!
             </div>
         {/if}

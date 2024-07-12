@@ -2,6 +2,7 @@ use crate::ic_agent::IcAgent;
 use async_channel::Receiver;
 use std::collections::HashMap;
 use tokio::time;
+use tracing::{error, info};
 use types::{CanisterId, PushIfNotContains, UserId};
 
 pub struct SubscriptionRemover {
@@ -35,12 +36,15 @@ impl SubscriptionRemover {
             }
 
             if !subscriptions_to_remove.is_empty() {
-                if let Err(_error) = self
+                let count = subscriptions_to_remove.len();
+                if let Err(error) = self
                     .ic_agent
                     .remove_subscriptions(&self.index_canister_id, subscriptions_to_remove)
                     .await
                 {
-                    // Log error
+                    error!(?error, "Failed to remove subscriptions");
+                } else {
+                    info!("Removed {count} subscriptions");
                 }
             }
 

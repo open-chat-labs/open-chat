@@ -34,6 +34,7 @@ export type GlobalState = {
 export const chitStateStore = immutableStore<ChitState>({
     chitBalance: 0,
     streak: 0,
+    streakEnds: 0n,
     nextDailyChitClaim: 0n,
 });
 

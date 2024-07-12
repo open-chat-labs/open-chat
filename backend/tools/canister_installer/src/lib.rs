@@ -82,6 +82,7 @@ async fn install_service_canisters_impl(
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
         video_call_operators: video_call_operators.clone(),
+        ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };
@@ -122,6 +123,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         skip_captcha_whitelist: vec![canister_ids.nns_internet_identity, canister_ids.sign_in_with_email],
+        ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };

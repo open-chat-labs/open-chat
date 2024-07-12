@@ -981,6 +981,7 @@ export type ChatStateFull = {
 
 export type ChitState = {
     streak: number;
+    streakEnds: bigint;
     nextDailyChitClaim: bigint;
     chitBalance: number;
 };

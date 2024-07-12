@@ -165,10 +165,13 @@ impl Channels {
         (matches, total)
     }
 
-    pub fn is_name_taken(&self, name: &str) -> bool {
+    pub fn is_name_taken(&self, name: &str, current_channel_id: Option<ChannelId>) -> bool {
         let lowercase_name = name.to_lowercase();
 
-        self.channels.values().any(|c| c.chat.name.to_lowercase() == lowercase_name)
+        self.channels
+            .values()
+            .filter(|c| current_channel_id != Some(c.id))
+            .any(|c| c.chat.name.to_lowercase() == lowercase_name)
     }
 }
 

@@ -299,7 +299,7 @@
 
                                                 <Badges
                                                     diamondStatus={user.diamondStatus}
-                                                    streak={user.streak} />
+                                                    streak={client.getStreak(user.userId)} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername

@@ -295,6 +295,7 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
@@ -1117,6 +1118,12 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type MarkLocalGroupIndexFull = {
+    canisterId: string;
+    full: boolean;
+    kind: "markLocalGroupIndexFull";
+};
+
 type SetDiamondMembershipFees = {
     fees: DiamondMembershipFees[];
     kind: "setDiamondMembershipFees";
@@ -1891,6 +1898,8 @@ export type WorkerResult<T> = T extends Init
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends MarkLocalGroupIndexFull
+    ? boolean
     : T extends SetDiamondMembershipFees
     ? boolean
     : T extends StakeNeuronForSubmittingProposals

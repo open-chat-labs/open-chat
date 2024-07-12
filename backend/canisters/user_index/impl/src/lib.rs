@@ -6,7 +6,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
@@ -23,7 +23,7 @@ use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
@@ -158,6 +158,36 @@ impl RuntimeState {
         jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
+    pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) {
+        let now = self.env.now();
+        if let Some(user) = self.data.users.delete_user(user_id, now) {
+            self.data.local_index_map.remove_user(&user_id);
+            self.data.empty_users.remove(&user_id);
+
+            #[derive(Serialize)]
+            struct EventPayload {
+                triggered_by_user: bool,
+            }
+
+            self.data.event_store_client.push(
+                EventBuilder::new("user_deleted", now)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(self.env.canister_id().to_string(), false)
+                    .with_json_payload(&EventPayload { triggered_by_user })
+                    .build(),
+            );
+
+            self.data.deleted_users.push(DeletedUser {
+                user_id,
+                triggered_by_user,
+                timestamp: now,
+            });
+
+            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
+            jobs::sync_users_to_identity_canister::try_run_now(self);
+        }
+    }
+
     pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
         self.data.users.get_by_user_id(&user_id).map(|user| {
             let now = self.env.now();
@@ -231,6 +261,9 @@ impl RuntimeState {
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.iter().take(100).copied().collect(),
             empty_users_length: self.data.empty_users.len(),
+            deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
+            deleted_users_length: self.data.deleted_users.len(),
+            unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
         }
     }
 }
@@ -278,6 +311,11 @@ struct Data {
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
+    pub deleted_users: Vec<DeletedUser>,
+    #[serde(default)]
+    pub ic_root_key: Vec<u8>,
+    #[serde(default)]
+    pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
 }
 
 impl Data {
@@ -298,6 +336,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -344,6 +383,9 @@ impl Data {
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
+            deleted_users: Vec::new(),
+            ic_root_key,
+            identity_canister_user_sync_queue: VecDeque::new(),
         };
 
         // Register the ProposalsBot
@@ -395,8 +437,9 @@ impl Data {
             .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
         {
             let band = (chit / size) * size;
+            let key = if band > 0 { (chit / band) * band } else { 0 };
 
-            bands.entry((chit / band) * band).and_modify(|e| *e += 1).or_insert(1);
+            bands.entry(key).and_modify(|e| *e += 1).or_insert(1);
         }
 
         bands
@@ -448,6 +491,9 @@ impl Default for Data {
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::default(),
+            deleted_users: Vec::new(),
+            ic_root_key: Vec::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
         }
     }
 }
@@ -486,6 +532,9 @@ pub struct Metrics {
     pub oc_public_key: String,
     pub empty_users: Vec<UserId>,
     pub empty_users_length: usize,
+    pub deleted_users: Vec<UserId>,
+    pub deleted_users_length: usize,
+    pub unique_person_proofs_submitted: u32,
 }
 
 #[derive(Serialize, Debug)]
@@ -534,6 +583,13 @@ pub struct NnsNeuron {
 struct UserRegisteredEventPayload {
     referred: bool,
     is_bot: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DeletedUser {
+    pub user_id: UserId,
+    pub triggered_by_user: bool,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Debug)]

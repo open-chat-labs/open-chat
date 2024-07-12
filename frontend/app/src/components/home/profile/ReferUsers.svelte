@@ -22,7 +22,6 @@
     $: userStore = client.userStore;
     $: link = `${window.location.origin}/?ref=${$user.userId}`;
 
-
     function onCopy() {
         navigator.clipboard.writeText(link).then(
             () => {
@@ -83,7 +82,9 @@
                         </div>
                         <LinkButton underline="hover">
                             {client.displayName(u)}
-                            <Badges diamondStatus={u?.diamondStatus} streak={u?.streak ?? 0} />
+                            <Badges
+                                diamondStatus={u?.diamondStatus}
+                                streak={client.getStreak(u?.userId)} />
                         </LinkButton>
                     </div>
                 {/each}

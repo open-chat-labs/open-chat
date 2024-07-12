@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use local_user_index_canister::{Event, UserDeleted};
+use local_user_index_canister::{DeleteUser, Event};
 use user_index_canister::delete_user::{Response::*, *};
 
 #[update]
@@ -20,8 +20,13 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    let now = state.env.now();
-    state.data.users.delete_user(args.user_id, now);
-    state.push_event_to_all_local_user_indexes(Event::UserDeleted(UserDeleted { user_id: args.user_id }), None);
+    state.delete_user(args.user_id, true);
+    state.push_event_to_all_local_user_indexes(
+        Event::DeleteUser(DeleteUser {
+            user_id: args.user_id,
+            triggered_by_user: true,
+        }),
+        None,
+    );
     Success
 }

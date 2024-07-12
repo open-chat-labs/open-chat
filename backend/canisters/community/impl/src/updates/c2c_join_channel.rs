@@ -156,7 +156,7 @@ fn is_permitted_to_join(
                             unique_person_proof,
                             verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
                                 user_ii_principal: vc.user_ii_principal,
-                                credential_jwt: vc.credential_jwt,
+                                credential_jwts: vc.credential_jwts(),
                                 ic_root_key: state.data.ic_root_key.clone(),
                                 ii_canister_id: state.data.internet_identity_canister_id,
                                 ii_origin: vc.ii_origin,

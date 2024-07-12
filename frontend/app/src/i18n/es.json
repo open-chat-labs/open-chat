@@ -577,13 +577,13 @@
     "lowBandwidth": "Ancho de banda bajo",
     "magicLink": {
         "closeMessage": "Cierra esta página e intenta iniciar sesión nuevamente.",
-        "code_invalid": "El código no es válido.",
-        "continueMessage": "Cierra esta página y continúa en la página original.",
+        "code_invalid": "El código no es válido",
+        "continueMessage": "Por favor cierre esta página y continúe en la página original.",
         "enterCode": "Introduzca el código de verificación",
         "link_expired": "El enlace sólo es válido durante 5 minutos y ya ha caducado.",
         "link_invalid": "El enlace no es válido.",
-        "success": "¡Éxito! Ya has iniciado sesión.",
-        "title": "Iniciando sesión con un enlace de correo electrónico..."
+        "success": "¡Éxito! Ya has iniciado sesión",
+        "title": "Iniciar sesión con enlace de correo electrónico"
     },
     "makeGroupPrivate": "Hacer que el grupo sea privado",
     "makeGroupPrivateFailed": "No se pudo hacer que {level} sea privado",
@@ -1111,6 +1111,7 @@
     "sendGif": "Enviar gif",
     "sendMessage": "Enviar mensaje",
     "sendTextDisabled": "Los mensajes de texto están deshabilitados",
+    "sendMessageDisabledAnon": "Por favor inicia sesión para enviar un mensaje",
     "sendTo": "Enviar a...",
     "sessionExpired": "La sesión ha expirado",
     "sessionExpiredBlurb": "Inicia sesión de nuevo",

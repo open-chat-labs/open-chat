@@ -5081,6 +5081,12 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "markLocalGroupIndexFull", canisterId, full }).catch(
+            () => false,
+        );
+    }
+
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
@@ -7045,6 +7051,19 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    getStreak(userId: string | undefined) {
+        if (userId === undefined) return 0;
+
+        if (userId === this._liveState.user.userId) {
+            const now = Date.now();
+            return this._liveState.chitState.streakEnds < now
+                ? 0
+                : this._liveState.chitState.streak;
+        }
+
+        return this._liveState.userStore[userId]?.streak ?? 0;
+    }
+
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         const userId = this._liveState.user.userId;
 
@@ -7052,6 +7071,7 @@ export class OpenChat extends OpenChatAgentWorker {
             if (resp.kind === "success") {
                 this.chitStateStore.set({
                     chitBalance: resp.chitBalance,
+                    streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
                     streak: resp.streak,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 });

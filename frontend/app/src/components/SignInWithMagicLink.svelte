@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, getContext, createEventDispatcher } from "svelte";
+    import { onMount, getContext, createEventDispatcher, tick } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
@@ -8,7 +8,6 @@
     import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
     import page from "page";
-    import Pincode from "./pincode/Pincode.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -17,13 +16,30 @@
     let status: string | undefined = undefined;
     let message = "magicLink.closeMessage";
     let busy = false;
+    let code: string | undefined;
+    let codeRef: HTMLInputElement | undefined;
 
     onMount(() => {
         pageReplace("/home");
+
+        tick().then(() => {
+            codeRef?.focus();
+        });
     });
 
-    function onCodeEntered(ev: CustomEvent<{ code: string[]; value: string }>) {
-        qs += "&c=" + ev.detail.value;
+    $: {
+        if (code !== undefined && code.length >= 3 && status === undefined) {
+            onCodeEntered();
+        }
+    }
+
+    function onCodeEntered() {
+        if (code === undefined || !isCodeValid(code)) {
+            status = "magicLink.code_invalid";
+            return;
+        }
+
+        qs += "&c=" + code;
 
         busy = true;
 
@@ -46,6 +62,10 @@
             .finally(() => (busy = false));
     }
 
+    function isCodeValid(code: string): boolean {
+        return Array.from(code).filter((c) => /^[0-9]$/.test(c)).length === 3;
+    }
+
     function close() {
         dispatch("close");
     }
@@ -57,34 +77,40 @@
             <Translatable resourceKey={i18nKey("magicLink.title")} />
         </div>
         <div class="body" slot="body">
-            <div>
-                {#if busy}
-                    <div class="loading">
-                        <FancyLoader />
-                    </div>
-                {:else if status === undefined}
-                    <p><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></p>
+            {#if busy}
+                <div class="loading">
+                    <FancyLoader loop={busy} />
+                </div>
+            {/if}
 
-                    <Pincode type="numeric" length={3} on:complete={onCodeEntered} />
-                {:else}
-                    <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
-                    <p class="message"><Translatable resourceKey={i18nKey(message)} /></p>
+            {#if status === undefined}
+                {#if !busy}
+                    <div><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></div>
                 {/if}
-            </div>
+
+                <input
+                    bind:this={codeRef}
+                    type="text"
+                    inputmode="numeric"
+                    pattern={"[0-9]{1}"}
+                    maxlength={3}
+                    disabled={busy || status !== undefined}
+                    bind:value={code} />
+
+                <!-- <Pincode length={3} on:complete={onCodeEntered} /> -->
+            {:else}
+                <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
+                <p><Translatable resourceKey={i18nKey(message)} /></p>
+            {/if}
         </div>
     </ModalContent>
 </div>
 
 <style lang="scss">
     :global(.magic-link .modal-content) {
-        min-width: 576px;
         color: var(--txt);
         padding: $sp3;
         text-align: center;
-
-        @include mobile() {
-            min-width: auto;
-        }
     }
 
     :global(.magic-link .modal-content .header h4) {
@@ -96,9 +122,18 @@
         }
     }
 
-    .body {
+    .magic-link {
+        width: 100%;
         display: flex;
         justify-content: center;
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
     }
 
     .loading {
@@ -110,7 +145,15 @@
         font-weight: bold;
     }
 
-    p {
+    input {
+        padding: 0.5rem 1rem;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        letter-spacing: 0.25em;
+        font-size: toRem(18);
+        text-align: center;
+        width: 100px;
         margin-bottom: $sp4;
     }
 </style>

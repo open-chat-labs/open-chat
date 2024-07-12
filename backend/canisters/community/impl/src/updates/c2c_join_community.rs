@@ -79,7 +79,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                     verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
                         CheckVerifiedCredentialGateArgs {
                             user_ii_principal: vc.user_ii_principal,
-                            credential_jwt: vc.credential_jwt.clone(),
+                            credential_jwts: vc.credential_jwts(),
                             ic_root_key: state.data.ic_root_key.clone(),
                             ii_canister_id: state.data.internet_identity_canister_id,
                             ii_origin: vc.ii_origin.clone(),

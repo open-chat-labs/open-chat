@@ -1072,6 +1072,14 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export interface LookupChannelByGroupIdArgs { 'group_id' : ChatId }
 export type LookupChannelByGroupIdResponse = { 'NotFound' : null } |
   { 'Success' : { 'channel_id' : ChannelId, 'community_id' : CommunityId } };
+export interface MarkLocalGroupIndexFullArgs {
+  'full' : boolean,
+  'canister_id' : CanisterId,
+}
+export type MarkLocalGroupIndexFullResponse = { 'NotAuthorized' : null } |
+  { 'LocalGroupIndexNotFound' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1823,6 +1831,10 @@ export interface _SERVICE {
   'lookup_channel_by_group_id' : ActorMethod<
     [LookupChannelByGroupIdArgs],
     LookupChannelByGroupIdResponse
+  >,
+  'mark_local_group_index_full' : ActorMethod<
+    [MarkLocalGroupIndexFullArgs],
+    MarkLocalGroupIndexFullResponse
   >,
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],

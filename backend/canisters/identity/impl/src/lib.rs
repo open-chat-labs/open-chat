@@ -1,4 +1,5 @@
 use crate::model::challenges::Challenges;
+use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
@@ -12,8 +13,11 @@ use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Hash, TimestampMillis, Timestamped};
+use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
+use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
+mod guards;
 mod hash;
 mod lifecycle;
 mod memory;
@@ -35,6 +39,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
     }
 
     pub fn der_encode_canister_sig_key(&self, seed: [u8; 32]) -> Vec<u8> {
@@ -81,12 +90,20 @@ struct Data {
     cycles_dispenser_canister_id: CanisterId,
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
+    #[serde(default)]
+    identity_link_requests: IdentityLinkRequests,
     #[serde(skip)]
     signature_map: SignatureMap,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    ic_root_key: Vec<u8>,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -95,6 +112,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         skip_captcha_whitelist: Vec<CanisterId>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -103,7 +121,9 @@ impl Data {
             cycles_dispenser_canister_id,
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
+            identity_link_requests: IdentityLinkRequests::default(),
             signature_map: SignatureMap::default(),
+            ic_root_key,
             salt: Salt::default(),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
@@ -143,6 +163,20 @@ fn delegation_signature_msg_hash(d: &Delegation) -> Hash {
     m.insert("expiration", Value::U64(d.expiration));
     let map_hash = hash::hash_of_map(m);
     hash::hash_with_domain(b"ic-request-auth-delegation", &map_hash)
+}
+
+fn extract_originating_canister(caller: Principal, public_key: &[u8]) -> Result<CanisterId, String> {
+    let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
+    let canister_id_length = key_info.subject_public_key.data[0];
+
+    let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
+
+    let expected_caller = Principal::self_authenticating(public_key);
+    if caller == expected_caller {
+        Ok(canister_id)
+    } else {
+        Err("PublicKey does not match caller".to_string())
+    }
 }
 
 #[derive(Serialize, Debug)]

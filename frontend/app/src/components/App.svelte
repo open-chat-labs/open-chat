@@ -129,6 +129,7 @@
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            markLocalGroupIndexFull,
             setDiamondMembershipFees,
             setTokenEnabled,
             stakeNeuronForSubmittingProposals,
@@ -305,6 +306,16 @@
                 console.log("User upgrade concurrency set", value);
             } else {
                 console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
+    }
+
+    function markLocalGroupIndexFull(canisterId: string, full: boolean): void {
+        client.markLocalGroupIndexFull(canisterId, full).then((success) => {
+            if (success) {
+                console.log("LocalGroupIndex marked as full", full);
+            } else {
+                console.log("Failed to mark LocalGroupIndex as full", full);
             }
         });
     }

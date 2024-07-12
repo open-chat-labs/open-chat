@@ -1,4 +1,6 @@
 use candid::Principal;
+// use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
+// use ic_verifiable_credentials::VcFlowSigners;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
@@ -9,8 +11,6 @@ use types::{
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
-// use vc_util::issuer_api::{ArgumentValue, CredentialSpec};
-// use vc_util::VcFlowSigners;
 
 pub enum CheckIfPassesGateResult {
     Success,
@@ -37,7 +37,7 @@ pub struct CheckGateArgs {
 #[derive(Clone)]
 pub struct CheckVerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
-    pub credential_jwt: String,
+    pub credential_jwts: Vec<String>,
     pub ic_root_key: Vec<u8>,
     pub ii_canister_id: CanisterId,
     pub ii_origin: String,
@@ -126,40 +126,51 @@ fn check_verified_credential_gate(
         ));
     };
 
-    // if let Err(error) = vc_util::validate_ii_presentation_and_claims(
-    //     &args.credential_jwt,
-    //     args.user_ii_principal,
-    //     &VcFlowSigners {
-    //         ii_canister_id: args.ii_canister_id,
-    //         ii_origin: args.ii_origin,
-    //         issuer_canister_id: gate.issuer_canister_id,
-    //         issuer_origin: gate.issuer_origin.clone(),
-    //     },
-    //     &CredentialSpec {
-    //         credential_type: gate.credential_type.clone(),
-    //         arguments: Some(
-    //             gate.credential_arguments
-    //                 .iter()
-    //                 .map(|(k, v)| {
-    //                     (
-    //                         k.clone(),
-    //                         match v {
-    //                             VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
-    //                             VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
-    //                         },
-    //                     )
-    //                 })
-    //                 .collect(),
-    //         ),
-    //     },
-    //     &args.ic_root_key,
-    //     (now * NANOS_PER_MILLISECOND) as u128,
-    // ) {
-    //     CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(format!("{error:?}")))
-    // } else {
-    //     CheckIfPassesGateResult::Success
-    // }
     CheckIfPassesGateResult::Success
+
+    // let vc_flow_signers = VcFlowSigners {
+    //     ii_canister_id: args.ii_canister_id,
+    //     ii_origin: args.ii_origin,
+    //     issuer_canister_id: gate.issuer_canister_id,
+    //     issuer_origin: gate.issuer_origin.clone(),
+    // };
+    //
+    // let credential_spec = CredentialSpec {
+    //     credential_type: gate.credential_type.clone(),
+    //     arguments: Some(
+    //         gate.credential_arguments
+    //             .iter()
+    //             .map(|(k, v)| {
+    //                 (
+    //                     k.clone(),
+    //                     match v {
+    //                         VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
+    //                         VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
+    //                     },
+    //                 )
+    //             })
+    //             .collect(),
+    //     ),
+    // };
+    //
+    // let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+    // if args.credential_jwts.iter().any(|jwt| {
+    //     ic_verifiable_credentials::validate_ii_presentation_and_claims(
+    //         jwt,
+    //         args.user_ii_principal,
+    //         &vc_flow_signers,
+    //         &credential_spec,
+    //         &args.ic_root_key,
+    //         now_nanos,
+    //     )
+    //     .is_ok()
+    // }) {
+    //     CheckIfPassesGateResult::Success
+    // } else {
+    //     CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
+    //         "No valid credential provided".to_string(),
+    //     ))
+    // }
 }
 
 async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {

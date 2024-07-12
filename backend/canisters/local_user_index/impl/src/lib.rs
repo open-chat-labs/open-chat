@@ -12,7 +12,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
@@ -188,6 +188,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(),
             event_store_client_info,
             canister_ids: CanisterIds {
@@ -235,12 +236,20 @@ struct Data {
     pub oc_secret_key_der: Option<Vec<u8>>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
+    pub users_to_delete_queue: VecDeque<UserToDelete>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct FailedMessageUsers {
     pub sender: UserId,
     pub recipient: UserId,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserToDelete {
+    pub user_id: UserId,
+    pub triggered_by_user: bool,
+    pub attempt: usize,
 }
 
 impl Data {
@@ -291,6 +300,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
+            users_to_delete_queue: VecDeque::new(),
         }
     }
 }
@@ -315,6 +325,7 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
+    pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,

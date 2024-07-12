@@ -27,6 +27,7 @@ pub mod set_max_concurrent_user_canister_upgrades;
 pub mod set_moderation_flags;
 pub mod set_user_upgrade_concurrency;
 pub mod set_username;
+pub mod submit_proof_of_unique_personhood;
 pub mod suspend_user;
 pub mod unsuspend_user;
 pub mod update_diamond_membership_subscription;

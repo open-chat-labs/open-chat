@@ -45,7 +45,7 @@ struct PrepareResult {
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller().into();
 
-    let local_group_index_canister = match state.data.local_index_map.index_for_new_canister() {
+    let local_group_index_canister = match state.data.local_index_map.index_for_new_community() {
         Some(canister) => canister,
         None => return Err(InternalError("No available LocalGroupIndex found".to_string())),
     };

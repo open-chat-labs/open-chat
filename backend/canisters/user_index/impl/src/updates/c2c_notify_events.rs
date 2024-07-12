@@ -6,8 +6,8 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    DeleteUser, Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, UserId};
@@ -87,6 +87,16 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 })),
             );
         }
+        Event::UserDeleted(ev) => {
+            state.delete_user(ev.user_id, false);
+            state.push_event_to_all_local_user_indexes(
+                LocalUserIndexEvent::DeleteUser(DeleteUser {
+                    user_id: ev.user_id,
+                    triggered_by_user: false,
+                }),
+                Some(caller),
+            );
+        }
     }
 }
 
@@ -164,6 +174,12 @@ You can change your username at any time by clicking \"Profile settings\" from t
         byte_limit: 100 * ONE_MB,
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
+
+    state
+        .data
+        .identity_canister_user_sync_queue
+        .push_back((caller, Some(user_id)));
+    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
 
     if let Some(referrer) = referred_by {
         state.data.user_referral_leaderboards.add_referral(referrer, now);

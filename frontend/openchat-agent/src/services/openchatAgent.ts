@@ -1564,7 +1564,6 @@ export class OpenChatAgent extends EventTarget {
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
-        const now = BigInt(Date.now());
 
         if (current === undefined) {
             const userResponse = await this.userClient.getInitialState();
@@ -1600,7 +1599,8 @@ export class OpenChatAgent extends EventTarget {
             );
             achievementsLastSeen = userResponse.achievementsLastSeen;
             chitState = {
-                streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                streakEnds: userResponse.streakEnds,
+                streak: userResponse.streak,
                 chitBalance: userResponse.chitBalance,
                 nextDailyChitClaim: userResponse.nextDailyClaim,
             };
@@ -1671,7 +1671,8 @@ export class OpenChatAgent extends EventTarget {
                     }
                 });
                 chitState = {
-                    streak: userResponse.streakEnds < now ? 0 : userResponse.streak,
+                    streakEnds: userResponse.streakEnds,
+                    streak: userResponse.streak,
                     chitBalance: userResponse.chitBalance,
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                 };
@@ -2880,6 +2881,10 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.setUserUpgradeConcurrency(value);
+    }
+
+    markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
+        return this._groupIndexClient.markLocalGroupIndexFull(canisterId, full);
     }
 
     stakeNeuronForSubmittingProposals(
