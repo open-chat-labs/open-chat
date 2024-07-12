@@ -53,14 +53,4 @@
     .choose-gate {
         margin-bottom: $sp3;
     }
-
-    .info {
-        @include font(book, normal, fs-80, 22);
-        color: var(--txt-light);
-    }
-    .section-title {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-    }
 </style>
