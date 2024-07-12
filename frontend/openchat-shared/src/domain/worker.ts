@@ -887,14 +887,14 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     localUserIndex: string;
-    credentialArgs: VerifiedCredentialArgs;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     localUserIndex: string;
-    credentialArgs: VerifiedCredentialArgs;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
 };
 

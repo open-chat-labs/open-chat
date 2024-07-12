@@ -1458,11 +1458,14 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    private buildVerifiedCredentialArgs(credentials: string[]): VerifiedCredentialArgs {
+    private buildVerifiedCredentialArgs(credentials: string[]): VerifiedCredentialArgs | undefined {
+        if (credentials.length === 0) return undefined;
+
         if (this._authPrincipal === undefined)
             throw new Error(
                 "Cannot construct a VerifiedCredentialArg because the _authPrincipal is undefined",
             );
+
         return {
             userIIPrincipal: this._authPrincipal,
             iiOrigin: new URL(this.config.internetIdentityUrl).origin,

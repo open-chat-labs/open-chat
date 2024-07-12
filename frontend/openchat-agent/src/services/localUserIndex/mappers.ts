@@ -334,13 +334,10 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
 
 export function apiVerifiedCredentialArgs(
     domain: VerifiedCredentialArgs,
-): [] | [ApiVerifiedCredentialArgs] {
-    if (domain.credentialJwts.length === 0) return [];
-    return [
-        {
-            user_ii_principal: Principal.fromText(domain.userIIPrincipal),
-            ii_origin: domain.iiOrigin,
-            credential_jwts: domain.credentialJwts,
-        },
-    ];
+): ApiVerifiedCredentialArgs {
+    return {
+        user_ii_principal: Principal.fromText(domain.userIIPrincipal),
+        ii_origin: domain.iiOrigin,
+        credential_jwts: domain.credentialJwts,
+    };
 }
