@@ -1,4 +1,5 @@
 <script lang="ts">
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import {
         isCompositeGate,
         isCredentialGate,
@@ -14,6 +15,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
+    import LinkButton from "../../LinkButton.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { createEventDispatcher, onMount } from "svelte";
@@ -21,6 +23,9 @@
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import AccessGateSummary from "./AccessGateSummary.svelte";
+    import { iconSize } from "../../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
 
@@ -32,6 +37,9 @@
     let currentGate: AccessGate | undefined;
     let credentials: string[] = [];
     let optionalGatesByIndex: Map<number, LeafGate> = new Map();
+    $: optionalInvalid =
+        currentGate?.kind === "composite_gate" &&
+        optionalGatesByIndex.size >= currentGate.gates.length;
 
     onMount(nextGate);
 
@@ -58,7 +66,7 @@
             }
         } else {
             currentGate = undefined;
-            dispatch("complete", credentials);
+            dispatch("success", { credentials });
         }
     }
 
@@ -95,17 +103,32 @@
     <div let:onClose class="body access-gate-evaluator" slot="body">
         {#if currentGate}
             {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
-                <p>
-                    You need to meet at least one of the following conditions. Choose which ones you
-                    prefer.
+                <div class="header">
+                    <div class="icon">
+                        <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                    </div>
+                    <p class="title">
+                        <Translatable resourceKey={i18nKey("access.chooseOneGate")} />
+                    </p>
+                </div>
+                <p class="subtitle">
+                    <Translatable resourceKey={i18nKey("access.chooseOneGateInfo")} />
                 </p>
 
                 {#each currentGate.gates as subgate, i}
-                    <Checkbox
-                        checked={!optionalGatesByIndex.has(i)}
-                        on:change={() => toggleIndex(i, subgate)}
-                        label={i18nKey(subgate.kind)}
-                        id={`subgate_${i}`}></Checkbox>
+                    <div class="optional-gate">
+                        <Checkbox
+                            checked={!optionalGatesByIndex.has(i)}
+                            on:change={() => toggleIndex(i, subgate)}
+                            label={i18nKey(subgate.kind)}
+                            id={`subgate_${i}`}>
+                            <AccessGateSummary
+                                editable={false}
+                                {level}
+                                showNoGate={false}
+                                gate={subgate} />
+                        </Checkbox>
+                    </div>
                 {/each}
             {:else if isCredentialGate(currentGate)}
                 <CredentialGateEvaluator
@@ -125,8 +148,6 @@
                     on:next={nextGate}
                     on:close={onClose} />
             {/if}
-
-            <pre>{JSON.stringify(currentGate, null, 4)}</pre>
         {/if}
     </div>
 
@@ -134,9 +155,9 @@
         <ButtonGroup>
             {#if currentGate !== undefined}
                 {#if isCompositeGate(currentGate)}
-                    <Button on:click={nextGate}>Next</Button>
+                    <Button disabled={optionalInvalid} on:click={nextGate}>Next</Button>
                 {:else}
-                    <Button on:click={nextGate}>Skip</Button>
+                    <LinkButton on:click={nextGate}>skip</LinkButton>
                 {/if}
             {:else}
                 <Button on:click={onClose}>Join</Button>
@@ -144,3 +165,19 @@
         </ButtonGroup>
     </div>
 </ModalContent>
+
+<style lang="scss">
+    .header {
+        @include font(bold, normal, fs-130, 29);
+        margin-bottom: $sp4;
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+    .subtitle {
+        margin-bottom: $sp4;
+    }
+    .optional-gate {
+        margin-bottom: $sp3;
+    }
+</style>

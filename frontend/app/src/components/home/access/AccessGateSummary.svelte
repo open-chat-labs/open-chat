@@ -17,7 +17,9 @@
 
     $: gateText = getGateText(gate);
 
-    function open() {
+    function open(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
         showDetail = true;
     }
 

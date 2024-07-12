@@ -1393,10 +1393,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(
-        chat: MultiUserChat,
-        credentialJwt: string | undefined,
-    ): Promise<ClientJoinGroupResponse> {
+    async joinGroup(chat: MultiUserChat, credentials: string[]): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
             return approveResponse;
@@ -1411,7 +1408,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
+            credentialArgs: credentials.map((c) => this.buildVerifiedCredentialArgs(c)),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1463,16 +1460,16 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    private buildVerifiedCredentialArgs(
-        credentialJwt: string | undefined,
-    ): VerifiedCredentialArgs | undefined {
-        return credentialJwt !== undefined && this._authPrincipal !== undefined
-            ? {
-                  userIIPrincipal: this._authPrincipal,
-                  iiOrigin: new URL(this.config.internetIdentityUrl).origin,
-                  credentialJwt,
-              }
-            : undefined;
+    private buildVerifiedCredentialArgs(credential: string): VerifiedCredentialArgs {
+        if (this._authPrincipal === undefined)
+            throw new Error(
+                "Cannot construct a VerifiedCredentialArg because the _authPrincipal is undefined",
+            );
+        return {
+            userIIPrincipal: this._authPrincipal,
+            iiOrigin: new URL(this.config.internetIdentityUrl).origin,
+            credentialJwt: credential,
+        };
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
@@ -6647,7 +6644,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async joinCommunity(
         community: CommunitySummary,
-        credentialJwt: string | undefined,
+        credentials: string[],
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
@@ -6658,7 +6655,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
+            credentialArgs: credentials.map((c) => this.buildVerifiedCredentialArgs(c)),
         })
             .then((resp) => {
                 if (resp.kind === "success") {

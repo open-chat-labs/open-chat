@@ -6,7 +6,6 @@ import {
     type CredentialGate,
     type CryptocurrencyDetails,
     type NervousSystemDetails,
-    type UniquePersonGate,
 } from "openchat-client";
 
 export type GateBinding = {
@@ -170,14 +169,17 @@ const nftGate: GateBinding = {
     enabled: false,
 };
 
-// TODO - we need to hard-code this with the DecideAI details
+// TODO - check this is the right credential definition
 export const uniquePersonCredentialGate: CredentialGate = {
     kind: "credential_gate",
     credential: {
-        credentialName: "",
-        issuerCanisterId: "",
-        issuerOrigin: "",
-        credentialType: "",
+        credentialName: "Is human",
+        issuerCanisterId: "h433y-uqaaa-aaaah-qdbja-cai",
+        issuerOrigin: "https://h433y-uqaaa-aaaah-qdbja-cai.icp0.io",
+        credentialType: "ProofOfHumanity",
+        credentialArguments: {
+            verificationType: "human-moderation",
+        },
     },
 };
 

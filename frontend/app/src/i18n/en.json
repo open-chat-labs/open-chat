@@ -9,6 +9,8 @@
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
         "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
+        "chooseOneGate": "Choose at least one gate",
+        "chooseOneGateInfo": "You need to meet at least one of the following conditions to join. Choose which ones you prefer.",
         "chooseToken": "Choose token",
         "compositeGate": "Combined access gate",
         "credential": {

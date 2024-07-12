@@ -28,8 +28,6 @@
         GroupChatSummary,
         ChannelIdentifier,
         UpdatedRules,
-        CredentialGate,
-        PaymentGate,
         ResourceKey,
         NervousSystemDetails,
         AccessGateWithLevel,
@@ -81,7 +79,6 @@
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
-    import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
@@ -92,7 +89,6 @@
     import LoggingInModal from "./LoggingInModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
-    import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -105,6 +101,8 @@
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+
+    type GateCheckSucceeded = { credentials: string[] };
 
     type ViewProfileConfig = {
         userId: string;
@@ -157,9 +155,7 @@
         | { kind: "no_access" }
         | { kind: "new_group"; candidate: CandidateGroupChat }
         | { kind: "wallet" }
-        | { kind: "gate_check_failed"; group: MultiUserChat }
-        | { kind: "verify_credential"; group: MultiUserChat; gate: CredentialGate; select: boolean }
-        | { kind: "approve_join_payment"; group: MultiUserChat; gate: PaymentGate; select: boolean }
+        | { kind: "gate_check_failed"; gates: AccessGateWithLevel[] }
         | { kind: "hall_of_fame" }
         | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
@@ -168,7 +164,13 @@
         | { kind: "not_found" }
         | { kind: "claim_daily_chit" }
         | { kind: "challenge" }
-        | { kind: "evaluating_access_gates"; gates: AccessGateWithLevel[]; level: Level };
+        | {
+              kind: "evaluating_access_gates";
+              group: MultiUserChat;
+              select: boolean;
+              gates: AccessGateWithLevel[];
+              level: Level;
+          };
 
     let modal: ModalType = { kind: "none" };
     let confirmActionEvent: ConfirmActionEvent | undefined;
@@ -828,26 +830,11 @@
         }
     }
 
-    function credentialReceived(ev: CustomEvent<string>) {
-        if (modal.kind === "verify_credential") {
+    function accessGatesEvaluated(ev: CustomEvent<GateCheckSucceeded>) {
+        if (modal.kind === "evaluating_access_gates") {
             const { group, select } = modal;
             closeModal();
             doJoinGroup(group, select, ev.detail);
-        }
-    }
-
-    function onJoined() {
-        if (modal.kind === "approve_join_payment" && modal.select) {
-            page(routeForChatIdentifier($chatListScope.kind, modal.group.id));
-        }
-        closeModal();
-    }
-
-    function accessGatesEvaluated(ev: CustomEvent<string[]>) {
-        if (modal.kind === "evaluating_access_gates") {
-            console.log("Received the following credentials: ", ev.detail);
-            console.log("This is where we will try to join the group again");
-            closeModal();
         }
     }
 
@@ -862,64 +849,55 @@
     async function doJoinGroup(
         group: MultiUserChat,
         select: boolean,
-        credential: string | undefined,
+        gateCheck: GateCheckSucceeded | undefined,
     ): Promise<void> {
         joining = group;
+        const credentials = gateCheck?.credentials ?? [];
 
-        const gates = client.accessGatesForChat(group);
-        const passed = client.doesUserMeetAccessGates(gates);
+        if (gateCheck === undefined) {
+            const gates = client.accessGatesForChat(group);
+            const passed = client.doesUserMeetAccessGates(gates);
 
-        if (!passed) {
-            // we can't tell that the user has definitely passed the required gates
-            /**
-             * There will always be two lists of gates. A list of gates that we must have and a list of gates that we must have one of.
-             * We can then filter out any gates that we can already verify on the client.
-             * Then we let them choose the gate they want to use from the or list and add it the and list giving the total list of
-             * all gates that must be verified. Then we filter that list for those that require FE action (VC & payment)
-             */
-            if (client.gatePreprocessingRequired(gates)) {
-                modal = { kind: "evaluating_access_gates", gates, level: group.level };
-                return Promise.resolve();
+            if (!passed) {
+                /**
+                 * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end
+                 * pre-processing.
+                 */
+                if (client.gatePreprocessingRequired(gates)) {
+                    modal = {
+                        kind: "evaluating_access_gates",
+                        group,
+                        select,
+                        gates,
+                        level: group.level,
+                    };
+                    return Promise.resolve();
+                }
             }
-        } else {
-            // if (group.gate.kind === "credential_gate" && credential === undefined) {
-            //     modal = { kind: "verify_credential", group, select, gate: group.gate };
-            //     return Promise.resolve();
-            // } else if (group.gate.kind === "payment_gate") {
-            //     modal = { kind: "approve_join_payment", group, select, gate: group.gate };
-            //     return Promise.resolve();
-            // } else if (group.kind === "channel") {
-            //     const community = client.getCommunityForChannel(group.id);
-            //     if (community?.gate.kind === "credential_gate" && credential === undefined) {
-            //         modal = { kind: "verify_credential", group, select, gate: community.gate };
-            //     } else if (community?.gate.kind === "payment_gate") {
-            //         modal = { kind: "approve_join_payment", group, select, gate: community.gate };
-            //         return Promise.resolve();
-            //     }
-            // }
-
-            return client
-                .joinGroup(group, credential)
-                .then((resp) => {
-                    if (resp.kind === "blocked") {
-                        toastStore.showFailureToast(i18nKey("youreBlocked"));
-                        joining = undefined;
-                    } else if (resp.kind === "gate_check_failed") {
-                        modal = { kind: "gate_check_failed", group };
-                    } else if (resp.kind !== "success") {
-                        toastStore.showFailureToast(
-                            i18nKey("joinGroupFailed", undefined, group.level, true),
-                        );
-                        joining = undefined;
-                    } else if (select) {
-                        joining = undefined;
-                        page(routeForChatIdentifier($chatListScope.kind, group.id));
-                    } else {
-                        joining = undefined;
-                    }
-                })
-                .catch(() => (joining = undefined));
         }
+
+        return client
+            .joinGroup(group, credentials)
+            .then((resp) => {
+                if (resp.kind === "blocked") {
+                    toastStore.showFailureToast(i18nKey("youreBlocked"));
+                    joining = undefined;
+                } else if (resp.kind === "gate_check_failed") {
+                    const gates = client.accessGatesForChat(group);
+                    modal = { kind: "gate_check_failed", gates };
+                } else if (resp.kind !== "success") {
+                    toastStore.showFailureToast(
+                        i18nKey("joinGroupFailed", undefined, group.level, true),
+                    );
+                    joining = undefined;
+                } else if (select) {
+                    joining = undefined;
+                    page(routeForChatIdentifier($chatListScope.kind, group.id));
+                } else {
+                    joining = undefined;
+                }
+            })
+            .catch(() => (joining = undefined));
     }
 
     function upgrade() {
@@ -1284,29 +1262,13 @@
         {:else if modal.kind === "not_found"}
             <NotFound on:close={closeNoAccess} />
         {:else if modal.kind === "gate_check_failed"}
-            <!-- this is not going to work for a community gate at the moment -->
-            <GateCheckFailed
-                level={modal.group.level}
-                on:close={closeModal}
-                gate={modal.group.gate} />
-        {:else if modal.kind === "verify_credential"}
-            <InitiateCredentialCheck
-                level={modal.group.level}
-                on:close={closeModal}
-                on:credentialReceived={credentialReceived}
-                gate={modal.gate} />
-        {:else if modal.kind === "approve_join_payment"}
-            <ApproveJoiningPaymentModal
-                on:close={closeModal}
-                on:joined={onJoined}
-                group={modal.group}
-                gate={modal.gate} />
+            <GateCheckFailed on:close={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
                 level={modal.level}
                 gates={modal.gates}
                 on:close={closeModal}
-                on:complete={accessGatesEvaluated} />
+                on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal.kind === "edit_community"}

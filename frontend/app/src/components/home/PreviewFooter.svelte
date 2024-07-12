@@ -103,9 +103,6 @@
         position: relative;
         justify-content: flex-end;
         gap: $sp3;
-        @include mobile() {
-            justify-content: center;
-        }
 
         .gate {
             position: absolute;
