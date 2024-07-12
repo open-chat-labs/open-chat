@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-ic-verifiable-credentials = { workspace = true }
+#ic-verifiable-credentials = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }

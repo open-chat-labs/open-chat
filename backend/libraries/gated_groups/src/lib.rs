@@ -1,13 +1,13 @@
 use candid::Principal;
-use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
-use ic_verifiable_credentials::VcFlowSigners;
+// use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
+// use ic_verifiable_credentials::VcFlowSigners;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
     AccessGate, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis,
-    TokenBalanceGate, UniquePersonProof, UserId, VerifiedCredentialArgumentValue, VerifiedCredentialGate,
+    TokenBalanceGate, UniquePersonProof, UserId, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
@@ -116,59 +116,61 @@ fn check_unique_person_gate(proof: Option<UniquePersonProof>) -> CheckIfPassesGa
 }
 
 fn check_verified_credential_gate(
-    gate: &VerifiedCredentialGate,
+    _gate: &VerifiedCredentialGate,
     args: Option<CheckVerifiedCredentialGateArgs>,
-    now: TimestampMillis,
+    _now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
-    let Some(args) = args else {
+    let Some(_args) = args else {
         return CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
             "Verified credential gate args not provided".to_string(),
         ));
     };
 
-    let vc_flow_signers = VcFlowSigners {
-        ii_canister_id: args.ii_canister_id,
-        ii_origin: args.ii_origin,
-        issuer_canister_id: gate.issuer_canister_id,
-        issuer_origin: gate.issuer_origin.clone(),
-    };
+    CheckIfPassesGateResult::Success
 
-    let credential_spec = CredentialSpec {
-        credential_type: gate.credential_type.clone(),
-        arguments: Some(
-            gate.credential_arguments
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        k.clone(),
-                        match v {
-                            VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
-                            VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
-                        },
-                    )
-                })
-                .collect(),
-        ),
-    };
-
-    let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
-    if args.credential_jwts.iter().any(|jwt| {
-        ic_verifiable_credentials::validate_ii_presentation_and_claims(
-            jwt,
-            args.user_ii_principal,
-            &vc_flow_signers,
-            &credential_spec,
-            &args.ic_root_key,
-            now_nanos,
-        )
-        .is_ok()
-    }) {
-        CheckIfPassesGateResult::Success
-    } else {
-        CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
-            "No valid credential provided".to_string(),
-        ))
-    }
+    // let vc_flow_signers = VcFlowSigners {
+    //     ii_canister_id: args.ii_canister_id,
+    //     ii_origin: args.ii_origin,
+    //     issuer_canister_id: gate.issuer_canister_id,
+    //     issuer_origin: gate.issuer_origin.clone(),
+    // };
+    //
+    // let credential_spec = CredentialSpec {
+    //     credential_type: gate.credential_type.clone(),
+    //     arguments: Some(
+    //         gate.credential_arguments
+    //             .iter()
+    //             .map(|(k, v)| {
+    //                 (
+    //                     k.clone(),
+    //                     match v {
+    //                         VerifiedCredentialArgumentValue::String(s) => ArgumentValue::String(s.clone()),
+    //                         VerifiedCredentialArgumentValue::Int(i) => ArgumentValue::Int(*i),
+    //                     },
+    //                 )
+    //             })
+    //             .collect(),
+    //     ),
+    // };
+    //
+    // let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+    // if args.credential_jwts.iter().any(|jwt| {
+    //     ic_verifiable_credentials::validate_ii_presentation_and_claims(
+    //         jwt,
+    //         args.user_ii_principal,
+    //         &vc_flow_signers,
+    //         &credential_spec,
+    //         &args.ic_root_key,
+    //         now_nanos,
+    //     )
+    //     .is_ok()
+    // }) {
+    //     CheckIfPassesGateResult::Success
+    // } else {
+    //     CheckIfPassesGateResult::Failed(GateCheckFailedReason::FailedVerifiedCredentialCheck(
+    //         "No valid credential provided".to_string(),
+    //     ))
+    // }
 }
 
 async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
