@@ -31,6 +31,7 @@
         ResourceKey,
         NervousSystemDetails,
         AccessGateWithLevel,
+        GateCheckSucceeded,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -101,8 +102,6 @@
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
-
-    type GateCheckSucceeded = { credentials: string[] };
 
     type ViewProfileConfig = {
         userId: string;
@@ -447,10 +446,10 @@
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
-                if (selectFirstChat()) {
-                    communityLoaded = true;
-                    return;
-                }
+                // if (selectFirstChat()) {
+                //     communityLoaded = true;
+                //     return;
+                // }
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"

@@ -143,3 +143,5 @@ If you break the rules you might be blocked and/or have your message(s) deleted.
         version: 0,
     };
 }
+
+export type GateCheckSucceeded = { credentials: string[] };

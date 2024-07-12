@@ -241,6 +241,8 @@
 
         const level = candidateGroup.level;
 
+        console.log("Candidate Group: ", candidateGroup);
+
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
