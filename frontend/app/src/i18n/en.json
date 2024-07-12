@@ -2,6 +2,7 @@
     "aboutOpenChat": "About OpenChat",
     "access": {
         "addGate": "Add gate",
+        "addGateInfo": "Multiple gates can be combined together into groups for greater flexibility. You can require joiners to meet all or any of the gates in a group.",
         "and": "Require all gates",
         "amount": "Amount (tokens)",
         "amountN": "Amount {n} tokens",

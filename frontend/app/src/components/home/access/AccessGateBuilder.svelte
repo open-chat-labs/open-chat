@@ -1,4 +1,5 @@
 <script lang="ts">
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Delete from "svelte-material-icons/Delete.svelte";
     import {
         type AccessGate,
@@ -28,6 +29,8 @@
     import { afterUpdate, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateIcon from "./AccessGateIcon.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import TooltipPopup from "../../TooltipPopup.svelte";
 
     const MAX_GATES = 5;
     const client = getContext<OpenChat>("client");
@@ -49,9 +52,9 @@
     $: canAdd = isLeafGate(gate) || gate.gates.length < MAX_GATES;
     $: title = !editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title");
 
-    afterUpdate(() => {
+    $: {
         valid = gateValidity.every((v) => v);
-    });
+    }
 
     function addLeaf() {
         const newGate: AccessGate = { kind: "no_gate" };
@@ -136,6 +139,26 @@
                     </CollapsibleCard>
                 {/each}
             {/if}
+            {#if editable}
+                <div class="add">
+                    <Button tiny disabled={!canAdd} on:click={addLeaf}>
+                        <Translatable resourceKey={i18nKey("access.addGate")} />
+                    </Button>
+                    <div class="icon">
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <InformationOutline
+                                slot="target"
+                                size={$iconSize}
+                                color={"var(--txt)"} />
+                            <div let:position let:align slot="tooltip">
+                                <TooltipPopup {position} {align}>
+                                    <Translatable resourceKey={i18nKey("access.addGateInfo")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
+                    </div>
+                </div>
+            {/if}
         </div>
 
         <div let:onClose slot="footer">
@@ -151,12 +174,7 @@
                     </div>
                 {/if}
                 <ButtonGroup>
-                    {#if editable}
-                        <Button disabled={!canAdd} on:click={addLeaf}>
-                            <Translatable resourceKey={i18nKey("access.addGate")} />
-                        </Button>
-                    {/if}
-                    <Button on:click={onClose} disabled={!valid}>
+                    <Button on:click={onClose}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>
@@ -202,6 +220,18 @@
         &.invalid::after {
             content: "!";
             color: var(--menu-warn);
+        }
+    }
+
+    .add {
+        margin-top: $sp4;
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+
+        .icon {
+            position: relative;
+            top: $sp2;
         }
     }
 </style>
