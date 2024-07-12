@@ -26,7 +26,7 @@
         getPaymentGateBindings,
         type GateBinding,
     } from "../../../utils/access";
-    import { afterUpdate, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
