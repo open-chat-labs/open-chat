@@ -107,5 +107,17 @@ pub enum GateCheckFailedReason {
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
+    #[serde(default)]
+    pub credential_jwts: Vec<String>,
     pub ii_origin: String,
+}
+
+impl VerifiedCredentialGateArgs {
+    pub fn credential_jwts(&self) -> Vec<String> {
+        let mut credential_jwts = self.credential_jwts.clone();
+        if !self.credential_jwt.is_empty() && !credential_jwts.contains(&self.credential_jwt) {
+            credential_jwts.push(self.credential_jwt.clone());
+        }
+        credential_jwts
+    }
 }

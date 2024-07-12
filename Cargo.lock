@@ -2619,6 +2619,7 @@ name = "gated_groups"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-verifiable-credentials",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
