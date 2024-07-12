@@ -34,6 +34,21 @@ type GenerateChallengeResponse = variant {
     Throttled;
 };
 
+type ApproveIdentityLinkArgs = record {
+    delegation : SignedDelegation;
+    public_key : blob;
+    link_initiated_by : principal;
+};
+
+type ApproveIdentityLinkResponse = variant {
+    Success;
+    CallerNotRecognised;
+    LinkRequestNotFound;
+    MalformedSignature : text;
+    InvalidSignature;
+    DelegationTooOld;
+};
+
 type CreateIdentityArgs = record {
     public_key : PublicKey;
     session_key : PublicKey;
@@ -50,6 +65,18 @@ type CreateIdentityResponse = variant {
     PublicKeyInvalid : text;
     ChallengeRequired;
     ChallengeFailed;
+};
+
+type InitiateIdentityLinkArgs = record {
+    public_key : blob;
+    link_to_principal : principal;
+};
+
+type InitiateIdentityLinkResponse = variant {
+    Success;
+    AlreadyRegistered;
+    TargetUserNotFound;
+    PublicKeyInvalid : text;
 };
 
 type PrepareDelegationArgs = record {
@@ -70,7 +97,9 @@ type PrepareDelegationSuccess = record {
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
-    generate_challenge : (record {}) -> (GenerateChallengeResponse);
+    approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
+    generate_challenge : (record {}) -> (GenerateChallengeResponse);
+    initiate_identity_link : (InitiateIdentityLinkArgs) -> (InitiateIdentityLinkResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
 }

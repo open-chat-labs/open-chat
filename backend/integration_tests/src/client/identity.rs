@@ -6,7 +6,9 @@ generate_query_call!(check_auth_principal);
 generate_query_call!(get_delegation);
 
 // Updates
+generate_update_call!(approve_identity_link);
 generate_update_call!(create_identity);
+generate_update_call!(initiate_identity_link);
 generate_update_call!(prepare_delegation);
 
 pub mod happy_path {
@@ -79,6 +81,54 @@ pub mod happy_path {
         match response {
             identity_canister::get_delegation::Response::Success(signed_delegation) => signed_delegation,
             response => panic!("'get_delegation' error: {response:?}"),
+        }
+    }
+
+    pub fn initiate_identity_link(
+        env: &mut PocketIc,
+        sender: Principal,
+        identity_canister_id: CanisterId,
+        public_key: Vec<u8>,
+        link_to_principal: Principal,
+    ) {
+        let response = super::initiate_identity_link(
+            env,
+            sender,
+            identity_canister_id,
+            &identity_canister::initiate_identity_link::Args {
+                public_key,
+                link_to_principal,
+            },
+        );
+
+        match response {
+            identity_canister::initiate_identity_link::Response::Success => (),
+            response => panic!("'initiate_identity_link' error: {response:?}"),
+        }
+    }
+
+    pub fn approve_identity_link(
+        env: &mut PocketIc,
+        sender: Principal,
+        identity_canister_id: CanisterId,
+        delegation: SignedDelegation,
+        public_key: Vec<u8>,
+        link_initiated_by: Principal,
+    ) {
+        let response = super::approve_identity_link(
+            env,
+            sender,
+            identity_canister_id,
+            &identity_canister::approve_identity_link::Args {
+                delegation,
+                public_key,
+                link_initiated_by,
+            },
+        );
+
+        match response {
+            identity_canister::approve_identity_link::Response::Success => (),
+            response => panic!("'approve_identity_link' error: {response:?}"),
         }
     }
 }
