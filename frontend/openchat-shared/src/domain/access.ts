@@ -45,7 +45,7 @@ export type CredentialGate = {
 export type VerifiedCredentialArgs = {
     userIIPrincipal: string;
     iiOrigin: string;
-    credentialJwt: string;
+    credentialJwts: string[];
 };
 
 export type NeuronGate = {

@@ -1113,6 +1113,7 @@ export const idlFactory = ({ IDL }) => {
   const VerifiedCredentialGateArgs = IDL.Record({
     'credential_jwt' : IDL.Text,
     'ii_origin' : IDL.Text,
+    'credential_jwts' : IDL.Vec(IDL.Text),
     'user_ii_principal' : IDL.Principal,
   });
   const JoinChannelArgs = IDL.Record({

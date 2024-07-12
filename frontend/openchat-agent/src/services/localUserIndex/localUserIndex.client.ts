@@ -243,13 +243,13 @@ export class LocalUserIndexClient extends CandidService {
     joinCommunity(
         communityId: string,
         inviteCode: string | undefined,
-        credentialArgs: VerifiedCredentialArgs[],
+        credentialArgs: VerifiedCredentialArgs,
     ): Promise<JoinCommunityResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
                 invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs[0]), //TODO - fix this
+                verified_credential_args: apiVerifiedCredentialArgs(credentialArgs),
             }),
             joinCommunityResponse,
         );
@@ -258,13 +258,13 @@ export class LocalUserIndexClient extends CandidService {
     joinGroup(
         chatId: string,
         inviteCode: string | undefined,
-        credentialArgs: VerifiedCredentialArgs[],
+        credentialArgs: VerifiedCredentialArgs,
     ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_group({
                 chat_id: Principal.fromText(chatId),
                 invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs[0]), //TODO - fix this
+                verified_credential_args: apiVerifiedCredentialArgs(credentialArgs),
                 correlation_id: BigInt(0),
             }),
             joinGroupResponse,
@@ -274,14 +274,14 @@ export class LocalUserIndexClient extends CandidService {
     joinChannel(
         id: ChannelIdentifier,
         inviteCode: string | undefined,
-        credentialArgs: VerifiedCredentialArgs[],
+        credentialArgs: VerifiedCredentialArgs,
     ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_channel({
                 community_id: Principal.fromText(id.communityId),
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs[0]), //TODO - fix this
+                verified_credential_args: apiVerifiedCredentialArgs(credentialArgs),
             }),
             (resp) => joinChannelResponse(resp, id.communityId),
         );

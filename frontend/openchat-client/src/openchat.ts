@@ -409,8 +409,6 @@ import type {
     GenerateChallengeResponse,
     ChallengeAttempt,
     AccessGateWithLevel,
-    LeafGate,
-    ActiveLeafGate,
     PreprocessedGate,
 } from "openchat-shared";
 import {
@@ -1408,7 +1406,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credentialArgs: credentials.map((c) => this.buildVerifiedCredentialArgs(c)),
+            credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1460,7 +1458,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    private buildVerifiedCredentialArgs(credential: string): VerifiedCredentialArgs {
+    private buildVerifiedCredentialArgs(credentials: string[]): VerifiedCredentialArgs {
         if (this._authPrincipal === undefined)
             throw new Error(
                 "Cannot construct a VerifiedCredentialArg because the _authPrincipal is undefined",
@@ -1468,7 +1466,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return {
             userIIPrincipal: this._authPrincipal,
             iiOrigin: new URL(this.config.internetIdentityUrl).origin,
-            credentialJwt: credential,
+            credentialJwts: credentials,
         };
     }
 
@@ -6661,7 +6659,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credentialArgs: credentials.map((c) => this.buildVerifiedCredentialArgs(c)),
+            credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
                 if (resp.kind === "success") {

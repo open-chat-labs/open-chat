@@ -24,19 +24,69 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
-export type Achievement = { 'JoinedCommunity' : null } |
+export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'DirectChats5' : null } |
+  { 'ChangedTheme' : null } |
+  { 'ChosenAsGroupModerator' : null } |
+  { 'FavouritedChat' : null } |
+  { 'AppointedGroupAdmin' : null } |
+  { 'HadMessageReactedTo' : null } |
+  { 'VotedOnPoll' : null } |
+  { 'ChosenAsGroupAdmin' : null } |
+  { 'OwnGroupWithOneHundredDiamondMembers' : null } |
+  { 'JoinedCommunity' : null } |
+  { 'SetCommunityDisplayName' : null } |
+  { 'AppointedGroupOwner' : null } |
+  { 'OwnGroupWithTenDiamondMembers' : null } |
+  { 'JoinedGatedGroupOrCommunity' : null } |
   { 'JoinedGroup' : null } |
+  { 'StartedCall' : null } |
+  { 'ChosenAsGroupOwner' : null } |
+  { 'TippedMessage' : null } |
+  { 'SentGiphy' : null } |
+  { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
   { 'Streak30' : null } |
+  { 'HadMessageTipped' : null } |
+  { 'SwappedFromWallet' : null } |
+  { 'EditedMessage' : null } |
+  { 'SentGroupMessage' : null } |
+  { 'ReactedToMessage' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
+  { 'AcceptedP2PSwapOffer' : null } |
+  { 'JoinedCall' : null } |
   { 'SetDisplayName' : null } |
+  { 'SentImage' : null } |
+  { 'EnabledDisappearingMessages' : null } |
+  { 'ForwardedMessage' : null } |
+  { 'SentPrize' : null } |
+  { 'FollowedThread' : null } |
   { 'SetBio' : null } |
+  { 'SentChannelMessage' : null } |
+  { 'OwnGroupWithOneThousandDiamondMembers' : null } |
+  { 'SentP2PSwapOffer' : null } |
+  { 'QuoteReplied' : null } |
+  { 'OwnGroupWithOneDiamondMember' : null } |
+  { 'SentCrypto' : null } |
+  { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'ReceivedCrypto' : null } |
+  { 'TranslationAccepted' : null } |
+  { 'RepliedInThread' : null } |
+  { 'DirectChats10' : null } |
+  { 'DirectChats20' : null } |
+  { 'SetGroupAccessGate' : null } |
+  { 'SentFile' : null } |
   { 'SentDirectMessage' : null } |
-  { 'SetAvatar' : null };
+  { 'SentMeme' : null } |
+  { 'SentPoll' : null } |
+  { 'SentAudio' : null } |
+  { 'SuggestedTranslation' : null } |
+  { 'SetAvatar' : null } |
+  { 'SentVideo' : null };
 export interface AddPlatformModeratorArgs { 'user_id' : UserId }
 export type AddPlatformModeratorResponse = {
     'AlreadyPlatformModerator' : null
@@ -1595,6 +1645,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
+export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
+  { 'Success' : null } |
+  { 'UserNotFound' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1794,6 +1848,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;
@@ -1914,6 +1969,10 @@ export interface _SERVICE {
     SetUserUpgradeConcurrencyResponse
   >,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
+  'submit_proof_of_unique_personhood' : ActorMethod<
+    [SubmitProofOfUniquePersonhoodArgs],
+    SubmitProofOfUniquePersonhoodResponse
+  >,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
