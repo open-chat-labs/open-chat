@@ -151,14 +151,15 @@ fn check_verified_credential_gate(
         ),
     };
 
+    let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
     if args.credential_jwts.iter().any(|jwt| {
         ic_verifiable_credentials::validate_ii_presentation_and_claims(
-            &jwt,
+            jwt,
             args.user_ii_principal,
             &vc_flow_signers,
             &credential_spec,
             &args.ic_root_key,
-            (now * NANOS_PER_MILLISECOND) as u128,
+            now_nanos,
         )
         .is_ok()
     }) {
