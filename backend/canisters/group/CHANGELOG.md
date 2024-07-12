@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+
 ## [[2.0.1234](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1234-group)] - 2024-07-09
 
 ### Added

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+
+## [[2.0.1236](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1236-local_user_index)] - 2024-07-11
+
 ### Changed
 
 - Added lots more achievements to enum ([#6020](https://github.com/open-chat-labs/open-chat/pull/6020))
