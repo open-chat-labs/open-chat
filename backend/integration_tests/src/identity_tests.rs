@@ -7,7 +7,7 @@ use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_internet_identity_principal;
+use testing::rng::{random_internet_identity_principal, random_string};
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[test_case(false)]
@@ -30,7 +30,15 @@ fn link_auth_identities(delay: bool) {
         session_key1.clone(),
     );
 
-    let oc_principal1 = Principal::self_authenticating(create_identity_result.user_key);
+    let oc_principal1 = Principal::self_authenticating(create_identity_result.user_key.clone());
+    client::local_user_index::happy_path::register_user(
+        env,
+        oc_principal1,
+        canister_ids.local_user_index,
+        create_identity_result.user_key,
+    );
+
+    env.tick();
 
     client::identity::happy_path::initiate_identity_link(
         env,
@@ -70,7 +78,7 @@ fn link_auth_identities(delay: bool) {
 }
 
 fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {
-    let email = "test@test.com";
+    let email = format!("{}@test.com", random_string());
     let session_key = random::<[u8; 32]>().to_vec();
 
     let generate_magic_link_response = client::sign_in_with_email::generate_magic_link(
@@ -78,7 +86,7 @@ fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Princi
         Principal::anonymous(),
         canister_ids.sign_in_with_email,
         &sign_in_with_email_canister::GenerateMagicLinkArgs {
-            email: email.to_string(),
+            email: email.clone(),
             session_key: session_key.clone(),
             max_time_to_live: None,
         },
@@ -91,7 +99,7 @@ fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Princi
     };
 
     let magic_link = sign_in_with_email_canister_test_utils::generate_magic_link(
-        email,
+        &email,
         session_key.clone(),
         generate_magic_link_success.created * NANOS_PER_MILLISECOND,
         generate_magic_link_success.expiration,
