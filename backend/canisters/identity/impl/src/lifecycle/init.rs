@@ -18,6 +18,7 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.skip_captcha_whitelist,
+        args.ic_root_key,
         args.test_mode,
     );
 
