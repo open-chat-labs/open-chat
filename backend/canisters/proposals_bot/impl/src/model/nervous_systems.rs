@@ -6,7 +6,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use std::mem;
 use types::{
-    icrc1, CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
+    icrc1, CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
     ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
 };
 
@@ -236,10 +236,21 @@ impl NervousSystems {
         }
     }
 
-    pub fn mark_proposal_pushed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, message_id: MessageId) {
+    pub fn mark_proposal_pushed(
+        &mut self,
+        governance_canister_id: &CanisterId,
+        proposal: Proposal,
+        message_id: MessageId,
+        message_index_if_known: Option<MessageIndex>,
+    ) {
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
-            ns.active_proposals.insert(proposal.id(), (proposal, message_id));
+            let proposal_id = proposal.id();
+            ns.active_proposals.insert(proposal_id, (proposal, message_id));
             ns.proposals_to_be_pushed.in_progress = false;
+
+            if let Some(message_index) = message_index_if_known {
+                ns.proposal_messages.insert(proposal_id, (message_index, message_id));
+            }
         }
     }
 
@@ -319,6 +330,8 @@ pub struct NervousSystem {
     min_neuron_stake: u64,
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
+    #[serde(default)]
+    proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -355,7 +368,12 @@ impl NervousSystem {
             min_neuron_stake: nervous_system.min_neuron_stake,
             min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
             proposal_rejection_fee: nervous_system.proposal_rejection_fee,
+            proposal_messages: BTreeMap::new(),
         }
+    }
+
+    pub fn chat_id(&self) -> MultiUserChat {
+        self.chat_id
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
@@ -463,6 +481,10 @@ impl NervousSystem {
 
     pub fn neuron_for_submitting_proposals(&self) -> Option<SnsNeuronId> {
         self.neuron_id_for_submitting_proposals
+    }
+
+    pub fn proposal_message(&self, proposal_id: &ProposalId) -> Option<(MessageIndex, MessageId)> {
+        self.proposal_messages.get(proposal_id).copied()
     }
 }
 
