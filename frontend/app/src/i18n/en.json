@@ -81,9 +81,9 @@
         "tokenPaymentInfo": "Users can only join if they pay an amount in {token} tokens.",
         "uniquePerson": "Unique person",
         "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
-        "uniquePersonInfo1": "What if I have not yet verified?",
+        "uniquePersonInfo1": "What if I do not have the verifiable credential?",
         "uniquePersonInfo2": "Simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
-        "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you are verified, come back here and hit 'Verify'.",
+        "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you completed the process, come back here and hit 'Verify'.",
         "verify": "Verify",
         "visibility": "Access"
     },
@@ -499,6 +499,15 @@
     "hotGroups": "Hot groups",
     "hours": "Hours",
     "howToBuyToken": "I need help buying {token}",
+    "human": {
+        "already": "Congratulations! You have already verified that you are a real, unique person!",
+        "failed": "Sorry we were not able to confirm your possession of the \"Unique Person\" verifiable credential. If you do not yet have the credential, follow the instructions below and try again.",
+        "instruction": "In order to confirm with OpenChat that you are a real, unique person you will need to provide the \"Unique Person\" verifiable credential.",
+        "notVerified": "You have not yet verified that you are a real, unique person. You may wish to verify as a signal of your trustworthiness to other users and as a way to qualify for future airdrops.",
+        "verification": "Verification",
+        "verify": "Verify",
+        "verified": "Verified unique human"
+    },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",
     "install": {

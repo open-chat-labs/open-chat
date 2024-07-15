@@ -40,6 +40,7 @@
         storageSectionOpen,
         userInfoOpen,
         renderPreviews,
+        verificationSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -55,6 +56,8 @@
     import Translatable from "../../Translatable.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
     import ChitEvents from "./ChitEvents.svelte";
+    import Human from "../../icons/Human.svelte";
+    import VerifyHumanity from "./VerifyHumanity.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -76,6 +79,8 @@
     let checkingUsername: boolean;
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
+    let verified = false;
+    let verifying = false;
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
     $: originalUsername = user?.username ?? "";
@@ -236,6 +241,10 @@
     }
 </script>
 
+{#if verifying}
+    <VerifyHumanity on:close={() => (verifying = false)} on:success={() => (verifying = false)} />
+{/if}
+
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
@@ -293,6 +302,9 @@
                             image={client.userAvatarUrl(user)}
                             on:imageSelected={userAvatarSelected} />
                     {/if}
+                    <div class="human">
+                        <Human size={"large"} human={verified} />
+                    </div>
                 </div>
                 {#if $anonUser}
                     <div class="guest">
@@ -353,6 +365,32 @@
                 {/if}
             </CollapsibleCard>
         </div>
+        {#if !$anonUser}
+            <div class="verification">
+                <CollapsibleCard
+                    on:toggle={verificationSectionOpen.toggle}
+                    open={$verificationSectionOpen}
+                    headerText={i18nKey("human.verification")}>
+                    {#if verified}
+                        <div class="verified">
+                            <div class="icon">
+                                <Human size={"large"} human={verified} />
+                            </div>
+                            <div class="msg">
+                                <Translatable resourceKey={i18nKey("human.already")} />
+                            </div>
+                        </div>
+                    {:else}
+                        <Translatable resourceKey={i18nKey("human.notVerified")} />
+                        <div class="full-width-btn">
+                            <Button on:click={() => (verifying = true)} fill small>
+                                <Translatable resourceKey={i18nKey("human.verify")} />
+                            </Button>
+                        </div>
+                    {/if}
+                </CollapsibleCard>
+            </div>
+        {/if}
         <div class="appearance">
             <CollapsibleCard
                 on:toggle={appearanceSectionOpen.toggle}
@@ -573,6 +611,13 @@
 
     .avatar {
         margin: $sp4 0 $sp5 0;
+        position: relative;
+    }
+
+    .human {
+        position: absolute;
+        bottom: 0;
+        left: calc(50% + 32px);
     }
 
     .userid {
@@ -662,5 +707,11 @@
         p {
             margin-bottom: $sp4;
         }
+    }
+
+    .verified {
+        display: flex;
+        gap: $sp4;
+        align-items: center;
     }
 </style>

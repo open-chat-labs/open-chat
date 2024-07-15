@@ -484,6 +484,7 @@
                                     {senderDisplayName}
                                 </h4>
                                 <Badges
+                                    human
                                     diamondStatus={sender?.diamondStatus}
                                     streak={client.getStreak(sender?.userId)} />
                                 {#if sender !== undefined && multiUserChat}
