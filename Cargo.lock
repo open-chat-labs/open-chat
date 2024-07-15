@@ -4839,6 +4839,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "json"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "json-proof-token"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8714,6 +8722,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "itertools 0.13.0",
+ "json",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",

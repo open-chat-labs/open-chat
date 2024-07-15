@@ -30,6 +30,8 @@ struct AttributeInput {
     #[serde(default)]
     pub msgpack: bool,
     #[serde(default)]
+    pub json: bool,
+    #[serde(default)]
     pub manual_reply: bool,
 }
 
@@ -88,9 +90,38 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         quote! {}
     };
 
+    let json = if attr.json {
+        let json_name = format!("{name}_json");
+
+        let serializer_name = format!("{json_name}_serializer");
+        let serializer_ident = Ident::new(&serializer_name, Span::call_site());
+
+        let deserializer_name = format!("{json_name}_deserializer");
+        let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
+
+        let serializer = quote! { serializer = #serializer_name, };
+        let deserializer = quote! { deserializer = #deserializer_name };
+
+        let mut json_item = item.clone();
+        json_item.sig.ident = Ident::new(&json_name, Span::call_site());
+
+        quote! {
+            use json::serialize_then_unwrap as #serializer_ident;
+            use json::deserialize_then_unwrap as #deserializer_ident;
+
+            #[ic_cdk::#method_type(name = #json_name, #guard #manual_reply #serializer #deserializer)]
+            #json_item
+        }
+    } else {
+        quote! {}
+    };
+
     TokenStream::from(quote! {
         #candid
+
         #msgpack
+
+        #json
     })
 }
 

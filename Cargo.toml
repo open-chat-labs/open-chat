@@ -135,6 +135,7 @@ members = [
     "backend/libraries/icpswap_client",
     "backend/libraries/index_store",
     "backend/libraries/instruction_counts_log",
+    "backend/libraries/json",
     "backend/libraries/jwt",
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
@@ -151,7 +152,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/tools/translation_tool",
+    "backend/tools/translation_tool", "backend/libraries/json",
 ]
 resolver = "2"
 

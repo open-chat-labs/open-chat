@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 use utils::time::{today, tomorrow};
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, json = true)]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }
