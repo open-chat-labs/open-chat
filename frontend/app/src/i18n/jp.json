@@ -81,6 +81,9 @@
         "tokenPaymentInfo": "ユーザーは、{token} トークンで金額を支払った場合にのみ参加できます。",
         "uniquePerson": "ユニークな人",
         "uniquePersonInfo": "固有の人格証明を提出したユーザーのみが参加できます",
+        "uniquePersonInfo1": "まだ確認していない場合はどうなりますか?",
+        "uniquePersonInfo2": "<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> にアクセスし、OpenChat へのアクセスに使用したのと同じインターネット ID を使用してサインインし、指示に従って自分の固有の人物であることを証明してください。",
+        "uniquePersonInfo3": "手順は簡単で、数分しかかからず、1 回だけ実行する必要があります。認証が完了したら、ここに戻って [認証] をクリックしてください。",
         "verify": "確認する",
         "visibility": "アクセス"
     },

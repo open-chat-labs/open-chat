@@ -81,6 +81,9 @@
         "tokenPaymentInfo": "Los usuarios solo pueden unirse si pagan una cantidad en tokens {token}.",
         "uniquePerson": "Persona unica",
         "uniquePersonInfo": "Solo se permitirá unirse a los usuarios que hayan proporcionado una prueba única de personalidad.",
+        "uniquePersonInfo1": "¿Qué pasa si aún no lo he verificado?",
+        "uniquePersonInfo2": "Simplemente dirígete a <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, inicia sesión con la misma identidad de Internet que usaste para acceder a OpenChat y sigue las instrucciones para demostrar tu personalidad única.",
+        "uniquePersonInfo3": "Es sencillo de hacer, sólo lleva unos minutos y sólo hay que hacerlo una vez. Cuando esté verificado, regrese aquí y presione 'Verificar'.",
         "verify": "Verificar",
         "visibility": "Acceso"
     },

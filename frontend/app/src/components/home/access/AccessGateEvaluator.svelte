@@ -98,7 +98,11 @@
     }
 </script>
 
-<ModalContent hideHeader closeIcon on:close>
+<ModalContent
+    hideHeader
+    hideFooter={currentGate !== undefined && currentGate.kind !== "composite_gate"}
+    closeIcon
+    on:close>
     <div let:onClose class="body access-gate-evaluator" slot="body">
         {#if currentGate}
             {#if isCompositeGate(currentGate) && currentGate.operator === "or"}

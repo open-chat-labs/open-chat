@@ -5,10 +5,12 @@
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { uniquePersonCredentialGate } from "../../../utils/access";
+    import Markdown from "../Markdown.svelte";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -49,28 +51,43 @@
 </div>
 <div>
     {#if failed}
-        <ErrorMessage>
+        <p class="info">
+            <ErrorMessage>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "access.credential.credentialCheckFailed",
+                        {
+                            credential: "Unique person",
+                        },
+                        level,
+                        true,
+                    )} />
+            </ErrorMessage>
+        </p>
+    {:else}
+        <p class="info">
             <Translatable
                 resourceKey={i18nKey(
-                    "access.credential.credentialCheckFailed",
+                    "access.credential.credentialCheckMessage",
                     {
                         credential: "Unique person",
                     },
                     level,
                     true,
                 )} />
-        </ErrorMessage>
-    {:else}
-        <Translatable
-            resourceKey={i18nKey(
-                "access.credential.credentialCheckMessage",
-                {
-                    credential: "Unique person",
-                },
-                level,
-                true,
-            )} />
+        </p>
     {/if}
+    <p class="question">
+        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+    </p>
+
+    <p class="answer">
+        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+    </p>
+
+    <p class="answer">
+        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+    </p>
 </div>
 <div>
     <ButtonGroup>
@@ -90,8 +107,17 @@
         gap: $sp3;
     }
 
-    .credential {
-        cursor: pointer;
-        @include font-size(fs-130);
+    .info,
+    .answer {
+        margin-bottom: $sp4;
+    }
+
+    .question {
+        @include font(book, normal, fs-90);
+    }
+
+    .answer {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
     }
 </style>

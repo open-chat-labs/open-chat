@@ -81,6 +81,9 @@
         "tokenPaymentInfo": "Người dùng chỉ có thể tham gia nếu họ trả một số tiền bằng mã thông báo {token}.",
         "uniquePerson": "Người độc nhất",
         "uniquePersonInfo": "Chỉ những người dùng đã cung cấp bằng chứng cá nhân duy nhất mới được phép tham gia",
+        "uniquePersonInfo1": "Nếu tôi chưa xác minh thì sao?",
+        "uniquePersonInfo2": "Chỉ cần truy cập <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, đăng nhập bằng chính Internet Identity mà bạn đã sử dụng để truy cập OpenChat và làm theo hướng dẫn để chứng minh cá tính độc đáo của bạn.",
+        "uniquePersonInfo3": "Việc thực hiện rất đơn giản, chỉ mất vài phút và chỉ cần thực hiện một lần. Khi bạn được xác minh, hãy quay lại đây và nhấn 'Xác minh'.",
         "verify": "Xác minh",
         "visibility": "Truy cập"
     },

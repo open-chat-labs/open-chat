@@ -81,6 +81,9 @@
         "tokenPaymentInfo": "用户只有使用 {token} 代币支付一定金额才能加入。",
         "uniquePerson": "独特的人",
         "uniquePersonInfo": "只有提供唯一身份证明的用户才允许加入",
+        "uniquePersonInfo1": "如果我尚未验证怎么办？",
+        "uniquePersonInfo2": "只需前往<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>，使用您用于访问 OpenChat 的相同互联网身份登录，并按照说明证明您的独特身份。",
+        "uniquePersonInfo3": "操作简单，只需几分钟，而且只需做一次。验证通过后，返回此处并点击“验证”。",
         "verify": "核实",
         "visibility": "能见度"
     },

@@ -81,6 +81,9 @@
         "tokenPaymentInfo": "Les utilisateurs ne peuvent adhérer que s&#39;ils paient un montant en jetons {token}.",
         "uniquePerson": "Personne unique",
         "uniquePersonInfo": "Seuls les utilisateurs ayant fourni une preuve de personnalité unique seront autorisés à rejoindre",
+        "uniquePersonInfo1": "Que faire si je n'ai pas encore vérifié ?",
+        "uniquePersonInfo2": "Rendez-vous simplement sur <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, connectez-vous en utilisant la même identité Internet que celle que vous avez utilisée pour accéder à OpenChat et suivez les instructions pour prouver votre personnalité unique.",
+        "uniquePersonInfo3": "C'est simple à faire, ne prend que quelques minutes et ne doit être effectué qu'une seule fois. Lorsque vous êtes vérifié, revenez ici et cliquez sur « Vérifier ».",
         "verify": "Vérifier",
         "visibility": "Accès"
     },
