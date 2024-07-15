@@ -15,7 +15,6 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import LinkButton from "../../LinkButton.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { createEventDispatcher, onMount } from "svelte";
@@ -155,12 +154,14 @@
         <ButtonGroup>
             {#if currentGate !== undefined}
                 {#if isCompositeGate(currentGate)}
-                    <Button disabled={optionalInvalid} on:click={nextGate}>Next</Button>
-                {:else}
-                    <LinkButton on:click={nextGate}>skip</LinkButton>
+                    <Button disabled={optionalInvalid} on:click={nextGate}>
+                        <Translatable resourceKey={i18nKey("access.next")} />
+                    </Button>
                 {/if}
             {:else}
-                <Button on:click={onClose}>Join</Button>
+                <Button on:click={onClose}>
+                    <Translatable resourceKey={i18nKey("access.join")} />
+                </Button>
             {/if}
         </ButtonGroup>
     </div>
