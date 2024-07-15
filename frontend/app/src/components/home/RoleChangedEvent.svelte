@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { OpenChat, UserSummary, RoleChanged } from "openchat-client";
+    import type { OpenChat, UserSummary, RoleChanged, MemberRole } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import { buildDisplayName } from "../../utils/user";
@@ -25,6 +25,7 @@
         user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername
     );
     $: meChanged = event.userIds.length == 1 && event.userIds[0] === user?.userId;
+    $: visible = me || meChanged || !isDemotion(event.oldRole, event.newRole);
 
     $: text = $_(meChanged ? "yourRoleChanged" : "roleChanged", {
         values: {
@@ -34,6 +35,16 @@
             newRole: $_(event.newRole),
         },
     });
+
+    function isDemotion(oldRole: MemberRole, newRole: MemberRole): boolean {
+        return newRole == "none" || 
+            newRole == "member" || 
+            oldRole == "owner" ||
+            (newRole === "moderator" && oldRole !== "member") || 
+            (oldRole === "admin" && newRole !== "owner");
+    }
 </script>
 
-<NonMessageEvent {text} {timestamp} />
+{#if visible}
+    <NonMessageEvent {text} {timestamp} />
+{/if}
