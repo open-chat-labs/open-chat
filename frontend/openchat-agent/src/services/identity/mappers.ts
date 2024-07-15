@@ -1,18 +1,22 @@
 import type {
+    ApiApproveIdentityLinkResponse,
     ApiCheckAuthPrincipalResponse,
     ApiCreateIdentityResponse,
     ApiGenerateChallengeResponse,
     ApiGetDelegationResponse,
+    ApiInitiateIdentityLinkResponse,
     ApiPrepareDelegationResponse,
 } from "./candid/idl";
 import {
+    type ApproveIdentityLinkResponse,
     type CheckAuthPrincipalResponse,
     type CreateIdentityResponse,
+    type GenerateChallengeResponse,
     type GetDelegationResponse,
+    type InitiateIdentityLinkResponse,
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     UnsupportedValueError,
-    type GenerateChallengeResponse,
 } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
@@ -118,6 +122,51 @@ export function generateChallengeResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGenerateChallengeResponse type received",
+        candid,
+    );
+}
+
+export function initiateIdentityLinkResponse(
+    candid: ApiInitiateIdentityLinkResponse,
+): InitiateIdentityLinkResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyRegistered" in candid) {
+        return "already_registered";
+    }
+    if ("TargetUserNotFound" in candid) {
+        return "target_user_not_found";
+    }
+    if ("PublicKeyInvalid" in candid) {
+        return "public_key_invalid";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiInitiateIdentityLinkResponse type received",
+        candid,
+    );
+}
+
+export function approveIdentityLinkResponse(
+    candid: ApiApproveIdentityLinkResponse,
+): ApproveIdentityLinkResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotRecognised" in candid) {
+        return "caller_not_recognised";
+    }
+    if ("LinkRequestNotFound" in candid) {
+        return "link_request_not_found";
+    }
+    if ("MalformedSignature" in candid || "InvalidSignature" in candid) {
+        return "invalid_signature";
+    }
+    if ("DelegationTooOld" in candid) {
+        return "delegation_too_old";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiApproveIdentityLinkResponse type received",
         candid,
     );
 }

@@ -81,3 +81,16 @@ export type Challenge = {
 };
 
 export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityError;
+
+export type InitiateIdentityLinkResponse =
+    | "success"
+    | "already_registered"
+    | "target_user_not_found"
+    | "public_key_invalid";
+
+export type ApproveIdentityLinkResponse =
+    | "success"
+    | "caller_not_recognised"
+    | "link_request_not_found"
+    | "invalid_signature"
+    | "delegation_too_old";
