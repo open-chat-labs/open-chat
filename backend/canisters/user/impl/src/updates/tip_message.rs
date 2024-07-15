@@ -39,6 +39,12 @@ async fn tip_message(args: Args) -> Response {
         return TransferFailed(failed.error_message().to_string());
     }
 
+    mutate_state(|state| {
+        state
+            .data
+            .award_achievement_and_notify(Achievement::TippedMessage, state.env.now())
+    });
+
     let response = match prepare_result {
         PrepareResult::Direct(tip_message_args) => {
             mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals, state))
@@ -78,14 +84,6 @@ async fn tip_message(args: Args) -> Response {
             }
         }
     };
-
-    if matches!(response, Success) {
-        mutate_state(|state| {
-            state
-                .data
-                .award_achievement_and_notify(Achievement::TippedMessage, state.env.now())
-        });
-    }
 
     response
 }
