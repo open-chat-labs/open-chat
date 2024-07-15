@@ -1,5 +1,19 @@
 import "../../../libraries/types/can.did";
 
+type LookupProposalMessageArgs = record {
+    governance_canister_id : CanisterId;
+    proposal_id: ProposalId;
+};
+
+type LookupProposalMessageResponse = variant {
+    Success : record {
+        chat_id : MultiUserChat;
+        message_index : MessageIndex;
+        message_id : MessageId;
+    };
+    NotFound;
+};
+
 type StakeNeuronForSubmittingProposalsArgs = record {
     governance_canister_id : CanisterId;
     stake : nat;
@@ -16,5 +30,6 @@ type StakeNeuronForSubmittingProposalsResponse = variant {
 };
 
 service : {
+    lookup_proposal_message : (LookupProposalMessageArgs) -> (LookupProposalMessageResponse) query;
     stake_neuron_for_submitting_proposals : (StakeNeuronForSubmittingProposalsArgs) -> (StakeNeuronForSubmittingProposalsResponse);
 };
