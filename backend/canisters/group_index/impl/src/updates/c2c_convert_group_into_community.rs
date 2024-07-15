@@ -1,12 +1,12 @@
 use crate::guards::caller_is_group_canister;
 use crate::updates::c2c_create_community::create_community_impl;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_convert_group_into_community::{Response::*, *};
 use types::{CanisterId, SourceGroup};
 
-#[update_msgpack(guard = "caller_is_group_canister")]
+#[update(guard = "caller_is_group_canister", msgpack = true)]
 #[trace]
 async fn c2c_convert_group_into_community(args: Args) -> Response {
     let PrepareResult {

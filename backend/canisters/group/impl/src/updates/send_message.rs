@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
-use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
@@ -10,7 +10,7 @@ use types::{
     EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId,
 };
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn send_message_v2(args: Args) -> Response {
     run_regular_jobs();
@@ -18,7 +18,7 @@ fn send_message_v2(args: Args) -> Response {
     mutate_state(|state| send_message_impl(args, state))
 }
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();

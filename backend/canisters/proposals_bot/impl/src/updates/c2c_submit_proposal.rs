@@ -2,7 +2,7 @@ use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
 use crate::timer_job_types::{LookupUserThenSubmitProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
@@ -20,7 +20,7 @@ use utils::time::SECOND_IN_MS;
 
 const OC_ROOT_URL: &str = "https://oc.app/";
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_submit_proposal(args: Args) -> Response {
     let PrepareResult {

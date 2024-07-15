@@ -1,13 +1,13 @@
 use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, ChitEarnedReason, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
 
-#[update_msgpack(guard = "caller_is_local_user_index")]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_notify_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))

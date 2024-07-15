@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
@@ -12,7 +12,7 @@ use user_index_canister_c2c_client::lookup_user;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn delete_messages(args: Args) -> Response {
     run_regular_jobs();

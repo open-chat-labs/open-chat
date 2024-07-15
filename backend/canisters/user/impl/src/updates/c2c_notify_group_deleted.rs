@@ -1,14 +1,14 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::TimerJob;
 use crate::{mutate_state, openchat_bot, run_regular_jobs, Data, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatInternal;
 use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, TimestampMillis};
 use user_canister::c2c_notify_group_deleted::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 
-#[update_msgpack(guard = "caller_is_group_index")]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 fn c2c_notify_group_deleted(args: Args) -> Response {
     run_regular_jobs();

@@ -1,12 +1,12 @@
 use crate::guards::caller_is_local_user_index;
 use crate::model::pending_actions_queue::Action;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use satoshi_dice_canister::c2c_add_user::{Response::*, *};
 use types::{BlobReference, CanisterId, ImageContent, MessageContentInitial, TextContent, ThumbnailData, UserId};
 
-#[update_msgpack(guard = "caller_is_local_user_index")]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_add_user(args: Args) -> Response {
     mutate_state(|state| c2c_add_user_impl(args.user_id, state))

@@ -1,13 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
 use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
 use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
     run_regular_jobs();

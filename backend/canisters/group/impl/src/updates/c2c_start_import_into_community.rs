@@ -1,10 +1,10 @@
 use crate::guards::caller_is_group_index_or_local_group_index;
 use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState, StartImportIntoCommunityResult};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_start_import_into_community::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
+#[update(guard = "caller_is_group_index_or_local_group_index", msgpack = true)]
 #[trace]
 fn c2c_start_import_into_community(args: Args) -> Response {
     run_regular_jobs();
