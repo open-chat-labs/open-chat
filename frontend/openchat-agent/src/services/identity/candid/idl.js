@@ -1,9 +1,30 @@
 export const idlFactory = ({ IDL }) => {
+  const PublicKey = IDL.Vec(IDL.Nat8);
+  const TimestampNanoseconds = IDL.Nat64;
+  const SignedDelegation = IDL.Record({
+    'signature' : IDL.Vec(IDL.Nat8),
+    'delegation' : IDL.Record({
+      'pubkey' : PublicKey,
+      'expiration' : TimestampNanoseconds,
+    }),
+  });
+  const ApproveIdentityLinkArgs = IDL.Record({
+    'link_initiated_by' : IDL.Principal,
+    'public_key' : IDL.Vec(IDL.Nat8),
+    'delegation' : SignedDelegation,
+  });
+  const ApproveIdentityLinkResponse = IDL.Variant({
+    'LinkRequestNotFound' : IDL.Null,
+    'InvalidSignature' : IDL.Null,
+    'Success' : IDL.Null,
+    'MalformedSignature' : IDL.Text,
+    'DelegationTooOld' : IDL.Null,
+    'CallerNotRecognised' : IDL.Null,
+  });
   const CheckAuthPrincipalResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const PublicKey = IDL.Vec(IDL.Nat8);
   const Nanoseconds = IDL.Nat64;
   const CreateIdentityArgs = IDL.Record({
     'public_key' : PublicKey,
@@ -13,7 +34,6 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({ 'key' : IDL.Nat32, 'chars' : IDL.Text })
     ),
   });
-  const TimestampNanoseconds = IDL.Nat64;
   const PrepareDelegationSuccess = IDL.Record({
     'user_key' : PublicKey,
     'expiration' : TimestampNanoseconds,
@@ -34,16 +54,19 @@ export const idlFactory = ({ IDL }) => {
     'session_key' : PublicKey,
     'expiration' : TimestampNanoseconds,
   });
-  const SignedDelegation = IDL.Record({
-    'signature' : IDL.Vec(IDL.Nat8),
-    'delegation' : IDL.Record({
-      'pubkey' : PublicKey,
-      'expiration' : TimestampNanoseconds,
-    }),
-  });
   const GetDelegationResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : SignedDelegation,
+  });
+  const InitiateIdentityLinkArgs = IDL.Record({
+    'public_key' : IDL.Vec(IDL.Nat8),
+    'link_to_principal' : IDL.Principal,
+  });
+  const InitiateIdentityLinkResponse = IDL.Variant({
+    'AlreadyRegistered' : IDL.Null,
+    'Success' : IDL.Null,
+    'TargetUserNotFound' : IDL.Null,
+    'PublicKeyInvalid' : IDL.Text,
   });
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
@@ -54,6 +77,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : PrepareDelegationSuccess,
   });
   return IDL.Service({
+    'approve_identity_link' : IDL.Func(
+        [ApproveIdentityLinkArgs],
+        [ApproveIdentityLinkResponse],
+        [],
+      ),
     'check_auth_principal' : IDL.Func(
         [IDL.Record({})],
         [CheckAuthPrincipalResponse],
@@ -73,6 +101,11 @@ export const idlFactory = ({ IDL }) => {
         [GetDelegationArgs],
         [GetDelegationResponse],
         ['query'],
+      ),
+    'initiate_identity_link' : IDL.Func(
+        [InitiateIdentityLinkArgs],
+        [InitiateIdentityLinkResponse],
+        [],
       ),
     'prepare_delegation' : IDL.Func(
         [PrepareDelegationArgs],
