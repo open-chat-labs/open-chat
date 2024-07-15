@@ -8,7 +8,7 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, ChannelId, ChatId, CommunityId, MessageId, MultiUserChat, Proposal};
+use types::{CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -71,7 +71,7 @@ async fn fetch_payload_rendering_if_required(governance_canister_id: CanisterId,
                     }
                 }
                 Err(error) => {
-                    mark_proposal_pushed(governance_canister_id, proposal, None);
+                    mark_proposal_pushed(governance_canister_id, proposal, None, None);
                     return Err(error);
                 }
             }
@@ -103,7 +103,16 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
 
     let response = group_canister_c2c_client::c2c_send_message(group_id.into(), &send_message_args).await;
 
-    mark_proposal_pushed(governance_canister_id, proposal, is_success(response).then_some(message_id));
+    if let Ok(group_canister::c2c_send_message::Response::Success(result)) = &response {
+        mark_proposal_pushed(governance_canister_id, proposal, Some(message_id), Some(result.message_index));
+    } else {
+        mark_proposal_pushed(
+            governance_canister_id,
+            proposal,
+            is_success(response).then_some(message_id),
+            None,
+        );
+    }
 }
 
 async fn push_channel_proposal(
@@ -135,16 +144,32 @@ async fn push_channel_proposal(
 
     let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;
 
-    mark_proposal_pushed(governance_canister_id, proposal, is_success(response).then_some(message_id));
+    if let Ok(community_canister::c2c_send_message::Response::Success(result)) = &response {
+        mark_proposal_pushed(governance_canister_id, proposal, Some(message_id), Some(result.message_index));
+    } else {
+        mark_proposal_pushed(
+            governance_canister_id,
+            proposal,
+            is_success(response).then_some(message_id),
+            None,
+        );
+    }
 }
 
-fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, message_id_if_success: Option<MessageId>) {
+fn mark_proposal_pushed(
+    governance_canister_id: CanisterId,
+    proposal: Proposal,
+    message_id_if_success: Option<MessageId>,
+    message_index_if_known: Option<MessageIndex>,
+) {
     mutate_state(|state| {
         if let Some(message_id) = message_id_if_success {
-            state
-                .data
-                .nervous_systems
-                .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
+            state.data.nervous_systems.mark_proposal_pushed(
+                &governance_canister_id,
+                proposal,
+                message_id,
+                message_index_if_known,
+            );
         } else {
             state
                 .data
