@@ -169,17 +169,13 @@ const nftGate: GateBinding = {
     enabled: false,
 };
 
-// TODO - check this is the right credential definition
 export const uniquePersonCredentialGate: CredentialGate = {
     kind: "credential_gate",
     credential: {
         credentialName: "Is human",
-        issuerCanisterId: "h433y-uqaaa-aaaah-qdbja-cai",
-        issuerOrigin: "https://h433y-uqaaa-aaaah-qdbja-cai.icp0.io",
-        credentialType: "ProofOfHumanity",
-        credentialArguments: {
-            verificationType: "human-moderation",
-        },
+        issuerCanisterId: "qbw6f-caaaa-aaaah-qdcwa-cai",
+        issuerOrigin: "https://qbw6f-caaaa-aaaah-qdcwa-cai.icp0.io",
+        credentialType: "ProofOfUniqueness",
     },
 };
 
