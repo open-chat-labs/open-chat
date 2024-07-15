@@ -386,6 +386,7 @@ type AddReactionArgs = record {
     reaction : text;
     username : text;
     display_name : opt text;
+    new_achievement : bool;
 };
 
 type AddReactionResponse = variant {
@@ -553,6 +554,7 @@ type DeleteMessagesArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_ids : vec MessageId;
     as_platform_moderator : opt bool;
+    new_achievement : bool;
 };
 
 type DeleteMessagesResponse = variant {
@@ -591,6 +593,7 @@ type EditMessageArgs = record {
     message_id : MessageId;
     content : MessageContentInitial;
     block_level_markdown : opt bool;
+    new_achievement : bool;
 };
 
 type EditMessageResponse = variant {
@@ -830,6 +833,7 @@ type SendMessageArgs = record {
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
     message_filter_failed : opt nat64;
+    new_achievement : bool;
 };
 
 type SendMessageResponse = variant {

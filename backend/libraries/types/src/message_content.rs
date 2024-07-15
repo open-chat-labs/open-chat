@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
+    MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved,
+    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -196,6 +196,29 @@ impl MessageContent {
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Custom(_) => None,
+        }
+    }
+
+    pub fn to_achievement(&self) -> Option<Achievement> {
+        match self {
+            MessageContent::Text(_) => Some(Achievement::SentText),
+            MessageContent::Image(_) => Some(Achievement::SentImage),
+            MessageContent::Video(_) => Some(Achievement::SentVideo),
+            MessageContent::Audio(_) => Some(Achievement::SentAudio),
+            MessageContent::File(_) => Some(Achievement::SentFile),
+            MessageContent::Poll(_) => Some(Achievement::SentPoll),
+            MessageContent::Crypto(_) => Some(Achievement::SentCrypto),
+            MessageContent::Deleted(_) => Some(Achievement::DeletedMessage),
+            MessageContent::Giphy(_) => Some(Achievement::SentGiphy),
+            MessageContent::GovernanceProposal(_) => None,
+            MessageContent::Prize(_) => Some(Achievement::SentPrize),
+            MessageContent::PrizeWinner(_) => None,
+            MessageContent::MessageReminderCreated(_) => Some(Achievement::SentReminder),
+            MessageContent::MessageReminder(_) => Some(Achievement::SentReminder),
+            MessageContent::ReportedMessage(_) => None,
+            MessageContent::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
+            MessageContent::VideoCall(_) => Some(Achievement::StartedCall),
+            MessageContent::Custom(_) => None,
         }
     }
 

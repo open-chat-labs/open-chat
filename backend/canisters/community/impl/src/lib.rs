@@ -24,11 +24,12 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, Achievement, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use user_canister::c2c_notify_achievement;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -268,6 +269,15 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
         }
+    }
+
+    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
+        let args = c2c_notify_achievement::Args { achievements };
+        self.data.fire_and_forget_handler.send(
+            user_id.into(),
+            "c2c_notify_achievement_msgpack".to_string(),
+            serialize_then_unwrap(args),
+        );
     }
 }
 

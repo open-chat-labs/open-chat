@@ -9,6 +9,7 @@ pub struct Args {
     pub reaction: Reaction,
     pub username: String,
     pub display_name: Option<String>,
+    pub new_achievement: bool,
     pub correlation_id: u64,
 }
 

@@ -72,6 +72,7 @@ pub mod happy_path {
                 block_level_markdown: false,
                 rules_accepted: None,
                 message_filter_failed: None,
+                new_achievement: false,
                 correlation_id: 0,
             },
         );

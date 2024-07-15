@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
+use crate::{Message, MessageIndex};
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Achievement {
     JoinedGroup,
@@ -16,21 +18,10 @@ pub enum Achievement {
     Streak7,
     Streak14,
     Streak30,
-    SentGroupMessage,
-    SentChannelMessage,
-    SetCommunityDisplayName,
-    ChangedTheme,
-    SentCrypto,
-    ReceivedCrypto,
-    ReactedToMessage,
-    HadMessageReactedTo,
-    TippedMessage,
-    HadMessageTipped,
-    SwappedFromWallet,
-    SentP2PSwapOffer,
-    AcceptedP2PSwapOffer,
+
     SentPoll,
     VotedOnPoll,
+    SentText,
     SentImage,
     SentVideo,
     SentAudio,
@@ -38,13 +29,28 @@ pub enum Achievement {
     SentGiphy,
     SentPrize,
     SentMeme,
+    SentReminder,
     StartedCall,
-    JoinedCall,
-    EnabledDisappearingMessages,
+    SentCrypto,
+    SentP2PSwapOffer,
+    ReactedToMessage,
+    EditedMessage,
     RepliedInThread,
     QuoteReplied,
-    EditedMessage,
+    TippedMessage,
+    DeletedMessage,
     ForwardedMessage,
+
+    ReceivedCrypto,
+    HadMessageReactedTo,
+    HadMessageTipped,
+    JoinedCall,
+    ProvedUniquePersonhood,
+    SetCommunityDisplayName,
+    ChangedTheme,
+    SwappedFromWallet,
+    AcceptedP2PSwapOffer,
+    EnabledDisappearingMessages,
     PinnedMessage,
     FavouritedChat,
     FollowedThread,
@@ -84,8 +90,7 @@ impl Achievement {
             Achievement::Streak7 => 3000,
             Achievement::Streak14 => 5000,
             Achievement::Streak30 => 10000,
-            Achievement::SentGroupMessage => 700,
-            Achievement::SentChannelMessage => 700,
+            Achievement::ProvedUniquePersonhood => 10000,
             Achievement::SetCommunityDisplayName => 700,
             Achievement::ChangedTheme => 800,
             Achievement::SentCrypto => 2000,
@@ -97,6 +102,7 @@ impl Achievement {
             Achievement::SwappedFromWallet => 3000,
             Achievement::SentP2PSwapOffer => 1000,
             Achievement::AcceptedP2PSwapOffer => 4000,
+            Achievement::SentText => 700,
             Achievement::SentPoll => 1000,
             Achievement::VotedOnPoll => 1000,
             Achievement::SentImage => 1000,
@@ -106,12 +112,14 @@ impl Achievement {
             Achievement::SentGiphy => 1000,
             Achievement::SentPrize => 3000,
             Achievement::SentMeme => 2000,
+            Achievement::SentReminder => 1500,
             Achievement::StartedCall => 2000,
             Achievement::JoinedCall => 3000,
             Achievement::EnabledDisappearingMessages => 1000,
             Achievement::RepliedInThread => 1500,
             Achievement::QuoteReplied => 1500,
             Achievement::EditedMessage => 1000,
+            Achievement::DeletedMessage => 700,
             Achievement::ForwardedMessage => 2000,
             Achievement::PinnedMessage => 2000,
             Achievement::FavouritedChat => 2000,
@@ -135,5 +143,29 @@ impl Achievement {
             Achievement::DirectChats10 => 4000,
             Achievement::DirectChats20 => 10000,
         }
+    }
+
+    pub fn from_message(direct: bool, message: &Message) -> Vec<Achievement> {
+        let mut achievements = Vec::new();
+
+        if let Some(achievement) = message.content.to_achievement() {
+            achievements.push(achievement);
+        }
+
+        if direct {
+            achievements.push(Achievement::SentDirectMessage);
+        }
+
+        if message.forwarded {
+            achievements.push(Achievement::ForwardedMessage);
+        }
+
+        if message.replies_to.is_some() {
+            achievements.push(Achievement::QuoteReplied);
+        } else if message.thread_summary.is_some() && message.message_index == MessageIndex::from(0) {
+            achievements.push(Achievement::RepliedInThread);
+        }
+
+        achievements
     }
 }

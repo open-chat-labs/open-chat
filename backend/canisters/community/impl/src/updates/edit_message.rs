@@ -3,6 +3,7 @@ use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use community_canister::edit_message::{Response::*, *};
 use ic_cdk::update;
+use types::Achievement;
 
 #[update]
 #[trace]
@@ -42,6 +43,11 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 ) {
                     EditMessageResult::Success => {
                         handle_activity_notification(state);
+
+                        if args.new_achievement {
+                            state.notify_user_of_achievements(sender, vec![Achievement::ReactedToMessage]);
+                        }
+
                         Success
                     }
                     EditMessageResult::NotAuthorized => MessageNotFound,

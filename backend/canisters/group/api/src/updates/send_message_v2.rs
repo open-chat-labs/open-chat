@@ -18,6 +18,7 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
+    pub new_achievement: bool,
     pub correlation_id: u64,
 }
 
