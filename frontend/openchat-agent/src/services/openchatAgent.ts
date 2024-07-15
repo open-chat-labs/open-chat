@@ -208,6 +208,7 @@ import type {
     Achievement,
     ChitEarned,
     ChitState,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3468,5 +3469,11 @@ export class OpenChatAgent extends EventTarget {
         if (cachedState !== undefined) {
             return this.userClient.markAchievementsSeen(cachedState.latestUserCanisterUpdates);
         }
+    }
+
+    submitProofOfUniquePersonhood(
+        credential: string,
+    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        return this._userIndexClient.submitProofOfUniquePersonhood(credential);
     }
 }

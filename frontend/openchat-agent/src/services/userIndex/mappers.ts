@@ -20,8 +20,9 @@ import type {
     CurrentUserSummary,
     UsersApiResponse,
     UserSummaryUpdate,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiChitUserBalance,
@@ -39,6 +40,7 @@ import type {
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
     ApiSetUsernameResponse,
+    ApiSubmitProofOfUniquePersonhoodResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
     ApiSuspensionDetails,
@@ -483,4 +485,22 @@ function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
         balance: candid.balance,
         username: candid.username,
     };
+}
+
+export function submitProofOfUniquePersonhoodResponse(
+    candid: ApiSubmitProofOfUniquePersonhoodResponse,
+): SubmitProofOfUniquePersonhoodResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    if ("Invalid" in candid) {
+        return CommonResponses.invalid();
+    }
+    if ("UserNotFound" in candid) {
+        return CommonResponses.userNotFound();
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
+        candid,
+    );
 }

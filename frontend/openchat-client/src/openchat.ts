@@ -410,6 +410,7 @@ import type {
     ChallengeAttempt,
     AccessGateWithLevel,
     PreprocessedGate,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -6647,6 +6648,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 return undefined;
             })
             .catch(() => undefined);
+    }
+
+    submitProofOfUniquePersonhood(
+        credential: string,
+    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        return this.sendRequest({
+            kind: "submitProofOfUniquePersonhood",
+            credential,
+        }).catch(err => {
+            console.error("Failed to submit proof of unique personhood to the user index", err)
+            return { kind: "invalid"};
+        });
     }
 
     async joinCommunity(

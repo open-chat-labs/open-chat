@@ -22,6 +22,7 @@ import type {
     UsersApiResponse,
     UserSummaryUpdate,
     ChitState,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -45,6 +46,7 @@ import {
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
     chitLeaderboardResponse,
+    submitProofOfUniquePersonhoodResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
@@ -482,6 +484,17 @@ export class UserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userIndexService.chit_leaderboard({}),
             chitLeaderboardResponse,
+        );
+    }
+
+    submitProofOfUniquePersonhood(
+        credential: string,
+    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        return this.handleResponse(
+            this.userIndexService.submit_proof_of_unique_personhood({
+                credential_jwt: credential,
+            }),
+            submitProofOfUniquePersonhoodResponse,
         );
     }
 }

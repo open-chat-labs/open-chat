@@ -27,7 +27,13 @@
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    dispatch("credentialReceived", credential);
+                    client.submitProofOfUniquePersonhood(credential).then((resp) => {
+                        if (resp.kind !== "success") {
+                            failed = true;
+                        } else {
+                            dispatch("success");
+                        }
+                    });
                 }
             })
             .catch(() => (failed = true))

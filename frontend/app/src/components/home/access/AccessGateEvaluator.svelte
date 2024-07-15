@@ -136,10 +136,7 @@
                     gate={currentGate}
                     {level} />
             {:else if isUniquePersonGate(currentGate)}
-                <UniqueHumanGateEvaluator
-                    on:close={onClose}
-                    on:credentialReceived={credentialReceived}
-                    {level} />
+                <UniqueHumanGateEvaluator on:close={onClose} on:success={nextGate} {level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
                     gate={currentGate}

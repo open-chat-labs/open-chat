@@ -3,6 +3,7 @@ import type { DataContent } from "../data/data";
 import type {
     Failure,
     InternalError,
+    Invalid,
     Offline,
     Retrying,
     Success,
@@ -491,3 +492,5 @@ export type DiamondMembershipFees = {
     oneYear: bigint;
     lifetime: bigint;
 };
+
+export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound;
