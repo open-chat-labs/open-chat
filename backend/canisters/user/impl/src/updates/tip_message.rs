@@ -45,7 +45,7 @@ async fn tip_message(args: Args) -> Response {
             .award_achievement_and_notify(Achievement::TippedMessage, state.env.now())
     });
 
-    let response = match prepare_result {
+    match prepare_result {
         PrepareResult::Direct(tip_message_args) => {
             mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals, state))
         }
@@ -83,9 +83,7 @@ async fn tip_message(args: Args) -> Response {
                 }
             }
         }
-    };
-
-    response
+    }
 }
 
 enum PrepareResult {
