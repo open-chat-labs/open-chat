@@ -7,6 +7,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -23,19 +24,69 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
-export type Achievement = { 'JoinedCommunity' : null } |
+export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'DirectChats5' : null } |
+  { 'ChangedTheme' : null } |
+  { 'ChosenAsGroupModerator' : null } |
+  { 'FavouritedChat' : null } |
+  { 'AppointedGroupAdmin' : null } |
+  { 'HadMessageReactedTo' : null } |
+  { 'VotedOnPoll' : null } |
+  { 'ChosenAsGroupAdmin' : null } |
+  { 'OwnGroupWithOneHundredDiamondMembers' : null } |
+  { 'JoinedCommunity' : null } |
+  { 'SetCommunityDisplayName' : null } |
+  { 'AppointedGroupOwner' : null } |
+  { 'OwnGroupWithTenDiamondMembers' : null } |
+  { 'JoinedGatedGroupOrCommunity' : null } |
   { 'JoinedGroup' : null } |
+  { 'StartedCall' : null } |
+  { 'ChosenAsGroupOwner' : null } |
+  { 'TippedMessage' : null } |
+  { 'SentGiphy' : null } |
+  { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
   { 'Streak30' : null } |
+  { 'HadMessageTipped' : null } |
+  { 'SwappedFromWallet' : null } |
+  { 'EditedMessage' : null } |
+  { 'SentGroupMessage' : null } |
+  { 'ReactedToMessage' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
+  { 'AcceptedP2PSwapOffer' : null } |
+  { 'JoinedCall' : null } |
   { 'SetDisplayName' : null } |
+  { 'SentImage' : null } |
+  { 'EnabledDisappearingMessages' : null } |
+  { 'ForwardedMessage' : null } |
+  { 'SentPrize' : null } |
+  { 'FollowedThread' : null } |
   { 'SetBio' : null } |
+  { 'SentChannelMessage' : null } |
+  { 'OwnGroupWithOneThousandDiamondMembers' : null } |
+  { 'SentP2PSwapOffer' : null } |
+  { 'QuoteReplied' : null } |
+  { 'OwnGroupWithOneDiamondMember' : null } |
+  { 'SentCrypto' : null } |
+  { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'ReceivedCrypto' : null } |
+  { 'TranslationAccepted' : null } |
+  { 'RepliedInThread' : null } |
+  { 'DirectChats10' : null } |
+  { 'DirectChats20' : null } |
+  { 'SetGroupAccessGate' : null } |
+  { 'SentFile' : null } |
   { 'SentDirectMessage' : null } |
-  { 'SetAvatar' : null };
+  { 'SentMeme' : null } |
+  { 'SentPoll' : null } |
+  { 'SentAudio' : null } |
+  { 'SuggestedTranslation' : null } |
+  { 'SetAvatar' : null } |
+  { 'SentVideo' : null };
 export interface AddedToChannelNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -958,6 +1009,18 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface LookupProposalMessageArgs {
+  'proposal_id' : ProposalId,
+  'governance_canister_id' : CanisterId,
+}
+export type LookupProposalMessageResponse = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'chat_id' : MultiUserChat,
+      'message_id' : MessageId,
+      'message_index' : MessageIndex,
+    }
+  };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1517,6 +1580,15 @@ export interface TokenInfo {
   'ledger' : CanisterId,
 }
 export interface Tokens { 'e8s' : bigint }
+export interface TopUpNeuronArgs {
+  'governance_canister_id' : CanisterId,
+  'amount' : bigint,
+}
+export type TopUpNeuronResponse = { 'TransferError' : string } |
+  { 'Success' : null } |
+  { 'Unauthorized' : null } |
+  { 'GovernanceCanisterNotSupported' : null } |
+  { 'InternalError' : string };
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
@@ -1590,6 +1662,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;
@@ -1634,10 +1707,15 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'lookup_proposal_message' : ActorMethod<
+    [LookupProposalMessageArgs],
+    LookupProposalMessageResponse
+  >,
   'stake_neuron_for_submitting_proposals' : ActorMethod<
     [StakeNeuronForSubmittingProposalsArgs],
     StakeNeuronForSubmittingProposalsResponse
   >,
+  'top_up_neuron' : ActorMethod<[TopUpNeuronArgs], TopUpNeuronResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

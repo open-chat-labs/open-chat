@@ -3,8 +3,11 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, type ProposalsBotService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { AgentConfig } from "../../config";
-import type { StakeNeuronForSubmittingProposalsResponse } from "openchat-shared";
-import { stakeNeuronForSubmittingProposalsResponse } from "./mappers";
+import type {
+    StakeNeuronForSubmittingProposalsResponse,
+    TopUpNeuronResponse,
+} from "openchat-shared";
+import { stakeNeuronForSubmittingProposalsResponse, topUpNeuronResponse } from "./mappers";
 
 export class ProposalsBotClient extends CandidService {
     private service: ProposalsBotService;
@@ -36,5 +39,13 @@ export class ProposalsBotClient extends CandidService {
             stakeNeuronForSubmittingProposalsResponse,
             args,
         );
+    }
+
+    topUpNeuron(governanceCanisterId: string, amount: bigint): Promise<TopUpNeuronResponse> {
+        const args = {
+            governance_canister_id: Principal.fromText(governanceCanisterId),
+            amount,
+        };
+        return this.handleResponse(this.service.top_up_neuron(args), topUpNeuronResponse);
     }
 }
