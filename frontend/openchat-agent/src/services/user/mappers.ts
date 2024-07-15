@@ -207,6 +207,157 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
 }
 
 export function achievementType(candid: ApiAchievement): Achievement {
+    if ("AppointedGroupModerator" in candid) {
+        return "appointed_group_mod";
+    }
+    if ("DirectChats5" in candid) {
+        return "direct_chat_5";
+    }
+    if ("ChangedTheme" in candid) {
+        return "changed_theme";
+    }
+    if ("ChosenAsGroupModerator" in candid) {
+        return "appointed_as_group_mod";
+    }
+    if ("FavouritedChat" in candid) {
+        return "favourited_chat";
+    }
+    if ("AppointedGroupAdmin" in candid) {
+        return "appointed_group_admin";
+    }
+    if ("HadMessageReactedTo" in candid) {
+        return "received_reaction";
+    }
+    if ("VotedOnPoll" in candid) {
+        return "voted_on_poll";
+    }
+    if ("ChosenAsGroupAdmin" in candid) {
+        return "appointed_as_group_admin";
+    }
+    if ("OwnGroupWithOneHundredDiamondMembers" in candid) {
+        return "own_group_with_100_diamond_members";
+    }
+    if ("SetCommunityDisplayName" in candid) {
+        return "set_community_display_name";
+    }
+    if ("AppointedGroupOwner" in candid) {
+        return "appointed_group_owner";
+    }
+    if ("OwnGroupWithTenDiamondMembers" in candid) {
+        return "own_group_with_10_diamond_members";
+    }
+    if ("JoinedGatedGroupOrCommunity" in candid) {
+        return "joined_gated_group_or_community";
+    }
+    if ("StartedCall" in candid) {
+        return "started_call";
+    }
+    if ("ChosenAsGroupOwner" in candid) {
+        return "appointed_as_group_owner";
+    }
+    if ("TippedMessage" in candid) {
+        return "tipped_message";
+    }
+    if ("SentGiphy" in candid) {
+        return "sent_giphy";
+    }
+    if ("SetCommunityAccessGate" in candid) {
+        return "set_community_access_gate";
+    }
+    if ("HadMessageTipped" in candid) {
+        return "had_message_tipped";
+    }
+    if ("SwappedFromWallet" in candid) {
+        return "swapped_from_wallet";
+    }
+    if ("EditedMessage" in candid) {
+        return "edited_message";
+    }
+    if ("SentGroupMessage" in candid) {
+        return "sent_group_message";
+    }
+    if ("ReactedToMessage" in candid) {
+        return "reacted_to_message";
+    }
+    if ("AcceptedP2PSwapOffer" in candid) {
+        return "accepted_swap_offer";
+    }
+    if ("JoinedCall" in candid) {
+        return "joined_call";
+    }
+    if ("SentImage" in candid) {
+        return "sent_image";
+    }
+    if ("EnabledDisappearingMessages" in candid) {
+        return "enabled_disappearing_messages";
+    }
+    if ("ForwardedMessage" in candid) {
+        return "forwarded_message";
+    }
+    if ("SentPrize" in candid) {
+        return "sent_prize";
+    }
+    if ("FollowedThread" in candid) {
+        return "followed_thread";
+    }
+    if ("SentChannelMessage" in candid) {
+        return "send_channel_message";
+    }
+    if ("OwnGroupWithOneThousandDiamondMembers" in candid) {
+        return "owned_group_with_1000_diamond_members";
+    }
+    if ("SentP2PSwapOffer" in candid) {
+        return "sent_swap_offer";
+    }
+    if ("QuoteReplied" in candid) {
+        return "quote_replied";
+    }
+    if ("OwnGroupWithOneDiamondMember" in candid) {
+        return "owned_group_with_1_diamond_member";
+    }
+    if ("SentCrypto" in candid) {
+        return "sent_crypto";
+    }
+    if ("PinnedMessage" in candid) {
+        return "pinned_message";
+    }
+    if ("ReceivedCrypto" in candid) {
+        return "received_crypto";
+    }
+    if ("TranslationAccepted" in candid) {
+        return "translation_accepted";
+    }
+    if ("RepliedInThread" in candid) {
+        return "replied_in_thread";
+    }
+    if ("DirectChats10" in candid) {
+        return "direct_chats_10";
+    }
+    if ("DirectChats20" in candid) {
+        return "direct_chats_20";
+    }
+    if ("SetGroupAccessGate" in candid) {
+        return "set_group_access_gate";
+    }
+    if ("SentFile" in candid) {
+        return "sent_file";
+    }
+    if ("SentMeme" in candid) {
+        return "sent_meme";
+    }
+    if ("SentPoll" in candid) {
+        return "sent_poll";
+    }
+    if ("SentAudio" in candid) {
+        return "sent_audio";
+    }
+    if ("SuggestedTranslation" in candid) {
+        return "suggested_translation";
+    }
+    if ("SentVideo" in candid) {
+        return "sent_video";
+    }
+
     if ("JoinedCommunity" in candid) {
         return "joined_community";
     }

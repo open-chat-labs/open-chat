@@ -530,6 +530,7 @@
     "joinGroupFailed": "Unable to join {level}",
     "lastOnline": "Last online {duration} ago",
     "learnToEarn": {
+        "title": "Learn to earn",
         "joined_community": "Joined your first community",
         "joined_group": "Joined your first group",
         "percentageComplete": "{perc}% Complete",

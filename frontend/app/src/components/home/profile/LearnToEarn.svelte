@@ -11,19 +11,31 @@
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
 
+    import { _ } from "svelte-i18n";
+
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
+    // this is a temporary hack to filter out everything we don't currently have translations for
+    // e.g. things we're not quite ready to switch on yet
+    function filter(achievement: string) {
+        const key = `learnToEarn.${achievement}`;
+        return $_(key) !== key;
+    }
+
+    $: filtered = [...achievements].filter(filter);
     $: globalState = client.globalStateStore;
-    $: [achieved, notAchieved] = client.partition([...achievements], (a) =>
+    $: [achieved, notAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),
     );
-    $: percComplete = Math.floor((achieved.length / achievements.length) * 100);
+    $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
 </script>
 
 <Overlay dismissible>
     <ModalContent closeIcon on:close>
-        <span class="header" slot="header"> Learn to earn </span>
+        <span class="header" slot="header">
+            <Translatable resourceKey={i18nKey("learnToEarn.title")} />
+        </span>
 
         <div class="body" slot="body">
             {#each achieved as achievement}
