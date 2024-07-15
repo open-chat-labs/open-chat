@@ -118,6 +118,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddReactionArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'username' : IDL.Text,
     'display_name' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
@@ -981,6 +982,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteMessagesArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'as_platform_moderator' : IDL.Opt(IDL.Bool),
     'message_ids' : IDL.Vec(MessageId),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1060,6 +1062,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'content' : MessageContentInitial,
     'block_level_markdown' : IDL.Opt(IDL.Bool),
     'message_id' : MessageId,
@@ -1638,6 +1641,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'channel_rules_accepted' : IDL.Opt(Version),
     'content' : MessageContentInitial,
     'message_filter_failed' : IDL.Opt(IDL.Nat64),
