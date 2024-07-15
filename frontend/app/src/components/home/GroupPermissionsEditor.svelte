@@ -5,6 +5,7 @@
     import TabHeader from "../TabHeader.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
+    export let editing: boolean;
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
     export let isCommunityPublic: boolean;
@@ -14,10 +15,10 @@
     let overrideChatMessages = permissions.threadPermissions !== undefined;
 
     $: {
-        if (isPublic && isCommunityPublic) {
-            permissions.mentionAllMembers = "admin";
-        } else {
-            permissions.mentionAllMembers = "member";
+        if (!editing) {
+            permissions.mentionAllMembers = isPublic && isCommunityPublic
+                ? "admin"
+                : "member";
         }
     }
 
