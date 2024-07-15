@@ -334,6 +334,7 @@
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
+                            {editing}
                             bind:permissions={candidateGroup.permissions}
                             isPublic={candidateGroup.public}
                             isCommunityPublic={$selectedCommunity?.public ?? true} />
