@@ -18,13 +18,13 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { createEventDispatcher, onMount } from "svelte";
-    import Checkbox from "../../Checkbox.svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import Radio from "../../Radio.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -39,6 +39,8 @@
     $: optionalInvalid =
         currentGate?.kind === "composite_gate" &&
         optionalGatesByIndex.size >= currentGate.gates.length;
+
+    $: console.log("OptionalGates: ", optionalGatesByIndex);
 
     onMount(nextGate);
 
@@ -88,11 +90,13 @@
         nextGate();
     }
 
-    function toggleIndex(i: number, gate: LeafGate) {
-        if (optionalGatesByIndex.has(i)) {
+    function toggleIndex(i: number, parent: AccessGate | undefined) {
+        if (parent === undefined || !isCompositeGate(parent)) return;
+
+        const found = optionalGatesByIndex.has(i);
+        optionalGatesByIndex = new Map(parent.gates.map((g, i) => [i, g]));
+        if (found) {
             optionalGatesByIndex.delete(i);
-        } else {
-            optionalGatesByIndex.set(i, gate);
         }
         optionalGatesByIndex = optionalGatesByIndex;
     }
@@ -120,9 +124,10 @@
 
                 {#each currentGate.gates as subgate, i}
                     <div class="optional-gate">
-                        <Checkbox
+                        <Radio
+                            group={"optional_gates"}
                             checked={!optionalGatesByIndex.has(i)}
-                            on:change={() => toggleIndex(i, subgate)}
+                            on:change={() => toggleIndex(i, currentGate)}
                             label={i18nKey(subgate.kind)}
                             id={`subgate_${i}`}>
                             <AccessGateSummary
@@ -130,7 +135,7 @@
                                 {level}
                                 showNoGate={false}
                                 gate={subgate} />
-                        </Checkbox>
+                        </Radio>
                     </div>
                 {/each}
             {:else if isCredentialGate(currentGate)}

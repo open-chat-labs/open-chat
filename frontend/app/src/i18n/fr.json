@@ -10,8 +10,6 @@
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",
-        "chooseOneGate": "Choisissez au moins une porte",
-        "chooseOneGateInfo": "Vous devez remplir au moins une des conditions suivantes pour adhérer. Choisissez ceux que vous préférez.",
         "chooseToken": "Choisissez un jeton",
         "compositeGate": "Portail d'accès combiné",
         "credential": {

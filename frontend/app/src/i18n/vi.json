@@ -10,8 +10,6 @@
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
         "chooseGate": "Chọn một cổng truy cập",
         "chooseNervousSystem": "Chọn hệ thần kinh",
-        "chooseOneGate": "Chọn ít nhất một cổng",
-        "chooseOneGateInfo": "Bạn cần đáp ứng ít nhất một trong các điều kiện sau để tham gia. Chọn những cái bạn thích.",
         "chooseToken": "Chọn mã thông báo",
         "compositeGate": "Cổng truy cập kết hợp",
         "credential": {

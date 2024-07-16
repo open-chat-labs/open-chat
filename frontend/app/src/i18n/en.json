@@ -10,8 +10,8 @@
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
         "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
-        "chooseOneGate": "Choose at least one gate",
-        "chooseOneGateInfo": "You need to meet at least one of the following conditions to join. Choose which ones you prefer.",
+        "chooseOneGate": "Choose a gate",
+        "chooseOneGateInfo": "You need to meet one of the following conditions to join. Choose which one you prefer.",
         "chooseToken": "Choose token",
         "compositeGate": "Combined access gate",
         "credential": {
@@ -506,7 +506,7 @@
         "notVerified": "You have not yet verified that you are a real, unique person. You may wish to verify as a signal of your trustworthiness to other users and as a way to qualify for future airdrops.",
         "verification": "Verification",
         "verify": "Verify",
-        "verified": "Verified unique human"
+        "verified": "Verified unique person"
     },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",

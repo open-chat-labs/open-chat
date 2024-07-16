@@ -10,8 +10,6 @@
         "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
         "chooseGate": "בחר שער גישה",
         "chooseNervousSystem": "בחר מערכת עצבים",
-        "chooseOneGate": "בחר לפחות שער אחד",
-        "chooseOneGateInfo": "עליך לעמוד לפחות באחד מהתנאים הבאים כדי להצטרף. בחר אילו מהם אתה מעדיף.",
         "chooseToken": "בחר אסימון",
         "compositeGate": "שער כניסה משולב",
         "credential": {

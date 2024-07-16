@@ -173,8 +173,8 @@ export const uniquePersonCredentialGate: CredentialGate = {
     kind: "credential_gate",
     credential: {
         credentialName: "Is human",
-        issuerCanisterId: "qbw6f-caaaa-aaaah-qdcwa-cai",
-        issuerOrigin: "https://qbw6f-caaaa-aaaah-qdcwa-cai.icp0.io",
+        issuerCanisterId: "qgxyr-pyaaa-aaaah-qdcwq-cai",
+        issuerOrigin: "https://id.decideai.xyz",
         credentialType: "ProofOfUniqueness",
     },
 };

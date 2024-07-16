@@ -10,8 +10,6 @@
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
         "chooseGate": "アクセスゲートを選択してください",
         "chooseNervousSystem": "神経系を選択する",
-        "chooseOneGate": "少なくとも1つのゲートを選択してください",
-        "chooseOneGateInfo": "参加するには、以下の条件のうち少なくとも 1 つを満たす必要があります。希望するものを選択してください。",
         "chooseToken": "トークンを選択",
         "compositeGate": "複合アクセスゲート",
         "credential": {

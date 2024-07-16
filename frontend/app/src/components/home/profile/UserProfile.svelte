@@ -79,7 +79,7 @@
     let checkingUsername: boolean;
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
-    let verified = false;
+    let verified = true;
     let verifying = false;
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
