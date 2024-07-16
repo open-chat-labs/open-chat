@@ -1,10 +1,9 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{ChatId, CommunityId};
 use user_canister::c2c_notify_achievement::{Response::*, *};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_notify_achievement(args: Args) -> Response {
     run_regular_jobs();
@@ -13,10 +12,9 @@ fn c2c_notify_achievement(args: Args) -> Response {
 }
 
 fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let community_id: CommunityId = state.env.caller().into();
-    let group_id: ChatId = state.env.caller().into();
+    let caller = state.env.caller();
 
-    if !state.data.communities.exists(&community_id) && !state.data.group_chats.exists(&group_id) {
+    if !state.data.communities.exists(&caller.into()) && !state.data.group_chats.exists(&caller.into()) {
         return CallerNotFound;
     }
 
