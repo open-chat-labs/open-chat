@@ -35,6 +35,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .map(|user_ids| user_ids.iter().copied().collect());
 
     let pin_number_updated = state.data.pin_number.last_updated() > updates_since;
+    let is_unique_person_updated = state
+        .data
+        .unique_person_proof
+        .as_ref()
+        .is_some_and(|p| p.timestamp > updates_since);
 
     let has_any_updates = username.is_some()
         || display_name.has_update()
@@ -43,6 +48,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || avatar_id.has_update()
         || suspended.is_some()
         || pin_number_updated
+        || is_unique_person_updated
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -138,6 +144,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let streak = state.data.streak.days(now);
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
     let streak_ends = state.data.streak.ends();
+    let is_unique_person = is_unique_person_updated.then_some(true);
 
     Success(SuccessResult {
         timestamp: now,
@@ -157,5 +164,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         streak,
         streak_ends,
         next_daily_claim,
+        is_unique_person,
     })
 }

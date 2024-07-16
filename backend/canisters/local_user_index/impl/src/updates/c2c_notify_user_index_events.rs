@@ -6,7 +6,6 @@ use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::Event;
 use std::cmp::min;
 use tracing::info;
-use types::ChitEarned;
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, OpenChatBotMessageV2, PhoneNumberConfirmed,
     ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
@@ -180,17 +179,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::SecretKeySet(sk_der) => {
             state.data.oc_secret_key_der = Some(sk_der);
         }
-        Event::ChitEarned(ev) => {
-            state.push_event_to_user(
-                ev.user_id,
-                UserEvent::ChitEarned(Box::new(ChitEarned {
-                    amount: ev.amount,
-                    timestamp: ev.timestamp,
-                    reason: ev.reason,
-                })),
-            );
-        }
-        Event::NotifyUniqueHumanProof(user_id, proof) => {
+        Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
     }

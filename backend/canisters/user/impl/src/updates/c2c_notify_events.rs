@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::{Achievement, ChitEarnedReason, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
@@ -102,36 +102,11 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 );
             }
         }
-        // TODO: LEGACY - delete this once the website has switched to calling the new user::claim_daily_chit endpoint
-        Event::ChitEarned(ev) => {
-            let timestamp = ev.timestamp;
-            let is_daily_claim = matches!(ev.reason, ChitEarnedReason::DailyClaim);
-
-            state.data.chit_balance = Timestamped::new(state.data.chit_balance.value + ev.amount, now);
-
-            state.data.chit_events.push(*ev);
-
-            if is_daily_claim && state.data.streak.claim(timestamp) {
-                let streak = state.data.streak.days(timestamp);
-
-                if streak >= 3 {
-                    state.data.award_achievement(Achievement::Streak3, now);
-                }
-
-                if streak >= 7 {
-                    state.data.award_achievement(Achievement::Streak7, now);
-                }
-
-                if streak >= 14 {
-                    state.data.award_achievement(Achievement::Streak14, now);
-                }
-
-                if streak >= 30 {
-                    state.data.award_achievement(Achievement::Streak30, now);
-                }
+        Event::NotifyUniquePersonProof(proof) => {
+            if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
+                state.data.notify_user_index_of_chit(now);
             }
-
-            state.data.notify_user_index_of_chit(now);
+            state.data.unique_person_proof = Some(*proof);
         }
     }
 }

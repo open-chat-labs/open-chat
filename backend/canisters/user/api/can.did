@@ -883,6 +883,7 @@ type InitialStateResponse = variant {
         streak : nat16;
         streak_ends : TimestampMillis;
         next_daily_claim : TimestampMillis;
+        is_unique_person : bool;
     };
 };
 
@@ -943,6 +944,7 @@ type UpdatesResponse = variant {
         streak : nat16;
         streak_ends : TimestampMillis;
         next_daily_claim : TimestampMillis;
+        is_unique_person : opt bool;
     };
     SuccessNoUpdates;
 };

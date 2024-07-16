@@ -27,6 +27,7 @@ pub struct SuccessResult {
     pub streak: u16,
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
+    pub is_unique_person: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
