@@ -5038,6 +5038,19 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    topUpNeuronForSubmittingProposals(
+        governanceCanisterId: string,
+        amount: bigint,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "topUpNeuronForSubmittingProposals",
+            governanceCanisterId,
+            amount,
+        })
+            .then((resp) => resp.kind === "success")
+            .catch(() => false);
+    }
+
     private onChatFrozen(
         chatId: MultiUserChatIdentifier,
         event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>,

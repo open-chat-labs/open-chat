@@ -1,5 +1,11 @@
-import type { ApiStakeNeuronForSubmittingProposalsResponse } from "./candid/idl";
-import type { StakeNeuronForSubmittingProposalsResponse } from "openchat-shared";
+import type {
+    ApiStakeNeuronForSubmittingProposalsResponse,
+    ApiTopUpNeuronResponse,
+} from "./candid/idl";
+import type {
+    StakeNeuronForSubmittingProposalsResponse,
+    TopUpNeuronResponse,
+} from "openchat-shared";
 import { CommonResponses } from "openchat-shared";
 
 export function stakeNeuronForSubmittingProposalsResponse(
@@ -9,5 +15,13 @@ export function stakeNeuronForSubmittingProposalsResponse(
         return CommonResponses.success();
     }
     console.warn("stakeNeuronForSubmittingProposals failed with: ", candid);
+    return CommonResponses.failure();
+}
+
+export function topUpNeuronResponse(candid: ApiTopUpNeuronResponse): TopUpNeuronResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    console.warn("topUpNeuron failed with: ", candid);
     return CommonResponses.failure();
 }

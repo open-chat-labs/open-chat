@@ -1517,6 +1517,15 @@ export interface TokenInfo {
   'ledger' : CanisterId,
 }
 export interface Tokens { 'e8s' : bigint }
+export interface TopUpNeuronArgs {
+  'governance_canister_id' : CanisterId,
+  'amount' : bigint,
+}
+export type TopUpNeuronResponse = { 'TransferError' : string } |
+  { 'Success' : null } |
+  { 'Unauthorized' : null } |
+  { 'GovernanceCanisterNotSupported' : null } |
+  { 'InternalError' : string };
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
@@ -1638,6 +1647,7 @@ export interface _SERVICE {
     [StakeNeuronForSubmittingProposalsArgs],
     StakeNeuronForSubmittingProposalsResponse
   >,
+  'top_up_neuron' : ActorMethod<[TopUpNeuronArgs], TopUpNeuronResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
