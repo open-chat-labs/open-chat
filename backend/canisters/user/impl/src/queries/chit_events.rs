@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query;
 use user_canister::chit_events::*;
 
-#[query_candid_and_msgpack(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn chit_events(args: Args) -> Response {
     read_state(|state| chit_events_impl(args, state))
 }

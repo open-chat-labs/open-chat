@@ -6,14 +6,14 @@ use crate::{
     },
     mutate_state, RuntimeState,
 };
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::deep_message_links;
 use modclub_canister::submitHtmlContent::Level;
 use types::{Chat, Message, MessageContent, MessageIndex};
 use user_index_canister::c2c_report_message::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_user_canister_or_group_index")]
+#[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_report_message(args: Args) -> Response {
     mutate_state(|state| c2c_report_message_impl(args, state))

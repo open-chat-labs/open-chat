@@ -2,13 +2,13 @@ use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
     run_regular_jobs, RuntimeState,
 };
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
 use types::MemberLeft;
 
 // Called via the user's user canister
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_leave_community(_args: Args) -> Response {
     run_regular_jobs();

@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_prize_bot::handle_direct_message::*;
 use types::{BotMessage, MessageContentInitial, TextContent};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn handle_direct_message(_args: Args) -> Response {
     mutate_state(handle_message)

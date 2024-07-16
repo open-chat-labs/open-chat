@@ -1,14 +1,13 @@
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use group_index_canister::active_groups::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true)]
 fn active_groups(args: Args) -> Response {
     read_state(|state| active_groups_impl(args, state))
 }
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_active_groups(args: group_index_canister::c2c_active_groups::Args) -> group_index_canister::c2c_active_groups::Response {
     read_state(|state| active_groups_impl(args, state))
 }

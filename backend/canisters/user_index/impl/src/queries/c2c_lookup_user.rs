@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use types::UserDetails;
 use user_index_canister::c2c_lookup_user::{Response::*, *};
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_lookup_user(args: Args) -> Response {
     read_state(|state| c2c_lookup_user_impl(args, state))
 }

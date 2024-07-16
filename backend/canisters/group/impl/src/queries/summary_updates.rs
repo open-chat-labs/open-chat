@@ -1,19 +1,18 @@
 use crate::{read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use group_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::summary_updates::{Response::*, *};
-use ic_cdk::query;
 use types::{
     GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
 };
 
-#[query]
+#[query(candid = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, None, state))
 }
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
     read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }

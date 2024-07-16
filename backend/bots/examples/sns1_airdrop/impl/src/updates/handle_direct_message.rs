@@ -1,12 +1,12 @@
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use sns1_airdrop::handle_direct_message::*;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{BotMessage, MessageContent, MessageContentInitial, TextContent, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn handle_direct_message(args: Args) -> Response {
     mutate_state(|state| handle_message(args, state))

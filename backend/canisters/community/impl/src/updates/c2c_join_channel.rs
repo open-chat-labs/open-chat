@@ -5,7 +5,7 @@ use crate::run_regular_jobs;
 use crate::updates::c2c_join_community::join_community;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
@@ -16,7 +16,7 @@ use gated_groups::{
 use group_chat_core::AddResult;
 use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs};
 
-#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
+#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_channel(args: Args) -> Response {
     run_regular_jobs();

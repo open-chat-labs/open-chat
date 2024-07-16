@@ -1,12 +1,12 @@
 use crate::guards::caller_is_owner_or_local_user_index;
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query;
 use chat_events::Reader;
 use types::{EventIndex, EventOrExpiredRange, EventsResponse};
 use user_canister::events_by_index::{Response::*, *};
 
-#[query_candid_and_msgpack(guard = "caller_is_owner_or_local_user_index")]
+#[query(guard = "caller_is_owner_or_local_user_index", candid = true, msgpack = true)]
 fn events_by_index(args: Args) -> Response {
     read_state(|state| events_by_index_impl(args, state))
 }
