@@ -13,8 +13,8 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    User, UserId, Version,
+    Achievement, ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
+    TimestampMillis, User, UserId, Version,
 };
 
 #[update_candid_and_msgpack]
@@ -75,6 +75,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.thread_root_message_index,
             users_mentioned.mentioned_directly,
             users_mentioned.user_groups_mentioned,
+            args.new_achievement,
             now,
             state,
         )
@@ -129,6 +130,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.thread_root_message_index,
             users_mentioned.mentioned_directly,
             users_mentioned.user_groups_mentioned,
+            false,
             now,
             state,
         )
@@ -189,6 +191,7 @@ fn process_send_message_result(
     thread_root_message_index: Option<MessageIndex>,
     mentioned: Vec<User>,
     user_groups_mentioned: Vec<(u32, String)>,
+    new_achievement: bool,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) -> Response {
@@ -235,6 +238,10 @@ fn process_send_message_result(
                 now,
                 &mut state.data,
             );
+
+            if new_achievement {
+                state.notify_user_of_achievements(sender, Achievement::from_message(false, &result.message_event.event));
+            }
 
             Success(SuccessResult {
                 event_index,

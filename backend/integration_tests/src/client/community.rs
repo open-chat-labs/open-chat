@@ -150,6 +150,7 @@ pub mod happy_path {
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
                 message_filter_failed: None,
+                new_achievement: false,
             },
         );
 

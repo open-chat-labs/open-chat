@@ -461,6 +461,7 @@ export class GroupClient extends CandidService {
                     block_level_markdown:
                         blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                     correlation_id: generateUint64(),
+                    new_achievement: false,
                 };
                 return this.handleResponse(
                     this.groupService.edit_message_v2(args),
@@ -516,6 +517,7 @@ export class GroupClient extends CandidService {
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
+                new_achievement: false,
             };
 
             return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
@@ -594,6 +596,7 @@ export class GroupClient extends CandidService {
                 username,
                 display_name: apiOptional(identity, displayName),
                 correlation_id: generateUint64(),
+                new_achievement: false,
             }),
             addRemoveReactionResponse,
         );
@@ -626,6 +629,7 @@ export class GroupClient extends CandidService {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
+                new_achievement: false,
             }),
             deleteMessageResponse,
         );

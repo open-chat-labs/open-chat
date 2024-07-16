@@ -9,8 +9,9 @@ use escrow_canister::deposit_subaccount;
 use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use types::{
-    icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId, MessageIndex,
-    Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
+    icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
+    MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
+    MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
@@ -71,6 +72,10 @@ async fn send_message_with_transfer_to_channel(
         Err(error) => return TransferFailed(error),
     };
 
+    let achievement = content.hydrate(None).to_achievement();
+    let has_thread = args.thread_root_message_index.is_some();
+    let quote_reply = args.replies_to.is_some();
+
     // Build the send_message args
     let c2c_args = community_canister::c2c_send_message::Args {
         channel_id: args.channel_id,
@@ -92,13 +97,17 @@ async fn send_message_with_transfer_to_channel(
     use community_canister::c2c_send_message::Response;
     match community_canister_c2c_client::c2c_send_message(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => Success(send_message_with_transfer_to_channel::SuccessResult {
-                event_index: r.event_index,
-                message_index: r.message_index,
-                timestamp: r.timestamp,
-                expires_at: r.expires_at,
-                transfer: completed_transaction,
-            }),
+            Response::Success(r) => {
+                mutate_state(|state| award_achievements(achievement, r.message_index, has_thread, quote_reply, state));
+
+                Success(send_message_with_transfer_to_channel::SuccessResult {
+                    event_index: r.event_index,
+                    message_index: r.message_index,
+                    timestamp: r.timestamp,
+                    expires_at: r.expires_at,
+                    transfer: completed_transaction,
+                })
+            }
             Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
@@ -186,6 +195,10 @@ async fn send_message_with_transfer_to_group(
         Err(error) => return TransferFailed(error),
     };
 
+    let achievement = content.hydrate(None).to_achievement();
+    let has_thread = args.thread_root_message_index.is_some();
+    let quote_reply = args.replies_to.is_some();
+
     // Build the send_message args
     let c2c_args = group_canister::c2c_send_message::Args {
         message_id: args.message_id,
@@ -206,13 +219,17 @@ async fn send_message_with_transfer_to_group(
     use group_canister::c2c_send_message::Response;
     match group_canister_c2c_client::c2c_send_message(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => Success(send_message_with_transfer_to_group::SuccessResult {
-                event_index: r.event_index,
-                message_index: r.message_index,
-                timestamp: r.timestamp,
-                expires_at: r.expires_at,
-                transfer: completed_transaction,
-            }),
+            Response::Success(r) => {
+                mutate_state(|state| award_achievements(achievement, r.message_index, has_thread, quote_reply, state));
+
+                Success(send_message_with_transfer_to_group::SuccessResult {
+                    event_index: r.event_index,
+                    message_index: r.message_index,
+                    timestamp: r.timestamp,
+                    expires_at: r.expires_at,
+                    transfer: completed_transaction,
+                })
+            }
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::UserSuspended => UserSuspended,
             Response::ChatFrozen => ChatFrozen,
@@ -437,4 +454,26 @@ impl From<SetUpP2PSwapError> for send_message_v2::Response {
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
         }
     }
+}
+
+fn award_achievements(
+    message_type_achievement: Option<Achievement>,
+    message_index: MessageIndex,
+    in_thread: bool,
+    quote_reply: bool,
+    state: &mut RuntimeState,
+) {
+    let mut achievements = Vec::new();
+
+    if let Some(achievement) = message_type_achievement {
+        achievements.push(achievement);
+    }
+
+    if quote_reply {
+        achievements.push(Achievement::QuoteReplied);
+    } else if in_thread && message_index == MessageIndex::from(0) {
+        achievements.push(Achievement::RepliedInThread);
+    }
+
+    state.data.award_achievements_and_notify(achievements, state.env.now());
 }

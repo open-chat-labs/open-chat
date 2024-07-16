@@ -84,6 +84,7 @@ fn suspend_user() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
             correlation_id: 0,
         },
     );
@@ -110,6 +111,7 @@ fn suspend_user() {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
         },
     );
     assert!(matches!(
@@ -167,6 +169,7 @@ fn suspend_user() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
             correlation_id: 0,
         },
     );
@@ -193,6 +196,7 @@ fn suspend_user() {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
         },
     );
     assert!(matches!(

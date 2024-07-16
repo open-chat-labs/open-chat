@@ -8,6 +8,7 @@ pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContentInitial,
     pub block_level_markdown: Option<bool>,
+    pub new_achievement: bool,
     pub correlation_id: u64,
 }
 

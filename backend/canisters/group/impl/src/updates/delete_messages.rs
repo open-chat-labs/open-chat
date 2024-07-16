@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
 use group_chat_core::DeleteMessagesResult;
-use types::{CanisterId, UserId};
+use types::{Achievement, CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
@@ -94,6 +94,10 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
             }
 
             handle_activity_notification(state);
+
+            if args.new_achievement {
+                state.notify_user_of_achievements(user_id, vec![Achievement::DeletedMessage]);
+            }
 
             Success
         }

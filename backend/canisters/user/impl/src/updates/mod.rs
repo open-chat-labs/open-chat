@@ -9,6 +9,7 @@ pub mod c2c_charge_user_account;
 pub mod c2c_grant_super_admin;
 pub mod c2c_mark_community_updated_for_user;
 pub mod c2c_mark_group_updated_for_user;
+pub mod c2c_notify_achievement;
 pub mod c2c_notify_community_deleted;
 pub mod c2c_notify_events;
 pub mod c2c_notify_group_deleted;
