@@ -269,7 +269,7 @@
             </Select>
         </div>
 
-        <Legend label={i18nKey("access.amount")} required />
+        <Legend label={i18nKey("access.amount")} required={editable} />
         <Input
             disabled={!editable}
             maxlength={100}
@@ -289,7 +289,7 @@
             </Select>
         </div>
 
-        <Legend label={i18nKey("access.minimumBalance")} required />
+        <Legend label={i18nKey("access.minimumBalance")} required={editable} />
         <Input
             disabled={!editable}
             maxlength={100}

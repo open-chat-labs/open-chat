@@ -102,7 +102,7 @@
 </script>
 
 {#if selectedCredentialIssuer}
-    <Legend required label={i18nKey("access.credential.credentialName")} />
+    <Legend required={editable} label={i18nKey("access.credential.credentialName")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialName}
         on:change={sync}
@@ -112,7 +112,7 @@
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.credentialNamePlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.issuerCanisterId")} />
+    <Legend required={editable} label={i18nKey("access.credential.issuerCanisterId")} />
     <Input
         bind:value={selectedCredentialIssuer.issuerCanisterId}
         invalid={!canisterValid}
@@ -122,7 +122,7 @@
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerCanisterIdPlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.issuerOrigin")} />
+    <Legend required={editable} label={i18nKey("access.credential.issuerOrigin")} />
     <Input
         bind:value={selectedCredentialIssuer.issuerOrigin}
         invalid={!originValid}
@@ -132,7 +132,7 @@
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerOriginPlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.credentialType")} />
+    <Legend required={editable} label={i18nKey("access.credential.credentialType")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialType}
         invalid={!typeValid}
@@ -145,7 +145,7 @@
     {#each credentialArguments as [name, value]}
         <div class="argument">
             <div class="argument-name">
-                <Legend required label={i18nKey("access.credential.argumentName")} />
+                <Legend required={editable} label={i18nKey("access.credential.argumentName")} />
                 <Input
                     bind:value={name}
                     invalid={!stringValid(name)}
@@ -156,7 +156,7 @@
                     placeholder={i18nKey("access.credential.argumentNamePlaceholder")} />
             </div>
             <div class="argument-value">
-                <Legend required label={i18nKey("access.credential.argumentValue")} />
+                <Legend required={editable} label={i18nKey("access.credential.argumentValue")} />
                 <Input
                     bind:value
                     invalid={!stringValid(value)}
