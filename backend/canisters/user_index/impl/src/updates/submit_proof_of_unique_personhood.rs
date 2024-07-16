@@ -48,7 +48,7 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
             };
             state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
             state.push_event_to_all_local_user_indexes(
-                local_user_index_canister::Event::NotifyUniqueHumanProof(user_id, proof),
+                local_user_index_canister::Event::NotifyUniquePersonProof(user_id, proof),
                 None,
             );
             state.data.event_store_client.push(

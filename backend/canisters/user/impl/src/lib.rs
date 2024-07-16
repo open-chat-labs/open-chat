@@ -28,7 +28,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId,
+    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{NamedAccount, UserCanisterEvent};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -178,6 +178,7 @@ impl RuntimeState {
             streak_ends: self.data.streak.ends(),
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
+            unique_person_proof: self.data.unique_person_proof.is_some(),
         }
     }
 }
@@ -225,6 +226,7 @@ struct Data {
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
     pub achievements_last_seen: TimestampMillis,
+    pub unique_person_proof: Option<UniquePersonProof>,
     pub rng_seed: [u8; 32],
 }
 
@@ -287,6 +289,7 @@ impl Data {
             streak: Streak::default(),
             achievements: HashSet::new(),
             achievements_last_seen: 0,
+            unique_person_proof: None,
             rng_seed: [0; 32],
         }
     }
@@ -403,6 +406,7 @@ pub struct Metrics {
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
+    pub unique_person_proof: bool,
 }
 
 fn run_regular_jobs() {

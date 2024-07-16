@@ -53,5 +53,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         streak: state.data.streak.days(now),
         streak_ends: state.data.streak.ends(),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+        is_unique_person: state.data.unique_person_proof.is_some(),
     })
 }

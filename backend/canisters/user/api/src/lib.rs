@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
     EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
+    Reaction, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -97,6 +97,7 @@ pub enum Event {
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
+    NotifyUniquePersonProof(Box<UniquePersonProof>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
