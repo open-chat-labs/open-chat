@@ -127,6 +127,7 @@ fn polls_ended_correctly() {
             rules_accepted: None,
             message_filter_failed: None,
             block_level_markdown: false,
+            new_achievement: false,
             correlation_id: 0,
         },
     );
@@ -254,6 +255,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, poll_config: P
             rules_accepted: None,
             message_filter_failed: None,
             block_level_markdown: false,
+            new_achievement: false,
             correlation_id: 0,
         },
     );

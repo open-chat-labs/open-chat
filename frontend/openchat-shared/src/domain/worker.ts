@@ -155,7 +155,10 @@ import type {
 } from "./community";
 import type { UpdateBtcBalanceResponse } from "./bitcoin";
 import type { RegistryValue } from "./registry";
-import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
+import type {
+    StakeNeuronForSubmittingProposalsResponse,
+    TopUpNeuronResponse,
+} from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
@@ -299,6 +302,7 @@ export type WorkerRequest =
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
+    | TopUpNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
@@ -1142,6 +1146,12 @@ type StakeNeuronForSubmittingProposals = {
     kind: "stakeNeuronForSubmittingProposals";
 };
 
+type TopUpNeuronForSubmittingProposals = {
+    governanceCanisterId: string;
+    amount: bigint;
+    kind: "topUpNeuronForSubmittingProposals";
+};
+
 type GetUsers = {
     chitState: ChitState;
     users: UsersArgs;
@@ -1343,6 +1353,7 @@ export type WorkerResponseInner =
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
     | StakeNeuronForSubmittingProposalsResponse
+    | TopUpNeuronResponse
     | Map<string, Record<number, EventWrapper<Message>>>
     | PayForDiamondMembershipResponse
     | ClaimPrizeResponse
@@ -1912,6 +1923,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
+    : T extends TopUpNeuronForSubmittingProposals
+    ? TopUpNeuronResponse
     : T extends LoadFailedMessages
     ? Map< string, Record< number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage

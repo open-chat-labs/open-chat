@@ -7,6 +7,7 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
     pub as_platform_moderator: Option<bool>,
+    pub new_achievement: bool,
     pub correlation_id: u64,
 }
 

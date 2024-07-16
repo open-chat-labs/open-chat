@@ -273,9 +273,6 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("EditedMessage" in candid) {
         return "edited_message";
     }
-    if ("SentGroupMessage" in candid) {
-        return "sent_group_message";
-    }
     if ("ReactedToMessage" in candid) {
         return "reacted_to_message";
     }
@@ -300,8 +297,17 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("FollowedThread" in candid) {
         return "followed_thread";
     }
-    if ("SentChannelMessage" in candid) {
-        return "send_channel_message";
+    if ("SentReminder" in candid) {
+        return "sent_reminder";
+    }
+    if ("ProvedUniquePersonhood" in candid) {
+        return "proved_unique_personhood";
+    }
+    if ("DeletedMessage" in candid) {
+        return "deleted_messge";
+    }
+    if ("SentText" in candid) {
+        return "sent_text";
     }
     if ("OwnGroupWithOneThousandDiamondMembers" in candid) {
         return "owned_group_with_1000_diamond_members";
@@ -357,7 +363,6 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("SentVideo" in candid) {
         return "sent_video";
     }
-
     if ("JoinedCommunity" in candid) {
         return "joined_community";
     }

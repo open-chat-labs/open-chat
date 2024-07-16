@@ -14,6 +14,7 @@ pub struct UserSummary {
     pub diamond_membership_status: DiamondMembershipStatus,
     pub chit_balance: i32,
     pub streak: u16,
+    pub is_unique_person: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -31,6 +32,7 @@ pub struct UserSummaryStable {
     pub is_bot: bool,
     pub suspended: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
+    pub is_unique_person: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -53,4 +55,5 @@ pub struct CurrentUserSummary {
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,
+    pub is_unique_person: bool,
 }

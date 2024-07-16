@@ -133,6 +133,7 @@
             setDiamondMembershipFees,
             setTokenEnabled,
             stakeNeuronForSubmittingProposals,
+            topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
@@ -347,6 +348,16 @@
                 console.log("Neuron staked successfully");
             } else {
                 console.log("Failed to stake neuron");
+            }
+        });
+    }
+
+    function topUpNeuronForSubmittingProposals(governanceCanisterId: string, amount: bigint): void {
+        client.topUpNeuronForSubmittingProposals(governanceCanisterId, amount).then((success) => {
+            if (success) {
+                console.log("Neuron topped up successfully");
+            } else {
+                console.log("Failed to top up neuron");
             }
         });
     }

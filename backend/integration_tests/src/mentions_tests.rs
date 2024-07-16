@@ -47,6 +47,7 @@ fn mention_users_succeeds(mention_everyone: bool) {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
             correlation_id: 0,
         },
     );
@@ -120,6 +121,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
+            new_achievement: false,
             correlation_id: 0,
         },
     );

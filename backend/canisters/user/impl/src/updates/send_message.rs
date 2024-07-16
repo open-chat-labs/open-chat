@@ -289,7 +289,9 @@ fn send_message_impl(
             );
         }
 
-        state.data.award_achievement_and_notify(Achievement::SentDirectMessage, now);
+        state
+            .data
+            .award_achievements_and_notify(Achievement::from_message(true, &message_event.event), now)
     }
 
     register_timer_jobs(

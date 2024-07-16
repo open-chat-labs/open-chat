@@ -70,8 +70,8 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak30' : null } |
   { 'HadMessageTipped' : null } |
   { 'SwappedFromWallet' : null } |
+  { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
-  { 'SentGroupMessage' : null } |
   { 'ReactedToMessage' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
@@ -84,12 +84,12 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentPrize' : null } |
   { 'FollowedThread' : null } |
   { 'SetBio' : null } |
-  { 'SentChannelMessage' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
+  { 'ProvedUniquePersonhood' : null } |
   { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
@@ -101,10 +101,12 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'DirectChats20' : null } |
   { 'SetGroupAccessGate' : null } |
   { 'SentFile' : null } |
+  { 'DeletedMessage' : null } |
   { 'SentDirectMessage' : null } |
   { 'SentMeme' : null } |
   { 'SentPoll' : null } |
   { 'SentAudio' : null } |
+  { 'SentText' : null } |
   { 'SuggestedTranslation' : null } |
   { 'SetAvatar' : null } |
   { 'SentVideo' : null };
@@ -142,6 +144,7 @@ export type AddMembersToChannelResponse = {
   { 'InternalError' : string };
 export interface AddReactionArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'username' : string,
   'display_name' : [] | [string],
   'message_id' : MessageId,
@@ -658,6 +661,7 @@ export type DeleteChannelResponse = { 'UserNotInChannel' : null } |
   { 'CommunityFrozen' : null };
 export interface DeleteMessagesArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -800,6 +804,7 @@ export type DocumentUpdate = { 'NoChange' : null } |
 export type Duration = bigint;
 export interface EditMessageArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'content' : MessageContentInitial,
   'block_level_markdown' : [] | [boolean],
   'message_id' : MessageId,
@@ -2015,6 +2020,7 @@ export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
   { 'PrivateCommunity' : null };
 export interface SendMessageArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'channel_rules_accepted' : [] | [Version],
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],

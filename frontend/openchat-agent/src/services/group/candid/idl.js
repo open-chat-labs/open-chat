@@ -49,6 +49,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientFunds' : IDL.Null,
   });
   const AddReactionArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'username' : IDL.Text,
     'display_name' : IDL.Opt(IDL.Text),
     'correlation_id' : IDL.Nat64,
@@ -277,6 +278,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const DeleteMessagesArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'as_platform_moderator' : IDL.Opt(IDL.Bool),
     'message_ids' : IDL.Vec(MessageId),
     'correlation_id' : IDL.Nat64,
@@ -636,6 +638,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageReminder' : MessageReminder,
   });
   const EditMessageV2Args = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'content' : MessageContentInitial,
     'block_level_markdown' : IDL.Opt(IDL.Bool),
     'correlation_id' : IDL.Nat64,
@@ -1229,6 +1232,7 @@ export const idlFactory = ({ IDL }) => {
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageV2Args = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'content' : MessageContentInitial,
     'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'block_level_markdown' : IDL.Bool,

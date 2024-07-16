@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 - Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
 
+### Changed
+
+- Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
+  
 ### Fixed
 
 - Allow changing casing of channel names ([#5999](https://github.com/open-chat-labs/open-chat/pull/5999))

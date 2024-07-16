@@ -132,6 +132,7 @@ impl User {
             diamond_membership_status: self.diamond_membership_details.status(now),
             chit_balance: self.chit_balance,
             streak: self.streak(now),
+            is_unique_person: self.unique_person_proof.is_some(),
         }
     }
 
@@ -151,6 +152,7 @@ impl User {
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
+            is_unique_person: self.unique_person_proof.is_some(),
         }
     }
 

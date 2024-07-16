@@ -26,11 +26,12 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    AccessGate, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document,
+    Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
+    MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
+use user_canister::c2c_notify_achievement;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -412,6 +413,15 @@ impl RuntimeState {
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
+    }
+
+    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
+        let args = c2c_notify_achievement::Args { achievements };
+        self.data.fire_and_forget_handler.send(
+            user_id.into(),
+            "c2c_notify_achievement_msgpack".to_string(),
+            serialize_then_unwrap(args),
+        );
     }
 }
 

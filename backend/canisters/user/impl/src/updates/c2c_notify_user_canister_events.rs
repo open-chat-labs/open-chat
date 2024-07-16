@@ -6,8 +6,8 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{
-    AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, Reader,
-    TipMessageArgs, TipMessageResult,
+    AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs,
+    MessageContentInternal, Reader, TipMessageArgs, TipMessageResult,
 };
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
@@ -49,10 +49,21 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
 
     match event {
         UserCanisterEvent::SendMessages(args) => {
+            let mut awarded = state.data.award_achievement(Achievement::ReceivedDirectMessage, now);
+
+            if args
+                .messages
+                .iter()
+                .any(|m| matches!(m.content, MessageContentInternal::Crypto(_)))
+            {
+                awarded |= state.data.award_achievement(Achievement::ReceivedCrypto, now);
+            }
+
+            if awarded {
+                state.data.notify_user_index_of_chit(now);
+            }
+
             send_messages(*args, caller_user_id, state);
-            state
-                .data
-                .award_achievement_and_notify(Achievement::ReceivedDirectMessage, now);
         }
         UserCanisterEvent::EditMessage(args) => {
             edit_message(*args, caller_user_id, state);

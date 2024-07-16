@@ -1,13 +1,14 @@
 import { IdentityClient } from "./identity/identity.client";
 import type { Identity, SignIdentity } from "@dfinity/agent";
 import { DelegationIdentity } from "@dfinity/identity";
-import type { GenerateChallengeResponse } from "openchat-shared";
-import {
-    buildDelegationIdentity,
-    type ChallengeAttempt,
-    type CreateOpenChatIdentityError,
-    toDer,
+import type {
+    ApproveIdentityLinkResponse,
+    ChallengeAttempt,
+    CreateOpenChatIdentityError,
+    GenerateChallengeResponse,
+    InitiateIdentityLinkResponse,
 } from "openchat-shared";
+import { buildDelegationIdentity, toDer } from "openchat-shared";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
@@ -62,6 +63,14 @@ export class IdentityAgent {
 
     generateChallenge(): Promise<GenerateChallengeResponse> {
         return this._identityClient.generateChallenge();
+    }
+
+    initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
+        return this._identityClient.initiateIdentityLink(linkToPrincipal);
+    }
+
+    approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
+        return this._identityClient.approveIdentityLink(linkInitiatedBy);
     }
 
     private async getDelegation(

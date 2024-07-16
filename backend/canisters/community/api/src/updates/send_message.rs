@@ -20,6 +20,7 @@ pub struct Args {
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
+    pub new_achievement: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

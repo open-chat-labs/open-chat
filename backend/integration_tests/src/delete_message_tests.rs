@@ -121,6 +121,7 @@ fn delete_group_message_succeeds() {
             message_ids: vec![message_id],
             as_platform_moderator: None,
             correlation_id: 0,
+            new_achievement: false,
         },
     );
     assert!(matches!(
@@ -236,6 +237,7 @@ fn delete_then_undelete_group_message(delay: bool) {
             message_ids: vec![message_id],
             as_platform_moderator: None,
             correlation_id: 0,
+            new_achievement: false,
         },
     );
     assert!(matches!(
@@ -315,6 +317,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
             message_ids: vec![message_id],
             as_platform_moderator: Some(true),
             correlation_id: 0,
+            new_achievement: false,
         },
     );
     if is_platform_moderator {

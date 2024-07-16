@@ -1,18 +1,24 @@
 import type { IDL } from "@dfinity/candid";
 import {
+    ApproveIdentityLinkResponse,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
-    GetDelegationResponse,
-    PrepareDelegationResponse,
     GenerateChallengeResponse,
+    GetDelegationResponse,
+    InitiateIdentityLinkResponse,
+    PrepareDelegationResponse,
+    SignedDelegation,
     _SERVICE,
 } from "./types";
 export {
+    ApproveIdentityLinkResponse as ApiApproveIdentityLinkResponse,
     CheckAuthPrincipalResponse as ApiCheckAuthPrincipalResponse,
     CreateIdentityResponse as ApiCreateIdentityResponse,
-    GetDelegationResponse as ApiGetDelegationResponse,
-    PrepareDelegationResponse as ApiPrepareDelegationResponse,
     GenerateChallengeResponse as ApiGenerateChallengeResponse,
+    GetDelegationResponse as ApiGetDelegationResponse,
+    InitiateIdentityLinkResponse as ApiInitiateIdentityLinkResponse,
+    PrepareDelegationResponse as ApiPrepareDelegationResponse,
+    SignedDelegation as ApiSignedDelegation,
     _SERVICE as IdentityService,
 };
 

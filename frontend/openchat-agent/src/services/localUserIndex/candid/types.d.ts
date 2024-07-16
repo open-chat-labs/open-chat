@@ -56,8 +56,8 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak30' : null } |
   { 'HadMessageTipped' : null } |
   { 'SwappedFromWallet' : null } |
+  { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
-  { 'SentGroupMessage' : null } |
   { 'ReactedToMessage' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
@@ -70,12 +70,12 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentPrize' : null } |
   { 'FollowedThread' : null } |
   { 'SetBio' : null } |
-  { 'SentChannelMessage' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
+  { 'ProvedUniquePersonhood' : null } |
   { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
@@ -87,10 +87,12 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'DirectChats20' : null } |
   { 'SetGroupAccessGate' : null } |
   { 'SentFile' : null } |
+  { 'DeletedMessage' : null } |
   { 'SentDirectMessage' : null } |
   { 'SentMeme' : null } |
   { 'SentPoll' : null } |
   { 'SentAudio' : null } |
+  { 'SentText' : null } |
   { 'SuggestedTranslation' : null } |
   { 'SetAvatar' : null } |
   { 'SentVideo' : null };

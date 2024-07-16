@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `lookup_proposal_message` ([#6031](https://github.com/open-chat-labs/open-chat/pull/6031))
 
+### Fixed
+
+- Handle `top_up_neuron` in `inspect_message` ([#6037](https://github.com/open-chat-labs/open-chat/pull/6037))
+
 ## [[2.0.1217](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1217-proposals_bot)] - 2024-07-02
 
 ### Added

@@ -247,6 +247,7 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 reaction,
+                new_achievement: false,
             }),
             addRemoveReactionResponse,
         );
@@ -358,6 +359,7 @@ export class CommunityClient extends CandidService {
                 message_ids: messageIds,
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                new_achievement: false,
             }),
             deleteMessageResponse,
         );
@@ -384,6 +386,7 @@ export class CommunityClient extends CandidService {
                         message_id: message.messageId,
                         block_level_markdown:
                             blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
+                        new_achievement: false,
                     }),
                     editMessageResponse,
                 );
@@ -997,6 +1000,7 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 block_level_markdown: event.event.blockLevelMarkdown,
+                new_achievement: false,
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
                 .then((resp) => {
