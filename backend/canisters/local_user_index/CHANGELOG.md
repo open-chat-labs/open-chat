@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
 
+### Changed
+
+- Store `unique_person_proof` in User canisters ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+
 ### Removed
 
 - Remove deprecated `ChitEarned` event ([#6041](https://github.com/open-chat-labs/open-chat/pull/6041))
