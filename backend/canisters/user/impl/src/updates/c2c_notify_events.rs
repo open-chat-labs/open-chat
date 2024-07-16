@@ -102,5 +102,11 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 );
             }
         }
+        Event::NotifyUniquePersonProof(proof) => {
+            if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
+                state.data.notify_user_index_of_chit(now);
+            }
+            state.data.unique_person_proof = Some(*proof);
+        }
     }
 }

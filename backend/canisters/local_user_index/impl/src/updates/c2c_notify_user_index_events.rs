@@ -179,7 +179,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::SecretKeySet(sk_der) => {
             state.data.oc_secret_key_der = Some(sk_der);
         }
-        Event::NotifyUniqueHumanProof(user_id, proof) => {
+        Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
     }
