@@ -41,20 +41,73 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
-export type Achievement = { 'JoinedCommunity' : null } |
+export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'DirectChats5' : null } |
+  { 'ChangedTheme' : null } |
+  { 'ChosenAsGroupModerator' : null } |
+  { 'FavouritedChat' : null } |
+  { 'AppointedGroupAdmin' : null } |
+  { 'HadMessageReactedTo' : null } |
+  { 'VotedOnPoll' : null } |
+  { 'ChosenAsGroupAdmin' : null } |
+  { 'OwnGroupWithOneHundredDiamondMembers' : null } |
+  { 'JoinedCommunity' : null } |
+  { 'SetCommunityDisplayName' : null } |
+  { 'AppointedGroupOwner' : null } |
+  { 'OwnGroupWithTenDiamondMembers' : null } |
+  { 'JoinedGatedGroupOrCommunity' : null } |
   { 'JoinedGroup' : null } |
+  { 'StartedCall' : null } |
+  { 'ChosenAsGroupOwner' : null } |
+  { 'TippedMessage' : null } |
+  { 'SentGiphy' : null } |
+  { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
   { 'Streak30' : null } |
+  { 'HadMessageTipped' : null } |
+  { 'SwappedFromWallet' : null } |
+  { 'SentReminder' : null } |
+  { 'EditedMessage' : null } |
+  { 'ReactedToMessage' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
+  { 'AcceptedP2PSwapOffer' : null } |
+  { 'JoinedCall' : null } |
   { 'SetDisplayName' : null } |
+  { 'SentImage' : null } |
+  { 'EnabledDisappearingMessages' : null } |
+  { 'ForwardedMessage' : null } |
+  { 'SentPrize' : null } |
+  { 'FollowedThread' : null } |
   { 'SetBio' : null } |
+  { 'OwnGroupWithOneThousandDiamondMembers' : null } |
+  { 'SentP2PSwapOffer' : null } |
+  { 'QuoteReplied' : null } |
+  { 'OwnGroupWithOneDiamondMember' : null } |
+  { 'SentCrypto' : null } |
+  { 'ProvedUniquePersonhood' : null } |
+  { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'ReceivedCrypto' : null } |
+  { 'TranslationAccepted' : null } |
+  { 'RepliedInThread' : null } |
+  { 'DirectChats10' : null } |
+  { 'DirectChats20' : null } |
+  { 'SetGroupAccessGate' : null } |
+  { 'SentFile' : null } |
+  { 'DeletedMessage' : null } |
   { 'SentDirectMessage' : null } |
-  { 'SetAvatar' : null };
+  { 'SentMeme' : null } |
+  { 'SentPoll' : null } |
+  { 'SentAudio' : null } |
+  { 'SentText' : null } |
+  { 'SuggestedTranslation' : null } |
+  { 'SetAvatar' : null } |
+  { 'SentVideo' : null };
 export interface AddReactionArgs {
+  'new_achievement' : boolean,
   'username' : string,
   'display_name' : [] | [string],
   'correlation_id' : bigint,
@@ -495,6 +548,7 @@ export interface CyclesRegistrationFee {
 export type DeclineInvitationResponse = { 'NotInvited' : null } |
   { 'Success' : null };
 export interface DeleteMessagesArgs {
+  'new_achievement' : boolean,
   'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,
   'correlation_id' : bigint,
@@ -631,6 +685,7 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
 export interface EditMessageV2Args {
+  'new_achievement' : boolean,
   'content' : MessageContentInitial,
   'block_level_markdown' : [] | [boolean],
   'correlation_id' : bigint,
@@ -1747,6 +1802,7 @@ export interface SendMessageSuccess {
   'message_index' : MessageIndex,
 }
 export interface SendMessageV2Args {
+  'new_achievement' : boolean,
   'content' : MessageContentInitial,
   'message_filter_failed' : [] | [bigint],
   'block_level_markdown' : boolean,

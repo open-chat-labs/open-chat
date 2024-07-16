@@ -693,6 +693,7 @@ fn send_dummy_message_with_rules(
             community_rules_accepted,
             channel_rules_accepted,
             message_filter_failed: None,
+            new_achievement: false,
         },
     )
 }

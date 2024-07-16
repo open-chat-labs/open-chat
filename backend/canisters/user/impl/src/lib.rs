@@ -331,6 +331,18 @@ impl Data {
         }
     }
 
+    pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
+        let mut awarded = false;
+
+        for achievement in achievements {
+            awarded |= self.award_achievement(achievement, now);
+        }
+
+        if awarded {
+            self.notify_user_index_of_chit(now);
+        }
+    }
+
     pub fn award_achievement_and_notify(&mut self, achievement: Achievement, now: TimestampMillis) {
         if self.award_achievement(achievement, now) {
             self.notify_user_index_of_chit(now);

@@ -99,6 +99,7 @@ fn delete_channel_message(
         thread_root_message_index,
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
+        new_achievement: false,
     };
     // TODO: When user canisters are released this can be delete_messages_msgpack
     fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
@@ -115,6 +116,7 @@ fn delete_group_message(
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
         correlation_id: 0,
+        new_achievement: false,
     };
     // TODO: When user canisters are released this can be delete_messages_msgpack
     fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());

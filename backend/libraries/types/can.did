@@ -1076,6 +1076,7 @@ type UserSummary = record {
     diamond_membership_status : DiamondMembershipStatus;
     chit_balance : int32;
     streak : nat16;
+    is_unique_person : bool;
 };
 
 type BuildVersion = record {
@@ -1871,6 +1872,7 @@ type UserSummaryStable = record {
     is_bot : bool;
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    is_unique_person : bool;
 };
 
 type UserSummaryVolatile = record {
@@ -1891,6 +1893,7 @@ type CurrentUserSummary = record {
     diamond_membership_details : opt DiamondMembershipDetails;
     diamond_membership_status : DiamondMembershipStatusFull;
     moderation_flags_enabled : nat32;
+    is_unique_person : bool;
 };
 
 type SuspensionDetails = record {
@@ -1918,21 +1921,9 @@ type Achievement = variant {
     Streak7;
     Streak14;
     Streak30;
-    SentGroupMessage;
-    SentChannelMessage;
-    SetCommunityDisplayName;
-    ChangedTheme;
-    SentCrypto;
-    ReceivedCrypto;
-    ReactedToMessage;
-    HadMessageReactedTo;
-    TippedMessage;
-    HadMessageTipped;
-    SwappedFromWallet;
-    SentP2PSwapOffer;
-    AcceptedP2PSwapOffer;
     SentPoll;
     VotedOnPoll;
+    SentText;
     SentImage;
     SentVideo;
     SentAudio;
@@ -1940,13 +1931,27 @@ type Achievement = variant {
     SentGiphy;
     SentPrize;
     SentMeme;
+    SentReminder;
     StartedCall;
-    JoinedCall;
-    EnabledDisappearingMessages;
+    SentCrypto;
+    SentP2PSwapOffer;
+    ReactedToMessage;
+    EditedMessage;
     RepliedInThread;
     QuoteReplied;
-    EditedMessage;
+    TippedMessage;
+    DeletedMessage;
     ForwardedMessage;
+    ReceivedCrypto;
+    HadMessageReactedTo;
+    HadMessageTipped;
+    JoinedCall;
+    ProvedUniquePersonhood;
+    SetCommunityDisplayName;
+    ChangedTheme;
+    SwappedFromWallet;
+    AcceptedP2PSwapOffer;
+    EnabledDisappearingMessages;
     PinnedMessage;
     FavouritedChat;
     FollowedThread;

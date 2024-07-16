@@ -7,7 +7,8 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId,
+    Achievement, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
+    User, UserId,
 };
 
 #[update(candid = true, msgpack = true)]
@@ -47,6 +48,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 &mut state.data.event_store_client,
                 now,
             );
+
             process_send_message_result(
                 result,
                 user_id,
@@ -55,6 +57,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
+                args.new_achievement,
                 state,
             )
         }
@@ -94,6 +97,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
                 args.thread_root_message_index,
                 args.mentioned,
                 now,
+                false,
                 state,
             )
         }
@@ -135,6 +139,7 @@ fn process_send_message_result(
     thread_root_message_index: Option<MessageIndex>,
     mentioned: Vec<User>,
     now: TimestampMillis,
+    new_achievement: bool,
     state: &mut RuntimeState,
 ) -> Response {
     match result {
@@ -164,6 +169,10 @@ fn process_send_message_result(
             state.push_notification(result.users_to_notify, notification);
 
             handle_activity_notification(state);
+
+            if new_achievement {
+                state.notify_user_of_achievements(sender, Achievement::from_message(false, &result.message_event.event));
+            }
 
             Success(SuccessResult {
                 event_index,

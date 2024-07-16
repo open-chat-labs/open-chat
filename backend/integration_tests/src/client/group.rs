@@ -72,6 +72,7 @@ pub mod happy_path {
                 block_level_markdown: false,
                 rules_accepted: None,
                 message_filter_failed: None,
+                new_achievement: false,
                 correlation_id: 0,
             },
         );
@@ -308,6 +309,7 @@ pub mod happy_path {
                 message_ids,
                 as_platform_moderator: None,
                 correlation_id: 0,
+                new_achievement: false,
             },
         );
 

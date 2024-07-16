@@ -29,7 +29,21 @@ type StakeNeuronForSubmittingProposalsResponse = variant {
     InternalError : text;
 };
 
+type TopUpNeuronArgs = record {
+    governance_canister_id : CanisterId;
+    amount : nat;
+};
+
+type TopUpNeuronResponse = variant {
+    Success;
+    TransferError : text;
+    GovernanceCanisterNotSupported;
+    Unauthorized;
+    InternalError : text;
+};
+
 service : {
     lookup_proposal_message : (LookupProposalMessageArgs) -> (LookupProposalMessageResponse) query;
     stake_neuron_for_submitting_proposals : (StakeNeuronForSubmittingProposalsArgs) -> (StakeNeuronForSubmittingProposalsResponse);
+    top_up_neuron : (TopUpNeuronArgs) -> (TopUpNeuronResponse);
 };

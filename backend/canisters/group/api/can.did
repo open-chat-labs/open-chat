@@ -12,6 +12,7 @@ type SendMessageV2Args = record {
     block_level_markdown : bool;
     rules_accepted : opt Version;
     message_filter_failed : opt nat64;
+    new_achievement : bool;
     correlation_id : nat64;
 };
 
@@ -42,6 +43,7 @@ type EditMessageV2Args = record {
     content : MessageContentInitial;
     block_level_markdown : opt bool;
     correlation_id : nat64;
+    new_achievement : bool;
 };
 
 type EditMessageResponse = variant {
@@ -58,7 +60,7 @@ type StartVideoCallArgs = record {
     initiator_username : text;
     initiator_display_name : opt text;
     max_duration : opt Milliseconds;
-    call_type: VideoCallType;
+    call_type : VideoCallType;
 };
 
 type StartVideoCallResponse = variant {
@@ -108,6 +110,7 @@ type DeleteMessagesArgs = record {
     message_ids : vec MessageId;
     as_platform_moderator : opt bool;
     correlation_id : nat64;
+    new_achievement : bool;
 };
 
 type DeleteMessagesResponse = variant {
@@ -195,6 +198,7 @@ type AddReactionArgs = record {
     username : text;
     display_name : opt text;
     correlation_id : nat64;
+    new_achievement : bool;
 };
 
 type AddReactionResponse = variant {
@@ -741,7 +745,7 @@ service : {
     follow_thread : (FollowThreadArgs) -> (FollowThreadResponse);
     unfollow_thread : (UnfollowThreadArgs) -> (UnfollowThreadResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
-    set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
+    set_video_call_presence : (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 
     // Video call operator only
     start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);

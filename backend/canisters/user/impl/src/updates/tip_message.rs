@@ -7,7 +7,9 @@ use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
 use ic_cdk::update;
 use serde::Serialize;
-use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
+use types::{
+    icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
+};
 use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
@@ -36,6 +38,12 @@ async fn tip_message(args: Args) -> Response {
     if let Err(failed) = process_transaction(pending_transfer).await {
         return TransferFailed(failed.error_message().to_string());
     }
+
+    mutate_state(|state| {
+        state
+            .data
+            .award_achievement_and_notify(Achievement::TippedMessage, state.env.now())
+    });
 
     match prepare_result {
         PrepareResult::Direct(tip_message_args) => {

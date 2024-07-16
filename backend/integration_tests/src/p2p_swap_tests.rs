@@ -425,6 +425,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
                 message_ids: vec![message_id],
                 as_platform_moderator: None,
                 correlation_id: 0,
+                new_achievement: false,
             },
         );
 

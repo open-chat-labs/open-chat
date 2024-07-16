@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
 use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
-use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
+use types::{Achievement, ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -27,6 +27,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let user_id = member.user_id;
+        let new_achievement = args.new_achievement;
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             let now = state.env.now();
@@ -51,6 +52,11 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         );
                     }
                     handle_activity_notification(state);
+
+                    if new_achievement {
+                        state.notify_user_of_achievements(user_id, vec![Achievement::ReactedToMessage]);
+                    }
+
                     Success
                 }
                 AddRemoveReactionResult::NoChange => NoChange,
