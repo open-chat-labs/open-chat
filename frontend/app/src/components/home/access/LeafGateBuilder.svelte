@@ -208,22 +208,24 @@
 </script>
 
 <section class="section">
-    <div class="section-title">
-        <Translatable resourceKey={i18nKey("access.chooseGate")} />
-    </div>
-    <div class="choose-gate">
-        <Select
-            invalid={!allowNone && selectedGateKey === "no_gate"}
-            disabled={!editable}
-            margin={false}
-            on:change={updateGate}
-            bind:value={selectedGateKey}>
-            {#each gateBindings as gate}
-                <option disabled={!gate.enabled} value={gate.key}
-                    ><Translatable resourceKey={i18nKey(gate.label)} /></option>
-            {/each}
-        </Select>
-    </div>
+    {#if editable}
+        <div class="section-title">
+            <Translatable resourceKey={i18nKey("access.chooseGate")} />
+        </div>
+        <div class="choose-gate">
+            <Select
+                invalid={!allowNone && selectedGateKey === "no_gate"}
+                disabled={!editable}
+                margin={false}
+                on:change={updateGate}
+                bind:value={selectedGateKey}>
+                {#each gateBindings as gate}
+                    <option disabled={!gate.enabled} value={gate.key}
+                        ><Translatable resourceKey={i18nKey(gate.label)} /></option>
+                {/each}
+            </Select>
+        </div>
+    {/if}
     {#if selectedGateKey === "neuron_gate_folder"}
         <Legend label={i18nKey("access.chooseNervousSystem")} />
         <div class="choose-gate">
@@ -328,10 +330,6 @@
 </section>
 
 <style lang="scss">
-    .icon {
-        flex: 0 0 toRem(34);
-    }
-
     .section-title {
         margin-bottom: $sp3;
     }
@@ -345,8 +343,7 @@
     }
 
     .info {
-        @include font(book, normal, fs-80, 22);
-        color: var(--txt-light);
+        @include font(book, normal, fs-90, 22);
     }
 
     .section-title {
