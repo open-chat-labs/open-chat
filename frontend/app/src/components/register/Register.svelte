@@ -102,6 +102,7 @@
                     moderationFlagsEnabled: 0,
                     updated: 0n,
                     isBot: false,
+                    isUniquePerson: false,
                 };
                 dispatch("createdUser", createdUser);
             } else {
