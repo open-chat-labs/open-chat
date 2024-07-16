@@ -425,6 +425,7 @@ export interface CurrentUserSummary {
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1588,6 +1589,7 @@ export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1598,6 +1600,7 @@ export interface UserSummary {
 export interface UserSummaryStable {
   'username' : string,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],

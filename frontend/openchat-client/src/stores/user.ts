@@ -30,6 +30,7 @@ export const videoCallBotUser: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    isUniquePerson: false,
 };
 
 export const openChatBotUser: UserSummary = {
@@ -43,6 +44,7 @@ export const openChatBotUser: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    isUniquePerson: false,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -56,6 +58,7 @@ export const anonymousUserSummary: UserSummary = {
     diamondStatus: "inactive",
     chitBalance: 0,
     streak: 0,
+    isUniquePerson: false,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -74,6 +77,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        isUniquePerson: false,
     };
 }
 

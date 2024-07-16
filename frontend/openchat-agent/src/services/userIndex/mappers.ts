@@ -98,6 +98,7 @@ export function currentUserSummary(
             blobId: id,
             canisterId: candid.user_id.toString(),
         })),
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -114,6 +115,7 @@ export function userSummaryUpdate(candid: ApiUserSummaryUpdate): UserSummaryUpda
                 canisterId: candid.user_id.toString(),
             })),
             suspended: s.suspended,
+            isUniquePerson: s.is_unique_person,
         })),
         volatile: optional(candid.volatile, (v) => ({
             chitBalance: v.chit_balance,
@@ -137,6 +139,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         diamondStatus: diamondStatus(candid.diamond_membership_status),
         chitBalance: candid.chit_balance,
         streak: candid.streak,
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -183,6 +186,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
+            isUniquePerson: candid.Success.is_unique_person,
         };
     }
 

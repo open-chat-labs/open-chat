@@ -23,6 +23,7 @@ export type UserSummary = DataContent & {
     diamondStatus: DiamondMembershipStatus["kind"];
     chitBalance: number;
     streak: number;
+    isUniquePerson: boolean;
 };
 
 // Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
@@ -72,6 +73,7 @@ export function userSummaryFromCurrentUserSummary(
         blobReference: currentSummary.blobReference,
         blobData: currentSummary.blobData,
         blobUrl: currentSummary.blobUrl,
+        isUniquePerson: currentSummary.isUniquePerson,
     };
 }
 
@@ -168,6 +170,7 @@ export type UserSummaryStable = DataContent & {
     isBot: boolean;
     displayName: string | undefined;
     suspended: boolean;
+    isUniquePerson: boolean;
 };
 
 export type UserSummaryVolatile = {
@@ -226,6 +229,7 @@ type CurrentUserCommon = DataContent & {
     isPlatformModerator: boolean;
     diamondDetails?: DiamondMembershipDetails;
     updated: bigint;
+    isUniquePerson: boolean;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -256,6 +260,7 @@ export function anonymousUser(): CreatedUser {
         moderationFlagsEnabled: 0,
         isBot: false,
         updated: 0n,
+        isUniquePerson: false,
     };
 }
 

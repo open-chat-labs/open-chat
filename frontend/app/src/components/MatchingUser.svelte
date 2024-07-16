@@ -42,7 +42,10 @@
                 {searchTerm}
                 me={user.userId === $createdUser.userId}
                 username={user.displayName ?? user.username} />
-            <Badges diamondStatus={user.diamondStatus} streak={client.getStreak(user.userId)} />
+            <Badges
+                uniquePerson={user.isUniquePerson}
+                diamondStatus={user.diamondStatus}
+                streak={client.getStreak(user.userId)} />
         </h4>
         <div class="username">
             <FilteredUsername {searchTerm} username={"@" + user.username} />

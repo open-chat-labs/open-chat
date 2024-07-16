@@ -79,7 +79,6 @@
     let checkingUsername: boolean;
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
-    let verified = true;
     let verifying = false;
 
     $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
@@ -98,6 +97,7 @@
     $: anonUser = client.anonUser;
     $: suspendedUser = client.suspendedUser;
     $: readonly = $suspendedUser || $anonUser;
+    $: verified = user.isUniquePerson;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -303,7 +303,7 @@
                             on:imageSelected={userAvatarSelected} />
                     {/if}
                     <div class="human">
-                        <Human size={"large"} human={verified} />
+                        <Human size={"large"} uniquePerson={verified} />
                     </div>
                 </div>
                 {#if $anonUser}
@@ -374,7 +374,7 @@
                     {#if verified}
                         <div class="verified">
                             <div class="icon">
-                                <Human size={"large"} human={verified} />
+                                <Human size={"large"} uniquePerson={verified} />
                             </div>
                             <div class="msg">
                                 <Translatable resourceKey={i18nKey("human.already")} />

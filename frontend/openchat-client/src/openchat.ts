@@ -4026,8 +4026,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 return this._liveState.user.diamondStatus.kind !== "inactive";
             } else if (gate.kind === "lifetime_diamond_gate") {
                 return this._liveState.user.diamondStatus.kind === "lifetime";
+            } else if (gate.kind === "unique_person_gate") {
+                return this._liveState.user.isUniquePerson;
             } else {
-                // TODO we will be able to check the human flag here too
                 return false;
             }
         }
@@ -6669,10 +6670,24 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "submitProofOfUniquePersonhood",
             credential,
-        }).catch(err => {
-            console.error("Failed to submit proof of unique personhood to the user index", err)
-            return { kind: "invalid"};
-        });
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.user.update((user) => ({
+                        ...user,
+                        isUniquePerson: true,
+                    }));
+                    this.overwriteUserInStore(this._liveState.user.userId, (u) => ({
+                        ...u,
+                        isUniquePerson: true,
+                    }));
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.error("Failed to submit proof of unique personhood to the user index", err);
+                return { kind: "invalid" };
+            });
     }
 
     async joinCommunity(

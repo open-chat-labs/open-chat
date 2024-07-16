@@ -88,6 +88,7 @@
                     ),
                     username: "@" + them.username,
                     eventsTTL: undefined,
+                    uniquePerson: them.isUniquePerson,
                 };
             default:
                 return {
@@ -104,6 +105,7 @@
                         typing,
                     ),
                     eventsTTL: chatSummary.eventsTTL,
+                    uniquePerson: false,
                 };
         }
     }
@@ -180,7 +182,10 @@
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
-                <Badges diamondStatus={chat.diamondStatus} streak={chat.streak} />
+                <Badges
+                    uniquePerson={chat.uniquePerson}
+                    diamondStatus={chat.diamondStatus}
+                    streak={chat.streak} />
                 <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}

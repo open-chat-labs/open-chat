@@ -62,7 +62,10 @@
         <div class="display-name">
             <h4>
                 <FilteredUsername {searchTerm} username={displayName} {me} />
-                <Badges diamondStatus={user.diamondStatus} streak={user.streak} />
+                <Badges
+                    uniquePerson={user.isUniquePerson}
+                    diamondStatus={user.diamondStatus}
+                    streak={user.streak} />
             </h4>
             {#if role !== undefined}
                 <span class="role">

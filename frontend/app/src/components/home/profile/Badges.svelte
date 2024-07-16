@@ -6,9 +6,9 @@
 
     export let diamondStatus: DiamondMembershipStatus["kind"] | undefined = undefined;
     export let streak: number = 0;
-    export let human: boolean = false;
+    export let uniquePerson: boolean = false;
 </script>
 
 <Diamond status={diamondStatus} />
-<Human {human} />
+<Human {uniquePerson} />
 <Streak days={streak} />

@@ -4,11 +4,11 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import Translatable from "../Translatable.svelte";
 
-    export let human = false;
+    export let uniquePerson = false;
     export let size: "small" | "large" = "small";
 </script>
 
-{#if human}
+{#if uniquePerson}
     <TooltipWrapper position="top" align="middle">
         <div slot="target" class={`human ${size}`}></div>
         <div let:position let:align slot="tooltip" class="tooltip">

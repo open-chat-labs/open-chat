@@ -94,6 +94,7 @@
                     eventsTTL: undefined,
                     video,
                     private: false,
+                    uniquePerson: them.isUniquePerson,
                 };
             default:
                 return {
@@ -112,6 +113,7 @@
                     eventsTTL: chatSummary.eventsTTL,
                     video,
                     private: !chatSummary.public,
+                    uniquePerson: false,
                 };
         }
     }
@@ -371,7 +373,10 @@
                         {/if}
                         <span>{chat.name}</span>
                     </h4>
-                    <Badges diamondStatus={chat.diamondStatus} streak={chat.streak} />
+                    <Badges
+                        uniquePerson={chat.uniquePerson}
+                        diamondStatus={chat.diamondStatus}
+                        streak={chat.streak} />
                 </div>
             </div>
             <div class="chat-msg">
