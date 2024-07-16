@@ -5,6 +5,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import del from "rollup-plugin-delete";
+import { sourcemapNewline } from "../sourcemapNewline.mjs";
 
 export default {
     input: `./src/service_worker.ts`,
@@ -27,5 +28,6 @@ export default {
             dedupe: ["@dfinity/candid"],
         }),
         terser(),
+        sourcemapNewline(),
     ],
 };
