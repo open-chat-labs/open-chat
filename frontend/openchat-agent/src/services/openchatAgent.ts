@@ -208,6 +208,7 @@ import type {
     Achievement,
     ChitEarned,
     ChitState,
+    TopUpNeuronResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2897,6 +2898,15 @@ export class OpenChatAgent extends EventTarget {
             governanceCanisterId,
             stake,
         );
+    }
+
+    topUpNeuronForSubmittingProposals(
+        governanceCanisterId: string,
+        amount: bigint,
+    ): Promise<TopUpNeuronResponse> {
+        if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        return this._proposalsBotClient.topUpNeuron(governanceCanisterId, amount);
     }
 
     updateMarketMakerConfig(

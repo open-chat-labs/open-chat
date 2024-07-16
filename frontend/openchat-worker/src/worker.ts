@@ -1051,6 +1051,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "topUpNeuronForSubmittingProposals":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.topUpNeuronForSubmittingProposals(
+                        payload.governanceCanisterId,
+                        payload.amount,
+                    ),
+                );
+                break;
+
             case "loadFailedMessages":
                 executeThenReply(payload, correlationId, agent.loadFailedMessages());
                 break;
