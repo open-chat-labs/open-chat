@@ -1,13 +1,13 @@
 use crate::guards::caller_is_local_group_or_community_canister;
 use crate::{mutate_state, read_state, RuntimeState, COMMUNITY_CANISTER_TOP_UP_AMOUNT, GROUP_CANISTER_TOP_UP_AMOUNT};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse};
 use utils::canister::deposit_cycles;
 use utils::consts::min_cycles_balance;
 use utils::cycles::can_spend_cycles;
 
-#[update_msgpack(guard = "caller_is_local_group_or_community_canister")]
+#[update(guard = "caller_is_local_group_or_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
     let prepare_ok = match read_state(prepare) {

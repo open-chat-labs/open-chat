@@ -4,21 +4,20 @@ use crate::model::members::CommunityMemberInternal;
 use crate::RuntimeState;
 use crate::{read_state, Data};
 use candid::Principal;
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
-use ic_cdk::query;
 use types::{
     AccessGate, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
     FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 
-#[query]
+#[query(candid = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
 }
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }

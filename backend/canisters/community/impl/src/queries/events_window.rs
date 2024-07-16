@@ -2,18 +2,17 @@ use crate::guards::caller_is_local_user_index;
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use community_canister::c2c_events_window::Args as C2CArgs;
 use community_canister::events_window::{Response::*, *};
 use group_chat_core::EventsResult;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true)]
 fn events_window(args: Args) -> Response {
     read_state(|state| events_window_impl(args, None, state))
 }
 
-#[query_msgpack(guard = "caller_is_local_user_index")]
+#[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_events_window(args: C2CArgs) -> Response {
     read_state(|state| events_window_impl(args.args, Some(args.caller), state))
 }

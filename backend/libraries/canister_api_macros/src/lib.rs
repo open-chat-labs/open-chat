@@ -26,30 +26,24 @@ struct AttributeInput {
     pub name: Option<String>,
     pub guard: Option<String>,
     #[serde(default)]
+    pub candid: bool,
+    #[serde(default)]
+    pub msgpack: bool,
+    #[serde(default)]
     pub manual_reply: bool,
 }
 
 #[proc_macro_attribute]
-pub fn update_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Update, attr, item, true)
+pub fn update(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Update, attr, item)
 }
 
 #[proc_macro_attribute]
-pub fn query_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Query, attr, item, true)
+pub fn query(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Query, attr, item)
 }
 
-#[proc_macro_attribute]
-pub fn update_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Update, attr, item, false)
-}
-
-#[proc_macro_attribute]
-pub fn query_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Query, attr, item, false)
-}
-
-fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream, include_candid: bool) -> TokenStream {
+fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr: AttributeInput = from_tokenstream(&attr.into()).unwrap();
     let item = parse_macro_input!(item as ItemFn);
 
@@ -59,18 +53,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let guard = attr.guard.map(|g| quote! { guard = #g, });
     let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
 
-    let msgpack_name = format!("{name}_msgpack");
-
-    let serializer_name = format!("{msgpack_name}_serializer");
-    let serializer_ident = Ident::new(&serializer_name, Span::call_site());
-
-    let deserializer_name = format!("{msgpack_name}_deserializer");
-    let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
-
-    let serializer = quote! { serializer = #serializer_name, };
-    let deserializer = quote! { deserializer = #deserializer_name };
-
-    let candid = if include_candid {
+    let candid = if attr.candid {
         quote! {
             #[ic_cdk::#method_type(name = #name, #guard #manual_reply)]
             #item
@@ -79,18 +62,33 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         quote! {}
     };
 
-    let mut msgpack_item = item.clone();
-    msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
+    let msgpack = if attr.msgpack {
+        let msgpack_name = format!("{name}_msgpack");
 
-    let msgpack = quote! {
-        #[ic_cdk::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
-        #msgpack_item
+        let serializer_name = format!("{msgpack_name}_serializer");
+        let serializer_ident = Ident::new(&serializer_name, Span::call_site());
+
+        let deserializer_name = format!("{msgpack_name}_deserializer");
+        let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
+
+        let serializer = quote! { serializer = #serializer_name, };
+        let deserializer = quote! { deserializer = #deserializer_name };
+
+        let mut msgpack_item = item.clone();
+        msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
+
+        quote! {
+            use msgpack::serialize_then_unwrap as #serializer_ident;
+            use msgpack::deserialize_then_unwrap as #deserializer_ident;
+
+            #[ic_cdk::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+            #msgpack_item
+        }
+    } else {
+        quote! {}
     };
 
     TokenStream::from(quote! {
-        use msgpack::serialize_then_unwrap as #serializer_ident;
-        use msgpack::deserialize_then_unwrap as #deserializer_ident;
-
         #candid
         #msgpack
     })

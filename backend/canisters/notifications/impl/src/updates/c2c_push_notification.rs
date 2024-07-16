@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_push_notification::{Response::*, *};
 use serde_bytes::ByteBuf;
 use types::{CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId, NotificationEnvelope, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_push_notification(args: Args) -> Response {
     match read_state(|state| can_push_notifications(&args, state)) {

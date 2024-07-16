@@ -1,11 +1,11 @@
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_community::{Response::*, *};
 use ic_cdk::api::call::CallResult;
 use types::{CanisterId, CommunityId, DeletedCommunityInfo, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_delete_community(args: Args) -> Response {
     let PrepareResult {

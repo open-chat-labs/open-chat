@@ -1,12 +1,12 @@
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use types::{AccessGate, CanisterId, ChatId, Document, GroupSubtype, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
     let avatar_id = Document::id(&args.avatar);

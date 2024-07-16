@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_index_canister;
 use crate::{jobs, mutate_state, RuntimeState, UserToDelete};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::Event;
@@ -11,7 +11,7 @@ use user_canister::{
     ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
 };
 
-#[update_msgpack(guard = "caller_is_user_index_canister")]
+#[update(guard = "caller_is_user_index_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_user_index_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
@@ -179,7 +179,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::SecretKeySet(sk_der) => {
             state.data.oc_secret_key_der = Some(sk_der);
         }
-        Event::NotifyUniqueHumanProof(user_id, proof) => {
+        Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
     }

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_group_index_canister;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
@@ -10,7 +10,7 @@ use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
-#[update_msgpack(guard = "caller_is_group_index_canister")]
+#[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
     let prepare_ok = match mutate_state(|state| prepare(args, state)) {
