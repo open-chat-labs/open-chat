@@ -7,6 +7,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -457,6 +458,7 @@ export type CurrentUserResponse = {
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
+      'is_unique_person' : boolean,
       'referrals' : Array<UserId>,
       'user_id' : UserId,
       'display_name' : [] | [string],
@@ -474,6 +476,7 @@ export interface CurrentUserSummary {
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1646,6 +1649,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
+export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
+  { 'Success' : null } |
+  { 'UserNotFound' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1780,6 +1787,7 @@ export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1790,6 +1798,7 @@ export interface UserSummary {
 export interface UserSummaryStable {
   'username' : string,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
@@ -1845,6 +1854,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;
@@ -1965,6 +1975,10 @@ export interface _SERVICE {
     SetUserUpgradeConcurrencyResponse
   >,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
+  'submit_proof_of_unique_personhood' : ActorMethod<
+    [SubmitProofOfUniquePersonhoodArgs],
+    SubmitProofOfUniquePersonhoodResponse
+  >,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,

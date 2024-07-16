@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
   const CommunityId = CanisterId;
@@ -620,15 +621,21 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'SnsNeuron' : SnsNeuronGate,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
+  AccessGate.fill(
+    IDL.Variant({
+      'UniquePerson' : IDL.Null,
+      'VerifiedCredential' : VerifiedCredentialGate,
+      'SnsNeuron' : SnsNeuronGate,
+      'TokenBalance' : TokenBalanceGate,
+      'Composite' : IDL.Record({
+        'and' : IDL.Bool,
+        'inner' : IDL.Vec(AccessGate),
+      }),
+      'DiamondMember' : IDL.Null,
+      'Payment' : PaymentGate,
+      'LifetimeDiamondMember' : IDL.Null,
+    })
+  );
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
@@ -1106,6 +1113,7 @@ export const idlFactory = ({ IDL }) => {
   const VerifiedCredentialGateArgs = IDL.Record({
     'credential_jwt' : IDL.Text,
     'ii_origin' : IDL.Text,
+    'credential_jwts' : IDL.Vec(IDL.Text),
     'user_ii_principal' : IDL.Principal,
   });
   const JoinChannelArgs = IDL.Record({

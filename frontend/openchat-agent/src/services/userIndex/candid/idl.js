@@ -87,6 +87,7 @@ export const idlFactory = ({ IDL }) => {
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
+      'is_unique_person' : IDL.Bool,
       'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,
       'display_name' : IDL.Opt(IDL.Text),
@@ -218,6 +219,7 @@ export const idlFactory = ({ IDL }) => {
     'username' : IDL.Text,
     'diamond_member' : IDL.Bool,
     'diamond_membership_status' : DiamondMembershipStatus,
+    'is_unique_person' : IDL.Bool,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
@@ -270,6 +272,14 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooShort' : IDL.Nat16,
     'UsernameInvalid' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
+    'Success' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
+  const SubmitProofOfUniquePersonhoodArgs = IDL.Record({
+    'credential_jwt' : IDL.Text,
+  });
+  const SubmitProofOfUniquePersonhoodResponse = IDL.Variant({
+    'Invalid' : IDL.Text,
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
@@ -332,6 +342,7 @@ export const idlFactory = ({ IDL }) => {
   const UserSummaryStable = IDL.Record({
     'username' : IDL.Text,
     'diamond_membership_status' : DiamondMembershipStatus,
+    'is_unique_person' : IDL.Bool,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -350,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
     'username' : IDL.Text,
     'is_platform_operator' : IDL.Bool,
     'diamond_membership_status' : DiamondMembershipStatusFull,
+    'is_unique_person' : IDL.Bool,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
@@ -477,6 +489,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
+    'submit_proof_of_unique_personhood' : IDL.Func(
+        [SubmitProofOfUniquePersonhoodArgs],
+        [SubmitProofOfUniquePersonhoodResponse],
+        [],
+      ),
     'suspected_bots' : IDL.Func(
         [SuspectedBotsArgs],
         [SuspectedBotsResponse],

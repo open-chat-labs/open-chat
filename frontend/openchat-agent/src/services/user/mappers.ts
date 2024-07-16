@@ -304,7 +304,7 @@ export function achievementType(candid: ApiAchievement): Achievement {
         return "proved_unique_personhood";
     }
     if ("DeletedMessage" in candid) {
-        return "deleted_messge";
+        return "deleted_message";
     }
     if ("SentText" in candid) {
         return "sent_text";

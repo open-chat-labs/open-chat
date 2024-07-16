@@ -240,7 +240,10 @@ fn process_send_message_result(
             );
 
             if new_achievement {
-                state.notify_user_of_achievements(sender, Achievement::from_message(false, &result.message_event.event));
+                state.notify_user_of_achievements(
+                    sender,
+                    Achievement::from_message(false, &result.message_event.event, thread_root_message_index.is_some()),
+                );
             }
 
             Success(SuccessResult {

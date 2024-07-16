@@ -7,6 +7,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -430,6 +431,7 @@ export interface CurrentUserSummary {
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1632,6 +1634,7 @@ export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1642,6 +1645,7 @@ export interface UserSummary {
 export interface UserSummaryStable {
   'username' : string,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
@@ -1684,6 +1688,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;

@@ -20,7 +20,6 @@ pub enum Achievement {
     Streak30,
 
     SentPoll,
-    VotedOnPoll,
     SentText,
     SentImage,
     SentVideo,
@@ -29,10 +28,9 @@ pub enum Achievement {
     SentGiphy,
     SentPrize,
     SentMeme,
-    SentReminder,
-    StartedCall,
     SentCrypto,
     SentP2PSwapOffer,
+    StartedCall,
     ReactedToMessage,
     EditedMessage,
     RepliedInThread,
@@ -41,6 +39,8 @@ pub enum Achievement {
     DeletedMessage,
     ForwardedMessage,
 
+    SentReminder,
+    VotedOnPoll,
     ReceivedCrypto,
     HadMessageReactedTo,
     HadMessageTipped,
@@ -145,7 +145,7 @@ impl Achievement {
         }
     }
 
-    pub fn from_message(direct: bool, message: &Message) -> Vec<Achievement> {
+    pub fn from_message(direct: bool, message: &Message, is_thread: bool) -> Vec<Achievement> {
         let mut achievements = Vec::new();
 
         if let Some(achievement) = message.content.to_achievement() {
@@ -162,7 +162,7 @@ impl Achievement {
 
         if message.replies_to.is_some() {
             achievements.push(Achievement::QuoteReplied);
-        } else if message.thread_summary.is_some() && message.message_index == MessageIndex::from(0) {
+        } else if is_thread && message.message_index == MessageIndex::from(0) {
             achievements.push(Achievement::RepliedInThread);
         }
 
