@@ -10,6 +10,8 @@
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
         "chooseGate": "选择一个门禁",
         "chooseNervousSystem": "选择神经系统",
+        "chooseOneGate": "选择一扇门",
+        "chooseOneGateInfo": "您需要满足以下条件之一才能加入。选择您喜欢的一项。",
         "chooseToken": "选择代币",
         "compositeGate": "组合门",
         "credential": {
@@ -497,6 +499,15 @@
     "hotGroups": "热门群聊",
     "hours": "小时",
     "howToBuyToken": "我需要购买 {token} 的帮助",
+    "human": {
+        "already": "恭喜！您已验证您是一个真实而独特的人！",
+        "failed": "抱歉，我们无法确认您是否拥有“唯一人员”可验证凭证。如果您尚未获得该凭证，请按照以下说明操作并重试。",
+        "instruction": "为了向 OpenChat 确认您是真实的、唯一的人，您需要提供“唯一人”可验证凭证。",
+        "notVerified": "您尚未验证您是真实、独特的人。您可能希望验证您的身份，以向其他用户表明您的可信度，并以此作为获得未来空投资格的一种方式。",
+        "verification": "确认",
+        "verified": "已验证的唯一人员",
+        "verify": "核实"
+    },
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",
     "install": {

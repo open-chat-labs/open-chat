@@ -505,8 +505,8 @@
         "instruction": "In order to confirm with OpenChat that you are a real, unique person you will need to provide the \"Unique Person\" verifiable credential.",
         "notVerified": "You have not yet verified that you are a real, unique person. You may wish to verify as a signal of your trustworthiness to other users and as a way to qualify for future airdrops.",
         "verification": "Verification",
-        "verify": "Verify",
-        "verified": "Verified unique person"
+        "verified": "Verified unique person",
+        "verify": "Verify"
     },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",

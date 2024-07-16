@@ -10,6 +10,8 @@
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
         "chooseGate": "Elige una puerta de acceso",
         "chooseNervousSystem": "Elige sistema nervioso",
+        "chooseOneGate": "Elige una puerta",
+        "chooseOneGateInfo": "Debe cumplir una de las siguientes condiciones para unirse. Elige cuál prefieres.",
         "chooseToken": "Elige token",
         "compositeGate": "Puerta de acceso combinada",
         "credential": {
@@ -497,6 +499,15 @@
     "hotGroups": "Grupos calientes",
     "hours": "Horas",
     "howToBuyToken": "Necesito ayuda para comprar {token}",
+    "human": {
+        "already": "¡Felicidades! ¡Ya has comprobado que eres una persona real y única!",
+        "failed": "Lo sentimos, no pudimos confirmar su posesión de la credencial verificable de \"Persona única\". Si aún no tiene la credencial, siga las instrucciones a continuación e inténtelo nuevamente.",
+        "instruction": "Para confirmar con OpenChat que usted es una persona real y única, deberá proporcionar la credencial verificable de \"Persona única\".",
+        "notVerified": "Aún no has verificado que eres una persona real y única. Es posible que desee realizar la verificación como señal de su confiabilidad para otros usuarios y como una forma de calificar para futuros lanzamientos aéreos.",
+        "verification": "Verificación",
+        "verified": "Persona única verificada",
+        "verify": "Verificar"
+    },
     "identityMigrationMessage": "Espere mientras su cuenta se actualiza a nuestro nuevo sistema. Esto nos permitirá admitir muchas más opciones de inicio de sesión en el futuro, incluida la recuperación de correo electrónico opcional en caso de que pierda el acceso a su dispositivo.",
     "inheritSystem": "Heredar tema del sistema",
     "install": {

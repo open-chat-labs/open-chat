@@ -10,6 +10,8 @@
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",
+        "chooseOneGate": "Choisissez un portail",
+        "chooseOneGateInfo": "Vous devez remplir l’une des conditions suivantes pour adhérer. Choisissez celui que vous préférez.",
         "chooseToken": "Choisissez un jeton",
         "compositeGate": "Portail d'accès combiné",
         "credential": {
@@ -497,6 +499,15 @@
     "hotGroups": "Groupes chauds",
     "hours": "Heures",
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
+    "human": {
+        "already": "Toutes nos félicitations! Vous avez déjà vérifié que vous êtes une personne réelle et unique !",
+        "failed": "Désolé, nous n'avons pas pu confirmer que vous possédez l'identifiant vérifiable « Personne unique ». Si vous ne disposez pas encore des informations d'identification, suivez les instructions ci-dessous et réessayez.",
+        "instruction": "Afin de confirmer avec OpenChat que vous êtes une personne réelle et unique, vous devrez fournir les informations d'identification vérifiables « Personne unique ».",
+        "notVerified": "Vous n’avez pas encore vérifié que vous êtes une personne réelle et unique. Vous souhaiterez peut-être vérifier comme un signal de votre fiabilité auprès des autres utilisateurs et comme moyen de vous qualifier pour de futurs parachutages.",
+        "verification": "Vérification",
+        "verified": "Personne unique vérifiée",
+        "verify": "Vérifier"
+    },
     "identityMigrationMessage": "Veuillez patienter pendant que votre compte est mis à niveau vers notre nouveau système. Cela nous permettra de prendre en charge de nombreuses autres options de connexion à l'avenir, y compris la récupération facultative des e-mails au cas où vous perdriez l'accès à votre appareil.",
     "inheritSystem": "Hériter du thème système",
     "install": {

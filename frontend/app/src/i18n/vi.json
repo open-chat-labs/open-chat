@@ -10,6 +10,8 @@
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
         "chooseGate": "Chọn một cổng truy cập",
         "chooseNervousSystem": "Chọn hệ thần kinh",
+        "chooseOneGate": "Chọn một cổng",
+        "chooseOneGateInfo": "Bạn cần đáp ứng một trong những điều kiện sau để tham gia. Chọn cái nào bạn thích.",
         "chooseToken": "Chọn mã thông báo",
         "compositeGate": "Cổng truy cập kết hợp",
         "credential": {
@@ -497,6 +499,15 @@
     "hotGroups": "Nhóm nóng",
     "hours": "Giờ",
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
+    "human": {
+        "already": "Chúc mừng! Bạn đã xác minh rằng bạn là một người thực sự, độc nhất!",
+        "failed": "Rất tiếc, chúng tôi không thể xác nhận việc bạn sở hữu thông tin xác thực \"Người duy nhất\". Nếu bạn chưa có thông tin xác thực, hãy làm theo hướng dẫn bên dưới và thử lại.",
+        "instruction": "Để xác nhận với OpenChat rằng bạn là người thực sự, là người duy nhất, bạn cần cung cấp thông tin xác thực có thể xác minh là \"Người duy nhất\".",
+        "notVerified": "Bạn chưa xác minh được rằng bạn là một người thực sự, độc nhất. Bạn có thể muốn xác minh như một tín hiệu về mức độ tin cậy của mình đối với những người dùng khác và như một cách để đủ điều kiện nhận các đợt airdrop trong tương lai.",
+        "verification": "xác minh",
+        "verified": "Người duy nhất đã được xác minh",
+        "verify": "Xác minh"
+    },
     "identityMigrationMessage": "Vui lòng đợi trong khi tài khoản của bạn được nâng cấp lên hệ thống mới của chúng tôi. Điều này sẽ cho phép chúng tôi hỗ trợ nhiều tùy chọn đăng nhập hơn trong tương lai, bao gồm cả tùy chọn khôi phục email trong trường hợp bạn mất quyền truy cập vào thiết bị của mình.",
     "inheritSystem": "Sử dụng màu nền theo hệ thống",
     "install": {

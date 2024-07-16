@@ -10,6 +10,8 @@
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
         "chooseGate": "Wählen Sie ein Zugangstor",
         "chooseNervousSystem": "Wählen Sie das Nervensystem",
+        "chooseOneGate": "Wählen Sie ein Tor",
+        "chooseOneGateInfo": "Um beizutreten, müssen Sie eine der folgenden Bedingungen erfüllen. Wählen Sie die von Ihnen bevorzugte aus.",
         "chooseToken": "Wählen Sie Token",
         "compositeGate": "Kombiniertes Zugangstor",
         "credential": {
@@ -497,6 +499,15 @@
     "hotGroups": "Heiße Gruppen",
     "hours": "Std",
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
+    "human": {
+        "already": "Herzlichen Glückwunsch! Sie haben bereits bestätigt, dass Sie eine echte, einzigartige Person sind!",
+        "failed": "Leider konnten wir Ihren Besitz der verifizierbaren Berechtigung „Eindeutige Person“ nicht bestätigen. Wenn Sie die Berechtigung noch nicht haben, folgen Sie den nachstehenden Anweisungen und versuchen Sie es erneut.",
+        "instruction": "Um mit OpenChat zu bestätigen, dass Sie eine echte, einzigartige Person sind, müssen Sie die überprüfbaren Anmeldeinformationen „Eindeutige Person“ angeben.",
+        "notVerified": "Sie haben noch nicht verifiziert, dass Sie eine echte, einzigartige Person sind. Sie können dies tun, um anderen Benutzern Ihre Vertrauenswürdigkeit zu signalisieren und sich für zukünftige Airdrops zu qualifizieren.",
+        "verification": "Überprüfung",
+        "verified": "Verifizierte eindeutige Person",
+        "verify": "Verifizieren"
+    },
     "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",
     "install": {
