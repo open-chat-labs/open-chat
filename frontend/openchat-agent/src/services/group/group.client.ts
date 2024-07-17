@@ -448,8 +448,9 @@ export class GroupClient extends CandidService {
 
     editMessage(
         message: Message,
-        threadRootMessageIndex?: number,
-        blockLevelMarkdown?: boolean,
+        threadRootMessageIndex: number | undefined,
+        blockLevelMarkdown: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [this.chatId.groupId])
@@ -461,7 +462,7 @@ export class GroupClient extends CandidService {
                     block_level_markdown:
                         blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                     correlation_id: generateUint64(),
-                    new_achievement: false,
+                    new_achievement: newAchievement,
                 };
                 return this.handleResponse(
                     this.groupService.edit_message_v2(args),
@@ -488,6 +489,7 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
@@ -517,7 +519,7 @@ export class GroupClient extends CandidService {
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
-                new_achievement: false,
+                new_achievement: newAchievement,
             };
 
             return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
@@ -586,7 +588,8 @@ export class GroupClient extends CandidService {
         reaction: string,
         username: string,
         displayName: string | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.groupService.add_reaction({
@@ -596,7 +599,7 @@ export class GroupClient extends CandidService {
                 username,
                 display_name: apiOptional(identity, displayName),
                 correlation_id: generateUint64(),
-                new_achievement: false,
+                new_achievement: newAchievement,
             }),
             addRemoveReactionResponse,
         );
@@ -620,8 +623,9 @@ export class GroupClient extends CandidService {
 
     deleteMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean,
+        threadRootMessageIndex: number | undefined,
+        asPlatformModerator: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
@@ -629,7 +633,7 @@ export class GroupClient extends CandidService {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
-                new_achievement: false,
+                new_achievement: newAchievement,
             }),
             deleteMessageResponse,
         );

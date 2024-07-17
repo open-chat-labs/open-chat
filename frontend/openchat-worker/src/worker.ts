@@ -538,6 +538,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.threadRootMessageIndex,
                         payload.asPlatformModerator,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -565,6 +566,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.username,
                         payload.displayName,
                         payload.threadRootMessageIndex,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -646,6 +648,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.acceptedRules,
                         payload.messageFilterFailed,
                         payload.pin,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -659,6 +662,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.msg,
                         payload.threadRootMessageIndex,
                         payload.blockLevelMarkdown,
+                        payload.newAchievement,
                     ),
                 );
                 break;

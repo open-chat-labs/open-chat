@@ -171,7 +171,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     triggered_by_user: ev.triggered_by_user,
                     attempt: 0,
                 });
-                jobs::delete_users::start_job_if_required(state);
+                jobs::delete_users::start_job_if_required(state, None);
             } else {
                 state.data.global_users.remove(&ev.user_id);
             }
@@ -181,6 +181,11 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         }
         Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
+        }
+        Event::AddCanisterToPool(canister_id) => {
+            if !state.data.canister_pool.contains(&canister_id) {
+                state.data.canister_pool.push(canister_id);
+            }
         }
     }
 }

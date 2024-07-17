@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const AccessGate = IDL.Rec();
   const ChannelId = IDL.Nat;
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
@@ -318,15 +319,21 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'SnsNeuron' : SnsNeuronGate,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
+  AccessGate.fill(
+    IDL.Variant({
+      'UniquePerson' : IDL.Null,
+      'VerifiedCredential' : VerifiedCredentialGate,
+      'SnsNeuron' : SnsNeuronGate,
+      'TokenBalance' : TokenBalanceGate,
+      'Composite' : IDL.Record({
+        'and' : IDL.Bool,
+        'inner' : IDL.Vec(AccessGate),
+      }),
+      'DiamondMember' : IDL.Null,
+      'Payment' : PaymentGate,
+      'LifetimeDiamondMember' : IDL.Null,
+    })
+  );
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -937,6 +944,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'AccessGateInvalid' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Record({ 'channel_id' : ChannelId }),
@@ -1967,6 +1975,7 @@ export const idlFactory = ({ IDL }) => {
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
     'UserNotInChannel' : IDL.Null,
+    'AccessGateInvalid' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
@@ -2004,6 +2013,7 @@ export const idlFactory = ({ IDL }) => {
     'DescriptionTooLong' : FieldTooLongResult,
     'InvalidLanguage' : IDL.Null,
     'NameTooShort' : FieldTooShortResult,
+    'AccessGateInvalid' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
     'UserNotInCommunity' : IDL.Null,

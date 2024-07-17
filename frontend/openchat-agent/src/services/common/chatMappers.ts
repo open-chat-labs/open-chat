@@ -1777,6 +1777,11 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             minBalance: candid.TokenBalance.min_balance,
         };
     }
+    if ("Composite" in candid) {
+        return {
+            kind: "no_gate",
+        };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
@@ -2270,6 +2275,7 @@ export function updateGroupResponse(
         return { kind: "chat_frozen" };
     }
     if (
+        "AccessGateInvalid" in candid ||
         "UserNotInChannel" in candid ||
         "ChannelNotFound" in candid ||
         "UserNotInCommunity" in candid ||
@@ -2372,6 +2378,9 @@ export function createGroupResponse(
         return { kind: "default_must_be_public" };
     }
 
+    if ("AccessGateInvalid" in candid) {
+        return CommonResponses.internalError();
+    }
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 

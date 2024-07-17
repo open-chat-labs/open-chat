@@ -273,6 +273,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
+  const SubmitProofOfUniquePersonhoodArgs = IDL.Record({
+    'credential_jwt' : IDL.Text,
+  });
+  const SubmitProofOfUniquePersonhoodResponse = IDL.Variant({
+    'Invalid' : IDL.Text,
+    'Success' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
   const SuspectedBotsArgs = IDL.Record({
     'after' : IDL.Opt(UserId),
     'count' : IDL.Nat32,
@@ -477,6 +485,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
+    'submit_proof_of_unique_personhood' : IDL.Func(
+        [SubmitProofOfUniquePersonhoodArgs],
+        [SubmitProofOfUniquePersonhoodResponse],
+        [],
+      ),
     'suspected_bots' : IDL.Func(
         [SuspectedBotsArgs],
         [SuspectedBotsResponse],
