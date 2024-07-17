@@ -5,6 +5,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use test_case::test_case;
 use tracing::info;
 use types::CanisterId;
 use user_index_canister::post_upgrade::Args;
@@ -60,4 +61,15 @@ fn local_user_index_canister(canister_id: CanisterId, test_mode: bool) -> Canist
     assert!(test_mode);
     // This will only be reached during tests + local development
     CanisterId::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap()
+}
+
+#[test_case("foyjw-giaaa-aaaaf-big5a-cai", true, "pecvb-tqaaa-aaaaf-bhdiq-cai")]
+#[test_case("x2jhd-2yaaa-aaaaf-bif6a-cai", true, "pecvb-tqaaa-aaaaf-bhdiq-cai")]
+#[test_case("ueepn-qiaaa-aaaar-ampla-cai", false, "aboy3-giaaa-aaaar-aaaaq-cai")]
+#[test_case("nfjlt-kaaaa-aaaar-axpxq-cai", false, "aboy3-giaaa-aaaar-aaaaq-cai")]
+#[test_case("7msbr-laaaa-aaaaf-ayvuq-cai", false, "nq4qv-wqaaa-aaaaf-bhdgq-cai")]
+#[test_case("2cpmn-myaaa-aaaaf-ayvia-cai", false, "nq4qv-wqaaa-aaaaf-bhdgq-cai")]
+fn local_user_index_canister_tests(canister_id: &str, test_mode: bool, expected: &str) {
+    let result = local_user_index_canister(CanisterId::from_text(canister_id).unwrap(), test_mode);
+    assert_eq!(result.to_text(), expected);
 }
