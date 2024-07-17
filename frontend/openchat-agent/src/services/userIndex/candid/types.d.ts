@@ -7,6 +7,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -1646,6 +1647,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
+export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
+  { 'Success' : null } |
+  { 'UserNotFound' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1845,6 +1850,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;
@@ -1965,6 +1971,10 @@ export interface _SERVICE {
     SetUserUpgradeConcurrencyResponse
   >,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
+  'submit_proof_of_unique_personhood' : ActorMethod<
+    [SubmitProofOfUniquePersonhoodArgs],
+    SubmitProofOfUniquePersonhoodResponse
+  >,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,

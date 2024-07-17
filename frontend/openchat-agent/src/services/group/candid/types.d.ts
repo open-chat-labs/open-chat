@@ -25,6 +25,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -2024,6 +2025,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'AccessGateInvalid' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -2103,6 +2105,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;

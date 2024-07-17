@@ -25,6 +25,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -555,6 +556,7 @@ export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'AccessGateInvalid' : null } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateCommunitySuccessResult } |
@@ -582,6 +584,7 @@ export type CreateGroupResponse = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'AccessGateInvalid' : null } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateGroupSuccessResult } |
@@ -2473,6 +2476,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;

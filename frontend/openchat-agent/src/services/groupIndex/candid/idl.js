@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const CommunityId = CanisterId;
   const TimestampMillis = IDL.Nat64;
@@ -83,15 +84,21 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'SnsNeuron' : SnsNeuronGate,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
+  AccessGate.fill(
+    IDL.Variant({
+      'UniquePerson' : IDL.Null,
+      'VerifiedCredential' : VerifiedCredentialGate,
+      'SnsNeuron' : SnsNeuronGate,
+      'TokenBalance' : TokenBalanceGate,
+      'Composite' : IDL.Record({
+        'and' : IDL.Bool,
+        'inner' : IDL.Vec(AccessGate),
+      }),
+      'DiamondMember' : IDL.Null,
+      'Payment' : PaymentGate,
+      'LifetimeDiamondMember' : IDL.Null,
+    })
+  );
   const CommunityMatch = IDL.Record({
     'id' : CommunityId,
     'channel_count' : IDL.Nat32,

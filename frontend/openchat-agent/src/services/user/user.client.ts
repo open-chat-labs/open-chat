@@ -959,7 +959,8 @@ export class UserClient extends CandidService {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.userService.add_reaction({
@@ -970,6 +971,7 @@ export class UserClient extends CandidService {
                 correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse,
+            newAchievement,
         );
     }
 

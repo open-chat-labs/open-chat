@@ -28,6 +28,7 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
+  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -581,6 +582,7 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'AccessGateInvalid' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : { 'channel_id' : ChannelId } } |
@@ -2279,6 +2281,7 @@ export type UpdateChannelResponse = { 'NameReserved' : null } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
   { 'UserNotInChannel' : null } |
+  { 'AccessGateInvalid' : null } |
   { 'ChannelNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
@@ -2305,6 +2308,7 @@ export type UpdateCommunityResponse = { 'NameReserved' : null } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'InvalidLanguage' : null } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'AccessGateInvalid' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'UserNotInCommunity' : null } |
@@ -2410,6 +2414,7 @@ export interface VerifiedCredentialGate {
 export interface VerifiedCredentialGateArgs {
   'credential_jwt' : string,
   'ii_origin' : string,
+  'credential_jwts' : Array<string>,
   'user_ii_principal' : Principal,
 }
 export type Version = number;

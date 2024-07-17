@@ -1,11 +1,12 @@
 <script lang="ts">
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import { OpenChat, achievements } from "openchat-client";
+    import { OpenChat, achievements, type Achievement } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -14,11 +15,32 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
+    const enabled = new Set<Achievement>([
+        "streak_3",
+        "streak_7",
+        "streak_14",
+        "streak_30",
+        "set_bio",
+        "set_avatar",
+        "joined_group",
+        "joined_community",
+        "sent_direct_message",
+        "received_direct_message",
+        "upgraded_to_diamond",
+        "set_display_name",
+        "upgrade_to_gold_diamond",
+    ]);
+
     $: globalState = client.globalStateStore;
-    $: [achieved, notAchieved] = client.partition([...achievements], (a) =>
+    $: filtered = [...achievements].filter(filter);
+    $: [achieved, notAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),
     );
-    $: percComplete = Math.floor((achieved.length / achievements.length) * 100);
+    $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
+
+    function filter(achievement: Achievement): boolean {
+        return enabled.has(achievement) || $globalState.achievements.has(achievement);
+    }
 </script>
 
 <Overlay dismissible>

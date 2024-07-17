@@ -48,7 +48,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 handle_activity_notification(state);
 
                 if args.new_achievement {
-                    state.notify_user_of_achievements(sender, vec![Achievement::ReactedToMessage]);
+                    state.notify_user_of_achievements(sender, vec![Achievement::EditedMessage]);
                 }
 
                 Success

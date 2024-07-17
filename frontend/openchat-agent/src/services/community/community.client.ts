@@ -238,6 +238,7 @@ export class CommunityClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.service.add_reaction({
@@ -247,7 +248,7 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 reaction,
-                new_achievement: false,
+                new_achievement: newAchievement,
             }),
             addRemoveReactionResponse,
         );
@@ -352,6 +353,7 @@ export class CommunityClient extends CandidService {
         messageIds: bigint[],
         threadRootMessageIndex: number | undefined,
         asPlatformModerator: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.service.delete_messages({
@@ -359,7 +361,7 @@ export class CommunityClient extends CandidService {
                 message_ids: messageIds,
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                new_achievement: false,
+                new_achievement: newAchievement,
             }),
             deleteMessageResponse,
         );
@@ -373,7 +375,8 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         message: Message,
         threadRootMessageIndex: number | undefined,
-        blockLevelMarkdown?: boolean,
+        blockLevelMarkdown: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity, this.config)
             .uploadData(message.content, [chatId.communityId])
@@ -386,7 +389,7 @@ export class CommunityClient extends CandidService {
                         message_id: message.messageId,
                         block_level_markdown:
                             blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
-                        new_achievement: false,
+                        new_achievement: newAchievement,
                     }),
                     editMessageResponse,
                 );
@@ -970,6 +973,7 @@ export class CommunityClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
@@ -1000,7 +1004,7 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_filter_failed: apiOptional(identity, messageFilterFailed),
                 block_level_markdown: event.event.blockLevelMarkdown,
-                new_achievement: false,
+                new_achievement: newAchievement,
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
                 .then((resp) => {
