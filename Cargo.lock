@@ -8833,6 +8833,7 @@ dependencies = [
  "stable_memory",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
+ "test-case",
  "testing",
  "time",
  "tracing",
