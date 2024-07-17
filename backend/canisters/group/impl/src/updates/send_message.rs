@@ -117,12 +117,7 @@ fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
     }
 
     let caller = state.env.caller();
-    if caller == state.data.user_index_canister_id {
-        Ok(Caller {
-            user_id: OPENCHAT_BOT_USER_ID,
-            is_bot: true,
-        })
-    } else if let Some(member) = state.data.get_member(caller) {
+    if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
         } else {
@@ -131,6 +126,11 @@ fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
                 is_bot: member.is_bot,
             })
         }
+    } else if caller == state.data.user_index_canister_id {
+        Ok(Caller {
+            user_id: OPENCHAT_BOT_USER_ID,
+            is_bot: true,
+        })
     } else {
         Err(CallerNotInGroup)
     }

@@ -152,13 +152,7 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
     }
 
     let caller = state.env.caller();
-    if caller == state.data.user_index_canister_id {
-        Ok(Caller {
-            user_id: OPENCHAT_BOT_USER_ID,
-            is_bot: true,
-            display_name: None,
-        })
-    } else if let Some(member) = state.data.members.get_mut(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
         } else {
@@ -181,6 +175,12 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
                 display_name: member.display_name().value.clone(),
             })
         }
+    } else if caller == state.data.user_index_canister_id {
+        Ok(Caller {
+            user_id: OPENCHAT_BOT_USER_ID,
+            is_bot: true,
+            display_name: None,
+        })
     } else {
         Err(UserNotInCommunity)
     }
