@@ -5,6 +5,7 @@ use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExp
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::OPENCHAT_BOT_USER_ID;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -95,7 +96,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     };
 
     // Bots can't call this c2c endpoint since it skips the validation
-    if is_bot && user_id != state.data.proposals_bot_user_id {
+    if is_bot && user_id != state.data.proposals_bot_user_id && user_id != OPENCHAT_BOT_USER_ID {
         return NotAuthorized;
     }
 
@@ -151,7 +152,13 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get_mut(caller) {
+    if caller == state.data.user_index_canister_id {
+        Ok(Caller {
+            user_id: OPENCHAT_BOT_USER_ID,
+            is_bot: true,
+            display_name: None,
+        })
+    } else if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
         } else {
