@@ -1,12 +1,12 @@
 use crate::model::private_communities::PrivateCommunityInfo;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
 use types::{AccessGate, CanisterId, CommunityId, Document, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
     let (user_id, principal) = match validate_caller().await {

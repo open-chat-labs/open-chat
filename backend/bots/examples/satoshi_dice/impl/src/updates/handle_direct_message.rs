@@ -1,7 +1,7 @@
 use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::model::user_map::DiceRoll;
 use crate::{mutate_state, RuntimeState, MAX_SATS_PER_ROLL};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use rand::RngCore;
 use satoshi_dice_canister::handle_direct_message::*;
@@ -10,7 +10,7 @@ use utils::time::MINUTE_IN_MS;
 
 const MAX_TOTAL_WINNINGS: u64 = 50_000;
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn handle_direct_message(args: Args) -> Response {
     mutate_state(|state| handle_message(args, state))

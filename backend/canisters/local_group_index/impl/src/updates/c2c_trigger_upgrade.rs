@@ -1,9 +1,9 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_trigger_upgrade::{Response::*, *};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_trigger_upgrade(_args: Args) -> Response {
     mutate_state(c2c_trigger_upgrade_impl)

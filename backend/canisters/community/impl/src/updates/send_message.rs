@@ -3,7 +3,7 @@ use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
-use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
@@ -17,7 +17,7 @@ use types::{
     TimestampMillis, User, UserId, Version,
 };
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn send_message(args: Args) -> Response {
     run_regular_jobs();
@@ -25,7 +25,7 @@ fn send_message(args: Args) -> Response {
     mutate_state(|state| send_message_impl(args, state))
 }
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();

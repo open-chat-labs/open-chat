@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index_canister;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
@@ -14,7 +14,7 @@ use types::{CanisterId, MessageContent, TextContent, UserId};
 use user_index_canister::c2c_notify_events::{Response::*, *};
 use user_index_canister::Event;
 
-#[update_msgpack(guard = "caller_is_local_user_index_canister")]
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))

@@ -20,7 +20,7 @@ export abstract class CandidService {
         config: { icUrl: string },
     ): T {
         const host = config.icUrl;
-        const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
+        const agent = HttpAgent.createSync({ identity: this.identity, host, retryTimes: 5 });
         if (!isMainnet(config.icUrl) && !offline()) {
             agent.fetchRootKey();
         }

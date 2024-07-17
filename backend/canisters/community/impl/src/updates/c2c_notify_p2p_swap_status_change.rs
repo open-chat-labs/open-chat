@@ -1,11 +1,11 @@
 use crate::guards::caller_is_escrow_canister;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
 use types::{Chat, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 
-#[update_msgpack(guard = "caller_is_escrow_canister")]
+#[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_p2p_swap_status_change(args: Args) {
     run_regular_jobs();

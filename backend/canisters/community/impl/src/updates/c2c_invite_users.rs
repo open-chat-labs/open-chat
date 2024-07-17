@@ -3,14 +3,14 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::invited_users::UserInvitation;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users::{Response::*, *};
 use types::UsersInvited;
 
 const MAX_INVITES: usize = 100;
 
-#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
+#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
     run_regular_jobs();
