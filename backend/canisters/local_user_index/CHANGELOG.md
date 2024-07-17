@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Reuse canisters of deleted empty and dormant users ([#6046](https://github.com/open-chat-labs/open-chat/pull/6046))
 
 ### Changed
 
