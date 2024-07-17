@@ -4,13 +4,13 @@ use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
 use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
-#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
+#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
     run_regular_jobs();

@@ -35,7 +35,7 @@ pub enum Event {
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
     DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
-    NotifyUniqueHumanProof(UserId, UniquePersonProof),
+    NotifyUniquePersonProof(UserId, UniquePersonProof),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

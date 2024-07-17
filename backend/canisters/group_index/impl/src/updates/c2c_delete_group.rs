@@ -1,11 +1,11 @@
 use crate::guards::caller_is_group_canister;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
 use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
 
-#[update_msgpack(guard = "caller_is_group_canister")]
+#[update(guard = "caller_is_group_canister", msgpack = true)]
 #[trace]
 fn c2c_delete_group(args: Args) -> Response {
     mutate_state(|state| {

@@ -1,13 +1,13 @@
 use crate::governance_clients::nns::GetBallotsResult;
 use crate::guards::caller_is_known_group_or_community_canister;
 use crate::{read_state, run_regular_jobs};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId};
 use user_canister::c2c_vote_on_proposal::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_known_group_or_community_canister")]
+#[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_vote_on_proposal(args: Args) -> Response {
     run_regular_jobs();

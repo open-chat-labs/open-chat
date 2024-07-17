@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::UserId;
 use user_index_canister::c2c_notify_chit::{Response::*, *};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_notify_chit(args: Args) -> Response {
     mutate_state(|state| c2c_notify_chit_impl(args, state))

@@ -1,11 +1,11 @@
 use crate::read_state;
 use crate::RuntimeState;
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
 use types::{BuildVersion, Document, PublicGroupSummary};
 
-#[query_candid_and_msgpack]
+#[query(candid = true, msgpack = true)]
 fn public_summary(args: Args) -> Response {
     read_state(|state| public_summary_impl(args, state))
 }

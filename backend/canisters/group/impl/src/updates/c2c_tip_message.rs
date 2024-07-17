@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{Reader, TipMessageArgs};
 use group_canister::c2c_tip_message::{Response::*, *};
@@ -8,7 +8,7 @@ use group_chat_core::TipMessageResult;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{EventIndex, GroupMessageTipped, Notification};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_tip_message(args: Args) -> Response {
     run_regular_jobs();

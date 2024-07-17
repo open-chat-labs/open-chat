@@ -1,11 +1,11 @@
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};
 use types::TimestampMillis;
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn create_swap(args: Args) -> Response {
     mutate_state(|state| create_swap_impl(args, state))

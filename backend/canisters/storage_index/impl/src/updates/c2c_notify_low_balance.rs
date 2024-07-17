@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState, BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_index_canister::c2c_notify_low_balance::*;
 use types::{CanisterId, CyclesTopUp};
 use utils::canister::deposit_cycles;
 use utils::cycles::can_spend_cycles;
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_notify_low_balance(_args: Args) -> Response {
     let prepare_ok = match read_state(prepare) {
