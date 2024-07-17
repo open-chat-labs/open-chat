@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Sync userIds to Identity canister ([#6027](https://github.com/open-chat-labs/open-chat/pull/6027))
 - Add `is_unique_person` field to user responses ([#6040](https://github.com/open-chat-labs/open-chat/pull/6040))
+- Auto delete users who get flagged as being empty and dormant ([#6046](https://github.com/open-chat-labs/open-chat/pull/6046))
 
 ## [[2.0.1235](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1235-user_index)] - 2024-07-11
 
