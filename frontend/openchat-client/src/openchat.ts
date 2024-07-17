@@ -3571,7 +3571,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 break;
         }
 
-        let achievements: Achievement[] = [];
+        const achievements: Achievement[] = [];
 
         if (achievement !== undefined) {
             achievements.push(achievement);
