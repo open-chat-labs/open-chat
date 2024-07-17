@@ -85,8 +85,8 @@ export const achievements = [
     "appointed_as_group_owner",
     "upgrade_to_gold_diamond",
     "owned_group_with_1_diamond_member",
-    "own_group_with_10_diamond_members",
-    "own_group_with_100_diamond_members",
+    "owned_group_with_10_diamond_members",
+    "owned_group_with_100_diamond_members",
     "owned_group_with_1000_diamond_members",
 ] as const;
 type AchievementType = typeof achievements;

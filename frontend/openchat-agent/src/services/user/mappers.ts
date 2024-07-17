@@ -235,7 +235,7 @@ export function achievementType(candid: ApiAchievement): Achievement {
         return "appointed_as_group_admin";
     }
     if ("OwnGroupWithOneHundredDiamondMembers" in candid) {
-        return "own_group_with_100_diamond_members";
+        return "owned_group_with_100_diamond_members";
     }
     if ("SetCommunityDisplayName" in candid) {
         return "set_community_display_name";
@@ -244,7 +244,7 @@ export function achievementType(candid: ApiAchievement): Achievement {
         return "appointed_group_owner";
     }
     if ("OwnGroupWithTenDiamondMembers" in candid) {
-        return "own_group_with_10_diamond_members";
+        return "owned_group_with_10_diamond_members";
     }
     if ("JoinedGatedGroupOrCommunity" in candid) {
         return "joined_gated_group_or_community";
