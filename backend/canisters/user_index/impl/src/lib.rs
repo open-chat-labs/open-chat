@@ -312,9 +312,7 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    #[serde(default)]
     pub ic_root_key: Vec<u8>,
-    #[serde(default)]
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
 }
 
