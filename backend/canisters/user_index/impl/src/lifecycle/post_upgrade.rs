@@ -47,14 +47,14 @@ fn post_upgrade(args: Args) {
 fn local_user_index_canister(canister_id: CanisterId, test_mode: bool) -> CanisterId {
     let bytes = canister_id.as_slice();
     if bytes > [0, 0, 0, 0, 2, 32, 0, 0, 1, 1].as_slice() && bytes < [0, 0, 0, 0, 2, 48, 0, 0, 1, 1].as_slice() {
+        return CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
+    }
+    if bytes > [0, 0, 0, 0, 0, 160, 0, 0, 1, 1].as_slice() && bytes < [0, 0, 0, 0, 0, 176, 0, 0, 1, 1].as_slice() {
         return if test_mode {
             CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap()
         } else {
             CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
         };
-    }
-    if bytes > [0, 0, 0, 0, 0, 160, 0, 0, 1, 1].as_slice() && bytes < [0, 0, 0, 0, 0, 176, 0, 0, 1, 1].as_slice() {
-        return CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
     }
 
     assert!(test_mode);
