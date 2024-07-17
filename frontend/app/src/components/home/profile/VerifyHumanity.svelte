@@ -13,12 +13,14 @@
     import { _ } from "svelte-i18n";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import LinkAccounts from "./LinkAccounts.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let failed = false;
     let verifying = false;
+    let step: "linking" | "verification" = "linking";
 
     function verify() {
         verifying = true;
@@ -44,50 +46,62 @@
 </script>
 
 <Overlay>
-    <ModalContent>
-        <div slot="header" class="header">
-            <AccountCheck size={$iconSize} color={"var(--txt)"} />
-            <div class="title">
-                <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+    {#if step === "linking"}
+        <LinkAccounts
+            on:close
+            on:proceed={() => (step = "verification")}
+            explanations={[i18nKey("identity.warning1"), i18nKey("identity.warning2")]} />
+    {:else}
+        <ModalContent fadeDelay={0} fadeDuration={0}>
+            <div slot="header" class="header">
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <div class="title">
+                    <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+                </div>
             </div>
-        </div>
-        <div slot="body">
-            {#if failed}
-                <p class="info">
-                    <ErrorMessage>
-                        <Translatable resourceKey={i18nKey("human.failed")} />
-                    </ErrorMessage>
-                </p>
-            {:else}
+            <div slot="body">
+                {#if failed}
+                    <p class="info">
+                        <ErrorMessage>
+                            <Translatable resourceKey={i18nKey("human.failed")} />
+                        </ErrorMessage>
+                    </p>
+                {/if}
                 <p class="info">
                     <Translatable resourceKey={i18nKey("human.instruction")} />
                 </p>
-            {/if}
-            <p class="question">
-                <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-            </p>
+                <p class="question">
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                </p>
 
-            <p class="answer">
-                <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-            </p>
+                <p class="answer">
+                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                </p>
 
-            <p class="answer">
-                <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-            </p>
-        </div>
+                <p class="answer">
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                </p>
+            </div>
 
-        <div slot="footer">
-            <ButtonGroup>
-                <Button secondary on:click={() => dispatch("close")}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                <Button loading={verifying} disabled={verifying} on:click={verify}
-                    ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-            </ButtonGroup>
-        </div>
-    </ModalContent>
+            <div slot="footer">
+                <ButtonGroup>
+                    <Button secondary on:click={() => dispatch("close")}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button secondary on:click={() => (step = "linking")}
+                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
+                    <Button loading={verifying} disabled={verifying} on:click={verify}
+                        ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+                </ButtonGroup>
+            </div>
+        </ModalContent>
+    {/if}
 </Overlay>
 
 <style lang="scss">
+    :global(.link-ii-logo img) {
+        width: 24px;
+    }
+
     .header {
         @include font(bold, normal, fs-130, 29);
         margin-bottom: $sp4;
