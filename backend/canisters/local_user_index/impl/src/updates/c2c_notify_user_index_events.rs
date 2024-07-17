@@ -182,5 +182,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
+        Event::AddCanisterToPool(canister_id) => {
+            if !state.data.canister_pool.contains(&canister_id) {
+                state.data.canister_pool.push(canister_id);
+            }
+        }
     }
 }

@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Store `unique_person_proof` in User canisters ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Reuse existing uninstalled user canisters ([#6047](https://github.com/open-chat-labs/open-chat/pull/6047))
 
 ### Removed
 
