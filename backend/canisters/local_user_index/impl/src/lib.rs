@@ -1,4 +1,3 @@
-use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -165,6 +164,7 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         let event_store_client_info = self.data.event_store_client.info();
         let event_relay_canister_id = event_store_client_info.event_store_canister_id;
@@ -172,7 +172,7 @@ impl RuntimeState {
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -189,7 +189,7 @@ impl RuntimeState {
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
-            referral_codes: self.data.referral_codes.metrics(),
+            referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -230,7 +230,6 @@ struct Data {
     pub platform_moderators_group: Option<ChatId>,
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
@@ -292,7 +291,6 @@ impl Data {
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
             timer_jobs: TimerJobs::default(),
-            btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der,
