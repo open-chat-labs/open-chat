@@ -171,7 +171,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     triggered_by_user: ev.triggered_by_user,
                     attempt: 0,
                 });
-                jobs::delete_users::start_job_if_required(state);
+                jobs::delete_users::start_job_if_required(state, None);
             } else {
                 state.data.global_users.remove(&ev.user_id);
             }

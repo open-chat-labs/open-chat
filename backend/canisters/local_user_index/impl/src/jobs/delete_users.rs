@@ -3,16 +3,17 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::Empty;
+use types::{Empty, Milliseconds};
 use user_index_canister::{Event, UserDeleted};
+use utils::time::SECOND_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.users_to_delete_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), run);
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -42,7 +43,7 @@ async fn process_user(user: UserToDelete) {
         match user_canister_c2c_client::c2c_is_empty_and_dormant(canister_id, &Empty {}).await {
             Ok(true) => {}
             Ok(false) => {
-                read_state(start_job_if_required);
+                read_state(|state| start_job_if_required(state, None));
                 return;
             }
             Err(_) => error = true,
@@ -60,6 +61,7 @@ async fn process_user(user: UserToDelete) {
 
             if !user.triggered_by_user {
                 state.push_event_to_user_index(Event::UserDeleted(Box::new(UserDeleted { user_id })));
+                state.data.canister_pool.push(canister_id);
             }
         } else if user.attempt < 50 {
             state.data.users_to_delete_queue.push_back(UserToDelete {
@@ -69,6 +71,6 @@ async fn process_user(user: UserToDelete) {
             });
         }
 
-        start_job_if_required(state);
+        start_job_if_required(state, error.then_some(30 * SECOND_IN_MS));
     })
 }
