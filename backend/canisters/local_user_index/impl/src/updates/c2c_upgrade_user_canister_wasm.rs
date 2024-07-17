@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, read_state, Data, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use itertools::Itertools;
 use local_user_index_canister::c2c_upgrade_user_canister_wasm::{Response::*, *};
@@ -11,7 +11,7 @@ use tracing::info;
 use types::{BuildVersion, CanisterId, ChunkedCanisterWasm, Hash};
 use utils::canister::{clear_chunk_store, should_perform_upgrade, upload_wasm_in_chunks};
 
-#[update_msgpack(guard = "caller_is_user_index_canister")]
+#[update(guard = "caller_is_user_index_canister", msgpack = true)]
 #[trace]
 async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
     let PrepareResult { this_canister_id } = match read_state(|state| prepare(&args, state)) {

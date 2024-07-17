@@ -1,11 +1,11 @@
 use crate::guards::caller_is_notifications_index;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_sync_index::{Response::*, *};
 use notifications_index_canister::NotificationsIndexEvent;
 
-#[update_msgpack(guard = "caller_is_notifications_index")]
+#[update(guard = "caller_is_notifications_index", msgpack = true)]
 #[trace]
 fn c2c_sync_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_index_impl(args, state))

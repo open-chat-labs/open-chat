@@ -1,12 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_invite_users::{Response::*, *};
 use group_chat_core::InvitedUsersResult;
 
-#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
+#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
     run_regular_jobs();

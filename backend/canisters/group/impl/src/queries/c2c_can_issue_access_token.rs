@@ -1,12 +1,12 @@
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
 use crate::RuntimeState;
-use canister_api_macros::query_msgpack;
+use canister_api_macros::query;
 use group_canister::c2c_can_issue_access_token::*;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use types::{AccessTokenType, VideoCallType};
 
-#[query_msgpack(guard = "caller_is_local_user_index")]
+#[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token(args: Args) -> Response {
     read_state(|state| c2c_can_issue_access_token_impl(args, state))
 }

@@ -1,14 +1,13 @@
 use crate::guards::caller_is_proposals_bot;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
 use group_index_canister::c2c_start_importing_group_into_community::Response as C2cResponse;
-use ic_cdk::update;
 use rand::Rng;
 use types::{CanisterId, ChannelId, ChatId, UserId};
 
-#[update_msgpack(guard = "caller_is_proposals_bot")]
+#[update(guard = "caller_is_proposals_bot", msgpack = true)]
 async fn c2c_import_proposals_group(
     args: community_canister::c2c_import_proposals_group::Args,
 ) -> community_canister::c2c_import_proposals_group::Response {
@@ -26,7 +25,7 @@ async fn c2c_import_proposals_group(
     }
 }
 
-#[update]
+#[update(candid = true)]
 #[trace]
 async fn import_group(args: Args) -> Response {
     run_regular_jobs();

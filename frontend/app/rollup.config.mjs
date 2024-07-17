@@ -23,6 +23,7 @@ import fs from "fs-extra";
 import path from "path";
 import rimraf from "rimraf";
 import { fileURLToPath } from "url";
+import { sourcemapNewline } from "../sourcemapNewline.mjs";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -403,6 +404,7 @@ export default {
             ],
             hook: "generateBundle",
         }),
+        sourcemapNewline(),
     ],
     watch: {
         clearScreen: false,

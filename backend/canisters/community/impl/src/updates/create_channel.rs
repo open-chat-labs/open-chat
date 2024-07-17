@@ -4,12 +4,11 @@ use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
-use ic_cdk::update;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId};
@@ -18,7 +17,7 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update]
+#[update(candid = true)]
 #[trace]
 async fn create_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -31,7 +30,7 @@ async fn create_channel(args: Args) -> Response {
     mutate_state(|state| create_channel_impl(args, false, diamond_membership_expiry_dates, state))
 }
 
-#[update_msgpack(guard = "caller_is_proposals_bot")]
+#[update(guard = "caller_is_proposals_bot", msgpack = true)]
 #[trace]
 fn c2c_create_proposals_channel(args: Args) -> Response {
     run_regular_jobs();

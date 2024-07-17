@@ -1,12 +1,12 @@
 use crate::model::pending_actions::PendingAction;
 use crate::model::reward_codes::ClaimRewardCodeResult;
 use crate::{mutate_state, RewardCodes, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use icp_dispenser_bot::handle_direct_message::*;
 use types::{BotMessage, MessageContent, MessageContentInitial, TextContent, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn handle_direct_message(args: Args) -> Response {
     mutate_state(|state| handle_message(args, state))

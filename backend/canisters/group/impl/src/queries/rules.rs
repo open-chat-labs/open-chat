@@ -1,9 +1,9 @@
 use crate::read_state;
 use crate::RuntimeState;
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query;
 use group_canister::rules::{Response::*, *};
 
-#[query_candid_and_msgpack]
+#[query(candid = true, msgpack = true)]
 fn rules(args: Args) -> Response {
     read_state(|state| rules_impl(args, state))
 }
