@@ -181,7 +181,6 @@ impl RuntimeState {
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
-            canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             user_wasm_version: self.data.user_canister_wasm_for_new_canisters.wasm.version,
@@ -202,6 +201,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
+            canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
 }
@@ -316,7 +316,6 @@ pub struct Metrics {
     pub global_user_count: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
-    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: BuildVersion,
@@ -328,6 +327,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
+    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 
 #[derive(Serialize, Debug)]
