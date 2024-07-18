@@ -29,6 +29,10 @@ impl Pool {
         self.canister_ids.len() >= self.target_size as usize
     }
 
+    pub fn contains(&self, canister_id: &CanisterId) -> bool {
+        self.canister_ids.contains(canister_id)
+    }
+
     pub fn push(&mut self, canister_id: CanisterId) {
         self.canister_ids.push_back(canister_id);
     }

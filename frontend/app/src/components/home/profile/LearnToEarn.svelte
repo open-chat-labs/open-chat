@@ -1,34 +1,46 @@
 <script lang="ts">
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import { OpenChat, achievements } from "openchat-client";
+    import { OpenChat, achievements, type Achievement } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
 
-    import { _ } from "svelte-i18n";
-
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    // this is a temporary hack to filter out everything we don't currently have translations for
-    // e.g. things we're not quite ready to switch on yet
-    function filter(achievement: string) {
-        const key = `learnToEarn.${achievement}`;
-        return $_(key) !== key;
-    }
+    const enabled = new Set<Achievement>([
+        "streak_3",
+        "streak_7",
+        "streak_14",
+        "streak_30",
+        "set_bio",
+        "set_avatar",
+        "joined_group",
+        "joined_community",
+        "sent_direct_message",
+        "received_direct_message",
+        "upgraded_to_diamond",
+        "set_display_name",
+        "upgrade_to_gold_diamond",
+    ]);
 
-    $: filtered = [...achievements].filter(filter);
     $: globalState = client.globalStateStore;
+    $: filtered = [...achievements].filter(filter);
     $: [achieved, notAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),
     );
     $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
+
+    function filter(achievement: Achievement): boolean {
+        return enabled.has(achievement) || $globalState.achievements.has(achievement);
+    }
 </script>
 
 <Overlay dismissible>

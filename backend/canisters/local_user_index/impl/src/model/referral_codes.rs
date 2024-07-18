@@ -23,6 +23,14 @@ pub struct ReferralCodes {
     codes: HashMap<String, ReferralCodeDetails>,
 }
 
+impl ReferralCodes {
+    pub fn set_expired(&mut self, now: TimestampMillis) {
+        for code in self.codes.values_mut() {
+            code.expiry = Some(now);
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ReferralCodeDetails {
     referral_type: ReferralType,
@@ -40,6 +48,7 @@ pub struct ReferralCodeClaim {
 #[derive(Serialize, Debug, Default)]
 pub struct ReferralTypeMetrics {
     pub claimed: usize,
+    pub expired: usize,
     pub total: usize,
 }
 
@@ -71,6 +80,7 @@ impl ReferralCodes {
         }
     }
 
+    #[allow(dead_code)]
     pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
         match self.codes.entry(code) {
             Entry::Occupied(mut e) => {
@@ -107,7 +117,7 @@ impl ReferralCodes {
         }
     }
 
-    pub fn metrics(&self) -> HashMap<ReferralType, ReferralTypeMetrics> {
+    pub fn metrics(&self, now: TimestampMillis) -> HashMap<ReferralType, ReferralTypeMetrics> {
         let mut metrics = HashMap::new();
 
         for details in self.codes.values() {
@@ -115,6 +125,8 @@ impl ReferralCodes {
             ms.total += 1;
             if details.claimed.is_some() {
                 ms.claimed += 1;
+            } else if details.expiry.is_some_and(|ts| ts < now) {
+                ms.expired += 1;
             }
         }
 

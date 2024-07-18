@@ -1,4 +1,3 @@
-use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -165,6 +164,7 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         let event_store_client_info = self.data.event_store_client.info();
         let event_relay_canister_id = event_store_client_info.event_store_canister_id;
@@ -172,7 +172,7 @@ impl RuntimeState {
         Metrics {
             heap_memory_used: utils::memory::heap(),
             stable_memory_used: utils::memory::stable(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -181,7 +181,6 @@ impl RuntimeState {
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
-            canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             user_wasm_version: self.data.user_canister_wasm_for_new_canisters.wasm.version,
@@ -189,7 +188,7 @@ impl RuntimeState {
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
-            referral_codes: self.data.referral_codes.metrics(),
+            referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -202,6 +201,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
+            canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
 }
@@ -230,7 +230,6 @@ struct Data {
     pub platform_moderators_group: Option<ChatId>,
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
@@ -292,7 +291,6 @@ impl Data {
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
             timer_jobs: TimerJobs::default(),
-            btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der,
@@ -318,7 +316,6 @@ pub struct Metrics {
     pub global_user_count: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
-    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: BuildVersion,
@@ -330,6 +327,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
+    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 
 #[derive(Serialize, Debug)]
