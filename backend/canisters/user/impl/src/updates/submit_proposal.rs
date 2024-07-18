@@ -23,7 +23,7 @@ async fn submit_proposal(args: Args) -> Response {
     };
 
     // Make the crypto transfer
-    let completed_transaction = match process_transaction(transaction, my_user_id.into()).await {
+    let completed_transaction = match process_transaction(transaction, my_user_id.into(), false).await {
         Ok(completed) => completed,
         Err(failed) => return TransferFailed(failed.error_message),
     };
