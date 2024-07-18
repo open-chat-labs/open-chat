@@ -35,6 +35,10 @@ impl CanistersRequiringUpgrade {
         self.pending.clear();
     }
 
+    pub fn clear_failed(&mut self, older_than: BuildVersion) {
+        self.failed.retain(|f| f.to_version >= older_than);
+    }
+
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.mark_upgrade_no_longer_in_progress(canister_id);
         self.completed += 1;
