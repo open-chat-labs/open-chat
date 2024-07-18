@@ -2,7 +2,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    User, UserId,
+    UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -22,6 +22,7 @@ pub enum Event {
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserDeleted(Box<UserDeleted>),
+    NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

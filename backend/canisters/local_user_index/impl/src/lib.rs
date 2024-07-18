@@ -58,16 +58,33 @@ impl RuntimeState {
         self.data.global_users.get(&caller).unwrap().user_id
     }
 
-    pub fn calling_user(&self, credential_jwts: Option<&[String]>) -> GlobalUser {
+    pub fn calling_user(&self) -> GlobalUser {
         let caller = self.env.caller();
-        let mut user_details = self.data.global_users.get(&caller).unwrap();
+        self.data.global_users.get(&caller).unwrap()
+    }
+
+    pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
+        let mut user_details = self.calling_user();
 
         if user_details.unique_person_proof.is_none() {
-            user_details.unique_person_proof = credential_jwts.as_ref().and_then(|jwts| {
+            if let Some(unique_person_proof) = credential_jwts.as_ref().and_then(|jwts| {
                 let now = self.env.now();
                 self.data
                     .extract_proof_of_unique_personhood(user_details.principal, jwts, now)
-            });
+            }) {
+                let user_id = user_details.user_id;
+                self.push_event_to_user_index(UserIndexEvent::NotifyUniquePersonProof(Box::new((
+                    user_id,
+                    unique_person_proof.clone(),
+                ))));
+                if self.data.local_users.contains(&user_id) {
+                    self.push_event_to_user(
+                        user_id,
+                        UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
+                    );
+                }
+                user_details.unique_person_proof = Some(unique_person_proof);
+            }
         }
 
         user_details

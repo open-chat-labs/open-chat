@@ -8,7 +8,7 @@ use types::UserId;
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 async fn chat_events(args: Args) -> Response {
-    let (user, now) = read_state(|state| (state.calling_user(None), state.env.now()));
+    let (user, now) = read_state(|state| (state.calling_user(), state.env.now()));
 
     let futures: Vec<_> = args
         .requests
