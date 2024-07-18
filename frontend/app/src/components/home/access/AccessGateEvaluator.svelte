@@ -6,6 +6,9 @@
         isLeafGate,
         isPaymentGate,
         isUniquePersonGate,
+        isLifetimeDiamondGate,
+        isDiamondGate,
+        OpenChat,
         shouldPreprocessGate,
         type AccessGate,
         type AccessGateWithLevel,
@@ -17,8 +20,9 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
+    import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -27,6 +31,7 @@
     import Radio from "../../Radio.svelte";
 
     const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let gates: AccessGateWithLevel[];
     export let level: Level;
@@ -61,7 +66,7 @@
             }
             if (isLeafGate(currentGate)) {
                 const found = [...optionalGatesByIndex.values()].find((g) => g === currentGate);
-                if (found) {
+                if (found || client.doesUserMeetAccessGate(currentGate)) {
                     nextGate();
                 }
             }
@@ -152,6 +157,14 @@
                     {level}
                     on:next={nextGate}
                     on:close={onClose} />
+            {:else if isLifetimeDiamondGate(currentGate)}
+                <DiamondGateEvaluator {level} lifetime on:next={nextGate} on:cancel={onClose} />
+            {:else if isDiamondGate(currentGate)}
+                <DiamondGateEvaluator
+                    {level}
+                    lifetime={false}
+                    on:next={nextGate}
+                    on:cancel={onClose} />
             {/if}
         {/if}
     </div>

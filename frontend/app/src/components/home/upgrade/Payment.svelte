@@ -28,6 +28,10 @@
     export let confirmed = false;
     export let refreshingBalance = false;
     export let ledger: string;
+    export let allowBack = true;
+    export let lifetime = false;
+    export let showExpiry = true;
+    export let padded = true;
 
     type FeeKey = keyof Omit<DiamondMembershipFees, "token">;
     type FeeData = RemoteData<Record<"ICP" | "CHAT", DiamondMembershipFees>, string>;
@@ -40,31 +44,36 @@
             index: 0,
             duration: i18nKey("upgrade.oneMonth"),
             fee: "oneMonth",
+            enabled: !lifetime,
         },
         {
             index: 1,
             duration: i18nKey("upgrade.threeMonths"),
             fee: "threeMonths",
+            enabled: !lifetime,
         },
         {
             index: 2,
             duration: i18nKey("upgrade.oneYear"),
             fee: "oneYear",
+            enabled: !lifetime,
         },
         {
             index: 3,
             duration: i18nKey("upgrade.lifetime"),
             fee: "lifetime",
+            enabled: true,
         },
     ];
 
     let autoRenew = true;
-    let selectedOption: Option | undefined = options[0];
+    let selectedOption: Option | undefined = options[lifetime ? 3 : 0];
 
     type Option = {
         index: number;
         duration: ResourceKey;
         fee: FeeKey;
+        enabled: boolean;
     };
 
     let diamondFees: FeeData = {
@@ -119,8 +128,11 @@
             .then((success) => {
                 if (success) {
                     confirmed = true;
+                    dispatch("success");
                 } else {
-                    toastStore.showFailureToast(i18nKey("upgrade.paymentFailed"));
+                    const errorKey = "upgrade.paymentFailed";
+                    error = errorKey;
+                    toastStore.showFailureToast(i18nKey(errorKey));
                 }
             })
             .finally(() => (confirming = false));
@@ -142,13 +154,15 @@
     });
 </script>
 
-<div class="body" class:confirming class:is-confirmed={confirmed}>
+<div class="body" class:padded class:confirming class:is-confirmed={confirmed}>
     {#if confirming}
         <Loading size={"large"} />
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <Expiry extendBy={selectedDuration} />
+        {#if showExpiry}
+            <Expiry extendBy={selectedDuration} />
+        {/if}
         <div class="cols">
             <div class="left">
                 {#each options as option}
@@ -156,9 +170,14 @@
                         role="button"
                         tabindex="0"
                         class="option"
+                        class:disabled={!option.enabled}
                         class:insufficientFunds={insufficientFunds && !refreshingBalance}
                         class:selected={selectedOption?.index === option.index}
-                        on:click={() => (selectedOption = option)}>
+                        on:click={() => {
+                            if (option.enabled) {
+                                selectedOption = option;
+                            }
+                        }}>
                         <div class="option-details">
                             <p class="duration"><Translatable resourceKey={option.duration} /></p>
                             <p class="price">
@@ -178,38 +197,44 @@
             </div>
         </div>
 
-        <div class="autorenew">
-            <Checkbox
-                id="auto-renew"
-                on:change={() => (autoRenew = !autoRenew)}
-                label={i18nKey("upgrade.autorenew")}
-                align={"start"}
-                disabled={selectedDuration === "lifetime"}
-                checked={autoRenew && selectedDuration !== "lifetime"}>
-                <div class="section-title">
-                    <Translatable resourceKey={i18nKey("upgrade.autorenew")} />
-                </div>
-                <div class="smallprint">
-                    <Translatable resourceKey={i18nKey("upgrade.paymentSmallprint")} />
-                </div>
-                {#if insufficientFunds && !refreshingBalance}
-                    <ErrorMessage
-                        ><Translatable
-                            resourceKey={i18nKey("upgrade.insufficientFunds", {
-                                token: tokenDetails.symbol,
-                                amount: `${toPay} ${tokenDetails.symbol}`,
-                            })} /></ErrorMessage>
-                {/if}
+        {#if !lifetime}
+            <div class="autorenew">
+                <Checkbox
+                    id="auto-renew"
+                    on:change={() => (autoRenew = !autoRenew)}
+                    label={i18nKey("upgrade.autorenew")}
+                    align={"start"}
+                    disabled={selectedDuration === "lifetime"}
+                    checked={autoRenew && selectedDuration !== "lifetime"}>
+                    <div class="section-title">
+                        <Translatable resourceKey={i18nKey("upgrade.autorenew")} />
+                    </div>
+                    <div class="smallprint">
+                        <Translatable resourceKey={i18nKey("upgrade.paymentSmallprint")} />
+                    </div>
+                </Checkbox>
+            </div>
+        {/if}
 
+        <div class="autorenew">
+            {#if insufficientFunds && !refreshingBalance}
+                <ErrorMessage
+                    ><Translatable
+                        resourceKey={i18nKey("upgrade.insufficientFunds", {
+                            token: tokenDetails.symbol,
+                            amount: `${toPay} ${tokenDetails.symbol}`,
+                        })} /></ErrorMessage>
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     <Translatable
-                        resourceKey={i18nKey("howToBuyToken", { token: tokenDetails.symbol })} />
+                        resourceKey={i18nKey("howToBuyToken", {
+                            token: tokenDetails.symbol,
+                        })} />
                 </a>
+            {/if}
 
-                {#if error}
-                    <ErrorMessage>{error}</ErrorMessage>
-                {/if}
-            </Checkbox>
+            {#if error}
+                <ErrorMessage>{error}</ErrorMessage>
+            {/if}
         </div>
     {/if}
 </div>
@@ -224,12 +249,15 @@
             small={!$mobileWidth}
             secondary
             on:click={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
-        <Button
-            disabled={confirming}
-            tiny={$mobileWidth}
-            small={!$mobileWidth}
-            secondary
-            on:click={features}><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
+        {#if allowBack}
+            <Button
+                disabled={confirming}
+                tiny={$mobileWidth}
+                small={!$mobileWidth}
+                secondary
+                on:click={features}
+                ><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
+        {/if}
         <Button
             small={!$mobileWidth}
             disabled={confirming || insufficientFunds}
@@ -241,9 +269,15 @@
 
 <style lang="scss">
     .body {
-        padding: $sp4 $sp5;
         min-height: 390px;
         transition: height 200ms ease-in-out;
+
+        &.padded {
+            padding: $sp4 $sp5;
+            @include mobile() {
+                padding: $sp3 $sp4;
+            }
+        }
 
         &.is-confirmed {
             height: 240px;
@@ -251,10 +285,6 @@
 
         &.confirming {
             height: 390px;
-        }
-
-        @include mobile() {
-            padding: $sp3 $sp4;
         }
     }
 
@@ -278,6 +308,11 @@
             }
         }
 
+        &.disabled {
+            color: var(--txt-light);
+            cursor: default;
+        }
+
         @include mobile() {
             text-align: center;
             padding: 10px $sp4;
@@ -298,10 +333,7 @@
     .duration {
         @include font-size(fs-70);
         text-transform: uppercase;
-        margin-bottom: $sp3;
-        @include mobile() {
-            margin-bottom: $sp2;
-        }
+        margin-bottom: $sp2;
     }
 
     .price {

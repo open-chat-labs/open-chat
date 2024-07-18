@@ -86,7 +86,9 @@
         on:error={onRefreshingBalanceFailed} />
 </div>
 <div>
-    <Markdown text={approvalMessage + " " + distributionMessage} />
+    <p>
+        <Markdown text={approvalMessage + " " + distributionMessage} />
+    </p>
     {#if errorMessage !== undefined}
         <div class="error">
             <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>

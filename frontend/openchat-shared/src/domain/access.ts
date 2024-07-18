@@ -73,7 +73,13 @@ export function isLeafGate(gate: AccessGate): gate is LeafGate {
 }
 
 export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate {
-    return ["unique_person_gate", "credential_gate", "payment_gate"].includes(gate.kind);
+    return [
+        "unique_person_gate",
+        "credential_gate",
+        "payment_gate",
+        "lifetime_diamond_gate",
+        "diamond_gate",
+    ].includes(gate.kind);
 }
 
 export function isCompositeGate(gate: AccessGate): gate is CompositeGate {
@@ -98,6 +104,14 @@ export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
 
 export function isUniquePersonGate(gate: AccessGate): gate is UniquePersonGate {
     return gate.kind === "unique_person_gate";
+}
+
+export function isLifetimeDiamondGate(gate: AccessGate): gate is LifetimeDiamondGate {
+    return gate.kind === "lifetime_diamond_gate";
+}
+
+export function isDiamondGate(gate: AccessGate): gate is DiamondGate {
+    return gate.kind === "diamond_gate";
 }
 
 export type DiamondGate = { kind: "diamond_gate" };
