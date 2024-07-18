@@ -513,9 +513,10 @@
         "linkIdentity": "Link Identity",
         "back": "Back",
         "failed": "Sorry but we failed to link an Internet Identity to your OpenChat account",
+        "mismatch": "This does not match the principal that you are currently signed in with. Are you sure you used the same authentication provider?",
         "proceed": "Proceed",
-        "signInCurrent": "First signin again with the identity provider that you are currently using.",
-        "signInNext": "Next create and/or signin with the internet identity that you would like to link to your OpenChat account.",
+        "signInCurrent": "Sign in with the identity provider that you are currently using",
+        "signInNext": "Create or signin with the internet identity that you would like to link to your OpenChat account",
         "warning1": "You must be signed in using Internet Identity to confirm your unique personhood. If you registered using another method you will need to create and link an Internet Identity to your OpenChat account first.",
         "warning2": "If you are already signed in with Internet Identity, you can proceed."
     },

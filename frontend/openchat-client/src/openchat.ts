@@ -1,7 +1,12 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
 import { type Identity } from "@dfinity/agent";
-import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
+import {
+    AuthClient,
+    type AuthClientLoginOptions,
+    type AuthClientStorage,
+    IdbStorage,
+} from "@dfinity/auth-client";
 import { get, writable, type Readable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -617,6 +622,13 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
+    public get AuthPrincipal(): string {
+        if (this._authPrincipal === undefined) {
+            throw new Error("Trying to access the _authPrincipal before it has been set up");
+        }
+        return this._authPrincipal;
+    }
+
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
         if (
             this._liveState.selectedChatId === undefined ||
@@ -703,14 +715,20 @@ export class OpenChat extends OpenChatAgentWorker {
         this._logger.debug(message, ...optionalParams);
     }
 
+    getAuthClientOptions(provider: AuthProvider): AuthClientLoginOptions {
+        return {
+            identityProvider: this.buildAuthProviderUrl(provider),
+            maxTimeToLive: SESSION_TIMEOUT_NANOS,
+            derivationOrigin: this.config.iiDerivationOrigin,
+        };
+    }
+
     login(): void {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
-                identityProvider: this.buildAuthProviderUrl(authProvider),
-                maxTimeToLive: SESSION_TIMEOUT_NANOS,
-                derivationOrigin: this.config.iiDerivationOrigin,
+                ...this.getAuthClientOptions(authProvider),
                 onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
@@ -720,7 +738,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
+    buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
         switch (authProvider) {
             case AuthProvider.II:
                 return this.config.internetIdentityUrl;

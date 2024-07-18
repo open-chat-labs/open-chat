@@ -3,15 +3,11 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { AuthProvider, Poller, type OpenChat } from "openchat-client";
-    import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
-    import SendIcon from "svelte-material-icons/Send.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
-    import Input from "../Input.svelte";
     import { configKeys } from "../../utils/config";
     import { ECDSAKeyIdentity } from "@dfinity/identity";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -19,6 +15,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { toastStore } from "../../stores/toast";
     import { querystring } from "../../routes";
+    import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -26,17 +23,15 @@
     let state: "options" | "logging-in" = "options";
     let mode: "signin" | "signup" = "signin";
     let email = "";
-    let showMore = false;
     let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
     let verificationCode: string | undefined = undefined;
+    let emailInvalid = false;
 
+    $: restrictTo = new Set($querystring.getAll("auth"));
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
-    $: options = buildOptions($selectedAuthProviderStore, mode);
-    $: emailInvalid = !isEmailValid(email);
-    $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
     $: loggingInWithEmail =
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
     $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
@@ -74,58 +69,8 @@
         dispatch("close");
     }
 
-    function buildOptions(
-        selected: AuthProvider | undefined,
-        mode: "signin" | "signup",
-    ): AuthProvider[] {
-        let options = [];
-        const supportsII = "PublicKeyCredential" in window;
-
-        options.push(AuthProvider.EMAIL);
-
-        if (supportsII) {
-            options.push(AuthProvider.II);
-            options.push(AuthProvider.ETH);
-            options.push(AuthProvider.SOL);
-
-            if (mode === "signin") {
-                options.push(AuthProvider.NFID);
-            }
-        }
-
-        const restrictTo = new Set($querystring.getAll("auth"));
-        if (restrictTo.size > 0) {
-            options = options.filter((o) => {
-                return (
-                    (o === AuthProvider.II && restrictTo.has("II")) ||
-                    (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
-                    (o === AuthProvider.ETH && restrictTo.has("ETH")) ||
-                    (o === AuthProvider.SOL && restrictTo.has("SOL")) ||
-                    (o === AuthProvider.NFID && restrictTo.has("NFID"))
-                );
-            });
-        }
-
-        if (selected !== undefined) {
-            let i = options.findIndex((p) => p === selected);
-
-            if (i >= 0) {
-                if (selected === AuthProvider.EMAIL) {
-                    email = localStorage.getItem(configKeys.selectedAuthEmail) ?? "";
-                }
-
-                options.splice(i, 1);
-                options.splice(0, 0, selected);
-            }
-        }
-        return options;
-    }
-
-    function isEmailValid(email: string): boolean {
-        return email.length > 0;
-    }
-
-    function login(provider: AuthProvider) {
+    function login(ev: CustomEvent<AuthProvider>) {
+        const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -216,10 +161,6 @@
         state = "options";
     }
 
-    function providerName(provider: AuthProvider): string {
-        return provider === AuthProvider.NFID ? "NFID (Legacy)" : provider;
-    }
-
     function toggleMode() {
         if (mode === "signin") {
             client.gaTrack("signup_link_clicked", "registration");
@@ -262,98 +203,21 @@
     </div>
     <div class="login" slot="body">
         {#if state === "options"}
-            <div class="options">
-                {#each options as provider, i}
-                    {#if showAllOptions || i === 0}
-                        <div
-                            class={`option ${
-                                showAllOptions && options.length > 1 && i === 0 ? "separate" : ""
-                            }`}>
-                            {#if provider === AuthProvider.EMAIL}
-                                <div class="email">
-                                    <div class="email-icon icon">
-                                        <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
-                                    </div>
-                                    <div class="email-txt">
-                                        <Input
-                                            bind:value={email}
-                                            minlength={10}
-                                            maxlength={200}
-                                            on:enter={() => login(provider)}
-                                            placeholder={i18nKey(
-                                                mode === "signin"
-                                                    ? "loginDialog.signinEmailPlaceholder"
-                                                    : "loginDialog.signupEmailPlaceholder",
-                                            )} />
-                                    </div>
-                                    <Button
-                                        disabled={emailInvalid}
-                                        tiny
-                                        on:click={() => login(provider)}>
-                                        <div class="center">
-                                            <SendIcon size={"1.5em"} />
-                                        </div>
-                                    </Button>
-                                </div>
-                            {:else}
-                                <div class="auth-option">
-                                    <div class="icon center">
-                                        {#if provider === AuthProvider.II}
-                                            <InternetIdentityLogo />
-                                        {:else if provider === AuthProvider.ETH}
-                                            <img
-                                                class="eth-img"
-                                                src="/assets/ethereum.svg"
-                                                alt="ethereum" />
-                                        {:else if provider === AuthProvider.SOL}
-                                            <img
-                                                class="sol-img"
-                                                src="/assets/solana.svg"
-                                                alt="solana" />
-                                        {:else if provider === AuthProvider.NFID}
-                                            <img
-                                                class="nfid-img"
-                                                src="/assets/nfid.svg"
-                                                alt="nfid" />
-                                        {/if}
-                                    </div>
-                                    <Button fill on:click={() => login(provider)}>
-                                        <Translatable
-                                            resourceKey={i18nKey(
-                                                mode === "signin"
-                                                    ? "loginDialog.signinWith"
-                                                    : "loginDialog.signupWith",
-                                                { provider: providerName(provider) },
-                                            )} />
-                                    </Button>
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
-                {/each}
+            <ChooseSignInOption on:login={login} {mode} {restrictTo} bind:emailInvalid />
 
-                {#if !showAllOptions && options.length > 1}
-                    <div class="more">
-                        <a role="button" tabindex="0" on:click={() => (showMore = true)}>
-                            <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
-                        </a>
-                    </div>
-                {/if}
-
-                <div class="change-mode">
+            <div class="change-mode">
+                <Translatable
+                    resourceKey={i18nKey(
+                        mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
+                    )} />
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-missing-attribute -->
+                <a role="button" tabindex="0" on:click={toggleMode}>
                     <Translatable
                         resourceKey={i18nKey(
-                            mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
+                            mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
                         )} />
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <!-- svelte-ignore a11y-missing-attribute -->
-                    <a role="button" tabindex="0" on:click={toggleMode}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
-                            )} />
-                    </a>
-                </div>
+                </a>
             </div>
         {:else if loggingInWithEmail}
             <p>
@@ -412,32 +276,6 @@
         padding: 0;
     }
 
-    :global(.login .email .input-wrapper) {
-        margin-bottom: 0;
-    }
-
-    :global(.login .auth-option button) {
-        border-radius: 0 $sp2 $sp2 0;
-    }
-
-    :global(.login .email button) {
-        height: $height;
-        width: 50px;
-        padding: 0 $sp3 !important;
-        border-radius: 0 $sp2 $sp2 0;
-    }
-
-    :global(.login .email .input-wrapper input) {
-        border-radius: 0;
-        box-shadow: none;
-        border-right: 1px solid var(--bd);
-        height: $height;
-    }
-
-    :global(.login .email [data-lastpass-icon-root]) {
-        display: none;
-    }
-
     :global(.login .error) {
         margin-bottom: 0;
     }
@@ -485,80 +323,12 @@
         gap: $sp4;
     }
 
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
     a:hover {
         text-decoration: underline;
     }
 
-    .options {
-        display: flex;
-        gap: 12px;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: $sp3;
-        width: 100%;
-
-        .option {
-            width: 100%;
-            max-width: 440px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            .email {
-                flex: 1;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-
-                .email-txt {
-                    flex: auto;
-                }
-            }
-
-            .auth-option {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex: auto;
-            }
-
-            &.separate {
-                margin-bottom: $sp2;
-                border-bottom: 1px solid var(--bd);
-                padding-bottom: $sp4;
-            }
-        }
-
-        .icon {
-            flex: 0 0 60px;
-            width: 60px;
-            height: $height;
-            border-radius: $sp2 0 0 $sp2;
-            border-right: 1px solid var(--bd);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--input-bg);
-
-            .nfid-img {
-                width: 40px;
-            }
-
-            .eth-img,
-            .sol-img {
-                width: 30px;
-            }
-        }
-
-        .change-mode {
-            margin-top: $sp4;
-        }
+    .change-mode {
+        margin-top: $sp4;
     }
 
     .code-wrapper {

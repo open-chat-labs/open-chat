@@ -9,20 +9,101 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
-    import type { OpenChat, ResourceKey } from "openchat-client";
+    import { AuthProvider, type OpenChat, type ResourceKey } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
+    import ChooseSignInOption from "./ChooseSignInOption.svelte";
+    import { configKeys } from "../../../utils/config";
+    import { AuthClient } from "@dfinity/auth-client";
+    // import { ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let explanations: ResourceKey[];
+    export let error: string | undefined;
+
+    type CurrentPrincipal = { kind: "current" };
+    type NextPrincipal = { kind: "next"; currentPrincipal: string };
+    type LinkPrincipals = { kind: "link"; currentPrincipal: string; nextPrincipal: string };
+    type LinkStage = CurrentPrincipal | NextPrincipal | LinkPrincipals;
 
     let failed = false;
     let step: "explain" | "linking" = "explain";
-    let substep: "current" | "next" | "link" = "current";
+    let substep: LinkStage = { kind: "current" };
+    let emailInvalid = false;
+    let email = "";
+
+    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
     function linkIdentity() {
         step = "linking";
+    }
+
+    function loginCurrent(ev: CustomEvent<AuthProvider>) {
+        const provider = ev.detail;
+        if (emailInvalid && provider === AuthProvider.EMAIL) {
+            return;
+        }
+
+        localStorage.setItem(configKeys.selectedAuthEmail, email);
+        selectedAuthProviderStore.set(provider);
+        error = undefined;
+
+        if (provider === AuthProvider.EMAIL) {
+            // ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
+            console.log("TODO Logging in with email");
+        } else if (provider === AuthProvider.ETH) {
+            console.log("Logging in with ETH");
+        } else if (provider === AuthProvider.SOL) {
+            console.log("Logging in with SOL");
+        } else {
+            // This is the II / NFID case
+            const authClient = AuthClient.create();
+            authClient.then((c) => {
+                c.login({
+                    ...client.getAuthClientOptions(provider),
+                    onSuccess: () => {
+                        console.log("success", c.getIdentity());
+                        const principal = c.getIdentity().getPrincipal().toString();
+                        if (principal !== client.AuthPrincipal) {
+                            error = "Principal mismatch";
+                        } else {
+                            substep = { kind: "next", currentPrincipal: principal };
+                        }
+                    },
+                    onError: (err) => {
+                        error = "we weren't able to sign into II at all";
+                        console.warn("Login error from auth client: ", err);
+                    },
+                });
+            });
+        }
+    }
+
+    function loginNext() {
+        if (substep.kind !== "next") return;
+        const currentPrincipal = substep.currentPrincipal;
+
+        const authClient = AuthClient.create();
+        authClient.then((c) => {
+            c.login({
+                ...client.getAuthClientOptions(AuthProvider.II),
+                onSuccess: () => {
+                    const principal = c.getIdentity().getPrincipal().toString();
+                    if (principal === currentPrincipal) {
+                        error =
+                            "The principal you are trying to link is the same as the current principal";
+                    } else {
+                        substep = { kind: "link", currentPrincipal, nextPrincipal: principal };
+                        // Probably we can just go ahead and link at this point and we don't need another state
+                    }
+                },
+                onError: (err) => {
+                    error = "we weren't able to sign into II at all";
+                    console.warn("Login error from auth client: ", err);
+                },
+            });
+        });
     }
 </script>
 
@@ -55,14 +136,24 @@
                 </div>
             </div>
         {:else if step === "linking"}
-            {#if substep === "current"}
-                <p class="info">
+            {#if substep.kind === "current"}
+                <div class="info center">
                     <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
-                </p>
-            {:else if substep === "next"}
-                <p class="info">
+                </div>
+                <ChooseSignInOption
+                    mode={"signin"}
+                    bind:emailInvalid
+                    bind:email
+                    on:login={loginCurrent} />
+            {:else if substep.kind === "next"}
+                <div class="info">
                     <Translatable resourceKey={i18nKey("identity.signInNext")} />
-                </p>
+                </div>
+                <Button on:click={loginNext}>
+                    <span class="link-ii-logo">
+                        <InternetIdentityLogo />
+                    </span>
+                    <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
             {/if}
         {/if}
     </div>
@@ -82,13 +173,6 @@
             {:else if step === "linking"}
                 <Button secondary on:click={() => (step = "explain")}
                     ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
-                {#if substep === "current"}
-                    <Button on:click={() => (substep = "next")}
-                        ><Translatable resourceKey={i18nKey("login")} /></Button>
-                {:else if substep === "next"}
-                    <Button on:click={() => (substep = "link")}
-                        ><Translatable resourceKey={i18nKey("login")} /></Button>
-                {/if}
             {/if}
         </ButtonGroup>
     </div>
@@ -105,6 +189,10 @@
 
     .info {
         margin-bottom: $sp4;
+
+        &.center {
+            text-align: center;
+        }
     }
 
     .explain {
