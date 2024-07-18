@@ -34,10 +34,11 @@ pub fn create_pending_transaction(
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
+    retry_if_bad_fee: bool,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
-        PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender).await {
+        PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender, retry_if_bad_fee).await {
             Ok(c) => Ok(c.into()),
             Err(f) => Err(f.into()),
         },

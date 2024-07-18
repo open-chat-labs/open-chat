@@ -239,7 +239,7 @@ impl Job for MakeTransferJob {
         ic_cdk::spawn(make_transfer(pending, sender));
 
         async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
-            if let Err(error) = process_transaction(pending_transaction.clone(), sender).await {
+            if let Err(error) = process_transaction(pending_transaction.clone(), sender, true).await {
                 error!(?error, "Transaction failed");
                 mutate_state(|state| {
                     let now = state.env.now();
