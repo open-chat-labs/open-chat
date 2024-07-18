@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1240](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1240-group_index)] - 2024-07-17
+
 ### Fixed
 
 - Handle `mark_local_group_index_full` in `inspect_message` ([#6010](https://github.com/open-chat-labs/open-chat/pull/6010))
