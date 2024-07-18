@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+
 ## [[2.0.1232](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1232-local_group_index)] - 2024-07-09
 
 ### Added

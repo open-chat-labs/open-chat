@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Use `should_retry_failed_c2c_call` to avoid getting stuck in loop ([#6061](https://github.com/open-chat-labs/open-chat/pull/6061)) 
+- Use `should_retry_failed_c2c_call` to avoid getting stuck in loop ([#6061](https://github.com/open-chat-labs/open-chat/pull/6061))
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
 
 ## [[2.0.1242](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1242-user_index)] - 2024-07-17
 
