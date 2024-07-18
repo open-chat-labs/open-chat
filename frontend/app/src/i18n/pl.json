@@ -39,12 +39,14 @@
             "requiredCredential": "Wymagane poświadczenie"
         },
         "diamondGateInfo": "Tylko użytkownicy z członkostwem Diamentowym będą mogli dołączyć",
+        "diamondGateInfo2": "Aby dołączyć do tego {level}, musisz mieć członkostwo Diamentowe.",
         "diamondMember": "Członkostwo diamentowe",
         "gate": "Brama dostępowa",
         "gateCheckFailed": "Brama dostępu nie została spełniona",
         "gateInvalid": "Brama dostępu jest nieprawidłowa",
         "join": "Dołączyć",
         "lifetimeDiamondGateInfo": "Tylko użytkownicy z dożywotnim członkostwem Diamentowym będą mogli dołączyć",
+        "lifetimeDiamondGateInfo2": "Aby dołączyć do tego {level}, musisz mieć dożywotnie członkostwo Diamentowe.",
         "lifetimeDiamondMember": "Dożywotnie członkostwo Diamentowe",
         "minDissolveDelay": "Min. opóźnienie rozpuszczania (dni)",
         "minDissolveDelayN": "Min. opóźnienie rozpuszczania {n} dni",
@@ -507,6 +509,18 @@
         "verification": "Weryfikacja",
         "verified": "Zweryfikowana wyjątkowa osoba",
         "verify": "Zweryfikować"
+    },
+    "identity": {
+        "back": "Z powrotem",
+        "failed": "Przepraszamy, ale nie udało nam się połączyć tożsamości internetowej z Twoim kontem OpenChat",
+        "link": "Połączyć",
+        "linkIdentity": "Tożsamość łącza",
+        "mismatch": "To nie jest zgodne z podmiotem zabezpieczeń, za pomocą którego jesteś aktualnie zalogowany. Czy na pewno korzystałeś z usług tego samego dostawcy uwierzytelniania?",
+        "proceed": "Przystępować",
+        "signInCurrent": "Zaloguj się przy użyciu dostawcy tożsamości, którego aktualnie używasz",
+        "signInNext": "Utwórz lub zaloguj się przy użyciu tożsamości internetowej, którą chcesz połączyć ze swoim kontem OpenChat",
+        "warning1": "Aby potwierdzić swoją wyjątkową osobowość, musisz zalogować się przy użyciu tożsamości internetowej. Jeśli zarejestrowałeś się przy użyciu innej metody, będziesz musiał najpierw utworzyć i połączyć tożsamość internetową ze swoim kontem OpenChat.",
+        "warning2": "Jeśli jesteś już zalogowany przy użyciu tożsamości internetowej, możesz kontynuować."
     },
     "identityMigrationMessage": "Poczekaj, aż Twoje konto zostanie zaktualizowane do nowego systemu. Dzięki temu będziemy mogli w przyszłości obsługiwać znacznie więcej opcji logowania, w tym opcjonalne odzyskiwanie poczty e-mail w przypadku utraty dostępu do urządzenia.",
     "inheritSystem": "Dziedzicz motyw systemu",

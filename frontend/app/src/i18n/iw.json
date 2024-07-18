@@ -39,12 +39,14 @@
             "requiredCredential": "אישור נדרש"
         },
         "diamondGateInfo": "רק משתמשים עם חברות Diamond יורשו להצטרף",
+        "diamondGateInfo2": "כדי להצטרף ל-{level} הזה אתה נדרש להיות חבר ב-Diamond.",
         "diamondMember": "חברות יהלום",
         "gate": "שער גישה",
         "gateCheckFailed": "שער הגישה לא נפגש",
         "gateInvalid": "שער הגישה אינו חוקי",
         "join": "לְהִצְטַרֵף",
         "lifetimeDiamondGateInfo": "רק משתמשים עם חברות Diamond לכל החיים יורשו להצטרף",
+        "lifetimeDiamondGateInfo2": "על מנת להצטרף ל-{level} הזה, עליך להיות בעל חברות Diamond לכל החיים.",
         "lifetimeDiamondMember": "חברות יהלום לכל החיים",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
@@ -507,6 +509,18 @@
         "verification": "אימות",
         "verified": "אדם ייחודי מאומת",
         "verify": "תאשר"
+    },
+    "identity": {
+        "back": "חזור",
+        "failed": "מצטערים, אבל לא הצלחנו לקשר זהות אינטרנט לחשבון OpenChat שלך",
+        "link": "קישור",
+        "linkIdentity": "זהות קישור",
+        "mismatch": "זה לא תואם למנהל שאיתו אתה מחובר כעת. האם אתה בטוח שהשתמשת באותו ספק אימות?",
+        "proceed": "להמשיך",
+        "signInCurrent": "היכנס עם ספק הזהות שבו אתה משתמש כעת",
+        "signInNext": "צור או היכנס עם הזהות האינטרנטית שברצונך לקשר לחשבון OpenChat שלך",
+        "warning1": "עליך להיות מחובר באמצעות Internet Identity כדי לאשר את אישיותך הייחודית. אם נרשמת בשיטה אחרת, תצטרך ליצור ולקשר זהות אינטרנט לחשבון OpenChat שלך תחילה.",
+        "warning2": "אם אתה כבר מחובר עם Internet Identity, אתה יכול להמשיך."
     },
     "identityMigrationMessage": "אנא המתן בזמן שחשבונך ישודרג למערכת החדשה שלנו. זה יאפשר לנו לתמוך באפשרויות כניסה רבות נוספות בעתיד, כולל שחזור דוא\"ל אופציונלי למקרה שתאבד את הגישה למכשיר שלך.",
     "inheritSystem": "יורש את נושא המערכת",

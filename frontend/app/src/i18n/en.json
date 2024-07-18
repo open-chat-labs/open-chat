@@ -511,10 +511,10 @@
         "verify": "Verify"
     },
     "identity": {
-        "link": "Link",
-        "linkIdentity": "Link Identity",
         "back": "Back",
         "failed": "Sorry but we failed to link an Internet Identity to your OpenChat account",
+        "link": "Link",
+        "linkIdentity": "Link Identity",
         "mismatch": "This does not match the principal that you are currently signed in with. Are you sure you used the same authentication provider?",
         "proceed": "Proceed",
         "signInCurrent": "Sign in with the identity provider that you are currently using",

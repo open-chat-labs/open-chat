@@ -39,12 +39,14 @@
             "requiredCredential": "Erforderliche Anmeldeinformationen"
         },
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
+        "diamondGateInfo2": "Um diesem {level} beizutreten, müssen Sie eine Diamond-Mitgliedschaft besitzen.",
         "diamondMember": "Diamond-Mitgliedschaft",
         "gate": "Zugangstor",
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "gateInvalid": "Das Zugangstor ist ungültig",
         "join": "Verbinden",
         "lifetimeDiamondGateInfo": "Nur Benutzer mit lebenslanger Diamond-Mitgliedschaft dürfen teilnehmen",
+        "lifetimeDiamondGateInfo2": "Um diesem {level} beizutreten, ist eine lebenslange Diamant-Mitgliedschaft erforderlich.",
         "lifetimeDiamondMember": "Lebenslange Diamond-Mitgliedschaft",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
         "minDissolveDelayN": "Min. Auflösungsverzögerung {n} Tage",
@@ -507,6 +509,18 @@
         "verification": "Überprüfung",
         "verified": "Verifizierte eindeutige Person",
         "verify": "Verifizieren"
+    },
+    "identity": {
+        "back": "Zurück",
+        "failed": "Es ist uns leider nicht gelungen, eine Internetidentität mit Ihrem OpenChat-Konto zu verknüpfen.",
+        "link": "Verknüpfung",
+        "linkIdentity": "Link-Identität",
+        "mismatch": "Dies stimmt nicht mit dem Principal überein, mit dem Sie derzeit angemeldet sind. Sind Sie sicher, dass Sie denselben Authentifizierungsanbieter verwendet haben?",
+        "proceed": "Fortfahren",
+        "signInCurrent": "Melden Sie sich mit dem Identitätsanbieter an, den Sie aktuell verwenden",
+        "signInNext": "Erstellen Sie die Internetidentität, die Sie mit Ihrem OpenChat-Konto verknüpfen möchten, oder melden Sie sich damit an.",
+        "warning1": "Sie müssen mit Ihrer Internetidentität angemeldet sein, um Ihre eindeutige Identität zu bestätigen. Wenn Sie sich mit einer anderen Methode registriert haben, müssen Sie zuerst eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen.",
+        "warning2": "Wenn Sie bereits mit Internet Identity angemeldet sind, können Sie fortfahren."
     },
     "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",

@@ -39,12 +39,14 @@
             "requiredCredential": "必要な資格情報"
         },
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
+        "diamondGateInfo2": "この {level} に参加するには、ダイヤモンド メンバーシップが必要です。",
         "diamondMember": "ダイヤモンド会員",
         "gate": "アクセスゲート",
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "gateInvalid": "アクセスゲートが無効です",
         "join": "参加する",
         "lifetimeDiamondGateInfo": "生涯ダイヤモンド会員のみ参加できます",
+        "lifetimeDiamondGateInfo2": "この {level} に参加するには、生涯ダイヤモンド メンバーシップが必要です。",
         "lifetimeDiamondMember": "生涯ダイヤモンド会員",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
@@ -507,6 +509,18 @@
         "verification": "検証",
         "verified": "確認済みの固有人物",
         "verify": "確認する"
+    },
+    "identity": {
+        "back": "戻る",
+        "failed": "申し訳ございませんが、インターネットIDをOpenChatアカウントにリンクできませんでした",
+        "link": "リンク",
+        "linkIdentity": "リンクID",
+        "mismatch": "これは現在サインインしているプリンシパルと一致しません。同じ認証プロバイダーを使用していますか?",
+        "proceed": "進む",
+        "signInCurrent": "現在使用しているIDプロバイダーでサインインしてください",
+        "signInNext": "OpenChatアカウントにリンクしたいインターネットIDを作成またはサインインします",
+        "warning1": "固有の個人であることを確認するために、インターネット ID を使用してサインインする必要があります。別の方法で登録した場合は、まずインターネット ID を作成し、OpenChat アカウントにリンクする必要があります。",
+        "warning2": "すでに Internet Identity でサインインしている場合は、続行できます。"
     },
     "identityMigrationMessage": "アカウントが新しいシステムにアップグレードされるまでお待ちください。これにより、デバイスにアクセスできなくなった場合に備えたオプションのメール回復など、今後さらに多くのサインイン オプションをサポートできるようになります。",
     "inheritSystem": "システムテーマを適用",

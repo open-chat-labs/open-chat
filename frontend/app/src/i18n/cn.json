@@ -39,12 +39,14 @@
             "requiredCredential": "所需凭证"
         },
         "diamondGateInfo": "只有拥有钻石会员资格的用户才能加入",
+        "diamondGateInfo2": "为了加入这个{level}，您需要拥有钻石会员资格。",
         "diamondMember": "钻石会员",
         "gate": "门禁",
         "gateCheckFailed": "未满足访问门禁",
         "gateInvalid": "访问门无效",
         "join": "加入",
         "lifetimeDiamondGateInfo": "只有终身钻石会员才允许加入",
+        "lifetimeDiamondGateInfo2": "为了加入这个{level}，您需要拥有终身钻石会员资格。",
         "lifetimeDiamondMember": "终身钻石会员",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
@@ -507,6 +509,18 @@
         "verification": "确认",
         "verified": "已验证的唯一人员",
         "verify": "核实"
+    },
+    "identity": {
+        "back": "后退",
+        "failed": "抱歉，我们未能将互联网身份链接到您的 OpenChat 帐户",
+        "link": "关联",
+        "linkIdentity": "链接标识",
+        "mismatch": "这与您当前登录的主体不匹配。您确定使用了相同的身份验证提供程序吗？",
+        "proceed": "继续",
+        "signInCurrent": "使用您当前正在使用的身份提供商登录",
+        "signInNext": "创建或使用您想要链接到 OpenChat 帐户的互联网身份登录",
+        "warning1": "您必须使用互联网身份登录才能确认您的唯一身份。如果您使用其他方法注册，则需要先创建互联网身份并将其链接到您的 OpenChat 帐户。",
+        "warning2": "如果您已经使用 Internet Identity 登录，则可以继续。"
     },
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",

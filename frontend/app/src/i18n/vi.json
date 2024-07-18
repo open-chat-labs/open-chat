@@ -39,12 +39,14 @@
             "requiredCredential": "Thông tin xác thực bắt buộc"
         },
         "diamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương mới được phép tham gia",
+        "diamondGateInfo2": "Để tham gia {level} này, bạn bắt buộc phải có tư cách thành viên Kim cương.",
         "diamondMember": "thành viên kim cương",
         "gate": "cổng ra vào",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "gateInvalid": "Cổng truy cập không hợp lệ",
         "join": "Tham gia",
         "lifetimeDiamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương trọn đời mới được phép tham gia",
+        "lifetimeDiamondGateInfo2": "Để tham gia {level} này, bạn bắt buộc phải có tư cách thành viên Kim cương trọn đời.",
         "lifetimeDiamondMember": "Thành viên kim cương trọn đời",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
@@ -507,6 +509,18 @@
         "verification": "xác minh",
         "verified": "Người duy nhất đã được xác minh",
         "verify": "Xác minh"
+    },
+    "identity": {
+        "back": "Mặt sau",
+        "failed": "Rất tiếc, chúng tôi không liên kết được Internet Identity với tài khoản OpenChat của bạn",
+        "link": "liên kết",
+        "linkIdentity": "Nhận dạng liên kết",
+        "mismatch": "Điều này không khớp với số tiền gốc mà bạn hiện đang đăng nhập. Bạn có chắc chắn mình đã sử dụng cùng một nhà cung cấp xác thực không?",
+        "proceed": "Tiếp tục",
+        "signInCurrent": "Đăng nhập bằng nhà cung cấp danh tính mà bạn hiện đang sử dụng",
+        "signInNext": "Tạo hoặc đăng nhập bằng danh tính internet mà bạn muốn liên kết với tài khoản OpenChat của mình",
+        "warning1": "Bạn phải đăng nhập bằng Internet Identity để xác nhận tư cách cá nhân duy nhất của mình. Nếu bạn đã đăng ký bằng phương pháp khác, trước tiên bạn cần tạo và liên kết Nhận dạng Internet với tài khoản OpenChat của mình.",
+        "warning2": "Nếu bạn đã đăng nhập bằng Internet Identity, bạn có thể tiếp tục."
     },
     "identityMigrationMessage": "Vui lòng đợi trong khi tài khoản của bạn được nâng cấp lên hệ thống mới của chúng tôi. Điều này sẽ cho phép chúng tôi hỗ trợ nhiều tùy chọn đăng nhập hơn trong tương lai, bao gồm cả tùy chọn khôi phục email trong trường hợp bạn mất quyền truy cập vào thiết bị của mình.",
     "inheritSystem": "Sử dụng màu nền theo hệ thống",

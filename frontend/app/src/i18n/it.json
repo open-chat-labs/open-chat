@@ -39,12 +39,14 @@
             "requiredCredential": "Credenziale richiesta"
         },
         "diamondGateInfo": "Solo gli utenti con abbonamento Diamond potranno iscriversi",
+        "diamondGateInfo2": "Per iscriverti a questo {level} devi avere l'abbonamento Diamond.",
         "diamondMember": "Adesione diamante",
         "gate": "Cancello di accesso",
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "gateInvalid": "Il cancello di accesso non è valido",
         "join": "Giuntura",
         "lifetimeDiamondGateInfo": "Solo gli utenti con abbonamento Diamond a vita potranno iscriversi",
+        "lifetimeDiamondGateInfo2": "Per iscriverti a questo {level} devi avere un abbonamento Diamond a vita.",
         "lifetimeDiamondMember": "Abbonamento Diamond a vita",
         "minDissolveDelay": "Ritardo dissolvenza minimo (giorni)",
         "minDissolveDelayN": "Ritardo dissolvenza minimo {n} giorni",
@@ -507,6 +509,18 @@
         "verification": "Verifica",
         "verified": "Persona unica verificata",
         "verify": "Verificare"
+    },
+    "identity": {
+        "back": "Indietro",
+        "failed": "Siamo spiacenti ma non siamo riusciti a collegare un'identità Internet al tuo account OpenChat",
+        "link": "Collegamento",
+        "linkIdentity": "Collegamento Identità",
+        "mismatch": "Questo non corrisponde all'entità con cui hai attualmente effettuato l'accesso. Sei sicuro di aver utilizzato lo stesso provider di autenticazione?",
+        "proceed": "Procedere",
+        "signInCurrent": "Accedi con il provider di identità che stai attualmente utilizzando",
+        "signInNext": "Crea o accedi con l'identità Internet che desideri collegare al tuo account OpenChat",
+        "warning1": "Devi aver effettuato l'accesso utilizzando l'identità Internet per confermare la tua personalità univoca. Se ti sei registrato utilizzando un altro metodo, dovrai prima creare e collegare un'identità Internet al tuo account OpenChat.",
+        "warning2": "Se hai già effettuato l'accesso con Identità Internet, puoi procedere."
     },
     "identityMigrationMessage": "Attendi mentre il tuo account viene aggiornato al nostro nuovo sistema. Ciò ci consentirà di supportare molte più opzioni di accesso in futuro, incluso il recupero facoltativo della posta elettronica nel caso in cui perdi l'accesso al tuo dispositivo.",
     "inheritSystem": "Eredita il tema del sistema",

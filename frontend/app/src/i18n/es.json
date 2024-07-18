@@ -39,12 +39,14 @@
             "requiredCredential": "Credencial requerida"
         },
         "diamondGateInfo": "Solo los usuarios con membresía Diamond podrán unirse",
+        "diamondGateInfo2": "Para unirse a este {level}, debe tener una membresía Diamond.",
         "diamondMember": "Membresía Diamante",
         "gate": "Puerta de acceso",
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "gateInvalid": "La puerta de acceso no es válida",
         "join": "Unirse",
         "lifetimeDiamondGateInfo": "Solo los usuarios con membresía Diamond vitalicia podrán unirse",
+        "lifetimeDiamondGateInfo2": "Para unirse a este {level}, debe tener una membresía Diamond de por vida.",
         "lifetimeDiamondMember": "Membresía Diamante de por vida",
         "minDissolveDelay": "Retraso mínimo de disolución (días)",
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
@@ -507,6 +509,18 @@
         "verification": "Verificación",
         "verified": "Persona única verificada",
         "verify": "Verificar"
+    },
+    "identity": {
+        "back": "Atrás",
+        "failed": "Lo sentimos, pero no pudimos vincular una identidad de Internet a su cuenta de OpenChat.",
+        "link": "Enlace",
+        "linkIdentity": "Identidad del enlace",
+        "mismatch": "Esto no coincide con el principal con el que inició sesión actualmente. ¿Está seguro de que utilizó el mismo proveedor de autenticación?",
+        "proceed": "Proceder",
+        "signInCurrent": "Inicie sesión con el proveedor de identidad que está utilizando actualmente",
+        "signInNext": "Cree o inicie sesión con la identidad de Internet que desea vincular a su cuenta de OpenChat.",
+        "warning1": "Debe iniciar sesión con Internet Identity para confirmar su personalidad única. Si se registró utilizando otro método, primero deberá crear y vincular una identidad de Internet a su cuenta de OpenChat.",
+        "warning2": "Si ya has iniciado sesión con Internet Identity, puedes continuar."
     },
     "identityMigrationMessage": "Espere mientras su cuenta se actualiza a nuestro nuevo sistema. Esto nos permitirá admitir muchas más opciones de inicio de sesión en el futuro, incluida la recuperación de correo electrónico opcional en caso de que pierda el acceso a su dispositivo.",
     "inheritSystem": "Heredar tema del sistema",

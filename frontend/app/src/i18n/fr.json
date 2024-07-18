@@ -39,12 +39,14 @@
             "requiredCredential": "Titre requis"
         },
         "diamondGateInfo": "Seuls les utilisateurs disposant d'un abonnement Diamond seront autorisés à rejoindre",
+        "diamondGateInfo2": "Pour rejoindre ce {level}, vous devez être membre Diamond.",
         "diamondMember": "Adhésion Diamant",
         "gate": "Porte d'accès",
         "gateCheckFailed": "Porte d'accès non rencontrée",
         "gateInvalid": "La porte d'accès n'est pas valide",
         "join": "Rejoindre",
         "lifetimeDiamondGateInfo": "Seuls les utilisateurs disposant d'un abonnement Diamond à vie seront autorisés à rejoindre",
+        "lifetimeDiamondGateInfo2": "Pour rejoindre ce {level}, vous devez être membre Diamond à vie.",
         "lifetimeDiamondMember": "Adhésion Diamant à vie",
         "minDissolveDelay": "Délai de dissolution min (jours)",
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
@@ -507,6 +509,18 @@
         "verification": "Vérification",
         "verified": "Personne unique vérifiée",
         "verify": "Vérifier"
+    },
+    "identity": {
+        "back": "Dos",
+        "failed": "Désolé mais nous n'avons pas réussi à associer une identité Internet à votre compte OpenChat",
+        "link": "Lien",
+        "linkIdentity": "Identité du lien",
+        "mismatch": "Cela ne correspond pas au compte principal avec lequel vous êtes actuellement connecté. Êtes-vous sûr d'avoir utilisé le même fournisseur d'authentification ?",
+        "proceed": "Procéder",
+        "signInCurrent": "Connectez-vous avec le fournisseur d'identité que vous utilisez actuellement",
+        "signInNext": "Créez ou connectez-vous avec l'identité Internet que vous souhaitez associer à votre compte OpenChat",
+        "warning1": "Vous devez être connecté en utilisant votre identité Internet pour confirmer votre personnalité unique. Si vous vous êtes inscrit en utilisant une autre méthode, vous devrez d'abord créer et lier une identité Internet à votre compte OpenChat.",
+        "warning2": "Si vous êtes déjà connecté avec Internet Identity, vous pouvez continuer."
     },
     "identityMigrationMessage": "Veuillez patienter pendant que votre compte est mis à niveau vers notre nouveau système. Cela nous permettra de prendre en charge de nombreuses autres options de connexion à l'avenir, y compris la récupération facultative des e-mails au cas où vous perdriez l'accès à votre appareil.",
     "inheritSystem": "Hériter du thème système",
