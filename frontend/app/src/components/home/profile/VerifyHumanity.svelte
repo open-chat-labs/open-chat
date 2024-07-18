@@ -20,7 +20,8 @@
 
     let failed = false;
     let verifying = false;
-    let step: "linking" | "verification" = "linking";
+    let step: "linking" | "verification" = "verification";
+    let error: string | undefined = undefined;
 
     function verify() {
         verifying = true;
@@ -48,6 +49,7 @@
 <Overlay>
     {#if step === "linking"}
         <LinkAccounts
+            bind:error
             on:close
             on:proceed={() => (step = "verification")}
             explanations={[i18nKey("identity.warning1"), i18nKey("identity.warning2")]} />
@@ -87,8 +89,8 @@
                 <ButtonGroup>
                     <Button secondary on:click={() => dispatch("close")}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button secondary on:click={() => (step = "linking")}
-                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
+                    <!-- <Button secondary on:click={() => (step = "linking")}
+                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
                     <Button loading={verifying} disabled={verifying} on:click={verify}
                         ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
                 </ButtonGroup>
