@@ -1,7 +1,7 @@
 use crate::ChallengeAttempt;
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use types::Nanoseconds;
+use types::{CanisterId, Nanoseconds};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -18,6 +18,7 @@ pub enum Response {
     Success(SuccessResult),
     AlreadyRegistered,
     PublicKeyInvalid(String),
+    OriginatingCanisterInvalid(CanisterId),
     ChallengeRequired,
     ChallengeFailed,
 }
