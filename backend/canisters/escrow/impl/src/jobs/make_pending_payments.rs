@@ -5,11 +5,11 @@ use escrow_canister::{deposit_subaccount, SwapStatus};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::trace;
 use types::icrc1::CompletedCryptoTransaction;
-use types::CanisterId;
 use utils::time::NANOS_PER_MILLISECOND;
 
 thread_local! {
@@ -52,7 +52,7 @@ async fn process_payment(pending_payment: PendingPayment) {
         amount: pending_payment.amount.into(),
     };
 
-    match make_payment(pending_payment.token_info.ledger, &args).await {
+    match make_transfer(pending_payment.token_info.ledger, &args).await {
         Ok(block_index) => {
             mutate_state(|state| {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
@@ -96,28 +96,13 @@ async fn process_payment(pending_payment: PendingPayment) {
                 }
             });
         }
-        Err(retry) => {
+        Err((_, retry)) => {
             if retry {
                 mutate_state(|state| {
                     state.data.pending_payments_queue.push(pending_payment);
                     start_job_if_required(state);
                 });
             }
-        }
-    }
-}
-
-// Error response contains a boolean stating if the transfer should be retried
-async fn make_payment(ledger_canister_id: CanisterId, args: &TransferArg) -> Result<u64, bool> {
-    match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, args).await {
-        Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
-        Ok(Err(transfer_error)) => {
-            error!(?transfer_error, ?args, "Transfer failed");
-            Err(false)
-        }
-        Err(error) => {
-            error!(?error, ?args, "Transfer failed");
-            Err(true)
         }
     }
 }

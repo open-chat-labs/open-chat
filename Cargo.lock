@@ -2367,6 +2367,7 @@ dependencies = [
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "ledger_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
@@ -4984,6 +4985,7 @@ dependencies = [
  "serde_cbor",
  "sha2 0.10.8",
  "test-case",
+ "tracing",
  "types",
 ]
 

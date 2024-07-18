@@ -14,6 +14,7 @@ icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../types" }
 
 [dev-dependencies]
