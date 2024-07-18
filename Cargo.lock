@@ -8495,6 +8495,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "itertools 0.13.0",
+ "ledger_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
