@@ -5,6 +5,6 @@ pub mod c2c_sync_bucket;
 pub mod c2c_update_user_principal;
 pub mod remove_accessor;
 pub mod remove_user;
-pub mod set_bucket_full;
+pub mod set_buckets_full;
 pub mod upgrade_bucket_canister_wasm;
 pub mod wallet_receive;

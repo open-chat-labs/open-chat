@@ -5,7 +5,7 @@ use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub bucket: CanisterId,
+    pub buckets: Vec<CanisterId>,
     pub full: bool,
 }
 
@@ -16,7 +16,7 @@ pub enum Response {
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
-    bucket: HumanReadablePrincipal,
+    buckets: Vec<HumanReadablePrincipal>,
     full: bool,
 }
 
@@ -25,7 +25,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
-            bucket: self.bucket.into(),
+            buckets: self.buckets.iter().copied().map(|b| b.into()).collect(),
             full: self.full,
         }
     }

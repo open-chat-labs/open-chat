@@ -39,12 +39,12 @@ type RemoveAccessorResponse = variant {
     Success;
 };
 
-type SetBucketFullArgs = record {
-    bucket : CanisterId;
+type SetBucketsFullArgs = record {
+    buckets : vec CanisterId;
     full : bool;
 };
 
-type SetBucketFullResponse = variant {
+type SetBucketsFullResponse = variant {
     Success;
 };
 
@@ -106,7 +106,7 @@ service : {
     add_or_update_users : (AddOrUpdateUsersArgs) -> (AddOrUpdateUsersResponse);
     remove_user : (RemoveUserArgs) -> (RemoveUserResponse);
     remove_accessor : (RemoveAccessorArgs) -> (RemoveAccessorResponse);
-    set_bucket_full : (SetBucketFullArgs) -> (SetBucketFullResponse);
+    set_buckets_full : (SetBucketsFullArgs) -> (SetBucketsFullResponse);
 
     allocated_bucket_v2 : (AllocatedBucketArgs) -> (AllocatedBucketResponse) query;
     can_forward : (CanForwardArgs) -> (CanForwardResponse) query;

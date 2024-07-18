@@ -10,7 +10,7 @@ fn main() {
     generate_candid_method!(storage_index, add_or_update_users, update);
     generate_candid_method!(storage_index, remove_accessor, update);
     generate_candid_method!(storage_index, remove_user, update);
-    generate_candid_method!(storage_index, set_bucket_full, update);
+    generate_candid_method!(storage_index, set_buckets_full, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());
