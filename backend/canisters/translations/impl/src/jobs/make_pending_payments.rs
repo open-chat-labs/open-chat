@@ -1,10 +1,11 @@
 use crate::model::pending_payments_queue::PendingPayment;
 use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
-use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg};
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::trace;
 use utils::consts::MEMO_TRANSLATION_PAYMENT;
 use utils::time::NANOS_PER_MILLISECOND;
 
@@ -33,23 +34,6 @@ pub fn run() {
 }
 
 async fn process_payment(pending_payment: PendingPayment) {
-    let result = make_payment(&pending_payment).await;
-
-    mutate_state(|state| {
-        match result {
-            Ok(_) => (),
-            Err(retry) => {
-                if retry {
-                    state.data.pending_payments_queue.push(pending_payment);
-                }
-            }
-        }
-        start_job_if_required(state);
-    });
-}
-
-// Error response contains a boolean stating if the transfer should be retried
-async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
     let args = TransferArg {
         from_subaccount: None,
         to: pending_payment.recipient_account,
@@ -59,15 +43,17 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
         amount: pending_payment.amount.into(),
     };
 
-    match icrc_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await {
-        Ok(Ok(block_index)) => Ok(block_index.0.into()),
-        Ok(Err(transfer_error)) => {
-            error!(?transfer_error, ?args, "Transfer failed");
-            Err(false)
+    let result = make_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await;
+
+    mutate_state(|state| {
+        match result {
+            Ok(_) => (),
+            Err((_, retry)) => {
+                if retry {
+                    state.data.pending_payments_queue.push(pending_payment);
+                }
+            }
         }
-        Err(error) => {
-            error!(?error, ?args, "Transfer failed");
-            Err(true)
-        }
-    }
+        start_job_if_required(state);
+    });
 }
