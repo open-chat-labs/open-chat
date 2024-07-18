@@ -17,7 +17,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
             .map(|u| (u.user_id, u.principal))
             .collect();
 
-        (state.calling_user().user_id, users)
+        (state.calling_user_id(), users)
     });
 
     let c2c_args = c2c_invite_users_to_channel::Args {

@@ -7,6 +7,7 @@ use event_store_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
+use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
@@ -14,14 +15,14 @@ use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
-    TimestampMillis, Timestamped, User, UserId,
+    TimestampMillis, Timestamped, UniquePersonProof, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -52,9 +53,24 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn calling_user(&self) -> GlobalUser {
+    pub fn calling_user_id(&self) -> UserId {
         let caller = self.env.caller();
-        self.data.global_users.get(&caller).unwrap()
+        self.data.global_users.get(&caller).unwrap().user_id
+    }
+
+    pub fn calling_user(&self, credential_jwts: Option<&[String]>) -> GlobalUser {
+        let caller = self.env.caller();
+        let mut user_details = self.data.global_users.get(&caller).unwrap();
+
+        if user_details.unique_person_proof.is_none() {
+            user_details.unique_person_proof = credential_jwts.as_ref().and_then(|jwts| {
+                let now = self.env.now();
+                self.data
+                    .extract_proof_of_unique_personhood(user_details.principal, &jwts, now)
+            });
+        }
+
+        user_details
     }
 
     pub fn is_caller_user_index_canister(&self) -> bool {
@@ -196,6 +212,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
                 event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
@@ -216,6 +233,8 @@ struct Data {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -232,6 +251,16 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
+    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    pub ic_root_key: Vec<u8>,
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -259,9 +288,11 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Option<Vec<u8>>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -276,6 +307,7 @@ impl Data {
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
+            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -294,7 +326,22 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
+            ic_root_key,
         }
+    }
+
+    pub fn extract_proof_of_unique_personhood(
+        &self,
+        principal: Principal,
+        credential_jwts: &[String],
+        now: TimestampMillis,
+    ) -> Option<UniquePersonProof> {
+        credential_jwts
+            .iter()
+            .filter_map(|jwt| {
+                verify_proof_of_unique_personhood(principal, self.identity_canister_id, jwt, &self.ic_root_key, now).ok()
+            })
+            .next()
     }
 }
 
@@ -335,4 +382,5 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
+    pub internet_identity: CanisterId,
 }
