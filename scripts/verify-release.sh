@@ -4,6 +4,12 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
+if ! command -v sha256sum &> /dev/null
+then
+    echo "sha256sum could not be found, please install it then try again"
+    exit 1
+fi
+
 ./scripts/check-docker-is-running.sh || exit 1
 
 RELEASE_VERSION=$1
