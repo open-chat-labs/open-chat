@@ -15,7 +15,7 @@ pub fn verify_proof_of_unique_personhood(
     now: TimestampMillis,
 ) -> Result<UniquePersonProof, String> {
     match ic_verifiable_credentials::validate_ii_presentation_and_claims(
-        &credential_jwt,
+        credential_jwt,
         principal,
         &VcFlowSigners {
             ii_canister_id: internet_identity_canister_id,

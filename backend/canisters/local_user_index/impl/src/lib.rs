@@ -66,7 +66,7 @@ impl RuntimeState {
             user_details.unique_person_proof = credential_jwts.as_ref().and_then(|jwts| {
                 let now = self.env.now();
                 self.data
-                    .extract_proof_of_unique_personhood(user_details.principal, &jwts, now)
+                    .extract_proof_of_unique_personhood(user_details.principal, jwts, now)
             });
         }
 
