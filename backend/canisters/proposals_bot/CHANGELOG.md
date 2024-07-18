@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1237](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1237-proposals_bot)] - 2024-07-16
+
 ### Added
 
 - Add `lookup_proposal_message` ([#6031](https://github.com/open-chat-labs/open-chat/pull/6031))
