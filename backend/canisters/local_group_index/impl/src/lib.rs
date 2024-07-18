@@ -84,11 +84,9 @@ impl RuntimeState {
             local_group_count: self.data.local_groups.len() as u64,
             local_community_count: self.data.local_communities.len() as u64,
             group_upgrades_completed: group_upgrades_metrics.completed,
-            group_upgrades_failed: group_upgrades_metrics.failed,
             group_upgrades_pending: group_upgrades_metrics.pending as u64,
             group_upgrades_in_progress: group_upgrades_metrics.in_progress as u64,
             community_upgrades_completed: community_upgrades_metrics.completed,
-            community_upgrades_failed: community_upgrades_metrics.failed,
             community_upgrades_pending: community_upgrades_metrics.pending as u64,
             community_upgrades_in_progress: community_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm_for_new_canisters.wasm.version,
@@ -109,6 +107,8 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            group_upgrades_failed: group_upgrades_metrics.failed,
+            community_upgrades_failed: community_upgrades_metrics.failed,
         }
     }
 }
@@ -213,11 +213,9 @@ pub struct Metrics {
     pub local_community_count: u64,
     pub canisters_in_pool: u16,
     pub group_upgrades_completed: u64,
-    pub group_upgrades_failed: Vec<FailedUpgradeCount>,
     pub group_upgrades_pending: u64,
     pub group_upgrades_in_progress: u64,
     pub community_upgrades_completed: u64,
-    pub community_upgrades_failed: Vec<FailedUpgradeCount>,
     pub community_upgrades_pending: u64,
     pub community_upgrades_in_progress: u64,
     pub group_wasm_version: BuildVersion,
@@ -228,6 +226,8 @@ pub struct Metrics {
     pub community_upgrade_concurrency: u32,
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
+    pub group_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub community_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 
 #[derive(Serialize, Debug)]
