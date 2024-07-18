@@ -203,7 +203,7 @@
     </div>
     <div class="login" slot="body">
         {#if state === "options"}
-            <ChooseSignInOption on:login={login} {mode} {restrictTo} bind:emailInvalid />
+            <ChooseSignInOption on:login={login} {mode} {restrictTo} bind:emailInvalid bind:email />
 
             <div class="change-mode">
                 <Translatable
