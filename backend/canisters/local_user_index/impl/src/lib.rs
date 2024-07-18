@@ -1,8 +1,6 @@
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
-use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
@@ -33,7 +31,6 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
-mod timer_job_types;
 mod updates;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -229,7 +226,6 @@ struct Data {
     pub user_upgrade_concurrency: u32,
     pub platform_moderators_group: Option<ChatId>,
     pub referral_codes: ReferralCodes,
-    pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
@@ -290,7 +286,6 @@ impl Data {
             user_upgrade_concurrency: 10,
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
-            timer_jobs: TimerJobs::default(),
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der,
