@@ -27,6 +27,12 @@ echo "TAG: $TAG"
 echo "COMMIT_ID: $COMMIT_ID"
 echo "URL: $URL"
 
+if ! command -v sha256sum &> /dev/null
+then
+    echo "sha256sum could not be found, please install it then try again"
+    exit 1
+fi
+
 # Download the canister WASM at the given commit
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID || exit 1
 
