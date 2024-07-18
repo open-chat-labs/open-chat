@@ -16,7 +16,8 @@ export type CreateIdentityResponse =
     | { kind: "already_registered" }
     | { kind: "challenge_failed" }
     | { kind: "challenge_required" }
-    | { kind: "public_key_invalid" };
+    | { kind: "public_key_invalid" }
+    | { kind: "originating_canister_invalid" };
 
 export type CheckAuthPrincipalResponse = { kind: "success" } | { kind: "not_found" };
 
@@ -65,7 +66,8 @@ export type CreateOpenChatIdentityError =
     | "already_registered"
     | "challenge_failed"
     | "challenge_required"
-    | "public_key_invalid";
+    | "public_key_invalid"
+    | "originating_canister_invalid";
 
 export type GenerateChallengeResponse =
     | { kind: "throttled" }

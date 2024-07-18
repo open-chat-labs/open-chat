@@ -22,6 +22,7 @@ export interface CreateIdentityArgs {
   'challenge_attempt' : [] | [{ 'key' : number, 'chars' : string }],
 }
 export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
+  { 'OriginatingCanisterInvalid' : string } |
   { 'Success' : PrepareDelegationSuccess } |
   { 'ChallengeFailed' : null } |
   { 'ChallengeRequired' : null } |

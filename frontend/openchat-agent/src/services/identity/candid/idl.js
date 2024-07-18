@@ -40,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateIdentityResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
+    'OriginatingCanisterInvalid' : IDL.Text,
     'Success' : PrepareDelegationSuccess,
     'ChallengeFailed' : IDL.Null,
     'ChallengeRequired' : IDL.Null,

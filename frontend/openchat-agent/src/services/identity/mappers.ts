@@ -33,6 +33,9 @@ export function createIdentityResponse(candid: ApiCreateIdentityResponse): Creat
     if ("PublicKeyInvalid" in candid) {
         return { kind: "public_key_invalid" };
     }
+    if ("OriginatingCanisterInvalid" in candid) {
+        return { kind: "originating_canister_invalid" };
+    }
     if ("ChallengeFailed" in candid) {
         return { kind: "challenge_failed" };
     }
