@@ -20,7 +20,7 @@ async fn claim_prize(args: Args) -> Response {
     };
 
     // Transfer the prize to the winner
-    let result = process_transaction(prepare_result.transaction, prepare_result.group).await;
+    let result = process_transaction(prepare_result.transaction, prepare_result.group, true).await;
 
     match result {
         Ok(completed_transaction) => {

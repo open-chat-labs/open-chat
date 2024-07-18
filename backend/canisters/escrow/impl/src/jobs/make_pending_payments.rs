@@ -52,7 +52,7 @@ async fn process_payment(pending_payment: PendingPayment) {
         amount: pending_payment.amount.into(),
     };
 
-    match make_transfer(pending_payment.token_info.ledger, &args).await {
+    match make_transfer(pending_payment.token_info.ledger, &args, true).await {
         Ok(block_index) => {
             mutate_state(|state| {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
