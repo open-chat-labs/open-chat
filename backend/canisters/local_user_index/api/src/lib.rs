@@ -36,6 +36,7 @@ pub enum Event {
     DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
+    AddCanisterToPool(CanisterId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

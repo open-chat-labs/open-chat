@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1244](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1244-community)] - 2024-07-18
+
 ### Added
 
 - Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Allow UserIndex to send Group/Channel messages as the OpenChat Bot ([#6048](https://github.com/open-chat-labs/open-chat/pull/6048))
 
+### Changed
+
+- Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
+  
 ## [[2.0.1235](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1235-community)] - 2024-07-09
 
 ### Added
@@ -17,10 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 - Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
 
-### Changed
-
-- Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
-  
 ### Fixed
 
 - Allow changing casing of channel names ([#5999](https://github.com/open-chat-labs/open-chat/pull/5999))

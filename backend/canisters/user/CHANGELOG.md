@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1243](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1243-user)] - 2024-07-17
+
 ### Changed
 
 - Added lots more achievements to enum ([#6020](https://github.com/open-chat-labs/open-chat/pull/6020))
 - Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
 - Store `unique_person_proof` in User canisters ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Re-enable notifying of user accounts that are empty and dormant ([#6046](https://github.com/open-chat-labs/open-chat/pull/6046))
 
 ### Removed
 

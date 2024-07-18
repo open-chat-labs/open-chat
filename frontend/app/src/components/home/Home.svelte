@@ -289,9 +289,11 @@
 
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
-        if ($activeVideoCall?.chatId === ev.detail.chatId ||
+        if (
+            $activeVideoCall?.chatId === ev.detail.chatId ||
             ev.detail.currentUserIsParticipant ||
-            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000) {
+            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
+        ) {
             return;
         }
 
@@ -447,10 +449,10 @@
                 rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
             } else if (pathParams.kind === "selected_community_route") {
                 await selectCommunity(pathParams.communityId);
-                // if (selectFirstChat()) {
-                //     communityLoaded = true;
-                //     return;
-                // }
+                if (selectFirstChat()) {
+                    communityLoaded = true;
+                    return;
+                }
             } else if (
                 pathParams.kind === "global_chat_selected_route" ||
                 pathParams.kind === "selected_channel_route"

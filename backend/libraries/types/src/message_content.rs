@@ -218,7 +218,13 @@ impl MessageContent {
             MessageContent::ReportedMessage(_) => None,
             MessageContent::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
             MessageContent::VideoCall(_) => Some(Achievement::StartedCall),
-            MessageContent::Custom(_) => None,
+            MessageContent::Custom(c) => {
+                if c.kind == "meme_fighter" {
+                    Some(Achievement::SentMeme)
+                } else {
+                    None
+                }
+            }
         }
     }
 

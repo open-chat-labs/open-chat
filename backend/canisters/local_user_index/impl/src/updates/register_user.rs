@@ -1,6 +1,4 @@
-use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
-use crate::timer_job_types::{AddUserToSatoshiDice, TimerJob};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -10,7 +8,7 @@ use local_user_index_canister::register_user::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
-use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
+use user_index_canister::{Event as UserIndexEvent, UserRegistered};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -212,35 +210,7 @@ fn commit(
                 );
             }
         }
-        Some(ReferralCode::BtcMiami(code)) => {
-            let test_mode = state.data.test_mode;
-
-            // This referral code can only be used once so claim it
-            state.data.referral_codes.claim(code, user_id, now);
-
-            state.data.btc_miami_payments_queue.push(PendingPayment {
-                amount: if test_mode { 50 } else { 50_000 }, // Approx $14
-                timestamp: state.env.now_nanos(),
-                recipient: user_id.into(),
-            });
-            crate::jobs::make_btc_miami_payments::start_job_if_required(state);
-
-            let btc_miami_group =
-                Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
-                    .unwrap()
-                    .into();
-
-            state.push_event_to_user_index(UserIndexEvent::JoinUserToGroup(Box::new(JoinUserToGroup {
-                user_id,
-                chat_id: btc_miami_group,
-            })));
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice { user_id, attempt: 0 }),
-                now,
-                now,
-            )
-        }
-        None => {}
+        Some(ReferralCode::BtcMiami(_)) | None => {}
     }
 }
 

@@ -789,8 +789,9 @@ type EditMessage = {
     chatId: ChatIdentifier;
     msg: Message;
     threadRootMessageIndex?: number;
-    kind: "editMessage";
     blockLevelMarkdown?: boolean;
+    newAchievement: boolean;
+    kind: "editMessage";
 };
 
 type SendMessage = {
@@ -801,6 +802,7 @@ type SendMessage = {
     acceptedRules: AcceptedRules | undefined;
     messageFilterFailed: bigint | undefined;
     pin: string | undefined;
+    newAchievement: boolean;
     kind: "sendMessage";
 };
 
@@ -855,6 +857,7 @@ type AddReaction = {
     username: string;
     displayName: string | undefined;
     threadRootMessageIndex?: number;
+    newAchievement: boolean;
     kind: "addReaction";
 };
 
@@ -863,6 +866,7 @@ type DeleteMessage = {
     messageId: bigint;
     threadRootMessageIndex?: number;
     asPlatformModerator?: boolean;
+    newAchievement: boolean;
     kind: "deleteMessage";
 };
 

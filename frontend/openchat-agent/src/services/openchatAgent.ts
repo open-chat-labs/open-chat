@@ -418,8 +418,9 @@ export class OpenChatAgent extends EventTarget {
     editMessage(
         chatId: ChatIdentifier,
         msg: Message,
-        threadRootMessageIndex?: number,
-        blockLevelMarkdown?: boolean,
+        threadRootMessageIndex: number | undefined,
+        blockLevelMarkdown: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         if (offline()) return Promise.resolve("failure");
 
@@ -437,6 +438,7 @@ export class OpenChatAgent extends EventTarget {
                     msg,
                     threadRootMessageIndex,
                     blockLevelMarkdown,
+                    newAchievement,
                 );
             case "channel":
                 return this.editChannelMessage(
@@ -444,6 +446,7 @@ export class OpenChatAgent extends EventTarget {
                     msg,
                     threadRootMessageIndex,
                     blockLevelMarkdown,
+                    newAchievement,
                 );
         }
     }
@@ -456,6 +459,7 @@ export class OpenChatAgent extends EventTarget {
         acceptedRules: AcceptedRules | undefined,
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -494,6 +498,7 @@ export class OpenChatAgent extends EventTarget {
                 acceptedRules?.community,
                 acceptedRules?.chat,
                 messageFilterFailed,
+                newAchievement,
             );
         }
         if (chatId.kind === "group_chat") {
@@ -524,6 +529,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 acceptedRules?.chat,
                 messageFilterFailed,
+                newAchievement,
             );
         }
         if (chatId.kind === "direct_chat") {
@@ -548,6 +554,7 @@ export class OpenChatAgent extends EventTarget {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -559,6 +566,7 @@ export class OpenChatAgent extends EventTarget {
             communityRulesAccepted,
             channelRulesAccepted,
             messageFilterFailed,
+            newAchievement,
         );
     }
 
@@ -571,6 +579,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -580,33 +589,38 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             rulesAccepted,
             messageFilterFailed,
+            newAchievement,
         );
     }
 
     private editGroupMessage(
         chatId: GroupChatIdentifier,
         message: Message,
-        threadRootMessageIndex?: number,
-        blockLevelMarkdown?: boolean,
+        threadRootMessageIndex: number | undefined,
+        blockLevelMarkdown: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return this.getGroupClient(chatId.groupId).editMessage(
             message,
             threadRootMessageIndex,
             blockLevelMarkdown,
+            newAchievement,
         );
     }
 
     private editChannelMessage(
         chatId: ChannelIdentifier,
         message: Message,
-        threadRootMessageIndex?: number,
-        blockLevelMarkdown?: boolean,
+        threadRootMessageIndex: number | undefined,
+        blockLevelMarkdown: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return this.communityClient(chatId.communityId).editMessage(
             chatId,
             message,
             threadRootMessageIndex,
             blockLevelMarkdown,
+            newAchievement,
         );
     }
 
@@ -2127,7 +2141,8 @@ export class OpenChatAgent extends EventTarget {
         reaction: string,
         username: string,
         displayName: string | undefined,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2139,6 +2154,7 @@ export class OpenChatAgent extends EventTarget {
                     username,
                     displayName,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
 
             case "direct_chat":
@@ -2147,6 +2163,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
 
             case "channel":
@@ -2157,6 +2174,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
         }
     }
@@ -2198,8 +2216,9 @@ export class OpenChatAgent extends EventTarget {
     deleteMessage(
         chatId: ChatIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean,
+        threadRootMessageIndex: number | undefined,
+        asPlatformModerator: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -2210,6 +2229,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     threadRootMessageIndex,
                     asPlatformModerator,
+                    newAchievement,
                 );
 
             case "direct_chat":
@@ -2221,6 +2241,7 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     threadRootMessageIndex,
                     asPlatformModerator,
+                    newAchievement,
                 );
         }
     }
@@ -2228,8 +2249,9 @@ export class OpenChatAgent extends EventTarget {
     private deleteChannelMessage(
         chatId: ChannelIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean,
+        threadRootMessageIndex: number | undefined,
+        asPlatformModerator: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -2238,14 +2260,16 @@ export class OpenChatAgent extends EventTarget {
             [messageId],
             threadRootMessageIndex,
             asPlatformModerator,
+            newAchievement,
         );
     }
 
     private deleteGroupMessage(
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number,
-        asPlatformModerator?: boolean,
+        threadRootMessageIndex: number | undefined,
+        asPlatformModerator: boolean | undefined,
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -2253,6 +2277,7 @@ export class OpenChatAgent extends EventTarget {
             messageId,
             threadRootMessageIndex,
             asPlatformModerator,
+            newAchievement,
         );
     }
 

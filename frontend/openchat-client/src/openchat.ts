@@ -416,6 +416,7 @@ import type {
     AccessGateWithLevel,
     PreprocessedGate,
     SubmitProofOfUniquePersonhoodResponse,
+    Achievement,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1345,6 +1346,7 @@ export class OpenChat extends OpenChatAgentWorker {
             this.config.internetIdentityUrl,
             this._authPrincipal,
             gate.credential.issuerOrigin,
+            gate.credential.issuerCanisterId,
             gate.credential.credentialType,
             gate.credential.credentialArguments,
             this.config.iiDerivationOrigin,
@@ -1981,12 +1983,15 @@ export class OpenChat extends OpenChatAgentWorker {
             localMessageUpdates.markUndeleted(messageId);
         }
 
+        const newAchievement = !this._liveState.globalState.achievements.has("deleted_message");
+
         return this.sendRequest({
             kind: "deleteMessage",
             chatId: id,
             messageId,
             threadRootMessageIndex,
             asPlatformModerator,
+            newAchievement,
         })
             .then((resp) => {
                 const success = resp === "success";
@@ -2106,6 +2111,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.dispatchEvent(new ReactionSelected(messageId, kind));
 
+        const newAchievement = !this._liveState.globalState.achievements.has("reacted_to_message");
+
         const result = (
             kind == "add"
                 ? this.sendRequest({
@@ -2116,6 +2123,7 @@ export class OpenChat extends OpenChatAgentWorker {
                       username,
                       displayName,
                       threadRootMessageIndex,
+                      newAchievement,
                   })
                 : this.sendRequest({
                       kind: "removeReaction",
@@ -3462,6 +3470,8 @@ export class OpenChat extends OpenChatAgentWorker {
             get(messageFiltersStore),
         );
 
+        const newAchievement = this.isNewSendMessageAchievement(messageContext, eventWrapper.event);
+
         return this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
@@ -3472,6 +3482,7 @@ export class OpenChat extends OpenChatAgentWorker {
             acceptedRules,
             messageFilterFailed,
             pin,
+            newAchievement,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3540,6 +3551,83 @@ export class OpenChat extends OpenChatAgentWorker {
 
                 return CommonResponses.failure();
             });
+    }
+
+    private isNewSendMessageAchievement(
+        message_context: MessageContext,
+        message: Message,
+    ): boolean {
+        let achievement: Achievement | undefined = undefined;
+
+        switch (message.content.kind) {
+            case "audio_content":
+                achievement = "sent_audio";
+                break;
+            case "crypto_content":
+                achievement = "sent_crypto";
+                break;
+            case "file_content":
+                achievement = "sent_file";
+                break;
+            case "giphy_content":
+                achievement = "sent_giphy";
+                break;
+            case "image_content":
+                achievement = "sent_image";
+                break;
+            case "meme_fighter_content":
+                achievement = "sent_meme";
+                break;
+            case "p2p_swap_content_initial":
+                achievement = "sent_swap_offer";
+                break;
+            case "poll_content":
+                achievement = "sent_poll";
+                break;
+            case "prize_content_initial":
+                achievement = "sent_prize";
+                break;
+            case "text_content":
+                achievement = "sent_text";
+                break;
+            case "video_call_content":
+                achievement = "started_call";
+                break;
+            case "video_content":
+                achievement = "sent_video";
+                break;
+        }
+
+        const achievements: Achievement[] = [];
+
+        if (achievement !== undefined) {
+            achievements.push(achievement);
+        }
+
+        if (message_context.chatId.kind === "direct_chat") {
+            achievements.push("sent_direct_message");
+        }
+
+        if (message.forwarded) {
+            achievements.push("forwarded_message");
+        }
+
+        if (message.repliesTo !== undefined) {
+            achievements.push("quote_replied");
+        } else if (
+            message_context.threadRootMessageIndex !== undefined &&
+            message.messageIndex == 0
+        ) {
+            achievements.push("replied_in_thread");
+        }
+
+        for (const a of achievements.values()) {
+            if (!this._liveState.globalState.achievements.has(a as Achievement)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private rulesNeedAccepting(): boolean {
@@ -3822,12 +3910,15 @@ export class OpenChat extends OpenChatAgentWorker {
                 localMessageUpdates.setBlockLevelMarkdown(msg.messageId, updatedBlockLevelMarkdown);
             }
 
+            const newAchievement = !this._liveState.globalState.achievements.has("edited_message");
+
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
                 threadRootMessageIndex: messageContext.threadRootMessageIndex,
                 blockLevelMarkdown: updatedBlockLevelMarkdown,
+                newAchievement,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -3866,6 +3957,7 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId: messageContext.chatId,
             msg,
             threadRootMessageIndex: messageContext.threadRootMessageIndex,
+            newAchievement: false,
         })
             .then((resp) => {
                 if (resp !== "success") {

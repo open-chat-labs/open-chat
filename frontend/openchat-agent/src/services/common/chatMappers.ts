@@ -1803,6 +1803,11 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             minBalance: candid.TokenBalance.min_balance,
         };
     }
+    if ("Composite" in candid) {
+        return {
+            kind: "no_gate",
+        };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
@@ -2301,6 +2306,7 @@ export function updateGroupResponse(
         return { kind: "access_gate_invalid" };
     }
     if (
+        "AccessGateInvalid" in candid ||
         "UserNotInChannel" in candid ||
         "ChannelNotFound" in candid ||
         "UserNotInCommunity" in candid ||

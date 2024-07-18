@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -12,7 +12,6 @@ use user_canister::post_upgrade::Args;
 use utils::time::DAY_IN_MS;
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
-const NOTIFY_IF_EMPTY: bool = false;
 
 #[post_upgrade]
 #[trace]
@@ -29,22 +28,19 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    // Disable this for now until all existing empty users have been deleted
-    if NOTIFY_IF_EMPTY {
-        mutate_state(|state| {
-            if state.data.user_created + SIX_MONTHS < state.env.now()
-                && state.data.direct_chats.len() <= 1
-                && state.data.group_chats.len() == 0
-                && state.data.communities.len() == 0
-            {
-                ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
-            }
-        });
-    }
+    read_state(|state| {
+        if state.data.user_created + SIX_MONTHS < state.env.now()
+            && state.data.direct_chats.len() <= 1
+            && state.data.group_chats.len() == 0
+            && state.data.communities.len() == 0
+        {
+            ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
+        }
+    });
 }
 
 fn mark_user_canister_empty() {
-    mutate_state(|state| {
+    read_state(|state| {
         let user_index_canister_id = state.data.user_index_canister_id;
         state.data.fire_and_forget_handler.send(
             user_index_canister_id,
