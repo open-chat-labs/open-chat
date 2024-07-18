@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
 
+### Removed
+
+- Remove a load of unused code ([#6066](https://github.com/open-chat-labs/open-chat/pull/6066))
+
 ## [[2.0.1247](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1247-local_user_index)] - 2024-07-18
 
 ### Changed
