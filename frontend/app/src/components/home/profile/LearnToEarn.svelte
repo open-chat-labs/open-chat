@@ -31,7 +31,6 @@
         "upgrade_to_gold_diamond",
         "sent_text",
         "reacted_to_message",
-        "started_call",
         "sent_file",
         "sent_image",
         "sent_poll",
