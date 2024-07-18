@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use identity_canister::post_upgrade::Args;
 use stable_memory::get_reader;
-use std::collections::HashSet;
 use tracing::info;
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -27,17 +27,25 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        // Remove ETH and SOL canisters from skip_captcha_whitelist
-        let canisters_to_remove = HashSet::from([
-            "2notu-qyaaa-aaaar-qaeha-cai".to_string(),
-            "2kpva-5aaaa-aaaar-qaehq-cai".to_string(),
-            "4s357-zaaaa-aaaaf-bjz7q-cai".to_string(),
-            "lix6w-ciaaa-aaaaf-bj2aa-cai".to_string(),
-        ]);
+        let originating_canisters = if state.data.test_mode {
+            [
+                "rdmx6-jaaaa-aaaaa-aaadq-cai", // II
+                "rubs2-eaaaa-aaaaf-bijfq-cai", // Email
+                "4s357-zaaaa-aaaaf-bjz7q-cai", // ETH
+                "lix6w-ciaaa-aaaaf-bj2aa-cai", // SOL
+            ]
+        } else {
+            [
+                "rdmx6-jaaaa-aaaaa-aaadq-cai", // II
+                "zi2i7-nqaaa-aaaar-qaemq-cai", // Email
+                "2notu-qyaaa-aaaar-qaeha-cai", // ETH
+                "2kpva-5aaaa-aaaar-qaehq-cai", // SOL
+            ]
+        };
 
         state
             .data
-            .skip_captcha_whitelist
-            .retain(|e| !canisters_to_remove.contains(&e.to_string()));
+            .originating_canisters
+            .extend(originating_canisters.iter().map(|s| CanisterId::from_text(s).unwrap()));
     });
 }

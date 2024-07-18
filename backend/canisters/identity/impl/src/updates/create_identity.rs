@@ -22,6 +22,10 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         Err(error) => return PublicKeyInvalid(error),
     };
 
+    if !state.data.originating_canisters.contains(&originating_canister) {
+        return OriginatingCanisterInvalid(originating_canister);
+    }
+
     if state.data.requires_captcha(&originating_canister) {
         let Some(attempt) = args.challenge_attempt else {
             return ChallengeRequired;

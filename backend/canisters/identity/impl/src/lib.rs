@@ -88,6 +88,8 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
+    #[serde(default)]
+    originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     #[serde(default)]
@@ -111,6 +113,7 @@ impl Data {
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        originating_canisters: Vec<CanisterId>,
         skip_captcha_whitelist: Vec<CanisterId>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
@@ -119,6 +122,7 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            originating_canisters: originating_canisters.into_iter().collect(),
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             identity_link_requests: IdentityLinkRequests::default(),

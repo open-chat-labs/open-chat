@@ -63,6 +63,7 @@ type CreateIdentityResponse = variant {
     Success : PrepareDelegationSuccess;
     AlreadyRegistered;
     PublicKeyInvalid : text;
+    OriginatingCanisterInvalid : principal;
     ChallengeRequired;
     ChallengeFailed;
 };
