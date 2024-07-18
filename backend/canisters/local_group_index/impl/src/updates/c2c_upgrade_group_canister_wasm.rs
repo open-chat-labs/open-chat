@@ -78,6 +78,12 @@ fn commit(args: Args, chunks: Vec<Hash>, state: &mut RuntimeState) -> Response {
         state.data.groups_requiring_upgrade.enqueue(canister_id, false);
     }
 
+    state.data.groups_requiring_upgrade.clear_failed(BuildVersion {
+        major: version.major,
+        minor: version.minor,
+        patch: version.patch.saturating_sub(100),
+    });
+
     let canisters_queued_for_upgrade = state.data.groups_requiring_upgrade.count_pending();
     info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
     Success

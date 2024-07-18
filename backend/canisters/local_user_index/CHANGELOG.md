@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+
+## [[2.0.1247](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1247-local_user_index)] - 2024-07-18
+
+### Changed
+
 - Expire old BTC Miami referral codes ([#6053](https://github.com/open-chat-labs/open-chat/pull/6053))
 
 ## [[2.0.1241](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1241-local_user_index)] - 2024-07-17
