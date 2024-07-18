@@ -29,6 +29,25 @@
         "upgraded_to_diamond",
         "set_display_name",
         "upgrade_to_gold_diamond",
+        "sent_text",
+        "reacted_to_message",
+        "started_call",
+        "sent_file",
+        "sent_image",
+        "sent_poll",
+        "sent_crypto",
+        "sent_video",
+        "sent_audio",
+        "sent_giphy",
+        "sent_prize",
+        "sent_meme",
+        "sent_swap_offer",
+        "quote_replied",
+        "replied_in_thread",
+        "edited_message",
+        "deleted_message",
+        "tipped_message",
+        "forwarded_message",
     ]);
 
     $: globalState = client.globalStateStore;
@@ -45,9 +64,8 @@
 
 <Overlay dismissible>
     <ModalContent closeIcon on:close>
-        <span class="header" slot="header">
-            <Translatable resourceKey={i18nKey("learnToEarn.title")} />
-        </span>
+        <span class="header" slot="header"
+            ><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>
 
         <div class="body" slot="body">
             {#each achieved as achievement}
