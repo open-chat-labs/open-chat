@@ -226,7 +226,7 @@
             const prize = prizes[i];
             if (prize < transferFees) {
                 prizes[i] = transferFees;
-                totalAdded = transferFees - prize;
+                totalAdded += transferFees - prize;
             }
         }
 
