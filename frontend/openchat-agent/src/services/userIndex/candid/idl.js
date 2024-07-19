@@ -52,7 +52,6 @@ export const idlFactory = ({ IDL }) => {
   const DiamondMembershipDetails = IDL.Record({
     'pay_in_chat' : IDL.Bool,
     'subscription' : DiamondMembershipSubscription,
-    'recurring' : IDL.Opt(DiamondMembershipSubscription),
     'expires_at' : TimestampMillis,
   });
   const DiamondMembershipStatusFull = IDL.Variant({

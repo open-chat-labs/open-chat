@@ -61,26 +61,22 @@ impl DiamondMembershipDetailsInternal {
                 .unwrap_or_default()
     }
 
-    #[allow(deprecated)]
     pub fn status_full(&self, now: TimestampMillis) -> DiamondMembershipStatusFull {
         match self.expires_at {
             Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
             Some(ts) if ts > now => DiamondMembershipStatusFull::Active(DiamondMembershipDetails {
                 expires_at: ts,
                 pay_in_chat: self.pay_in_chat,
-                recurring: Some(self.subscription),
                 subscription: self.subscription,
             }),
             _ => DiamondMembershipStatusFull::Inactive,
         }
     }
 
-    #[allow(deprecated)]
     pub fn hydrate(&self, now: TimestampMillis) -> Option<DiamondMembershipDetails> {
         self.expires_at.filter(|&ts| now < ts).map(|ts| DiamondMembershipDetails {
             expires_at: ts,
             pay_in_chat: self.pay_in_chat,
-            recurring: self.subscription.is_active().then_some(self.subscription),
             subscription: self.subscription,
         })
     }
