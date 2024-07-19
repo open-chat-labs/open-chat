@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept proofs of uniqueness from LocalUserIndexes ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
 - Ensure UserIndex is only controller before installing LocalUserIndex ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
 
+### Removed
+
+- Remove deprecated `recurring` field ([#6077](https://github.com/open-chat-labs/open-chat/pull/6077))
+
 ## [[2.0.1242](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1242-user_index)] - 2024-07-17
 
 ### Added

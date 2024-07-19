@@ -1484,7 +1484,6 @@ type PrizeWinnerContent = record {
 
 type DiamondMembershipDetails = record {
     expires_at : TimestampMillis;
-    recurring : opt DiamondMembershipSubscription;
     pay_in_chat : bool;
     subscription : DiamondMembershipSubscription;
 };

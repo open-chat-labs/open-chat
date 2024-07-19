@@ -7,8 +7,6 @@ use std::fmt::{Display, Formatter};
 pub struct DiamondMembershipDetails {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,
-    #[deprecated]
-    pub recurring: Option<DiamondMembershipSubscription>,
     pub subscription: DiamondMembershipSubscription,
 }
 
