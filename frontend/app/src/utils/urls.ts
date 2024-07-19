@@ -34,14 +34,13 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const nomenuRoutes: RouteType[] = ["miami_route"];
+const nomenuRoutes: RouteType[] = [];
 const scrollingRoutes: RouteType[] = [
     "features_route",
     "roadmap_route",
     "whitepaper_route",
     "architecture_route",
     "blog_route",
-    "miami_route",
     "guidelines_route",
     "faq_route",
     "diamond_route",

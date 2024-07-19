@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Alert from "svelte-material-icons/Alert.svelte";
     import { locale } from "svelte-i18n";
     import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
     import Toast from "../Toast.svelte";
@@ -15,6 +16,7 @@
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Translatable from "../Translatable.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
 
@@ -151,12 +153,16 @@
             </div>
         {:else if badCode}
             <div class="bad-code">
-                <img class="shirt" src="/assets/miami/miami_shirt.png" alt="Miami shirt" />
-                <div class="message">
-                    <h4 class="invalid">
+                <div class="alert">
+                    <Alert size={$iconSize} color={"var(--warn"} />
+                </div>
+                <div class="alert-txt">
+                    <h4 class="main">
                         <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
                     </h4>
-                    <p><Translatable resourceKey={i18nKey("register.doYouWantToProceed")} /></p>
+                    <p class="sub">
+                        <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
+                    </p>
                 </div>
             </div>
         {:else}
@@ -281,13 +287,27 @@
     }
 
     .bad-code {
+        padding: $sp4;
+        border: 1px solid var(--warn);
         display: flex;
-        gap: $sp5;
-        .shirt {
-            height: 200px;
+        align-items: flex-start;
+        gap: $sp3;
+        border-radius: var(--rd);
+
+        .alert {
+            flex: 0 0 25px;
         }
-        .invalid {
-            margin-bottom: $sp4;
+
+        .alert-txt {
+            flex: auto;
+
+            .main {
+                margin-bottom: $sp3;
+            }
+
+            .sub {
+                color: var(--txt-light);
+            }
         }
     }
 
