@@ -18,7 +18,7 @@ import {
     UserGroup,
     AccessTokenType,
     AccessTokenResponse,
-    VerifiedCredentialArgs,
+    VerifiedCredentialGateArgs,
     VideoCallType,
 } from "./types";
 export {
@@ -39,7 +39,7 @@ export {
     UserGroup as ApiUserGroup,
     AccessTokenResponse as ApiAccessTokenResponse,
     AccessTokenType as ApiAccessTokenType,
-    VerifiedCredentialArgs as ApiVerifiedCredentialArgs,
+    VerifiedCredentialGateArgs as ApiVerifiedCredentialGateArgs,
     VideoCallType as ApiVideoCallType,
 };
 
