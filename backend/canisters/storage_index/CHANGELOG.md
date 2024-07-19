@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+- Ensure StorageIndex is only controller before installing StorageBucket ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
 
 ## [[2.0.1175](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1175-storage_index)] - 2024-05-16
 

@@ -1,10 +1,10 @@
-use crate::canister::{install, CanisterToInstall, WasmToInstall};
+use crate::canister::install_basic;
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterInstallMode, CanisterSettings, CreateCanisterArgument};
+use ic_cdk::api::management_canister::main::{CanisterSettings, CreateCanisterArgument};
 use tracing::error;
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
+use types::{CanisterId, CanisterWasm, Cycles};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
@@ -32,18 +32,7 @@ pub async fn create_and_install<A: CandidType>(
         },
     };
 
-    match install(CanisterToInstall {
-        canister_id,
-        current_wasm_version: BuildVersion::default(),
-        new_wasm_version: wasm.version,
-        new_wasm: WasmToInstall::Default(wasm.module),
-        deposit_cycles_if_needed: true,
-        args: init_args,
-        mode: CanisterInstallMode::Install,
-        stop_start_canister: false,
-    })
-    .await
-    {
+    match install_basic(canister_id, wasm, init_args).await {
         Ok(_) => Ok(canister_id),
         Err((code, msg)) => Err(CreateAndInstallError::InstallFailed(canister_id, code, msg)),
     }
