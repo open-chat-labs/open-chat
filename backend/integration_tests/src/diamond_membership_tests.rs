@@ -59,6 +59,7 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
     assert_eq!(diamond_response.expires_at, expected_expiry);
     assert!(!diamond_response.subscription.is_active());
+
     let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
     let claims: Claims<DiamondMembershipDetails> = verify_jwt(&diamond_response.proof_jwt, public_key.as_bytes()).unwrap();
 
