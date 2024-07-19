@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Return proof as JWT after paying for Diamond membership ([#6078](https://github.com/open-chat-labs/open-chat/pull/6078))
+
 ### Changed
 
 - Use `should_retry_failed_c2c_call` to avoid getting stuck in loop ([#6061](https://github.com/open-chat-labs/open-chat/pull/6061))
