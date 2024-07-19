@@ -58,7 +58,7 @@ pub fn sign_and_encode_token<T: Serialize>(
 }
 
 pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_der: &[u8]) -> Result<T, Box<dyn Error>> {
-    let mut parts = jwt.split(".");
+    let mut parts = jwt.split('.');
     let header_json = parts.next().ok_or("Invalid jwt")?;
     let claims_json = parts.next().ok_or("Invalid jwt")?;
     let signature_str = parts.next().ok_or("Invalid jwt")?;
@@ -69,7 +69,7 @@ pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_der: &[u8]) -> Resu
     let verifying_key = ecdsa::VerifyingKey::from_public_key_der(public_key_der)?;
     verifying_key.verify(authenticated.as_bytes(), &signature)?;
 
-    Ok(decode_from_json(claims_json)?)
+    decode_from_json(claims_json)
 }
 
 fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
