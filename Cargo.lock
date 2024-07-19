@@ -5126,10 +5126,12 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "proof_of_unique_personhood",
  "rand 0.8.5",
  "satoshi_dice_canister",
  "satoshi_dice_canister_c2c_client",
  "serde",
+ "serde_bytes",
  "serde_json",
  "serializer",
  "sha256",
@@ -6270,6 +6272,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proof_of_unique_personhood"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-verifiable-credentials",
+ "types",
+]
+
+[[package]]
 name = "proposal_validation_canister"
 version = "0.1.0"
 dependencies = [
@@ -6378,7 +6389,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.65",
@@ -8810,7 +8821,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures 0.6.4",
- "ic-verifiable-credentials",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "identity_canister",
@@ -8825,6 +8835,7 @@ dependencies = [
  "nns_governance_canister",
  "nns_governance_canister_c2c_client",
  "p256_key_pair",
+ "proof_of_unique_personhood",
  "pulldown-cmark",
  "rand 0.8.5",
  "serde",

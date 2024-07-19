@@ -47,7 +47,7 @@ struct PrepareResult {
 }
 
 fn prepare(state: &RuntimeState) -> PrepareResult {
-    let user_id = state.calling_user().user_id;
+    let user_id = state.calling_user_id();
 
     PrepareResult {
         user_id,

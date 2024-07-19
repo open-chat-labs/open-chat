@@ -97,6 +97,14 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 Some(caller),
             );
         }
+        Event::NotifyUniquePersonProof(ev) => {
+            let (user_id, proof) = *ev;
+            state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
+            state.push_event_to_all_local_user_indexes(
+                LocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof),
+                Some(caller),
+            );
+        }
     }
 }
 
