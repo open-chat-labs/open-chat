@@ -62,12 +62,6 @@
             () => (route = LandingPage),
         );
         page(
-            "/miami",
-            parsePathParams(() => ({ kind: "miami_route" })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
             "/guidelines",
             parsePathParams(() => ({ kind: "guidelines_route" })),
             track,

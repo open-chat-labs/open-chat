@@ -81,10 +81,6 @@ export function isBlogRoute(route: RouteParams): route is BlogRoute {
     return route.kind === "blog_route";
 }
 
-export function isMiamiRoute(route: RouteParams): route is MiamiRoute {
-    return route.kind === "miami_route";
-}
-
 export function isRoadmapRoute(route: RouteParams): route is RoadmapRoute {
     return route.kind === "roadmap_route";
 }
@@ -253,7 +249,6 @@ export type LandingPageRoute =
     | WhitepaperRoute
     | RoadmapRoute
     | BlogRoute
-    | MiamiRoute
     | FaqRoute
     | GuidelinesRoute
     | DiamondRoute;
@@ -282,7 +277,6 @@ export type FeaturesRoute = { kind: "features_route" };
 export type ArchitectureRoute = { kind: "architecture_route" };
 export type WhitepaperRoute = { kind: "whitepaper_route" };
 export type RoadmapRoute = { kind: "roadmap_route" };
-export type MiamiRoute = { kind: "miami_route" };
 export type FaqRoute = { kind: "faq_route" };
 export type DiamondRoute = { kind: "diamond_route" };
 export type GuidelinesRoute = { kind: "guidelines_route" };
