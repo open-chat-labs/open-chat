@@ -4,10 +4,11 @@ use crate::{read_state, LocalUserIndexEvent};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use ledger_utils::icrc1::make_transfer;
 use local_user_index_canister::OpenChatBotMessage;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::trace;
 use types::{Cryptocurrency, MessageContent, TextContent};
 use utils::consts::SNS_ROOT_CANISTER_ID;
 
@@ -37,7 +38,16 @@ pub fn run() {
 
 async fn process_payment(pending_payment: PendingPayment) {
     let reason = pending_payment.reason.clone();
-    let result = make_payment(&pending_payment).await;
+    let args = TransferArg {
+        from_subaccount: None,
+        to: pending_payment.recipient_account,
+        fee: None,
+        created_at_time: Some(pending_payment.timestamp),
+        memo: Some(pending_payment.memo.to_vec().into()),
+        amount: pending_payment.amount.into(),
+    };
+
+    let result = make_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args, true).await;
 
     mutate_state(|state| {
         match result {
@@ -50,7 +60,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                 }
                 _ => {}
             },
-            Err(retry) => {
+            Err((_, retry)) => {
                 if retry {
                     state.data.pending_payments_queue.push(pending_payment);
                 }
@@ -58,30 +68,6 @@ async fn process_payment(pending_payment: PendingPayment) {
         }
         start_job_if_required(state);
     });
-}
-
-// Error response contains a boolean stating if the transfer should be retried
-async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
-    let args = TransferArg {
-        from_subaccount: None,
-        to: pending_payment.recipient_account,
-        fee: None,
-        created_at_time: Some(pending_payment.timestamp),
-        memo: Some(pending_payment.memo.to_vec().into()),
-        amount: pending_payment.amount.into(),
-    };
-
-    match icrc_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await {
-        Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
-        Ok(Err(transfer_error)) => {
-            error!(?transfer_error, ?args, "Transfer failed");
-            Err(false)
-        }
-        Err(error) => {
-            error!(?error, ?args, "Transfer failed");
-            Err(true)
-        }
-    }
 }
 
 fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {

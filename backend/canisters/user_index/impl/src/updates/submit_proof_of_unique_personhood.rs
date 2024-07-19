@@ -2,15 +2,10 @@ use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use ic_cdk::update;
-use ic_verifiable_credentials::issuer_api::CredentialSpec;
-use ic_verifiable_credentials::VcFlowSigners;
+use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::Serialize;
-use types::{CanisterId, UniquePersonProof, UniquePersonProofProvider};
+use types::UniquePersonProofProvider;
 use user_index_canister::submit_proof_of_unique_personhood::{Response::*, *};
-use utils::time::NANOS_PER_MILLISECOND;
-
-const ISSUER_CANISTER_ID: CanisterId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 240, 24, 173, 1, 1]);
-const ISSUER_ORIGIN: &str = "id.decideai.xyz";
 
 #[update]
 #[trace]
@@ -25,27 +20,14 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
     };
 
     let now = state.env.now();
-    match ic_verifiable_credentials::validate_ii_presentation_and_claims(
-        &args.credential_jwt,
+    match verify_proof_of_unique_personhood(
         caller,
-        &VcFlowSigners {
-            ii_canister_id: state.data.internet_identity_canister_id,
-            ii_origin: "identity.ic0.app".to_string(),
-            issuer_canister_id: ISSUER_CANISTER_ID,
-            issuer_origin: ISSUER_ORIGIN.to_string(),
-        },
-        &CredentialSpec {
-            credential_type: "ProofOfUniqueness".to_string(),
-            arguments: None,
-        },
+        state.data.internet_identity_canister_id,
+        &args.credential_jwt,
         &state.data.ic_root_key,
-        (now * NANOS_PER_MILLISECOND) as u128,
+        now,
     ) {
-        Ok(_) => {
-            let proof = UniquePersonProof {
-                timestamp: now,
-                provider: UniquePersonProofProvider::DecideAI,
-            };
+        Ok(proof) => {
             state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
             state.push_event_to_all_local_user_indexes(
                 local_user_index_canister::Event::NotifyUniquePersonProof(user_id, proof),
@@ -62,17 +44,11 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
             );
             Success
         }
-        Err(error) => Invalid(format!("{error:?}")),
+        Err(error) => Invalid(error),
     }
 }
 
 #[derive(Serialize)]
 struct EventPayload {
     provider: UniquePersonProofProvider,
-}
-
-#[test]
-fn signing_canister_id() {
-    let canister_id = CanisterId::from_text("qgxyr-pyaaa-aaaah-qdcwq-cai").unwrap();
-    assert_eq!(canister_id, ISSUER_CANISTER_ID);
 }

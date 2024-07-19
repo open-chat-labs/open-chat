@@ -59,12 +59,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,
                 event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
+                internet_identity_canister_id: state.data.internet_identity_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
                 oc_secret_key_der: state
                     .data
                     .oc_key_pair
                     .is_initialised()
                     .then_some(state.data.oc_key_pair.secret_key_der().to_vec()),
+                ic_root_key: state.data.ic_root_key.clone(),
                 test_mode: state.data.test_mode,
             },
         })

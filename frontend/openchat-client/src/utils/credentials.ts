@@ -115,6 +115,7 @@ export function verifyCredential(
             iiUrl,
             principal,
             issuerOrigin,
+            issuerCanisterId,
             credentialType,
         );
 

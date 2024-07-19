@@ -122,6 +122,12 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        originating_canisters: vec![
+            canister_ids.nns_internet_identity,
+            canister_ids.sign_in_with_email,
+            canister_ids.sign_in_with_ethereum,
+            canister_ids.sign_in_with_solana,
+        ],
         skip_captcha_whitelist: vec![canister_ids.nns_internet_identity, canister_ids.sign_in_with_email],
         ic_root_key: agent.read_root_key(),
         wasm_version: version,

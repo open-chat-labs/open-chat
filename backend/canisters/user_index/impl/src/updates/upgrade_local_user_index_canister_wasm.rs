@@ -44,6 +44,12 @@ fn upgrade_local_user_index_canister_wasm_impl(args: Args, state: &mut RuntimeSt
         }
         crate::jobs::upgrade_canisters::start_job_if_required(state);
 
+        state.data.canisters_requiring_upgrade.clear_failed(BuildVersion {
+            major: version.major,
+            minor: version.minor,
+            patch: version.patch.saturating_sub(100),
+        });
+
         let canisters_queued_for_upgrade = state.data.canisters_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "Local user index canister wasm upgraded");
         Success

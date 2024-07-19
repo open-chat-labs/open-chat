@@ -4438,8 +4438,16 @@ export class OpenChat extends OpenChatAgentWorker {
                     if (this._referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }
-                    this.clearReferralCode();
                 }
+
+                switch (res.kind) {
+                    case "success":
+                    case "referral_code_invalid":
+                    case "referral_code_already_claimed":
+                    case "referral_code_expired":
+                        this.clearReferralCode();
+                }
+
                 return res;
             })
             .catch(() => ({ kind: "internal_error" }));

@@ -155,7 +155,7 @@ async fn transfer_prize_funds_to_group(
         created: now_nanos,
     };
 
-    match icrc1::process_transaction(pending_transaction, group).await {
+    match icrc1::process_transaction(pending_transaction, group, true).await {
         Ok(completed_transaction) => mutate_state(|state| {
             let completed_transaction = CompletedCryptoTransaction::from(completed_transaction);
             state.data.prizes_sent.push(Prize {

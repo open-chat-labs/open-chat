@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use notifications_index_canister::upgrade_notifications_canister_wasm::{Response::*, *};
 use std::collections::HashSet;
 use tracing::info;
+use types::BuildVersion;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -40,8 +41,13 @@ fn upgrade_notifications_canister_wasm_impl(args: Args, state: &mut RuntimeState
         {
             state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
         }
-
         crate::jobs::upgrade_canisters::start_job_if_required(state);
+
+        state.data.canisters_requiring_upgrade.clear_failed(BuildVersion {
+            major: version.major,
+            minor: version.minor,
+            patch: version.patch.saturating_sub(100),
+        });
 
         let canisters_queued_for_upgrade = state.data.canisters_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "Notifications canister wasm upgraded");

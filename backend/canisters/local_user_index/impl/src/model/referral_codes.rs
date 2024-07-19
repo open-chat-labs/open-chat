@@ -23,14 +23,6 @@ pub struct ReferralCodes {
     codes: HashMap<String, ReferralCodeDetails>,
 }
 
-impl ReferralCodes {
-    pub fn set_expired(&mut self, now: TimestampMillis) {
-        for code in self.codes.values_mut() {
-            code.expiry = Some(now);
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct ReferralCodeDetails {
     referral_type: ReferralType,

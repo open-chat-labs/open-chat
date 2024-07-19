@@ -27,9 +27,11 @@ fn init(args: Args) {
         args.cycles_dispenser_canister_id,
         args.escrow_canister_id,
         args.event_relay_canister_id,
+        args.internet_identity_canister_id,
         canister_pool_target_size,
         args.video_call_operators,
         args.oc_secret_key_der,
+        args.ic_root_key,
         args.test_mode,
     );
 
