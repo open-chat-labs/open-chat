@@ -26,7 +26,7 @@ import type {
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
-    ApiVerifiedCredentialArgs,
+    ApiVerifiedCredentialGateArgs,
     ApiVideoCallType,
 } from "./candid/idl";
 import { bytesToHexString, identity } from "../../utils/mapping";
@@ -334,10 +334,11 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
 
 export function apiVerifiedCredentialArgs(
     domain: VerifiedCredentialArgs,
-): ApiVerifiedCredentialArgs {
+): ApiVerifiedCredentialGateArgs {
     return {
         user_ii_principal: Principal.fromText(domain.userIIPrincipal),
         ii_origin: domain.iiOrigin,
         credential_jwt: domain.credentialJwt,
+        credential_jwts: [domain.credentialJwt],
     };
 }
