@@ -138,7 +138,7 @@ mod tests {
 
             let jwt = sign_and_encode_token(sk_der, claims, &mut rng).unwrap();
 
-            let claims: Claims<StartVideoCallClaims> = verify_jwt(&jwt, &pk_pem).unwrap();
+            let claims: Claims<StartVideoCallClaims> = verify_jwt(&jwt, pk_pem).unwrap();
 
             assert_eq!(claims.claim_type, "StartVideoCall");
         }
