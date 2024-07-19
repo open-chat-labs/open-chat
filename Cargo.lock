@@ -8826,6 +8826,7 @@ dependencies = [
  "identity_canister",
  "identity_canister_c2c_client",
  "itertools 0.13.0",
+ "jwt",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",

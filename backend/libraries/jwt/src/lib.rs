@@ -1,9 +1,10 @@
-use ct_codecs::Base64UrlSafeNoPadding;
 use ct_codecs::Encoder;
+use ct_codecs::{Base64UrlSafeNoPadding, Decoder};
 use p256::ecdsa;
-use p256::ecdsa::signature::RandomizedDigestSigner;
+use p256::ecdsa::signature::{RandomizedDigestSigner, Verifier};
 use p256::elliptic_curve::rand_core::CryptoRngCore;
-use p256::pkcs8::DecodePrivateKey;
+use p256::pkcs8::{DecodePrivateKey, DecodePublicKey};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use types::TimestampMillis;
@@ -24,6 +25,18 @@ impl<T> Claims<T> {
             custom,
         }
     }
+
+    pub fn exp(&self) -> u64 {
+        self.exp
+    }
+
+    pub fn claim_type(&self) -> &str {
+        &self.claim_type
+    }
+
+    pub fn custom(&self) -> &T {
+        &self.custom
+    }
 }
 
 pub fn sign_and_encode_token<T: Serialize>(
@@ -31,23 +44,32 @@ pub fn sign_and_encode_token<T: Serialize>(
     claims: T,
     rng: &mut impl CryptoRngCore,
 ) -> Result<String, Box<dyn Error>> {
-    let jwt_header = JWTHeader {
+    let jwt_header = JwtHeader {
         alg: "ES256".to_string(),
     };
-    let jwt_header_json = serde_json::to_string(&jwt_header)?;
-    let claims_json = serde_json::to_string(&claims)?;
-    let authenticated = format!(
-        "{}.{}",
-        Base64UrlSafeNoPadding::encode_to_string(jwt_header_json)?,
-        Base64UrlSafeNoPadding::encode_to_string(claims_json)?
-    );
+    let authenticated = format!("{}.{}", encode_as_json(&jwt_header)?, encode_as_json(&claims)?);
 
     let signature = sign_token(&authenticated, secret_key_der, rng)?;
 
     let mut token = authenticated;
     token.push('.');
-    token.push_str(&Base64UrlSafeNoPadding::encode_to_string(signature)?);
+    token.push_str(&encode_bytes(&signature)?);
     Ok(token)
+}
+
+pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_der: &[u8]) -> Result<T, Box<dyn Error>> {
+    let mut parts = jwt.split(".");
+    let header_json = parts.next().ok_or("Invalid jwt")?;
+    let claims_json = parts.next().ok_or("Invalid jwt")?;
+    let signature_str = parts.next().ok_or("Invalid jwt")?;
+    let signature_bytes = decode_to_bytes(signature_str)?;
+    let signature = ecdsa::Signature::from_slice(&signature_bytes)?;
+    let authenticated = format!("{header_json}.{claims_json}");
+
+    let verifying_key = ecdsa::VerifyingKey::from_public_key_der(public_key_der)?;
+    verifying_key.verify(authenticated.as_bytes(), &signature)?;
+
+    Ok(decode_from_json(claims_json)?)
 }
 
 fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -61,8 +83,26 @@ fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) 
     Ok(signature.to_vec())
 }
 
-#[derive(Debug, Clone, Serialize)]
-struct JWTHeader {
+fn encode_as_json<T: Serialize>(value: &T) -> Result<String, Box<dyn Error>> {
+    let bytes = serde_json::to_vec(value)?;
+    Ok(encode_bytes(&bytes)?)
+}
+
+fn encode_bytes(bytes: &[u8]) -> Result<String, ct_codecs::Error> {
+    Base64UrlSafeNoPadding::encode_to_string(bytes)
+}
+
+fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
+    let bytes = decode_to_bytes(s)?;
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
+fn decode_to_bytes(s: &str) -> Result<Vec<u8>, ct_codecs::Error> {
+    Base64UrlSafeNoPadding::decode_to_vec(s, None)
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct JwtHeader {
     pub alg: String,
 }
 
