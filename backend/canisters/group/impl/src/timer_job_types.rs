@@ -231,7 +231,10 @@ impl Job for RefundPrizeJob {
                 state.env.now_nanos(),
             )
         }) {
-            let make_transfer_job = MakeTransferJob { pending_transaction, attempt: 0 };
+            let make_transfer_job = MakeTransferJob {
+                pending_transaction,
+                attempt: 0,
+            };
             make_transfer_job.execute();
         }
     }
@@ -243,7 +246,7 @@ impl Job for MakeTransferJob {
         let pending = self.pending_transaction.clone();
         ic_cdk::spawn(make_transfer(pending, sender, self.attempt));
 
-        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId attempt: u32) {
+        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId, attempt: u32) {
             if let Err(error) = process_transaction(pending_transaction.clone(), sender, true).await {
                 error!(?error, "Transaction failed");
                 if attempt < 50 {
@@ -253,7 +256,10 @@ impl Job for MakeTransferJob {
                             pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
                         }
                         state.data.timer_jobs.enqueue_job(
-                            TimerJob::MakeTransfer(MakeTransferJob { pending_transaction, attempt: attempt + 1 }),
+                            TimerJob::MakeTransfer(MakeTransferJob {
+                                pending_transaction,
+                                attempt: attempt + 1,
+                            }),
                             now + MINUTE_IN_MS,
                             now,
                         );
