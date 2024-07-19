@@ -3,10 +3,9 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::add_local_group_index_canister::{Response::*, *};
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
-use utils::canister::{install, CanisterToInstall, WasmToInstall};
+use utils::canister::{install_basic, set_controllers};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -14,24 +13,15 @@ async fn add_local_group_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
-            match install(CanisterToInstall {
-                canister_id: args.canister_id,
-                current_wasm_version: BuildVersion::default(),
-                new_wasm_version: result.canister_wasm.version,
-                new_wasm: WasmToInstall::Default(result.canister_wasm.module),
-                deposit_cycles_if_needed: true,
-                args: result.init_args,
-                mode: CanisterInstallMode::Install,
-                stop_start_canister: false,
-            })
-            .await
-            {
-                Ok(_) => {
-                    let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
-                    info!(canister_id = %args.canister_id, "local group index canister added");
-                    response
-                }
-                Err(error) => InternalError(format!("{error:?}")),
+
+            if let Err(error) = set_controllers(args.canister_id, vec![result.this_canister_id]).await {
+                InternalError(format!("Failed to set controller: {error:?}"))
+            } else if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
+                InternalError(format!("Failed to install canister: {error:?}"))
+            } else {
+                let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
+                info!(canister_id = %args.canister_id, "local group index canister added");
+                response
             }
         }
         Err(response) => response,
@@ -39,6 +29,7 @@ async fn add_local_group_index_canister(args: Args) -> Response {
 }
 
 struct PrepareResult {
+    this_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
     init_args: local_group_index_canister::init::Args,
 }
@@ -46,6 +37,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
         Ok(PrepareResult {
+            this_canister_id: state.env.canister_id(),
             canister_wasm: state.data.local_group_index_canister_wasm_for_new_canisters.clone(),
             init_args: local_group_index_canister::init::Args {
                 group_canister_wasm: state.data.group_canister_wasm.clone(),

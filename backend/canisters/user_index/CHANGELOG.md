@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
 - Accept proofs of uniqueness from LocalUserIndexes ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
+- Ensure UserIndex is only controller before installing LocalUserIndex ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
 
 ## [[2.0.1242](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1242-user_index)] - 2024-07-17
 

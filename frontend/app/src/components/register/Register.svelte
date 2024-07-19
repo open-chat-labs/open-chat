@@ -106,7 +106,7 @@
                 };
                 dispatch("createdUser", createdUser);
             } else {
-                error.set(`Unexpected register user response: ${resp}`);
+                error.set(`Unexpected register user response: ${resp.kind}`);
             }
         });
     }
