@@ -9,20 +9,17 @@
         isDiamondRoute,
         isFaqRoute,
         isGuidelinesRoute,
-        isMiamiRoute,
         isRoadmapRoute,
         isWhitepaperRoute,
         pathParams,
     } from "../../routes";
-    import { getContext, onMount } from "svelte";
-    import { type CreatedUser, OPENCHAT_BOT_USER_ID, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { type CreatedUser, type OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
     import Loading from "../Loading.svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
-    import page from "page";
-    import { themeType } from "../../theme/themes";
     import { framed } from "../../stores/xframe";
     import HostedLandingPage from "./HostedLandingPage.svelte";
 
@@ -30,7 +27,6 @@
 
     $: identityState = client.identityState;
     $: showMenu = showMenuForLandingRoute($pathParams);
-    $: miami = isMiamiRoute($pathParams);
 
     function logout() {
         client.logout();
@@ -38,16 +34,7 @@
 
     function createdUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
-        if (miami) {
-            page(`/${OPENCHAT_BOT_USER_ID}`);
-        }
     }
-
-    onMount(() => {
-        if (miami) {
-            themeType.set("dark");
-        }
-    });
 </script>
 
 {#if $identityState.kind === "registering"}
@@ -63,17 +50,9 @@
         <Header on:logout={logout} />
     {/if}
 
-    <main class:miami class="main">
+    <main class="main">
         {#if $pathParams.kind === "features_route"}
             <FeaturesPage />
-        {:else if miami}
-            {#await import("./miami/Miami.svelte")}
-                <div class="loading">
-                    <Loading />
-                </div>
-            {:then { default: Miami }}
-                <Miami on:login={() => client.login()} />
-            {/await}
         {:else}
             <Content>
                 {#if isBlogRoute($pathParams)}
@@ -157,10 +136,6 @@
         overflow-x: hidden;
         margin: 0 auto;
         margin-top: toRem(80);
-
-        &.miami {
-            margin-top: 0;
-        }
     }
 
     .loading {

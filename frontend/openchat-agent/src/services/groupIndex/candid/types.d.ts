@@ -498,7 +498,6 @@ export interface DeletedGroupInfo {
 export interface DiamondMembershipDetails {
   'pay_in_chat' : boolean,
   'subscription' : DiamondMembershipSubscription,
-  'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
 }
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
