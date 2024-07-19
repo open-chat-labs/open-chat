@@ -57,7 +57,7 @@ pub fn sign_and_encode_token<T: Serialize>(
     Ok(token)
 }
 
-pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_der: &[u8]) -> Result<T, Box<dyn Error>> {
+pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
     let mut parts = jwt.split('.');
     let header_json = parts.next().ok_or("Invalid jwt")?;
     let claims_json = parts.next().ok_or("Invalid jwt")?;
@@ -66,7 +66,7 @@ pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_der: &[u8]) -> Resu
     let signature = ecdsa::Signature::from_slice(&signature_bytes)?;
     let authenticated = format!("{header_json}.{claims_json}");
 
-    let verifying_key = ecdsa::VerifyingKey::from_public_key_der(public_key_der)?;
+    let verifying_key = ecdsa::VerifyingKey::from_public_key_pem(public_key_pem)?;
     verifying_key.verify(authenticated.as_bytes(), &signature)?;
 
     decode_from_json(claims_json)
@@ -115,7 +115,7 @@ mod tests {
     use types::{StartVideoCallClaims, StringChat, VideoCallType};
 
     #[test]
-    fn sign_and_encode_token_succeeds() {
+    fn sign_and_encode_token_then_verify_succeeds() {
         let mut rng = rand::thread_rng();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
@@ -124,6 +124,7 @@ mod tests {
             kp.initialize(&mut rng);
 
             let sk_der = kp.secret_key_der();
+            let pk_pem = kp.public_key_pem();
 
             let claims = Claims::new(
                 now + 300_000, // Token valid for 5 mins from now
@@ -135,7 +136,11 @@ mod tests {
                 },
             );
 
-            assert!(sign_and_encode_token(sk_der, claims, &mut rng).is_ok());
+            let jwt = sign_and_encode_token(sk_der, claims, &mut rng).unwrap();
+
+            let claims: Claims<StartVideoCallClaims> = verify_jwt(&jwt, &pk_pem).unwrap();
+
+            assert_eq!(claims.claim_type, "StartVideoCall");
         }
     }
 }
