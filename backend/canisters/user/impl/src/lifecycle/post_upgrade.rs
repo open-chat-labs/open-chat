@@ -29,16 +29,12 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     read_state(|state| {
-        if state.data.direct_chats.len() <= 1
+        if state.data.user_created + SIX_MONTHS < state.env.now()
+            && state.data.direct_chats.len() <= 1
             && state.data.group_chats.len() == 0
             && state.data.communities.len() == 0
-            && state.data.diamond_membership_expires_at.is_none()
-            && state.data.unique_person_proof.is_none()
         {
-            let now = state.env.now();
-            if state.data.user_created + SIX_MONTHS < now && state.data.chit_balance.timestamp + SIX_MONTHS < now {
-                ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
-            }
+            ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
         }
     });
 }
