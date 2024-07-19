@@ -47,7 +47,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
-    let invited_by = state.calling_user().user_id;
+    let invited_by = state.calling_user_id();
     let users = args
         .user_ids
         .iter()

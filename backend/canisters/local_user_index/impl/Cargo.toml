@@ -36,8 +36,10 @@ jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 rand = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
