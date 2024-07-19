@@ -135,7 +135,7 @@
         }
 
         &.invalid {
-            border: 1px solid var(--error);
+            border: var(--bw) solid var(--error);
         }
 
         &::placeholder {

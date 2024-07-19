@@ -67,7 +67,6 @@
 
         &.invalid {
             border: var(--bw) solid var(--error);
-            box-shadow: 0 0 5px 1px var(--error);
         }
     }
 

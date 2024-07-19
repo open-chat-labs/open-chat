@@ -83,10 +83,10 @@
         }
 
         &.invalid {
-            background-color: var(--menu-warn);
+            background-color: var(--error);
             @media (hover: hover) {
                 &:hover {
-                    background: var(--menu-warn);
+                    background: var(--error);
                 }
             }
         }

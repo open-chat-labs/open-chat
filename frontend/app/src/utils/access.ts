@@ -122,11 +122,11 @@ const lifetimeDiamondGate: GateBinding = {
     enabled: true,
 };
 
-const uniquePersonGate: GateBinding = {
+export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: true,
+    enabled: false,
 };
 
 export const neuronGateFolder: GateBinding = {

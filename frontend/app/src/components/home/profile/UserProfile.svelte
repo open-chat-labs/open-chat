@@ -58,6 +58,7 @@
     import ChitEvents from "./ChitEvents.svelte";
     import Human from "../../icons/Human.svelte";
     import VerifyHumanity from "./VerifyHumanity.svelte";
+    import { uniquePersonGate } from "../../../utils/access";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -365,7 +366,7 @@
                 {/if}
             </CollapsibleCard>
         </div>
-        {#if !$anonUser}
+        {#if !$anonUser && uniquePersonGate.enabled}
             <div class="verification">
                 <CollapsibleCard
                     on:toggle={verificationSectionOpen.toggle}
