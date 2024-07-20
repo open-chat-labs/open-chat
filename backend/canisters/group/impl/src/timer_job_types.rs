@@ -49,6 +49,8 @@ pub struct RefundPrizeJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
+    #[serde(default)]
+    pub attempt: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -171,7 +173,10 @@ impl Job for HardDeleteMessageContentJob {
                                 if let Some(pending_transaction) =
                                     prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
                                 {
-                                    follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }));
+                                    follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
+                                        pending_transaction,
+                                        attempt: 0,
+                                    }));
                                 }
                             }
                         }
@@ -226,7 +231,10 @@ impl Job for RefundPrizeJob {
                 state.env.now_nanos(),
             )
         }) {
-            let make_transfer_job = MakeTransferJob { pending_transaction };
+            let make_transfer_job = MakeTransferJob {
+                pending_transaction,
+                attempt: 0,
+            };
             make_transfer_job.execute();
         }
     }
@@ -236,22 +244,27 @@ impl Job for MakeTransferJob {
     fn execute(self) {
         let sender = read_state(|state| state.env.canister_id());
         let pending = self.pending_transaction.clone();
-        ic_cdk::spawn(make_transfer(pending, sender));
+        ic_cdk::spawn(make_transfer(pending, sender, self.attempt));
 
-        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
+        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId, attempt: u32) {
             if let Err(error) = process_transaction(pending_transaction.clone(), sender, true).await {
                 error!(?error, "Transaction failed");
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    if (pending_transaction.created() / NANOS_PER_MILLISECOND) + DAY_IN_MS < now {
-                        pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
-                    }
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }),
-                        now + MINUTE_IN_MS,
-                        now,
-                    );
-                });
+                if attempt < 50 {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        if (pending_transaction.created() / NANOS_PER_MILLISECOND) + DAY_IN_MS < now {
+                            pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
+                        }
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::MakeTransfer(MakeTransferJob {
+                                pending_transaction,
+                                attempt: attempt + 1,
+                            }),
+                            now + MINUTE_IN_MS,
+                            now,
+                        );
+                    });
+                }
             }
         }
     }
