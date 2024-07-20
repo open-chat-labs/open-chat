@@ -222,23 +222,21 @@
 
     function ensureMinPrizeAtLeastTransferFee(prizes: bigint[]): bigint[] {
         let totalAdded = 0n;
+        let max = 0n;
+        let maxIndex = 0;
         for (let i = 0; i < prizes.length; i++) {
             const prize = prizes[i];
             if (prize < transferFees) {
                 prizes[i] = transferFees;
                 totalAdded += transferFees - prize;
+            } else if (prize > max) {
+                max = prize;
+                maxIndex = i;
             }
         }
 
         if (totalAdded > 0n) {
-            const max = bigIntMax(...prizes);
-            for (let i = 0; i < prizes.length; i++) {
-                const prize = prizes[i];
-                if (prize === max) {
-                    prizes[i] = prize - totalAdded;
-                    break;
-                }
-            }
+            prizes[maxIndex] = max - totalAdded;
         }
 
         return prizes;
