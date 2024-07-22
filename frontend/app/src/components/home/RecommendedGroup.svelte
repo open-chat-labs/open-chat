@@ -16,7 +16,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import AccessGateIcon from "./AccessGateIcon.svelte";
+    import AccessGateIcon from "./access/AccessGateIcon.svelte";
     import page from "page";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -82,7 +82,7 @@
     </div>
     <Footer align="end">
         <div class="gate">
-            <AccessGateIcon on:upgrade gate={group.gate} />
+            <AccessGateIcon clickable level={group.level} gate={group.gate} />
         </div>
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}

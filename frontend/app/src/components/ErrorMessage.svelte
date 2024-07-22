@@ -9,7 +9,8 @@
 <style lang="scss">
     .error {
         @include font(book, normal, fs-80);
-        color: var(--error);
         margin-bottom: $sp3;
+        background-color: var(--error);
+        padding: $sp3 $sp4;
     }
 </style>

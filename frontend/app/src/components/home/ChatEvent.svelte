@@ -85,6 +85,7 @@
             diamondStatus: "inactive",
             chitBalance: 0,
             streak: 0,
+            isUniquePerson: user.isUniquePerson,
         };
     }
 

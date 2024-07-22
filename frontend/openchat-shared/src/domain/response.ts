@@ -1,4 +1,5 @@
 import type { GateCheckFailed, PinNumberFailures } from "./chat";
+import type { UserNotFound } from "./user";
 
 export type UserNotInChat = { kind: "user_not_in_chat" };
 export type ChatNotFound = { kind: "chat_not_found" };
@@ -75,6 +76,7 @@ export const CommonResponses = {
     failure: (): Failure => ({ kind: "failure" }) as Failure,
     offline: (): Offline => ({ kind: "offline" }) as Offline,
     blocked: (): Blocked => ({ kind: "blocked" }) as Blocked,
+    userNotFound: (): UserNotFound => ({ kind: "unknown_user" }),
 };
 
 export type Blocked = {
@@ -83,6 +85,11 @@ export type Blocked = {
 
 export type ApproveAccessGatePaymentResponse = Success | PinNumberFailures | Failure;
 
-export type ClientJoinGroupResponse = Success | Blocked | GateCheckFailed | PinNumberFailures | Failure;
+export type ClientJoinGroupResponse =
+    | Success
+    | Blocked
+    | GateCheckFailed
+    | PinNumberFailures
+    | Failure;
 
 export type ClientJoinCommunityResponse = Success | GateCheckFailed | PinNumberFailures | Failure;

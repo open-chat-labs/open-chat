@@ -128,6 +128,7 @@
         if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
         if (resp.kind === "failure") return i18nKey("failure");
         if (resp.kind === "offline") return i18nKey("offlineError");
+        if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -154,6 +155,7 @@
         if (resp.kind === "default_must_be_public") return i18nKey("defaultMustBePublic");
         if (resp.kind === "unauthorized_to_create_public_group")
             return i18nKey("unauthorizedToCreatePublicGroup");
+        if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
         return i18nKey("groupCreationFailed");
     }
 
@@ -239,6 +241,8 @@
 
         const level = candidateGroup.level;
 
+        console.log("Candidate Group: ", candidateGroup);
+
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
@@ -314,7 +318,6 @@
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl
                         on:upgrade
-                        original={originalGroup}
                         {editing}
                         history
                         {canEditDisappearingMessages}

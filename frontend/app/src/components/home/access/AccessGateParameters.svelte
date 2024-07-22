@@ -7,8 +7,8 @@
         type TokenBalanceGate,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import CredentialGateSummary from "./CredentialGateSummary.svelte";
 
     const client = getContext<OpenChat>("client");

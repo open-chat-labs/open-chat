@@ -31,7 +31,8 @@ import {
     DiamondMembershipStatusFull,
     DiamondMembershipSubscription,
     ClaimDailyChitResponse,
-    ChitUserBalance
+    ChitUserBalance,
+    SubmitProofOfUniquePersonhoodResponse
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -66,6 +67,7 @@ export {
     DiamondMembershipSubscription as ApiDiamondMembershipSubscription,
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ChitUserBalance as ApiChitUserBalance,
+    SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

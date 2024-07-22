@@ -51,6 +51,7 @@
         description: string;
         username: string | undefined;
         lastUpdated: bigint;
+        uniquePerson: boolean;
     };
     type ShareCommunity = {
         kind: "community";
@@ -203,6 +204,7 @@
                     description,
                     username: "@" + them.username,
                     lastUpdated: chatSummary.lastUpdated,
+                    uniquePerson: them.isUniquePerson,
                 };
 
             default:
@@ -217,6 +219,7 @@
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
                     lastUpdated: chatSummary.lastUpdated,
+                    uniquePerson: false,
                 };
         }
     }
@@ -318,6 +321,7 @@
                                         {target.name}
                                     </span>
                                     <Badges
+                                        uniquePerson={target.uniquePerson}
                                         diamondStatus={target.diamondStatus}
                                         streak={target.streak} />
                                     {#if target.username !== undefined}

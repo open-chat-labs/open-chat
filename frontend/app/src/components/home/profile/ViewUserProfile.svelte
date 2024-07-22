@@ -288,7 +288,10 @@
                         <div class="username">
                             @{profile.username}
                         </div>
-                        <Badges {diamondStatus} streak={client.getStreak(user?.userId)} />
+                        <Badges
+                            uniquePerson={user?.isUniquePerson}
+                            {diamondStatus}
+                            streak={client.getStreak(user?.userId)} />
                         {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
                             <WithRole
                                 userId={user.userId}

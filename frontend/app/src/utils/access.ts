@@ -1,10 +1,11 @@
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import type {
-    AccessGate,
-    Credential,
-    CryptocurrencyDetails,
-    NervousSystemDetails,
+import {
+    type AccessGate,
+    type Credential,
+    type CredentialGate,
+    type CryptocurrencyDetails,
+    type NervousSystemDetails,
 } from "openchat-client";
 
 export type GateBinding = {
@@ -12,6 +13,19 @@ export type GateBinding = {
     label: string;
     enabled: boolean;
     gate: AccessGate;
+};
+
+export const gateLabel: Record<AccessGate["kind"], string> = {
+    no_gate: "access.openAccess",
+    composite_gate: "access.compositeGate",
+    credential_gate: "access.credential.label",
+    diamond_gate: "access.diamondMember",
+    lifetime_diamond_gate: "access.lifetimeDiamondMember",
+    neuron_gate: "access.neuronHolder",
+    nft_gate: "access.nftHolder",
+    payment_gate: "access.payment",
+    token_balance_gate: "access.tokenBalance",
+    unique_person_gate: "access.uniquePerson",
 };
 
 export function getGateBindings(): GateBinding[] {
@@ -108,31 +122,43 @@ const lifetimeDiamondGate: GateBinding = {
     enabled: true,
 };
 
-const uniquePersonGate: GateBinding = {
+export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
     enabled: false,
 };
 
-const neuronGateFolder: GateBinding = {
+export const neuronGateFolder: GateBinding = {
     label: "access.neuronHolder",
     key: "neuron_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "neuron_gate",
+        governanceCanister: "",
+    },
     enabled: true,
 };
 
-const paymentGateFolder: GateBinding = {
+export const paymentGateFolder: GateBinding = {
     label: "access.payment",
     key: "payment_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "payment_gate",
+        ledgerCanister: "",
+        amount: 0n,
+        fee: 0n,
+    },
     enabled: true,
 };
 
-const balanceGateFolder: GateBinding = {
+export const balanceGateFolder: GateBinding = {
     label: "access.minimumBalance",
     key: "balance_gate_folder",
-    gate: { kind: "no_gate" },
+    gate: {
+        kind: "token_balance_gate",
+        ledgerCanister: "",
+        minBalance: 0n,
+    },
     enabled: true,
 };
 
@@ -141,6 +167,16 @@ const nftGate: GateBinding = {
     key: "nft_gate",
     gate: { kind: "nft_gate" },
     enabled: false,
+};
+
+export const uniquePersonCredentialGate: CredentialGate = {
+    kind: "credential_gate",
+    credential: {
+        credentialName: "Is human",
+        issuerCanisterId: "qgxyr-pyaaa-aaaah-qdcwq-cai",
+        issuerOrigin: "https://id.decideai.xyz",
+        credentialType: "ProofOfUniqueness",
+    },
 };
 
 const credentialGate: GateBinding = {

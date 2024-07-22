@@ -183,6 +183,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     VideoCallParticipant,
+    LeafGate,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1600,6 +1601,16 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
 }
 
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
+    if (domain.kind === "composite_gate") {
+        return [
+            {
+                Composite: {
+                    inner: domain.gates.map(apiAccessGate),
+                    and: domain.operator === "and",
+                },
+            },
+        ];
+    }
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
@@ -1692,6 +1703,14 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
             },
         };
     }
+    if (domain.kind === "composite_gate") {
+        return {
+            Composite: {
+                and: domain.operator === "and",
+                inner: domain.gates.map(apiAccessGate),
+            },
+        };
+    }
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
@@ -1724,6 +1743,13 @@ function apiCredentialArguments(
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
+    if ("Composite" in candid) {
+        return {
+            kind: "composite_gate",
+            operator: candid.Composite.and ? "and" : "or",
+            gates: candid.Composite.inner.map(accessGate) as LeafGate[],
+        };
+    }
     if ("SnsNeuron" in candid) {
         return {
             kind: "neuron_gate",
@@ -2232,6 +2258,8 @@ export function updateGroupResponse(
             rulesVersion: optional(candid.SuccessV2.rules_version, identity),
         };
     }
+
+    console.log("Failed to update group: ", candid);
     if ("DescriptionTooLong" in candid) {
         return { kind: "desc_too_long" };
     }
@@ -2273,6 +2301,9 @@ export function updateGroupResponse(
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
+    }
+    if ("AccessGateInvalid" in candid) {
+        return { kind: "access_gate_invalid" };
     }
     if (
         "AccessGateInvalid" in candid ||
@@ -2379,8 +2410,9 @@ export function createGroupResponse(
     }
 
     if ("AccessGateInvalid" in candid) {
-        return CommonResponses.internalError();
+        return { kind: "access_gate_invalid" };
     }
+
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 

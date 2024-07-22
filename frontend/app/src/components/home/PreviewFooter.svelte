@@ -1,13 +1,13 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import GroupGateIcon from "./AccessGateIcon.svelte";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";
     import { routeForScope } from "../../routes";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -66,7 +66,7 @@
 
 <div class="preview">
     <div class="gate">
-        <GroupGateIcon on:upgrade gate={chat.gate} />
+        <AccessGateIconsForChat {chat} />
     </div>
     {#if $platformModerator}
         {#if isFrozen}
@@ -103,9 +103,6 @@
         position: relative;
         justify-content: flex-end;
         gap: $sp3;
-        @include mobile() {
-            justify-content: center;
-        }
 
         .gate {
             position: absolute;

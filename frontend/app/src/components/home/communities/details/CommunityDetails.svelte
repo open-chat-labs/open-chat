@@ -9,7 +9,7 @@
         communityVisibilityOpen,
     } from "../../../../stores/settings";
     import Markdown from "../../Markdown.svelte";
-    import AccessGateSummary from "../../AccessGateSummary.svelte";
+    import AccessGateSummary from "../../access/AccessGateSummary.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
     import AdvancedSection from "./AdvancedSection.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
@@ -71,7 +71,7 @@
                 {/if}
             {/if}
         </div>
-        <AccessGateSummary gate={community.gate} />
+        <AccessGateSummary editable={false} level={community.level} gate={community.gate} />
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard

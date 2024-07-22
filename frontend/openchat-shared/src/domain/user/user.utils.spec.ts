@@ -15,6 +15,7 @@ const lookup: UserLookup = {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        isUniquePerson: false,
     },
     b: {
         kind: "user",
@@ -26,6 +27,7 @@ const lookup: UserLookup = {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        isUniquePerson: false,
     },
     xyz: {
         kind: "user",
@@ -37,6 +39,7 @@ const lookup: UserLookup = {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        isUniquePerson: false,
     },
     alpha: {
         kind: "user",
@@ -48,6 +51,7 @@ const lookup: UserLookup = {
         diamondStatus: "inactive",
         chitBalance: 0,
         streak: 0,
+        isUniquePerson: false,
     },
 };
 

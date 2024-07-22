@@ -338,7 +338,7 @@ export function apiVerifiedCredentialArgs(
     return {
         user_ii_principal: Principal.fromText(domain.userIIPrincipal),
         ii_origin: domain.iiOrigin,
-        credential_jwt: domain.credentialJwt,
-        credential_jwts: [domain.credentialJwt],
+        credential_jwts: domain.credentialJwts,
+        credential_jwt: domain.credentialJwts[0],
     };
 }

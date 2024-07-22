@@ -179,10 +179,9 @@
                         toastStore.showSuccessToast(i18nKey("communities.created"));
                         dispatch("close");
                         page(`/community/${response.id}`);
-                        optionallyInviteUsers(response.id)
-                            .catch((_err) => {
-                                toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                            });
+                        optionallyInviteUsers(response.id).catch((_err) => {
+                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
+                        });
                     } else {
                         toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
                     }
@@ -214,7 +213,6 @@
                         canEditDisappearingMessages={false}
                         bind:candidate
                         bind:valid={visibilityValid}
-                        {original}
                         {editing}
                         history={false} />
                 </div>

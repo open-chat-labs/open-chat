@@ -458,6 +458,7 @@ export type CurrentUserResponse = {
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
+      'is_unique_person' : boolean,
       'referrals' : Array<UserId>,
       'user_id' : UserId,
       'display_name' : [] | [string],
@@ -475,6 +476,7 @@ export interface CurrentUserSummary {
   'username' : string,
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1386,7 +1388,14 @@ export type PayForDiamondMembershipResponse = {
     'PaymentAlreadyInProgress' : null
   } |
   { 'CurrencyNotSupported' : null } |
-  { 'Success' : DiamondMembershipDetails } |
+  {
+    'Success' : {
+      'proof_jwt' : string,
+      'pay_in_chat' : boolean,
+      'subscription' : DiamondMembershipSubscription,
+      'expires_at' : TimestampMillis,
+    }
+  } |
   { 'AlreadyLifetimeDiamondMember' : null } |
   { 'PriceMismatch' : null } |
   { 'TransferFailed' : string } |
@@ -1784,6 +1793,7 @@ export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1794,6 +1804,7 @@ export interface UserSummary {
 export interface UserSummaryStable {
   'username' : string,
   'diamond_membership_status' : DiamondMembershipStatus,
+  'is_unique_person' : boolean,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],

@@ -20,8 +20,9 @@ import type {
     CurrentUserSummary,
     UsersApiResponse,
     UserSummaryUpdate,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiChitUserBalance,
@@ -39,6 +40,7 @@ import type {
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
     ApiSetUsernameResponse,
+    ApiSubmitProofOfUniquePersonhoodResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
     ApiSuspensionDetails,
@@ -96,6 +98,7 @@ export function currentUserSummary(
             blobId: id,
             canisterId: candid.user_id.toString(),
         })),
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -112,6 +115,7 @@ export function userSummaryUpdate(candid: ApiUserSummaryUpdate): UserSummaryUpda
                 canisterId: candid.user_id.toString(),
             })),
             suspended: s.suspended,
+            isUniquePerson: s.is_unique_person,
         })),
         volatile: optional(candid.volatile, (v) => ({
             chitBalance: v.chit_balance,
@@ -135,6 +139,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         diamondStatus: diamondStatus(candid.diamond_membership_status),
         chitBalance: candid.chit_balance,
         streak: candid.streak,
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -181,6 +186,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
+            isUniquePerson: candid.Success.is_unique_person,
         };
     }
 
@@ -401,6 +407,7 @@ export function payForDiamondMembershipResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
+            proof: candid.Success.proof_jwt,
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }
@@ -483,4 +490,22 @@ function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
         balance: candid.balance,
         username: candid.username,
     };
+}
+
+export function submitProofOfUniquePersonhoodResponse(
+    candid: ApiSubmitProofOfUniquePersonhoodResponse,
+): SubmitProofOfUniquePersonhoodResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    }
+    if ("Invalid" in candid) {
+        return CommonResponses.invalid();
+    }
+    if ("UserNotFound" in candid) {
+        return CommonResponses.userNotFound();
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
+        candid,
+    );
 }

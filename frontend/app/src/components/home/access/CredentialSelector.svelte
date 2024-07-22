@@ -1,20 +1,21 @@
 <script lang="ts">
     import Delete from "svelte-material-icons/Delete.svelte";
-    import Legend from "../Legend.svelte";
-    import Input from "../Input.svelte";
+    import Legend from "../../Legend.svelte";
+    import Input from "../../Input.svelte";
     import type { CredentialGate, Credential } from "openchat-client";
     import { onMount } from "svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Button from "../../Button.svelte";
+    import { iconSize } from "../../../stores/iconSize";
     import { Principal } from "@dfinity/principal";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 1;
     const MAX_LENGTH = 50;
 
     export let gate: CredentialGate;
     export let valid: boolean;
+    export let editable: boolean;
 
     let selectedCredentialIssuer: Credential;
     let credentialArguments: [string, string][] = [];
@@ -101,38 +102,42 @@
 </script>
 
 {#if selectedCredentialIssuer}
-    <Legend required label={i18nKey("access.credential.credentialName")} />
+    <Legend required={editable} label={i18nKey("access.credential.credentialName")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialName}
         on:change={sync}
+        disabled={!editable}
         invalid={!nameValid}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.credentialNamePlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.issuerCanisterId")} />
+    <Legend required={editable} label={i18nKey("access.credential.issuerCanisterId")} />
     <Input
         bind:value={selectedCredentialIssuer.issuerCanisterId}
         invalid={!canisterValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerCanisterIdPlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.issuerOrigin")} />
+    <Legend required={editable} label={i18nKey("access.credential.issuerOrigin")} />
     <Input
         bind:value={selectedCredentialIssuer.issuerOrigin}
         invalid={!originValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.issuerOriginPlaceholder")} />
 
-    <Legend required label={i18nKey("access.credential.credentialType")} />
+    <Legend required={editable} label={i18nKey("access.credential.credentialType")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialType}
         invalid={!typeValid}
         on:change={sync}
+        disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.credentialTypePlaceholder")} />
@@ -140,36 +145,42 @@
     {#each credentialArguments as [name, value]}
         <div class="argument">
             <div class="argument-name">
-                <Legend required label={i18nKey("access.credential.argumentName")} />
+                <Legend required={editable} label={i18nKey("access.credential.argumentName")} />
                 <Input
                     bind:value={name}
                     invalid={!stringValid(name)}
                     on:change={sync}
+                    disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
                     placeholder={i18nKey("access.credential.argumentNamePlaceholder")} />
             </div>
             <div class="argument-value">
-                <Legend required label={i18nKey("access.credential.argumentValue")} />
+                <Legend required={editable} label={i18nKey("access.credential.argumentValue")} />
                 <Input
                     bind:value
                     invalid={!stringValid(value)}
                     on:change={sync}
+                    disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
                     placeholder={i18nKey("access.credential.argumentValuePlaceholder")} />
             </div>
-            <div on:click={() => deleteArgument(name)} class="delete-icon">
-                <Delete size={$iconSize} color={"var(--icon-txt)"} />
-            </div>
+            {#if editable}
+                <div on:click={() => deleteArgument(name)} class="delete-icon">
+                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                </div>
+            {/if}
         </div>
     {/each}
 
-    <div class="add">
-        <Button tiny on:click={addArgument}>
-            <Translatable resourceKey={i18nKey("access.credential.addArgument")} />
-        </Button>
-    </div>
+    {#if editable}
+        <div class="add">
+            <Button tiny on:click={addArgument}>
+                <Translatable resourceKey={i18nKey("access.credential.addArgument")} />
+            </Button>
+        </div>
+    {/if}
 {/if}
 
 <!-- <Legend label={i18nKey("access.predefinedCredentialIssuer")} />

@@ -1,7 +1,12 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
 import { type Identity } from "@dfinity/agent";
-import { AuthClient, type AuthClientStorage, IdbStorage } from "@dfinity/auth-client";
+import {
+    AuthClient,
+    type AuthClientLoginOptions,
+    type AuthClientStorage,
+    IdbStorage,
+} from "@dfinity/auth-client";
 import { get, writable, type Readable } from "svelte/store";
 import DRange from "drange";
 import {
@@ -408,7 +413,11 @@ import type {
     ChitEventsResponse,
     GenerateChallengeResponse,
     ChallengeAttempt,
+    AccessGateWithLevel,
+    PreprocessedGate,
+    SubmitProofOfUniquePersonhoodResponse,
     Achievement,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -457,6 +466,8 @@ import {
     storeIdentity,
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
+    isCompositeGate,
+    shouldPreprocessGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -613,6 +624,13 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
     }
 
+    public get AuthPrincipal(): string {
+        if (this._authPrincipal === undefined) {
+            throw new Error("Trying to access the _authPrincipal before it has been set up");
+        }
+        return this._authPrincipal;
+    }
+
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
         if (
             this._liveState.selectedChatId === undefined ||
@@ -699,14 +717,20 @@ export class OpenChat extends OpenChatAgentWorker {
         this._logger.debug(message, ...optionalParams);
     }
 
+    getAuthClientOptions(provider: AuthProvider): AuthClientLoginOptions {
+        return {
+            identityProvider: this.buildAuthProviderUrl(provider),
+            maxTimeToLive: SESSION_TIMEOUT_NANOS,
+            derivationOrigin: this.config.iiDerivationOrigin,
+        };
+    }
+
     login(): void {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = this._liveState.selectedAuthProvider!;
         this._authClient.then((c) => {
             c.login({
-                identityProvider: this.buildAuthProviderUrl(authProvider),
-                maxTimeToLive: SESSION_TIMEOUT_NANOS,
-                derivationOrigin: this.config.iiDerivationOrigin,
+                ...this.getAuthClientOptions(authProvider),
                 onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
@@ -716,7 +740,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
+    buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
         switch (authProvider) {
             case AuthProvider.II:
                 return this.config.internetIdentityUrl;
@@ -1389,10 +1413,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(
-        chat: MultiUserChat,
-        credentialJwt: string | undefined,
-    ): Promise<ClientJoinGroupResponse> {
+    async joinGroup(chat: MultiUserChat, credentials: string[]): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayment(chat);
         if (approveResponse.kind !== "success") {
             return approveResponse;
@@ -1407,7 +1428,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinGroup",
             chatId: chat.id,
             localUserIndex,
-            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
+            credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1459,16 +1480,19 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    private buildVerifiedCredentialArgs(
-        credentialJwt: string | undefined,
-    ): VerifiedCredentialArgs | undefined {
-        return credentialJwt !== undefined && this._authPrincipal !== undefined
-            ? {
-                  userIIPrincipal: this._authPrincipal,
-                  iiOrigin: new URL(this.config.internetIdentityUrl).origin,
-                  credentialJwt,
-              }
-            : undefined;
+    private buildVerifiedCredentialArgs(credentials: string[]): VerifiedCredentialArgs | undefined {
+        if (credentials.length === 0) return undefined;
+
+        if (this._authPrincipal === undefined)
+            throw new Error(
+                "Cannot construct a VerifiedCredentialArg because the _authPrincipal is undefined",
+            );
+
+        return {
+            userIIPrincipal: this._authPrincipal,
+            iiOrigin: new URL(this.config.internetIdentityUrl).origin,
+            credentialJwts: credentials,
+        };
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
@@ -2714,6 +2738,9 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         if (isCredentialGate(current) && isCredentialGate(original)) {
             return JSON.stringify(current.credential) !== JSON.stringify(original.credential);
+        }
+        if (isCompositeGate(current) && isCompositeGate(original)) {
+            return JSON.stringify(current) !== JSON.stringify(original);
         }
         return false;
     }
@@ -4090,6 +4117,71 @@ export class OpenChat extends OpenChatAgentWorker {
                 userId: message.userId,
             });
         }
+    }
+
+    /**
+     * We *may* be able to conclude that the user meets the gate purely through
+     * reference to the user data in which case we don't need to do anything else
+     */
+    doesUserMeetAccessGates(gates: AccessGate[]): boolean {
+        return gates.every((g) => this.doesUserMeetAccessGate(g));
+    }
+
+    doesUserMeetAccessGate(gate: AccessGate): boolean {
+        if (isCompositeGate(gate)) {
+            return gate.operator === "and"
+                ? gate.gates.every((g) => this.doesUserMeetAccessGate(g))
+                : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
+        } else {
+            if (gate.kind === "diamond_gate") {
+                return this._liveState.user.diamondStatus.kind !== "inactive";
+            } else if (gate.kind === "lifetime_diamond_gate") {
+                return this._liveState.user.diamondStatus.kind === "lifetime";
+            } else if (gate.kind === "unique_person_gate") {
+                return this._liveState.user.isUniquePerson;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    gatePreprocessingRequired(gates: AccessGate[]): boolean {
+        return this.getAllPreprocessLeafGates(gates).length > 0;
+    }
+
+    private getAllPreprocessLeafGates(gates: AccessGate[]): PreprocessedGate[] {
+        return gates.reduce((all, g) => {
+            if (isCompositeGate(g)) {
+                all.push(...this.getAllPreprocessLeafGates(g.gates));
+            } else {
+                if (shouldPreprocessGate(g)) {
+                    all.push(g);
+                }
+            }
+            return all;
+        }, [] as PreprocessedGate[]);
+    }
+
+    /**
+     * When joining a channel it is possible that both the channel & the community
+     * have access gates so we need to work out all applicable gates for the chat
+     * Note that we only return gates if we are not already a member.
+     */
+    accessGatesForChat(chat: MultiUserChat): AccessGateWithLevel[] {
+        const gates: AccessGateWithLevel[] = [];
+        const community =
+            chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
+        if (
+            community !== undefined &&
+            community.gate.kind !== "no_gate" &&
+            community.membership.role === "none"
+        ) {
+            gates.push({ level: "community", ...community.gate });
+        }
+        if (chat.gate.kind !== "no_gate" && chat.membership.role === "none") {
+            gates.push({ level: chat.level, ...chat.gate });
+        }
+        return gates;
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {
@@ -5756,7 +5848,7 @@ export class OpenChat extends OpenChatAgentWorker {
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
-    ): Promise<boolean> {
+    ): Promise<PayForDiamondMembershipResponse> {
         return this.sendRequest({
             kind: "payForDiamondMembership",
             userId: this._liveState.user.userId,
@@ -5766,18 +5858,16 @@ export class OpenChat extends OpenChatAgentWorker {
             expectedPriceE8s,
         })
             .then((resp) => {
-                if (resp.kind !== "success") {
-                    return false;
-                } else {
+                if (resp.kind === "success") {
                     this.user.update((user) => ({
                         ...user,
                         diamondStatus: resp.status,
                     }));
                     this.setDiamondStatus(resp.status);
-                    return true;
                 }
+                return resp;
             })
-            .catch(() => false);
+            .catch(() => ({ kind: "internal_error" }));
     }
 
     setMessageReminder(
@@ -6691,9 +6781,35 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => undefined);
     }
 
+    submitProofOfUniquePersonhood(
+        credential: string,
+    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        return this.sendRequest({
+            kind: "submitProofOfUniquePersonhood",
+            credential,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.user.update((user) => ({
+                        ...user,
+                        isUniquePerson: true,
+                    }));
+                    this.overwriteUserInStore(this._liveState.user.userId, (u) => ({
+                        ...u,
+                        isUniquePerson: true,
+                    }));
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.error("Failed to submit proof of unique personhood to the user index", err);
+                return { kind: "invalid" };
+            });
+    }
+
     async joinCommunity(
         community: CommunitySummary,
-        credentialJwt: string | undefined,
+        credentials: string[],
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayment(community);
         if (approveResponse.kind !== "success") {
@@ -6704,7 +6820,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "joinCommunity",
             id: community.id,
             localUserIndex: community.localUserIndex,
-            credentialArgs: this.buildVerifiedCredentialArgs(credentialJwt),
+            credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
                 if (resp.kind === "success") {

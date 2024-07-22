@@ -83,6 +83,7 @@
                         <LinkButton underline="hover">
                             {client.displayName(u)}
                             <Badges
+                                uniquePerson={u?.isUniquePerson}
                                 diamondStatus={u?.diamondStatus}
                                 streak={client.getStreak(u?.userId)} />
                         </LinkButton>

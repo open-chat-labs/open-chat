@@ -1561,6 +1561,7 @@ export type CreateGroupResponse =
     | NotAuthorised
     | CommunityFrozen
     | UserSuspended
+    | { kind: "access_gate_invalid" }
     | Offline
     | DefaultMustBePublic;
 
@@ -1895,6 +1896,7 @@ export type UpdateGroupResponse =
     | { kind: "chat_frozen" }
     | { kind: "internal_error" }
     | { kind: "failure" }
+    | { kind: "access_gate_invalid" }
     | Offline;
 
 export type UpdatePermissionsResponse =

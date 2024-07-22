@@ -20,6 +20,7 @@ import {
     AccessTokenResponse,
     VerifiedCredentialGateArgs,
     VideoCallType,
+    JoinCommunityArgs,
 } from "./types";
 export {
     _SERVICE as LocalUserIndexService,
@@ -41,6 +42,7 @@ export {
     AccessTokenType as ApiAccessTokenType,
     VerifiedCredentialGateArgs as ApiVerifiedCredentialGateArgs,
     VideoCallType as ApiVideoCallType,
+    JoinCommunityArgs as ApiJoinCommunityArgs
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -110,6 +110,7 @@ import type {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
+    SubmitProofOfUniquePersonhoodResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -382,7 +383,13 @@ export type WorkerRequest =
     | ClaimDailyChit
     | ChitLeaderboard
     | ChitEventsRequest
-    | MarkAchievementsSeen;
+    | MarkAchievementsSeen
+    | SubmitProofOfUniquePersonhood;
+
+type SubmitProofOfUniquePersonhood = {
+    kind: "submitProofOfUniquePersonhood";
+    credential: string;
+};
 
 type MarkAchievementsSeen = {
     kind: "markAchievementsSeen";
@@ -1414,7 +1421,8 @@ export type WorkerResponseInner =
     | SetPinNumberResponse
     | ClaimDailyChitResponse
     | ChitUserBalance[]
-    | ChitEventsResponse;
+    | ChitEventsResponse
+    | SubmitProofOfUniquePersonhoodResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2081,4 +2089,6 @@ export type WorkerResult<T> = T extends Init
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
     ? void
+    : T extends SubmitProofOfUniquePersonhood
+    ? SubmitProofOfUniquePersonhoodResponse
     : never;

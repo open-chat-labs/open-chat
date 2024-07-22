@@ -1767,6 +1767,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.markAchievementsSeen());
                 break;
 
+            case "submitProofOfUniquePersonhood":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.submitProofOfUniquePersonhood(payload.credential),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

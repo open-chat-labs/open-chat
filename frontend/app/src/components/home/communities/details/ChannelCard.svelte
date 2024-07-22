@@ -10,7 +10,7 @@
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { getContext } from "svelte";
     import page from "page";
-    import AccessGateIcon from "../../AccessGateIcon.svelte";
+    import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import { popRightPanelHistory } from "../../../../stores/rightPanel";
     import Markdown from "../../Markdown.svelte";
 
@@ -51,10 +51,11 @@
                 </div>
                 <div class="gate">
                     <AccessGateIcon
+                        clickable
+                        level={"channel"}
                         small
                         position={"bottom"}
                         align={"middle"}
-                        on:upgrade
                         gate={channel.gate} />
                 </div>
             </div>

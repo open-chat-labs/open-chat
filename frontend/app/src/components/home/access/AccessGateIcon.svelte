@@ -1,8 +1,10 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
+    import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
     import { _ } from "svelte-i18n";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import TooltipPopup from "../../TooltipPopup.svelte";
     import {
         type AccessGate,
         isNeuronGate,
@@ -10,23 +12,29 @@
         isPaymentGate,
         type CryptocurrencyDetails,
         isBalanceGate,
+        type Level,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import type { Alignment, Position } from "../../utils/alignment";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { getContext } from "svelte";
+    import type { Alignment, Position } from "../../../utils/alignment";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
-    import GoldDiamond from "../icons/GoldDiamond.svelte";
-    import BlueDiamond from "../icons/BlueDiamond.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import GoldDiamond from "../../icons/GoldDiamond.svelte";
+    import BlueDiamond from "../../icons/BlueDiamond.svelte";
+    import { iconSize } from "../../../stores/iconSize";
+    import AccessGateBuilder from "./AccessGateBuilder.svelte";
 
     export let gate: AccessGate;
     export let position: Position = "top";
     export let align: Alignment = "start";
     export let small = false;
+    export let showNoGate = false;
+    export let level: Level;
+    export let clickable = false;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+
+    let showDetail = false;
 
     $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
     $: params = formatParams(gate, tokenDetails);
@@ -65,12 +73,53 @@
         }
         return parts.length > 0 ? ` (${parts.join(", ")})` : "";
     }
+
+    function onClick(ev: Event) {
+        if (clickable) {
+            showDetail = true;
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+    }
 </script>
 
-{#if gate.kind !== "no_gate"}
-    {#if gate.kind === "diamond_gate"}
+{#if showDetail}
+    <AccessGateBuilder
+        valid={true}
+        {level}
+        on:close={() => (showDetail = false)}
+        {gate}
+        editable={false} />
+{/if}
+
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div on:click={onClick} class="wrapper">
+    {#if gate.kind === "no_gate" && showNoGate}
         <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+            <div slot="target" class="open">
+                <ShieldLockOpenOutline size={$iconSize} color={"var(--txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "composite_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="composite">
+                <VectorCombine size={$iconSize} color={"var(--txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.compositeGate")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "diamond_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="diamond">
                 <BlueDiamond />
             </div>
             <div let:position let:align slot="tooltip">
@@ -81,7 +130,7 @@
         </TooltipWrapper>
     {:else if gate.kind === "lifetime_diamond_gate"}
         <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+            <div slot="target" class="diamond">
                 <GoldDiamond />
             </div>
             <div let:position let:align slot="tooltip">
@@ -92,7 +141,7 @@
         </TooltipWrapper>
     {:else if gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+            <div slot="target" class="unique">
                 <AccountCheck size={$iconSize} color={"var(--txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
@@ -167,7 +216,7 @@
             </div>
         </TooltipWrapper>
     {/if}
-{/if}
+</div>
 
 <style lang="scss">
     $size: 32px;

@@ -298,6 +298,7 @@
                                                     username={user.displayName ?? user.username} />
 
                                                 <Badges
+                                                    uniquePerson={user.isUniquePerson}
                                                     diamondStatus={user.diamondStatus}
                                                     streak={client.getStreak(user.userId)} />
                                             </h4>

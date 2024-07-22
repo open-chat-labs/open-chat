@@ -6,7 +6,7 @@
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey, } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -63,7 +63,8 @@
 
 <Overlay dismissible>
     <ModalContent closeIcon on:close>
-        <span class="header" slot="header"><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>
+        <span class="header" slot="header"
+            ><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>
 
         <div class="body" slot="body">
             {#each achieved as achievement}
