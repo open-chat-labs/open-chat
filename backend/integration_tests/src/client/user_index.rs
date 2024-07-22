@@ -218,7 +218,7 @@ pub mod happy_path {
     pub fn chit_balances(
         env: &PocketIc,
         user_index_canister_id: CanisterId,
-        user_ids: Vec<UserId>,
+        users: Vec<UserId>,
         year: u16,
         month: u8,
     ) -> HashMap<UserId, i32> {

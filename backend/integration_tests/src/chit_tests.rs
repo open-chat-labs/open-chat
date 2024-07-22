@@ -91,7 +91,7 @@ fn chit_stored_per_month() {
     let start_month = MonthKey::from_timestamp(now_millis(env));
 
     for i in 1..5 {
-        for j in 0..i {
+        for _ in 0..i {
             client::user::happy_path::claim_daily_chit(env, &user);
             env.advance_time(Duration::from_millis(2 * MS_IN_DAY));
         }
@@ -111,6 +111,7 @@ fn chit_stored_per_month() {
         )
         .values()
         .next()
+        .copied()
         .unwrap();
 
         assert_eq!(chit_balance, i * 200);
