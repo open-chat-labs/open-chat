@@ -9,6 +9,7 @@ use ic_cdk::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
+use jwt::{sign_and_encode_token, Claims};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
 use serde::Serialize;
@@ -17,7 +18,7 @@ use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -239,7 +240,16 @@ fn process_charge(
                 .push((args.token, args.expected_price_e8s as u128));
         }
 
-        Success(result)
+        let claims = Claims::new(now + HOUR_IN_MS, "diamond_membership".to_string(), result.clone());
+        let proof_jwt =
+            sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, state.env.rng()).unwrap_or_default();
+
+        Success(SuccessResult {
+            expires_at: result.expires_at,
+            pay_in_chat: result.pay_in_chat,
+            subscription: result.subscription,
+            proof_jwt,
+        })
     } else {
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");
         UserNotFound
