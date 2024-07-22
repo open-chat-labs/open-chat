@@ -26,7 +26,7 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         if let Some(sk_der) = state.data.oc_secret_key_der.clone() {
-            state.data.oc_key_pair = P256KeyPair::from_secret_key_der(sk_der);
+            state.data.oc_key_pair = P256KeyPair::from_secret_key_der(sk_der).unwrap();
         }
     });
 

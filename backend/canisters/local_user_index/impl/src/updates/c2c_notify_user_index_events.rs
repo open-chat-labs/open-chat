@@ -178,7 +178,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::SecretKeySet(sk_der) => {
-            state.data.oc_key_pair = P256KeyPair::from_secret_key_der(sk_der);
+            if let Ok(key_pair) = P256KeyPair::from_secret_key_der(sk_der) {
+                state.data.oc_key_pair = key_pair;
+            }
         }
         Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
