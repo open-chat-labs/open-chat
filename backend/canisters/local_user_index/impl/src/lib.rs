@@ -4,6 +4,7 @@ use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
+use jwt::{verify_jwt, Claims};
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
@@ -15,8 +16,8 @@ use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, MessageContent, ReferralType,
-    TimestampMillis, Timestamped, UniquePersonProof, User, UserId,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
+    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -67,24 +68,36 @@ impl RuntimeState {
     pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
         let mut user_details = self.calling_user();
 
-        if user_details.unique_person_proof.is_none() {
-            if let Some(unique_person_proof) = credential_jwts.as_ref().and_then(|jwts| {
-                let now = self.env.now();
-                self.data
-                    .extract_proof_of_unique_personhood(user_details.principal, jwts, now)
-            }) {
-                let user_id = user_details.user_id;
-                self.push_event_to_user_index(UserIndexEvent::NotifyUniquePersonProof(Box::new((
-                    user_id,
-                    unique_person_proof.clone(),
-                ))));
-                if self.data.local_users.contains(&user_id) {
-                    self.push_event_to_user(
+        if let Some(jwts) = credential_jwts {
+            let now = self.env.now();
+            let user_id = user_details.user_id;
+
+            for jwt in jwts {
+                if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
+                    user_details.principal,
+                    self.data.identity_canister_id,
+                    jwt,
+                    &self.data.ic_root_key,
+                    now,
+                ) {
+                    self.push_event_to_user_index(UserIndexEvent::NotifyUniquePersonProof(Box::new((
                         user_id,
-                        UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
-                    );
+                        unique_person_proof.clone(),
+                    ))));
+                    if self.data.local_users.contains(&user_id) {
+                        self.push_event_to_user(
+                            user_id,
+                            UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
+                        );
+                    }
+                    user_details.unique_person_proof = Some(unique_person_proof);
+                } else if let Ok(claims) =
+                    verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
+                {
+                    if claims.claim_type() == "diamond_membership" {
+                        user_details.diamond_membership_expires_at = Some(claims.custom().expires_at);
+                    }
                 }
-                user_details.unique_person_proof = Some(unique_person_proof);
             }
         }
 
@@ -351,20 +364,6 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
         }
-    }
-
-    pub fn extract_proof_of_unique_personhood(
-        &self,
-        principal: Principal,
-        credential_jwts: &[String],
-        now: TimestampMillis,
-    ) -> Option<UniquePersonProof> {
-        credential_jwts
-            .iter()
-            .filter_map(|jwt| {
-                verify_proof_of_unique_personhood(principal, self.identity_canister_id, jwt, &self.ic_root_key, now).ok()
-            })
-            .next()
     }
 }
 
