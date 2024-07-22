@@ -5126,6 +5126,7 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "p256_key_pair",
  "proof_of_unique_personhood",
  "rand 0.8.5",
  "satoshi_dice_canister",

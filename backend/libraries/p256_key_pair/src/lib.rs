@@ -14,6 +14,13 @@ pub struct P256KeyPair {
 }
 
 impl P256KeyPair {
+    pub fn from_secret_key_der(sk_der: Vec<u8>) -> P256KeyPair {
+        let sk: ecdsa::SigningKey = ecdsa::SigningKey::from_slice(&sk_der).unwrap();
+        let pk_pem = sk.verifying_key().to_public_key_pem(Default::default()).unwrap();
+
+        P256KeyPair { sk_der, pk_pem }
+    }
+
     pub fn initialize(&mut self, rng: &mut impl CryptoRngCore) {
         if self.is_initialised() {
             return;
