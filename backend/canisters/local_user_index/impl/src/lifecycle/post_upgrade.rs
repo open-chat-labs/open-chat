@@ -1,10 +1,11 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use local_user_index_canister::post_upgrade::Args;
+use p256_key_pair::P256KeyPair;
 use stable_memory::get_reader;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
@@ -22,6 +23,12 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
+
+    mutate_state(|state| {
+        if let Some(sk_der) = state.data.oc_secret_key_der.clone() {
+            state.data.oc_key_pair = P256KeyPair::from_secret_key_der(sk_der).unwrap();
+        }
+    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
