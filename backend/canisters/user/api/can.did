@@ -1152,6 +1152,7 @@ type LocalUserIndexResponse = variant {
 type ChitEventsArgs = record {
     from : opt TimestampMillis;
     to : opt TimestampMillis;
+    skip : opt nat32;
     max : nat32;
     ascending : bool;
 };

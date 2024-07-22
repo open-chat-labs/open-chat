@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Improve check for empty and dormant users ([#6073](https://github.com/open-chat-labs/open-chat/pull/6073))
+- Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
 
 ## [[2.0.1243](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1243-user)] - 2024-07-17
 

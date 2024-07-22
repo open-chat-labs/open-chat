@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
 - Accept proofs of uniqueness from LocalUserIndexes ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
 - Ensure UserIndex is only controller before installing LocalUserIndex ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
+- Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
 
 ### Removed
 
