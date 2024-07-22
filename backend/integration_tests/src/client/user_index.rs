@@ -32,8 +32,7 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, UserId,
+        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
     };
     use user_index_canister::users::UserGroup;
 
@@ -83,7 +82,7 @@ pub mod happy_path {
         duration: DiamondMembershipPlanDuration,
         pay_in_chat: bool,
         recurring: bool,
-    ) -> DiamondMembershipDetails {
+    ) -> user_index_canister::pay_for_diamond_membership::SuccessResult {
         let fees = DiamondMembershipFees::default();
 
         let response = super::pay_for_diamond_membership(
@@ -192,8 +191,8 @@ pub mod happy_path {
         ));
     }
 
-    pub fn public_key(env: &mut PocketIc, sender: Principal, user_index_canister_id: CanisterId) -> String {
-        let response = super::public_key(env, sender, user_index_canister_id, &Empty {});
+    pub fn public_key(env: &mut PocketIc, user_index_canister_id: CanisterId) -> String {
+        let response = super::public_key(env, Principal::anonymous(), user_index_canister_id, &Empty {});
 
         match response {
             user_index_canister::public_key::Response::Success(pk) => pk,

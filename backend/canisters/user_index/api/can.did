@@ -249,7 +249,12 @@ type PayForDiamondMembershipArgs = record {
 };
 
 type PayForDiamondMembershipResponse = variant {
-    Success : DiamondMembershipDetails;
+    Success : record {
+        expires_at : TimestampMillis;
+        pay_in_chat : bool;
+        subscription : DiamondMembershipSubscription;
+        proof_jwt : text;
+    };
     AlreadyLifetimeDiamondMember;
     CurrencyNotSupported;
     PriceMismatch;

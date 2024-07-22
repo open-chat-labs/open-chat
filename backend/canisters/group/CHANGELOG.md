@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
 
+### Fixed
+
+- Avoid getting stuck in infinite loop trying to refund prizes ([#6080](https://github.com/open-chat-labs/open-chat/pull/6080))
+
 ## [[2.0.1245](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1245-group)] - 2024-07-18
 
 ### Added
