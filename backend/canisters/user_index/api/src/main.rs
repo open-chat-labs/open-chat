@@ -3,6 +3,7 @@ use candid_gen::generate_candid_method;
 #[allow(deprecated)]
 fn main() {
     generate_candid_method!(user_index, check_username, query);
+    generate_candid_method!(user_index, chit_balances, query);
     generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, diamond_membership_fees, query);
