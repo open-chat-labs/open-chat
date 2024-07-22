@@ -63,15 +63,22 @@
     </div>
 </div>
 <div>
-    <p class="para">
-        {#if lifetime}
-            <Translatable
-                resourceKey={i18nKey("access.lifetimeDiamondGateInfo2", undefined, level, true)} />
-        {:else}
-            <Translatable
-                resourceKey={i18nKey("access.diamondGateInfo2", undefined, level, true)} />
-        {/if}
-    </p>
+    {#if !confirming}
+        <p class="para">
+            {#if lifetime}
+                <Translatable
+                    resourceKey={i18nKey(
+                        "access.lifetimeDiamondGateInfo2",
+                        undefined,
+                        level,
+                        true,
+                    )} />
+            {:else}
+                <Translatable
+                    resourceKey={i18nKey("access.diamondGateInfo2", undefined, level, true)} />
+            {/if}
+        </p>
+    {/if}
 
     <Payment
         bind:confirmed
