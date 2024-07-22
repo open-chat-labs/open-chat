@@ -33,7 +33,7 @@ fn access_token_valid() {
 
     tick_many(env, 10);
 
-    let public_key = user_index::happy_path::public_key(env, user1.principal, canister_ids.user_index);
+    let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
 
     println!("{public_key}");
 

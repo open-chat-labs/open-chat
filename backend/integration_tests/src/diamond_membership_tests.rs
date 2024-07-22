@@ -2,13 +2,17 @@ use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
+use jwt::{verify_jwt, Claims};
 use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, DiamondMembershipSubscription};
+use types::{
+    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
+    DiamondMembershipSubscription,
+};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::MINUTE_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 #[test_case(true, false)]
 #[test_case(true, true)]
@@ -55,6 +59,14 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
     assert_eq!(diamond_response.expires_at, expected_expiry);
     assert!(!diamond_response.subscription.is_active());
+
+    let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
+    let claims: Claims<DiamondMembershipDetails> = verify_jwt(&diamond_response.proof_jwt, &public_key).unwrap();
+
+    let claims_expiry = claims.exp() * 1000;
+    assert!(now < claims_expiry && claims_expiry < now + DAY_IN_MS);
+    assert_eq!(claims.claim_type(), "diamond_membership");
+    assert_eq!(claims.custom().expires_at, diamond_response.expires_at);
 
     let user_response = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert_eq!(
