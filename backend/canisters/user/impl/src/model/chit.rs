@@ -35,10 +35,10 @@ impl ChitEarnedEvents {
     ) -> (Vec<ChitEarned>, u32) {
         if ascending {
             let range = self.range(from.unwrap_or_default()..to.unwrap_or(TimestampMillis::MAX));
-            (range.iter().skip(skip).cloned().take(max).collect(), range.len() as u32)
+            (range.iter().skip(skip).take(max).cloned().collect(), range.len() as u32)
         } else {
             let range = self.range(to.unwrap_or_default()..from.unwrap_or(TimestampMillis::MAX));
-            (range.iter().rev().skip(skip).cloned().take(max).collect(), range.len() as u32)
+            (range.iter().rev().skip(skip).take(max).cloned().collect(), range.len() as u32)
         }
     }
 
