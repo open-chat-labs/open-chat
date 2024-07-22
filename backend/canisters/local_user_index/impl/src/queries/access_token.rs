@@ -81,7 +81,7 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
 }
 
 fn build_token<T: Serialize>(token_type: AccessTokenType, custom_claims: T, state: &mut RuntimeState) -> Response {
-    let Some(secret_key_der) = state.data.oc_secret_key_der.as_ref() else {
+    if !state.data.oc_key_pair.is_initialised() {
         return InternalError("OC Secret not set".to_string());
     };
 
@@ -93,7 +93,7 @@ fn build_token<T: Serialize>(token_type: AccessTokenType, custom_claims: T, stat
         custom_claims,
     );
 
-    match jwt::sign_and_encode_token(secret_key_der, claims, &mut rng) {
+    match jwt::sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, &mut rng) {
         Ok(token) => Success(token),
         Err(err) => InternalError(format!("{err:?}")),
     }

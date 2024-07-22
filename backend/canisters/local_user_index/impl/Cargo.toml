@@ -36,6 +36,7 @@ jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 rand = { workspace = true }
 serde = { workspace = true }
