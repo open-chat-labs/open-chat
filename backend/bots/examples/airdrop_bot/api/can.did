@@ -38,6 +38,23 @@ type SetAvatarResponse = variant {
     AvatarTooBig : FieldTooLongResult;
 };
 
+type SetAirdropArgs = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    start : TimestampMillis;
+    main_chat_fund : u128;
+    main_chit_band : u32;
+    lottery_prizes : Vec<u128>;
+    lottery_chit_band : u32;
+};
+
+type SetAirdropResponse = variant {
+    Success;
+    ChannelUsed;
+    InThePast;
+    ClashesWithPrevious;
+};
+
 type InitArgs = record {
     user_index_canister_id : CanisterId;
     local_user_index_canister_id : CanisterId;
@@ -55,5 +72,6 @@ type BuildVersion = record {
 
 service : (InitArgs) -> {
     initialize_bot : (InitializeBotArgs) -> (InitializeBotResponse);
+    set_airdrop : (SetAirdropArgs) -> (SetAirdropResponse);
     set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
 };
