@@ -7,6 +7,7 @@ use event_store_utils::EventDeduper;
 use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
+use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -231,7 +232,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            oc_secret_key_initialized: self.data.oc_secret_key_der.is_some(),
+            oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
@@ -265,6 +266,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
+    #[serde(default)]
+    pub oc_key_pair: P256KeyPair,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
@@ -337,7 +340,10 @@ impl Data {
             referral_codes: ReferralCodes::default(),
             rng_seed: [0; 32],
             video_call_operators,
-            oc_secret_key_der,
+            oc_secret_key_der: None,
+            oc_key_pair: oc_secret_key_der
+                .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
+                .unwrap_or_default(),
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),

@@ -215,7 +215,31 @@
         const scale = total / Number(fund);
         const scaled = intermediate.map((p) => BigInt(Math.round(p / scale)));
 
-        return compensateRounding(scaled, fund);
+        const prizes = compensateRounding(scaled, fund);
+
+        return ensureMinPrizeAtLeastTransferFee(prizes);
+    }
+
+    function ensureMinPrizeAtLeastTransferFee(prizes: bigint[]): bigint[] {
+        let totalAdded = 0n;
+        let max = 0n;
+        let maxIndex = 0;
+        for (let i = 0; i < prizes.length; i++) {
+            const prize = prizes[i];
+            if (prize < transferFees) {
+                prizes[i] = transferFees;
+                totalAdded += transferFees - prize;
+            } else if (prize > max) {
+                max = prize;
+                maxIndex = i;
+            }
+        }
+
+        if (totalAdded > 0n) {
+            prizes[maxIndex] = max - totalAdded;
+        }
+
+        return prizes;
     }
 
     function random(min: number, max: number): number {

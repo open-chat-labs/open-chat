@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::Event;
+use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
 use user_canister::{
@@ -177,7 +178,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::SecretKeySet(sk_der) => {
-            state.data.oc_secret_key_der = Some(sk_der);
+            if let Ok(key_pair) = P256KeyPair::from_secret_key_der(sk_der) {
+                state.data.oc_key_pair = key_pair;
+            }
         }
         Event::NotifyUniquePersonProof(user_id, proof) => {
             state.data.global_users.insert_unique_person_proof(user_id, proof);
