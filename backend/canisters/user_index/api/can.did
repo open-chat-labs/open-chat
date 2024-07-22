@@ -123,6 +123,12 @@ type ChitBalancesArgs = record {
     month : nat8;
 };
 
+type ChitBalancesResponse = variant {
+    Success : record {
+        balances : vec record { UserId; int32 };
+    };
+};
+
 type DiamondMembershipFeesResponse = variant {
     Success : vec record {
         token : Cryptocurrency;
