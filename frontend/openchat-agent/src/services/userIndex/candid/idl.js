@@ -136,7 +136,12 @@ export const idlFactory = ({ IDL }) => {
   const PayForDiamondMembershipResponse = IDL.Variant({
     'PaymentAlreadyInProgress' : IDL.Null,
     'CurrencyNotSupported' : IDL.Null,
-    'Success' : DiamondMembershipDetails,
+    'Success' : IDL.Record({
+      'proof_jwt' : IDL.Text,
+      'pay_in_chat' : IDL.Bool,
+      'subscription' : DiamondMembershipSubscription,
+      'expires_at' : TimestampMillis,
+    }),
     'AlreadyLifetimeDiamondMember' : IDL.Null,
     'PriceMismatch' : IDL.Null,
     'TransferFailed' : IDL.Text,

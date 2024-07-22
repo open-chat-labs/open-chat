@@ -125,10 +125,10 @@
                 autoRenew && selectedDuration !== "lifetime",
                 toPayE8s,
             )
-            .then((success) => {
-                if (success) {
+            .then((resp) => {
+                if (resp.kind === "success") {
                     confirmed = true;
-                    dispatch("success");
+                    dispatch("success", resp.proof);
                 } else {
                     const errorKey = "upgrade.paymentFailed";
                     error = errorKey;

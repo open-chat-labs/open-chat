@@ -407,6 +407,7 @@ export function payForDiamondMembershipResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
+            proof: candid.Success.proof_jwt,
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }

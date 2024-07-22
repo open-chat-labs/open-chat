@@ -417,6 +417,7 @@ import type {
     PreprocessedGate,
     SubmitProofOfUniquePersonhoodResponse,
     Achievement,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5847,7 +5848,7 @@ export class OpenChat extends OpenChatAgentWorker {
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
-    ): Promise<boolean> {
+    ): Promise<PayForDiamondMembershipResponse> {
         return this.sendRequest({
             kind: "payForDiamondMembership",
             userId: this._liveState.user.userId,
@@ -5857,18 +5858,16 @@ export class OpenChat extends OpenChatAgentWorker {
             expectedPriceE8s,
         })
             .then((resp) => {
-                if (resp.kind !== "success") {
-                    return false;
-                } else {
+                if (resp.kind === "success") {
                     this.user.update((user) => ({
                         ...user,
                         diamondStatus: resp.status,
                     }));
                     this.setDiamondStatus(resp.status);
-                    return true;
                 }
+                return resp;
             })
-            .catch(() => false);
+            .catch(() => ({ kind: "internal_error" }));
     }
 
     setMessageReminder(

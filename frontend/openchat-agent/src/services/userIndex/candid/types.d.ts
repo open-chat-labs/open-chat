@@ -1388,7 +1388,14 @@ export type PayForDiamondMembershipResponse = {
     'PaymentAlreadyInProgress' : null
   } |
   { 'CurrencyNotSupported' : null } |
-  { 'Success' : DiamondMembershipDetails } |
+  {
+    'Success' : {
+      'proof_jwt' : string,
+      'pay_in_chat' : boolean,
+      'subscription' : DiamondMembershipSubscription,
+      'expires_at' : TimestampMillis,
+    }
+  } |
   { 'AlreadyLifetimeDiamondMember' : null } |
   { 'PriceMismatch' : null } |
   { 'TransferFailed' : string } |

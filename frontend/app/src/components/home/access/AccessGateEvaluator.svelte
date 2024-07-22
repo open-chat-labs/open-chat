@@ -161,12 +161,16 @@
                     on:next={nextGate}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}
-                <DiamondGateEvaluator {level} lifetime on:next={nextGate} on:cancel={onClose} />
+                <DiamondGateEvaluator
+                    {level}
+                    lifetime
+                    on:credentialReceived={credentialReceived}
+                    on:cancel={onClose} />
             {:else if isDiamondGate(currentGate)}
                 <DiamondGateEvaluator
                     {level}
                     lifetime={false}
-                    on:next={nextGate}
+                    on:credentialReceived={credentialReceived}
                     on:cancel={onClose} />
             {/if}
         {/if}

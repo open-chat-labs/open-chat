@@ -84,7 +84,7 @@
         showExpiry={false}
         padded={false}
         accountBalance={Number(tokenDetails.balance)}
-        on:success={() => dispatch("next")}
+        on:success={(ev) => dispatch("credentialReceived", ev.detail)}
         on:cancel />
 </div>
 

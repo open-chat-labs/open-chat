@@ -378,7 +378,7 @@ export type UnsuspendUserResponse =
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }
     | { kind: "currency_not_supported" }
-    | { kind: "success"; status: DiamondMembershipStatus }
+    | { kind: "success"; status: DiamondMembershipStatus; proof: string }
     | { kind: "price_mismatch" }
     | { kind: "transfer_failed" }
     | { kind: "internal_error" }
