@@ -6,6 +6,7 @@ use types::{ChitEarned, TimestampMillis};
 pub struct Args {
     pub from: Option<TimestampMillis>,
     pub to: Option<TimestampMillis>,
+    pub skip: Option<u32>,
     pub max: u32,
     pub ascending: bool,
 }

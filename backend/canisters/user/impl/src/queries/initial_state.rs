@@ -49,7 +49,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         local_user_index_canister_id: state.data.local_user_index_canister_id,
         achievements: state.data.chit_events.achievements(None),
         achievements_last_seen: state.data.achievements_last_seen,
-        chit_balance: state.data.chit_balance.value,
+        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
         streak: state.data.streak.days(now),
         streak_ends: state.data.streak.ends(),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },

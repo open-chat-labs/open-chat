@@ -2,11 +2,13 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use types::{
     is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
     UserSummaryVolatile,
 };
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -52,6 +54,8 @@ pub struct User {
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
+    #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
+    pub chit_per_month: BTreeMap<MonthKey, i32>,
     #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
@@ -112,6 +116,7 @@ impl User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             chit_updated: now,
             streak: 0,
             streak_ends: 0,
@@ -136,11 +141,11 @@ impl User {
         }
     }
 
-    pub fn to_summary_v2(&self, now: TimestampMillis) -> UserSummaryV2 {
+    pub fn to_summary_v2(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryV2 {
         UserSummaryV2 {
             user_id: self.user_id,
             stable: Some(self.to_summary_stable(now)),
-            volatile: Some(self.to_summary_volatile(now)),
+            volatile: Some(self.to_summary_volatile(now, month_key)),
         }
     }
 
@@ -156,9 +161,9 @@ impl User {
         }
     }
 
-    pub fn to_summary_volatile(&self, now: TimestampMillis) -> UserSummaryVolatile {
+    pub fn to_summary_volatile(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryVolatile {
         UserSummaryVolatile {
-            chit_balance: self.chit_balance,
+            chit_balance: self.chit_per_month.get(&month_key).copied().unwrap_or_default(),
             streak: self.streak(now),
         }
     }
@@ -226,6 +231,7 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             streak: 0,
             streak_ends: 0,
             chit_updated: 0,

@@ -9,6 +9,7 @@ use std::ops::RangeFrom;
 use tracing::info;
 use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -33,6 +34,13 @@ pub struct UserMap {
 }
 
 impl UserMap {
+    pub fn initialise_monthly_chit_balances(&mut self, now: TimestampMillis) {
+        let month_key = MonthKey::from_timestamp(now);
+        for user in self.users.values_mut() {
+            user.chit_per_month.insert(month_key, user.chit_balance);
+        }
+    }
+
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
     }
@@ -201,10 +209,14 @@ impl UserMap {
             return false;
         };
 
-        if chit_event_timestamp <= user.latest_chit_event {
+        let chit_event_month = MonthKey::from_timestamp(chit_event_timestamp);
+        let now_month = MonthKey::from_timestamp(now);
+
+        if chit_event_month == now_month && chit_event_timestamp <= user.latest_chit_event {
             return false;
         }
 
+        user.chit_per_month.insert(chit_event_month, chit_balance);
         user.latest_chit_event = chit_event_timestamp;
         user.chit_balance = chit_balance;
         user.streak = streak;
