@@ -29,11 +29,11 @@ pub fn tomorrow(now: TimestampMillis) -> TimestampMillis {
 }
 
 pub fn to_date(ts: TimestampMillis) -> time::Date {
-    time::OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap().date()
+    OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap().date()
 }
 
 pub fn to_timestamp(date: time::Date) -> TimestampMillis {
-    (time::OffsetDateTime::new_utc(date, time::Time::MIDNIGHT).unix_timestamp() * 1000) as u64
+    (OffsetDateTime::new_utc(date, Time::MIDNIGHT).unix_timestamp() * 1000) as u64
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -48,7 +48,7 @@ impl MonthKey {
     }
 
     pub fn from_timestamp(ts: TimestampMillis) -> MonthKey {
-        let date = time::OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap();
+        let date = OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap();
 
         MonthKey {
             year: date.year() as u32,
@@ -87,6 +87,20 @@ impl MonthKey {
 
     fn start_timestamp(&self) -> TimestampMillis {
         let date = time::Date::from_calendar_date(self.year as i32, self.month.try_into().unwrap(), 1).unwrap();
-        OffsetDateTime::new_utc(date, Time::MIDNIGHT).unix_timestamp() as TimestampMillis
+        (OffsetDateTime::new_utc(date, Time::MIDNIGHT).unix_timestamp() * 1000) as TimestampMillis
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::time::MonthKey;
+
+    #[test]
+    fn month_timestamp_range() {
+        let month = MonthKey::new(2021, 5);
+        let range = month.timestamp_range();
+
+        assert_eq!(range.start, 1619827200000);
+        assert_eq!(range.end, 1622505600000);
     }
 }
