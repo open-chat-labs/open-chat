@@ -341,9 +341,7 @@ impl Data {
             rng_seed: [0; 32],
             video_call_operators,
             oc_secret_key_der: None,
-            oc_key_pair: oc_secret_key_der
-                .map(|sk_der| P256KeyPair::from_secret_key_der(sk_der))
-                .unwrap_or_default(),
+            oc_key_pair: oc_secret_key_der.map(P256KeyPair::from_secret_key_der).unwrap_or_default(),
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
