@@ -4,6 +4,7 @@ use std::collections::binary_heap::BinaryHeap;
 use std::collections::btree_map::BTreeMap;
 use std::collections::HashMap;
 use types::{TimestampMillis, UserId};
+use utils::time::MonthKey;
 
 const STARTING_MONTH: MonthKey = MonthKey { year: 2023, month: 5 };
 
@@ -105,35 +106,6 @@ pub struct ReferralStats {
     pub diamond_members: u32,
     pub total_users: u32,
     pub user_id: UserId,
-}
-
-#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct MonthKey {
-    year: u32,
-    month: u8,
-}
-
-impl MonthKey {
-    pub fn new(year: u32, month: u8) -> MonthKey {
-        MonthKey { year, month }
-    }
-
-    pub fn from_timestamp(ts: TimestampMillis) -> MonthKey {
-        let date = time::OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap();
-
-        MonthKey {
-            year: date.year() as u32,
-            month: u8::from(date.month()),
-        }
-    }
-
-    pub fn year(&self) -> u32 {
-        self.year
-    }
-
-    pub fn month(&self) -> u8 {
-        self.month
-    }
 }
 
 #[cfg(test)]

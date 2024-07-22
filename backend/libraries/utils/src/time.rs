@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use types::{Milliseconds, TimestampMillis, TimestampNanos};
 
 pub const SECOND_IN_MS: Milliseconds = 1000;
@@ -30,4 +31,33 @@ pub fn to_date(ts: TimestampMillis) -> time::Date {
 
 pub fn to_timestamp(date: time::Date) -> TimestampMillis {
     (time::OffsetDateTime::new_utc(date, time::Time::MIDNIGHT).unix_timestamp() * 1000) as u64
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct MonthKey {
+    pub year: u32,
+    pub month: u8,
+}
+
+impl MonthKey {
+    pub fn new(year: u32, month: u8) -> MonthKey {
+        MonthKey { year, month }
+    }
+
+    pub fn from_timestamp(ts: TimestampMillis) -> MonthKey {
+        let date = time::OffsetDateTime::from_unix_timestamp((ts / 1000) as i64).unwrap();
+
+        MonthKey {
+            year: date.year() as u32,
+            month: u8::from(date.month()),
+        }
+    }
+
+    pub fn year(&self) -> u32 {
+        self.year
+    }
+
+    pub fn month(&self) -> u8 {
+        self.month
+    }
 }

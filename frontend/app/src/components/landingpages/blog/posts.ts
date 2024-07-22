@@ -22,7 +22,7 @@ export const postsBySlug: Record<string, BlogPostInfo> = {
         slug: "chit",
         title: "CHIT Rewards",
         author: "@Matt",
-        date: new Date(2024, 7, 9),
+        date: new Date(2024, 6, 9),
         component: Chit,
     },
     signin: {
