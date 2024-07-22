@@ -85,7 +85,7 @@ impl MonthKey {
         start..end
     }
 
-    fn start_timestamp(&self) -> TimestampMillis {
+    pub fn start_timestamp(&self) -> TimestampMillis {
         let date = time::Date::from_calendar_date(self.year as i32, self.month.try_into().unwrap(), 1).unwrap();
         (OffsetDateTime::new_utc(date, Time::MIDNIGHT).unix_timestamp() * 1000) as TimestampMillis
     }
