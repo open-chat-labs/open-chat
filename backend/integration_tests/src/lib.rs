@@ -95,6 +95,7 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,

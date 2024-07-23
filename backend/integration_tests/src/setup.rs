@@ -85,6 +85,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let notifications_index_canister_id = create_canister(env, controller);
     let identity_canister_id = create_canister(env, controller);
     let online_users_canister_id = create_canister(env, controller);
+    let airdrop_bot_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
@@ -115,6 +116,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
+    let airdrop_bot_canister_wasm = wasms::AIRDROP_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
     let sign_in_with_email_canister_wasm = wasms::SIGN_IN_WITH_EMAIL.clone();
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
@@ -259,6 +261,22 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_canister_id,
         proposals_bot_canister_wasm,
         proposals_bot_init_args,
+    );
+
+    let aairdrop_bot_init_args = airdrop_bot_canister::init::Args {
+        admins: vec![controller],
+        user_index_canister_id,
+        local_user_index_canister_id,
+        chat_ledger_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        airdrop_bot_canister_id,
+        airdrop_bot_canister_wasm,
+        aairdrop_bot_init_args,
     );
 
     let storage_index_init_args = storage_index_canister::init::Args {
@@ -493,6 +511,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
+        airdrop_bot: airdrop_bot_canister_id,
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
