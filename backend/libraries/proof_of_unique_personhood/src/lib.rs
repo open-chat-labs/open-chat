@@ -14,6 +14,8 @@ pub fn verify_proof_of_unique_personhood(
     ic_root_key: &[u8],
     now: TimestampMillis,
 ) -> Result<UniquePersonProof, String> {
+    let root_pk_raw = &ic_root_key[ic_root_key.len().saturating_sub(96)..];
+
     match ic_verifiable_credentials::validate_ii_presentation_and_claims(
         credential_jwt,
         principal,
@@ -27,7 +29,7 @@ pub fn verify_proof_of_unique_personhood(
             credential_type: "ProofOfUniqueness".to_string(),
             arguments: None,
         },
-        ic_root_key,
+        root_pk_raw,
         (now * NANOS_PER_MILLISECOND) as u128,
     ) {
         Ok(_) => Ok(UniquePersonProof {
