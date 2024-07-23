@@ -136,6 +136,7 @@ dependencies = [
  "serde_json",
  "serializer",
  "stable_memory",
+ "testing",
  "time",
  "tracing",
  "types",

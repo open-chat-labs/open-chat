@@ -5,7 +5,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::UserId;
+use types::{AccessGate, OptionUpdate, UserId};
 
 use super::process_pending_actions;
 
@@ -53,6 +53,37 @@ fn run() {
 }
 
 async fn run_airdrop(config: AirdropConfig) {
+    // Call the configured community canister to set the no-access gate on the configured channel
+    match community_canister_c2c_client::update_channel(
+        config.community_id.into(),
+        &community_canister::update_channel::Args {
+            channel_id: config.channel_id,
+            name: None,
+            description: None,
+            rules: None,
+            avatar: OptionUpdate::NoChange,
+            permissions_v2: None,
+            events_ttl: OptionUpdate::NoChange,
+            // TODO: This needs to be AccessGate::Locked
+            gate: OptionUpdate::SetToSome(AccessGate::LifetimeDiamondMember),
+            public: None,
+        },
+    )
+    .await
+    {
+        Ok(community_canister::update_channel::Response::SuccessV2(_)) => (),
+        Ok(resp) => {
+            error!(?resp, "Failed to set no-access gate");
+            return;
+        }
+        Err(err) => {
+            error!("{err:?}");
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(60_000), run);
+            TIMER_ID.set(Some(timer_id));
+            return;
+        }
+    }
+
     // Call the configured community canister to fetch the particpants of the configured channel
     let members = match community_canister_c2c_client::selected_channel_initial(
         config.community_id.into(),
@@ -122,6 +153,23 @@ fn execute_airdrop(particpants: Vec<(UserId, u32)>, state: &mut RuntimeState) {
                             shares: particpant.shares,
                         }),
                     })))
+            }
+        }
+
+        loop {
+            if let Some((user_id, prize)) = lottery_winners.pop() {
+                state
+                    .data
+                    .pending_actions_queue
+                    .push(Action::Transfer(Box::new(AirdropTransfer {
+                        recipient: user_id,
+                        amount: prize.chat_won,
+                        airdrop_type: AirdropType::Lottery(LotteryAirdrop {
+                            position: lottery_winners.len(),
+                        }),
+                    })))
+            } else {
+                break;
             }
         }
 

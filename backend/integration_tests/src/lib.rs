@@ -5,6 +5,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use types::{CanisterId, Cycles, UserId};
 
+mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
 mod change_group_role_tests;
 mod chit_tests;

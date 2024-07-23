@@ -10,13 +10,13 @@ pub struct Airdrops {
     next: Option<AirdropConfig>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Airdrop {
     pub config: AirdropConfig,
     pub outcome: AirdropOutcome,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AirdropConfig {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -27,20 +27,20 @@ pub struct AirdropConfig {
     pub lottery_chit_band: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AirdropOutcome {
     pub participants: HashMap<UserId, Participant>,
     pub lottery_winners: Vec<(UserId, Prize)>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Participant {
     pub chit: u32,
     pub shares: u32,
     pub prize: Option<Prize>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Prize {
     pub chat_won: u128,
     pub block_index: Option<u64>,
@@ -189,5 +189,60 @@ impl Airdrops {
 
     pub fn next(&self) -> Option<&AirdropConfig> {
         self.next.as_ref()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use testing::rng::random_principal;
+    use utils::env::{test::TestEnv, Environment};
+
+    use super::*;
+
+    #[test]
+    fn execute_airdrop_expected() {
+        let mut env = TestEnv::default();
+        let mut airdrops = setup(env.now);
+        let users = generate_random_users();
+
+        let airdrop = airdrops.execute(users, env.rng()).expect("Expected some airdrop");
+
+        println!("{:#?}", airdrop.outcome);
+
+        assert_eq!(airdrop.outcome.lottery_winners.len(), 3);
+        assert_eq!(
+            airdrop
+                .outcome
+                .lottery_winners
+                .iter()
+                .map(|(_, p)| p.chat_won)
+                .collect::<Vec<u128>>(),
+            vec![12000_u128, 5000_u128, 3000_u128]
+        )
+    }
+
+    fn setup(now: TimestampMillis) -> Airdrops {
+        let mut airdrops = Airdrops::default();
+
+        airdrops.set_next(
+            AirdropConfig {
+                community_id: random_principal().into(),
+                channel_id: 1,
+                start: now + 1_000,
+                main_chat_fund: 80_000,
+                main_chit_band: 10_000,
+                lottery_prizes: vec![12_000, 5_000, 3_000],
+                lottery_chit_band: 50_000,
+            },
+            now,
+        );
+
+        airdrops
+    }
+
+    fn generate_random_users() -> Vec<(UserId, u32)> {
+        (0..1000)
+            .map(|_| (random_principal().into(), rand::thread_rng().next_u32() % 110_000))
+            .collect()
     }
 }
