@@ -67,6 +67,7 @@ async fn check_non_composite_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
         AccessGate::Composite(_) => unreachable!(),
+        AccessGate::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
     }
 }
 
