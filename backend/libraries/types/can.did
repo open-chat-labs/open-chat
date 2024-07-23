@@ -1526,6 +1526,7 @@ type AccessGate = variant {
         inner : vec AccessGate;
         and : bool;
     };
+    NoAccess;
 };
 
 type AccessGateUpdate = variant {
@@ -1577,6 +1578,7 @@ type GateCheckFailedReason = variant {
     PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
     FailedVerifiedCredentialCheck : text;
+    NoAccessGate;
 };
 
 type VerifiedCredentialGateArgs = record {

@@ -16,6 +16,7 @@ pub enum AccessGate {
     Payment(PaymentGate),
     TokenBalance(TokenBalanceGate),
     Composite(CompositeGate),
+    NoAccess,
 }
 
 impl AccessGate {
@@ -45,6 +46,7 @@ impl AccessGate {
             AccessGate::Payment(_) => "payment",
             AccessGate::TokenBalance(_) => "token_balance",
             AccessGate::Composite(_) => "composite",
+            AccessGate::NoAccess => "no_access",
         }
     }
 }
@@ -101,6 +103,7 @@ pub enum GateCheckFailedReason {
     PaymentFailed(TransferFromError),
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
+    NoAccessGate,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
