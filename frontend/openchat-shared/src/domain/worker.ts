@@ -388,6 +388,7 @@ export type WorkerRequest =
 
 type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
+    iiPrincipal: string;
     credential: string;
 };
 

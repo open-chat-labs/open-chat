@@ -1655,7 +1655,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
-export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export interface SubmitProofOfUniquePersonhoodArgs {
+  'credential_jwt' : string,
+  'user_ii_principal' : Principal,
+}
 export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
