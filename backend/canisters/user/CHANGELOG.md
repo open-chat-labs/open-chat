@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `NoAccess` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+
 ### Changed
 
 - Improve check for empty and dormant users ([#6073](https://github.com/open-chat-labs/open-chat/pull/6073))
