@@ -6,6 +6,7 @@ export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
@@ -670,6 +671,7 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'Locked' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
