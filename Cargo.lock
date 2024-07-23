@@ -4264,7 +4264,7 @@ dependencies = [
 [[package]]
 name = "ic-verifiable-credentials"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=2cc9be24599b755f9584f270dbe429f09ccf473f#2cc9be24599b755f9584f270dbe429f09ccf473f"
+source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=a116a2e53a13e4a1f6f7e8429960a7d0d6142e70#a116a2e53a13e4a1f6f7e8429960a7d0d6142e70"
 dependencies = [
  "candid",
  "canister_sig_util 0.1.0 (git+https://github.com/dfinity/internet-identity?rev=f668535241bb01fa9a7fb508b6579407c8afe59c)",
