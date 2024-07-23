@@ -381,7 +381,7 @@ pub struct AccessGateMetrics {
     #[serde(default)]
     pub composite: u32,
     #[serde(default)]
-    pub no_access: u32,
+    pub locked: u32,
 }
 
 impl AccessGateMetrics {
@@ -395,7 +395,7 @@ impl AccessGateMetrics {
             AccessGate::Payment(_) => self.payment += 1,
             AccessGate::TokenBalance(_) => self.token_balance += 1,
             AccessGate::Composite(_) => self.composite += 1,
-            AccessGate::NoAccess => self.no_access += 1,
+            AccessGate::Locked => self.locked += 1,
         }
     }
 }

@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `NoAccess` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
 
 ### Changed
 
