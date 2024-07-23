@@ -203,7 +203,7 @@ jwt-simple = { version = "0.12.9", default-features = false, features = [
 ] }
 lazy_static = "1.4.0"
 num-traits = "0.2.19"
-openssl = "0.10.64"
+openssl = "0.10.66"
 p256 = { version = "0.13.2" }
 pocket-ic = "3.1.0"
 proc-macro2 = "1.0.83"

@@ -14,7 +14,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-
     const enabled = new Set<Achievement>([
         "streak_3",
         "streak_7",
@@ -49,6 +48,8 @@
         "forwarded_message",
     ]);
 
+    let selectedTab: "todo" | "done" = "todo";
+
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
     $: [achieved, notAchieved] = client.partition(filtered, (a) =>
@@ -59,6 +60,10 @@
     function filter(achievement: Achievement): boolean {
         return enabled.has(achievement) || $globalState.achievements.has(achievement);
     }
+
+    function selectTab(tab: "todo" | "done") {
+        selectedTab = tab;
+    }
 </script>
 
 <Overlay dismissible>
@@ -67,22 +72,71 @@
             ><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>
 
         <div class="body" slot="body">
-            {#each achieved as achievement}
-                <div class="achievement">
-                    <div class="yes icon">
-                        <CheckCircle size={$iconSize} color={"var(--toast-success-bg)"} />
-                    </div>
-                    <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+            <div class="tabs">
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => selectTab("todo")}
+                    class:selected={selectedTab === "todo"}
+                    class="tab">
+                    <Translatable resourceKey={i18nKey("learnToEarn.todo")} />
                 </div>
-            {/each}
-            {#each notAchieved as achievement}
-                <div class="achievement">
-                    <div class="no icon">
-                        <CheckCircleOutline size={$iconSize} color={"#ccc"} />
-                    </div>
-                    <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => selectTab("done")}
+                    class:selected={selectedTab === "done"}
+                    class="tab">
+                    <Translatable resourceKey={i18nKey("learnToEarn.done")} />
                 </div>
-            {/each}
+            </div>
+            {#if selectedTab === "todo"}
+                <div class="list">
+                    {#if notAchieved.length === 0}
+                        <div class="empty">
+                            <div class="emoji">😎</div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("learnToEarn.nothingLeftToDo")} />
+                            </div>
+                        </div>
+                    {:else}
+                        {#each notAchieved as achievement}
+                            <div class="achievement">
+                                <div class="no icon">
+                                    <CheckCircleOutline size={$iconSize} color={"#ccc"} />
+                                </div>
+                                <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            {/if}
+            {#if selectedTab === "done"}
+                <div class="list">
+                    {#if achieved.length === 0}
+                        <div class="empty">
+                            <div class="emoji">😢</div>
+                            <div class="msg">
+                                <Translatable resourceKey={i18nKey("learnToEarn.nothingDone")} />
+                            </div>
+                        </div>
+                    {:else}
+                        {#each achieved as achievement}
+                            <div class="achievement">
+                                <div class="yes icon">
+                                    <CheckCircle
+                                        size={$iconSize}
+                                        color={"var(--toast-success-bg)"} />
+                                </div>
+                                <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            {/if}
         </div>
 
         <span class="footer" slot="footer">
@@ -117,5 +171,54 @@
         justify-content: space-between;
         align-items: center;
         gap: $sp4;
+    }
+
+    .tabs {
+        display: flex;
+        align-items: center;
+        @include font(medium, normal, fs-90);
+        color: var(--txt-light);
+        gap: $sp5;
+        border-bottom: 1px solid var(--bd);
+        cursor: pointer;
+        margin-bottom: $sp5;
+
+        @include mobile() {
+            gap: $sp4;
+        }
+
+        .tab {
+            padding-bottom: 10px;
+            margin-bottom: -2px;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            &.selected {
+                color: var(--txt);
+                border-bottom: 3px solid var(--txt);
+            }
+        }
+    }
+
+    .list {
+        height: 400px;
+        @include nice-scrollbar();
+    }
+
+    .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 0 25%;
+        gap: $sp4;
+        text-align: center;
+
+        .emoji {
+            @include font(book, normal, fs-260);
+        }
+        .msg {
+            @include font(bold, normal, fs-140);
+        }
     }
 </style>
