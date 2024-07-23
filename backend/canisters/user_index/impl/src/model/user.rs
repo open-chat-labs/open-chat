@@ -77,6 +77,10 @@ impl User {
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up.into())
     }
+
+    pub fn total_chit_earned(&self) -> i32 {
+        self.chit_per_month.values().copied().sum()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -135,7 +139,12 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
-            chit_balance: self.chit_balance,
+            total_chit_earned: self.total_chit_earned(),
+            chit_balance: self
+                .chit_per_month
+                .get(&MonthKey::from_timestamp(now))
+                .copied()
+                .unwrap_or_default(),
             streak: self.streak(now),
             is_unique_person: self.unique_person_proof.is_some(),
         }
@@ -163,6 +172,7 @@ impl User {
 
     pub fn to_summary_volatile(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryVolatile {
         UserSummaryVolatile {
+            total_chit_earned: self.total_chit_earned(),
             chit_balance: self.chit_per_month.get(&month_key).copied().unwrap_or_default(),
             streak: self.streak(now),
         }

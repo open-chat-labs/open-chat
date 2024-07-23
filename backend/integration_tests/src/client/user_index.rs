@@ -35,6 +35,7 @@ pub mod happy_path {
     use std::collections::HashMap;
     use types::{
         CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
+        UserSummary,
     };
     use user_index_canister::users::UserGroup;
 
@@ -103,6 +104,20 @@ pub mod happy_path {
             user_index_canister::pay_for_diamond_membership::Response::Success(result) => result,
             response => panic!("'pay_for_diamond_membership' error: {response:?}"),
         }
+    }
+
+    pub fn user(env: &PocketIc, canister_id: CanisterId, user_id: UserId) -> UserSummary {
+        let user_index_canister::user::Response::Success(result) = super::user(
+            env,
+            Principal::anonymous(),
+            canister_id,
+            &user_index_canister::user::Args {
+                user_id: Some(user_id),
+                username: None,
+            },
+        );
+
+        result
     }
 
     pub fn users(

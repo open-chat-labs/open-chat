@@ -118,6 +118,11 @@ fn chit_stored_per_month() {
 
         month = month.next();
     }
+
+    let user = client::user_index::happy_path::user(env, canister_ids.user_index, user.user_id);
+
+    assert_eq!(user.total_chit_earned, 2000);
+    assert_eq!(user.chit_balance, 0);
 }
 
 fn advance_to_next_month(env: &mut PocketIc) {
