@@ -19,6 +19,8 @@
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: gates = client.accessGatesForChat(chat);
+    $: locked = gates.some((g) => g.kind === "locked_gate");
 
     let freezingInProgress = false;
 
@@ -66,7 +68,7 @@
 
 <div class="preview">
     <div class="gate">
-        <AccessGateIconsForChat {chat} />
+        <AccessGateIconsForChat {gates} />
     </div>
     {#if $platformModerator}
         {#if isFrozen}
@@ -84,10 +86,13 @@
     </Button>
     <Button
         loading={joining !== undefined}
-        disabled={joining !== undefined}
+        disabled={locked || joining !== undefined}
         small
         on:click={joinGroup}>
-        <Translatable resourceKey={i18nKey("joinGroup", undefined, chat.level, true)} />
+        <Translatable
+            resourceKey={locked
+                ? i18nKey("access.lockedGate", undefined, chat.level, true)
+                : i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 

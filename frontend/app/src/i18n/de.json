@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Nur Benutzer mit lebenslanger Diamond-Mitgliedschaft dürfen teilnehmen",
         "lifetimeDiamondGateInfo2": "Um diesem {level} beizutreten, ist eine lebenslange Diamant-Mitgliedschaft erforderlich.",
         "lifetimeDiamondMember": "Lebenslange Diamond-Mitgliedschaft",
+        "lockedGate": "Gesperrt",
+        "lockedGateInfo": "Dieses {level} ist gesperrt und kann nicht betreten werden",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
         "minDissolveDelayN": "Min. Auflösungsverzögerung {n} Tage",
         "minimumBalance": "Mindest-Token-Guthaben",

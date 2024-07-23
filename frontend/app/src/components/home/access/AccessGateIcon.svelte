@@ -106,6 +106,16 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
+    {:else if gate.kind === "locked_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="locked"></div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable
+                        resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
     {:else if gate.kind === "composite_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="composite">
@@ -242,5 +252,13 @@
 
     .params {
         margin-top: $sp3;
+    }
+
+    .locked {
+        $size: 20px;
+        background-repeat: no-repeat;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/locked.svg");
     }
 </style>

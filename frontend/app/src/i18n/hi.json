@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "केवल आजीवन डायमंड सदस्यता वाले उपयोगकर्ताओं को ही इसमें शामिल होने की अनुमति होगी",
         "lifetimeDiamondGateInfo2": "इस {level} में शामिल होने के लिए आपके पास आजीवन डायमंड सदस्यता होना आवश्यक है।",
         "lifetimeDiamondMember": "आजीवन डायमंड सदस्यता",
+        "lockedGate": "बंद",
+        "lockedGateInfo": "यह {level} लॉक है और इसमें शामिल नहीं हुआ जा सकता",
         "minDissolveDelay": "न्यूनतम विघटित विलंब (दिन)",
         "minDissolveDelayN": "न्यूनतम विघटन विलंब {n} दिन",
         "minimumBalance": "न्यूनतम टोकन शेष",

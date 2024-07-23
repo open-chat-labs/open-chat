@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Приєднатися зможуть лише користувачі з довічним членством Diamond",
         "lifetimeDiamondGateInfo2": "Щоб приєднатися до цього {level}, ви повинні мати довічне Діамантове членство.",
         "lifetimeDiamondMember": "Довічне Діамантове членство",
+        "lockedGate": "Заблоковано",
+        "lockedGateInfo": "Цей {level} заблокований і не може приєднатися",
         "minDissolveDelay": "Мінімальна затримка розчинення (дні)",
         "minDissolveDelayN": "Мінімальна затримка розчинення {n} днів",
         "minimumBalance": "Мінімальний баланс токенів",

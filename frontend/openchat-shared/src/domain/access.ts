@@ -17,7 +17,12 @@ export type LeafGate =
     | NftGate
     | CredentialGate
     | TokenBalanceGate
-    | UniquePersonGate;
+    | UniquePersonGate
+    | LockedGate;
+
+export type LockedGate = {
+    kind: "locked_gate";
+};
 
 export type CompositeGate = {
     kind: "composite_gate";
@@ -80,6 +85,10 @@ export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate
         "lifetime_diamond_gate",
         "diamond_gate",
     ].includes(gate.kind);
+}
+
+export function isLockedGate(gate: AccessGate): gate is LockedGate {
+    return gate.kind === "locked_gate";
 }
 
 export function isCompositeGate(gate: AccessGate): gate is CompositeGate {

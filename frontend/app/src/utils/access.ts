@@ -26,6 +26,7 @@ export const gateLabel: Record<AccessGate["kind"], string> = {
     payment_gate: "access.payment",
     token_balance_gate: "access.tokenBalance",
     unique_person_gate: "access.uniquePerson",
+    locked_gate: "access.lockedGate",
 };
 
 export function getGateBindings(): GateBinding[] {
