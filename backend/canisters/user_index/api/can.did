@@ -266,6 +266,7 @@ type PayForDiamondMembershipResponse = variant {
 };
 
 type SubmitProofOfUniquePersonhoodArgs = record {
+    user_ii_principal : principal;
     credential_jwt : text;
 };
 
