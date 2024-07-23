@@ -107,7 +107,7 @@ pub mod happy_path {
     }
 
     pub fn user(env: &PocketIc, canister_id: CanisterId, user_id: UserId) -> UserSummary {
-        let user_index_canister::user::Response::Success(result) = super::user(
+        let response = super::user(
             env,
             Principal::anonymous(),
             canister_id,
@@ -117,7 +117,10 @@ pub mod happy_path {
             },
         );
 
-        result
+        match response {
+            user_index_canister::user::Response::Success(result) => result,
+            _ => panic!("User not found"),
+        }
     }
 
     pub fn users(
