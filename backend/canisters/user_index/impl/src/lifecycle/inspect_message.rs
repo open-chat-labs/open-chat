@@ -16,16 +16,17 @@ fn accept_if_valid(state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "create_canister"
+        "claim_daily_chit"
+        | "create_canister"
         | "delete_user"
         | "mark_as_online"
+        | "mark_suspected_bot"
         | "pay_for_diamond_membership"
         | "set_display_name"
         | "set_moderation_flags"
         | "set_username"
-        | "mark_suspected_bot"
-        | "update_diamond_membership_subscription"
-        | "claim_daily_chit" => {
+        | "submit_proof_of_unique_personhood"
+        | "update_diamond_membership_subscription" => {
             let caller = state.env.caller();
             let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user
