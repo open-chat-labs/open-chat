@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support submitting proof of uniqueness to LocalUserIndex ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
 - Support submitting proof of diamond membership to LocalUserIndex ([#6084](https://github.com/open-chat-labs/open-chat/pull/6084))
+- Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
 
 ### Changed
 
