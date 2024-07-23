@@ -53,6 +53,24 @@ pub enum SetNextResult {
     ClashesWithPrevious,
 }
 
+#[derive(Serialize, Debug)]
+pub struct AirdropsMetrics {
+    past: Vec<AirdropMetrics>,
+    next: Option<AirdropConfig>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct AirdropMetrics {
+    pub config: AirdropConfig,
+    pub outcome: AirdropOutcomeMetrics,
+}
+
+#[derive(Serialize, Debug)]
+pub struct AirdropOutcomeMetrics {
+    pub participants: u32,
+    pub lottery_winners: Vec<(UserId, Prize)>,
+}
+
 impl Airdrops {
     pub fn set_next(&mut self, config: AirdropConfig, now: TimestampMillis) -> SetNextResult {
         if config.start <= now {
@@ -185,6 +203,23 @@ impl Airdrops {
         }
 
         None
+    }
+
+    pub fn metrics(&self) -> AirdropsMetrics {
+        AirdropsMetrics {
+            past: self
+                .past
+                .iter()
+                .map(|a| AirdropMetrics {
+                    config: a.config.clone(),
+                    outcome: AirdropOutcomeMetrics {
+                        participants: a.outcome.participants.len() as u32,
+                        lottery_winners: a.outcome.lottery_winners.clone(),
+                    },
+                })
+                .collect(),
+            next: self.next.clone(),
+        }
     }
 
     pub fn next(&self) -> Option<&AirdropConfig> {

@@ -16,9 +16,8 @@ fn airdrop_end_to_end() {
         ..
     } = wrapper.env();
 
-    // - Airdrop bot created
-    // - Installed
-    // - Call initialize
+    // - Mint CHAT tokens
+    // - Transfer them to Airdrop bot
     // - Create 3 users
     // - Claim daily chit for each user
     // - Create community

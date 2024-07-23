@@ -99,6 +99,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
     let notifications_canister_id = create_canister(env, notifications_index_canister_id);
 
+    let airdrop_bot_canister_wasm = wasms::AIRDROP_BOT.clone();
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();

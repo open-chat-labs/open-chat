@@ -1,7 +1,7 @@
 use crate::model::pending_actions_queue::{Action, PendingActionsQueue};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use model::airdrops::Airdrops;
+use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -51,12 +51,14 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             username: self.data.username.clone(),
+            display_name: self.data.display_name.clone(),
             initialized: self.data.initialized,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
             },
+            airdrops: self.data.airdrops.metrics(),
         }
     }
 }
@@ -69,6 +71,7 @@ struct Data {
     pub admins: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
     pub username: String,
+    pub display_name: Option<String>,
     pub airdrops: Airdrops,
     pub pending_actions_queue: PendingActionsQueue,
     pub initialized: bool,
@@ -91,6 +94,7 @@ impl Data {
             admins,
             avatar: Timestamped::default(),
             username: "".to_string(),
+            display_name: None,
             airdrops: Airdrops::default(),
             pending_actions_queue: PendingActionsQueue::default(),
             initialized: false,
@@ -109,8 +113,10 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub username: String,
+    pub display_name: Option<String>,
     pub initialized: bool,
     pub canister_ids: CanisterIds,
+    pub airdrops: AirdropsMetrics,
 }
 
 #[derive(Serialize, Debug)]

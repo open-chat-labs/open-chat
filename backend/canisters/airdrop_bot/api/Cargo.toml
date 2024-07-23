@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bot_api = { path = "../../../bots/api" }
 candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
 serde = { workspace = true }
 user_canister = { path = "../../user/api" }
 user_index_canister = { path = "../../user_index/api" }

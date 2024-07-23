@@ -23,6 +23,7 @@ async fn initialize_bot(args: Args) -> Response {
         Ok(Success) => {
             mutate_state(|state| {
                 state.data.username = args.username;
+                state.data.display_name = args.display_name;
                 state.data.initialized = true;
             });
             Success

@@ -33,6 +33,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.airdrop_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
         set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
@@ -165,6 +166,16 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let airdrop_bot_canister_wasm = get_canister_wasm(CanisterName::AirdropBot, version);
+    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
+        admins: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        local_user_index_canister_id: canister_ids.local_user_index,
+        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        wasm_version: version,
+        test_mode,
+    };
+
     let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
     let storage_index_init_args = storage_index_canister::init::Args {
         governance_principals: vec![principal],
@@ -222,7 +233,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         icp_ledger_canister_id: canister_ids.nns_ledger,
-        chat_ledger_canister_id: canister_ids.nns_ledger, // TODO This should be the CHAT ledger
+        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };
@@ -401,7 +412,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join3(
+    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_email,
@@ -419,6 +430,12 @@ async fn install_service_canisters_impl(
             &canister_ids.sign_in_with_solana,
             &sign_in_with_solana_wasm.module,
             sign_in_with_solana_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.airdrop_bot,
+            &airdrop_bot_canister_wasm.module,
+            airdrop_bot_init_args,
         ),
     )
     .await;
@@ -547,6 +564,26 @@ async fn install_service_canisters_impl(
         notifications_index_canister::add_notifications_canister::Response::Success
     ) {
         panic!("{add_notifications_canister_response:?}");
+    }
+
+    println!("Initializing Airdrop Bot...");
+
+    let initialize_airdrop_bot_response = airdrop_bot_canister_client::initialize_bot(
+        agent,
+        &canister_ids.airdrop_bot,
+        &airdrop_bot_canister::initialize_bot::Args {
+            username: "AirdropBot".to_string(),
+            display_name: Some("Airdrop Bot".to_string()),
+        },
+    )
+    .await
+    .unwrap();
+
+    if !matches!(
+        initialize_airdrop_bot_response,
+        airdrop_bot_canister::initialize_bot::Response::Success
+    ) {
+        panic!("{initialize_airdrop_bot_response:?}");
     }
 
     println!("Canister wasms installed");

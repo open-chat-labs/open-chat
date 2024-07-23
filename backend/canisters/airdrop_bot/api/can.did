@@ -1,13 +1,12 @@
-type CanisterId = principal;
-type Cycles = nat;
+import "../../../libraries/types/can.did";
 
 type InitializeBotArgs = record {
     username : text;
+    display_name : opt text;
 };
 
 type InitializeBotResponse = variant {
     Success;
-    EndDateInPast;
     AlreadyRegistered;
     UserLimitReached;
     UsernameTaken;
@@ -16,17 +15,6 @@ type InitializeBotResponse = variant {
     UsernameTooLong : nat16;
     InsufficientCyclesProvided : Cycles;
     InternalError : text;
-};
-
-type Document = record {
-    id : nat;
-    mime_type : text;
-    data : blob;
-};
-
-type FieldTooLongResult = record {
-    length_provided : nat32;
-    max_length : nat32;
 };
 
 type SetAvatarArgs = record {
@@ -42,10 +30,14 @@ type SetAirdropArgs = record {
     community_id : CommunityId;
     channel_id : ChannelId;
     start : TimestampMillis;
-    main_chat_fund : u128;
-    main_chit_band : u32;
-    lottery_prizes : Vec<u128>;
-    lottery_chit_band : u32;
+    main_chat_fund : nat;
+    main_chit_band : nat32;
+    lottery_prizes : vec nat;
+    lottery_chit_band : nat32;
+};
+
+type CancelAirdropResponse = variant {
+    Success;
 };
 
 type SetAirdropResponse = variant {
@@ -55,23 +47,9 @@ type SetAirdropResponse = variant {
     ClashesWithPrevious;
 };
 
-type InitArgs = record {
-    user_index_canister_id : CanisterId;
-    local_user_index_canister_id : CanisterId;
-    ck_btc_ledger_canister_id : CanisterId;
-    admins : vec principal;
-    wasm_version : BuildVersion;
-    test_mode : bool;
-};
-
-type BuildVersion = record {
-    major : nat32;
-    minor : nat32;
-    patch : nat32;
-};
-
-service : (InitArgs) -> {
+service : {
     initialize_bot : (InitializeBotArgs) -> (InitializeBotResponse);
-    set_airdrop : (SetAirdropArgs) -> (SetAirdropResponse);
     set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
+    set_airdrop : (SetAirdropArgs) -> (SetAirdropResponse);
+    cancel_airdrop : (EmptyArgs) -> (CancelAirdropResponse);
 };

@@ -137,7 +137,7 @@ async fn handle_main_message_action(action: AirdropMessage) {
         return;
     };
 
-    let Some((username, month)) = read_state(|state| {
+    let Some((username, display_name, month)) = read_state(|state| {
         state
             .data
             .airdrops
@@ -147,14 +147,14 @@ async fn handle_main_message_action(action: AirdropMessage) {
                 let format = format_description!("[month repr:long]");
                 date.format(format).ok()
             })
-            .map(|m| (state.data.username.clone(), m))
+            .map(|m| (state.data.username.clone(), state.data.display_name.clone(), m))
     }) else {
         return;
     };
 
     let args = user_canister::c2c_handle_bot_messages::Args {
         bot_name: username,
-        bot_display_name: None,
+        bot_display_name: display_name,
         messages: vec![BotMessage {
             thread_root_message_id: None,
             content: MessageContentInitial::Crypto(CryptoContent {

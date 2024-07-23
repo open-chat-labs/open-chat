@@ -15,6 +15,7 @@ members = [
     "backend/tools/canister_upgrade_proposal_builder",
     "backend/tools/canister_upgrader",
     "backend/canisters/airdrop_bot/api",
+    "backend/canisters/airdrop_bot/client",
     "backend/canisters/airdrop_bot/impl",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",
