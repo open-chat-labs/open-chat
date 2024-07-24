@@ -17,6 +17,7 @@ pub enum AccessGate {
     TokenBalance(TokenBalanceGate),
     Composite(CompositeGate),
     Locked,
+    Invited,
 }
 
 impl AccessGate {
@@ -47,6 +48,7 @@ impl AccessGate {
             AccessGate::TokenBalance(_) => "token_balance",
             AccessGate::Composite(_) => "composite",
             AccessGate::Locked => "locked",
+            AccessGate::Invited => "invited",
         }
     }
 }
@@ -104,6 +106,7 @@ pub enum GateCheckFailedReason {
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
     Locked,
+    NotInvited,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
