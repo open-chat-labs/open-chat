@@ -1,6 +1,7 @@
 use crate::guards::caller_is_admin;
 use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::model::airdrops::{AirdropConfig, SetNextResult};
+use crate::model::pending_actions_queue::Action;
 use crate::{mutate_state, RuntimeState};
 use airdrop_bot_canister::set_airdrop::*;
 use canister_tracing_macros::trace;
@@ -25,7 +26,11 @@ fn set_airdrop_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match state.data.airdrops.set_next(config, state.env.now()) {
         SetNextResult::Success => {
-            start_airdrop_timer(state);
+            if state.data.communities_joined.contains(&args.community_id) {
+                start_airdrop_timer(state);
+            } else {
+                state.enqueue_pending_action(Action::JoinCommunity(args.community_id));
+            }
             Response::Success
         }
         SetNextResult::ChannelUsed => Response::ChannelUsed,

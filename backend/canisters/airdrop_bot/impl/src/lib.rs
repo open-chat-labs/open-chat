@@ -5,7 +5,7 @@ use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, Document, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -73,6 +73,7 @@ struct Data {
     pub username: String,
     pub display_name: Option<String>,
     pub airdrops: Airdrops,
+    pub communities_joined: HashSet<CommunityId>,
     pub pending_actions_queue: PendingActionsQueue,
     pub initialized: bool,
     pub rng_seed: [u8; 32],
@@ -96,6 +97,7 @@ impl Data {
             username: "".to_string(),
             display_name: None,
             airdrops: Airdrops::default(),
+            communities_joined: HashSet::default(),
             pending_actions_queue: PendingActionsQueue::default(),
             initialized: false,
             rng_seed: [0; 32],

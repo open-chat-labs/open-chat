@@ -11,7 +11,8 @@ use time::macros::format_description;
 use tracing::{error, trace};
 use types::icrc1::{self};
 use types::{
-    BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial,
+    BotMessage, CanisterId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
+    MessageContentInitial,
 };
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 
@@ -56,12 +57,17 @@ async fn process_actions(actions: Vec<Action>) {
 
 async fn process_action(action: Action) {
     match action.clone() {
+        Action::JoinCommunity(community_id) => join_community(community_id).await,
         Action::SendMessage(action) if matches!(action.airdrop_type, AirdropType::Lottery(_)) => {
             handle_lottery_message_action(*action).await
         }
         Action::SendMessage(action) => handle_main_message_action(*action).await,
         Action::Transfer(action) => handle_transfer_action(*action).await,
     }
+}
+
+async fn join_community(community_id: CommunityId) {
+    // TODO
 }
 
 async fn handle_transfer_action(action: AirdropTransfer) {

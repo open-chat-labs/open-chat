@@ -73,7 +73,7 @@ pub struct AirdropOutcomeMetrics {
 
 impl Airdrops {
     pub fn set_next(&mut self, config: AirdropConfig, now: TimestampMillis) -> SetNextResult {
-        if config.start <= now {
+        if config.start < now {
             return SetNextResult::InThePast;
         }
 

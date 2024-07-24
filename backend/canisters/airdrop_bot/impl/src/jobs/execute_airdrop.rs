@@ -105,7 +105,7 @@ async fn run_airdrop(config: AirdropConfig) {
         }
     };
 
-    // Call the user_index to get the particpants CHIT balances for the given month
+    // Call the user_index to get the particpants' CHIT balances for the given month
     let particpants = members.into_iter().map(|m| (m.user_id, 10000)).collect();
 
     // Execute the airdrop
