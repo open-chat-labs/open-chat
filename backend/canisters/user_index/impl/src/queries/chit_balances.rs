@@ -1,5 +1,6 @@
 use crate::{read_state, RuntimeState};
 use ic_cdk::query;
+use types::UserId;
 use user_index_canister::chit_balances::{Response::*, *};
 use utils::time::MonthKey;
 
@@ -14,10 +15,13 @@ fn chit_balances_impl(args: Args, state: &RuntimeState) -> Response {
     let balances = args
         .users
         .iter()
-        .flat_map(|u| state.data.users.get_by_user_id(u))
-        .map(|u| (u.user_id, u.chit_per_month.get(&month_key).copied().unwrap_or_default()))
-        .filter(|(_, c)| *c > 0)
+        .map(|u| chit_balance_for_user(u, month_key, state).unwrap_or_default())
         .collect();
 
     Success(SuccessResult { balances })
+}
+
+fn chit_balance_for_user(user_id: &UserId, month_key: MonthKey, state: &RuntimeState) -> Option<i32> {
+    let user = state.data.users.get_by_user_id(user_id)?;
+    user.chit_per_month.get(&month_key).copied()
 }
