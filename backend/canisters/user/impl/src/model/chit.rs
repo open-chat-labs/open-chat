@@ -4,7 +4,14 @@ use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "ChitEarnedEventsPrevious")]
 pub struct ChitEarnedEvents {
+    events: Vec<ChitEarned>,
+    total_chit_earned: i32,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct ChitEarnedEventsPrevious {
     events: Vec<ChitEarned>,
 }
 
@@ -18,6 +25,7 @@ impl ChitEarnedEvents {
             }
         }
 
+        self.total_chit_earned += event.amount;
         self.events.push(event);
 
         if sort {
@@ -40,6 +48,10 @@ impl ChitEarnedEvents {
             let range = self.range(to.unwrap_or_default()..from.unwrap_or(TimestampMillis::MAX));
             (range.iter().rev().skip(skip).take(max).cloned().collect(), range.len() as u32)
         }
+    }
+
+    pub fn total_chit_earned(&self) -> i32 {
+        self.total_chit_earned
     }
 
     pub fn balance_for_month_by_timestamp(&self, ts: TimestampMillis) -> i32 {
@@ -71,6 +83,17 @@ impl ChitEarnedEvents {
         let end = self.events.partition_point(|e| e.timestamp <= range.end);
 
         &self.events[start..end]
+    }
+}
+
+impl From<ChitEarnedEventsPrevious> for ChitEarnedEvents {
+    fn from(value: ChitEarnedEventsPrevious) -> Self {
+        let total_chit_earned = value.events.iter().map(|e| e.amount).sum();
+
+        ChitEarnedEvents {
+            events: value.events,
+            total_chit_earned,
+        }
     }
 }
 

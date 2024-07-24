@@ -879,6 +879,7 @@ type InitialStateResponse = variant {
         local_user_index_canister_id : CanisterId;
         achievements : vec ChitEarned;
         achievements_last_seen : TimestampMillis;
+        total_chit_earned : int32;
         chit_balance : int32;
         streak : nat16;
         streak_ends : TimestampMillis;
@@ -940,6 +941,7 @@ type UpdatesResponse = variant {
         suspended : opt bool;
         achievements : vec ChitEarned;
         achievements_last_seen : opt TimestampMillis;
+        total_chit_earned : int32;
         chit_balance : int32;
         streak : nat16;
         streak_ends : TimestampMillis;

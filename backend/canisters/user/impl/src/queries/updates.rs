@@ -139,6 +139,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         None
     };
 
+    let total_chit_earned = state.data.chit_events.total_chit_earned();
     let chit_balance = state.data.chit_events.balance_for_month_by_timestamp(now);
     let streak = state.data.streak.days(now);
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
@@ -159,6 +160,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pin_number_settings,
         achievements,
         achievements_last_seen,
+        total_chit_earned,
         chit_balance,
         streak,
         streak_ends,
