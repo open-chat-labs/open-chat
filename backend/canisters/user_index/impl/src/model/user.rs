@@ -226,6 +226,7 @@ impl From<&SuspensionDetails> for types::SuspensionDetails {
 #[cfg(test)]
 impl Default for User {
     fn default() -> Self {
+        #[allow(deprecated)]
         User {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
