@@ -125,7 +125,7 @@ type ChitBalancesArgs = record {
 
 type ChitBalancesResponse = variant {
     Success : record {
-        balances : vec record { UserId; int32 };
+        balances : vec int32;
     };
 };
 
