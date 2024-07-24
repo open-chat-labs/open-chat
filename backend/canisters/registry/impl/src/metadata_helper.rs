@@ -1,3 +1,4 @@
+use candid::Nat;
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 
 pub struct MetadataHelper {
@@ -27,7 +28,9 @@ impl MetadataHelper {
                 ("icrc1:fee", MetadataValue::Nat(n)) => fee = u128::try_from(n.0).ok(),
                 ("icrc1:burn_fee", MetadataValue::Nat(n)) => burn_fee = u128::try_from(n.0).ok(),
                 ("icrc1:logo", MetadataValue::Text(s)) => logo = Some(s),
-                ("icrc1:transfer_fee_rate" | "icrc1:burn_fee_rate", _) => is_icrc1_compatible = false,
+                ("icrc1:transfer_fee_rate" | "icrc1:burn_fee_rate", MetadataValue::Nat(n)) if n > Nat::default() => {
+                    is_icrc1_compatible = false
+                }
                 _ => {}
             }
         }
