@@ -347,6 +347,7 @@
 
     .info {
         @include font(book, normal, fs-90, 22);
+        color: var(--txt-light);
     }
 
     .section-title {

@@ -3,6 +3,7 @@
     import {
         AvatarSize,
         type GroupChatSummary,
+        isLocked,
         type MultiUserChat,
         type OpenChat,
         routeForChatIdentifier,
@@ -31,7 +32,7 @@
     $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
-    $: locked = group.gate.kind === "locked_gate";
+    $: locked = isLocked(group.gate);
 
     function dismiss({ id }: GroupChatSummary) {
         dispatch("dismissRecommendation", id);

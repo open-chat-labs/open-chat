@@ -18,12 +18,7 @@
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>
         <div class="choose-gate">
-            <AccessGateSummary
-                showNoGate={true}
-                bind:valid
-                {level}
-                editable={gate.kind !== "locked_gate"}
-                bind:gate />
+            <AccessGateSummary showNoGate={true} bind:valid {level} editable bind:gate />
         </div>
     </div>
 </div>

@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import page from "page";
     import { getContext } from "svelte";
-    import type { ChatListScope, OpenChat } from "openchat-client";
+    import { isLocked, type ChatListScope, type OpenChat } from "openchat-client";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import { routeForScope } from "../../routes";
@@ -14,7 +14,7 @@
     $: chatListScope = client.chatListScope;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
-    $: locked = $selectedCommunity?.gate?.kind === "locked_gate";
+    $: locked = isLocked($selectedCommunity?.gate);
 
     $: [title, message] = getMessageForScope($chatListScope.kind);
 

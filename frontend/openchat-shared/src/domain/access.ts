@@ -87,7 +87,21 @@ export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate
     ].includes(gate.kind);
 }
 
-export function isLockedGate(gate: AccessGate): gate is LockedGate {
+export function isLocked(gate: AccessGate | undefined): boolean {
+    if (gate === undefined) return false;
+    if (isCompositeGate(gate)) {
+        switch (gate.operator) {
+            case "and":
+                return gate.gates.some(isLockedGate);
+            case "or":
+                return gate.gates.every(isLockedGate);
+        }
+    } else {
+        return isLockedGate(gate);
+    }
+}
+
+function isLockedGate(gate: AccessGate): gate is LockedGate {
     return gate.kind === "locked_gate";
 }
 

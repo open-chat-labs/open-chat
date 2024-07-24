@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import { isLocked, type MultiUserChat, type OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";
     import { routeForScope } from "../../routes";
@@ -20,7 +20,7 @@
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: gates = client.accessGatesForChat(chat);
-    $: locked = gates.some((g) => g.kind === "locked_gate");
+    $: locked = gates.some((g) => isLocked(g));
 
     let freezingInProgress = false;
 
