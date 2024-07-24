@@ -31,6 +31,7 @@
     $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
+    $: locked = group.gate.kind === "locked_gate";
 
     function dismiss({ id }: GroupChatSummary) {
         dispatch("dismissRecommendation", id);
@@ -90,12 +91,15 @@
         {:else}
             {#if !$suspendedUser}
                 <Button
-                    disabled={joining === group}
+                    disabled={locked || joining === group}
                     loading={joining === group}
                     tiny
                     hollow
                     on:click={() => joinGroup(group)}
-                    ><Translatable resourceKey={i18nKey("join")} /></Button>
+                    ><Translatable
+                        resourceKey={locked
+                            ? i18nKey("access.lockedGate", undefined, group.level, true)
+                            : i18nKey("join")} /></Button>
             {/if}
             <Button disabled={joining === group} tiny on:click={() => gotoGroup(group)}
                 ><Translatable resourceKey={i18nKey("preview")} /></Button>

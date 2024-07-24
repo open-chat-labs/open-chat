@@ -14,6 +14,7 @@
     $: chatListScope = client.chatListScope;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: locked = $selectedCommunity?.gate?.kind === "locked_gate";
 
     $: [title, message] = getMessageForScope($chatListScope.kind);
 
@@ -58,9 +59,12 @@
             <div class="join">
                 <Button
                     loading={joiningCommunity}
-                    disabled={joiningCommunity}
+                    disabled={locked || joiningCommunity}
                     on:click={joinCommunity}
-                    ><Translatable resourceKey={i18nKey("communities.joinCommunity")} /></Button>
+                    ><Translatable
+                        resourceKey={locked
+                            ? i18nKey("access.lockedGate", undefined, "community", true)
+                            : i18nKey("communities.joinCommunity")} /></Button>
                 <Button secondary small on:click={cancelPreview}>
                     <Translatable resourceKey={i18nKey("leave")} />
                 </Button>
