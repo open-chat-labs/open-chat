@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use types::{TimestampMillis, UserId};
 use utils::time::MonthKey;
 
-const STARTING_MONTH: MonthKey = MonthKey { year: 2023, month: 5 };
+const STARTING_MONTH: MonthKey = MonthKey::new(2023, 5);
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserReferralLeaderboards {

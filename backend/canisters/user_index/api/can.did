@@ -117,6 +117,18 @@ type SearchResponse = variant {
     };
 };
 
+type ChitBalancesArgs = record {
+    users : vec UserId;
+    year : nat16;
+    month : nat8;
+};
+
+type ChitBalancesResponse = variant {
+    Success : record {
+        balances : vec record { UserId; int32 };
+    };
+};
+
 type DiamondMembershipFeesResponse = variant {
     Success : vec record {
         token : Cryptocurrency;
@@ -404,6 +416,9 @@ service : {
 
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;
+
+    // Gets the CHIT balances for multiple users for a chosen month
+    chit_balances : (ChitBalancesArgs) -> (ChitBalancesResponse) query;
 
     // Retrieves the current fees to pay for Diamond membership
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;

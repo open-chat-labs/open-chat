@@ -53,9 +53,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
         || state.data.communities.any_updated(updates_since)
-        || state.data.chit_events.has_achievements_since(updates_since)
-        || state.data.achievements_last_seen > updates_since
-        || state.data.chit_balance.timestamp > updates_since;
+        || state.data.chit_events.last_updated() > updates_since
+        || state.data.achievements_last_seen > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -140,7 +139,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         None
     };
 
-    let chit_balance = state.data.chit_balance.value;
+    let total_chit_earned = state.data.chit_events.total_chit_earned();
+    let chit_balance = state.data.chit_events.balance_for_month_by_timestamp(now);
     let streak = state.data.streak.days(now);
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
     let streak_ends = state.data.streak.ends();
@@ -160,6 +160,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pin_number_settings,
         achievements,
         achievements_last_seen,
+        total_chit_earned,
         chit_balance,
         streak,
         streak_ends,
