@@ -173,7 +173,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
-            chit_balance: self.data.chit_balance.value,
+            chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
@@ -222,7 +222,6 @@ struct Data {
     pub pin_number: PinNumber,
     pub btc_address: Option<String>,
     pub chit_events: ChitEarnedEvents,
-    pub chit_balance: Timestamped<i32>,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
     pub achievements_last_seen: TimestampMillis,
@@ -285,7 +284,6 @@ impl Data {
             pin_number: PinNumber::default(),
             btc_address: None,
             chit_events: ChitEarnedEvents::default(),
-            chit_balance: Timestamped::default(),
             streak: Streak::default(),
             achievements: HashSet::new(),
             achievements_last_seen: 0,
@@ -360,7 +358,6 @@ impl Data {
                 timestamp: now,
                 reason: ChitEarnedReason::Achievement(achievement),
             });
-            self.chit_balance = Timestamped::new(self.chit_balance.value + amount, now);
             true
         } else {
             false
@@ -370,7 +367,7 @@ impl Data {
     pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
         let args = user_index_canister::c2c_notify_chit::Args {
             timestamp: now,
-            chit_balance: self.chit_balance.value,
+            chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
             streak: self.streak.days(now),
             streak_ends: self.streak.ends(),
         };

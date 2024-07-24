@@ -9,6 +9,7 @@ use std::ops::RangeFrom;
 use tracing::info;
 use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -33,6 +34,14 @@ pub struct UserMap {
 }
 
 impl UserMap {
+    pub fn initialise_monthly_chit_balances(&mut self, now: TimestampMillis) {
+        let month_key = MonthKey::from_timestamp(now);
+        for user in self.users.values_mut() {
+            #[allow(deprecated)]
+            user.chit_per_month.insert(month_key, user.chit_balance);
+        }
+    }
+
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
     }
@@ -201,16 +210,26 @@ impl UserMap {
             return false;
         };
 
-        if chit_event_timestamp <= user.latest_chit_event {
-            return false;
+        let chit_event_month = MonthKey::from_timestamp(chit_event_timestamp);
+
+        if chit_event_timestamp >= user.latest_chit_event {
+            if MonthKey::from_timestamp(user.latest_chit_event) == chit_event_month.previous() {
+                user.latest_chit_event_previous_month = user.latest_chit_event;
+            }
+            user.latest_chit_event = chit_event_timestamp;
+            user.streak = streak;
+            user.streak_ends = streak_ends;
+        } else {
+            let previous_month = MonthKey::from_timestamp(now).previous();
+            if chit_event_month == previous_month && chit_event_timestamp >= user.latest_chit_event_previous_month {
+                user.latest_chit_event_previous_month = chit_event_timestamp;
+            } else {
+                return false;
+            }
         }
 
-        user.latest_chit_event = chit_event_timestamp;
-        user.chit_balance = chit_balance;
-        user.streak = streak;
-        user.streak_ends = streak_ends;
         user.chit_updated = now;
-
+        user.chit_per_month.insert(chit_event_month, chit_balance);
         true
     }
 

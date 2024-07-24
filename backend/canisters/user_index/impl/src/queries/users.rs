@@ -3,6 +3,7 @@ use ic_cdk::query;
 use std::collections::HashSet;
 use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
+use utils::time::MonthKey;
 
 #[query]
 fn users(args: Args) -> Response {
@@ -46,6 +47,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
+    let now_month = MonthKey::from_timestamp(now);
     for group in args.user_groups {
         let updated_since = group.updated_since;
         users.extend(
@@ -63,7 +65,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .map(|u| UserSummaryV2 {
                     user_id: u.user_id,
                     stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: Some(u.to_summary_volatile(now)),
+                    volatile: Some(u.to_summary_volatile(now, now_month)),
                 }),
         );
     }
@@ -78,7 +80,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .take(100)
                 .filter(|u| user_ids.insert(*u))
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .map(|u| u.to_summary_v2(now)),
+                .map(|u| u.to_summary_v2(now, now_month)),
         );
     }
 
