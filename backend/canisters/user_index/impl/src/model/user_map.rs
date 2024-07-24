@@ -219,7 +219,6 @@ impl UserMap {
             user.chit_balance = chit_balance;
             user.streak = streak;
             user.streak_ends = streak_ends;
-            user.chit_updated = now;
         } else {
             let previous_month = MonthKey::from_timestamp(now).previous();
             if chit_event_month == previous_month && chit_event_timestamp >= user.latest_chit_event_previous_month {
@@ -229,6 +228,7 @@ impl UserMap {
             }
         }
 
+        user.chit_updated = now;
         user.chit_per_month.insert(chit_event_month, chit_balance);
         true
     }
