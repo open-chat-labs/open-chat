@@ -212,6 +212,9 @@ impl UserMap {
         let chit_event_month = MonthKey::from_timestamp(chit_event_timestamp);
 
         if chit_event_timestamp >= user.latest_chit_event {
+            if MonthKey::from_timestamp(user.latest_chit_event) == chit_event_month.previous() {
+                user.latest_chit_event_previous_month = user.latest_chit_event;
+            }
             user.latest_chit_event = chit_event_timestamp;
             user.chit_balance = chit_balance;
             user.streak = streak;
