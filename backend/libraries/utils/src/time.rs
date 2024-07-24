@@ -78,6 +78,20 @@ impl MonthKey {
         }
     }
 
+    pub fn previous(self) -> MonthKey {
+        if self.month == 1 {
+            MonthKey {
+                year: self.year.saturating_sub(1),
+                month: 12,
+            }
+        } else {
+            MonthKey {
+                year: self.year,
+                month: self.month.saturating_sub(1),
+            }
+        }
+    }
+
     pub fn timestamp_range(&self) -> Range<TimestampMillis> {
         let start = self.start_timestamp();
         let end = self.next().start_timestamp();

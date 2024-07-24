@@ -210,19 +210,23 @@ impl UserMap {
         };
 
         let chit_event_month = MonthKey::from_timestamp(chit_event_timestamp);
-        let now_month = MonthKey::from_timestamp(now);
 
-        if chit_event_month == now_month && chit_event_timestamp <= user.latest_chit_event {
-            return false;
+        if chit_event_timestamp >= user.latest_chit_event {
+            user.latest_chit_event = chit_event_timestamp;
+            user.chit_balance = chit_balance;
+            user.streak = streak;
+            user.streak_ends = streak_ends;
+            user.chit_updated = now;
+        } else {
+            let previous_month = MonthKey::from_timestamp(now).previous();
+            if chit_event_month == previous_month && chit_event_timestamp >= user.latest_chit_event_previous_month {
+                user.latest_chit_event_previous_month = chit_event_timestamp;
+            } else {
+                return false;
+            }
         }
 
         user.chit_per_month.insert(chit_event_month, chit_balance);
-        user.latest_chit_event = chit_event_timestamp;
-        user.chit_balance = chit_balance;
-        user.streak = streak;
-        user.streak_ends = streak_ends;
-        user.chit_updated = now;
-
         true
     }
 

@@ -64,6 +64,8 @@ pub struct User {
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", default)]
     pub latest_chit_event: TimestampMillis,
+    #[serde(rename = "lcp", default)]
+    pub latest_chit_event_previous_month: TimestampMillis,
     #[serde(rename = "uh", default, skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
 }
@@ -125,6 +127,7 @@ impl User {
             streak: 0,
             streak_ends: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }
@@ -246,6 +249,7 @@ impl Default for User {
             streak_ends: 0,
             chit_updated: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }
