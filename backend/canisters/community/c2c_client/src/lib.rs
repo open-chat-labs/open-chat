@@ -8,6 +8,7 @@ generate_c2c_call!(c2c_events_by_index);
 generate_c2c_call!(c2c_events_window);
 generate_c2c_call!(c2c_summary);
 generate_c2c_call!(c2c_summary_updates);
+generate_c2c_call!(local_user_index);
 generate_candid_c2c_call!(selected_channel_initial);
 
 // Updates

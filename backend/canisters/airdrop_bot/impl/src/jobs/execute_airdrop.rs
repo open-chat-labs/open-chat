@@ -5,7 +5,8 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AccessGate, OptionUpdate, UserId};
+use types::{AccessGate, CanisterId, OptionUpdate, UserId};
+use utils::time::MonthKey;
 
 use super::process_pending_actions;
 
@@ -45,14 +46,17 @@ fn run() {
     trace!("'execute_airdrop' running");
     TIMER_ID.set(None);
 
-    if let Some(config) = read_state(|state| state.data.airdrops.next().cloned()) {
-        ic_cdk::spawn(run_airdrop(config));
+    let (config, user_index_canister_id) =
+        read_state(|state| (state.data.airdrops.next().cloned(), state.data.user_index_canister_id));
+
+    if let Some(config) = config {
+        ic_cdk::spawn(prepare_airdrop(config, user_index_canister_id));
     } else {
         trace!("No airdrop configured");
     };
 }
 
-async fn run_airdrop(config: AirdropConfig) {
+async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: CanisterId) {
     // Call the configured community canister to set the `locked` gate on the configured channel
     match community_canister_c2c_client::update_channel(
         config.community_id.into(),
@@ -99,20 +103,39 @@ async fn run_airdrop(config: AirdropConfig) {
         }
         Err(err) => {
             error!("{err:?}");
-            let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(60_000), run);
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
             TIMER_ID.set(Some(timer_id));
             return;
         }
     };
 
     // Call the user_index to get the particpants' CHIT balances for the given month
-    let particpants = members.into_iter().map(|m| (m.user_id, 10000)).collect();
+    let mk = MonthKey::from_timestamp(config.start).previous();
+
+    let particpants = match user_index_canister_c2c_client::chit_balances(
+        user_index_canister_id,
+        &user_index_canister::chit_balances::Args {
+            users: members.into_iter().map(|m| m.user_id).collect(),
+            year: mk.year() as u16,
+            month: mk.month(),
+        },
+    )
+    .await
+    {
+        Ok(user_index_canister::chit_balances::Response::Success(result)) => result.balances,
+        Err(err) => {
+            error!("{err:?}");
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
+            TIMER_ID.set(Some(timer_id));
+            return;
+        }
+    };
 
     // Execute the airdrop
-    mutate_state(|state| execute_airdrop(particpants, state));
+    mutate_state(|state| execute_airdrop(particpants.into_iter().collect(), state));
 }
 
-fn execute_airdrop(particpants: Vec<(UserId, u32)>, state: &mut RuntimeState) {
+fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
     let rng = state.env.rng();
 
     if let Some(airdrop) = state.data.airdrops.execute(particpants, rng) {
@@ -168,6 +191,6 @@ fn execute_airdrop(particpants: Vec<(UserId, u32)>, state: &mut RuntimeState) {
                 })))
         }
 
-        process_pending_actions::start_job_if_required(state);
+        process_pending_actions::start_job_if_required(state, None);
     }
 }

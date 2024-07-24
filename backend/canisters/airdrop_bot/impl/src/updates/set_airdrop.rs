@@ -26,10 +26,10 @@ fn set_airdrop_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match state.data.airdrops.set_next(config, state.env.now()) {
         SetNextResult::Success => {
-            if state.data.communities_joined.contains(&args.community_id) {
+            if state.data.channels_joined.contains(&(args.community_id, args.channel_id)) {
                 start_airdrop_timer(state);
             } else {
-                state.enqueue_pending_action(Action::JoinCommunity(args.community_id));
+                state.enqueue_pending_action(Action::JoinChannel(args.community_id, args.channel_id), None);
             }
             Response::Success
         }

@@ -100,7 +100,7 @@ impl Airdrops {
         self.next.take()
     }
 
-    pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, u32)>, rng: &mut R) -> Option<&Airdrop> {
+    pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, i32)>, rng: &mut R) -> Option<&Airdrop> {
         let config = self.next.take()?;
 
         let mut total_shares: u32 = 0;
@@ -109,6 +109,7 @@ impl Airdrops {
         let mut ticket_holders: Vec<UserId> = Vec::new();
 
         for (user_id, chit) in users {
+            let chit = chit as u32;
             let shares = chit / config.main_chit_band;
             let tickets = chit / config.lottery_chit_band;
 
@@ -275,9 +276,9 @@ mod tests {
         airdrops
     }
 
-    fn generate_random_users() -> Vec<(UserId, u32)> {
+    fn generate_random_users() -> Vec<(UserId, i32)> {
         (0..1000)
-            .map(|_| (random_principal().into(), rand::thread_rng().next_u32() % 110_000))
+            .map(|_| (random_principal().into(), (rand::thread_rng().next_u32() % 110_000) as i32))
             .collect()
     }
 }

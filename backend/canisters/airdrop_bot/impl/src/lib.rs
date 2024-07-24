@@ -3,9 +3,9 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
+use std::{cell::RefCell, time::Duration};
+use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -37,9 +37,9 @@ impl RuntimeState {
         self.data.admins.contains(&caller)
     }
 
-    pub fn enqueue_pending_action(&mut self, action: Action) {
+    pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>) {
         self.data.pending_actions_queue.push(action);
-        jobs::process_pending_actions::start_job_if_required(self);
+        jobs::process_pending_actions::start_job_if_required(self, after);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -73,7 +73,7 @@ struct Data {
     pub username: String,
     pub display_name: Option<String>,
     pub airdrops: Airdrops,
-    pub communities_joined: HashSet<CommunityId>,
+    pub channels_joined: HashSet<(CommunityId, ChannelId)>,
     pub pending_actions_queue: PendingActionsQueue,
     pub initialized: bool,
     pub rng_seed: [u8; 32],
@@ -97,7 +97,7 @@ impl Data {
             username: "".to_string(),
             display_name: None,
             airdrops: Airdrops::default(),
-            communities_joined: HashSet::default(),
+            channels_joined: HashSet::default(),
             pending_actions_queue: PendingActionsQueue::default(),
             initialized: false,
             rng_seed: [0; 32],

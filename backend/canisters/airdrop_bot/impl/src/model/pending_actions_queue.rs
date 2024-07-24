@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::vec_deque::VecDeque;
-use types::{CommunityId, CompletedCryptoTransaction, UserId};
+use types::{ChannelId, CommunityId, CompletedCryptoTransaction, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingActionsQueue {
@@ -27,7 +27,7 @@ impl PendingActionsQueue {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Action {
-    JoinCommunity(CommunityId),
+    JoinChannel(CommunityId, ChannelId),
     Transfer(Box<AirdropTransfer>),
     SendMessage(Box<AirdropMessage>),
 }

@@ -141,6 +141,8 @@ dependencies = [
  "ic-stable-structures 0.6.4",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "rand 0.8.5",
  "serde",

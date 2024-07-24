@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+airdrop_bot_canister = { path = "../api" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
@@ -25,9 +26,10 @@ ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
+local_user_index_canister = { path = "../../local_user_index/api" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
-airdrop_bot_canister = { path = "../api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }

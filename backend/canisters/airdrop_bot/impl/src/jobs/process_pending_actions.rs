@@ -11,10 +11,12 @@ use time::macros::format_description;
 use tracing::{error, trace};
 use types::icrc1::{self};
 use types::{
-    BotMessage, CanisterId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
-    MessageContentInitial,
+    BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
+    Cryptocurrency, MessageContentInitial,
 };
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
+
+use super::execute_airdrop::start_airdrop_timer;
 
 const MAX_BATCH_SIZE: usize = 5;
 
@@ -22,9 +24,9 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer_interval(after.unwrap_or_default(), run);
         TIMER_ID.set(Some(timer_id));
         trace!("'process_pending_actions' job started");
         true
@@ -57,7 +59,7 @@ async fn process_actions(actions: Vec<Action>) {
 
 async fn process_action(action: Action) {
     match action.clone() {
-        Action::JoinCommunity(community_id) => join_community(community_id).await,
+        Action::JoinChannel(community_id, channel_id) => join_channel(community_id, channel_id).await,
         Action::SendMessage(action) if matches!(action.airdrop_type, AirdropType::Lottery(_)) => {
             handle_lottery_message_action(*action).await
         }
@@ -66,8 +68,45 @@ async fn process_action(action: Action) {
     }
 }
 
-async fn join_community(community_id: CommunityId) {
-    // TODO
+async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
+    let local_user_index_canister_id = match community_canister_c2c_client::local_user_index(
+        community_id.into(),
+        &community_canister::local_user_index::Args {},
+    )
+    .await
+    {
+        Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
+        Err(err) => {
+            error!("Failed to get local_user_index {err:?}");
+            mutate_state(|state| {
+                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+            });
+            return;
+        }
+    };
+
+    match local_user_index_canister_c2c_client::join_channel(
+        local_user_index_canister_id,
+        &local_user_index_canister::join_channel::Args {
+            community_id,
+            channel_id,
+            invite_code: None,
+            verified_credential_args: None,
+        },
+    )
+    .await
+    {
+        Ok(_) => (),
+        Err(err) => {
+            error!("Failed to get join_channel {err:?}");
+            mutate_state(|state| {
+                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+            });
+            return;
+        }
+    }
+
+    read_state(start_airdrop_timer);
 }
 
 async fn handle_transfer_action(action: AirdropTransfer) {
@@ -101,21 +140,24 @@ async fn handle_transfer_action(action: AirdropTransfer) {
                 let fee = token.fee().unwrap();
                 let block_index = block_index.0.try_into().unwrap();
 
-                state.enqueue_pending_action(Action::SendMessage(Box::new(AirdropMessage {
-                    recipient: action.recipient,
-                    transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
-                        ledger: ledger_canister_id,
-                        token,
-                        amount: action.amount,
-                        fee,
-                        from: Account::from(this_canister_id).into(),
-                        to: to.into(),
-                        memo: Some(memo.to_vec().into()),
-                        created: now_nanos,
-                        block_index,
-                    }),
-                    airdrop_type: action.airdrop_type.clone(),
-                })));
+                state.enqueue_pending_action(
+                    Action::SendMessage(Box::new(AirdropMessage {
+                        recipient: action.recipient,
+                        transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
+                            ledger: ledger_canister_id,
+                            token,
+                            amount: action.amount,
+                            fee,
+                            from: Account::from(this_canister_id).into(),
+                            to: to.into(),
+                            memo: Some(memo.to_vec().into()),
+                            created: now_nanos,
+                            block_index,
+                        }),
+                        airdrop_type: action.airdrop_type.clone(),
+                    })),
+                    None,
+                );
 
                 match action.airdrop_type {
                     AirdropType::Lottery(LotteryAirdrop { position }) => {
@@ -133,7 +175,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to transfer CHAT, retrying");
-            mutate_state(|state| state.enqueue_pending_action(Action::Transfer(Box::new(action))))
+            mutate_state(|state| state.enqueue_pending_action(Action::Transfer(Box::new(action)), None))
         }
     }
 }
@@ -179,7 +221,7 @@ async fn handle_main_message_action(action: AirdropMessage) {
         .await
         .is_err()
     {
-        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action))));
+        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
     }
 }
 
@@ -238,6 +280,6 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
         .await
         .is_err()
     {
-        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action))));
+        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
     }
 }
