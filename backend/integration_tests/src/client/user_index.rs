@@ -244,11 +244,15 @@ pub mod happy_path {
             env,
             Principal::anonymous(),
             user_index_canister_id,
-            &user_index_canister::chit_balances::Args { users, year, month },
+            &user_index_canister::chit_balances::Args {
+                users: users.clone(),
+                year,
+                month,
+            },
         );
 
         match response {
-            user_index_canister::chit_balances::Response::Success(result) => result.balances,
+            user_index_canister::chit_balances::Response::Success(result) => users.into_iter().zip(result.balances).collect(),
         }
     }
 }
