@@ -1528,6 +1528,7 @@ type AccessGate = variant {
         and : bool;
     };
     Locked;
+    Invited;
 };
 
 type AccessGateUpdate = variant {
@@ -1580,6 +1581,7 @@ type GateCheckFailedReason = variant {
     InsufficientBalance : nat;
     FailedVerifiedCredentialCheck : text;
     Locked;
+    Invited;
 };
 
 type VerifiedCredentialGateArgs = record {

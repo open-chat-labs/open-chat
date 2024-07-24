@@ -60,6 +60,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                             ii_origin: vc.ii_origin.clone(),
                         }
                     }),
+                    is_user_invited: state.data.chat.invited_users.contains(&args.user_id),
                     now: state.env.now(),
                 },
             )
