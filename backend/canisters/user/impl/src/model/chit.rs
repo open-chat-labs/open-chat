@@ -171,44 +171,48 @@ mod tests {
     }
 
     fn init_test_data() -> ChitEarnedEvents {
+        let events = vec![
+            ChitEarned {
+                amount: 200,
+                timestamp: 10,
+                reason: ChitEarnedReason::DailyClaim,
+            },
+            ChitEarned {
+                amount: 200,
+                timestamp: 11,
+                reason: ChitEarnedReason::DailyClaim,
+            },
+            ChitEarned {
+                amount: 300,
+                timestamp: 12,
+                reason: ChitEarnedReason::DailyClaim,
+            },
+            ChitEarned {
+                amount: 500,
+                timestamp: 13,
+                reason: ChitEarnedReason::Achievement(Achievement::SetBio),
+            },
+            ChitEarned {
+                amount: 300,
+                timestamp: 14,
+                reason: ChitEarnedReason::DailyClaim,
+            },
+            ChitEarned {
+                amount: 500,
+                timestamp: 15,
+                reason: ChitEarnedReason::Achievement(Achievement::SetAvatar),
+            },
+            ChitEarned {
+                amount: 500,
+                timestamp: 16,
+                reason: ChitEarnedReason::Achievement(Achievement::SentDirectMessage),
+            },
+        ];
+        let total_chit_earned = events.iter().map(|e| e.amount).sum();
+
         ChitEarnedEvents {
-            events: vec![
-                ChitEarned {
-                    amount: 200,
-                    timestamp: 10,
-                    reason: ChitEarnedReason::DailyClaim,
-                },
-                ChitEarned {
-                    amount: 200,
-                    timestamp: 11,
-                    reason: ChitEarnedReason::DailyClaim,
-                },
-                ChitEarned {
-                    amount: 300,
-                    timestamp: 12,
-                    reason: ChitEarnedReason::DailyClaim,
-                },
-                ChitEarned {
-                    amount: 500,
-                    timestamp: 13,
-                    reason: ChitEarnedReason::Achievement(Achievement::SetBio),
-                },
-                ChitEarned {
-                    amount: 300,
-                    timestamp: 14,
-                    reason: ChitEarnedReason::DailyClaim,
-                },
-                ChitEarned {
-                    amount: 500,
-                    timestamp: 15,
-                    reason: ChitEarnedReason::Achievement(Achievement::SetAvatar),
-                },
-                ChitEarned {
-                    amount: 500,
-                    timestamp: 16,
-                    reason: ChitEarnedReason::Achievement(Achievement::SentDirectMessage),
-                },
-            ],
+            events,
+            total_chit_earned,
         }
     }
 }
