@@ -59,7 +59,13 @@ impl ChitEarnedEvents {
     }
 
     pub fn balance_for_month(&self, month: MonthKey) -> i32 {
-        let timestamp_range = month.timestamp_range();
+        let mut timestamp_range = month.timestamp_range();
+
+        // TODO remove this once the July airdrop is complete
+        if month.year() == 2024 && month.month() == 7 {
+            timestamp_range.start = 0;
+        }
+
         let range = self.range(timestamp_range);
         range.iter().map(|e| e.amount).sum()
     }
