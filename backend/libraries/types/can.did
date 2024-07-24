@@ -1074,6 +1074,7 @@ type UserSummary = record {
     suspended : bool;
     diamond_member : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    total_chit_earned : int32;
     chit_balance : int32;
     streak : nat16;
     is_unique_person : bool;
@@ -1877,6 +1878,7 @@ type UserSummaryStable = record {
 };
 
 type UserSummaryVolatile = record {
+    total_chit_earned : int32;
     chit_balance : int32;
     streak : nat16;
 };

@@ -36,7 +36,7 @@ fn post_upgrade(args: Args) {
             && state.data.unique_person_proof.is_none()
         {
             let now = state.env.now();
-            if state.data.user_created + SIX_MONTHS < now && state.data.chit_balance.timestamp + SIX_MONTHS < now {
+            if state.data.user_created + SIX_MONTHS < now && state.data.chit_events.last_updated() + SIX_MONTHS < now {
                 ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
             }
         }

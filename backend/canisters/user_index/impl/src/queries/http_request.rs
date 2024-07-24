@@ -4,6 +4,7 @@ use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use std::collections::BTreeMap;
 use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
+use utils::time::MonthKey;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -57,8 +58,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             "new_users_per_day" => return get_new_users_per_day(state),
             "chitbands" => {
                 let size: u32 = parts.get(1).and_then(|s| (*s).parse::<u32>().ok()).unwrap_or(500);
+                let now = state.env.now();
+                let month_key = MonthKey::from_timestamp(now);
 
-                return build_json_response(&state.data.chit_bands(size));
+                return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
             }
             _ => (),
         }

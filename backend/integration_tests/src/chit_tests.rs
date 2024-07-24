@@ -1,11 +1,11 @@
-use pocket_ic::PocketIc;
-use types::{ChitEarnedReason, Milliseconds, TimestampMillis};
-
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
-use std::ops::Deref;
+use pocket_ic::PocketIc;
+use std::ops::{Add, Deref};
 use std::time::{Duration, SystemTime};
+use types::{ChitEarnedReason, Milliseconds, TimestampMillis};
+use utils::time::MonthKey;
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const MS_IN_DAY: Milliseconds = 1000 * 60 * 60 * 24;
@@ -78,6 +78,57 @@ fn chit_streak_gained_and_lost_as_expected() {
 
     assert_eq!(result.users.len(), 1);
     assert_eq!(result.users[0].volatile.as_ref().unwrap().streak, 0);
+}
+
+#[test]
+fn chit_stored_per_month() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+    advance_to_next_month(env);
+    let start_month = MonthKey::from_timestamp(now_millis(env));
+
+    for i in 1..5 {
+        for _ in 0..i {
+            client::user::happy_path::claim_daily_chit(env, &user);
+            env.advance_time(Duration::from_millis(2 * MS_IN_DAY));
+        }
+        advance_to_next_month(env);
+    }
+
+    env.tick();
+
+    let mut month = start_month;
+    for i in 1..5 {
+        let chit_balance = client::user_index::happy_path::chit_balances(
+            env,
+            canister_ids.user_index,
+            vec![user.user_id],
+            month.year() as u16,
+            month.month(),
+        )
+        .values()
+        .next()
+        .copied()
+        .unwrap();
+
+        assert_eq!(chit_balance, i * 200);
+
+        month = month.next();
+    }
+
+    let user = client::user_index::happy_path::user(env, canister_ids.user_index, user.user_id);
+
+    assert_eq!(user.total_chit_earned, 2000);
+    assert_eq!(user.chit_balance, 0);
+}
+
+fn advance_to_next_month(env: &mut PocketIc) {
+    let now = now_millis(env);
+    let next_month = MonthKey::from_timestamp(now).next();
+    env.set_time(SystemTime::UNIX_EPOCH.add(Duration::from_millis(next_month.start_timestamp())));
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {
