@@ -53,6 +53,7 @@ pub struct User {
     #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
+    #[deprecated]
     pub chit_balance: i32,
     #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
     pub chit_per_month: BTreeMap<MonthKey, i32>,
@@ -102,6 +103,7 @@ impl User {
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
+        #[allow(deprecated)]
         User {
             principal,
             user_id,

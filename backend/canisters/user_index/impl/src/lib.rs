@@ -33,7 +33,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
-use utils::time::DAY_IN_MS;
+use utils::time::{MonthKey, DAY_IN_MS};
 
 mod guards;
 mod jobs;
@@ -199,7 +199,11 @@ impl RuntimeState {
                 is_bot: user.is_bot,
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
-                chit_balance: user.chit_balance,
+                chit_balance: user
+                    .chit_per_month
+                    .get(&MonthKey::from_timestamp(now))
+                    .copied()
+                    .unwrap_or_default(),
                 streak: user.streak(now),
                 streak_ends: user.streak_ends,
                 chit_updated: user.chit_updated,
@@ -426,13 +430,16 @@ impl Data {
         }
     }
 
-    pub fn chit_bands(&self, size: u32) -> BTreeMap<u32, u32> {
+    pub fn chit_bands(&self, size: u32, year: u32, month: u8) -> BTreeMap<u32, u32> {
         let mut bands = BTreeMap::new();
+        let month_key = MonthKey::new(year, month);
 
         for chit in self
             .users
             .iter()
-            .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
+            .map(|u| u.chit_per_month.get(&month_key).copied().unwrap_or_default())
+            .filter(|c| *c > 0)
+            .map(|c| c as u32)
         {
             let band = (chit / size) * size;
             let key = if band > 0 { (chit / band) * band } else { 0 };

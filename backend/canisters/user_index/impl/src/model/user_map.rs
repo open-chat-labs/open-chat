@@ -37,6 +37,7 @@ impl UserMap {
     pub fn initialise_monthly_chit_balances(&mut self, now: TimestampMillis) {
         let month_key = MonthKey::from_timestamp(now);
         for user in self.users.values_mut() {
+            #[allow(deprecated)]
             user.chit_per_month.insert(month_key, user.chit_balance);
         }
     }
@@ -216,7 +217,6 @@ impl UserMap {
                 user.latest_chit_event_previous_month = user.latest_chit_event;
             }
             user.latest_chit_event = chit_event_timestamp;
-            user.chit_balance = chit_balance;
             user.streak = streak;
             user.streak_ends = streak_ends;
         } else {
