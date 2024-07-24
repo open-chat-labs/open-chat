@@ -14,6 +14,7 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
+mod metadata_helper;
 mod model;
 mod queries;
 mod updates;
