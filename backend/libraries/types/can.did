@@ -1581,7 +1581,6 @@ type GateCheckFailedReason = variant {
     InsufficientBalance : nat;
     FailedVerifiedCredentialCheck : text;
     Locked;
-    NotInvited;
 };
 
 type VerifiedCredentialGateArgs = record {

@@ -161,7 +161,6 @@ fn is_permitted_to_join(
                                 ii_canister_id: state.data.internet_identity_canister_id,
                                 ii_origin: vc.ii_origin,
                             }),
-                            is_user_invited: channel.chat.invited_users.contains(&member.user_id),
                             now: state.env.now(),
                         },
                     )
