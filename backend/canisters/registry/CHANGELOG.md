@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1250](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1250-registry)] - 2024-07-25
+
 ### Changed
 
 - Simplify adding tokens and add compatibility with `burn_fee` ([#6102](https://github.com/open-chat-labs/open-chat/pull/6102))

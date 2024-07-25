@@ -1,6 +1,5 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -17,5 +16,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub balances: HashMap<UserId, i32>,
+    pub balances: Vec<i32>,
 }

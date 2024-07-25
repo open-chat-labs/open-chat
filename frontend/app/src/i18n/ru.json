@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Присоединиться смогут только пользователи с пожизненным статусом Diamond.",
         "lifetimeDiamondGateInfo2": "Чтобы присоединиться к {level}, вам необходимо иметь пожизненное членство со статусом Diamond.",
         "lifetimeDiamondMember": "Пожизненное членство со статусом Diamond",
+        "lockedGate": "Заблокировано",
+        "lockedGateInfo": "Этот {level} заблокирован, и к нему нельзя присоединиться.",
         "minDissolveDelay": "Минимальная задержка растворения (дни)",
         "minDissolveDelayN": "Минимальная задержка растворения {n} дней",
         "minimumBalance": "Минимальный баланс токена",

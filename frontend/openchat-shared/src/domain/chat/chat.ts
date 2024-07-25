@@ -1740,7 +1740,8 @@ export type GateCheckFailedReason =
     | "insufficient_balance"
     | "failed_verified_credential_check"
     | "no_unique_person_proof"
-    | "not_lifetime_diamond";
+    | "not_lifetime_diamond"
+    | "locked";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

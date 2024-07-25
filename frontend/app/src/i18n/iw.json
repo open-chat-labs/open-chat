@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "רק משתמשים עם חברות Diamond לכל החיים יורשו להצטרף",
         "lifetimeDiamondGateInfo2": "על מנת להצטרף ל-{level} הזה, עליך להיות בעל חברות Diamond לכל החיים.",
         "lifetimeDiamondMember": "חברות יהלום לכל החיים",
+        "lockedGate": "נָעוּל",
+        "lockedGateInfo": "{level} זה נעול ולא ניתן להצטרף אליו",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
         "minimumBalance": "יתרה סמלית מינימלית",

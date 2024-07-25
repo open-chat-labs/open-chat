@@ -149,7 +149,7 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn summary(&self, member: Option<&CommunityMemberInternal>) -> CommunityCanisterCommunitySummary {
+    pub fn summary(&self, member: Option<&CommunityMemberInternal>, is_invited: bool) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
         let (channels, membership) = if let Some(m) = member {
@@ -213,6 +213,7 @@ impl RuntimeState {
             channels,
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
+            is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
         }
     }
@@ -426,11 +427,14 @@ impl Data {
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.is_public
             || self.members.get(caller).is_some()
-            || self
-                .members
-                .lookup_user_id(caller)
-                .map_or(false, |u| self.invited_users.get(&u).is_some())
+            || self.is_invited(caller)
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn is_invited(&self, caller: Principal) -> bool {
+        self.members
+            .lookup_user_id(caller)
+            .map_or(false, |u| self.invited_users.get(&u).is_some())
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {

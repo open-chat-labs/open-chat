@@ -32,7 +32,7 @@
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    client.submitProofOfUniquePersonhood(credential).then((resp) => {
+                    return client.submitProofOfUniquePersonhood(credential).then((resp) => {
                         if (resp.kind !== "success") {
                             failed = true;
                         } else {

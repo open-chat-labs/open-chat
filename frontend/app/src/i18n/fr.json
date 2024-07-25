@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Seuls les utilisateurs disposant d'un abonnement Diamond à vie seront autorisés à rejoindre",
         "lifetimeDiamondGateInfo2": "Pour rejoindre ce {level}, vous devez être membre Diamond à vie.",
         "lifetimeDiamondMember": "Adhésion Diamant à vie",
+        "lockedGate": "Fermé à clé",
+        "lockedGateInfo": "Ce {level} est verrouillé et ne peut pas être rejoint",
         "minDissolveDelay": "Délai de dissolution min (jours)",
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
         "minimumBalance": "Solde minimum de jetons",

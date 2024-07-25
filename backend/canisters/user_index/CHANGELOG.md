@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1255](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1255-user_index)] - 2024-07-25
+
 ### Added
 
 - Return proof as JWT after paying for Diamond membership ([#6078](https://github.com/open-chat-labs/open-chat/pull/6078))
@@ -21,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
 - Add `user_ii_principal` to `submit_proof_of_unique_personhood` args ([#6092](https://github.com/open-chat-labs/open-chat/pull/6092))
 - Bump `ic-verifiable-credentials` to latest version ([#6096](https://github.com/open-chat-labs/open-chat/pull/6096))
+- Simplify `chit_balances` responses ([#6107](https://github.com/open-chat-labs/open-chat/pull/6107))
 
 ### Removed
 

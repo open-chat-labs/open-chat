@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
         "lifetimeDiamondGateInfo2": "In order to join this {level} you are required to have lifetime Diamond membership.",
         "lifetimeDiamondMember": "Lifetime Diamond membership",
+        "lockedGate": "Locked",
+        "lockedGateInfo": "This {level} is locked and cannot be joined",
         "minDissolveDelay": "Min dissolve delay (days)",
         "minDissolveDelayN": "Min dissolve delay {n} days",
         "minimumBalance": "Minimum token balance",

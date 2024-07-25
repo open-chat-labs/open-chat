@@ -29,19 +29,10 @@ pub struct UserMap {
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
     deleted_users: HashMap<UserId, TimestampMillis>,
-    #[serde(default)]
     unique_person_proofs_submitted: u32,
 }
 
 impl UserMap {
-    pub fn initialise_monthly_chit_balances(&mut self, now: TimestampMillis) {
-        let month_key = MonthKey::from_timestamp(now);
-        for user in self.users.values_mut() {
-            #[allow(deprecated)]
-            user.chit_per_month.insert(month_key, user.chit_balance);
-        }
-    }
-
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
     }
@@ -429,6 +420,10 @@ impl From<UserMapTrimmed> for UserMap {
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
+            }
+
+            if user.unique_person_proof.is_some() {
+                user_map.unique_person_proofs_submitted += 1;
             }
         }
 

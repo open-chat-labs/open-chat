@@ -6,6 +6,7 @@ export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
@@ -670,6 +671,7 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'Locked' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -1655,7 +1657,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
-export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export interface SubmitProofOfUniquePersonhoodArgs {
+  'credential_jwt' : string,
+  'user_ii_principal' : Principal,
+}
 export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
   { 'Success' : null } |
   { 'UserNotFound' : null };

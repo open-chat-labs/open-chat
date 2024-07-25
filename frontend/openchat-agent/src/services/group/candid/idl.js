@@ -851,6 +851,7 @@ export const idlFactory = ({ IDL }) => {
       'UniquePerson' : IDL.Null,
       'VerifiedCredential' : VerifiedCredentialGate,
       'SnsNeuron' : SnsNeuronGate,
+      'Locked' : IDL.Null,
       'TokenBalance' : TokenBalanceGate,
       'Composite' : IDL.Record({
         'and' : IDL.Bool,

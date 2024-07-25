@@ -626,6 +626,7 @@ export const idlFactory = ({ IDL }) => {
       'UniquePerson' : IDL.Null,
       'VerifiedCredential' : VerifiedCredentialGate,
       'SnsNeuron' : SnsNeuronGate,
+      'Locked' : IDL.Null,
       'TokenBalance' : TokenBalanceGate,
       'Composite' : IDL.Record({
         'and' : IDL.Bool,
@@ -1143,6 +1144,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'Locked' : IDL.Null,
     'NoUniquePersonProof' : IDL.Null,
     'FailedVerifiedCredentialCheck' : IDL.Text,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
