@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
 - Bypass gates if user is invited ([#6110](https://github.com/open-chat-labs/open-chat/pull/6110))
+- Return `is_invited` when previewing a group ([#6113](https://github.com/open-chat-labs/open-chat/pull/6113))
 
 ### Fixed
 
