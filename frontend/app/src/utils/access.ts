@@ -26,6 +26,7 @@ export const gateLabel: Record<AccessGate["kind"], string> = {
     payment_gate: "access.payment",
     token_balance_gate: "access.tokenBalance",
     unique_person_gate: "access.uniquePerson",
+    locked_gate: "access.lockedGate",
 };
 
 export function getGateBindings(): GateBinding[] {
@@ -38,6 +39,7 @@ export function getGateBindings(): GateBinding[] {
         balanceGateFolder,
         credentialGate,
         uniquePersonGate,
+        lockedGate,
         nftGate,
     ];
 }
@@ -126,7 +128,14 @@ export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: false,
+    enabled: true,
+};
+
+export const lockedGate: GateBinding = {
+    label: "access.lockedGate",
+    key: "locked_gate",
+    gate: { kind: "locked_gate" },
+    enabled: true,
 };
 
 export const neuronGateFolder: GateBinding = {

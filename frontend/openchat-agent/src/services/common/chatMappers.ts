@@ -1614,6 +1614,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
+    if (domain.kind === "locked_gate") return [{ Locked: null }];
     if (domain.kind === "credential_gate")
         return [
             {
@@ -1664,6 +1665,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
 }
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
+    if (domain.kind === "locked_gate") return { Locked: null };
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
@@ -1761,6 +1763,11 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("DiamondMember" in candid) {
         return {
             kind: "diamond_gate",
+        };
+    }
+    if ("Locked" in candid) {
+        return {
+            kind: "locked_gate",
         };
     }
     if ("LifetimeDiamondMember" in candid) {
@@ -2161,6 +2168,9 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     if ("FailedVerifiedCredentialCheck" in candid) {
         console.warn("FailedVerifiedCredentialCheck: ", candid);
         return "failed_verified_credential_check";
+    }
+    if ("Locked" in candid) {
+        return "locked";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

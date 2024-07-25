@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "只有终身钻石会员才允许加入",
         "lifetimeDiamondGateInfo2": "为了加入这个{level}，您需要拥有终身钻石会员资格。",
         "lifetimeDiamondMember": "终身钻石会员",
+        "lockedGate": "已锁定",
+        "lockedGateInfo": "此{level}已被锁定，无法加入",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minimumBalance": "最低代币余额",

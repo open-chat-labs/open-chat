@@ -1,11 +1,8 @@
 <script lang="ts">
-    import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import type { AccessGateWithLevel } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
 
-    const client = getContext<OpenChat>("client");
-    export let chat: MultiUserChat;
-    $: gates = client.accessGatesForChat(chat);
+    export let gates: AccessGateWithLevel[];
 </script>
 
 {#if gates.length > 0}

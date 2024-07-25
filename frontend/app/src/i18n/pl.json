@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Tylko użytkownicy z dożywotnim członkostwem Diamentowym będą mogli dołączyć",
         "lifetimeDiamondGateInfo2": "Aby dołączyć do tego {level}, musisz mieć dożywotnie członkostwo Diamentowe.",
         "lifetimeDiamondMember": "Dożywotnie członkostwo Diamentowe",
+        "lockedGate": "Zablokowany",
+        "lockedGateInfo": "To {level} jest zablokowane i nie można do niego dołączyć",
         "minDissolveDelay": "Min. opóźnienie rozpuszczania (dni)",
         "minDissolveDelayN": "Min. opóźnienie rozpuszczania {n} dni",
         "minimumBalance": "Minimalne saldo tokenów",

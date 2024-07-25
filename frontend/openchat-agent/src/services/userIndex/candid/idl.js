@@ -281,6 +281,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SubmitProofOfUniquePersonhoodArgs = IDL.Record({
     'credential_jwt' : IDL.Text,
+    'user_ii_principal' : IDL.Principal,
   });
   const SubmitProofOfUniquePersonhoodResponse = IDL.Variant({
     'Invalid' : IDL.Text,
