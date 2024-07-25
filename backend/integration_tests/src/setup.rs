@@ -263,7 +263,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_init_args,
     );
 
-    let aairdrop_bot_init_args = airdrop_bot_canister::init::Args {
+    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
         admins: vec![controller],
         user_index_canister_id,
         local_user_index_canister_id,
@@ -276,7 +276,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         controller,
         airdrop_bot_canister_id,
         airdrop_bot_canister_wasm,
-        aairdrop_bot_init_args,
+        airdrop_bot_init_args,
     );
 
     let storage_index_init_args = storage_index_canister::init::Args {
@@ -500,6 +500,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     // Tick a load of times so that all the child canisters have time to get installed
     tick_many(env, 10);
+
+    client::airdrop_bot::happy_path::initialize(env, controller, airdrop_bot_canister_id);
+
+    tick_many(env, 3);
 
     CanisterIds {
         user_index: user_index_canister_id,

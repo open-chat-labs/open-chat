@@ -77,6 +77,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
         Err(err) => {
+            ic_cdk::eprintln!("Failed to get local_user_index {err:?}");
             error!("Failed to get local_user_index {err:?}");
             mutate_state(|state| {
                 state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
@@ -98,7 +99,8 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     {
         Ok(_) => (),
         Err(err) => {
-            error!("Failed to get join_channel {err:?}");
+            ic_cdk::eprintln!("Failed to join_channel{err:?}");
+            error!("Failed to join_channel {err:?}");
             mutate_state(|state| {
                 state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
             });

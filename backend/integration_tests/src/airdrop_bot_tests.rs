@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use airdrop_bot_canister::set_airdrop;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{AccessGate, ChatEvent, EventIndex, GroupRole, Message, MessageContent};
+use types::{AccessGate, ChatEvent, EventIndex, GroupRole, Message, MessageContent, UserId};
 
 #[test]
 fn airdrop_end_to_end() {
@@ -16,24 +16,27 @@ fn airdrop_end_to_end() {
         ..
     } = wrapper.env();
 
+    let airdrop_bot_user_id: UserId = canister_ids.airdrop_bot.into();
+
+    let airdrop_bot_user_summary = client::user_index::happy_path::user(env, canister_ids.user_index, airdrop_bot_user_id);
+    assert_eq!(airdrop_bot_user_summary.username, "AirdropBot".to_string());
+
     // Setup the environment for the test...
-    // Create a diamond user and it then creates an airdrop community
-    // Create 5 more users and join each of them to the community
-    // Create a public airdrop channel - the 5 users + diamond user will be added automatically
-    // Transfer 80,001 CHAT to the airdrop_bot canister
+    // Create 1 owner and 5 other users
+    // Owner creates the airdrop community
+    // Join each other user to the community
+    // Owner creates a public airdrop channel gated by diamond - the 5 users will be added automatically
+    // Transfer 85,001 CHAT to the airdrop_bot canister
+    // Owner invites the airdrop_bot to the channel
     //
-    let diamond_user = client::register_diamond_user(env, canister_ids, *controller);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
 
-    let community_id = client::user::happy_path::create_community(
-        env,
-        &diamond_user,
-        "CHIT for CHAT airdrops",
-        true,
-        vec!["General".to_string()],
-    );
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, "CHIT for CHAT airdrops", true, vec!["General".to_string()]);
 
-    let user_count = 5usize;
-    let users: Vec<_> = (0..user_count).map(|_| client::register_user(env, canister_ids)).collect();
+    let users: Vec<_> = (0..5)
+        .map(|_| client::register_diamond_user(env, canister_ids, *controller))
+        .collect();
 
     env.tick();
 
@@ -43,20 +46,33 @@ fn airdrop_end_to_end() {
 
     tick_many(env, 10);
 
-    let channel_id = client::community::happy_path::create_channel(
-        env,
-        diamond_user.principal,
-        community_id,
-        true,
-        "July airdrop".to_string(),
-    );
+    let channel_id =
+        client::community::happy_path::create_channel(env, owner.principal, community_id, true, "July airdrop".to_string());
+
+    // let channel_id = client::community::happy_path::create_gated_channel(
+    //     env,
+    //     diamond_user.principal,
+    //     community_id,
+    //     true,
+    //     "July airdrop".to_string(),
+    //     AccessGate::DiamondMember,
+    // );
 
     client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
         canister_ids.airdrop_bot,
-        8_000_100_000_000,
+        8_500_100_000_000,
+    );
+
+    client::local_user_index::happy_path::invite_users_to_channel(
+        env,
+        &owner,
+        canister_ids.local_user_index,
+        community_id,
+        channel_id,
+        vec![airdrop_bot_user_id],
     );
 
     // Set the airdrop to start in 1 second and assert success
@@ -70,7 +86,7 @@ fn airdrop_end_to_end() {
             community_id,
             channel_id,
             start: now_millis(env) + 1000,
-            main_chat_fund: 60_000,
+            main_chat_fund: 65_000,
             main_chit_band: 500,
             lottery_prizes: vec![12_000, 5_000, 3_000],
             lottery_chit_band: 500,
@@ -85,10 +101,10 @@ fn airdrop_end_to_end() {
     //
     client::community::happy_path::change_channel_role(
         env,
-        diamond_user.principal,
+        owner.principal,
         community_id,
         channel_id,
-        canister_ids.airdrop_bot.into(),
+        airdrop_bot_user_id,
         GroupRole::Owner,
     );
 
@@ -98,21 +114,13 @@ fn airdrop_end_to_end() {
 
     // Assert the channel is now locked
     //
-    let channel_summary = client::community::happy_path::channel_summary(env, &diamond_user, community_id, channel_id);
+    let channel_summary = client::community::happy_path::channel_summary(env, &owner, community_id, channel_id);
     assert_eq!(channel_summary.gate, Some(AccessGate::Locked));
 
     // Assert the airdrop channel has exactly 3 prize messages
     //
-    let response = client::community::happy_path::events(
-        env,
-        &diamond_user,
-        community_id,
-        channel_id,
-        EventIndex::from(0),
-        true,
-        10,
-        10,
-    );
+    let response =
+        client::community::happy_path::events(env, &owner, community_id, channel_id, EventIndex::from(0), true, 10, 10);
 
     let messages: Vec<Message> = response
         .events
@@ -125,15 +133,7 @@ fn airdrop_end_to_end() {
 
     // Assert the diamond user has been sent a DM from the Airdrop Bot for the expected amount of CHAT
     //
-    let response = client::user::happy_path::events(
-        env,
-        &diamond_user,
-        canister_ids.airdrop_bot.into(),
-        EventIndex::from(0),
-        true,
-        10,
-        20,
-    );
+    let response = client::user::happy_path::events(env, &owner, airdrop_bot_user_id, EventIndex::from(0), true, 10, 20);
 
     assert_eq!(response.events.len(), 1);
 
@@ -146,7 +146,7 @@ fn airdrop_end_to_end() {
     };
 
     // Diamond user should have 5000 CHIT from diamond achievement.
-    // Other 5 users should have 500 CHIT each from joining community achievement
-    // Expected CHAT = 60_000 / (7_500 / 500) = 4_000
-    assert_eq!(content.transfer.units(), 400_000_000_000);
+    // Other 5 users should have 5500 CHIT each from joining community achievement
+    // Expected CHAT = 65_000 / ((5500 * 5 + 5000) / 500) = 1_000
+    assert_eq!(content.transfer.units(), 100_000_000_000);
 }

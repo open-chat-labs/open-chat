@@ -23,6 +23,8 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub(crate) fn start_airdrop_timer(state: &RuntimeState) -> bool {
+    ic_cdk::println!("Start airdrop timer");
+
     clear_airdrop_timer();
 
     if let Some(config) = state.data.airdrops.next() {
@@ -52,11 +54,15 @@ fn run() {
     if let Some(config) = config {
         ic_cdk::spawn(prepare_airdrop(config, user_index_canister_id));
     } else {
+        ic_cdk::println!("No airdrop configured");
+
         trace!("No airdrop configured");
     };
 }
 
 async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: CanisterId) {
+    ic_cdk::println!("Prepare airdrop");
+
     // Call the configured community canister to set the `locked` gate on the configured channel
     match community_canister_c2c_client::update_channel(
         config.community_id.into(),
