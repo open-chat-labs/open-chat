@@ -1528,7 +1528,6 @@ type AccessGate = variant {
         and : bool;
     };
     Locked;
-    Invited;
 };
 
 type AccessGateUpdate = variant {
