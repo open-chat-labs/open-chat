@@ -112,6 +112,8 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
 }
 
 async fn handle_transfer_action(action: AirdropTransfer) {
+    ic_cdk::println!("handle_transfer_action");
+
     let (this_canister_id, ledger_canister_id, now_nanos) = read_state(|state| {
         (
             state.env.canister_id(),
@@ -183,6 +185,8 @@ async fn handle_transfer_action(action: AirdropTransfer) {
 }
 
 async fn handle_main_message_action(action: AirdropMessage) {
+    ic_cdk::println!("handle_main_message_action");
+
     let AirdropType::Main(MainAidrop { chit, shares }) = action.airdrop_type else {
         return;
     };
@@ -228,6 +232,8 @@ async fn handle_main_message_action(action: AirdropMessage) {
 }
 
 async fn handle_lottery_message_action(action: AirdropMessage) {
+    ic_cdk::println!("handle_lottery_message_action");
+
     let AirdropType::Lottery(LotteryAirdrop { position }): AirdropType = action.airdrop_type else {
         return;
     };

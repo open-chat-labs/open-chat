@@ -130,6 +130,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     {
         Ok(user_index_canister::chit_balances::Response::Success(result)) => result.balances,
         Err(err) => {
+            ic_cdk::eprintln!("Failed to get chit_balances {err:?}");
             error!("{err:?}");
             let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
             TIMER_ID.set(Some(timer_id));
@@ -142,9 +143,14 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
 }
 
 fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
+    ic_cdk::println!("Execute airdrop");
+
     let rng = state.env.rng();
 
     if let Some(airdrop) = state.data.airdrops.execute(particpants, rng) {
+        let winners = airdrop.outcome.lottery_winners.len();
+        ic_cdk::println!("Lottery winners: {winners}");
+
         // Add the CHAT transfer actions to the queue. When each transfer has succeeded
         // the corresponding message action will be added to the queue.
 
