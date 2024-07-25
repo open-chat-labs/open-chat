@@ -1,13 +1,12 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use identity_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -25,27 +24,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        let originating_canisters = if state.data.test_mode {
-            [
-                "rdmx6-jaaaa-aaaaa-aaadq-cai", // II
-                "rubs2-eaaaa-aaaaf-bijfq-cai", // Email
-                "4s357-zaaaa-aaaaf-bjz7q-cai", // ETH
-                "lix6w-ciaaa-aaaaf-bj2aa-cai", // SOL
-            ]
-        } else {
-            [
-                "rdmx6-jaaaa-aaaaa-aaadq-cai", // II
-                "zi2i7-nqaaa-aaaar-qaemq-cai", // Email
-                "2notu-qyaaa-aaaar-qaeha-cai", // ETH
-                "2kpva-5aaaa-aaaar-qaehq-cai", // SOL
-            ]
-        };
-
-        state
-            .data
-            .originating_canisters
-            .extend(originating_canisters.iter().map(|s| CanisterId::from_text(s).unwrap()));
-    });
 }
