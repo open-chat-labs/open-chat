@@ -225,12 +225,13 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index())
-        } else if chat.is_public.value {
-            chat.min_visible_indexes_for_new_members.unwrap_or_default()
+        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
+            (member.min_visible_event_index(), member.min_visible_message_index(), false)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
-            (invitation.min_visible_event_index, invitation.min_visible_message_index)
+            (invitation.min_visible_event_index, invitation.min_visible_message_index, true)
+        } else if chat.is_public.value {
+            let (e, m) = chat.min_visible_indexes_for_new_members.unwrap_or_default();
+            (e, m, false)
         } else {
             return None;
         };
@@ -293,6 +294,7 @@ impl Channel {
             gate: chat.gate.value.clone(),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
+            is_invited,
         })
     }
 

@@ -49,5 +49,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         gate: data.chat.gate.value.clone(),
         wasm_version: BuildVersion::default(),
     };
-    Success(SuccessResult { summary })
+    Success(SuccessResult {
+        summary,
+        is_invited: data.get_invitation(caller).is_some(),
+    })
 }

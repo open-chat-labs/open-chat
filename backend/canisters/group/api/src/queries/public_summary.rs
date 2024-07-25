@@ -17,4 +17,5 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub summary: PublicGroupSummary,
+    pub is_invited: bool,
 }

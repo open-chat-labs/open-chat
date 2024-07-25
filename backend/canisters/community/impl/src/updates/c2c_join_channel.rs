@@ -41,7 +41,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member)
+                        state.summary(member, false)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
