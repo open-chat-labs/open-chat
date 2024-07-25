@@ -149,7 +149,11 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn summary(&self, member: Option<&CommunityMemberInternal>, is_invited: bool) -> CommunityCanisterCommunitySummary {
+    pub fn summary(
+        &self,
+        member: Option<&CommunityMemberInternal>,
+        is_invited: Option<bool>,
+    ) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
         let (channels, membership) = if let Some(m) = member {

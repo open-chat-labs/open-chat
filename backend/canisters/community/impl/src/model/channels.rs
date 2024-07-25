@@ -226,12 +226,16 @@ impl Channel {
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
         let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index(), false)
+            (member.min_visible_event_index(), member.min_visible_message_index(), None)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
-            (invitation.min_visible_event_index, invitation.min_visible_message_index, true)
+            (
+                invitation.min_visible_event_index,
+                invitation.min_visible_message_index,
+                Some(true),
+            )
         } else if chat.is_public.value {
             let (e, m) = chat.min_visible_indexes_for_new_members.unwrap_or_default();
-            (e, m, false)
+            (e, m, Some(false))
         } else {
             return None;
         };

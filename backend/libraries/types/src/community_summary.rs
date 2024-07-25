@@ -25,7 +25,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub channels: Vec<CommunityCanisterChannelSummary>,
     pub membership: Option<CommunityMembership>,
     pub user_groups: Vec<UserGroupSummary>,
-    pub is_invited: bool,
+    pub is_invited: Option<bool>,
     pub metrics: ChatMetrics,
 }
 
