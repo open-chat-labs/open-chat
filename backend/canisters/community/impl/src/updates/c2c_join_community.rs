@@ -65,9 +65,9 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         Err(CommunityFrozen)
     } else if let Some(limit) = state.data.members.user_limit_reached() {
         Err(MemberLimitReached(limit))
-    } else if state.data.is_invited(args.principal, args.invite_code) {
+    } else if state.data.is_invited(args.principal) {
         Ok(None)
-    } else if !state.data.is_public {
+    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
         Err(NotInvited)
     } else {
         Ok(state.data.gate.as_ref().map(|g| {

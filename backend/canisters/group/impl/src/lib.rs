@@ -575,11 +575,10 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.chat.is_public.value || self.get_member(caller).is_some() || self.is_invited(caller, invite_code)
-    }
-
-    pub fn is_invited(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.get_invitation(caller).is_some() || self.is_invite_code_valid(invite_code)
+        self.chat.is_public.value
+            || self.get_member(caller).is_some()
+            || self.get_invitation(caller).is_some()
+            || self.is_invite_code_valid(invite_code)
     }
 
     pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
