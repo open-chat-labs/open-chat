@@ -403,6 +403,7 @@ pub mod happy_path {
             &user_canister::chit_events::Args {
                 from,
                 to,
+                skip: None,
                 max,
                 ascending: false,
             },

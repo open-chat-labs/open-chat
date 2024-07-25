@@ -1,14 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChitEarned, TimestampMillis};
+use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub from: Option<TimestampMillis>,
-    pub to: Option<TimestampMillis>,
-    pub skip: Option<u32>,
-    pub max: u32,
-    pub ascending: bool,
+    pub users: Vec<UserId>,
+    pub year: u16,
+    pub month: u8,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -18,6 +16,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub events: Vec<ChitEarned>,
-    pub total: u32,
+    pub balances: Vec<i32>,
 }

@@ -2,11 +2,13 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use types::{
     is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
     UserSummaryVolatile,
 };
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -51,7 +53,10 @@ pub struct User {
     #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
+    #[deprecated]
     pub chit_balance: i32,
+    #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
+    pub chit_per_month: BTreeMap<MonthKey, i32>,
     #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
@@ -60,6 +65,8 @@ pub struct User {
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", default)]
     pub latest_chit_event: TimestampMillis,
+    #[serde(rename = "lcp", default)]
+    pub latest_chit_event_previous_month: TimestampMillis,
     #[serde(rename = "uh", default, skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
 }
@@ -72,6 +79,10 @@ impl User {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up.into())
+    }
+
+    pub fn total_chit_earned(&self) -> i32 {
+        self.chit_per_month.values().copied().sum()
     }
 }
 
@@ -92,6 +103,7 @@ impl User {
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
+        #[allow(deprecated)]
         User {
             principal,
             user_id,
@@ -112,10 +124,12 @@ impl User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             chit_updated: now,
             streak: 0,
             streak_ends: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }
@@ -130,17 +144,22 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
-            chit_balance: self.chit_balance,
+            total_chit_earned: self.total_chit_earned(),
+            chit_balance: self
+                .chit_per_month
+                .get(&MonthKey::from_timestamp(now))
+                .copied()
+                .unwrap_or_default(),
             streak: self.streak(now),
             is_unique_person: self.unique_person_proof.is_some(),
         }
     }
 
-    pub fn to_summary_v2(&self, now: TimestampMillis) -> UserSummaryV2 {
+    pub fn to_summary_v2(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryV2 {
         UserSummaryV2 {
             user_id: self.user_id,
             stable: Some(self.to_summary_stable(now)),
-            volatile: Some(self.to_summary_volatile(now)),
+            volatile: Some(self.to_summary_volatile(now, month_key)),
         }
     }
 
@@ -156,9 +175,10 @@ impl User {
         }
     }
 
-    pub fn to_summary_volatile(&self, now: TimestampMillis) -> UserSummaryVolatile {
+    pub fn to_summary_volatile(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryVolatile {
         UserSummaryVolatile {
-            chit_balance: self.chit_balance,
+            total_chit_earned: self.total_chit_earned(),
+            chit_balance: self.chit_per_month.get(&month_key).copied().unwrap_or_default(),
             streak: self.streak(now),
         }
     }
@@ -206,6 +226,7 @@ impl From<&SuspensionDetails> for types::SuspensionDetails {
 #[cfg(test)]
 impl Default for User {
     fn default() -> Self {
+        #[allow(deprecated)]
         User {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
@@ -226,10 +247,12 @@ impl Default for User {
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
             chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             streak: 0,
             streak_ends: 0,
             chit_updated: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }

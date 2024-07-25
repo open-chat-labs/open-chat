@@ -23,6 +23,7 @@ pub struct SuccessResult {
     pub local_user_index_canister_id: CanisterId,
     pub achievements: Vec<ChitEarned>,
     pub achievements_last_seen: TimestampMillis,
+    pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,

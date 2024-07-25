@@ -12,6 +12,7 @@ pub struct UserSummary {
     pub suspended: bool,
     pub diamond_member: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
+    pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
     pub is_unique_person: bool,
@@ -37,6 +38,7 @@ pub struct UserSummaryStable {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummaryVolatile {
+    pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
 }
