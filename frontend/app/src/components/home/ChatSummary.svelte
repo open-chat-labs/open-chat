@@ -514,6 +514,17 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
+                                <MenuItem
+                                    disabled={unreadMessages === 0}
+                                    on:click={() => client.markAllRead(chatSummary)}>
+                                    <CheckboxMultipleMarked
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("markAllRead")} />
+                                    </div>
+                                </MenuItem>
                                 {#if chatSummary.membership.archived}
                                     <MenuItem on:click={selectChat}>
                                         <ArchiveOffIcon
@@ -554,17 +565,6 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
-                                <MenuItem
-                                    disabled={unreadMessages === 0}
-                                    on:click={() => client.markAllRead(chatSummary)}>
-                                    <CheckboxMultipleMarked
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable resourceKey={i18nKey("markAllRead")} />
-                                    </div>
-                                </MenuItem>
                             </Menu>
                         </div>
                     </MenuIcon>

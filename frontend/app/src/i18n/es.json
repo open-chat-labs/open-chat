@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Solo los usuarios con membresía Diamond vitalicia podrán unirse",
         "lifetimeDiamondGateInfo2": "Para unirse a este {level}, debe tener una membresía Diamond de por vida.",
         "lifetimeDiamondMember": "Membresía Diamante de por vida",
+        "lockedGate": "bloqueado",
+        "lockedGateInfo": "Este {level} está bloqueado y no se puede unir",
         "minDissolveDelay": "Retraso mínimo de disolución (días)",
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minimumBalance": "Saldo mínimo de tokens",
