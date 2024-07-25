@@ -24,7 +24,8 @@ export type AcceptP2PSwapResponse = {
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'UniquePerson' : null } |
+export type AccessGate = { 'Invited' : null } |
+  { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
@@ -925,6 +926,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotInvited' : null } |
   { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
@@ -2362,6 +2364,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'streak' : number,
   'username' : string,
+  'total_chit_earned' : number,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
@@ -2388,6 +2391,7 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
+  'total_chit_earned' : number,
   'chit_balance' : number,
 }
 export interface UsersBlocked {

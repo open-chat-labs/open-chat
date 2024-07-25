@@ -86,6 +86,7 @@ export const idlFactory = ({ IDL }) => {
   });
   AccessGate.fill(
     IDL.Variant({
+      'Invited' : IDL.Null,
       'UniquePerson' : IDL.Null,
       'VerifiedCredential' : VerifiedCredentialGate,
       'SnsNeuron' : SnsNeuronGate,

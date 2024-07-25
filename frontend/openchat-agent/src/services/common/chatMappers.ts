@@ -1615,6 +1615,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
     if (domain.kind === "locked_gate") return [{ Locked: null }];
+    if (domain.kind === "invited_gate") return [{ Invited: null }];
     if (domain.kind === "credential_gate")
         return [
             {
@@ -1666,6 +1667,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "locked_gate") return { Locked: null };
+    if (domain.kind === "invited_gate") return { Invited: null };
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
@@ -1768,6 +1770,11 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("Locked" in candid) {
         return {
             kind: "locked_gate",
+        };
+    }
+    if ("Invited" in candid) {
+        return {
+            kind: "invited_gate",
         };
     }
     if ("LifetimeDiamondMember" in candid) {
@@ -2171,6 +2178,9 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     }
     if ("Locked" in candid) {
         return "locked";
+    }
+    if ("NotInvited" in candid) {
+        return "not_invited";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

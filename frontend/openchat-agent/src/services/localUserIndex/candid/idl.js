@@ -623,6 +623,7 @@ export const idlFactory = ({ IDL }) => {
   });
   AccessGate.fill(
     IDL.Variant({
+      'Invited' : IDL.Null,
       'UniquePerson' : IDL.Null,
       'VerifiedCredential' : VerifiedCredentialGate,
       'SnsNeuron' : SnsNeuronGate,
@@ -1139,6 +1140,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotLifetimeDiamondMember' : IDL.Null,
+    'NotInvited' : IDL.Null,
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,

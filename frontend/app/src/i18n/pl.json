@@ -44,6 +44,8 @@
         "gate": "Brama dostępowa",
         "gateCheckFailed": "Brama dostępu nie została spełniona",
         "gateInvalid": "Brama dostępu jest nieprawidłowa",
+        "invitedGate": "Zaproszeni Użytkownicy",
+        "invitedGateInfo": "Użytkownicy, którzy zostali wyraźnie zaproszeni do tego {level}, będą mogli dołączyć",
         "join": "Dołączyć",
         "lifetimeDiamondGateInfo": "Tylko użytkownicy z dożywotnim członkostwem Diamentowym będą mogli dołączyć",
         "lifetimeDiamondGateInfo2": "Aby dołączyć do tego {level}, musisz mieć dożywotnie członkostwo Diamentowe.",

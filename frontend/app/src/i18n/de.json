@@ -44,6 +44,8 @@
         "gate": "Zugangstor",
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "gateInvalid": "Das Zugangstor ist ungültig",
+        "invitedGate": "Eingeladene Benutzer",
+        "invitedGateInfo": "Benutzer, die ausdrücklich zu diesem {level} eingeladen wurden, dürfen teilnehmen",
         "join": "Verbinden",
         "lifetimeDiamondGateInfo": "Nur Benutzer mit lebenslanger Diamond-Mitgliedschaft dürfen teilnehmen",
         "lifetimeDiamondGateInfo2": "Um diesem {level} beizutreten, ist eine lebenslange Diamant-Mitgliedschaft erforderlich.",
