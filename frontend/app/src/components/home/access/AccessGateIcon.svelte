@@ -1,5 +1,4 @@
 <script lang="ts">
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
@@ -114,18 +113,6 @@
                 <TooltipPopup {position} {align}>
                     <Translatable
                         resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
-    {:else if gate.kind === "invited_gate"}
-        <TooltipWrapper {position} {align}>
-            <div slot="target" class="invited">
-                <AccountPlusOutline size={$iconSize} color={"var(--txt)"} />
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    <Translatable
-                        resourceKey={i18nKey("access.invitedGateInfo", undefined, level, true)} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>

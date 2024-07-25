@@ -3,8 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'Invited' : null } |
-  { 'UniquePerson' : null } |
+export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
@@ -283,14 +282,6 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
-export interface ChitBalancesArgs {
-  'month' : number,
-  'year' : number,
-  'users' : Array<UserId>,
-}
-export type ChitBalancesResponse = {
-    'Success' : { 'balances' : Int32Array | number[] }
-  };
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
   'amount' : number,
@@ -675,7 +666,6 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
-  { 'NotInvited' : null } |
   { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
@@ -1806,7 +1796,6 @@ export type UserResponse = { 'Success' : UserSummary } |
 export interface UserSummary {
   'streak' : number,
   'username' : string,
-  'total_chit_earned' : number,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
@@ -1833,7 +1822,6 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
-  'total_chit_earned' : number,
   'chit_balance' : number,
 }
 export interface UsersArgs {
@@ -1939,7 +1927,6 @@ export interface _SERVICE {
     AssignPlatformModeratorsGroupResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'chit_balances' : ActorMethod<[ChitBalancesArgs], ChitBalancesResponse>,
   'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<

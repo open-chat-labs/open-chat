@@ -44,8 +44,6 @@
         "gate": "Cancello di accesso",
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "gateInvalid": "Il cancello di accesso non è valido",
-        "invitedGate": "Utenti invitati",
-        "invitedGateInfo": "Gli utenti che sono stati esplicitamente invitati a questo {level} potranno partecipare",
         "join": "Giuntura",
         "lifetimeDiamondGateInfo": "Solo gli utenti con abbonamento Diamond a vita potranno iscriversi",
         "lifetimeDiamondGateInfo2": "Per iscriverti a questo {level} devi avere un abbonamento Diamond a vita.",

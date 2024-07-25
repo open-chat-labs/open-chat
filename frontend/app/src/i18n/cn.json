@@ -44,8 +44,6 @@
         "gate": "门禁",
         "gateCheckFailed": "未满足访问门禁",
         "gateInvalid": "访问门无效",
-        "invitedGate": "受邀用户",
-        "invitedGateInfo": "已明确受邀参加此 {level} 的用户将被允许加入",
         "join": "加入",
         "lifetimeDiamondGateInfo": "只有终身钻石会员才允许加入",
         "lifetimeDiamondGateInfo2": "为了加入这个{level}，您需要拥有终身钻石会员资格。",

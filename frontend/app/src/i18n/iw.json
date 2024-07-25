@@ -44,8 +44,6 @@
         "gate": "שער גישה",
         "gateCheckFailed": "שער הגישה לא נפגש",
         "gateInvalid": "שער הגישה אינו חוקי",
-        "invitedGate": "משתמשים מוזמנים",
-        "invitedGateInfo": "משתמשים שהוזמנו במפורש ל-{level} הזה יורשו להצטרף",
         "join": "לְהִצְטַרֵף",
         "lifetimeDiamondGateInfo": "רק משתמשים עם חברות Diamond לכל החיים יורשו להצטרף",
         "lifetimeDiamondGateInfo2": "על מנת להצטרף ל-{level} הזה, עליך להיות בעל חברות Diamond לכל החיים.",

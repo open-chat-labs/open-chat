@@ -18,15 +18,10 @@ export type LeafGate =
     | CredentialGate
     | TokenBalanceGate
     | UniquePersonGate
-    | LockedGate
-    | InvitedGate;
+    | LockedGate;
 
 export type LockedGate = {
     kind: "locked_gate";
-};
-
-export type InvitedGate = {
-    kind: "invited_gate";
 };
 
 export type CompositeGate = {
@@ -108,10 +103,6 @@ export function isLocked(gate: AccessGate | undefined): boolean {
 
 function isLockedGate(gate: AccessGate): gate is LockedGate {
     return gate.kind === "locked_gate";
-}
-
-export function isInviteGate(gate: AccessGate): gate is InvitedGate {
-    return gate.kind === "invited_gate";
 }
 
 export function isCompositeGate(gate: AccessGate): gate is CompositeGate {

@@ -327,10 +327,6 @@
         <div class="info">
             <Translatable resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
         </div>
-    {:else if gate.kind === "invited_gate"}
-        <div class="info">
-            <Translatable resourceKey={i18nKey("access.invitedGateInfo", undefined, level, true)} />
-        </div>
     {:else if gate.kind === "credential_gate"}
         <CredentialSelector {editable} bind:valid={credentialIssuerValid} bind:gate />
     {/if}

@@ -1741,8 +1741,7 @@ export type GateCheckFailedReason =
     | "failed_verified_credential_check"
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
-    | "locked"
-    | "not_invited";
+    | "locked";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

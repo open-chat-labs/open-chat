@@ -44,8 +44,6 @@
         "gate": "Access gate",
         "gateCheckFailed": "Access gate not met",
         "gateInvalid": "Access gate is invalid",
-        "invitedGate": "Invited Users",
-        "invitedGateInfo": "Users who have been explicitly invited to this {level} will be allowed to join",
         "join": "Join",
         "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
         "lifetimeDiamondGateInfo2": "In order to join this {level} you are required to have lifetime Diamond membership.",

@@ -44,8 +44,6 @@
         "gate": "アクセスゲート",
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "gateInvalid": "アクセスゲートが無効です",
-        "invitedGate": "招待されたユーザー",
-        "invitedGateInfo": "この{level}に明示的に招待されたユーザーは参加できます",
         "join": "参加する",
         "lifetimeDiamondGateInfo": "生涯ダイヤモンド会員のみ参加できます",
         "lifetimeDiamondGateInfo2": "この {level} に参加するには、生涯ダイヤモンド メンバーシップが必要です。",

@@ -44,8 +44,6 @@
         "gate": "Puerta de acceso",
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "gateInvalid": "La puerta de acceso no es válida",
-        "invitedGate": "Usuarios invitados",
-        "invitedGateInfo": "Los usuarios que hayan sido invitados explícitamente a este {level} podrán unirse",
         "join": "Unirse",
         "lifetimeDiamondGateInfo": "Solo los usuarios con membresía Diamond vitalicia podrán unirse",
         "lifetimeDiamondGateInfo2": "Para unirse a este {level}, debe tener una membresía Diamond de por vida.",

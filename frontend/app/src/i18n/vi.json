@@ -44,8 +44,6 @@
         "gate": "cổng ra vào",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "gateInvalid": "Cổng truy cập không hợp lệ",
-        "invitedGate": "Người dùng được mời",
-        "invitedGateInfo": "Người dùng đã được mời rõ ràng vào {level} này sẽ được phép tham gia",
         "join": "Tham gia",
         "lifetimeDiamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương trọn đời mới được phép tham gia",
         "lifetimeDiamondGateInfo2": "Để tham gia {level} này, bạn bắt buộc phải có tư cách thành viên Kim cương trọn đời.",
