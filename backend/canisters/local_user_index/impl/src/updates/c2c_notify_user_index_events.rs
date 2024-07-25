@@ -73,7 +73,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             );
         }
         Event::UserRegistered(ev) => {
-            state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
+            state
+                .data
+                .global_users
+                .add(ev.user_principal, ev.user_id, ev.is_bot, ev.is_oc_controlled_bot);
 
             if let Some(referred_by) = ev.referred_by {
                 if state.data.local_users.get(&referred_by).is_some() {

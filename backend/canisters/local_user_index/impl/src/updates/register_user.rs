@@ -191,7 +191,7 @@ fn commit(
 ) {
     let now = state.env.now();
     state.data.local_users.add(user_id, principal, wasm_version, now);
-    state.data.global_users.add(principal, user_id, false);
+    state.data.global_users.add(principal, user_id, false, false);
 
     state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
         principal,

@@ -48,7 +48,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     state
         .data
         .users
-        .register(caller, user_id, args.username.clone(), now, None, true);
+        .register(caller, user_id, args.username.clone(), now, None, true, false);
 
     state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
@@ -56,6 +56,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             user_principal: caller,
             username: args.username,
             is_bot: true,
+            is_oc_controlled_bot: false,
             referred_by: None,
         }),
         None,

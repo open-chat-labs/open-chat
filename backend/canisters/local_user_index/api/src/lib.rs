@@ -72,7 +72,10 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub user_principal: Principal,
     pub username: String,
+    #[serde(default)]
     pub is_bot: bool,
+    #[serde(default)]
+    pub is_oc_controlled_bot: bool,
     pub referred_by: Option<UserId>,
 }
 
@@ -161,10 +164,14 @@ pub struct DeleteUser {
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
+    #[serde(default)]
     pub is_bot: bool,
+    #[serde(default)]
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub is_oc_controlled_bot: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
