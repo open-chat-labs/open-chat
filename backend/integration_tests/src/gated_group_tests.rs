@@ -5,9 +5,10 @@ use test_case::test_case;
 use testing::rng::random_string;
 use types::{AccessGate, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
-#[test_case(true; "diamond_member")]
-#[test_case(false; "not_diamond_member")]
-fn public_group_diamond_member_gate_check(is_diamond: bool) {
+#[test_case(true, false; "diamond_member")]
+#[test_case(false; false, "not_diamond_member")]
+#[test_case(false; true, "is_invited")]
+fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -46,6 +47,16 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         client::register_user(env, canister_ids)
     };
 
+    if is_invited {
+        client::local_user_index::happy_path::invite_users_to_group(
+            env,
+            &user1,
+            canister_ids.local_user_index,
+            group_id,
+            vec![user2.user_id],
+        );
+    }
+
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
@@ -58,7 +69,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         },
     );
 
-    if is_diamond {
+    if is_diamond || is_invited {
         assert!(matches!(
             join_group_response,
             local_user_index_canister::join_group::Response::Success(_)

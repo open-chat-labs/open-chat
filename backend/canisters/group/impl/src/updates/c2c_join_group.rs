@@ -33,15 +33,17 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
-    } else if state.data.is_frozen() {
-        Err(ChatFrozen)
-    } else if !state.data.is_accessible(args.principal, args.invite_code) {
-        Err(NotInvited)
-    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
-        Err(ParticipantLimitReached(limit))
     } else if let Some(member) = state.data.chat.members.get(&args.user_id) {
         let summary = state.summary(member);
         Err(AlreadyInGroupV2(Box::new(summary)))
+    } else if state.data.is_frozen() {
+        Err(ChatFrozen)
+    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
+        Err(ParticipantLimitReached(limit))
+    } else if state.data.is_invited(caller, args.invite_code) {
+        Ok(None)
+    } else if !state.data.chat.is_public.value {
+        Err(NotInvited)
     } else {
         Ok(state.data.chat.gate.as_ref().map(|g| {
             (

@@ -139,12 +139,14 @@ fn is_permitted_to_join(
                         .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap(),
                 )))
-            } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
-                Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
             } else if channel.chat.members.is_blocked(&member.user_id) {
                 Err(UserBlocked)
+            } else if channel.chat.invited_users.get(&member.user_id).is_some() {
+                Ok(None)
+            } else if !channel.chat.is_public.value {
+                Err(NotInvited)
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| {
                     (

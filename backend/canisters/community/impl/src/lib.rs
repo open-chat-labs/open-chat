@@ -424,12 +424,13 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.is_public
-            || self.members.get(caller).is_some()
-            || self
-                .members
-                .lookup_user_id(caller)
-                .map_or(false, |u| self.invited_users.get(&u).is_some())
+        self.is_public || self.members.get(caller).is_some() || self.is_invited(caller, invite_code)
+    }
+
+    pub fn is_invited(&self, caller: Principal, invite_code: Option<u64>) -> bool {
+        self.members
+            .lookup_user_id(caller)
+            .map_or(false, |u| self.invited_users.get(&u).is_some())
             || self.is_invite_code_valid(invite_code)
     }
 

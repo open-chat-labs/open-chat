@@ -1132,7 +1132,7 @@ impl GroupChatCore {
             }
 
             // The original caller must be authorized to invite other users
-            if !self.is_public.value && !member.role.can_invite_users(&self.permissions) {
+            if !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1143,7 +1143,7 @@ impl GroupChatCore {
                 .copied()
                 .collect();
 
-            if !self.is_public.value && !invited_users.is_empty() {
+            if !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
