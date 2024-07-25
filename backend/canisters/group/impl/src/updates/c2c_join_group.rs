@@ -40,7 +40,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         Err(ChatFrozen)
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
-    } else if state.data.get_invitation(caller).is_some() {
+    } else if state.data.get_invitation(args.principal).is_some() {
         Ok(None)
     } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
         Err(NotInvited)
