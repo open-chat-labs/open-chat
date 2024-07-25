@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1251](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1251-identity)] - 2024-07-25
+
 ### Changed
 
 - Only allow identities from approved originating canisters ([#6060](https://github.com/open-chat-labs/open-chat/pull/6060))
