@@ -5,7 +5,7 @@ use community_canister::add_members_to_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
 use ic_cdk::update;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::iter::zip;
 use types::{
     AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification,
@@ -57,7 +57,6 @@ async fn add_members_to_channel(args: Args) -> Response {
                         this_canister: prepare_result.this_canister,
                         unique_person_proof: None,
                         verified_credential_args: None,
-                        is_user_invited: prepare_result.invited.contains(user_id),
                         now: prepare_result.now_nanos,
                     },
                 )
@@ -107,7 +106,6 @@ struct PrepareResult {
     member_display_name: Option<String>,
     this_canister: CanisterId,
     now_nanos: TimestampNanos,
-    invited: HashSet<UserId>,
 }
 
 #[allow(clippy::result_large_err)]
@@ -150,7 +148,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     member_display_name: member.display_name().value.clone(),
                     this_canister: state.env.canister_id(),
                     now_nanos: state.env.now_nanos(),
-                    invited: channel.chat.invited_users.users().into_iter().collect(),
                 })
             } else {
                 Err(UserNotInChannel)
