@@ -373,7 +373,7 @@ type CommunityCanisterCommunitySummary = record {
     channels : vec CommunityCanisterChannelSummary;
     membership : opt CommunityMembership;
     user_groups : vec UserGroup;
-    is_invited : bool;
+    is_invited : opt bool;
     metrics : ChatMetrics;
 };
 
@@ -414,7 +414,7 @@ type CommunityCanisterChannelSummary = record {
     gate : opt AccessGate;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
-    is_invited : bool;
+    is_invited : opt bool;
 };
 
 type GroupMembership = record {
