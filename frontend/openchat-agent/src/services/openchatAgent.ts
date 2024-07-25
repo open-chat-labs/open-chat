@@ -3507,8 +3507,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     submitProofOfUniquePersonhood(
+        iiPrincipal: string,
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this._userIndexClient.submitProofOfUniquePersonhood(credential);
+        return this._userIndexClient.submitProofOfUniquePersonhood(iiPrincipal, credential);
     }
 }

@@ -488,10 +488,12 @@ export class UserIndexClient extends CandidService {
     }
 
     submitProofOfUniquePersonhood(
+        iiPrincipal: string,
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         return this.handleResponse(
             this.userIndexService.submit_proof_of_unique_personhood({
+                user_ii_principal: Principal.fromText(iiPrincipal),
                 credential_jwt: credential,
             }),
             submitProofOfUniquePersonhoodResponse,

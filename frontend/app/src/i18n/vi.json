@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương trọn đời mới được phép tham gia",
         "lifetimeDiamondGateInfo2": "Để tham gia {level} này, bạn bắt buộc phải có tư cách thành viên Kim cương trọn đời.",
         "lifetimeDiamondMember": "Thành viên kim cương trọn đời",
+        "lockedGate": "Đã khóa",
+        "lockedGateInfo": "{level} này đã bị khóa và không thể tham gia",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
         "minimumBalance": "Số dư mã thông báo tối thiểu",
