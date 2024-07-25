@@ -29,9 +29,7 @@
     export let level: Level;
     export let container: MultiUserChat | CommunitySummary;
 
-    $: canInvite =
-        client.canInviteUsers(container.id) &&
-        (container.kind !== "channel" || !client.isChatPrivate(container));
+    $: canInvite = client.canInviteUsers(container.id);
 
     const dispatch = createEventDispatcher();
     let usersToInvite: UserSummary[] = [];
@@ -68,38 +66,40 @@
 
 {#if !busy}
     <div class="find-user">
-        <CollapsibleCard open headerText={i18nKey("searchForUsername")}>
-            <SelectUsers
-                {userLookup}
-                mode={"edit"}
-                on:selectUser={selectUser}
-                on:deleteUser={deleteUser}
-                selectedUsers={usersToInvite} />
-        </CollapsibleCard>
         {#if canInvite}
-            <CollapsibleCard
-                open
-                headerText={i18nKey("invite.inviteWithLink", undefined, container.level, true)}>
-                <InviteUsersWithLink {container} />
+            <CollapsibleCard open headerText={i18nKey("searchForUsername")}>
+                <SelectUsers
+                    {userLookup}
+                    mode={"edit"}
+                    on:selectUser={selectUser}
+                    on:deleteUser={deleteUser}
+                    selectedUsers={usersToInvite} />
             </CollapsibleCard>
         {/if}
+        <CollapsibleCard
+            open
+            headerText={i18nKey("invite.inviteWithLink", undefined, container.level, true)}>
+            <InviteUsersWithLink {container} />
+        </CollapsibleCard>
     </div>
 {/if}
 
-{#if busy}
-    <Loading />
-{/if}
+{#if canInvite}
+    {#if busy}
+        <Loading />
+    {/if}
 
-<div class="cta">
-    <Button
-        disabled={busy || usersToInvite.length === 0}
-        loading={busy}
-        square
-        on:click={inviteUsers}
-        fill
-        ><Translatable
-            resourceKey={i18nKey("group.inviteUsers", undefined, level, true)} /></Button>
-</div>
+    <div class="cta">
+        <Button
+            disabled={busy || usersToInvite.length === 0}
+            loading={busy}
+            square
+            on:click={inviteUsers}
+            fill
+            ><Translatable
+                resourceKey={i18nKey("group.inviteUsers", undefined, level, true)} /></Button>
+    </div>
+{/if}
 
 <style lang="scss">
     :global(.find-user .find-user .search-form) {

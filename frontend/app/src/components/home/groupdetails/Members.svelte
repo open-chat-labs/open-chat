@@ -26,6 +26,7 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
+    import ButtonGroup from "../../ButtonGroup.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -54,9 +55,8 @@
     $: invitedUsers = Array.from(invited)
         .map((userId) => $userStore[userId])
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
-    $: publicCollection = collection.public;
-    $: showBlocked = publicCollection && blockedUsers.length > 0;
-    $: showInvited = !publicCollection && invitedUsers.length > 0;
+    $: showBlocked = blockedUsers.length > 0;
+    $: showInvited = invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     //$: platformModerator = client.platformModerator;
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
@@ -67,6 +67,8 @@
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
     let selectedTab: "users" | "groups" = "users";
+
+    $: console.log("Member view: ", memberView);
 
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
@@ -206,22 +208,25 @@
     </div>
 
     {#if showBlocked || showInvited}
-        <div class="section-selector">
-            <SelectionButton
-                title={$_("members")}
-                on:click={() => setView("members")}
-                selected={memberView === "members"} />
-            {#if showBlocked}
+        <div class="member-section-selector">
+            <ButtonGroup align="fill">
                 <SelectionButton
-                    title={$_("blocked")}
-                    on:click={() => setView("blocked")}
-                    selected={memberView === "blocked"} />
-            {:else}
-                <SelectionButton
-                    title={$_("invited")}
-                    on:click={() => setView("invited")}
-                    selected={memberView === "invited"} />
-            {/if}
+                    title={$_("members")}
+                    on:click={() => setView("members")}
+                    selected={memberView === "members"} />
+                {#if showInvited}
+                    <SelectionButton
+                        title={$_("invited")}
+                        on:click={() => setView("invited")}
+                        selected={memberView === "invited"} />
+                {/if}
+                {#if showBlocked}
+                    <SelectionButton
+                        title={$_("blocked")}
+                        on:click={() => setView("blocked")}
+                        selected={memberView === "blocked"} />
+                {/if}
+            </ButtonGroup>
         </div>
     {/if}
 
@@ -285,13 +290,21 @@
 {/if}
 
 <style lang="scss">
-    .section-selector {
-        display: flex;
-        justify-content: flex-start;
+    :global(.member-section-selector .button-group.fill) {
+        flex-wrap: nowrap;
+    }
+    :global(.member-section-selector button) {
+        padding: $sp2 0 !important;
+    }
+
+    .member-section-selector {
         margin: 0 $sp4 $sp4 $sp4;
-        gap: $sp3;
+        // display: flex;
+        // justify-content: flex-start;
+        // margin: 0 $sp4 $sp4 $sp4;
+        // gap: $sp3;
         @include mobile() {
-            justify-content: space-evenly;
+            // justify-content: space-evenly;
             margin: 0 $sp3 $sp3 $sp3;
         }
     }

@@ -287,7 +287,7 @@
                     color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        {#if client.canInviteUsers(selectedChatSummary.id)}
+        {#if selectedChatSummary.public || client.canInviteUsers(selectedChatSummary.id)}
             <span on:click={showInviteGroupUsers}>
                 <HoverIcon
                     title={interpolate(

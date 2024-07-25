@@ -16,9 +16,7 @@
 
     $: {
         if (!editing) {
-            permissions.mentionAllMembers = isPublic && isCommunityPublic
-                ? "admin"
-                : "member";
+            permissions.mentionAllMembers = isPublic && isCommunityPublic ? "admin" : "member";
         }
     }
 
@@ -47,12 +45,10 @@
             {roles}
             label={i18nKey("permissions.updateGroup")}
             bind:rolePermission={permissions.updateGroup} />
-        {#if !isPublic}
-            <SelectPermissionRole
-                {roles}
-                label={i18nKey("permissions.inviteUsers")}
-                bind:rolePermission={permissions.inviteUsers} />
-        {/if}
+        <SelectPermissionRole
+            {roles}
+            label={i18nKey("permissions.inviteUsers")}
+            bind:rolePermission={permissions.inviteUsers} />
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.removeMembers")}
