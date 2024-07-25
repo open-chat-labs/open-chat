@@ -429,6 +429,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'is_invited' : boolean,
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -477,6 +478,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'is_invited' : boolean,
   'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -2362,6 +2364,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'streak' : number,
   'username' : string,
+  'total_chit_earned' : number,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
@@ -2388,6 +2391,7 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
+  'total_chit_earned' : number,
   'chit_balance' : number,
 }
 export interface UsersBlocked {
