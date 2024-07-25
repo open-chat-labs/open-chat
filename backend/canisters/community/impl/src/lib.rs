@@ -149,7 +149,7 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn summary(&self, member: Option<&CommunityMemberInternal>) -> CommunityCanisterCommunitySummary {
+    pub fn summary(&self, member: Option<&CommunityMemberInternal>, is_invited: bool) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
         let (channels, membership) = if let Some(m) = member {
@@ -213,6 +213,7 @@ impl RuntimeState {
             channels,
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
+            is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
         }
     }

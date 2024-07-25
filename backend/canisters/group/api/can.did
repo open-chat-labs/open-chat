@@ -608,6 +608,7 @@ type PublicSummaryResponse = variant {
 
 type PublicSummarySuccess = record {
     summary : PublicGroupSummary;
+    is_invited : bool;
 };
 
 type RulesArgs = record {
