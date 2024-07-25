@@ -41,7 +41,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member)
+                        state.summary(member, false)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
@@ -139,12 +139,14 @@ fn is_permitted_to_join(
                         .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap(),
                 )))
-            } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
-                Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
             } else if channel.chat.members.is_blocked(&member.user_id) {
                 Err(UserBlocked)
+            } else if channel.chat.invited_users.get(&member.user_id).is_some() {
+                Ok(None)
+            } else if !channel.chat.is_public.value {
+                Err(NotInvited)
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| {
                     (
@@ -161,7 +163,6 @@ fn is_permitted_to_join(
                                 ii_canister_id: state.data.internet_identity_canister_id,
                                 ii_origin: vc.ii_origin,
                             }),
-                            is_user_invited: channel.chat.invited_users.contains(&member.user_id),
                             now: state.env.now(),
                         },
                     )

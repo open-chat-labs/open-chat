@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "Solo gli utenti con abbonamento Diamond a vita potranno iscriversi",
         "lifetimeDiamondGateInfo2": "Per iscriverti a questo {level} devi avere un abbonamento Diamond a vita.",
         "lifetimeDiamondMember": "Abbonamento Diamond a vita",
+        "lockedGate": "Bloccato",
+        "lockedGateInfo": "Questo {level} è bloccato e non è possibile unirsi",
         "minDissolveDelay": "Ritardo dissolvenza minimo (giorni)",
         "minDissolveDelayN": "Ritardo dissolvenza minimo {n} giorni",
         "minimumBalance": "Saldo minimo dei gettoni",

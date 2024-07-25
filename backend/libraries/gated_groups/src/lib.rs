@@ -31,7 +31,6 @@ pub struct CheckGateArgs {
     pub this_canister: CanisterId,
     pub unique_person_proof: Option<UniquePersonProof>,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
-    pub is_user_invited: bool,
     pub now: TimestampMillis,
 }
 
@@ -69,14 +68,6 @@ async fn check_non_composite_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
         AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
         AccessGate::Composite(_) => unreachable!(),
         AccessGate::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
-        AccessGate::Invited => check_invited_gate(args.is_user_invited),
-    }
-}
-
-fn check_invited_gate(is_user_invited: bool) -> CheckIfPassesGateResult {
-    match is_user_invited {
-        true => CheckIfPassesGateResult::Success,
-        false => CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotInvited),
     }
 }
 

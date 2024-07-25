@@ -48,6 +48,8 @@
         "lifetimeDiamondGateInfo": "生涯ダイヤモンド会員のみ参加できます",
         "lifetimeDiamondGateInfo2": "この {level} に参加するには、生涯ダイヤモンド メンバーシップが必要です。",
         "lifetimeDiamondMember": "生涯ダイヤモンド会員",
+        "lockedGate": "ロックされています",
+        "lockedGateInfo": "この{level}はロックされており、参加できません",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
         "minimumBalance": "最小トークン残高",

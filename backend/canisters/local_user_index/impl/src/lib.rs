@@ -24,7 +24,7 @@ use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -264,7 +264,6 @@ struct Data {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -278,22 +277,12 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
-    pub oc_secret_key_der: Option<Vec<u8>>,
-    #[serde(default)]
     pub oc_key_pair: P256KeyPair,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -353,7 +342,6 @@ impl Data {
             referral_codes: ReferralCodes::default(),
             rng_seed: [0; 32],
             video_call_operators,
-            oc_secret_key_der: None,
             oc_key_pair: oc_secret_key_der
                 .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
                 .unwrap_or_default(),
