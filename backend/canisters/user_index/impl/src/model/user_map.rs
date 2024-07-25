@@ -62,11 +62,12 @@ impl UserMap {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
+        is_oc_controlled_bot: bool,
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, is_bot);
+        let user = User::new(principal, user_id, username, now, referred_by, is_bot, is_oc_controlled_bot);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {

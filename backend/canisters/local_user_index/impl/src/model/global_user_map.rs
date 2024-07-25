@@ -11,16 +11,22 @@ pub struct GlobalUserMap {
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
+    #[serde(default)]
+    oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
 }
 
 impl GlobalUserMap {
-    pub fn add(&mut self, principal: Principal, user_id: UserId, is_bot: bool) {
+    pub fn add(&mut self, principal: Principal, user_id: UserId, is_bot: bool, is_oc_controlled_bot: bool) {
         self.user_id_to_principal.insert(user_id, principal);
         self.principal_to_user_id.insert(principal, user_id);
 
         if is_bot {
             self.bots.insert(user_id);
+
+            if is_oc_controlled_bot {
+                self.oc_controlled_bot_users.insert(user_id);
+            }
         }
     }
 
@@ -95,13 +101,16 @@ impl GlobalUserMap {
     }
 
     fn hydrate_user(&self, user_id: UserId, principal: Principal) -> GlobalUser {
+        let is_bot = self.bots.contains(&user_id);
+
         GlobalUser {
             user_id,
             principal,
-            is_bot: self.bots.contains(&user_id),
+            is_bot,
             is_platform_moderator: self.platform_moderators.contains(&user_id),
             diamond_membership_expires_at: self.diamond_membership_expiry_dates.get(&user_id).copied(),
             unique_person_proof: self.unique_person_proofs.get(&user_id).cloned(),
+            is_oc_controlled_bot: is_bot && self.oc_controlled_bot_users.contains(&user_id),
         }
     }
 }
