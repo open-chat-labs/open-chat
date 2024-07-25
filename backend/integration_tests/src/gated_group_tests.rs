@@ -6,8 +6,8 @@ use testing::rng::random_string;
 use types::{AccessGate, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
 #[test_case(true, false; "diamond_member")]
-#[test_case(false; false, "not_diamond_member")]
-#[test_case(false; true, "is_invited")]
+#[test_case(false, false; "not_diamond_member")]
+#[test_case(false, true; "is_invited")]
 fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
