@@ -245,7 +245,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
-            is_oc_controlled_bot: false,
+            user_type: UserType::User,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
