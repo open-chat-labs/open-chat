@@ -18,9 +18,9 @@ function createLastOnlineDatesStore() {
 
     return {
         subscribe: store.subscribe,
-        get: (userId: string, now: number): number | undefined => {
+        get: (userId: string, now: number): LastOnline | undefined => {
             const value = storeValue.get(userId);
-            return value !== undefined && !expired(value, now) ? value.lastOnline : undefined;
+            return value !== undefined && !expired(value, now) ? value : undefined;
         },
         set: (values: Iterable<[string, number]>, now: number): void => {
             store.update((map) => {
@@ -31,7 +31,10 @@ function createLastOnlineDatesStore() {
                     }
                 }
                 for (const [userId, lastOnline] of values) {
-                    newMap.set(userId, { lastOnline, updated: now });
+                    const current = newMap.get(userId);
+                    if (current === undefined || current.lastOnline < lastOnline) {
+                        newMap.set(userId, { lastOnline, updated: now });
+                    }
                 }
                 return newMap;
             });
