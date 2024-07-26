@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))

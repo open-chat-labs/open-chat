@@ -28,12 +28,6 @@ pub struct Channel {
 }
 
 impl Channels {
-    pub fn set_user_types(&mut self, oc_controlled_bots: &[UserId]) {
-        for channel in self.channels.values_mut() {
-            channel.chat.set_user_types(oc_controlled_bots);
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
