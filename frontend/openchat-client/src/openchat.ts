@@ -4954,7 +4954,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 lastOnlineCached.updated > now - 30 * 1000);
 
         if (cacheValid) {
-            return lastOnlineCached?.lastOnline;
+            return lastOnlineCached.lastOnline;
         } else {
             const response = await this.getLastOnlineDatesBatched([userId]);
             return response[userId];
