@@ -6,7 +6,7 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageAr
 use ic_cdk::update;
 use rand::Rng;
 use types::{
-    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, UserId,
+    DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, UserId, UserType,
     VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call::{Response::*, *};
@@ -107,7 +107,10 @@ pub fn handle_start_video_call(
     let chat = if let Some(c) = state.data.direct_chats.get_mut(&other.into()) {
         c
     } else {
-        state.data.direct_chats.create(other, false, state.env.rng().gen(), now)
+        state
+            .data
+            .direct_chats
+            .create(other, UserType::User, state.env.rng().gen(), now)
     };
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 

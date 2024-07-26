@@ -27,7 +27,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -397,8 +397,7 @@ impl Data {
             "ProposalsBot".to_string(),
             0,
             None,
-            true,
-            true,
+            UserType::OcControlledBot,
         );
 
         data

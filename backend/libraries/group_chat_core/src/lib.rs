@@ -17,8 +17,8 @@ use types::{
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
-    VideoCall,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules, VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -73,11 +73,11 @@ impl GroupChatCore {
         permissions: GroupPermissions,
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
-        is_bot: bool,
+        created_by_user_type: UserType,
         anonymized_chat_id: u128,
         now: TimestampMillis,
     ) -> GroupChatCore {
-        let members = GroupMembers::new(created_by, is_bot, now);
+        let members = GroupMembers::new(created_by, created_by_user_type, now);
         let events = ChatEvents::new_group_chat(
             chat,
             name.clone(),
@@ -532,7 +532,7 @@ impl GroupChatCore {
     pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
-        sender_is_bot: bool,
+        sender_user_type: UserType,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -548,7 +548,7 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -605,7 +605,7 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
-            sender_is_bot,
+            sender_user_type,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -642,7 +642,7 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
-            sender_is_bot,
+            sender_is_bot: sender_user_type.is_bot(),
             block_level_markdown,
             correlation_id: 0,
             now,
@@ -721,7 +721,7 @@ impl GroupChatCore {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
-                sender_is_bot: true,
+                sender_user_type: UserType::OcControlledBot,
             });
         }
 
@@ -756,7 +756,7 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
-            sender_is_bot: member.is_bot,
+            sender_user_type: member.user_type,
         })
     }
 
@@ -2069,5 +2069,5 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
-    sender_is_bot: bool,
+    sender_user_type: UserType,
 }

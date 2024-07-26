@@ -12,7 +12,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
     is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
-    HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS,
+    HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, UserType, Version, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -40,7 +40,7 @@ pub enum MemberUpdate {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    pub fn new(creator_user_id: UserId, is_bot: bool, now: TimestampMillis) -> GroupMembers {
+    pub fn new(creator_user_id: UserId, user_type: UserType, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
             date_added: now,
@@ -54,7 +54,8 @@ impl GroupMembers {
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
-            is_bot,
+            is_bot: user_type.is_bot(),
+            user_type,
         };
 
         GroupMembers {
@@ -74,7 +75,7 @@ impl GroupMembers {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
         notifications_muted: bool,
-        is_bot: bool,
+        user_type: UserType,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -96,7 +97,8 @@ impl GroupMembers {
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
                         rules_accepted: None,
-                        is_bot,
+                        is_bot: user_type.is_bot(),
+                        user_type,
                     };
                     e.insert(member.clone());
                     self.updates.insert((now, user_id, MemberUpdate::Added));
@@ -336,7 +338,8 @@ pub struct GroupMemberInternal {
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "b", default, skip_serializing_if = "is_default")]
     pub is_bot: bool,
-
+    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
+    pub user_type: UserType,
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
@@ -456,7 +459,7 @@ mod tests {
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::{Timestamped, Version};
+    use types::{Timestamped, UserType, Version};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -474,6 +477,7 @@ mod tests {
             min_visible_message_index: 0.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: false,
+            user_type: UserType::User,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
@@ -503,6 +507,7 @@ mod tests {
             min_visible_message_index: 1.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: true,
+            user_type: UserType::Bot,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
+use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -61,13 +61,12 @@ impl UserMap {
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
-        is_bot: bool,
-        is_oc_controlled_bot: bool,
+        user_type: UserType,
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, is_bot, is_oc_controlled_bot);
+        let user = User::new(principal, user_id, username, now, referred_by, user_type);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {

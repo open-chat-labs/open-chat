@@ -4,7 +4,9 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version,
+};
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
@@ -24,6 +26,7 @@ impl CommunityMembers {
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
+        creator_user_type: UserType,
         public_channels: Vec<ChannelId>,
         now: TimestampMillis,
     ) -> CommunityMembers {
@@ -35,7 +38,8 @@ impl CommunityMembers {
             channels: public_channels.into_iter().collect(),
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
-            is_bot: false,
+            is_bot: creator_user_type.is_bot(),
+            user_type: creator_user_type,
             display_name: Timestamped::default(),
         };
 
@@ -50,7 +54,7 @@ impl CommunityMembers {
         }
     }
 
-    pub fn add(&mut self, user_id: UserId, principal: Principal, is_bot: bool, now: TimestampMillis) -> AddResult {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, user_type: UserType, now: TimestampMillis) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
@@ -64,7 +68,8 @@ impl CommunityMembers {
                         channels: HashSet::new(),
                         channels_removed: Vec::new(),
                         rules_accepted: None,
-                        is_bot,
+                        is_bot: user_type.is_bot(),
+                        user_type,
                         display_name: Timestamped::default(),
                     };
                     e.insert(member.clone());
@@ -342,6 +347,8 @@ pub struct CommunityMemberInternal {
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
+    #[serde(default)]
+    pub user_type: UserType,
     display_name: Timestamped<Option<String>>,
 }
 

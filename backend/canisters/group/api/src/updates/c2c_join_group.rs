@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    GateCheckFailedReason, GroupCanisterGroupChatSummary, TimestampMillis, UniquePersonProof, UserId,
+    GateCheckFailedReason, GroupCanisterGroupChatSummary, TimestampMillis, UniquePersonProof, UserId, UserType,
     VerifiedCredentialGateArgs,
 };
 
@@ -13,6 +13,8 @@ pub struct Args {
     pub correlation_id: u64,
     pub is_platform_moderator: bool,
     pub is_bot: bool,
+    #[serde(default)]
+    pub user_type: UserType,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
     pub unique_person_proof: Option<UniquePersonProof>,

@@ -26,7 +26,7 @@ use std::time::Duration;
 use types::{
     AccessGate, Achievement, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
-    PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::c2c_notify_achievement;
@@ -341,6 +341,7 @@ impl Data {
         community_id: CommunityId,
         created_by_principal: Principal,
         created_by_user_id: UserId,
+        created_by_user_type: UserType,
         is_public: bool,
         name: String,
         description: String,
@@ -370,13 +371,20 @@ impl Data {
         let channels = Channels::new(
             community_id,
             created_by_user_id,
+            created_by_user_type,
             default_channels,
             default_channel_rules,
             is_public,
             rng,
             now,
         );
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
+        let members = CommunityMembers::new(
+            created_by_principal,
+            created_by_user_id,
+            created_by_user_type,
+            channels.public_channel_ids(),
+            now,
+        );
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {

@@ -3,7 +3,7 @@ use chat_events::{ChatInternal, ChatMetricsInternal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, TimestampMillis, Timestamped, UserId};
+use types::{ChatId, TimestampMillis, Timestamped, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -25,12 +25,12 @@ impl DirectChats {
     pub fn create(
         &mut self,
         their_user_id: UserId,
-        is_bot: bool,
+        their_user_type: UserType,
         anonymized_id: u128,
         now: TimestampMillis,
     ) -> &mut DirectChat {
         if let Vacant(e) = self.direct_chats.entry(their_user_id.into()) {
-            e.insert(DirectChat::new(their_user_id, is_bot, None, anonymized_id, now))
+            e.insert(DirectChat::new(their_user_id, their_user_type, None, anonymized_id, now))
         } else {
             unreachable!()
         }
