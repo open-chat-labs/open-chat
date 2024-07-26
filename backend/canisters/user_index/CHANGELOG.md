@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Special case registration of airdrop bot ([#6088](https://github.com/open-chat-labs/open-chat/pull/6088))
+
 ### Changed
 
 - Set `is_oc_controlled_bot` to true when registering the ProposalsBot ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))

@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -26,11 +27,27 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     mutate_state(|state| {
+        // TODO: remove this one-time only code
+        if state.data.test_mode {
+            state.data.airdrop_bot_canister_id = Principal::from_text("6pwwx-laaaa-aaaaf-bmy6a-cai").unwrap().into();
+        }
+
         state.push_event_to_all_local_user_indexes(
             local_user_index_canister::Event::UserRegistered(UserRegistered {
                 user_id: state.data.proposals_bot_canister_id.into(),
                 user_principal: state.data.proposals_bot_canister_id,
                 username: "ProposalsBot".to_string(),
+                is_bot: true,
+                user_type: UserType::OcControlledBot,
+                referred_by: None,
+            }),
+            None,
+        );
+        state.push_event_to_all_local_user_indexes(
+            local_user_index_canister::Event::UserRegistered(UserRegistered {
+                user_id: state.data.airdrop_bot_canister_id.into(),
+                user_principal: state.data.airdrop_bot_canister_id,
+                username: "AirdropBot".to_string(),
                 is_bot: true,
                 user_type: UserType::OcControlledBot,
                 referred_by: None,
