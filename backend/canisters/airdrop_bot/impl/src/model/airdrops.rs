@@ -101,8 +101,6 @@ impl Airdrops {
     }
 
     pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, i32)>, rng: &mut R) -> Option<&Airdrop> {
-        ic_cdk::println!("Execute - users: {users:?}");
-
         let config = self.next.take()?;
 
         let mut total_shares: u32 = 0;

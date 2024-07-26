@@ -77,7 +77,6 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
         Err(err) => {
-            ic_cdk::eprintln!("Failed to get local_user_index {err:?}");
             error!("Failed to get local_user_index {err:?}");
             mutate_state(|state| {
                 state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
@@ -99,7 +98,6 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     {
         Ok(_) => (),
         Err(err) => {
-            ic_cdk::eprintln!("Failed to join_channel{err:?}");
             error!("Failed to join_channel {err:?}");
             mutate_state(|state| {
                 state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
@@ -112,8 +110,6 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
 }
 
 async fn handle_transfer_action(action: AirdropTransfer) {
-    ic_cdk::println!("handle_transfer_action");
-
     let (this_canister_id, ledger_canister_id, now_nanos) = read_state(|state| {
         (
             state.env.canister_id(),
@@ -185,8 +181,6 @@ async fn handle_transfer_action(action: AirdropTransfer) {
 }
 
 async fn handle_main_message_action(action: AirdropMessage) {
-    ic_cdk::println!("handle_main_message_action");
-
     let AirdropType::Main(MainAidrop { chit, shares }) = action.airdrop_type else {
         return;
     };
@@ -232,8 +226,6 @@ async fn handle_main_message_action(action: AirdropMessage) {
 }
 
 async fn handle_lottery_message_action(action: AirdropMessage) {
-    ic_cdk::println!("handle_lottery_message_action");
-
     let AirdropType::Lottery(LotteryAirdrop { position }): AirdropType = action.airdrop_type else {
         return;
     };
