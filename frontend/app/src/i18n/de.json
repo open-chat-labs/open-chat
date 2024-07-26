@@ -7,6 +7,7 @@
         "amountN": "Anzahl {n} Token",
         "and": "Alle Tore anfordern",
         "approvePaymentTitle": "Zahlung genehmigen",
+        "bypassWarning": "⚠️ Benutzer, die ausdrücklich zu diesem {level} eingeladen sind, müssen die Zugangstore nicht passieren.",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
         "chooseGate": "Wählen Sie ein Zugangstor",
         "chooseNervousSystem": "Wählen Sie das Nervensystem",

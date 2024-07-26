@@ -856,15 +856,6 @@
         joining = group;
         const credentials = gateCheck?.credentials ?? [];
 
-        /**
-         * TODO What we are going to do is just filter out gates that apply to a thing that we've been invited to.
-         * In practice in the channel case, we will either already belong to the community or we won't. If we already
-         * belong we may be invited to the channel, if we don't we may be invited to the community, but we should
-         * never find that we are invited to both.
-         *
-         * also pick up Hamish's most recent changes
-         */
-
         if (gateCheck === undefined) {
             const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);

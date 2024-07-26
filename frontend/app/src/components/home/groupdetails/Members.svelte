@@ -297,12 +297,7 @@
 
     .member-section-selector {
         margin: 0 $sp4 $sp4 $sp4;
-        // display: flex;
-        // justify-content: flex-start;
-        // margin: 0 $sp4 $sp4 $sp4;
-        // gap: $sp3;
         @include mobile() {
-            // justify-content: space-evenly;
             margin: 0 $sp3 $sp3 $sp3;
         }
     }
