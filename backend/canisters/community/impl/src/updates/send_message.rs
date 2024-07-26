@@ -15,7 +15,7 @@ use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
-    TimestampMillis, User, UserId, Version,
+    TimestampMillis, User, UserId, UserType, Version,
 };
 
 #[update(candid = true, msgpack = true)]
@@ -37,7 +37,7 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Caller {
         user_id,
-        is_bot,
+        user_type,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -50,7 +50,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let result = channel.chat.validate_and_send_message(
             user_id,
-            is_bot,
+            user_type,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -88,7 +88,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
     let Caller {
         user_id,
-        is_bot,
+        user_type,
         display_name,
     } = match validate_caller(args.community_rules_accepted, state) {
         Ok(ok) => ok,
@@ -96,7 +96,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     };
 
     // Bots can't call this c2c endpoint since it skips the validation
-    if is_bot && user_id != state.data.proposals_bot_user_id && user_id != OPENCHAT_BOT_USER_ID {
+    if user_type.is_bot() && !user_type.is_oc_controlled_bot() {
         return NotAuthorized;
     }
 
@@ -142,7 +142,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 
 struct Caller {
     user_id: UserId,
-    is_bot: bool,
+    user_type: UserType,
     display_name: Option<String>,
 }
 
@@ -171,14 +171,14 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
 
             Ok(Caller {
                 user_id: member.user_id,
-                is_bot: member.is_bot,
+                user_type: member.user_type,
                 display_name: member.display_name().value.clone(),
             })
         }
     } else if caller == state.data.user_index_canister_id {
         Ok(Caller {
             user_id: OPENCHAT_BOT_USER_ID,
-            is_bot: true,
+            user_type: UserType::OcControlledBot,
             display_name: None,
         })
     } else {

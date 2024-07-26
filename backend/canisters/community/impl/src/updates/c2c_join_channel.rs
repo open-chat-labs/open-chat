@@ -30,6 +30,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             invite_code: args.invite_code,
             is_platform_moderator: args.is_platform_moderator,
             is_bot: args.is_bot,
+            user_type: args.user_type,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             verified_credential_args: args.verified_credential_args.clone(),
             unique_person_proof: args.unique_person_proof.clone(),
@@ -41,7 +42,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member, false)
+                        state.summary(member, None)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
@@ -241,7 +242,7 @@ pub(crate) fn join_channel_unchecked(
         min_visible_event_index,
         min_visible_message_index,
         notifications_muted,
-        member.is_bot,
+        member.user_type,
     );
 
     match &result {

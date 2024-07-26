@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::iter::zip;
 use types::{
     AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification,
-    TimestampNanos, UserId,
+    TimestampNanos, UserId, UserType,
 };
 
 #[update]
@@ -22,7 +22,7 @@ async fn add_members_to_channel(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let mut users_to_add: Vec<UserId> = Vec::new();
+    let mut users_to_add: Vec<(UserId, UserType)> = Vec::new();
     let mut users_failed_gate_check: Vec<UserFailedGateCheck> = Vec::new();
     let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
 
@@ -31,7 +31,7 @@ async fn add_members_to_channel(args: Args) -> Response {
             match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
                 prepare_result.local_user_index_canister_id,
                 &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args {
-                    user_ids: prepare_result.users_to_add.clone(),
+                    user_ids: prepare_result.users_to_add.iter().map(|(u, _)| *u).collect(),
                 },
             )
             .await
@@ -48,7 +48,7 @@ async fn add_members_to_channel(args: Args) -> Response {
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
-            .map(|user_id| {
+            .map(|(user_id, _)| {
                 check_if_passes_gate(
                     gate.clone(),
                     CheckGateArgs {
@@ -65,9 +65,9 @@ async fn add_members_to_channel(args: Args) -> Response {
 
         let results = futures::future::join_all(futures).await;
 
-        for (user_id, result) in zip(prepare_result.users_to_add, results) {
+        for ((user_id, user_type), result) in zip(prepare_result.users_to_add, results) {
             match result {
-                CheckIfPassesGateResult::Success => users_to_add.push(user_id),
+                CheckIfPassesGateResult::Success => users_to_add.push((user_id, user_type)),
                 CheckIfPassesGateResult::Failed(reason) => {
                     users_failed_gate_check.push(UserFailedGateCheck { user_id, reason })
                 }
@@ -89,8 +89,8 @@ async fn add_members_to_channel(args: Args) -> Response {
             users_to_add,
             prepare_result.users_already_in_channel,
             users_failed_gate_check,
+            prepare_result.users_not_in_community,
             users_failed_with_error,
-            prepare_result.is_bot,
             state,
         )
     })
@@ -98,11 +98,11 @@ async fn add_members_to_channel(args: Args) -> Response {
 
 struct PrepareResult {
     user_id: UserId,
-    users_to_add: Vec<UserId>,
+    users_to_add: Vec<(UserId, UserType)>,
     users_already_in_channel: Vec<UserId>,
+    users_not_in_community: Vec<UserId>,
     gate: Option<AccessGate>,
     local_user_index_canister_id: CanisterId,
-    is_bot: bool,
     member_display_name: Option<String>,
     this_canister: CanisterId,
     now_nanos: TimestampNanos,
@@ -132,19 +132,28 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     return Err(NotAuthorized);
                 }
 
-                let (users_already_in_channel, users_to_add): (Vec<_>, Vec<_>) = args
-                    .user_ids
-                    .iter()
-                    .copied()
-                    .partition(|id| channel.chat.members.contains(id));
+                let mut users_to_add = Vec::new();
+                let mut users_already_in_channel = Vec::new();
+                let mut users_not_in_community = Vec::new();
+                for user_id in args.user_ids.iter() {
+                    if let Some(member) = state.data.members.get_by_user_id(user_id) {
+                        if !channel.chat.members.contains(user_id) {
+                            users_to_add.push((*user_id, member.user_type));
+                        } else {
+                            users_already_in_channel.push(*user_id);
+                        }
+                    } else {
+                        users_not_in_community.push(*user_id);
+                    }
+                }
 
                 Ok(PrepareResult {
                     user_id,
                     users_to_add,
                     users_already_in_channel,
+                    users_not_in_community,
                     gate: channel.chat.gate.as_ref().cloned(),
                     local_user_index_canister_id: state.data.local_user_index_canister_id,
-                    is_bot: member.is_bot,
                     member_display_name: member.display_name().value.clone(),
                     this_canister: state.env.canister_id(),
                     now_nanos: state.env.now_nanos(),
@@ -166,11 +175,11 @@ fn commit(
     added_by_name: String,
     added_by_display_name: Option<String>,
     channel_id: ChannelId,
-    users_to_add: Vec<UserId>,
+    users_to_add: Vec<(UserId, UserType)>,
     mut users_already_in_channel: Vec<UserId>,
     users_failed_gate_check: Vec<UserFailedGateCheck>,
+    _users_not_in_community: Vec<UserId>,
     mut users_failed_with_error: Vec<UserFailedError>,
-    is_bot: bool,
     state: &mut RuntimeState,
 ) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
@@ -188,14 +197,14 @@ fn commit(
         let mut users_added: Vec<UserId> = Vec::new();
         let mut users_limit_reached: Vec<UserId> = Vec::new();
 
-        for user_id in users_to_add {
+        for (user_id, user_type) in users_to_add {
             match channel.chat.members.add(
                 user_id,
                 now,
                 min_visible_event_index,
                 min_visible_message_index,
                 channel.chat.is_public.value,
-                is_bot,
+                user_type,
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);
