@@ -153,7 +153,9 @@ impl Airdrops {
 
         for i in 0..prizes {
             let winning_ticket = (rng.next_u32() % ticket_holders.len() as u32) as usize;
+
             let winner = ticket_holders.remove(winning_ticket);
+
             lottery_winners.push((
                 winner,
                 Prize {
