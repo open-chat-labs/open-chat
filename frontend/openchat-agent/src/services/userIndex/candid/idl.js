@@ -34,6 +34,14 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
   });
+  const ChitBalancesArgs = IDL.Record({
+    'month' : IDL.Nat8,
+    'year' : IDL.Nat16,
+    'users' : IDL.Vec(UserId),
+  });
+  const ChitBalancesResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'balances' : IDL.Vec(IDL.Int32) }),
+  });
   const EmptyArgs = IDL.Record({});
   const ChitUserBalance = IDL.Record({
     'username' : IDL.Text,
@@ -221,6 +229,7 @@ export const idlFactory = ({ IDL }) => {
   const UserSummary = IDL.Record({
     'streak' : IDL.Nat16,
     'username' : IDL.Text,
+    'total_chit_earned' : IDL.Int32,
     'diamond_member' : IDL.Bool,
     'diamond_membership_status' : DiamondMembershipStatus,
     'is_unique_person' : IDL.Bool,
@@ -355,6 +364,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserSummaryVolatile = IDL.Record({
     'streak' : IDL.Nat16,
+    'total_chit_earned' : IDL.Int32,
     'chit_balance' : IDL.Int32,
   });
   const UserSummaryV2 = IDL.Record({
@@ -408,6 +418,11 @@ export const idlFactory = ({ IDL }) => {
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
+        ['query'],
+      ),
+    'chit_balances' : IDL.Func(
+        [ChitBalancesArgs],
+        [ChitBalancesResponse],
         ['query'],
       ),
     'chit_leaderboard' : IDL.Func(

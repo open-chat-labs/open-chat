@@ -7,6 +7,7 @@
         "amountN": "Ilość tokenów {n}",
         "and": "Wymagaj wszystkich bram",
         "approvePaymentTitle": "Zatwierdź płatność",
+        "bypassWarning": "⚠️ Użytkownicy wyraźnie zaproszeni do tego {level} nie będą musieli przechodzić przez bramki dostępu",
         "cannotMakePublic": "Nie możesz ustawić prywatnego {level} jako publicznego, ponieważ zagroziłoby to prywatności istniejących członków.",
         "chooseGate": "Wybierz bramę dostępową",
         "chooseNervousSystem": "Wybierz układ nerwowy",

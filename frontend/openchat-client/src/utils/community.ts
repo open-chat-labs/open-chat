@@ -66,10 +66,7 @@ export function canUnblockUsers(community: CommunitySummary): boolean {
 }
 
 export function canInviteUsers(community: CommunitySummary): boolean {
-    return (
-        community.public ||
-        isPermitted(community.membership.role, community.permissions.inviteUsers)
-    );
+    return isPermitted(community.membership.role, community.permissions.inviteUsers);
 }
 
 export function canRemoveMembers(community: CommunitySummary): boolean {

@@ -1094,7 +1094,7 @@ export function canInviteUsers(chat: ChatSummary): boolean {
     return (
         chat.kind !== "direct_chat" &&
         !chat.frozen &&
-        (chat.public || isPermitted(chat.membership.role, chat.permissions.inviteUsers))
+        isPermitted(chat.membership.role, chat.permissions.inviteUsers)
     );
 }
 

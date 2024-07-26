@@ -45,5 +45,6 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         metrics: emptyChatMetrics(),
         userGroups: new Map(),
         localUserIndex: "",
+        isInvited: false,
     };
 }

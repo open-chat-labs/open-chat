@@ -1370,6 +1370,7 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        isInvited: boolean;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1397,6 +1398,7 @@ export type GroupChatSummary = DataContent &
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
         localUserIndex: string;
+        isInvited: boolean;
     };
 
 export function nullMembership(): ChatMembership {

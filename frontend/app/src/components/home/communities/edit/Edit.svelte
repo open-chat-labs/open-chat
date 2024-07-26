@@ -225,9 +225,7 @@
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
-                        <PermissionsEditor
-                            isPublic={candidate.public}
-                            bind:permissions={candidate.permissions} />
+                        <PermissionsEditor bind:permissions={candidate.permissions} />
                     {:else}
                         <PermissionsViewer
                             isPublic={candidate.public}

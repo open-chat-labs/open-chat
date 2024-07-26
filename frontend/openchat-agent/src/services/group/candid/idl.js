@@ -1054,7 +1054,10 @@ export const idlFactory = ({ IDL }) => {
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
-  const PublicSummarySuccess = IDL.Record({ 'summary' : PublicGroupSummary });
+  const PublicSummarySuccess = IDL.Record({
+    'is_invited' : IDL.Bool,
+    'summary' : PublicGroupSummary,
+  });
   const PublicSummaryResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : PublicSummarySuccess,

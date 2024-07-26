@@ -12,7 +12,10 @@ import {
     CommonResponses,
 } from "openchat-shared";
 
-export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
+export function publicGroupSummary(
+    candid: ApiPublicGroupSummary,
+    isInvited: boolean,
+): GroupChatSummary {
     return {
         kind: "group_chat",
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -58,6 +61,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         level: "group",
         membership: nullMembership(),
         localUserIndex: candid.local_user_index_canister_id.toString(),
+        isInvited,
     };
 }
 
@@ -67,7 +71,7 @@ export function publicSummaryResponse(
     if ("Success" in candid) {
         return {
             kind: "success",
-            group: publicGroupSummary(candid.Success.summary),
+            group: publicGroupSummary(candid.Success.summary, candid.Success.is_invited),
         };
     } else {
         console.warn("ApiPublicSummaryResponse failed with ", candid);

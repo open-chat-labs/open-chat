@@ -80,6 +80,7 @@ const defaultGroupChat: GroupChatSummary = {
         ],
     },
     localUserIndex: "",
+    isInvited: false,
 };
 
 function createUser(userId: string, username: string): UserSummary {

@@ -273,6 +273,7 @@ export function mergeGroupChatUpdates(
             },
             localUserIndex: c.localUserIndex,
             videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),
+            isInvited: false,
         };
     });
 }
@@ -328,6 +329,7 @@ export function mergeGroupChats(
             },
             localUserIndex: g.localUserIndex,
             videoCallInProgress: g.videoCallInProgress,
+            isInvited: false,
         };
     });
 }

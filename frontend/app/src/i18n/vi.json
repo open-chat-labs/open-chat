@@ -7,6 +7,7 @@
         "amountN": "Số lượng mã thông báo {n}",
         "and": "Yêu cầu tất cả các cổng",
         "approvePaymentTitle": "Phê duyệt thanh toán",
+        "bypassWarning": "⚠️ Bất kỳ người dùng nào được mời rõ ràng vào {level} này sẽ không phải vượt qua cổng truy cập",
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
         "chooseGate": "Chọn một cổng truy cập",
         "chooseNervousSystem": "Chọn hệ thần kinh",
