@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data, jobs};
+use crate::{jobs, mutate_state, Data};
 use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -48,7 +48,7 @@ fn post_upgrade(args: Args) {
                 is_bot: true,
                 user_type: UserType::OcControlledBot,
                 referred_by: None,
-            })
+            }),
         ];
 
         for canister_id in state.data.local_index_map.canisters() {
