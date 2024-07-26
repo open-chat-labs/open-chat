@@ -2066,7 +2066,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         primaryLanguage: candid.primary_language,
         userGroups: new Map(candid.user_groups.map(userGroup)),
         localUserIndex,
-        isInvited: candid.is_invited,
+        isInvited: optional(candid.is_invited, identity) ?? false,
     };
 }
 
@@ -2129,7 +2129,7 @@ export function communityChannelSummary(
             archived: false,
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
-        isInvited: candid.is_invited,
+        isInvited: optional(candid.is_invited, identity) ?? false,
     };
 }
 
