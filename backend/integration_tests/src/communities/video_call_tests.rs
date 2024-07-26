@@ -4,6 +4,7 @@ use crate::utils::{generate_seed, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
+use jwt_simple::common::VerificationOptions;
 use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;

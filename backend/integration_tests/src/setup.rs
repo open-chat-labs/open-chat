@@ -501,10 +501,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     // Tick a load of times so that all the child canisters have time to get installed
     tick_many(env, 10);
 
-    client::airdrop_bot::happy_path::initialize(env, controller, airdrop_bot_canister_id);
-
-    tick_many(env, 3);
-
     CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,

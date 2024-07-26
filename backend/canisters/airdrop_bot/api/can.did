@@ -1,22 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type InitializeBotArgs = record {
-    username : text;
-    display_name : opt text;
-};
-
-type InitializeBotResponse = variant {
-    Success;
-    AlreadyRegistered;
-    UserLimitReached;
-    UsernameTaken;
-    UsernameInvalid;
-    UsernameTooShort : nat16;
-    UsernameTooLong : nat16;
-    InsufficientCyclesProvided : Cycles;
-    InternalError : text;
-};
-
 type SetAvatarArgs = record {
     avatar : opt Document;
 };
@@ -48,7 +31,6 @@ type SetAirdropResponse = variant {
 };
 
 service : {
-    initialize_bot : (InitializeBotArgs) -> (InitializeBotResponse);
     set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
     set_airdrop : (SetAirdropArgs) -> (SetAirdropResponse);
     cancel_airdrop : (EmptyArgs) -> (CancelAirdropResponse);

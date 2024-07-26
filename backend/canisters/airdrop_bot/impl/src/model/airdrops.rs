@@ -101,6 +101,8 @@ impl Airdrops {
     }
 
     pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, i32)>, rng: &mut R) -> Option<&Airdrop> {
+        ic_cdk::println!("Execute - users: {users:?}");
+
         let config = self.next.take()?;
 
         let mut total_shares: u32 = 0;
@@ -121,6 +123,10 @@ impl Airdrops {
             for _n in 0..tickets {
                 ticket_holders.push(user_id);
             }
+        }
+
+        if total_tickets == 0 || total_shares == 0 {
+            return None;
         }
 
         let fund = config.main_chat_fund;

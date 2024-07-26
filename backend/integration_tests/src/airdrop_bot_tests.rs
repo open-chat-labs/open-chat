@@ -5,6 +5,7 @@ use airdrop_bot_canister::set_airdrop;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{AccessGate, ChatEvent, EventIndex, GroupRole, Message, MessageContent, UserId};
+use utils::time::MonthKey;
 
 #[test]
 fn airdrop_end_to_end() {
@@ -16,11 +17,6 @@ fn airdrop_end_to_end() {
         ..
     } = wrapper.env();
 
-    let airdrop_bot_user_id: UserId = canister_ids.airdrop_bot.into();
-
-    let airdrop_bot_user_summary = client::user_index::happy_path::user(env, canister_ids.user_index, airdrop_bot_user_id);
-    assert_eq!(airdrop_bot_user_summary.username, "AirdropBot".to_string());
-
     // Setup the environment for the test...
     // Create 1 owner and 5 other users
     // Owner creates the airdrop community
@@ -29,6 +25,8 @@ fn airdrop_end_to_end() {
     // Transfer 85,001 CHAT to the airdrop_bot canister
     // Owner invites the airdrop_bot to the channel
     //
+    let airdrop_bot_user_id: UserId = canister_ids.airdrop_bot.into();
+
     let owner = client::register_diamond_user(env, canister_ids, *controller);
 
     let community_id =
@@ -75,9 +73,13 @@ fn airdrop_end_to_end() {
         vec![airdrop_bot_user_id],
     );
 
-    // Set the airdrop to start in 1 second and assert success
+    // Set the airdrop to start just after the beginning of the next month
     // This will also join the airdrop_bot to the channel
     //
+    let airdrop_month = MonthKey::from_timestamp(now_millis(env));
+    let next_month = airdrop_month.next();
+    let start_airdrop = next_month.start_timestamp() + 10000;
+
     let response = client::airdrop_bot::set_airdrop(
         env,
         *controller,
@@ -85,7 +87,7 @@ fn airdrop_end_to_end() {
         &airdrop_bot_canister::set_airdrop::Args {
             community_id,
             channel_id,
-            start: now_millis(env) + 1000,
+            start: start_airdrop,
             main_chat_fund: 65_000,
             main_chit_band: 500,
             lottery_prizes: vec![12_000, 5_000, 3_000],
@@ -108,8 +110,9 @@ fn airdrop_end_to_end() {
         GroupRole::Owner,
     );
 
-    // Advance time by a second to start the airdrop
-    env.advance_time(Duration::from_millis(1010));
+    // Advance time to just after the airdrop is due
+    env.advance_time(Duration::from_millis(1000 + start_airdrop - now_millis(env)));
+
     tick_many(env, 10);
 
     // Assert the channel is now locked

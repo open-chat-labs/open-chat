@@ -566,26 +566,6 @@ async fn install_service_canisters_impl(
         panic!("{add_notifications_canister_response:?}");
     }
 
-    println!("Initializing Airdrop Bot...");
-
-    let initialize_airdrop_bot_response = airdrop_bot_canister_client::initialize_bot(
-        agent,
-        &canister_ids.airdrop_bot,
-        &airdrop_bot_canister::initialize_bot::Args {
-            username: "AirdropBot".to_string(),
-            display_name: Some("Airdrop Bot".to_string()),
-        },
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        initialize_airdrop_bot_response,
-        airdrop_bot_canister::initialize_bot::Response::Success
-    ) {
-        panic!("{initialize_airdrop_bot_response:?}");
-    }
-
     println!("Canister wasms installed");
 }
 

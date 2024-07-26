@@ -3,6 +3,7 @@ use crate::model::pending_actions_queue::{Action, AirdropTransfer, AirdropType, 
 use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
+use std::iter::zip;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{AccessGate, CanisterId, OptionUpdate, UserId};
@@ -118,10 +119,12 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     // Call the user_index to get the particpants' CHIT balances for the given month
     let mk = MonthKey::from_timestamp(config.start).previous();
 
-    let particpants = match user_index_canister_c2c_client::chit_balances(
+    let users: Vec<UserId> = members.into_iter().map(|m| m.user_id).collect();
+
+    let balances = match user_index_canister_c2c_client::chit_balances(
         user_index_canister_id,
         &user_index_canister::chit_balances::Args {
-            users: members.into_iter().map(|m| m.user_id).collect(),
+            users: users.clone(),
             year: mk.year() as u16,
             month: mk.month(),
         },
@@ -138,8 +141,10 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
     };
 
+    let user_balances = zip(users, balances).collect();
+
     // Execute the airdrop
-    mutate_state(|state| execute_airdrop(particpants.into_iter().collect(), state));
+    mutate_state(|state| execute_airdrop(user_balances, state));
 }
 
 fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
