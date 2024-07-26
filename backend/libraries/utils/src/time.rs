@@ -21,7 +21,7 @@ pub const MONTHS: [&str; 12] = [
     "August",
     "September",
     "October",
-    "Novemeber",
+    "November",
     "December",
 ];
 
