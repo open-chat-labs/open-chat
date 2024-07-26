@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
 - Hack to include all built up CHIT in the July airdrop ([#6104](https://github.com/open-chat-labs/open-chat/pull/6104))
 - Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
 
 ## [[2.0.1243](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1243-user)] - 2024-07-17
 

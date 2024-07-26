@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bypass gates if user is invited ([#6110](https://github.com/open-chat-labs/open-chat/pull/6110))
 - Return `is_invited` when previewing a group ([#6113](https://github.com/open-chat-labs/open-chat/pull/6113))
 - Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
 
 ### Fixed
 
