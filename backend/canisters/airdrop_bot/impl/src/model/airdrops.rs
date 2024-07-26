@@ -121,7 +121,7 @@ impl Airdrops {
             }
         }
 
-        if ticket_holders.is_empty() || total_shares == 0 {
+        if total_shares == 0 {
             return None;
         }
 
@@ -152,6 +152,10 @@ impl Airdrops {
         let mut lottery_winners = Vec::new();
 
         for i in 0..prizes {
+            if ticket_holders.is_empty() {
+                break;
+            }
+
             let winning_ticket = (rng.next_u32() % ticket_holders.len() as u32) as usize;
 
             let winner = ticket_holders.remove(winning_ticket);
@@ -163,10 +167,6 @@ impl Airdrops {
                     block_index: None,
                 },
             ));
-
-            if ticket_holders.is_empty() {
-                break;
-            }
         }
 
         let airdrop = Airdrop {
