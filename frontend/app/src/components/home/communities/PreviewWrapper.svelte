@@ -52,7 +52,7 @@
             };
 
             if (gateCheck === undefined) {
-                if ($selectedCommunity.gate.kind !== "no_gate") {
+                if ($selectedCommunity.gate.kind !== "no_gate" && !$selectedCommunity.isInvited) {
                     const gates = [$selectedCommunity.gate];
                     const passed = client.doesUserMeetAccessGates(gates);
                     if (!passed) {

@@ -68,8 +68,6 @@
     let memberView: "members" | "blocked" | "invited" = "members";
     let selectedTab: "users" | "groups" = "users";
 
-    $: console.log("Member view: ", memberView);
-
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
 

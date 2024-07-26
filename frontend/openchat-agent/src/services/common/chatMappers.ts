@@ -2019,6 +2019,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             rulesAccepted: candid.rules_accepted,
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
+        isInvited: false, // this is only applicable when we are not a member
     };
 }
 
@@ -2065,6 +2066,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         primaryLanguage: candid.primary_language,
         userGroups: new Map(candid.user_groups.map(userGroup)),
         localUserIndex,
+        isInvited: candid.is_invited,
     };
 }
 
@@ -2127,6 +2129,7 @@ export function communityChannelSummary(
             archived: false,
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
+        isInvited: candid.is_invited,
     };
 }
 

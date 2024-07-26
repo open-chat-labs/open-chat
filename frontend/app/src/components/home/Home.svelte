@@ -843,7 +843,7 @@
     /**
      * When we try to join a group we need to first scrutinise the access gates and
      * see whether any of them require client side action before we can proceed with the
-     * call to the back end. I there are gates which require action, we need to perform
+     * call to the back end. If there are gates which require action, we need to perform
      * those actions one by one until they are all done and then feed their results
      * back into this function.
      */
@@ -856,8 +856,17 @@
         joining = group;
         const credentials = gateCheck?.credentials ?? [];
 
+        /**
+         * TODO What we are going to do is just filter out gates that apply to a thing that we've been invited to.
+         * In practice in the channel case, we will either already belong to the community or we won't. If we already
+         * belong we may be invited to the channel, if we don't we may be invited to the community, but we should
+         * never find that we are invited to both.
+         *
+         * also pick up Hamish's most recent changes
+         */
+
         if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group);
+            const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);
 
             if (!passed) {

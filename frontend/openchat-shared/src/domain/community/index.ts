@@ -75,6 +75,7 @@ export type CommunitySummary = AccessControlled &
         primaryLanguage: string;
         userGroups: Map<number, UserGroupSummary>;
         localUserIndex: string;
+        isInvited: boolean;
     };
 
 export type DefaultChannel = {

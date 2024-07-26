@@ -4166,19 +4166,28 @@ export class OpenChat extends OpenChatAgentWorker {
      * When joining a channel it is possible that both the channel & the community
      * have access gates so we need to work out all applicable gates for the chat
      * Note that we only return gates if we are not already a member.
+     * We may also optionally exclude gates for things we are invited to in some scenarios.
      */
-    accessGatesForChat(chat: MultiUserChat): AccessGateWithLevel[] {
+    accessGatesForChat(
+        chat: MultiUserChat,
+        excludeInvited: boolean = false,
+    ): AccessGateWithLevel[] {
         const gates: AccessGateWithLevel[] = [];
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (
             community !== undefined &&
             community.gate.kind !== "no_gate" &&
-            community.membership.role === "none"
+            community.membership.role === "none" &&
+            (!community.isInvited || !excludeInvited)
         ) {
             gates.push({ level: "community", ...community.gate });
         }
-        if (chat.gate.kind !== "no_gate" && chat.membership.role === "none") {
+        if (
+            chat.gate.kind !== "no_gate" &&
+            chat.membership.role === "none" &&
+            (!chat.isInvited || !excludeInvited)
+        ) {
             gates.push({ level: chat.level, ...chat.gate });
         }
         return gates;
