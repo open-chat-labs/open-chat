@@ -161,6 +161,10 @@ impl Airdrops {
                     block_index: None,
                 },
             ));
+
+            if ticket_holders.is_empty() {
+                break;
+            }
         }
 
         let airdrop = Airdrop {
