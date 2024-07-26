@@ -20,6 +20,7 @@ async fn join_channel(args: Args) -> Response {
         invite_code: args.invite_code,
         is_platform_moderator: user_details.is_platform_moderator,
         is_bot: user_details.is_bot,
+        user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
         verified_credential_args: args.verified_credential_args.clone(),
         unique_person_proof: user_details.unique_person_proof.clone(),

@@ -1,6 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, BuildVersion, CanisterId, CommunityPermissions, Document, Milliseconds, Rules, SourceGroup, UserId};
+use types::{
+    AccessGate, BuildVersion, CanisterId, CommunityPermissions, Document, Milliseconds, Rules, SourceGroup, UserId, UserType,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -14,6 +16,8 @@ pub struct Args {
     pub primary_language: String,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
+    #[serde(default)]
+    pub created_by_user_type: UserType,
     pub mark_active_duration: Milliseconds,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,

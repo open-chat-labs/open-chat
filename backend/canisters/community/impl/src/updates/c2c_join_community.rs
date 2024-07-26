@@ -41,7 +41,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-                    Success(Box::new(state.summary(Some(member), false)))
+                    Success(Box::new(state.summary(Some(member), None)))
                 } else {
                     InternalError("User not found in community".to_string())
                 }
@@ -58,7 +58,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     if caller == state.data.user_index_canister_id {
         Ok(None)
     } else if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-        Err(AlreadyInCommunity(Box::new(state.summary(Some(member), false))))
+        Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))))
     } else if state.data.members.is_blocked(&args.user_id) {
         Err(UserBlocked)
     } else if state.data.is_frozen() {
@@ -112,7 +112,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
     }
 
-    match state.data.members.add(args.user_id, args.principal, args.is_bot, now) {
+    match state.data.members.add(args.user_id, args.principal, args.user_type, now) {
         AddResult::Success(_) => {
             let invitation = state.data.invited_users.remove(&args.user_id, now);
 
@@ -135,7 +135,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
         }
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
-            let summary = state.summary(Some(member), false);
+            let summary = state.summary(Some(member), None);
             Err(AlreadyInCommunity(Box::new(summary)))
         }
         AddResult::Blocked => Err(UserBlocked),

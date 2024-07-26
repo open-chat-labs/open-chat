@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -28,9 +28,17 @@ pub struct Channel {
 }
 
 impl Channels {
+    pub fn set_user_types(&mut self, oc_controlled_bots: &[UserId]) {
+        for channel in self.channels.values_mut() {
+            channel.chat.set_user_types(oc_controlled_bots);
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
+        created_by_user_type: UserType,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
@@ -48,6 +56,7 @@ impl Channels {
                         community_id,
                         name,
                         created_by,
+                        created_by_user_type,
                         default_channel_rules.clone(),
                         is_community_public,
                         rng.gen(),
@@ -182,6 +191,7 @@ impl Channel {
         community_id: CommunityId,
         name: String,
         created_by: UserId,
+        created_by_user_type: UserType,
         channel_rules: Option<Rules>,
         is_community_public: bool,
         anonymized_id: u128,
@@ -207,7 +217,7 @@ impl Channel {
                 permissions,
                 None,
                 None,
-                false,
+                created_by_user_type,
                 anonymized_id,
                 now,
             ),
@@ -226,12 +236,16 @@ impl Channel {
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
         let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index(), false)
+            (member.min_visible_event_index(), member.min_visible_message_index(), None)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
-            (invitation.min_visible_event_index, invitation.min_visible_message_index, true)
+            (
+                invitation.min_visible_event_index,
+                invitation.min_visible_message_index,
+                Some(true),
+            )
         } else if chat.is_public.value {
             let (e, m) = chat.min_visible_indexes_for_new_members.unwrap_or_default();
-            (e, m, false)
+            (e, m, Some(false))
         } else {
             return None;
         };

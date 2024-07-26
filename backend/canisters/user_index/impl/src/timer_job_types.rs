@@ -262,6 +262,7 @@ impl Job for JoinUserToGroup {
                     correlation_id: 0,
                     is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
                     is_bot: u.is_bot,
+                    user_type: u.user_type,
                     diamond_membership_expires_at: state
                         .data
                         .users

@@ -2,7 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
     MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved,
-    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, UserType, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -250,7 +250,7 @@ impl MessageContentInitial {
     pub fn validate_for_new_message(
         &self,
         is_direct_chat: bool,
-        sender_is_bot: bool,
+        sender_user_type: UserType,
         forwarding: bool,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
@@ -279,11 +279,6 @@ impl MessageContentInitial {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
                 }
             }
-            MessageContentInitial::P2PSwap(_) => {
-                if sender_is_bot {
-                    return Err(ContentValidationError::Unauthorized);
-                }
-            }
             MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_) => {
@@ -291,6 +286,10 @@ impl MessageContentInitial {
             }
             _ => {}
         };
+
+        if self.contains_crypto_transfer() && sender_user_type.is_bot() && !sender_user_type.is_oc_controlled_bot() {
+            return Err(ContentValidationError::Unauthorized);
+        }
 
         let is_empty = match self {
             MessageContentInitial::Text(t) => t.text.is_empty(),

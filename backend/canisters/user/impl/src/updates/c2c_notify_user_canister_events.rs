@@ -12,7 +12,8 @@ use chat_events::{
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
-    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, VideoCallPresence,
+    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, UserType,
+    VideoCallPresence,
 };
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
@@ -24,10 +25,11 @@ async fn c2c_notify_user_canister_events(args: Args) -> Response {
     run_regular_jobs();
 
     let caller_user_id = match read_state(get_sender_status) {
-        crate::updates::c2c_send_messages::SenderStatus::Ok(user_id) => user_id,
+        crate::updates::c2c_send_messages::SenderStatus::Ok(user_id, UserType::User) => user_id,
+        crate::updates::c2c_send_messages::SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),
         crate::updates::c2c_send_messages::SenderStatus::Blocked => return Blocked,
         crate::updates::c2c_send_messages::SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !verify_user(local_user_index_canister_id, user_id, false).await {
+            if !matches!(verify_user(local_user_index_canister_id, user_id).await, Some(UserType::User)) {
                 panic!("This request is not from an OpenChat user");
             }
             user_id
@@ -138,7 +140,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 content: message.content,
                 replies_to: message.replies_to,
                 forwarding: message.forwarding,
-                is_bot: false,
+                sender_user_type: UserType::User,
                 sender_avatar_id: args.sender_avatar_id,
                 push_message_sent_event: false,
                 mute_notification: message.message_filter_failed.is_some(),

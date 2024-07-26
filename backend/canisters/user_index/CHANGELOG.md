@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Set `is_oc_controlled_bot` to true when registering the ProposalsBot ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+
 ## [[2.0.1255](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1255-user_index)] - 2024-07-25
 
 ### Added

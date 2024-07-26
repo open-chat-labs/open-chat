@@ -30,7 +30,7 @@ pub struct CommunityCanisterChannelSummary {
     pub gate: Option<AccessGate>,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
-    pub is_invited: bool,
+    pub is_invited: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

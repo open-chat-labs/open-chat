@@ -29,7 +29,7 @@ use types::{
     AccessGate, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document,
     Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
     MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
-    MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::c2c_notify_achievement;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -236,7 +236,7 @@ impl RuntimeState {
             args.min_visible_event_index,
             args.min_visible_message_index,
             args.mute_notifications,
-            args.is_bot,
+            args.user_type,
         );
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
@@ -476,6 +476,7 @@ impl Data {
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
+        creator_user_type: UserType,
         events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
@@ -507,7 +508,7 @@ impl Data {
             permissions.unwrap_or_default(),
             gate,
             events_ttl,
-            proposals_bot_user_id == creator_user_id,
+            creator_user_type,
             anonymized_chat_id,
             now,
         );
@@ -705,7 +706,7 @@ struct AddMemberArgs {
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
     mute_notifications: bool,
-    is_bot: bool,
+    user_type: UserType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

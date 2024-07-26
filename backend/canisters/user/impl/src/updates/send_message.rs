@@ -12,7 +12,7 @@ use rand::Rng;
 use types::{
     Achievement, BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError,
     CryptoTransaction, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation,
-    TimestampMillis, UserId,
+    TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -25,21 +25,21 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let (my_user_id, user_type) = match mutate_state(|state| validate_request(&args, state)) {
+    let (my_user_id, recipient_type) = match mutate_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(u, t) => (u, t),
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(u, local_user_index_canister_id) => {
             let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
                 user_id_or_principal: args.recipient.into(),
             };
-            match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
-                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => {
-                    (u, UserType::Bot)
-                }
-                Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => (u, UserType::User),
-                Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
-                Err(error) => return InternalError(format!("{error:?}")),
-            }
+            let user_type =
+                match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
+                    Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
+                    Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
+                    Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
+                    Err(error) => return InternalError(format!("{error:?}")),
+                };
+            (u, RecipientType::Other(user_type))
         }
     };
 
@@ -49,9 +49,6 @@ async fn send_message_v2(mut args: Args) -> Response {
     // the message to contain the completed transfer.
     match &mut args.content {
         MessageContentInitial::Crypto(c) => {
-            if user_type.is_self() {
-                return InvalidRequest("Cannot send crypto to yourself".to_string());
-            }
             let mut pending_transaction = match &c.transfer {
                 CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                 _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
@@ -61,7 +58,7 @@ async fn send_message_v2(mut args: Args) -> Response {
             }
             // When transferring to bot users, each user transfers to their own subaccount, this way it
             // is trivial for the bots to keep track of each user's funds
-            if user_type.is_bot() {
+            if recipient_type.user_type().is_bot() {
                 pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
             }
 
@@ -106,28 +103,37 @@ async fn send_message_v2(mut args: Args) -> Response {
         _ => {}
     };
 
-    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, user_type, state))
+    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, recipient_type, state))
 }
 
-enum UserType {
+#[derive(Copy, Clone)]
+enum RecipientType {
     _Self,
-    User,
-    Bot,
+    Other(UserType),
 }
 
-impl UserType {
+impl RecipientType {
     fn is_self(&self) -> bool {
-        matches!(self, UserType::_Self)
+        matches!(self, RecipientType::_Self)
     }
 
-    fn is_bot(&self) -> bool {
-        matches!(self, UserType::Bot)
+    fn user_type(self) -> UserType {
+        self.into()
+    }
+}
+
+impl From<RecipientType> for UserType {
+    fn from(value: RecipientType) -> Self {
+        match value {
+            RecipientType::_Self => UserType::User,
+            RecipientType::Other(u) => u,
+        }
     }
 }
 
 #[allow(clippy::large_enum_variant)]
 enum ValidateRequestResult {
-    Valid(UserId, UserType),
+    Valid(UserId, RecipientType),
     Invalid(Response),
     RecipientUnknown(UserId, CanisterId), // UserId, UserIndexCanisterId
 }
@@ -166,7 +172,10 @@ fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestRes
         }
     }
 
-    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
+    if let Err(error) = args
+        .content
+        .validate_for_new_message(true, UserType::User, args.forwarding, now)
+    {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -181,24 +190,16 @@ fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestRes
             }
         })
     } else if args.recipient == my_user_id {
-        if matches!(
-            args.content,
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
-        ) {
+        if args.content.contains_crypto_transfer() {
             ValidateRequestResult::Invalid(TransferCannotBeToSelf)
         } else {
-            ValidateRequestResult::Valid(my_user_id, UserType::_Self)
+            ValidateRequestResult::Valid(my_user_id, RecipientType::_Self)
         }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
-        let user_type = if chat.is_bot {
-            if matches!(args.content, MessageContentInitial::P2PSwap(_)) {
-                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P swap with a bot".to_string()));
-            }
-            UserType::Bot
-        } else {
-            UserType::User
-        };
-        ValidateRequestResult::Valid(my_user_id, user_type)
+        if chat.user_type.is_bot() && matches!(args.content, MessageContentInitial::P2PSwap(_)) {
+            return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P swap with a bot".to_string()));
+        }
+        ValidateRequestResult::Valid(my_user_id, RecipientType::Other(chat.user_type))
     } else {
         ValidateRequestResult::RecipientUnknown(my_user_id, state.data.local_user_index_canister_id)
     }
@@ -208,7 +209,7 @@ fn send_message_impl(
     args: Args,
     completed_transfer: Option<CompletedCryptoTransaction>,
     p2p_swap_id: Option<u32>,
-    user_type: UserType,
+    recipient_type: RecipientType,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
@@ -241,12 +242,12 @@ fn send_message_impl(
         state
             .data
             .direct_chats
-            .create(recipient, user_type.is_bot(), state.env.rng().gen(), now)
+            .create(recipient, recipient_type.into(), state.env.rng().gen(), now)
     };
 
     let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
-    if !user_type.is_self() {
+    if !recipient_type.is_self() {
         let send_message_args = SendMessageArgs {
             thread_root_message_id: args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
             message_id: args.message_id,
@@ -271,7 +272,7 @@ fn send_message_impl(
         let sender_name = state.data.username.value.clone();
         let sender_display_name = state.data.display_name.value.clone();
 
-        if user_type.is_bot() {
+        if recipient_type.user_type().is_bot() {
             ic_cdk::spawn(send_to_bot_canister(
                 recipient,
                 message_event.event.message_index,
