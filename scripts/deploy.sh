@@ -42,6 +42,7 @@ NOTIFICATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id notifications)
 IDENTITY_CANISTER_ID=$(dfx canister --network $NETWORK id identity)
 ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
+AIRDROP_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id airdrop_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
@@ -69,6 +70,7 @@ cargo run \
   --identity $IDENTITY_CANISTER_ID \
   --online-users $ONLINE_USERS_CANISTER_ID \
   --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
+  --airdrop-bot $AIRDROP_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
   --registry $REGISTRY_CANISTER_ID \

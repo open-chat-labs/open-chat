@@ -98,6 +98,70 @@ dependencies = [
 ]
 
 [[package]]
+name = "airdrop_bot_canister"
+version = "0.1.0"
+dependencies = [
+ "bot_api",
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+ "user_canister",
+ "user_index_canister",
+]
+
+[[package]]
+name = "airdrop_bot_canister_client"
+version = "0.1.0"
+dependencies = [
+ "airdrop_bot_canister",
+ "candid",
+ "canister_client",
+ "ic-agent",
+ "types",
+]
+
+[[package]]
+name = "airdrop_bot_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "airdrop_bot_canister",
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "community_canister",
+ "community_canister_c2c_client",
+ "futures",
+ "http_request",
+ "ic-cdk 0.14.0",
+ "ic-cdk-timers",
+ "ic-ledger-types",
+ "ic-stable-structures 0.6.4",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
+ "msgpack",
+ "rand 0.8.5",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serializer",
+ "stable_memory",
+ "testing",
+ "time",
+ "tracing",
+ "types",
+ "user_canister",
+ "user_canister_c2c_client",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1055,6 +1119,8 @@ version = "0.1.0"
 name = "canister_installer"
 version = "0.1.0"
 dependencies = [
+ "airdrop_bot_canister",
+ "airdrop_bot_canister_client",
  "candid",
  "canister_agent_utils",
  "clap 4.5.4",
@@ -1176,6 +1242,7 @@ dependencies = [
 name = "canister_upgrader"
 version = "0.1.0"
 dependencies = [
+ "airdrop_bot_canister",
  "candid",
  "canister_agent_utils",
  "clap 4.5.4",
@@ -4709,6 +4776,7 @@ dependencies = [
 name = "integration_tests"
 version = "0.1.0"
 dependencies = [
+ "airdrop_bot_canister",
  "candid",
  "community_canister",
  "cycles_dispenser_canister",

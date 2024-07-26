@@ -1,0 +1,129 @@
+use crate::model::pending_actions_queue::{Action, PendingActionsQueue};
+use candid::Principal;
+use canister_state_macros::canister_state;
+use model::airdrops::{Airdrops, AirdropsMetrics};
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::{cell::RefCell, time::Duration};
+use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
+use utils::env::Environment;
+
+mod guards;
+mod jobs;
+mod lifecycle;
+mod memory;
+mod model;
+mod queries;
+mod updates;
+
+thread_local! {
+    static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
+}
+
+canister_state!(RuntimeState);
+
+struct RuntimeState {
+    pub env: Box<dyn Environment>,
+    pub data: Data,
+}
+
+impl RuntimeState {
+    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
+        RuntimeState { env, data }
+    }
+
+    pub fn is_caller_admin(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.admins.contains(&caller)
+    }
+
+    pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>) {
+        self.data.pending_actions_queue.push(action);
+        jobs::process_pending_actions::start_job_if_required(self, after);
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
+            now: self.env.now(),
+            cycles_balance: self.env.cycles_balance(),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
+            git_commit_id: utils::git::git_commit_id().to_string(),
+            username: self.data.username.clone(),
+            display_name: self.data.display_name.clone(),
+            initialized: self.data.initialized,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                chat_ledger: self.data.chat_ledger_canister_id,
+            },
+            airdrops: self.data.airdrops.metrics(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Data {
+    pub user_index_canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
+    pub chat_ledger_canister_id: CanisterId,
+    pub admins: HashSet<Principal>,
+    pub avatar: Timestamped<Option<Document>>,
+    pub username: String,
+    pub display_name: Option<String>,
+    pub airdrops: Airdrops,
+    pub channels_joined: HashSet<(CommunityId, ChannelId)>,
+    pub pending_actions_queue: PendingActionsQueue,
+    pub initialized: bool,
+    pub rng_seed: [u8; 32],
+    pub test_mode: bool,
+}
+
+impl Data {
+    pub fn new(
+        user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
+        chat_ledger_canister_id: CanisterId,
+        admins: HashSet<Principal>,
+        test_mode: bool,
+    ) -> Data {
+        Data {
+            user_index_canister_id,
+            local_user_index_canister_id,
+            chat_ledger_canister_id,
+            admins,
+            avatar: Timestamped::default(),
+            username: "".to_string(),
+            display_name: None,
+            airdrops: Airdrops::default(),
+            channels_joined: HashSet::default(),
+            pending_actions_queue: PendingActionsQueue::default(),
+            initialized: false,
+            rng_seed: [0; 32],
+            test_mode,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct Metrics {
+    pub now: TimestampMillis,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
+    pub cycles_balance: Cycles,
+    pub wasm_version: BuildVersion,
+    pub git_commit_id: String,
+    pub username: String,
+    pub display_name: Option<String>,
+    pub initialized: bool,
+    pub canister_ids: CanisterIds,
+    pub airdrops: AirdropsMetrics,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub chat_ledger: CanisterId,
+}

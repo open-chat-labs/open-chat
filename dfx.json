@@ -67,6 +67,12 @@
       "wasm": "wasms/proposals_bot.wasm.gz",
       "build": "./scripts/generate-wasm.sh proposals_bot"
     },
+    "airdrop_bot": {
+      "type": "custom",
+      "candid": "backend/canisters/airdrop_bot/api/can.did",
+      "wasm": "wasms/airdrop_bot.wasm.gz",
+      "build": "./scripts/generate-wasm.sh airdrop_bot"
+    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",

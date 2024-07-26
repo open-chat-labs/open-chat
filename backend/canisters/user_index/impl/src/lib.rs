@@ -283,6 +283,8 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    #[serde(default = "init_airdrop_bot_canister_id")]
+    pub airdrop_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -320,6 +322,10 @@ struct Data {
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
 }
 
+fn init_airdrop_bot_canister_id() -> CanisterId {
+    Principal::from_text("62rh2-kiaaa-aaaaf-bmy5q-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -330,6 +336,7 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        airdrop_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -351,6 +358,7 @@ impl Data {
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
+            airdrop_bot_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -395,6 +403,16 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
+            0,
+            None,
+            UserType::OcControlledBot,
+        );
+
+        // Register the AirdropBot
+        data.users.register(
+            airdrop_bot_canister_id,
+            airdrop_bot_canister_id.into(),
+            "AirdropBot".to_string(),
             0,
             None,
             UserType::OcControlledBot,
@@ -464,6 +482,7 @@ impl Default for Data {
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
+            airdrop_bot_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,

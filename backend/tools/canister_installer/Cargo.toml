@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+airdrop_bot_canister = { path = "../../canisters/airdrop_bot/api" }
+airdrop_bot_canister_client = { path = "../../canisters/airdrop_bot/client" }
 candid = { workspace = true }
 canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
