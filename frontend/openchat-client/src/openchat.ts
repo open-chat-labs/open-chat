@@ -780,6 +780,7 @@ export class OpenChat extends OpenChatAgentWorker {
             const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
+
             function timeout() {
                 console.debug(
                     "SESSION: session has timed out after ",
@@ -789,6 +790,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 );
                 self.logout().then(resolve);
             }
+
             if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
                 timeout();
             } else {
@@ -2330,6 +2332,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         await this.getMissingUsers(allUserIds);
     }
+
     isTyping = isTyping;
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
@@ -2393,6 +2396,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ]);
         }
     }
+
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
         this.blockCommunityUserLocally(id, userId);
         return this.sendRequest({ kind: "blockCommunityUser", id, userId })
@@ -2703,6 +2707,7 @@ export class OpenChat extends OpenChatAgentWorker {
     messageContentFromFile(file: File): Promise<AttachmentContent> {
         return messageContentFromFile(file, this._liveState.isDiamond);
     }
+
     formatFileSize = formatFileSize;
 
     haveCommunityPermissionsChanged(p1: CommunityPermissions, p2: CommunityPermissions): boolean {
@@ -3143,6 +3148,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return loadedUpTo < serverChat.latestEventIndex ? [loadedUpTo + 1, true] : undefined;
     }
+
     private confirmedUpToEventIndex(chatId: ChatIdentifier): number | undefined {
         const ranges = confirmedEventIndexesLoaded(chatId).subranges();
         if (ranges.length > 0) {
@@ -3150,6 +3156,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         return undefined;
     }
+
     private confirmedThreadUpToEventIndex(): number | undefined {
         const ranges = get(confirmedThreadEventIndexesLoadedStore).subranges();
         if (ranges.length > 0) {
@@ -3234,6 +3241,7 @@ export class OpenChat extends OpenChatAgentWorker {
         unconfirmed.delete(context, messageId);
         messagesRead.removeUnconfirmedMessage(context, messageId);
     }
+
     toggleProposalFilterMessageExpansion = toggleProposalFilterMessageExpansion;
     groupWhile = groupWhile;
     sameUser = sameUser;
@@ -4938,12 +4946,18 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (userId === this._liveState.user.userId) return now;
 
-        let lastOnline = lastOnlineDates.get(userId, now);
-        if (lastOnline === undefined) {
+        const lastOnline = lastOnlineDates.get(userId, now);
+        // Refresh the last online date if we don't currently have one for the user, or if the user has been online in
+        // the last 5 minutes and it has been at least 30 seconds since we refreshed their last online date
+        if (
+            lastOnline === undefined ||
+            (lastOnline.lastOnline > now - 5 * ONE_MINUTE_MILLIS &&
+                lastOnline.updated < now - 30 * 1000)
+        ) {
             const response = await this.getLastOnlineDatesBatched([userId]);
-            lastOnline = response[userId];
+            return response[userId];
         }
-        return lastOnline;
+        return lastOnline?.lastOnline;
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
@@ -7139,6 +7153,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     // **** End of Communities stuff
     diamondDurationToMs = diamondDurationToMs;
+
     swapRestricted(): Promise<boolean> {
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
