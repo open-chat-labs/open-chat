@@ -23,6 +23,13 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    pub fn set_user_types(&mut self, oc_controlled_bot_users: &[UserId]) {
+        for (user_id, member) in self.members.iter_mut().filter(|(_, m)| m.is_bot) {
+            member.user_type =
+                if oc_controlled_bot_users.contains(user_id) { UserType::OcControlledBot } else { UserType::Bot };
+        }
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
