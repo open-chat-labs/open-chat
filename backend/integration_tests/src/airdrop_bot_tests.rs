@@ -44,17 +44,14 @@ fn airdrop_end_to_end() {
 
     tick_many(env, 10);
 
-    let channel_id =
-        client::community::happy_path::create_channel(env, owner.principal, community_id, true, "July airdrop".to_string());
-
-    // let channel_id = client::community::happy_path::create_gated_channel(
-    //     env,
-    //     diamond_user.principal,
-    //     community_id,
-    //     true,
-    //     "July airdrop".to_string(),
-    //     AccessGate::DiamondMember,
-    // );
+    let channel_id = client::community::happy_path::create_gated_channel(
+        env,
+        owner.principal,
+        community_id,
+        true,
+        "July airdrop".to_string(),
+        AccessGate::DiamondMember,
+    );
 
     client::ledger::happy_path::transfer(
         env,
@@ -88,9 +85,9 @@ fn airdrop_end_to_end() {
             community_id,
             channel_id,
             start: start_airdrop,
-            main_chat_fund: 65_000,
+            main_chat_fund: 6_500_000_000_000,
             main_chit_band: 500,
-            lottery_prizes: vec![12_000, 5_000, 3_000],
+            lottery_prizes: vec![1_200_000_000_000, 500_000_000_000, 300_000_000_000],
             lottery_chit_band: 500,
         },
     );
@@ -138,18 +135,22 @@ fn airdrop_end_to_end() {
     //
     let response = client::user::happy_path::events(env, &owner, airdrop_bot_user_id, EventIndex::from(0), true, 10, 20);
 
-    assert_eq!(response.events.len(), 1);
+    let messages: Vec<Message> = response
+        .events
+        .into_iter()
+        .filter_map(|e| if let ChatEvent::Message(message) = e.event { Some(*message) } else { None })
+        .collect();
 
-    let ChatEvent::Message(message) = &response.events[0].event else {
-        panic!("unexpected event: {response:?}");
+    assert_eq!(messages.len(), 1);
+
+    let MessageContent::Crypto(content) = &messages[0].content else {
+        panic!("unexpected content: {messages:?}");
     };
 
-    let MessageContent::Crypto(content) = &message.content else {
-        panic!("unexpected content: {response:?}");
-    };
-
-    // Diamond user should have 5000 CHIT from diamond achievement.
+    // Owner should have 5000 CHIT from diamond achievement.
     // Other 5 users should have 5500 CHIT each from joining community achievement
-    // Expected CHAT = 65_000 / ((5500 * 5 + 5000) / 500) = 1_000
-    assert_eq!(content.transfer.units(), 100_000_000_000);
+    // Each share = ((5500 * 5 + 5000) / 500) = 1_000
+    // Owner's shares = 5000/500 = 10
+    // Expected CHAT = 10_000
+    assert_eq!(content.transfer.units(), 1_000_000_000_000);
 }
