@@ -4,7 +4,7 @@ use ic_verifiable_credentials::VcFlowSigners;
 use types::{CanisterId, TimestampMillis, UniquePersonProof, UniquePersonProofProvider};
 
 const ISSUER_CANISTER_ID: CanisterId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 240, 24, 173, 1, 1]);
-const ISSUER_ORIGIN: &str = "https://id.decideai.xyz/";
+const ISSUER_ORIGIN: &str = "https://id.decideai.xyz";
 const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 
 pub fn verify_proof_of_unique_personhood(
