@@ -6,7 +6,7 @@ use std::cell::Cell;
 use std::iter::zip;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AccessGate, CanisterId, OptionUpdate, UserId};
+use types::{AccessGate, CanisterId, GroupRole, OptionUpdate, UserId};
 use utils::time::MonthKey;
 
 use super::process_pending_actions;
@@ -113,7 +113,12 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     // Call the user_index to get the particpants' CHIT balances for the given month
     let mk = MonthKey::from_timestamp(config.start).previous();
 
-    let users: Vec<UserId> = members.into_iter().map(|m| m.user_id).collect();
+    // Exclude channel owners from the airdrop
+    let users: Vec<UserId> = members
+        .into_iter()
+        .filter(|m| !matches!(m.role, GroupRole::Owner))
+        .map(|m| m.user_id)
+        .collect();
 
     let balances = match user_index_canister_c2c_client::chit_balances(
         user_index_canister_id,
