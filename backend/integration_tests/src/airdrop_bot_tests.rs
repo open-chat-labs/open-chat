@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use airdrop_bot_canister::set_airdrop;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{AccessGate, ChatEvent, EventIndex, GroupRole, Message, MessageContent, UserId};
+use types::{AccessGate, ChatEvent, CryptoContent, EventIndex, GroupRole, Message, MessageContent, UserId};
 use utils::time::MonthKey;
 
 #[test]
@@ -117,19 +117,23 @@ fn airdrop_end_to_end() {
     let channel_summary = client::community::happy_path::channel_summary(env, &owner, community_id, channel_id);
     assert_eq!(channel_summary.gate, Some(AccessGate::Locked));
 
-    // Assert the airdrop channel has exactly 3 prize messages
+    // Assert the airdrop channel has messages with the correct prizes in reverse order
     //
     let response =
         client::community::happy_path::events(env, &owner, community_id, channel_id, EventIndex::from(0), true, 10, 10);
 
-    let messages: Vec<Message> = response
+    let contents: Vec<CryptoContent> = response
         .events
         .into_iter()
         .filter_map(|e| if let ChatEvent::Message(message) = e.event { Some(*message) } else { None })
+        .filter_map(|m| if let MessageContent::Crypto(content) = m.content { Some(content) } else { None })
         .collect();
 
-    assert_eq!(messages.len(), 3);
-    assert!(messages.iter().all(|m| matches!(m.content, MessageContent::Crypto(_))));
+    assert_eq!(contents.len(), 3);
+
+    assert_eq!(contents[0].transfer.units(), 300_000_000_000);
+    assert_eq!(contents[1].transfer.units(), 500_000_000_000);
+    assert_eq!(contents[2].transfer.units(), 1_200_000_000_000);
 
     // Assert the diamond user has been sent a DM from the Airdrop Bot for the expected amount of CHAT
     //
