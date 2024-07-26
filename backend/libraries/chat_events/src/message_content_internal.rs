@@ -1111,7 +1111,18 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
+            MessageContentInitial::Crypto(c) => {
+                if let CryptoTransaction::Completed(transfer) = c.transfer {
+                    MessageContentInternal::Crypto(CryptoContentInternal {
+                        recipient: c.recipient,
+                        transfer,
+                        caption: c.caption,
+                    })
+                } else {
+                    panic!("Crypto transfer must be completed")
+                }
+            }
+            MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
                 unreachable!()
             }
         }
