@@ -28,6 +28,7 @@ pub struct Channel {
 }
 
 impl Channels {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
