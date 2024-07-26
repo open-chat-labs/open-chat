@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{mutate_state, Data, jobs};
 use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -32,7 +32,7 @@ fn post_upgrade(args: Args) {
             state.data.airdrop_bot_canister_id = Principal::from_text("6pwwx-laaaa-aaaaf-bmy6a-cai").unwrap();
         }
 
-        state.push_event_to_all_local_user_indexes(
+        let events = [
             local_user_index_canister::Event::UserRegistered(UserRegistered {
                 user_id: state.data.proposals_bot_canister_id.into(),
                 user_principal: state.data.proposals_bot_canister_id,
@@ -41,9 +41,6 @@ fn post_upgrade(args: Args) {
                 user_type: UserType::OcControlledBot,
                 referred_by: None,
             }),
-            None,
-        );
-        state.push_event_to_all_local_user_indexes(
             local_user_index_canister::Event::UserRegistered(UserRegistered {
                 user_id: state.data.airdrop_bot_canister_id.into(),
                 user_principal: state.data.airdrop_bot_canister_id,
@@ -51,9 +48,15 @@ fn post_upgrade(args: Args) {
                 is_bot: true,
                 user_type: UserType::OcControlledBot,
                 referred_by: None,
-            }),
-            None,
-        );
+            })
+        ];
+
+        for canister_id in state.data.local_index_map.canisters() {
+            for event in events.iter() {
+                state.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
+        }
+        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
     });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
