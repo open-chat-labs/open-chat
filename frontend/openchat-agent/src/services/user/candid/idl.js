@@ -151,6 +151,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : IDL.Opt(TimestampMillis),
     'max' : IDL.Nat32,
     'from' : IDL.Opt(TimestampMillis),
+    'skip' : IDL.Opt(IDL.Nat32),
     'ascending' : IDL.Bool,
   });
   const Achievement = IDL.Variant({
@@ -1318,6 +1319,7 @@ export const idlFactory = ({ IDL }) => {
       'streak' : IDL.Nat16,
       'pin_number_settings' : IDL.Opt(PinNumberSettings),
       'communities' : CommunitiesInitial,
+      'total_chit_earned' : IDL.Int32,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
       'next_daily_claim' : TimestampMillis,
@@ -1971,6 +1973,7 @@ export const idlFactory = ({ IDL }) => {
       }),
       'communities' : CommunitiesUpdates,
       'username' : IDL.Opt(IDL.Text),
+      'total_chit_earned' : IDL.Int32,
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
       'next_daily_claim' : TimestampMillis,

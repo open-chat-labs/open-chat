@@ -7,6 +7,7 @@
         "amountN": "量 {n} トークン",
         "and": "すべてのゲートが必要",
         "approvePaymentTitle": "支払いの承認",
+        "bypassWarning": "⚠️ この{level}に明示的に招待されたユーザーは、アクセスゲートを通過する必要はありません。",
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
         "chooseGate": "アクセスゲートを選択してください",
         "chooseNervousSystem": "神経系を選択する",

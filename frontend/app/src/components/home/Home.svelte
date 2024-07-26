@@ -843,7 +843,7 @@
     /**
      * When we try to join a group we need to first scrutinise the access gates and
      * see whether any of them require client side action before we can proceed with the
-     * call to the back end. I there are gates which require action, we need to perform
+     * call to the back end. If there are gates which require action, we need to perform
      * those actions one by one until they are all done and then feed their results
      * back into this function.
      */
@@ -857,7 +857,7 @@
         const credentials = gateCheck?.credentials ?? [];
 
         if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group);
+            const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);
 
             if (!passed) {

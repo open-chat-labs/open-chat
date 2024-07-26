@@ -5,6 +5,9 @@
     import { fade } from "svelte/transition";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import type { AccessGate, Level } from "openchat-client";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let gate: AccessGate;
     export let level: Level;
@@ -20,6 +23,12 @@
         <div class="choose-gate">
             <AccessGateSummary showNoGate={true} bind:valid {level} editable bind:gate />
         </div>
+        {#if gate.kind !== "no_gate"}
+            <ErrorMessage>
+                <Translatable
+                    resourceKey={i18nKey("access.bypassWarning", undefined, level, true)} />
+            </ErrorMessage>
+        {/if}
     </div>
 </div>
 
@@ -51,6 +60,6 @@
     }
 
     .choose-gate {
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
     }
 </style>
