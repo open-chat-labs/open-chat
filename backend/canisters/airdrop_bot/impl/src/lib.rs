@@ -22,6 +22,8 @@ thread_local! {
 
 canister_state!(RuntimeState);
 
+pub const USERNAME: &str = "AirdropBot";
+
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
@@ -50,8 +52,6 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            username: self.data.username.clone(),
-            display_name: self.data.display_name.clone(),
             initialized: self.data.initialized,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -70,8 +70,6 @@ struct Data {
     pub chat_ledger_canister_id: CanisterId,
     pub admins: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
-    pub username: String,
-    pub display_name: Option<String>,
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
     pub pending_actions_queue: PendingActionsQueue,
@@ -94,8 +92,6 @@ impl Data {
             chat_ledger_canister_id,
             admins,
             avatar: Timestamped::default(),
-            username: "".to_string(),
-            display_name: None,
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
             pending_actions_queue: PendingActionsQueue::default(),
@@ -114,8 +110,6 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
-    pub username: String,
-    pub display_name: Option<String>,
     pub initialized: bool,
     pub canister_ids: CanisterIds,
     pub airdrops: AirdropsMetrics,

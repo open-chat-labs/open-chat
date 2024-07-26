@@ -1,5 +1,5 @@
 use crate::model::pending_actions_queue::{Action, AirdropMessage, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState, USERNAME};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::account::Account;
@@ -185,24 +185,19 @@ async fn handle_main_message_action(action: AirdropMessage) {
         return;
     };
 
-    let Some((username, display_name, month)) = read_state(|state| {
-        state
-            .data
-            .airdrops
-            .current(state.env.now())
-            .and_then(|c| {
-                let date = time::OffsetDateTime::from_unix_timestamp((c.start / 1000) as i64).unwrap();
-                let format = format_description!("[month repr:long]");
-                date.format(format).ok()
-            })
-            .map(|m| (state.data.username.clone(), state.data.display_name.clone(), m))
+    let Some(month) = read_state(|state| {
+        state.data.airdrops.current(state.env.now()).and_then(|c| {
+            let date = time::OffsetDateTime::from_unix_timestamp((c.start / 1000) as i64).unwrap();
+            let format = format_description!("[month repr:long]");
+            date.format(format).ok()
+        })
     }) else {
         return;
     };
 
     let args = user_canister::c2c_handle_bot_messages::Args {
-        bot_name: username,
-        bot_display_name: display_name,
+        bot_name: USERNAME.to_string(),
+        bot_display_name: None,
         messages: vec![BotMessage {
             thread_root_message_id: None,
             content: MessageContentInitial::Crypto(CryptoContent {
@@ -230,15 +225,12 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
         return;
     };
 
-    let Some((username, community_id, channel_id, message_id)) = mutate_state(|state| {
-        state.data.airdrops.current(state.env.now()).map(|c| {
-            (
-                state.data.username.clone(),
-                c.community_id,
-                c.channel_id,
-                state.env.rng().gen(),
-            )
-        })
+    let Some((community_id, channel_id, message_id)) = mutate_state(|state| {
+        state
+            .data
+            .airdrops
+            .current(state.env.now())
+            .map(|c| (c.community_id, c.channel_id, state.env.rng().gen()))
     }) else {
         return;
     };
@@ -264,7 +256,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
                 "Congratulations! You have won {position} prize in the CHIT for CHAT airdrop lottery!"
             )),
         }),
-        sender_name: username,
+        sender_name: USERNAME.to_string(),
         sender_display_name: None,
         replies_to: None,
         mentioned: Vec::new(),
