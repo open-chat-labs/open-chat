@@ -472,7 +472,7 @@
                             <Input
                                 disabled={busy}
                                 minlength={1}
-                                maxlength={100}
+                                maxlength={200}
                                 bind:value={addOrUpdateTokenTransactionUrlFormat}
                                 countdown
                                 placeholder={i18nKey(
