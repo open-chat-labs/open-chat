@@ -12,7 +12,7 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId, UsersBlocked};
+use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId, UserType, UsersBlocked};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -166,12 +166,12 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     let (members_to_add_to_community, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
-        let mut to_add: HashMap<UserId, bool> = HashMap::new();
-        for (user_id, is_bot) in channel.chat.members.iter().map(|m| (m.user_id, m.is_bot)) {
+        let mut to_add: HashMap<UserId, UserType> = HashMap::new();
+        for (user_id, user_type) in channel.chat.members.iter().map(|m| (m.user_id, m.user_type)) {
             if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
                 member.channels.insert(channel_id);
             } else {
-                to_add.insert(user_id, is_bot);
+                to_add.insert(user_id, user_type);
             }
         }
 

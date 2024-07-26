@@ -6,7 +6,7 @@ use ic_cdk::update;
 use rand::Rng;
 use types::{
     CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis, User,
-    UserId,
+    UserId, UserType,
 };
 use user_canister::C2CReplyContext;
 
@@ -17,19 +17,21 @@ async fn c2c_handle_bot_messages(
 ) -> user_canister::c2c_handle_bot_messages::Response {
     let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
 
-    let sender = match sender_status {
-        SenderStatus::Ok(user_id) => user_id,
+    let (sender, sender_user_type) = match sender_status {
+        SenderStatus::Ok(user_id, user_type) => (user_id, user_type),
         SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !verify_user(local_user_index_canister_id, user_id, true).await {
-                panic!("This request is not from a bot registered with OpenChat");
-            }
-            user_id
+            let user_type = match verify_user(local_user_index_canister_id, user_id).await {
+                Some(UserType::Bot) => UserType::Bot,
+                Some(UserType::OcControlledBot) => UserType::OcControlledBot,
+                _ => panic!("This request is not from a bot registered with OpenChat"),
+            };
+            (user_id, user_type)
         }
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, true, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, sender_user_type, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -48,7 +50,7 @@ async fn c2c_handle_bot_messages(
                     content: message.content.into(),
                     replies_to: None,
                     forwarding: false,
-                    is_bot: true,
+                    sender_user_type,
                     sender_avatar_id: None,
                     push_message_sent_event: true,
                     mentioned: Vec::new(),
@@ -73,7 +75,7 @@ pub(crate) struct HandleMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
-    pub is_bot: bool,
+    pub sender_user_type: UserType,
     pub sender_avatar_id: Option<u128>,
     pub push_message_sent_event: bool,
     pub mute_notification: bool,
@@ -83,7 +85,7 @@ pub(crate) struct HandleMessageArgs {
 }
 
 pub(crate) enum SenderStatus {
-    Ok(UserId),
+    Ok(UserId, UserType),
     Blocked,
     UnknownUser(CanisterId, UserId),
 }
@@ -93,22 +95,22 @@ pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
 
     if state.data.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if state.data.direct_chats.get(&sender.into()).is_some() {
-        SenderStatus::Ok(sender)
+    } else if let Some(user_type) = state.data.direct_chats.get(&sender.into()).map(|c| c.user_type) {
+        SenderStatus::Ok(sender, user_type)
     } else {
         SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
     }
 }
 
-pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
+pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> Option<UserType> {
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: user_id.into(),
     };
     if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
         if let local_user_index_canister::c2c_lookup_user::Response::Success(r) = response {
-            r.is_bot == is_bot
+            Some(r.user_type)
         } else {
-            false
+            None
         }
     } else {
         panic!("Failed to call local_user_index to verify user");
@@ -126,7 +128,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         state
             .data
             .direct_chats
-            .create(args.sender, args.is_bot, state.env.rng().gen(), args.now)
+            .create(args.sender, args.sender_user_type, state.env.rng().gen(), args.now)
     };
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
@@ -139,7 +141,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
-        sender_is_bot: args.is_bot,
+        sender_is_bot: args.sender_user_type.is_bot(),
         block_level_markdown: args.block_level_markdown,
         correlation_id: 0,
         now: args.now,
@@ -154,7 +156,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         args.push_message_sent_event.then_some(&mut state.data.event_store_client),
     );
 
-    if args.is_bot {
+    if args.sender_user_type.is_bot() {
         chat.mark_read_up_to(message_event.event.message_index, false, args.now);
     }
 

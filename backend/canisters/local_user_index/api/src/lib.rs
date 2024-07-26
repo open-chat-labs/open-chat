@@ -4,7 +4,7 @@ use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
 };
 
 mod lifecycle;
@@ -75,7 +75,7 @@ pub struct UserRegistered {
     #[serde(default)]
     pub is_bot: bool,
     #[serde(default)]
-    pub is_oc_controlled_bot: bool,
+    pub user_type: UserType,
     pub referred_by: Option<UserId>,
 }
 
@@ -171,7 +171,7 @@ pub struct GlobalUser {
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub unique_person_proof: Option<UniquePersonProof>,
     #[serde(default)]
-    pub is_oc_controlled_bot: bool,
+    pub user_type: UserType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

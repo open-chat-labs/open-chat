@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.history_visible_to_new_joiners,
         args.created_by_principal,
         args.created_by_user_id,
+        args.created_by_user_type,
         args.events_ttl,
         env.now(),
         args.mark_active_duration,

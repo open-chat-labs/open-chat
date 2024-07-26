@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use types::{
     is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
-    UserSummaryVolatile,
+    UserSummaryVolatile, UserType,
 };
 use utils::time::MonthKey;
 
@@ -40,8 +40,8 @@ pub struct User {
     pub referred_by: Option<UserId>,
     #[serde(rename = "ib", default, skip_serializing_if = "is_default")]
     pub is_bot: bool,
-    #[serde(rename = "ocb", default, skip_serializing_if = "is_default")]
-    pub is_oc_controlled_bot: bool,
+    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
+    pub user_type: UserType,
     #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
     pub suspension_details: Option<SuspensionDetails>,
     #[serde(
@@ -103,8 +103,7 @@ impl User {
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
-        is_bot: bool,
-        is_oc_controlled_bot: bool,
+        user_type: UserType,
     ) -> User {
         #[allow(deprecated)]
         User {
@@ -121,8 +120,8 @@ impl User {
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by,
-            is_bot,
-            is_oc_controlled_bot,
+            is_bot: user_type.is_bot(),
+            user_type,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
@@ -246,7 +245,7 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,
-            is_oc_controlled_bot: false,
+            user_type: UserType::User,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,

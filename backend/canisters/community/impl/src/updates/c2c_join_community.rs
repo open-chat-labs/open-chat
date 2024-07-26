@@ -112,7 +112,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
     }
 
-    match state.data.members.add(args.user_id, args.principal, args.is_bot, now) {
+    match state.data.members.add(args.user_id, args.principal, args.user_type, now) {
         AddResult::Success(_) => {
             let invitation = state.data.invited_users.remove(&args.user_id, now);
 

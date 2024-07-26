@@ -62,3 +62,21 @@ pub struct UserDetails {
     pub is_platform_operator: bool,
     pub is_diamond_member: bool,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum UserType {
+    #[default]
+    User,
+    Bot,
+    OcControlledBot,
+}
+
+impl UserType {
+    pub fn is_bot(&self) -> bool {
+        matches!(self, UserType::Bot | UserType::OcControlledBot)
+    }
+
+    pub fn is_oc_controlled_bot(&self) -> bool {
+        matches!(self, UserType::OcControlledBot)
+    }
+}

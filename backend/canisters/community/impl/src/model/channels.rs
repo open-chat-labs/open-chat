@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -28,9 +28,17 @@ pub struct Channel {
 }
 
 impl Channels {
+    pub fn set_user_types(&mut self, oc_controlled_bots: &[UserId]) {
+        for channel in self.channels.values_mut() {
+            channel.chat.set_user_types(oc_controlled_bots);
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
+        created_by_user_type: UserType,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
@@ -48,6 +56,7 @@ impl Channels {
                         community_id,
                         name,
                         created_by,
+                        created_by_user_type,
                         default_channel_rules.clone(),
                         is_community_public,
                         rng.gen(),
@@ -182,6 +191,7 @@ impl Channel {
         community_id: CommunityId,
         name: String,
         created_by: UserId,
+        created_by_user_type: UserType,
         channel_rules: Option<Rules>,
         is_community_public: bool,
         anonymized_id: u128,
@@ -207,7 +217,7 @@ impl Channel {
                 permissions,
                 None,
                 None,
-                false,
+                created_by_user_type,
                 anonymized_id,
                 now,
             ),

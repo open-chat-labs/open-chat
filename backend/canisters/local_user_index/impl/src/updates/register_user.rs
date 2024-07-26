@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, UserRegistered};
@@ -191,7 +191,7 @@ fn commit(
 ) {
     let now = state.env.now();
     state.data.local_users.add(user_id, principal, wasm_version, now);
-    state.data.global_users.add(principal, user_id, false, false);
+    state.data.global_users.add(principal, user_id, UserType::User);
 
     state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
         principal,

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
 use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -96,6 +96,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         permissions: args.permissions.unwrap_or_default(),
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
+        created_by_user_type: UserType::User,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,
         local_group_index_canister_id: state.env.canister_id(),

@@ -11,7 +11,7 @@ use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use rand::Rng;
 use std::collections::HashMap;
-use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId};
+use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId, UserType};
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
@@ -45,6 +45,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 invite_code: None,
                 is_platform_moderator: false,
                 is_bot: true,
+                user_type: UserType::OcControlledBot,
                 diamond_membership_expires_at: None,
                 verified_credential_args: None,
                 unique_person_proof: None,
@@ -131,7 +132,7 @@ fn create_channel_impl(
                 permissions,
                 args.gate.clone(),
                 args.events_ttl,
-                member.is_bot,
+                member.user_type,
                 state.env.rng().gen(),
                 now,
             );
