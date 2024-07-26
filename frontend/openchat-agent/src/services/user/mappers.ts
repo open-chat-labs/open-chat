@@ -774,7 +774,7 @@ export async function getEventsResponse(
 
 function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
     return {
-        summaries: candid.summaries.map(groupChatSummary),
+        summaries: candid.summaries.map((g) => groupChatSummary(g, false)),
         timestamp: candid.timestamp,
     };
 }
@@ -1099,7 +1099,7 @@ function mention(candid: ApiMention): Mention {
     };
 }
 
-function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+function groupChatSummary(candid: ApiGroupChatSummary, isInvited: boolean): GroupChatSummary {
     const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -1144,6 +1144,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             rulesAccepted: candid.rules_accepted,
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
+        isInvited,
     };
 }
 

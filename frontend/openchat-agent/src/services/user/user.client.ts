@@ -1404,6 +1404,7 @@ export class UserClient extends CandidService {
                     to: apiOptional(identity, to),
                     max,
                     ascending,
+                    skip: [],
                 }),
             chitEventsResponse,
         );

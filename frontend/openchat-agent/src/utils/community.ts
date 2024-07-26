@@ -147,6 +147,7 @@ export function mergeCommunityUpdates(
                 c?.userGroupsDeleted ?? new Set(),
             ),
             localUserIndex: community.localUserIndex,
+            isInvited: false,
         };
     });
 }
@@ -239,6 +240,7 @@ function mergeChannelUpdates(
                 archived: u?.archived ?? channel.membership.archived,
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
             },
+            isInvited: false,
         };
     });
 }

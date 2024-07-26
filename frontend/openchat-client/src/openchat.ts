@@ -4166,7 +4166,7 @@ export class OpenChat extends OpenChatAgentWorker {
      * When joining a channel it is possible that both the channel & the community
      * have access gates so we need to work out all applicable gates for the chat
      * Note that we only return gates if we are not already a member.
-     * We may also optionally exclude gates for things we are invited to in some scenarios.
+     * We may also optionally exclude gates for things we are invited to in some scenariose
      */
     accessGatesForChat(
         chat: MultiUserChat,
