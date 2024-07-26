@@ -4946,18 +4946,19 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (userId === this._liveState.user.userId) return now;
 
-        const lastOnline = lastOnlineDates.get(userId, now);
-        // Refresh the last online date if we don't currently have one for the user, or if the user has been online in
-        // the last 5 minutes and it has been at least 30 seconds since we refreshed their last online date
-        if (
-            lastOnline === undefined ||
-            (lastOnline.lastOnline > now - 5 * ONE_MINUTE_MILLIS &&
-                lastOnline.updated < now - 30 * 1000)
-        ) {
+        const lastOnlineCached = lastOnlineDates.get(userId, now);
+
+        const cacheValid =
+            lastOnlineCached !== undefined &&
+            (lastOnlineCached.lastOnline < now - 5 * ONE_MINUTE_MILLIS ||
+                lastOnlineCached.updated > now - 30 * 1000);
+
+        if (cacheValid) {
+            return lastOnlineCached?.lastOnline;
+        } else {
             const response = await this.getLastOnlineDatesBatched([userId]);
             return response[userId];
         }
-        return lastOnline?.lastOnline;
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
