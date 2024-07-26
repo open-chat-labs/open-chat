@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1259](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1259-local_group_index)] - 2024-07-26
+
 ### Changed
 
 - Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))

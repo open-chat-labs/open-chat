@@ -8,7 +8,6 @@ use types::{
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_canister::SendMessageArgs;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -27,12 +26,6 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn set_user_type(&mut self) {
-        if self.is_bot {
-            self.user_type = if self.them == OPENCHAT_BOT_USER_ID { UserType::OcControlledBot } else { UserType::Bot };
-        }
-    }
-
     pub fn new(
         them: UserId,
         user_type: UserType,

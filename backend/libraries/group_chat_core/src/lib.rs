@@ -60,12 +60,6 @@ pub struct GroupChatCore {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    pub fn set_user_types(&mut self, oc_controlled_bots: &[UserId]) {
-        for (user_id, member) in self.members.members.iter_mut().filter(|(_, m)| m.is_bot) {
-            member.user_type = if oc_controlled_bots.contains(user_id) { UserType::OcControlledBot } else { UserType::Bot };
-        }
-    }
-
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1257](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1257-local_user_index)] - 2024-07-26
+
 ### Added
 
 - Add `is_oc_controlled_bot` to `GlobalUser` ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))
