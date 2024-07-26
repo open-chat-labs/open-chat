@@ -22,7 +22,7 @@ fn airdrop_end_to_end() {
     // Owner creates the airdrop community
     // Join each other user to the community
     // Owner creates a public airdrop channel gated by diamond - the 5 users will be added automatically
-    // Transfer 85,001 CHAT to the airdrop_bot canister
+    // Transfer 75,001 CHAT to the airdrop_bot canister
     // Owner invites the airdrop_bot to the channel
     //
     let airdrop_bot_user_id: UserId = canister_ids.airdrop_bot.into();
@@ -38,7 +38,7 @@ fn airdrop_end_to_end() {
 
     env.tick();
 
-    for user in users {
+    for user in users.iter() {
         client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
     }
 
@@ -58,7 +58,7 @@ fn airdrop_end_to_end() {
         *controller,
         canister_ids.chat_ledger,
         canister_ids.airdrop_bot,
-        8_500_100_000_000,
+        7_500_100_000_000,
     );
 
     client::local_user_index::happy_path::invite_users_to_channel(
@@ -85,7 +85,7 @@ fn airdrop_end_to_end() {
             community_id,
             channel_id,
             start: start_airdrop,
-            main_chat_fund: 6_500_000_000_000,
+            main_chat_fund: 5_500_000_000_000,
             main_chit_band: 500,
             lottery_prizes: vec![1_200_000_000_000, 500_000_000_000, 300_000_000_000],
             lottery_chit_band: 500,
@@ -135,9 +135,9 @@ fn airdrop_end_to_end() {
     assert_eq!(contents[1].transfer.units(), 500_000_000_000);
     assert_eq!(contents[2].transfer.units(), 1_200_000_000_000);
 
-    // Assert the diamond user has been sent a DM from the Airdrop Bot for the expected amount of CHAT
+    // Assert user1 has been sent a DM from the Airdrop Bot for the expected amount of CHAT
     //
-    let response = client::user::happy_path::events(env, &owner, airdrop_bot_user_id, EventIndex::from(0), true, 10, 20);
+    let response = client::user::happy_path::events(env, &users[0], airdrop_bot_user_id, EventIndex::from(0), true, 10, 20);
 
     let messages: Vec<Message> = response
         .events
@@ -151,10 +151,9 @@ fn airdrop_end_to_end() {
         panic!("unexpected content: {messages:?}");
     };
 
-    // Owner should have 5000 CHIT from diamond achievement.
-    // Other 5 users should have 5500 CHIT each from joining community achievement
-    // Each share = ((5500 * 5 + 5000) / 500) = 1_000
-    // Owner's shares = 5000/500 = 10
-    // Expected CHAT = 10_000
-    assert_eq!(content.transfer.units(), 1_000_000_000_000);
+    // 5 users should have 5500 CHIT each from achievements
+    // Total shares = ((5500 * 5) / 500) = 55
+    // Each share = 55_000 CHAT / 55 = 1_000 CHAT
+    // Expected CHAT per user = 11_000
+    assert_eq!(content.transfer.units(), 1_100_000_000_000);
 }
