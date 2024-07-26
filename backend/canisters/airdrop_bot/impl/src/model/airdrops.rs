@@ -104,7 +104,6 @@ impl Airdrops {
         let config = self.next.take()?;
 
         let mut total_shares: u32 = 0;
-        let mut total_tickets: u32 = 0;
         let mut user_shares: Vec<(UserId, u32, u32)> = Vec::new();
         let mut ticket_holders: Vec<UserId> = Vec::new();
 
@@ -114,7 +113,6 @@ impl Airdrops {
             let tickets = chit / config.lottery_chit_band;
 
             total_shares += shares;
-            total_tickets += tickets;
 
             user_shares.push((user_id, chit, shares));
 
@@ -123,49 +121,55 @@ impl Airdrops {
             }
         }
 
-        if total_tickets == 0 || total_shares == 0 {
+        if ticket_holders.is_empty() || total_shares == 0 {
             return None;
         }
 
         let fund = config.main_chat_fund;
         let prizes = config.lottery_prizes.len();
-        let outcome = AirdropOutcome {
-            participants: user_shares
-                .into_iter()
-                .map(|(u, chit, shares)| {
-                    (
-                        u,
-                        Participant {
-                            chit,
-                            shares,
-                            prize: if shares > 0 {
-                                Some(Prize {
-                                    chat_won: (fund * shares as u128) / total_shares as u128,
-                                    block_index: None,
-                                })
-                            } else {
-                                None
-                            },
-                        },
-                    )
-                })
-                .collect(),
-            lottery_winners: (0..prizes)
-                .map(|i| {
-                    let winning_ticket = (rng.next_u32() % total_tickets) as usize;
-                    let winner = ticket_holders[winning_ticket];
-                    (
-                        winner,
-                        Prize {
-                            chat_won: config.lottery_prizes[i],
-                            block_index: None,
-                        },
-                    )
-                })
-                .collect(),
-        };
 
-        let airdrop = Airdrop { config, outcome };
+        let participants = user_shares
+            .into_iter()
+            .map(|(u, chit, shares)| {
+                (
+                    u,
+                    Participant {
+                        chit,
+                        shares,
+                        prize: if shares > 0 {
+                            Some(Prize {
+                                chat_won: (fund * shares as u128) / total_shares as u128,
+                                block_index: None,
+                            })
+                        } else {
+                            None
+                        },
+                    },
+                )
+            })
+            .collect();
+
+        let mut lottery_winners = Vec::new();
+
+        for i in 0..prizes {
+            let winning_ticket = (rng.next_u32() % ticket_holders.len() as u32) as usize;
+            let winner = ticket_holders.remove(winning_ticket);
+            lottery_winners.push((
+                winner,
+                Prize {
+                    chat_won: config.lottery_prizes[i],
+                    block_index: None,
+                },
+            ));
+        }
+
+        let airdrop = Airdrop {
+            config,
+            outcome: AirdropOutcome {
+                participants,
+                lottery_winners,
+            },
+        };
 
         self.past.push(airdrop);
 
