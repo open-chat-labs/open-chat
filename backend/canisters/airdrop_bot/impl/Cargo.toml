@@ -36,7 +36,7 @@ serde_json = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 testing = { path = "../../../libraries/testing" }
-time = { workspace = true, features = ["macros", "formatting"] }
+time = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
