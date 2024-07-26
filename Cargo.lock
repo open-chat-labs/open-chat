@@ -151,7 +151,6 @@ dependencies = [
  "serializer",
  "stable_memory",
  "testing",
- "time",
  "tracing",
  "types",
  "user_canister",

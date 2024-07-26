@@ -7,7 +7,6 @@ use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use std::cell::Cell;
 use std::time::Duration;
-use time::macros::format_description;
 use tracing::{error, trace};
 use types::icrc1::{self};
 use types::{
@@ -15,6 +14,7 @@ use types::{
     Cryptocurrency, MessageContentInitial,
 };
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
+use utils::time::{MonthKey, MONTHS};
 
 use super::execute_airdrop::start_airdrop_timer;
 
@@ -186,10 +186,9 @@ async fn handle_main_message_action(action: AirdropMessage) {
     };
 
     let Some(month) = read_state(|state| {
-        state.data.airdrops.current(state.env.now()).and_then(|c| {
-            let date = time::OffsetDateTime::from_unix_timestamp((c.start / 1000) as i64).unwrap();
-            let format = format_description!("[month repr:long]");
-            date.format(format).ok()
+        state.data.airdrops.current(state.env.now()).map(|c| {
+            let mk = MonthKey::from_timestamp(c.start).previous();
+            MONTHS[mk.month() as usize]
         })
     }) else {
         return;

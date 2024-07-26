@@ -10,6 +10,21 @@ pub const HOUR_IN_MS: Milliseconds = MINUTE_IN_MS * 60;
 pub const DAY_IN_MS: Milliseconds = HOUR_IN_MS * 24;
 pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
 
+pub const MONTHS: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
+
 pub const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 
 pub fn now_millis() -> TimestampMillis {

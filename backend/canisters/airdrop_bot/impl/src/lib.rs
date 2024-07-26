@@ -52,7 +52,6 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            initialized: self.data.initialized,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -73,7 +72,6 @@ struct Data {
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
     pub pending_actions_queue: PendingActionsQueue,
-    pub initialized: bool,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -95,7 +93,6 @@ impl Data {
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
             pending_actions_queue: PendingActionsQueue::default(),
-            initialized: false,
             rng_seed: [0; 32],
             test_mode,
         }
@@ -110,7 +107,6 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
-    pub initialized: bool,
     pub canister_ids: CanisterIds,
     pub airdrops: AirdropsMetrics,
 }
