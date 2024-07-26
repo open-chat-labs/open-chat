@@ -323,7 +323,7 @@ struct Data {
 }
 
 fn init_airdrop_bot_canister_id() -> CanisterId {
-    Principal::from_text("62rh2-kiaaa-aaaaf-bmy5q-cai").unwrap().into()
+    Principal::from_text("62rh2-kiaaa-aaaaf-bmy5q-cai").unwrap()
 }
 
 impl Data {

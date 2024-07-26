@@ -29,7 +29,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         // TODO: remove this one-time only code
         if state.data.test_mode {
-            state.data.airdrop_bot_canister_id = Principal::from_text("6pwwx-laaaa-aaaaf-bmy6a-cai").unwrap().into();
+            state.data.airdrop_bot_canister_id = Principal::from_text("6pwwx-laaaa-aaaaf-bmy6a-cai").unwrap();
         }
 
         state.push_event_to_all_local_user_indexes(
