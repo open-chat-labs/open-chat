@@ -31,7 +31,7 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
+use utils::consts::{DEV_TEAM_DFX_PRINCIPAL, IC_ROOT_KEY};
 use utils::env::Environment;
 use utils::time::{MonthKey, DAY_IN_MS};
 
@@ -318,8 +318,13 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
+    #[serde(with = "serde_bytes", skip_deserializing, default = "ic_root_key")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+}
+
+fn ic_root_key() -> Vec<u8> {
+    IC_ROOT_KEY.to_vec()
 }
 
 fn init_airdrop_bot_canister_id() -> CanisterId {
