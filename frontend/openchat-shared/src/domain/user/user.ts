@@ -22,6 +22,7 @@ export type UserSummary = DataContent & {
     suspended: boolean;
     diamondStatus: DiamondMembershipStatus["kind"];
     chitBalance: number;
+    totalChitEarned: number;
     streak: number;
     isUniquePerson: boolean;
 };
@@ -69,6 +70,7 @@ export function userSummaryFromCurrentUserSummary(
         suspended: currentSummary.suspensionDetails !== undefined,
         diamondStatus: currentSummary.diamondStatus.kind,
         chitBalance: chitState.chitBalance,
+        totalChitEarned: chitState.totalChitEarned,
         streak: chitState.streak,
         blobReference: currentSummary.blobReference,
         blobData: currentSummary.blobData,
@@ -176,6 +178,7 @@ export type UserSummaryStable = DataContent & {
 export type UserSummaryVolatile = {
     streak: number;
     chitBalance: number;
+    totalChitEarned: number;
 };
 
 export type UserSummaryUpdate = {

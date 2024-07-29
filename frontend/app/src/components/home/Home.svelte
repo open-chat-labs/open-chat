@@ -860,6 +860,8 @@
             const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);
 
+            console.log("Passed: ", passed);
+
             if (!passed) {
                 /**
                  * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end

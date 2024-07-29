@@ -141,6 +141,8 @@
     "chatWith": "Chat with {username}",
     "checkBackLater": "Please try again later. ",
     "chitBalance": "CHIT balance",
+    "totalChitEarned": "Total CHIT earned",
+    "currentChitBalance": "Current CHIT balance",
     "chooseAStorageLevel": "Choose a storage level up to a maximum of 1GB",
     "chooseMembers": "Choose members",
     "chooseReaction": "Choose a reaction",
