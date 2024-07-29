@@ -307,6 +307,7 @@
         "transactions": "Transakcje",
         "unknownTransactionType": "Nieznany"
     },
+    "currentChitBalance": "Aktualne saldo CHIT",
     "currentLimit": "Twój aktualny limit miejsca na dysku to {limit} GB, a saldo konta to {balance} ICP.",
     "currentUsage": "Bieżące wykorzystanie pamięci",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "Twój adres {token}",
         "zeroBalance": "Nie masz żadnego {token}."
     },
+    "totalChitEarned": "Całkowity zarobiony CHIT",
     "transferOwnership": "Przenieś własność na",
     "transferOwnershipFailed": "Przeniesienie własności nie powiodło się",
     "transferOwnershipSucceeded": "Własność została przeniesiona",

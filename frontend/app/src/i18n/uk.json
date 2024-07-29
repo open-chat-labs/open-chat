@@ -307,6 +307,7 @@
         "transactions": "транзакції",
         "unknownTransactionType": "Невідомий"
     },
+    "currentChitBalance": "Поточний баланс CHIT",
     "currentLimit": "Ваш поточний ліміт пам’яті становить {limit} ГБ, а баланс вашого облікового запису — {balance} ICP.",
     "currentUsage": "Поточне використання сховища",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "Ваша адреса {token}",
         "zeroBalance": "У вас немає {token}."
     },
+    "totalChitEarned": "Всього зароблено CHIT",
     "transferOwnership": "Передати право власності на",
     "transferOwnershipFailed": "Не вдалося передати право власності",
     "transferOwnershipSucceeded": "Право власності успішно передано",

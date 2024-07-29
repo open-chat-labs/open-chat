@@ -76,8 +76,8 @@
             display: flex;
             flex-direction: column;
             .total {
-                color: var(--txt-light);
-                @include font(book, normal, fs-60);
+                text-align: start;
+                @include font(light, normal, fs-60);
             }
         }
 
