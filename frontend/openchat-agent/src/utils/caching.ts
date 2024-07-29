@@ -2,7 +2,6 @@ import {
     openDB,
     type DBSchema,
     type IDBPCursorWithValue,
-    type IDBPCursorWithValueIteratorValue,
     type IDBPDatabase,
     type IDBPTransaction,
     type StoreNames,
