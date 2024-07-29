@@ -95,6 +95,7 @@ function createUser(userId: string, username: string): UserSummary {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 
