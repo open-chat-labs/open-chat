@@ -28,7 +28,10 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
         now,
     ) {
         Ok(proof) => {
-            state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
+            state
+                .data
+                .users
+                .record_proof_of_unique_personhood(user_id, proof.clone(), now);
             state.push_event_to_all_local_user_indexes(
                 local_user_index_canister::Event::NotifyUniquePersonProof(user_id, proof),
                 None,
