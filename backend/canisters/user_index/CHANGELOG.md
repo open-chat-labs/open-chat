@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Register the AirdropBot user ([#6129](https://github.com/open-chat-labs/open-chat/pull/6129))
 
+### Fixed
+
+- Fix empty `ic_root_key` ([#6134](https://github.com/open-chat-labs/open-chat/pull/6134))
+
 ## [[2.0.1258](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1258-user_index)] - 2024-07-26
 
 ### Added
