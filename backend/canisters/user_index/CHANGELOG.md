@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Bump `date_updated` after submitting proof of uniqueness ([#6135](https://github.com/open-chat-labs/open-chat/pull/6135))
+
+## [[2.0.1265](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1265-user_index)] - 2024-07-29
+
 ### Changed
 
 - Register the AirdropBot user ([#6129](https://github.com/open-chat-labs/open-chat/pull/6129))

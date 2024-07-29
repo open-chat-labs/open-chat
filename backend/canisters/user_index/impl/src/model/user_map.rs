@@ -354,12 +354,18 @@ impl UserMap {
         }
     }
 
-    pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
+    pub fn record_proof_of_unique_personhood(
+        &mut self,
+        user_id: UserId,
+        proof: UniquePersonProof,
+        now: TimestampMillis,
+    ) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             if user.unique_person_proof.is_none() {
                 self.unique_person_proofs_submitted += 1;
             }
             user.unique_person_proof = Some(proof);
+            user.date_updated = now;
             true
         } else {
             false
