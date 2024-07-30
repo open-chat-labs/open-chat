@@ -1339,6 +1339,625 @@
             </ul>
         </li>
     </ul>
+
+    <h2>Section E: Additional terms for dealing in CHAT</h2>
+    <ul class="custom_list bold" style={"--prefix: 'E'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>This section of these Terms will apply whenever you deal in CHAT.</li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for dealing in CHAT</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    <p>
+                        By dealing in CHAT, you are dealing in Cryptoassets and clause A 6 shall
+                        apply. In addition, you acknowledge and accept that:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '2.1.'"}>
+                        <li>
+                            you have the necessary and relevant experience, knowledge and
+                            understanding to deal in CHAT;
+                        </li>
+                        <li>
+                            other than as set out in these Terms, you are not relying upon any other
+                            representation or warranty by OpenChat or any other person, written or
+                            otherwise, in determining whether to deal in CHAT, and have reached your
+                            independent view regarding that dealing in CHAT is right for you;
+                        </li>
+                        <li>
+                            you accept that CHAT is created and you obtain CHAT on an “as is” basis.
+                            Therefore, provided we act in good faith in accordance with these Terms,
+                            you accept that OpenChat is providing CHAT without being able to provide
+                            any warranties in relation to them, including, but not limited to,
+                            title, merchantability or fitness for a particular purpose;
+                        </li>
+                        <li>
+                            OpenChat has not made, and does not make, any representations that you
+                            will be able to generate a return on your obtaining of CHAT, and you
+                            should not expect a return or any kind of cancellation or refund rights
+                            in relation to the CHAT;
+                        </li>
+                        <li>
+                            whilst OpenChat will use reasonable endeavours to ensure that CHAT will
+                            have the utility reflected in these Terms, the features of the CHAT are
+                            subject to change, modification, amendment, alternation or
+                            supplementation at any time (at OpenChat’s sole discretion);
+                        </li>
+                        <li>
+                            these Terms do not constitute a prospectus, offering memorandum or
+                            private placement memorandum of any sort and does not pertain in any way
+                            to be any kind of regulated offering;
+                        </li>
+                        <li>
+                            you understand that the CHAT is not being offered as securities, e-money
+                            or stablecoins; and
+                        </li>
+                        <li>
+                            you accept that we reserve the right to create new classes of
+                            cryptoassets other than CHAT under separate brands and with features
+                            outside of the scope of these Terms and nothing in these Terms shall
+                            entitle you to have any rights (of whatever nature) in relation to such
+                            cryptoassets.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Any sale of CHAT by you to another person is subject to these Terms, and you are
+                    responsible for ensuring that any acquirer of CHAT is aware of the fact that in
+                    doing so they accept, and are subject to, these Terms.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Section F: Additional terms for Diamnond membership holders</h2>
+    <ul class="custom_list bold" style={"--prefix: 'F'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>This section of these Terms will apply if you hold a Diamond Membership.</li>
+                <li>
+                    <p>As a Diamond Membership holder, you are eligible to:</p>
+
+                    <ul class="custom_list" style={"--prefix: '1.2.'"}>
+                        <li>
+                            earn rewards in return for referring other users to become Diamond
+                            Membership holders. Rewards are 50% of the referred member’s total
+                            Diamond Membership payments for the first year after the referral is
+                            completed. Rewards are paid out in either CHAT or ICP, depending on
+                            whether the referred member uses CHAT or ICP to purchase the Diamond
+                            Membership;
+                        </li>
+                        <li>
+                            create public Groups (in addition to the general ability to create
+                            private Groups);
+                        </li>
+                        <li>create public and / or private Communities;</li>
+                        <li>create Gated Groups and Gated Communities;</li>
+                        <li>make video and voice calls;</li>
+                        <li>
+                            make or accept Swap Offers in relation to a P2P Swaps (see section D for
+                            further information); and
+                        </li>
+                        <li>
+                            access any other features that we make available from time to time at
+                            our discretion to holders of a Diamond Membership (subject to your
+                            acceptance of any additional terms which may apply to such).
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for becoming a Diamond membership holder</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    We will charge you in advance for your Diamond Membership and we will
+                    automatically deduct the fee (as specified on the fees page on the OpenChat
+                    Platform and payable in either CHAT or ICP) directly from your OpenChat Wallet
+                    at the start of your membership. This fee shall cover your Diamond Membership
+                    for the membership period specified when you sign up for Diamond Membership.
+                </li>
+                <li>
+                    <p>In the event that we suspend the provision of Diamond Membership to you:</p>
+                    <ul class="custom_list" style={"--prefix: '2.2.'"}>
+                        <li>
+                            because you breach the terms of this Agreement, you will forfeit your
+                            Diamond Membership (and shall not be entitled to any refund in respect
+                            of such).
+                        </li>
+                        <li>
+                            for any other reason, the membership period shall be extended
+                            accordingly so that you do not pay any fee in respect of a time period
+                            during which the Diamond Membership is suspended.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Your Diamond Membership cannot be transferred or assigned. To the extent
+                    permitted by Applicable Law, we do not provide any refund rights in relation to
+                    your purchase of a Diamond Membership, and we note that the Diamond Membership
+                    is contingent on the operation and value of CHAT and ICP which is dependent on
+                    fluctuations in the financial market which cannot be controlled by us.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for creating groups and communities</h3>
+            <ul class="custom_list" style={"--prefix: '3.'"}>
+                <li>
+                    <p>As the creator of a Group, Community or Channel, you may:</p>
+                    <ul class="custom_list" style={"--prefix: '3.1.'"}>
+                        <li>
+                            determine the rules that users must comply with in order to send
+                            messages in the Group, Community or Channel;
+                        </li>
+                        <li>
+                            manage and control the operation of the Group, Community or Channel; and
+                        </li>
+                        <li>
+                            assign functions to admins and moderators at their discretion to assist
+                            with the management of the Group, Community or Channel,
+                        </li>
+                        <li>and in doing so you accept that you are responsible for:</li>
+                        <li>the Groups, Communities, and Channels you administer;</li>
+                        <li>
+                            ensuring that the rules of the Groups, Communities and Channels you
+                            administer are appropriately enforced; and
+                        </li>
+                        <li>
+                            dealing with any complaints or queries received from participants in
+                            relation to the Groups, Communities, and Channels you administer.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Notwithstanding the rest of this clause F 3, we may require you to change the
+                    rules of any Group, Community or Channel, or we may require that certain
+                    jurisdictions be geo-blocked from a Group, Community or Channel, if we in good
+                    faith believe that this is required to comply with Applicable Law. We also have
+                    the right to require you to resolve any complaint or query in a particular way,
+                    if we in good faith believe that this is required to protect the rights of any
+                    person. You shall comply with any such requirement we impose promptly, and
+                    ensure that we are provided with full, complete, accurate and up to date
+                    responses to any queries we make in deciding whether to place such a requirement
+                    on you or any Group or Community. We do not accept any liability for our
+                    exercise of our rights under this clause F 3.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Section G: Participating in the OpenChat DAO</h2>
+    <ul class="custom_list bold" style={"--prefix: 'G'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>
+                    This section of these Terms will apply if you participate in the governance of
+                    the OpenChat DAO.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Location of information regarding the DAO</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    <p>For information regarding:</p>
+                    <ul class="custom_list" style={"--prefix: '2.1.'"}>
+                        <li>
+                            the rules setting out the operation and governance of the OpenChat DAO,
+                            please see: <a href="https://oc.app/blog/governance"
+                                >https://oc.app/blog/governance</a
+                            >; and
+                        </li>
+                        <li>
+                            how holders of CHAT may vote on Governance Matters, please see:
+                            <a href="https://oc.app/blog/governance"
+                                >https://oc.app/blog/governance</a
+                            >,
+                        </li>
+                    </ul>
+                    <p>
+                        and in participating in the OpenChat DAO you agree to and are bound by these
+                        rules as amended from time to time, which shall be considered as part of
+                        these Terms.
+                    </p>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for using the voting platform</h3>
+            <ul class="custom_list" style={"--prefix: '3.'"}>
+                <li>
+                    You understand that the Voting Platform you use to vote may be operated by a
+                    third party. As such, you may be subject to the additional terms of the third
+                    party operating the Voting Platform. Where this is the case, and you confirm
+                    that (i) you accept and will comply with these additional terms as applicable to
+                    you and (ii) you understand that we are not responsible for them.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Schedule 1: Risks relating to cryptoassets</h2>
+    <p>
+        <strong>
+            DEALING IN CRYPTOASSETS INVOLVES A HIGH DEGREE OF RISK, AND, THEREFORE, SHOULD BE
+            UNDERTAKEN ONLY IF YOU ARE CAPABLE OF EVALUATING THE RISKS INVOLVED AND ABLE TO BEAR THE
+            RISK OF A COMPLETE LOSS OF ALL CAPITAL USED TO PARTICIPATE IN CRYPTOASSETS.
+        </strong>
+    </p>
+    <p>
+        <strong>
+            YOU SHOULD CAREFULLY CONSIDER THE RISKS DESCRIBED BELOW BEFORE DEALING IN CRYPTOASSETS.
+            IT SHOULD BE NOTED THAT THE LIST OF RISK FACTORS DESCRIBED HEREUNDER IS NOT INTENDED TO
+            BE EXHAUSTIVE AND DOES NOT NECESSARILY INCLUDE ALL THE RISKS TO WHICH YOU MAY BE EXPOSED
+            WHEN DEALING IN CRYPTOASSETS.
+        </strong>
+    </p>
+    <p>
+        We expressly disclaim all responsibility for any loss or damage of any kind whatsoever
+        arising directly or indirectly from: (i) reliance on any information contained in this
+        Schedule 1, (ii) any error, omission or inaccuracy in any such information or (iii) any
+        action resulting from such information.
+    </p>
+    <p>
+        Please note that in addition to the risks below, there may be other risks associated with
+        your dealing in Cryptoassets and using our Services generally, including those that we
+        cannot reasonably foresee. Additional risks may also materialise as unanticipated variations
+        or combinations of the risks discussed below.
+    </p>
+    <p>
+        By participating in these Terms, or by otherwise dealing in Cryptoassets, including CHAT,
+        you expressly acknowledge and assume the following risks, which we shall not be liable
+        should they materialise:
+    </p>
+    <p>
+        <strong> Risks applicable to all Cryptoassets (including CHAT) </strong>
+    </p>
+
+    <ul class="custom_list" style={"--prefix: ''"}>
+        <li>
+            <h3>General risks</h3>
+            <p>
+                The value of the Cryptoassets can fall as well as rise. If you buy Cryptoassets, you
+                may not get back the full amount you spent on them, or anything at all. The value of
+                Cryptoassets may depend on fluctuations in the financial markets, or other economic
+                factors, which are outside our control. The past performance of a Cryptoassets is
+                not a guide to the future performance of Cryptoassets.
+            </p>
+        </li>
+        <li>
+            <h3>The prices of Cryptoassets are extremely volatile</h3>
+            <p>
+                Fluctuations in the price of Cryptoassets are subject to significant price
+                volatility. The prices of Cryptoassets have historically been subject to dramatic
+                fluctuations and are highly volatile. A range of factors may influence the market
+                price, if any, of Cryptoassets , including, but not limited to: (i) the ability (if
+                any) of Cryptoassets to trade on a secondary market; (ii) global supply and demand
+                (iii) general expectations with respect to the rate of inflation, interest rates and
+                exchange rates; (iv) changes in the software, software requirements or hardware
+                requirements underlying Cryptoassets; (v) changes in the rights, obligations,
+                incentives, or rewards for holders of Cryptoassets;(vii) interruptions in service
+                from or failures of exchanges on which Cryptoassets are traded; (viii) investment
+                and trading activities of large purchasers, including private and registered funds,
+                that may directly or indirectly invest in Cryptoassets; (ix) monetary policies of
+                governments, trade restrictions, currency devaluations and revaluations; (x)
+                regulatory measures, if any, that affect the use of Cryptoassets and changes in
+                Applicable Law; (xi) global or regional political, economic or financial events and
+                situations; and (x) expectations among participants that the value of a particular
+                Cryptoasset or Cryptoassets generally will soon change. A decrease in the price of a
+                single cryptoasset may cause volatility in the entire cryptoasset industry and may
+                affect the Cryptoassets available via our Services. Volatility in the price of
+                Cryptoassets may result in significant loss over a short period of time.
+            </p>
+        </li>
+        <li>
+            <h3>
+                Risk of losing access to Cryptoassets due to loss of private key(s) and wallet(s)
+            </h3>
+            <p>
+                A private key, or a combination of private keys, is necessary to deal in
+                Cryptoassets. Accordingly, loss of requisite private key(s) associated with your
+                digital wallet or vault storing Cryptoassets will result in loss of such
+                Cryptoassets. Moreover, any third party that gains access to such private key(s),
+                including by gaining access to login credentials of a hosted wallet service you use
+                (including the OpenChat Wallet), may be able to misappropriate your Cryptoassets.
+            </p>
+            <p>
+                Any errors or malfunctions caused by or otherwise related to the wallet you use to
+                receive and store Cryptoassets, including your own failure to properly maintain or
+                use such wallet, may also result in the loss of your Cryptoassets. Failure to
+                precisely follow any procedures set forth by us for dealing in Cryptoassets,
+                including, for instance, providing an incorrect wallet address, or using
+                incompatible wallet(s), may result in the loss of Cryptoassets you hold.
+            </p>
+        </li>
+        <li>
+            <h3>Regulatory risks</h3>
+            <p>
+                Regulation of Cryptoassets and the offering thereof, as well as blockchain
+                technologies, and cryptoasset exchanges is currently underdeveloped and likely to
+                rapidly evolve. Regulation varies significantly between different jurisdictions and
+                is subject to significant uncertainty. Regulators may in the future adopt laws,
+                regulations, guidance or other actions that may severely impact the development,
+                operations and growth of the OpenChat Platform and the adoption and utility of
+                Cryptoassets.
+            </p>
+        </li>
+        <li>
+            <h3>Risks associated with the blockchain protocol</h3>
+            <p>
+                Because Cryptoassets are based on blockchain protocols, any malfunction, breakdown
+                or abandonment of a blockchain protocol may have a material adverse effect on
+                Cryptoassets. Moreover, advances in cryptography, or technical advances such as the
+                development of quantum computing, could present risks to Cryptoassets by rendering
+                ineffective the cryptographic consensus mechanism that underpins the blockchain
+                protocol.
+            </p>
+        </li>
+        <li>
+            <h3>Risk of hacking and software and security weaknesses</h3>
+            <p>
+                Hackers or other malicious groups or organizations may attempt to interfere with
+                Cryptoassets in a variety of ways, including malware attacks, denial of service
+                attacks, consensus-based attacks, Sybil attacks, smurfing and spoofing, as well as
+                attacks which overpower the consensus-based mechanism on which the blockchain in
+                built and attacks which interfere with or otherwise cause nodes to malfunction
+                (nodes are computers / hardware devices that help maintain the blockchain).
+            </p>
+            <p>
+                There is also an inherent risk that the software and related technologies and
+                theories we use could contain Viruses or Vulnerabilities. Viruses or Vulnerabilities
+                could cause, inter alia, complete loss of Cryptoassets, or could negatively affect
+                the OpenChat Platform.
+            </p>
+        </li>
+        <li>
+            <h3>Other potential risks applicable to Cryptoassets</h3>
+            <p>
+                In addition to the risks included in this Schedule 1, there are other risks
+                associated with dealing in Cryptoassets (including CHAT), including those that we
+                cannot reasonably foresee. Additional risks may also materialize as unanticipated
+                variations or combinations of the risks discussed above in this Schedule 1.
+            </p>
+            <p>
+                Where you deal in any Cryptoasset you should take care to understand the risks
+                involved. In this respect, we note some of the additional specific risks relevant to
+                CHAT. In relation to Cryptoassets other than CHAT, it is usual for the issuer of the
+                Cryptoasset to provide an explanation of the risks involved (or if they have not,
+                this can be an indicator that a Cryptoasset is particularly risky as there has been
+                a lack of consideration of the risks relevant to that Cryptoasset). By dealing in
+                any Cryptoasset, you confirm to us that you have taken to time to understand, and
+                accept, the risks involved (including in respect of the risks as explained by the
+                issuer of the Cryptoasset).
+            </p>
+        </li>
+        <li>
+            <h3>Forks and Airdrops</h3>
+            <p>
+                The underlying protocols of Cryptoassets may be subject to substantial changes in
+                their operating rules (called a “forks”), and these may alter the value or function
+                of a Cryptoasset. A fork may result in multiple versions of a Cryptoasset, leading
+                to volatility as one version becomes dominant over another, which may lose its
+                value.
+            </p>
+            <p>
+                There may be additional distributions (called an “airdrop”) made to holders of a
+                particular Cryptoasset, which may be a new variant of a Cryptoasset or a further
+                quantity of the same Cryptoasset. The (anticipated) occurrence of an airdrop may
+                impact the value of the Cryptoasset(s) affected by that airdrop.
+            </p>
+        </li>
+    </ul>
+
+    <p>
+        <strong>CHAT specific risks</strong>
+    </p>
+    <p>
+        As noted elsewhere in these Terms, CHAT is not being structured or sold as securities nor
+        any other form of regulated investment product. Accordingly, there has not been any
+        consideration as to whether the CHAT is a suitable or an appropriate thing for you to deal
+        in. In addition to the General Cryptoasset risks, you should be aware of the following risks
+        in relation to CHAT specifically:
+    </p>
+    <ul class="custom_list" style={"--prefix: ''"}>
+        <li>
+            <h3>Lack of operating history</h3>
+            <p>
+                Purchases of CHAT involve a high degree of risk. The value of CHAT is reliant on the
+                success of us developing our business. As such, CHAT has all of the risks and
+                uncertainties normally associated with a developing business, including in respect
+                of potential difficulties operating the OpenChat Platform, lack of name recognition,
+                lack of adequate capital to progress the business, and difficulties in complying
+                with all Applicable Law. Financial and operational risks confronting start-ups are
+                significant and we are not immune to these. The market in which we compete is highly
+                competitive, and the percentage of companies that survive and prosper is small.
+            </p>
+            <p>
+                Our lack of an operating history may make it difficult for you to evaluate our
+                business and long-term operating prospects and the prospects of the OpenChat
+                Platform in connection with acquiring CHAT. These risks include, but are not limited
+                to, our ability to: (i) increase revenues and manage costs relating to the operation
+                of the OpenChat Platform; (ii) increase awareness of the OpenChat Platform and CHAT;
+                (iii) offer compelling content on the OpenChat Platform; (iv) maintain current and
+                develop new strategic relationships; (v) respond effectively to competitive
+                pressures; (vi) continue to develop and upgrade technology; and (vii) raise any
+                additional capital as potentially required. There are no assurances that our
+                business strategy will be successful, nor that we will address these risks
+                successfully during the operation of the OpenChat Platform and CHAT.
+            </p>
+        </li>
+        <li>
+            <h3>Risks associated with uncertain regulation</h3>
+            <p>
+                The regulatory status of the CHAT may be unclear or unsettled in certain
+                jurisdictions. It is difficult to predict how or whether regulatory agencies may
+                apply existing regulation with respect to CHAT and its applications, including the
+                OpenChat Platform. It is likewise difficult to predict how or whether legislatures
+                or regulatory agencies may implement changes to law and regulation affecting
+                distributed ledger technology and its applications. Regulatory actions could
+                negatively impact CHAT in various ways, including, for purposes of illustration
+                only, through a determination that CHAT are a regulated financial instrument that
+                require registration or licensing. We may cease operations in a jurisdiction in the
+                event that regulatory actions, or changes to Applicable Law, make it illegal to
+                operate in such jurisdiction, or commercially undesirable to obtain the necessary
+                regulatory approval(s) to operate in such jurisdiction.
+            </p>
+            <p>
+                More generally, the OpenChat Platform is pioneered on new and evolving technology,
+                which increases legal complexity, particularly as the Applicable Law is subject to
+                interpretation and change. This could result in a variety of adverse consequences,
+                including civil penalties and fines as well as the requirement that some or all of
+                our Services by restricted or prohibited in certain jurisdictions. These
+                developments could have an adverse effect on the operations of the OpenChat Platform
+                and the value of CHAT.
+            </p>
+        </li>
+        <li>
+            <h3>Legal proceedings and litigation</h3>
+            <p>
+                From time to time, we may be involved in legal proceedings or litigation. The
+                results of such legal proceedings and claims cannot be predicted with certainty and,
+                regardless of the outcome, legal proceedings could have an adverse impact on our
+                business, because of defence and settlement costs, diversion of resources, and other
+                factors. Generally, if third parties are successful in their claims, we may have to
+                pay substantial damages, account for profits derived from the alleged infringing
+                acts, and cease to use certain technologies or take other actions that could be
+                detrimental to our business. If there is an intellectual property infringement
+                claim, or to avoid such claims, we may be prohibited from selling or licensing to
+                others some or all Services we develop, unless the patent or copyright holder grants
+                a license of the relevant intellectual property to us, which the patent or copyright
+                holder is not obligated to do. There also may be adverse publicity associated with
+                litigation that could negatively affect people’s perception of us, the OpenChat
+                Platform and/or CHAT, regardless of whether the allegations are valid or we are
+                ultimately found liable. Accordingly, litigation may adversely affect our business
+                and financial condition.
+            </p>
+        </li>
+        <li>
+            <h3>Intellectual property</h3>
+            <p>
+                Companies, organisations, or individuals, including competitors, may hold or obtain
+                patents, trademarks, or other proprietary rights that would prevent, limit, or
+                interfere with our ability to make, use, develop, sell, and / or market CHAT and /
+                or the OpenChat Platform, which could make it more difficult for us to operate our
+                business. These third parties may have applied for, been granted, or obtained,
+                patents that relate to intellectual property, and which compete with our
+                intellectual property or technology. This may require us to develop or obtain
+                alternative technology, or obtain appropriate licenses under these patents, which
+                may not be available on acceptable terms or at all. Such a circumstance may result
+                in us having to significantly increase development efforts and resources to redesign
+                the technology in order for us to safeguard our competitive edge against competitors
+                in the same industry. There is a risk that our means of protecting intellectual
+                property rights may not be adequate, and weaknesses or failures in this area could
+                adversely affect our business or reputation, financial condition, the operations of
+                the OpenChat Platform and the development of CHAT.
+            </p>
+            <p>
+                From time to time, we may receive communications from holders of patents or
+                trademarks regarding their proprietary rights. Companies holding patents or other
+                intellectual property rights may bring suits alleging infringement of such rights or
+                otherwise assert their rights and urge us to take licenses. In addition, if we are
+                determined to have infringed upon a third party's intellectual property rights, we
+                may be required to cease operating the OpenChat Platform or certain Services, pay
+                substantial damages, seek a license from the holder of the infringed intellectual
+                property right (which license may not be available on reasonable terms or at all),
+                and/or establish and maintain alternative branding for items relating to the
+                OpenChat Platform and our Services. We may need to file lawsuits to protect our
+                intellectual property rights from infringement from third parties, which could be
+                expensive, time consuming, and distract management's attention from our core
+                operations.
+            </p>
+            <p>
+                Our ability to serve our customers and the OpenChat Platform’s participants will
+                depend upon our intellectual property. The steps we take to protect our intellectual
+                property rights may be inadequate. In order to protect our intellectual property
+                rights, we may be required to spend significant resources to monitor and protect
+                these rights. Litigation brought to protect and enforce our intellectual property
+                rights could be costly, time-consuming and distracting to management and could
+                result in the impairment or loss of portions of our intellectual property.
+                Furthermore, our efforts to enforce our intellectual property rights may be met with
+                defences, counterclaims, and countersuits attacking the validity and enforceability
+                of our intellectual property rights. Our failure to secure, protect, and enforce our
+                intellectual property rights could seriously harm the CHAT brand and adversely
+                affect the development of the CHAT.
+            </p>
+        </li>
+        <li>
+            <h3>
+                CHAT will have no refund rights or similar features and may have limited liquidity
+            </h3>
+            <p>
+                After issuance, to the extent permitted by Applicable Law you will have no right to
+                return your CHAT to us or to receive a refund or otherwise require us to exchange
+                CHAT for a certain value. As a result, if there is not sufficient demand or interest
+                in the OpenChat Platform and CHAT, or if there are limits on the transferability of,
+                or limited liquidity for, CHAT, then you may lose all or a portion of your
+                investment.
+            </p>
+        </li>
+        <li>
+            <h3>Future distribution of CHAT and other types of token</h3>
+            <p>
+                The distribution by us of a substantial number of CHAT or additional types of token
+                could have an adverse effect on the value of CHAT. Any distribution of CHAT could
+                dilute your percentage interest in then-outstanding CHAT, if any, and have an
+                adverse effect on the market value of the CHAT. Additional new types of cryptoasset
+                may also impact the value of CHAT, and you have no rights in relation to such new
+                types of cryptoasset as a result of entering into these Terms.
+            </p>
+        </li>
+        <li>
+            <h3>Funding</h3>
+            <p>
+                We intend to use the amounts received from CHAT holders to fund the development of
+                our business and the OpenChat Platform. Amounts received from CHAT holders may be
+                converted into other cryptoassets or fiat currencies. If the value of cryptoassets
+                or fiat currencies fluctuate unfavourably this may mean that we may not be able to
+                fund business development and deployment as expected or may not be able to develop
+                the OpenChat Platform in the manner it intended, which may consequently impact the
+                value of CHAT.
+            </p>
+        </li>
+        <li>
+            <h3>Lack information for monitoring their CHAT</h3>
+            <p>
+                You may not be able to obtain all information you want from time to time regarding
+                the OpenChat Platform and / or CHAT. Even if you do receive such information, you
+                may not receive it on a timely basis. It is possible that you may not be aware of
+                materially adverse changes that have occurred with respect to the OpenChat Platform
+                and/or CHAT in a timely manner. As a result of these difficulties, as well as other
+                uncertainties, you may not have accurate or accessible information relating to your
+                purchase, which could prevent you from taking actions with the potential to prevent
+                adverse consequences relating to your holding of CHAT.
+            </p>
+        </li>
+        <li>
+            <h3>CHAT may not be classified as unregulated</h3>
+            <p>
+                Although we intend for CHAT to be classified as unregulated, the regulatory position
+                of cryptoassets can be uncertain and subject to change. This may, at a later date,
+                cause us to reclassify CHAT as a security, in which case CHAT may be subject to
+                restrictions on resale and transfer.
+            </p>
+        </li>
+        <li>
+            <h3>Voting power</h3>
+            <p>
+                Whilst CHAT allows CHAT holders to participate in the governance of the OpenChat DAO
+                by voting on proposals, each CHAT holder’s voting power is proportional to the
+                amount of CHAT they have deposited and locked. As such, there is a risk that a small
+                number of CHAT holders may be able to exercise the majority of the voting power from
+                time to time, meaning that other holders of CHAT cannot effectively influence the
+                governance of the OpenChat DAO, and devaluing the CHAT they hold.
+            </p>
+        </li>
+    </ul>
 </div>
 
 <style lang="scss">
