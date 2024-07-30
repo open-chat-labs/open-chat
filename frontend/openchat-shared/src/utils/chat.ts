@@ -106,7 +106,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 userIds.add(e.event.frozenBy);
                 break;
             case "chat_unfrozen":
-                user_ids.add(e.event.unfrozenBy);
+                userIds.add(e.event.unfrozenBy);
                 break;
             case "aggregate_common_events":
             case "direct_chat_created":
