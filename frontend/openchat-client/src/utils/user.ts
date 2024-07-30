@@ -89,6 +89,7 @@ export function nullUser(username: string): UserSummary {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 

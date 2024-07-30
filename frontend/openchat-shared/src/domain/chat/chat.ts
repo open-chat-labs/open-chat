@@ -984,6 +984,7 @@ export type ChitState = {
     streakEnds: bigint;
     nextDailyChitClaim: bigint;
     chitBalance: number;
+    totalChitEarned: number;
 };
 
 export type CurrentChatState = {
@@ -1140,6 +1141,7 @@ export type InitialStateResponse = {
     streak: number;
     nextDailyClaim: bigint;
     chitBalance: number;
+    totalChitEarned: number;
 };
 
 export type PinNumberSettings = {
@@ -1181,6 +1183,7 @@ export type UpdatesSuccessResponse = {
     streakEnds: bigint;
     streak: number;
     nextDailyClaim: bigint;
+    totalChitEarned: number;
 };
 
 export type DirectChatsUpdates = {

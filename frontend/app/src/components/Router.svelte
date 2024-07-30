@@ -68,6 +68,12 @@
             () => (route = LandingPage),
         );
         page(
+            "/terms",
+            parsePathParams(() => ({ kind: "terms_route" })),
+            track,
+            () => (route = LandingPage),
+        );
+        page(
             "/faq",
             parsePathParams(() => ({ kind: "faq_route" })),
             track,

@@ -307,6 +307,7 @@
         "transactions": "Giao dịch",
         "unknownTransactionType": "không xác định"
     },
+    "currentChitBalance": "Số dư CHIT hiện tại",
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "Địa chỉ {token} của bạn",
         "zeroBalance": "Bạn không có bất kỳ {token} nào."
     },
+    "totalChitEarned": "Tổng CHIT kiếm được",
     "transferOwnership": "Chuyển quyền sở hữu cho",
     "transferOwnershipFailed": "Chuyển quyền sở hữu không thành công",
     "transferOwnershipSucceeded": "Quyền sở hữu đã được chuyển nhượng thành công",

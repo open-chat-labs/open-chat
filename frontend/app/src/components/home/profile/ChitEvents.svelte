@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OpenChat, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
-    import Calendar from "../../calendar/Calendar.svelte";
+    import Calendar, { title as monthTitle } from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
     import ChitBalance from "./ChitBalance.svelte";
@@ -17,6 +17,7 @@
 
     let busy = false;
     let events: ChitEarned[] = [];
+    $: totalEarned = events.reduce((total, ev) => total + ev.amount, 0);
 
     function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
         return events.filter((e) => {
@@ -55,9 +56,17 @@
                 day streak!
             </div>
         {/if}
-        <ChitBalance size={"large"} me balance={$chitState.chitBalance} />
+        <ChitBalance
+            size={"large"}
+            me
+            balance={$chitState.chitBalance}
+            totalEarned={$chitState.totalChitEarned} />
     </div>
     <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} {busy} let:day>
+        <div class="month-title" slot="month-title">
+            <div class="month">{$monthTitle}</div>
+            <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
+        </div>
         <ChitEventsForDay {day} events={chitEventsForDay(events, day)} />
     </Calendar>
     <Toggle
@@ -98,5 +107,11 @@
     .streak-txt {
         @include font(bold, normal, fs-160);
         color: var(--accent);
+    }
+
+    .chit-earned {
+        text-align: center;
+        color: var(--txt-light);
+        @include font(book, normal, fs-60);
     }
 </style>
