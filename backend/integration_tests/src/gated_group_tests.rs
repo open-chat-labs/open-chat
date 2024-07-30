@@ -35,6 +35,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             rules: Rules::default(),
             events_ttl: None,
             gate: Some(AccessGate::DiamondMember),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,
@@ -117,6 +118,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
                 ledger_canister_id: canister_ids.icp_ledger,
                 min_balance,
             })),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,
@@ -200,6 +202,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
                 ],
                 and: and_gate,
             })),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,

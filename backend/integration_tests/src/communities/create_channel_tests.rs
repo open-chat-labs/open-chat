@@ -64,6 +64,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             subtype: None,
             avatar: None,
             history_visible_to_new_joiners: true,
+            messages_visible_to_non_members: Some(true),
             permissions_v2: None,
             events_ttl: None,
             gate: diamond_gate.then_some(AccessGate::DiamondMember),

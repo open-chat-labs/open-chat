@@ -75,6 +75,9 @@ fn create_channel_impl(
         return CommunityFrozen;
     }
 
+    let messages_visible_to_non_members =
+        if args.is_public { args.messages_visible_to_non_members.unwrap_or_default() } else { false };
+
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
@@ -129,6 +132,7 @@ fn create_channel_impl(
                 subtype,
                 args.avatar,
                 args.history_visible_to_new_joiners,
+                messages_visible_to_non_members,
                 permissions,
                 args.gate.clone(),
                 args.events_ttl,

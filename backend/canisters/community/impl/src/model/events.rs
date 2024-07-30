@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityPermissionsChanged, CommunityRoleChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined,
+    CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined,
     MemberLeft, MembersRemoved, PrimaryLanguageChanged, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
@@ -31,7 +31,7 @@ pub enum CommunityEventInternal {
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
     PermissionsChanged(Box<CommunityPermissionsChanged>),
-    VisibilityChanged(Box<GroupVisibilityChanged>),
+    VisibilityChanged(Box<CommunityVisibilityChanged>),
     InviteCodeChanged(Box<GroupInviteCodeChanged>),
     Frozen(Box<GroupFrozen>),
     Unfrozen(Box<GroupUnfrozen>),

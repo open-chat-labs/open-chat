@@ -127,6 +127,7 @@ pub mod happy_path {
                 description: format!("{name}_description"),
                 avatar: None,
                 history_visible_to_new_joiners,
+                messages_visible_to_non_members: Some(is_public),
                 permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,

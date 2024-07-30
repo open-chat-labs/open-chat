@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.subtype,
         args.avatar,
         args.history_visible_to_new_joiners,
+        args.is_public && args.messages_visible_to_non_members.unwrap_or(true),
         args.created_by_principal,
         args.created_by_user_id,
         args.created_by_user_type,

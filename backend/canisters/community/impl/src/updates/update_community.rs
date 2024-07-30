@@ -8,7 +8,7 @@ use ic_cdk::update;
 use tracing::error;
 use types::{
     AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
-    Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
+    CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged,
     OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
@@ -319,7 +319,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         if state.data.is_public != public {
             state.data.is_public = public;
 
-            let event = GroupVisibilityChanged {
+            let event = CommunityVisibilityChanged {
                 now_public: public,
                 changed_by: my_user_id,
             };

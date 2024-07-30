@@ -261,6 +261,7 @@ type GroupChatSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -298,6 +299,7 @@ type GroupCanisterGroupChatSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -341,6 +343,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     metrics : opt ChatMetrics;
     my_metrics : opt ChatMetrics;
     is_public : opt bool;
+    messages_visible_to_non_members: opt bool;
     latest_threads : vec GroupCanisterThreadDetails;
     unfollowed_threads : vec MessageIndex;
     notifications_muted : opt bool;
@@ -399,6 +402,7 @@ type CommunityCanisterChannelSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -415,6 +419,7 @@ type CommunityCanisterChannelSummary = record {
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
     is_invited : opt bool;
+    
 };
 
 type GroupMembership = record {
@@ -464,6 +469,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     subtype : GroupSubtypeUpdate;
     avatar_id : DocumentIdUpdate;
     is_public : opt bool;
+    messages_visible_to_non_members: opt bool;
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
@@ -731,6 +737,7 @@ type PublicGroupSummary = record {
     description : text;
     subtype : opt GroupSubtype;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     avatar_id : opt nat;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
@@ -888,6 +895,8 @@ type PermissionsChanged = record {
 
 type GroupVisibilityChanged = record {
     now_public : bool;
+    public : opt bool;
+    messages_visible_to_non_members : opt bool;
     changed_by : UserId;
 };
 
