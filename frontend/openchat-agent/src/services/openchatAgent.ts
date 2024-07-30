@@ -1619,6 +1619,7 @@ export class OpenChatAgent extends EventTarget {
                 streak: userResponse.streak,
                 chitBalance: userResponse.chitBalance,
                 nextDailyChitClaim: userResponse.nextDailyClaim,
+                totalChitEarned: userResponse.totalChitEarned,
             };
             anyUpdates = true;
         } else {
@@ -1691,6 +1692,7 @@ export class OpenChatAgent extends EventTarget {
                     streak: userResponse.streak,
                     chitBalance: userResponse.chitBalance,
                     nextDailyChitClaim: userResponse.nextDailyClaim,
+                    totalChitEarned: userResponse.totalChitEarned,
                 };
                 anyUpdates = true;
             }

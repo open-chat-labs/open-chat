@@ -29,6 +29,7 @@ const lookup: UserLookup = {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     },
     b: {
         kind: "user",
@@ -41,6 +42,7 @@ const lookup: UserLookup = {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     },
     xyz: {
         kind: "user",
@@ -53,6 +55,7 @@ const lookup: UserLookup = {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     },
     alpha: {
         kind: "user",
@@ -65,6 +68,7 @@ const lookup: UserLookup = {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     },
 };
 
@@ -117,6 +121,7 @@ describe("compare username", () => {
             chitBalance: 0,
             streak: 0,
             isUniquePerson: false,
+            totalChitEarned: 0,
         };
     }
     test("works with non-null usernames", () => {

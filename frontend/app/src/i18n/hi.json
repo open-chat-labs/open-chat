@@ -307,6 +307,7 @@
         "transactions": "लेनदेन",
         "unknownTransactionType": "अज्ञात"
     },
+    "currentChitBalance": "वर्तमान CHIT शेष",
     "currentLimit": "आपकी वर्तमान संग्रहण सीमा {limit}GB है और आपके खाते की शेष राशि {balance} ICP है।",
     "currentUsage": "वर्तमान भंडारण उपयोग",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "आपका {token} पता",
         "zeroBalance": "आपके पास कोई {token} नहीं है."
     },
+    "totalChitEarned": "कुल अर्जित CHIT",
     "transferOwnership": "को स्वामित्व हस्तांतरित करें",
     "transferOwnershipFailed": "स्वामित्व का हस्तांतरण विफल रहा",
     "transferOwnershipSucceeded": "स्वामित्व सफलतापूर्वक हस्तांतरित",

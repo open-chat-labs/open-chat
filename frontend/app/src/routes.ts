@@ -97,6 +97,10 @@ export function isGuidelinesRoute(route: RouteParams): route is GuidelinesRoute 
     return route.kind === "guidelines_route";
 }
 
+export function isTermsRoute(route: RouteParams): route is TermsRoute {
+    return route.kind === "terms_route";
+}
+
 export function isFaqRoute(route: RouteParams): route is FaqRoute {
     return route.kind === "faq_route";
 }
@@ -251,6 +255,7 @@ export type LandingPageRoute =
     | BlogRoute
     | FaqRoute
     | GuidelinesRoute
+    | TermsRoute
     | DiamondRoute;
 
 export type RouteType = RouteParams["kind"];
@@ -280,6 +285,7 @@ export type RoadmapRoute = { kind: "roadmap_route" };
 export type FaqRoute = { kind: "faq_route" };
 export type DiamondRoute = { kind: "diamond_route" };
 export type GuidelinesRoute = { kind: "guidelines_route" };
+export type TermsRoute = { kind: "terms_route" };
 
 export type HomeRoute = RouteCommon & {
     kind: "home_route";

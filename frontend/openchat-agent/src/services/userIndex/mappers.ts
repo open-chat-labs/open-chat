@@ -120,6 +120,7 @@ export function userSummaryUpdate(candid: ApiUserSummaryUpdate): UserSummaryUpda
         volatile: optional(candid.volatile, (v) => ({
             chitBalance: v.chit_balance,
             streak: v.streak,
+            totalChitEarned: v.total_chit_earned,
         })),
     };
 }
@@ -138,6 +139,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         suspended: candid.suspended,
         diamondStatus: diamondStatus(candid.diamond_membership_status),
         chitBalance: candid.chit_balance,
+        totalChitEarned: candid.total_chit_earned,
         streak: candid.streak,
         isUniquePerson: candid.is_unique_person,
     };

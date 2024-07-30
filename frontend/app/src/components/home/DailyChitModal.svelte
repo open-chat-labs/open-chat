@@ -17,6 +17,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import LearnToEarn from "./profile/LearnToEarn.svelte";
+    import ChitBalance from "./profile/ChitBalance.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -110,8 +111,11 @@
         <div class="balance">
             <div class="spacer"></div>
             <div class="current">
-                <div class="chit"></div>
-                {`${$chitState.chitBalance.toLocaleString()} CHIT`}
+                <ChitBalance
+                    balance={$chitState.chitBalance}
+                    totalEarned={$chitState.totalChitEarned}
+                    me={false}
+                    size={"large"} />
             </div>
             <div class="additional">
                 {#if additional}
@@ -313,19 +317,6 @@
 
         .current {
             flex-shrink: 0;
-            padding: $sp2 $sp3;
-            border-radius: var(--rd);
-            background-color: rgba(255, 255, 255, 0.1);
-            display: flex;
-            gap: $sp3;
-            align-items: center;
-
-            .chit {
-                background-image: url("/assets/chit.svg");
-                background-repeat: no-repeat;
-                width: $sp4;
-                height: $sp4;
-            }
         }
     }
 

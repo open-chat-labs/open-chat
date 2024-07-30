@@ -307,6 +307,7 @@
         "transactions": "トランザクション",
         "unknownTransactionType": "未知"
     },
+    "currentChitBalance": "現在のCHIT残高",
     "currentLimit": "現在のストレージ制限は{limit} GBで、アカウントの残高は{balance} ICPです。",
     "currentUsage": "現在のストレージ使用量",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "あなたの {token} アドレス",
         "zeroBalance": "あなたは {token} を持っていません。"
     },
+    "totalChitEarned": "獲得したCHITの合計",
     "transferOwnership": "所有権を譲渡する",
     "transferOwnershipFailed": "所有権の移転に失敗しました",
     "transferOwnershipSucceeded": "所有権の移転が完了しました",
