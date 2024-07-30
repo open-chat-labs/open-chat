@@ -1958,6 +1958,88 @@
             </p>
         </li>
     </ul>
+
+    <h2>Schedule 2: Content Standards</h2>
+
+    <p>
+        A Contribution must comply with Applicable Law. In addition, the Content Standards below
+        must be complied with in spirit as well as to the letter. The Content Standards apply to
+        each part of any Contribution as well as to its whole. We will determine, at our discretion,
+        whether a Contribution breaches the Content Standards.
+    </p>
+    <p>A Contribution must not:</p>
+    <ul class="custom_list" style={"--prefix: ''"}>
+        <li>
+            threaten to harm another individual or group of people. This includes direct, indirect,
+            and suggestive threats.
+        </li>
+        <li>
+            solicit, share, or make attempts to distribute content that depicts, promotes, or
+            attempts to normalise child sexual abuse.
+        </li>
+        <li>post content that in any way sexualises children.</li>
+        <li>
+            share sexually explicit or sexually suggestive content without the subject’s knowledge
+            and consent, otherwise known as “revenge porn”. This includes the non-consensual
+            distribution of intimate media that was created either with or without an individual’s
+            consent.
+        </li>
+        <li>
+            share content that glorifies, promotes, or normalises suicide or other acts of physical
+            self-harm. This includes content that encourages others to cut, burn, or starve
+            themselves, as well as content that normalizes eating disorders, such as anorexia and
+            bulimia. Self-harm acts or threats used as a form of emotional manipulation or coercion
+            are also prohibited.
+        </li>
+        <li>
+            share real media depicting gore, excessive violence, or animal harm, especially with the
+            intention to harass or shock others.
+        </li>
+        <li>
+            promote, coordinate, or execute financial scams. Promoting a particular crypto token or
+            NFT does not break this rule in general.
+        </li>
+        <li>
+            be sent persistently as a spam message. This includes repeatedly sending the same or
+            meaningless messages, either in the same chat or across multiple chats.
+        </li>
+    </ul>
+
+    <h2>Schedule 3: Chat features</h2>
+    <p>
+        <strong
+            >PLEASE NOTE THAT THE BELOW REPRESENTS FEATURES OF CHAT AS AT THE CURRENT DATE OF THESE
+            TERMS. HOWEVER, THERE MAY BE LEGAL, REGULATORY OR COMMERCIAL REASONS WHY CHAT FEATURE
+            MAY IN THE FUTURE CHANGE FROM THE BELOW.</strong>
+    </p>
+    <p>CHAT gives CHAT holders the following rights:</p>
+    <p>CHAT may be:</p>
+    <ul class="custom_list" style={"--prefix: ''"}>
+        <li>
+            deposited and locked as neurons to participate in the OpenChat DAO governance by voting
+            on proposals;
+        </li>
+        <li>
+            distributed as a voting reward in accordance with the DAO governance rules as set out at
+            https://oc.app/blog/governance.
+        </li>
+        <li>used to purchase a Diamond Membership; and</li>
+        <li>
+            used to gain access to additional features that we may, at our discretion, make
+            available from time to time.
+        </li>
+    </ul>
+    <p>
+        Please see Section G: Participating in OpenChat DAO to find out where you can obtain
+        information on the OpenChat DAO.
+    </p>
+    <p>
+        <strong>
+            Please note that we have <em>no</em> obligation to give CHAT any rights or attributes other
+            than those outlined above, and CHAT shall not give you any rights in relation to any aspect
+            of any business conducted at any time by us other than as explicitly stated above.
+        </strong>
+    </p>
 </div>
 
 <style lang="scss">
