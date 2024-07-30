@@ -209,6 +209,7 @@ pub struct CommunityPermissionsChanged {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 #[serde(from = "GroupVisibilityChangedPrevious")]
 pub struct GroupVisibilityChanged {
+    // TODO: deprecated
     pub now_public: bool,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
