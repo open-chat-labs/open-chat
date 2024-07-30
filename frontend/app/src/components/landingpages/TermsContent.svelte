@@ -104,7 +104,1078 @@
                                 distinct forms of communication within the OpenChat Platform);
                             </td>
                         </tr>
+                        <tr>
+                            <td>"Content Standards"</td>
+                            <td>
+                                means the standards that apply to all Contributions, as set out at
+                                Schedule 2;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Contribution"</td>
+                            <td>
+                                refers to any material which you contribute to the OpenChat
+                                Platform, including any communication you make via our Services;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Cryptoassets"</td>
+                            <td>
+                                refers to CHAT as well as any and all other cryptoassets that are
+                                supported by the OpenChat Platform, a list of which are available in
+                                your OpenChat Wallet;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Diamond Membership"</td>
+                            <td>
+                                refers to our subscription service that gives members access to
+                                exclusive benefits;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Exchange Swap"</td>
+                            <td>has the meaning set out at clause D 1.2.1;</td>
+                        </tr>
+                        <tr>
+                            <td>"Gated"</td>
+                            <td
+                                >refers to the restrictions or rules that the owner of a Group,
+                                Community, or Channel may impose on users' ability to access or use
+                                that Group, Community, or Channel;</td>
+                        </tr>
+                        <tr>
+                            <td>"Governance Matters"</td>
+                            <td
+                                >refers to matters which relate to the operation or governance of
+                                the OpenChat DAO;</td>
+                        </tr>
+                        <tr>
+                            <td>"Group"</td>
+                            <td
+                                >refers to a channel in which a group of users can communicate. This
+                                is distinct from the concept of a Community, as a Community involves
+                                users messaging within a set of channels (and Communities and Groups
+                                are a distinct forms of communication within the OpenChat Platform);</td>
+                        </tr>
+                        <tr>
+                            <td>"Manifest Error"</td>
+                            <td>
+                                refers to the purported price of a Cryptoasset that differs so
+                                significantly from that reported by exchanges generally that it is
+                                clearly inaccurate due to, for example, a computer error;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"OpenChat Platform"</td>
+                            <td>
+                                refers to the platform we provide, available at <a
+                                    href="https://oc.app/">https://oc.app</a
+                                >;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"OpenChat Wallet"</td>
+                            <td
+                                >refers to the digital wallet we provide, in which you can store
+                                your Cryptoassets;</td>
+                        </tr>
+                        <tr>
+                            <td>"P2P Swap"</td>
+                            <td> has the meaning set out at clause D 1.2.2; </td>
+                        </tr>
+                        <tr>
+                            <td>"Prize Messages"</td>
+                            <td>
+                                refers to messages containing Cryptoassets which are distributed to
+                                OpenChat users, who, upon receipt of the message, can potentially be
+                                gifted Cryptoassets;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Source Cryptoasset"</td>
+                            <td
+                                >refers to the Cryptoasset you wish to exchange to obtain the Target
+                                Cryptoasset;</td>
+                        </tr>
+                        <tr>
+                            <td>"Swap(s)"</td>
+                            <td
+                                >refers to either or both an Exchange Swap and / or a P2P Swap (as
+                                relevant);</td>
+                        </tr>
+                        <tr>
+                            <td>"Swap Offer"</td>
+                            <td>has the meaning set out at clause D 1.6;</td>
+                        </tr>
+                        <tr>
+                            <td>"Target Cryptoasset"</td>
+                            <td
+                                >refers to the Cryptoasset you wish to acquire in exchange for the
+                                Source Cryptoasset;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Virus"</td>
+                            <td>
+                                means any software, thing or device which contains any malicious
+                                code, file, program, or other internal component which may prevent,
+                                impair or otherwise adversely affect the operation of any computer
+                                software, hardware or network; or which may prevent, impair or
+                                otherwise adversely affect access to or the operation of any
+                                programme or data, including the reliability of any programme or
+                                data (whether by re-arranging, altering or erasing the programme or
+                                data in whole or part or otherwise); or adversely affect the user
+                                experience, including worms, trojan horses, viruses, time bombs and
+                                other similar things or devices;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Voting Platform"</td>
+                            <td>
+                                refers to the mechanism by which CHAT holders may submit votes as
+                                prescribed from time to time; and
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>"Vulnerability"</td>
+                            <td
+                                >means a weakness, glitch or bug in the computational logic (for
+                                example, code) found in software and hardware components that, when
+                                exploited, results in a negative impact to confidentiality,
+                                integrity, or availability.
+                            </td>
+                        </tr>
                     </table>
+                </li>
+                <li>
+                    Where the words "<strong>includes</strong>", "<strong>including</strong>", "<strong
+                        >for example</strong
+                    >" or "<strong>such as</strong>" are used in these Terms, they are deemed to
+                    have the words "<strong>without limitation</strong>" following them.
+                </li>
+                <li>
+                    A reference to “<strong>writing</strong>” or “<strong>written</strong>” includes
+                    email but not faxes. Any reference to "<strong>written consent</strong>" shall
+                    mean specific explicit consent.
+                </li>
+                <li>
+                    References to “<strong>dealing in</strong>” or “<strong>deal in</strong>” are
+                    references to any participation in Cryptoassets including buying, acquiring,
+                    accepting, holding, selling, staking, disposing of and / or otherwise making use
+                    of Cryptoassets. References to “<strong>transaction”</strong> or “<strong
+                        >transactions</strong
+                    >” are references to any activity involving a person disposing, acquiring, or
+                    otherwise transferring a Cryptoasset to another person (be that by a Swap, a
+                    chat message, or any other means).
+                </li>
+                <li>
+                    The headings of the clauses and schedules of these Terms are for convenience
+                    only and shall not affect its construction or interpretation. The schedules form
+                    part of these Terms and any reference in these Terms to a clause or schedule is
+                    a reference to a clause or schedule of these Terms.
+                </li>
+                <li>
+                    A reference to these Terms or to any other agreement or document referred to in
+                    these Terms is a reference to these Terms or such other document or agreement as
+                    amended or varied in accordance with its terms from time to time.
+                </li>
+                <li>
+                    A reference to a statute, statutory provision or subordinate legislation is a
+                    reference to it as it is in force from time to time, and includes any statute,
+                    statutory provision or subordinate legislation which it amends or re-enacts and
+                    subordinate legislation for the time being in force made under it.
+                </li>
+                <li>
+                    Unless the context otherwise requires, words in the singular shall include the
+                    plural and the plural shall include the singular, and a reference to one gender
+                    shall include a reference to the other genders.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Contact Details</h3>
+
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    If you have any queries, you can contact us via the help channel in the OpenChat
+                    Community, accessible via the OpenChat Platform.
+                </li>
+                <li>
+                    Communications between us shall be in English. Should we receive a communication
+                    which purports to be from you, we are entitled, but are not obliged, to rely on
+                    and conclusively presume that such communication has been given by you. We may
+                    record and monitor conversations we have with you.
+                </li>
+                <li>
+                    You must keep your information with us up to date, as any communication we send
+                    using the details you provide us will be deemed received by you, regardless of
+                    whether or not you actually receive it.
+                </li>
+                <li>
+                    You accept that we are deemed to have received any correspondence only at the
+                    time we actually access it. You accept that there may be a delay in responding
+                    to correspondence received.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Setting up and securing your OpenChat account</h3>
+
+            <ul class="custom_list" style={"--prefix: '3.'"}>
+                <li>
+                    Before you can use our Services, you need to set up an account and provide
+                    certain information. You can do this via our Platform.
+                </li>
+                <li>
+                    To set up an account, our Platform will ask you to authenticate your identity
+                    via a third party identity provider. By authenticating your identity, you agree
+                    to the terms of the third party identity provider.
+                </li>
+                <li>
+                    As part of setting up your account, you may be provided with or asked to create
+                    security details. You must keep your security details secure and not disclose
+                    them to anyone else. Any action or instruction by anyone using your security
+                    details will be treated as if such action or instruction had been made by you,
+                    and we are not responsible for any loss as a result. You should contact us
+                    immediately upon discovering any unauthorised use of your security details.
+                </li>
+                <li>
+                    <strong
+                        >We strongly recommend logging out of the OpenChat Platform at the end of
+                        every session you have on the OpenChat Platform, as otherwise the OpenChat
+                        Platform may not prompt the next user of the device used to access the
+                        OpenChat Platform to enter credentials in order to use the OpenChat
+                        Platform. If you do not log out of the OpenChat Platform at the end of each
+                        session, there is a risk that another person may impersonate you, for
+                        example to send Contributions or to access your Cryptoassets without your
+                        knowledge or consent. We are not responsible for any losses as a consequence
+                        of your failure to log out at the end of a session or your credentials
+                        otherwise being compromised.
+                    </strong>
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <h3>Eligibility to use our services</h3>
+
+            <ul class="custom_list" style={"--prefix: '4.'"}>
+                <li>
+                    <p>
+                        By using the OpenChat Platform, you confirm and represent at all times that:
+                    </p>
+
+                    <ul class="custom_list" style={"--prefix: '4.1.'"}>
+                        <li>
+                            (if you are a body corporate) you are duly organised and validly
+                            existing under the laws of the jurisdiction of your domicile, and have
+                            full power, authority and right, and have taken all action required, to
+                            bind yourself to these Terms, including as regards performing all
+                            actions and obligations under these Terms, which therefore constitute
+                            valid and legally binding obligations;
+                        </li>
+                        <li>
+                            (if you are an individual) you are of legal age and competency to agree
+                            to these Terms and all related obligations, including as regards any
+                            age, residency, legal capacity, competency and all other requirements;
+                        </li>
+                        <li>
+                            you are not a citizen or resident of, or a legal entity in any country
+                            or territory which appears on the sanctions lists of the Office of
+                            Foreign Assets Control of the U.S. Department of Treasury (“<strong
+                                >OFAC</strong
+                            >”), United Nations Security Council (“<strong>UNSC</strong>”), Her
+                            Majesty’s Treasury (“<strong>HMT</strong>”) or any other relevant
+                            sanctions list;
+                        </li>
+                        <li>
+                            (if using our Services to deal in Cryptoassets) you are not a citizen or
+                            resident of, or a legal entity in any country that prohibits dealing in
+                            Cryptoassets or which would otherwise require us to have a licence,
+                            permission, registration or authorisation which we do not have;
+                        </li>
+                        <li>
+                            (if using our Services to send Contributions) you shall not make a
+                            Contribution that is prohibited in the country where you are a citizen
+                            or resident, or registered as a legal entity.
+                        </li>
+                        <li>
+                            you will comply with any Applicable Law relevant to you, including not
+                            committing, causing, facilitating or contributing to the commission by
+                            any person of any bribery, corruption or tax evasion offence;
+                        </li>
+                        <li>
+                            you shall not deal in Cryptoassets where this would require you or us to
+                            obtain any registration, approval, authorisation or similar which you /
+                            we do not have, or in any other circumstances in which your dealing in
+                            Cryptoassets is prohibited;
+                        </li>
+                        <li>
+                            in using the OpenChat Platform you do not breach the rights of any third
+                            party, including any intellectual property or data privacy rights of any
+                            third party;
+                        </li>
+                        <li>
+                            you have not received any advice from us in relation to the using the
+                            Openchat Platform or our Services or dealing in CHAT, and you are solely
+                            responsible for any evaluations, decisions and actions taken in
+                            connection with such;
+                        </li>
+                        <li>
+                            you will provide us with whatever information we may request for the
+                            purposes of satisfying our regulatory, compliance and contractual
+                            obligations;
+                        </li>
+                        <li>
+                            you will deal with us in any open and honest way, including as regards
+                            providing us with full, complete and accurate information when
+                            responding to our reasonable requests;
+                        </li>
+                        <li>
+                            you waive any right you may have to participate in a class action
+                            lawsuit or a class-wide arbitration against us and / or any person
+                            involved with us that arises out of or relates to CHAT or these Terms;
+                        </li>
+                        <li>
+                            you will not attempt to circumvent the security of or interfere with the
+                            proper working of the OpenChat Platform, CHAT or any server on which
+                            they are hosted, nor otherwise introduce, nor permit the introduction
+                            of, any Virus or Vulnerability into the OpenChat Platform, CHAT nor any
+                            of our systems; and
+                        </li>
+                        <li>
+                            you will not use (or assist others in using) our Services or CHAT in
+                            ways that are unlawful, misleading, harmful, discriminatory or
+                            fraudulent.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    In using the OpenChat Platform and our Services you are responsible for all
+                    activity that occurs under your OpenChat account and via any device connected
+                    with/to your OpenChat account.
+                </li>
+                <li>
+                    You shall notify us via the help channel in the OpenChat Community (accessible
+                    via the OpenChat Platform) immediately if you become aware you have breached, or
+                    may have breached, any of your obligations under these Terms.
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <h3>Availability</h3>
+
+            <ul class="custom_list" style={"--prefix: '5.'"}>
+                <li>
+                    Whilst we strive to make our Services and the OpenChat Platform available for
+                    all users all the time, we do not guarantee that our Services or the OpenChat
+                    Platform will be available without interruption, and there may be unavailability
+                    for reasons such as maintenance, repairs, upgrades, or failures of network or
+                    equipment.
+                </li>
+                <li>
+                    We shall not be responsible for any loss from or arising out of Service
+                    interruptions, delays in processing transactions or inability to execute
+                    transactions.
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <h3>General obligations when dealing with cryptoassets</h3>
+
+            <ul class="custom_list" style={"--prefix: '6.'"}>
+                <li>
+                    <p>
+                        When using our Services to deal in Cryptoassets (including CHAT), you
+                        acknowledge and accept that:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '6.1.'"}>
+                        <li>
+                            you understand that we do not provide, nor do we accept responsibility
+                            for, any investment, legal, tax or accounting advice, and we do not
+                            provide any form of recommendation regarding the
+                            suitability/appropriateness or quality of any Cryptoasset, and the fact
+                            that our Services may be used in relation to any Cryptoasset should not
+                            be taken as an indication of such;
+                        </li>
+                        <li>
+                            your dealing in Cryptoassets is based on your own assessment of the
+                            risks involved, and if you are in any doubt as to what these risks are
+                            you confirm you have taken your own independent advice as appropriate;
+                        </li>
+                        <li>
+                            you are responsible for ensuring that any Cryptoassets and software
+                            (including any external wallet) you use in connection with our Services
+                            is compatible with the OpenChat Platform and CHAT, and we are not liable
+                            in the event of any incompatibility resulting in loss;
+                        </li>
+                        <li>
+                            you are only able to send Cryptoassets using our Services that are
+                            stored in your OpenChat Wallet, and you are not able to send
+                            Cryptoassets stored in any external wallet;
+                        </li>
+                        <li>
+                            the OpenChat Platform will refuse to complete, cancel or reverse any
+                            transaction you have authorised or made using our Services where there
+                            is insufficient Cryptoassets in your OpenChat Wallet to cover the
+                            transaction and our fees incurred;
+                        </li>
+                        <li>
+                            you will be charged a fee for every chat message sent containing
+                            Cryptoassets as determined by the relevant Cryptoasset ledger, and this
+                            fee will be automatically deducted from your OpenChat Wallet (this is
+                            not a fee charged by us);
+                        </li>
+                        <li>
+                            you will provide us with whatever information we request to facilitate
+                            any transaction using our Services;
+                        </li>
+                        <li>
+                            Cryptoasset transfers are irreversible and so accidental or fraudulent
+                            transactions with respect to Cryptoassets may not be recoverable. We are
+                            not responsible for any losses that may arise in connection with
+                            accidental or fraudulent transactions and as such, caution should be
+                            exercised whenever you make a transaction via the OpenChat Platform;
+                        </li>
+                        <li>
+                            whilst we will use reasonable endeavours to ensure that instructions in
+                            relation to Cryptoassets are processed in a timely manner, we make no
+                            representation or warranty regarding the amount of time needed to
+                            complete any instruction, as this is dependent upon many factors outside
+                            of our control, and we shall not be responsible for any loss from or
+                            arising out of delays in processing transactions or any inability to
+                            execute transactions; and
+                        </li>
+                        <li>
+                            you are responsible for complying with any tax obligations applicable to
+                            you in connection with your dealing in Cryptoassets.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Intellectual property</h3>
+
+            <ul class="custom_list" style={"--prefix: '7.'"}>
+                <li>
+                    OpenChat and their licensors (if any) are at all times the owners of all
+                    intellectual property rights (of whatever nature, anywhere in the world)
+                    associated with our Services, the OpenChat Platform or CHAT, as well as any
+                    related software or information provided in relation to the CHAT (the “<strong>
+                        OpenChat Intellectual Property
+                    </strong>”). The OpenChat Intellectual Property and aforesaid rights are
+                    licensed (not sold) to you under the AGPLv3 licence (at
+                    <a href="https://www.gnu.org/licenses/agpl-3.0.html"
+                        >https://www.gnu.org/licenses/agpl-3.0.html</a
+                    >) and you have the right to use the OpenChat Intellectual Property only for the
+                    purpose of using our Services and as otherwise permitted under the AGPLv3
+                    licence. You have no intellectual property rights in the OpenChat Intellectual
+                    Property other than the right to use them in accordance with these Terms and the
+                    AGPLv3 licence. Any other use is expressly prohibited. We reserve all rights not
+                    expressly granted under these Terms.
+                </li>
+
+                <li>
+                    <p>
+                        The main repository for the OpenChat application used in the OpenChat
+                        Platform is at <a href="https://github.com/open-chat-labs/open-chat/"
+                            >https://github.com/open-chat-labs/open-chat/</a
+                        >. You may use this code solely in accordance with the AGPLv3 licence or as
+                        otherwise expressly agreed by us in these Terms or in writing. Subject to
+                        the foregoing, you shall not, except as may be allowed by Applicable Law
+                        which is incapable of exclusion by agreement between the Parties:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '7.1.'"}>
+                        <li>
+                            except to the extent expressly permitted under these Terms, attempt to
+                            copy, modify, duplicate, create derivative works from, frame, mirror,
+                            republish, download, display, transmit, or distribute all or any portion
+                            of any OpenChat Intellectual Property;
+                        </li>
+                        <li>
+                            attempt to reverse compile, disassemble, reverse engineer or otherwise
+                            reduce to human-perceivable form all or any part of any OpenChat
+                            Intellectual Property;
+                        </li>
+                        <li>
+                            access all or any part of the OpenChat Intellectual Property in order to
+                            build a product or Service which competes with the CHAT and / or the
+                            activities of OpenChat;
+                        </li>
+                        <li>
+                            license, sell, rent, lease, transfer, assign, distribute, display,
+                            disclose, or otherwise commercially exploit OpenChat Intellectual
+                            Property, and this includes not doing so via any third party; and / or
+                        </li>
+                        <li>
+                            attempt to obtain, or assist third parties in obtaining, access to
+                            OpenChat Intellectual Property other than as expressly permitted by
+                            these Terms.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    All logos related to us and the OpenChat Intellectual Property are marks of
+                    OpenChat or our licensors. You may not copy, imitate, or use our trading names
+                    or logos without our prior written consent. All rights, title and interests in
+                    and to such is the exclusive property of us and our licensors.
+                </li>
+                <li>
+                    OpenChat Intellectual Property may contain code, commonly referred to as
+                    open-source software, which is distributed under any of the many known
+                    variations of open source licence terms, including terms which allow the free
+                    distribution and modification of the relevant software’s source code and/or
+                    which require all distributors to make such source code freely available upon
+                    request, including any contributions or modifications made by such distributor
+                    (collectively, “<strong>Open Source Software</strong>”). To the extent that our
+                    Services, the OpenChat Platform or CHAT use or contain any Open Source Software,
+                    that element only is licensed to you under the relevant licence terms of the
+                    applicable third party licensor (“<strong>Open Source Licence Terms</strong>”),
+                    and you accept and agree to be bound by such Open Source Licence Terms.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Our liability</h3>
+
+            <ul class="custom_list" style={"--prefix: '8.'"}>
+                <li>
+                    Notwithstanding any other clause in these Terms, we do not in any way exclude or
+                    limit our liability for death or personal injury caused by our negligence; fraud
+                    or fraudulent misrepresentation; or any other liability which cannot be limited
+                    or excluded by Applicable Law.
+                </li>
+                <li>
+                    Subject to clause A 8.1, we shall be responsible to you only for loss that you
+                    suffer as a direct and foreseeable result of our breach of this Agreement as a
+                    result of our gross negligence, and only insofar that such loss does not arise
+                    as a result of a breach of these Terms and / or Applicable Law by you. In any
+                    event, we shall not be liable to you for any loss: (i) of profits or expected
+                    revenue; (ii) caused by events outside our reasonable control; (iii) resulting
+                    from any attack by a third party on our systems; (iv) as a result of us
+                    exercising any of our rights or any exercise of discretion permitted to us under
+                    these Terms; or (v) anything else which we state we are not responsible for or
+                    which we otherwise exclude our liability for under these Terms.
+                </li>
+                <li>
+                    Subject to clause A 8.1, our total liability under these Terms shall be capped
+                    at the total amount of fees received by us from you in the year proceeding the
+                    breach.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Your liability</h3>
+
+            <ul class="custom_list" style={"--prefix: '9.'"}>
+                <li>
+                    <p>You agree to indemnify us for any losses that arise from or relate to:</p>
+                    <ul class="custom_list" style={"--prefix: '9.1.'"}>
+                        <li>your breach of any Applicable Law or these Terms;</li>
+                        <li>your breach of the rights of any third party to these Terms;</li>
+                        <li>
+                            any regulatory inquiry, legal action, litigation, dispute or
+                            investigation, whether such situations occur or are anticipated, that
+                            relate to you; and
+                        </li>
+                        <li>
+                            any fees, taxes or costs not imposed by or via us, which we pay on your
+                            behalf.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Losses for the purposes of this clause A 9 include direct and indirect losses,
+                    as well as any costs and expenses (including reasonable legal fees).
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Termination</h3>
+            <ul class="custom_list" style={"--prefix: '10.'"}>
+                <li>
+                    <p>
+                        You may terminate your relationship with us immediately at any time for any
+                        reason by ceasing to use our Services. You will not be charged for
+                        terminating your OpenChat account. Once your OpenChat account is closed, you
+                        accept and acknowledge that:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '10.1.'"}>
+                        <li>you will no longer have access to any Contributions you have made;</li>
+                        <li>
+                            our other users will continue to have access to the Contributions you
+                            have made (as Contributions are not deleted when you terminate); and
+                        </li>
+                        <li>
+                            you will no longer have access to your OpenChat Wallet, and you are
+                            solely responsible for transferring any Cryptoassets stored in your
+                            OpenChat Wallet to an external wallet prior to account deletion
+                            (otherwise you will lose access to those Cryptoassets).
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    We may suspend, restrict or terminate your access to or use of any or all of our
+                    Services or the OpenChat Platform with immediate effect at any time by giving
+                    you notice via the OpenChat Platform where (i) we believe that has been
+                    suspicious or unlawful conduct, including fraud; (ii) if we reasonably believe
+                    you breach these Terms repeatedly or in a serious way; (iii) if we reasonably
+                    believe you create harm, risk, or possible legal exposure for us, our users, or
+                    others; (iv) for security, legal or regulatory reasons; or (v) if you have not
+                    given us information we need, or we believe that the information you have
+                    provided us is incorrect.
+                </li>
+                <li>
+                    On suspension of some or all of our Services, you shall not be able to access
+                    some or all of our Services until the suspension is ended at our discretion. We
+                    shall have no obligation to end any suspension within any particular time period
+                    or at all, and we shall not incur any liability for any loss caused or as a
+                    consequence of us exercising our suspension rights under these Terms.
+                </li>
+                <li>
+                    <p>On termination of all of our Services:</p>
+                    <ul class="custom_list" style={"--prefix: '10.4.'"}>
+                        <li>
+                            you will no longer be permitted or have any right to access or use the
+                            OpenChat Platform or our Services, and we will also cease to support
+                            your use of CHAT in connection with these purposes.
+                        </li>
+                        <li>
+                            you must withdraw all of your Cryptoassets from your OpenChat Wallet
+                            within 1 week of termination, as we will cease to provide support for
+                            your OpenChat Wallet after the expiry of that period, and we are not
+                            responsible for any loss as a consequence.
+                        </li>
+                        <li>
+                            all other rights, obligations and liabilities of the parties accrued up
+                            to and including the date of termination shall not be affected by
+                            termination.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Termination shall not affect the continued operation of clauses and provisions
+                    which by their nature clearly reflect the intention of the parties that they
+                    survive termination, including in relation to liability and the protection of
+                    intellectual property.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Changes to these terms</h3>
+            <ul class="custom_list" style={"--prefix: '11.'"}>
+                <li>
+                    <p>
+                        We may make changes to these Terms and our Services available from time to
+                        time:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '11.1.'"}>
+                        <li>to reflect changes to Applicable Law;</li>
+                        <li>
+                            to reflect changes required by any court, regulatory or tax authority or
+                            industry guidance or codes of practice;
+                        </li>
+                        <li>to reflect changes in the way cryptoasset markets work;</li>
+                        <li>
+                            to reflect changes to our technology or other systems, including those
+                            required to reflect to our intention to have increasing decentralisation
+                            of the OpenChat Platform;
+                        </li>
+                        <li>
+                            if it becomes impossible or impractical, in our reasonable opinion, to
+                            carry out any aspect of these Terms as a result of circumstances beyond
+                            our reasonable control;
+                        </li>
+                        <li>to make these Terms easier to understand;</li>
+                        <li>
+                            to reflect changes to the nature or scope of the Services we provide
+                            generally;
+                        </li>
+                        <li>where the changes are to your benefit or not detrimental to you; or</li>
+                        <li>for any other valid reason.</li>
+                    </ul>
+                </li>
+                <li>
+                    We will give you reasonable notice of any changes to these Terms, or we may make
+                    changes with immediate effect where they are in your favour or are required by
+                    Applicable Law.
+                </li>
+                <li>
+                    We will notify you of any changes via the OpenChat Platform. You will be treated
+                    as accepting any change that we make to these Terms unless you tell us that you
+                    do not agree to the change, in which case you must discontinue using our
+                    Services. We will treat this as your termination of your agreement to use our
+                    Services, with effect from the date that the change would otherwise come into
+                    effect.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Novation</h3>
+            <ul class="custom_list" style={"--prefix: '12.'"}>
+                <li>
+                    We may appoint another entity to take over all or some of our rights and
+                    obligations under these Terms (the “<strong>New Entity</strong>”), in which case
+                    you consent to us transferring by way of novation all or some of our rights and
+                    obligations under these Terms to the New Entity. As soon as reasonably
+                    practicable following such novation, we shall notify you in writing of the
+                    effective date of such novation. From such effective date, all references in
+                    these Terms to “OpenChat”, “we”, “us” or “our” shall be deemed to be references
+                    to the New Entity.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Governing law and jurisdiction</h3>
+            <ul class="custom_list" style={"--prefix: '13.'"}>
+                <li>
+                    If you are a consumer, please note that these Terms and any dispute or claim
+                    arising out of or in connection with them shall be governed by English law. You
+                    and we both agree that the courts of England and Wales will have non-exclusive
+                    jurisdiction to settle any dispute or claim arising out of or in connection with
+                    these Terms or their subject matter. However, nothing in these Terms will
+                    override any mandatory laws of the country in which you have your usual place of
+                    residence.
+                </li>
+                <li>
+                    If you are a business, these Terms and any dispute or claim arising out of or in
+                    connection with them or their subject matter or formation (including
+                    non-contractual disputes or claims) shall be governed by and construed in
+                    accordance with English law. We both agree that the courts of England and Wales
+                    shall have exclusive jurisdiction to settle any such dispute or claim (including
+                    non-contractual disputes or claims).
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Entire agreement</h3>
+            <ul class="custom_list" style={"--prefix: '14.'"}>
+                <li>
+                    These Terms constitute the entire agreement between you and us and supersede any
+                    prior agreement, terms and conditions or arrangement in respect of their subject
+                    matter. There are no promises, representations, warranties, terms, conditions or
+                    obligations between you and us other than those set out in these Terms.
+                </li>
+                <li>
+                    You warrant that you have not entered into these Terms in reliance upon, and
+                    will have no remedy in respect of, any misrepresentation, representation or
+                    statement which is not expressly set out or referred to in these Terms. The only
+                    remedy available for any misrepresentation or breach of any representation or
+                    statement set out or referred to in these Terms shall be for breach of contract.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Miscellaneous</h3>
+            <ul class="custom_list" style={"--prefix: '15.'"}>
+                <li>
+                    These Terms shall take effect from the earlier of the date on which you (i)
+                    receive CHAT (ii) access the OpenChat Platform or (iii) otherwise use our
+                    Services.
+                </li>
+                <li>
+                    Each of the provisions of these Terms are separate, severable and enforceable
+                    and, accordingly, if at any time any provision or part-provision of these Terms
+                    is or becomes invalid, void, illegal or unenforceable, it shall be deemed
+                    deleted, but that shall not affect the validity and enforceability of the rest
+                    of these Terms. If any provision or part-provision of these Terms is deemed
+                    deleted under this clause A 15.2, these Terms shall be interpreted so as, to the
+                    greatest extent possible, to achieve the intended commercial result of the
+                    deleted provision.
+                </li>
+                <li>
+                    You may not assign, lien, mortgage, transfer, charge or otherwise encumber any
+                    of your rights or obligations in a way which may impede your performance of your
+                    obligations under these Terms. We may assign the benefit of these Terms without
+                    restriction subject to compliance with Applicable Law.
+                </li>
+                <li>
+                    The parties intend that any New Entity shall have the right to enforce any
+                    rights granted to it under clause A 12 pursuant to the Contracts (Rights of
+                    Third Parties) Act 1999 (the "<strong>1999 Act</strong>"). Save as aforesaid,
+                    the participants do not intend that the provisions of these Terms shall be
+                    enforceable by virtue of the 1999 Act or otherwise by any person not a user of
+                    the OpenChat Platform. Notwithstanding this clause A 15.4, the consent any third
+                    party is not required for any variation (including any release or compromise of
+                    any liability) or termination of these Terms.
+                </li>
+                <li>
+                    No variation or waiver of any of the terms of these Terms shall be effective
+                    unless agreed by us explicitly in writing. No failure or delay by us to exercise
+                    any right, power or remedy under these Terms shall operate as a waiver of that
+                    right, or any other right, nor shall any single or partial exercise by us of any
+                    right, power or remedy preclude any other or further exercise of that right or
+                    any other right, power or remedy.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Section B: Additional terms for messaging on the OpenChat platform</h2>
+
+    <ul class="custom_list bold" style={"--prefix: 'B'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>
+                    This section of these Terms will apply to OpenChat users when using the OpenChat
+                    Platform to send Contributions to each other.
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <h3>Messaging services</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    <p>The OpenChat Platform enables all its users to, for example:</p>
+                    <ul class="custom_list" style={"--prefix: '2.1.'"}>
+                        <li>send and receive text and multimedia communications;</li>
+                        <li>send messages containing Cryptoassets (including tips);</li>
+                        <li>send Prize Messages;</li>
+                        <li>join video and voice calls;</li>
+                        <li>create private Groups;</li>
+                        <li>join public and / or private and / or Gated Groups; and</li>
+                        <li>join (but not create) public and / or private Communities.</li>
+                    </ul>
+                </li>
+                <li>
+                    <p>Please note:</p>
+                    <ul class="custom_list" style={"--prefix: '2.2.'"}>
+                        <li>
+                            when using our messages or prize messages to send Cryptoassets, this
+                            shall constitute dealing in Cryptoassets and the provisions in clause A
+                            6 shall apply.
+                        </li>
+                        <li>
+                            that we strongly recommend logging out of the OpenChat Platform at the
+                            end of every session you have on the OpenChat Platform, as otherwise the
+                            OpenChat Platform may not prompt the next user of the device used to
+                            access the OpenChat Platform to enter credentials in order to use the
+                            OpenChat Platform. If you do not log out of the OpenChat Platform at the
+                            end of each session, there is a risk that another person may impersonate
+                            you to send Contributions. We are not responsible for any losses as a
+                            consequence of your failure to log out at the end of a session or your
+                            credentials otherwise being compromised.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <h3>Conditions for contributions</h3>
+            <ul class="custom_list" style={"--prefix: '3.'"}>
+                <li>
+                    <p>A Contribution must not:</p>
+                    <ul class="custom_list" style={"--prefix: '3.1.'"}>
+                        <li>do anything that is unlawful;</li>
+                        <li>communicate any illegal content or activity;</li>
+                        <li>be defamatory, obscene, offensive, hateful or inflammatory;</li>
+                        <li>bully, harass, insult or intimidate; or</li>
+                        <li>otherwise breach our Content Standards.</li>
+                    </ul>
+                </li>
+                <li>
+                    We shall decide, at our discretion, if a Contribution does not meet these
+                    requirements and if we decide that there has been a breach of clause B 3.1, we
+                    may suspend or terminate your access to or use of our Services immediately and
+                    you will be liable for any loss we incur as a consequence.
+                </li>
+                <li>
+                    If we decide that a Contribution is prohibited in any jurisdiction, we reserve
+                    the right to conceal the Contribution and prevent it from being viewed by users
+                    who are citizens, residents or legal entities in those jurisdictions where such
+                    a Contribution is prohibited.
+                </li>
+                <li>
+                    If we decide that a Contribution is likely to be interpreted by any users as
+                    defamatory, offensive, hateful or inflammatory, we reserve the right to require
+                    users to confirm an appropriate risk warning before permitting them to view such
+                    a Contribution.
+                </li>
+                <li>
+                    If you see any Contribution that you believe is in breach of clause B 3.1, you
+                    should contact us via the help channel in the OpenChat Community (accessible via
+                    the OpenChat Platform) and we will investigate. However, you acknowledge that we
+                    are not responsible if a person breaches clause B 3.1 when using our Services,
+                    whether or not we take any action as a result.
+                </li>
+                <li>
+                    <p>
+                        We will enable you to send Prize Messages. Where you do so, you shall ensure
+                        that the arrangements under which any Cryptoasset prizes are gifted:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '3.6.'"}>
+                        <li>
+                            are clear, fair, honest, not misleading and in compliance with any
+                            Applicable Law;
+                        </li>
+                        <li>
+                            are not structured in a way that would meet the definition of regulated
+                            gambling under any relevant jurisdiction; and
+                        </li>
+                        <li>
+                            are gifted in accordance on a basis which is clearly communicated with
+                            all participants.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    All participants in any arrangement for Cryptoasset prizes accept that we do not
+                    control, and are not responsible or liable for, any issue or loss in connection
+                    with any Cryptoassets prizes offered or gifted via our Services.
+                </li>
+                <li>
+                    You understand that messaging services are vulnerable to spoofing and phishing
+                    attacks and so caution should be exercised in reviewing all Contributions, and
+                    we shall not be responsible for any loss caused by phishing, spoofing or any
+                    other malicious attack.
+                </li>
+                <li>
+                    You also accept that we shall also not be responsible for any loss in connection
+                    with any delay or error in the transmission or receipt of any Contribution, so
+                    long as we have acted in good faith. This includes loss caused as a result of a
+                    delay in the transmission or receipt of Cryptoassets sent via our messaging
+                    system, so long as we have acted in good faith.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for joining groups and communities</h3>
+
+            <ul class="custom_list" style={"--prefix: '4.'"}>
+                <li>
+                    By joining a public or private Group or Community (including those which are
+                    Gated) on the OpenChat Platform, you understand and accept that you must comply
+                    with all applicable rules of that Group or Community. You also understand that
+                    we do not accept responsibility for the operation of Groups and Communities
+                    available via the OpenChat Platform.
+                </li>
+                <li>
+                    In addition, to join a Gated Group or Community you will need to at all relevant
+                    times satisfy the criteria as determined by the creator of that particular Group
+                    or Community.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Intellectual property</h3>
+            <ul class="custom_list" style={"--prefix: '5.'"}>
+                <li>
+                    We do not claim any ownership of any intellectual property in the content that
+                    you submit via our messaging Services. However, you represent that any content
+                    you submit does not breach the intellectual property of any person, that you
+                    have the full right to send such information, and there is no other reason why
+                    we would be in breach of any obligation to any person in enabling you to send
+                    such information via our Services.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Section C: Additional terms for using the OpenChat wallet</h2>
+    <ul class="custom_list bold" style={"--prefix: 'C'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>
+                    This section of these Terms will apply to OpenChat users who use the OpenChat
+                    Wallet.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for use</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    <p>By using the OpenChat Wallet, you acknowledge and accept that:</p>
+                    <ul class="custom_list" style={"--prefix: '2.1.'"}>
+                        <li>
+                            you understand that in order to secure your OpenChat Wallet and be able
+                            to store Cryptoassets, you must access your OpenChat account using the
+                            credentials provided when opening your account. You are responsible for
+                            keeping, protecting and safeguarding your credentials. In this respect,
+                            you are aware that if you lose your credentials or access to your
+                            OpenChat account is compromised for any other reason, you may not be
+                            able to access your OpenChat Wallet and someone else may take control of
+                            your Cryptoassets (and may as a consequence be treated by the OpenChat
+                            Platform as if they were owner of those Cryptoassets). We are not
+                            responsible for any losses in relation to your loss of or inability to
+                            access the Cryptoassets stored in your OpenChat Wallet in connection
+                            with you losing your credentials or your credentials otherwise being
+                            compromised;
+                        </li>
+                        <li>
+                            unless you log out of the OpenChat Platform at the end of every session
+                            you have on the OpenChat Platform, the OpenChat Platform may not prompt
+                            the next user of the device used to access the OpenChat Platform to
+                            enter credentials in order to use the OpenChat Platform. If you do not
+                            log out of the OpenChat Platform at the end of each session, there is a
+                            risk that another person may impersonate you to access your Cryptoassets
+                            without your knowledge or consent, and the OpenChat Platform may treat
+                            them as if they are the owner of those Cryptoassets. We are not
+                            responsible for any losses as a consequence of your failure to log out
+                            at the end of a session or your credentials otherwise being compromised;
+                        </li>
+                        <li>
+                            we assume no responsibility in connection with any attempt to use your
+                            OpenChat Wallet for cryptoassets that we do not support or with regard
+                            to Cryptoassets sent from your OpenChat Wallet to an incompatible
+                            external wallet address;
+                        </li>
+                        <li>
+                            you understand that if you authorise or allow any third party to access
+                            your OpenChat Wallet, the third party will know your OpenChat Wallet
+                            information (including without limitation, information relating to your
+                            assets and transactions), and your OpenChat Wallet will be exposed to
+                            certain risks, and you may suffer losses (we are not responsible for any
+                            such losses);
+                        </li>
+                        <li>
+                            the transfer of Cryptoassets into your OpenChat Wallet exposes those
+                            Cryptoassets to the risk of loss from, amongst other things, security
+                            breaches from cyber-attacks, and so long as we have acted in good faith
+                            we are not responsible for any such loss; and
+                        </li>
+                        <li>
+                            you understand that if you hold Cryptoassets in your OpenChat Wallet,
+                            and there has been no activity on your OpenChat account for a prolonged
+                            period of time and we are unable to contact you, Applicable Law may
+                            require us to deliver any such Cryptoassets to the authorities in
+                            certain jurisdictions as unclaimed property. Where this is the case, we
+                            will comply with such requirements to the extent reasonably required by
+                            Applicable Law.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <p>By using the OpenChat Wallet, you covenant, represent and warrant that:</p>
+                    <ul class="custom_list" style={"--prefix: '2.2.'"}>
+                        <li>
+                            you shall allow your OpenChat Wallet to be used in connection with any
+                            activities that are prohibited by Applicable Law;
+                        </li>
+                        <li>
+                            you shall not use your OpenChat Wallet to store, send, or receive
+                            cryptoassets that we do not support;
+                        </li>
+                        <li>
+                            you are the legal and rightful owner of all Cryptoassets in your
+                            OpenChat Wallet, and that the sources of such Crptoassets are legal, and
+                            you will not transfer or trade through the OpenChat Platform anything
+                            other than Cryptoassets that have been legally obtained by you and that
+                            belong to you; and
+                        </li>
+                        <li>
+                            you shall notify us without undue delay of any unauthorised use and / or
+                            access of your OpenChat Wallet.
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </li>
@@ -147,7 +1218,7 @@
         }
 
         .custom_list > li::before {
-            content: var(--prefix) counter(item) ".";
+            content: var(--prefix) counter(item);
             counter-increment: item;
             font-weight: normal;
             position: absolute;
@@ -169,10 +1240,9 @@
         }
 
         td {
-            width: 50%;
-
             &:first-child {
                 font-weight: bold;
+                min-width: 350px;
             }
         }
     }
