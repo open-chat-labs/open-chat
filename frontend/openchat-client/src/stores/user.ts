@@ -19,6 +19,24 @@ export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
 
+export const AIRDROP_BOT_USER_ID = process.env.AIRDROP_BOT_CANISTER!;
+export const AIRDROP_BOT_USERNAME = "AirdropBot";
+export const AIRDROP_BOT_AVATAR_URL = "/assets/airdrop_bot.svg";
+
+export const airdropBotUser: UserSummary = {
+    kind: "bot",
+    userId: AIRDROP_BOT_USER_ID,
+    username: AIRDROP_BOT_USERNAME,
+    displayName: undefined,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: AIRDROP_BOT_AVATAR_URL,
+    diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
+    isUniquePerson: false,
+};
+
 export const videoCallBotUser: UserSummary = {
     kind: "bot",
     userId: OPENCHAT_VIDEO_CALL_USER_ID,

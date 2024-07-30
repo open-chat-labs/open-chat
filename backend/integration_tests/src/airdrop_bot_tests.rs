@@ -110,7 +110,7 @@ fn airdrop_end_to_end() {
     // Advance time to just after the airdrop is due
     env.advance_time(Duration::from_millis(1000 + start_airdrop - now_millis(env)));
 
-    tick_many(env, 10);
+    tick_many(env, 30);
 
     // Assert the channel is now locked
     //

@@ -33,14 +33,6 @@ pub struct UserMap {
 }
 
 impl UserMap {
-    pub fn ensure_date_updated_non_zero(&mut self, now: TimestampMillis) {
-        for user in self.users.values_mut() {
-            if user.date_updated == 0 {
-                user.date_updated = now;
-            }
-        }
-    }
-
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
     }
