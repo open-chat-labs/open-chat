@@ -8,6 +8,7 @@ use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
+use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
