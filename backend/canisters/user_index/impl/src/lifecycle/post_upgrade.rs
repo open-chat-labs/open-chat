@@ -8,7 +8,6 @@ use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -27,6 +26,6 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        state.data.users.ensure_date_updated_non_zero(env.now());
+        state.data.users.ensure_date_updated_non_zero(state.env.now());
     });
 }
