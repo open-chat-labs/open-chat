@@ -1180,6 +1180,165 @@
             </ul>
         </li>
     </ul>
+
+    <h2>Section D: Additional terms applicable to making a swap</h2>
+    <ul class="custom_list bold" style={"--prefix: 'D'"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>
+                    This section of these Terms will apply to OpenChat users who use the OpenChat
+                    Platform to make a Swap.
+                </li>
+                <li>
+                    <p>A Swap can be either:</p>
+                    <ul class="custom_list" style={"--prefix: '1.2.'"}>
+                        <li>
+                            an Exchange Swap, which is where the OpenChat Platform offers you a
+                            price for the Cryptoasset, and the transaction is completed using the
+                            third party exchange(s) the OpenChat Platform is linked to; or
+                        </li>
+                        <li>
+                            a P2P Swap, which is where you send a message to the users of a chat
+                            with the proposed terms of a transaction, and the OpenChat Platform
+                            facilitates you in completing that transaction with the other user.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    In order to make an Exchange Swap, you need to choose (i) your Source
+                    Cryptoasset, (ii) your Target Cryptoasset and (ii) the amount of the Source
+                    Cryptoasset you wish to exchange for that Target Cryptoasset. You can then ask
+                    us to provide you with a proposed estimated exchange rate. This exchange rate
+                    reflects the rate(s) provided by the third party exchange(s) we are connected
+                    with.
+                </li>
+                <li>
+                    If you instruct us to proceed with an Exchange Swap, we will transfer the Source
+                    Cryptoasset from your OpenChat Wallet to the relevant third party exchange to
+                    make the conversion. You will then receive the Target Cryptoasset back to your
+                    OpenChat Wallet.
+                </li>
+                <li>
+                    Where we use a third party exchange to complete an Exchange Swap, please note
+                    that the exchange rates provided by us are an estimated rate at the time you
+                    request the rate. The actual rate provided will be determined at the time you
+                    instruct us to make the Exchange Swap. <strong>
+                        As the prices of Cryptoassets can be highly volatile, we do not guarantee
+                        that the amount of Target Cryptoassets you acquire from an Exchange Swap
+                        will be the same as that set out in the proposed exchange rate. Rather, it
+                        will reflect the rate actually obtained when the Exchange Swap is actually
+                        executed by the third party exchange (which may result you in receiving less
+                        of the Target Cryptoasset than that predicted by the estimated exchange rate
+                        you receive
+                    </strong>).
+                </li>
+                <li>
+                    <p>
+                        In order to engage in a P2P Swap (either by making a Swap Offer or accepting
+                        a Swap Offer), you need to have a Diamond Membership. A “Swap Offer”, is a
+                        communication which you, if you hold a Diamond Membership, can make to other
+                        users in chat(s) with the following information:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '1.6.'"}>
+                        <li>your Source Cryptoasset;</li>
+                        <li>your Target Cryptoasset;</li>
+                        <li>the amount of the Source Cryptoasset you are willing to exchange;</li>
+                        <li>the amount of the Target Cryptoasset you wish to acquire; and</li>
+                        <li>the chat(s) who can accept the Swap Offer.</li>
+                    </ul>
+                </li>
+                <li>
+                    <p>Upon making a Swap Offer:</p>
+                    <ul class="custom_list" style={"--prefix: '1.7.'"}>
+                        <li>
+                            the amount of the Source Cryptoasset you are willing to exchange is sent
+                            from your OpenChat Wallet into escrow.
+                        </li>
+                        <li>
+                            a message containing the details of the Swap Offer is sent to the users
+                            in the relevant chat(s), who have the ability to accept your Swap Offer
+                            at their discretion.
+                        </li>
+                        <li>
+                            you have the ability to cancel the Swap Offer for as long as no other
+                            user has accepted the Swap Offer, in which case the Source Cryptoasset
+                            shall be returned to your OpenChat Wallet.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <p>
+                        As soon as another user accepts your Swap Offer, the P2P Swap is processed,
+                        meaning that:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '1.8.'"}>
+                        <li>
+                            the Target Cryptoassets will be transferred from their wallet to escrow;
+                        </li>
+                        <li>
+                            the Source Cryptoassets will be transferred from escrow to the other
+                            user’s OpenChat Wallet; and
+                        </li>
+                        <li>
+                            the Target Cryptoassets will be transferred from escrow to your OpenChat
+                            Wallet.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Conditions for making a swap</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    <p>
+                        By using our Services to make a Swap, you are dealing in Cryptoassets and
+                        clause A 6 shall apply. In addition, you acknowledge and accept that:
+                    </p>
+                    <ul class="custom_list" style={"--prefix: '2.1.'"}>
+                        <li>
+                            you will only able to make a Swap if there are sufficient Cryptoassets
+                            stored in your OpenChat Wallet to do so;
+                        </li>
+                        <li>
+                            you understand that once an offer for a Swap has been accepted, you are
+                            not able to cancel that Swap (or otherwise ask for a refund), and as
+                            such before making any Swap or Swap Offer you should make sure that you
+                            are certain you want to proceed;
+                        </li>
+                        <li>
+                            whilst we may cancel an Exchange Swap where there is a Manifest Error in
+                            the price of a Cryptoasset as shown by us (in which case we will give
+                            you the ability as soon as commercially practicable to acquire the
+                            Cryptoasset at the correct price, and we shall notify you of any
+                            cancellation as soon as we reasonably can by email or via the OpenChat
+                            Platform), you do not have the right to cancel an accepted Swap Offer
+                            because of a Manifest Error (and so you should be careful to ensure that
+                            the details of any Swap Offer you make are accurate); and
+                        </li>
+                        <li>
+                            we reserve the right to make changes to these Terms to reflect changes
+                            to the third party exchanges available to us and their offerings.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <p>As long as we act in good faith, we do not accept responsibility for:</p>
+                    <ul class="custom_list" style={"--prefix: '2.2.'"}>
+                        <li>our Services being interrupted;</li>
+                        <li>any Swap not being executed or accepted by any counterparty;</li>
+                        <li>any delay in processing a Swap;</li>
+                        <li>any lack of liquidity in any market for a Cryptoasset; or</li>
+                        <li>
+                            our refusal to carry out any Swap for you if we believe it is in breach
+                            of these Terms.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
 </div>
 
 <style lang="scss">
