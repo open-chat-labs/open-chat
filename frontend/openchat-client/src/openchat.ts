@@ -609,8 +609,6 @@ export class OpenChat extends OpenChatAgentWorker {
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
 
-        console.log("Airdrop user: ", airdropBotUser);
-
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
