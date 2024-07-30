@@ -45,6 +45,8 @@ pub struct GroupChatCore {
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
+    #[serde(default)]
+    pub messages_visible_to_non_members: Timestamped<bool>,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
@@ -70,6 +72,7 @@ impl GroupChatCore {
         subtype: Option<GroupSubtype>,
         avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
+        messages_visible_to_non_members: bool,
         permissions: GroupPermissions,
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
@@ -96,6 +99,7 @@ impl GroupChatCore {
             subtype: Timestamped::new(subtype, now),
             avatar: Timestamped::new(avatar, now),
             history_visible_to_new_joiners,
+            messages_visible_to_non_members: Timestamped::new(messages_visible_to_non_members, now),
             members,
             events,
             created_by,
@@ -123,7 +127,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public.value && !self.has_payment_gate() {
+        } else if self.is_public.value && self.messages_visible_to_non_members.value {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -213,6 +217,7 @@ impl GroupChatCore {
             permissions: self.permissions.if_set_after(since).cloned(),
             updated_events,
             is_public: self.is_public.if_set_after(since).copied(),
+            messages_visible_to_non_members: self.messages_visible_to_non_members.if_set_after(since).copied(),
             date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
             events_ttl: events_ttl
                 .if_set_after(since)
@@ -1330,6 +1335,7 @@ impl GroupChatCore {
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         public: Option<bool>,
+        messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
@@ -1343,6 +1349,7 @@ impl GroupChatCore {
                 permissions,
                 gate,
                 public,
+                messages_visible_to_non_members,
                 events_ttl,
                 now,
             ))),
@@ -1422,6 +1429,7 @@ impl GroupChatCore {
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         public: Option<bool>,
+        messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateSuccessResult {
@@ -1539,23 +1547,44 @@ impl GroupChatCore {
             }
         }
 
+        let mut public_changed = false;
+        let mut message_visbility_changed = false;
+
         if let Some(public) = public {
             if self.is_public.value != public {
                 self.is_public = Timestamped::new(public, now);
 
-                let event = GroupVisibilityChanged {
-                    now_public: public,
-                    changed_by: user_id,
-                };
+                public_changed = true;
 
-                let push_event_result =
-                    events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
-
-                if self.is_public.value {
-                    self.min_visible_indexes_for_new_members =
-                        Some((push_event_result.index, events.main_events_list().next_message_index()));
-                    result.newly_public = true;
+                if !public && self.messages_visible_to_non_members.value {
+                    self.messages_visible_to_non_members = Timestamped::new(false, now);
+                    message_visbility_changed = true;
                 }
+            }
+        }
+
+        if let Some(messages_visible_to_non_members) = messages_visible_to_non_members {
+            if self.is_public.value && self.messages_visible_to_non_members.value != messages_visible_to_non_members {
+                self.messages_visible_to_non_members = Timestamped::new(messages_visible_to_non_members, now);
+                message_visbility_changed = true;
+            }
+        }
+
+        if public_changed || message_visbility_changed {
+            let event = GroupVisibilityChanged {
+                now_public: self.is_public.value,
+                public: public_changed.then_some(self.is_public.value),
+                messages_visible_to_non_members: message_visbility_changed
+                    .then_some(self.messages_visible_to_non_members.value),
+                changed_by: user_id,
+            };
+
+            let push_event_result = events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+
+            if public_changed && self.is_public.value {
+                self.min_visible_indexes_for_new_members =
+                    Some((push_event_result.index, events.main_events_list().next_message_index()));
+                result.newly_public = true;
             }
         }
 
@@ -1983,6 +2012,7 @@ pub struct SummaryUpdates {
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     pub is_public: Option<bool>,
+    pub messages_visible_to_non_members: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,

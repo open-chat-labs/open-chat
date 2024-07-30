@@ -322,6 +322,7 @@ type UpdateGroupV2Args = record {
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
+    messages_visible_to_non_members: opt bool;    
     correlation_id : nat64;
 };
 

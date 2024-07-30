@@ -753,6 +753,7 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         gate: OptionUpdate::NoChange,
         public: None,
         channel_id,
+        messages_visible_to_non_members: None,
     };
 
     client::community::happy_path::update_channel(env, sender, community_id, &args);

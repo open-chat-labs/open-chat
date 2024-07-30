@@ -37,6 +37,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         description: data.chat.description.value.clone(),
         subtype: data.chat.subtype.value.clone(),
         history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
+        messages_visible_to_non_members: data.chat.messages_visible_to_non_members.value,
         avatar_id: Document::id(&data.chat.avatar),
         latest_message,
         latest_event_index: events_reader.latest_event_index().unwrap_or_default(),

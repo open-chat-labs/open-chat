@@ -414,6 +414,7 @@ type CreateGroupArgs = record {
     description : text;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: opt bool;    
     permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;
