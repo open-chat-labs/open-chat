@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{jobs, mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -8,6 +8,7 @@ use local_user_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
 use types::CanisterId;
+use user_canister::Event as UserEvent;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -27,9 +28,14 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        state
-            .data
-            .canister_pool
-            .remove(&CanisterId::from_text("6uvp5-wqaaa-aaaar-arjcq-cai").unwrap())
+        for (user_id, proof) in state.data.global_users.iter_unique_person_proofs() {
+            if state.data.local_users.contains(user_id) {
+                state.data.user_event_sync_queue.push(
+                    CanisterId::from(*user_id),
+                    UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())),
+                );
+            }
+        }
+        jobs::sync_events_to_user_canisters::start_job_if_required(state);
     });
 }
