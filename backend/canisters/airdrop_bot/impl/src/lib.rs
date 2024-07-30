@@ -40,7 +40,7 @@ impl RuntimeState {
     }
 
     pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>) {
-        self.data.pending_actions_queue.push(action);
+        self.data.pending_actions_queue.push_back(action);
         jobs::process_pending_actions::start_job_if_required(self, after);
     }
 
@@ -58,6 +58,8 @@ impl RuntimeState {
                 chat_ledger: self.data.chat_ledger_canister_id,
             },
             airdrops: self.data.airdrops.metrics(),
+            pending_actions: self.data.pending_actions_queue.len(),
+            channels_joined: self.data.channels_joined.iter().cloned().collect(),
         }
     }
 }
@@ -109,6 +111,8 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub canister_ids: CanisterIds,
     pub airdrops: AirdropsMetrics,
+    pub pending_actions: usize,
+    pub channels_joined: Vec<(CommunityId, ChannelId)>,
 }
 
 #[derive(Serialize, Debug)]
