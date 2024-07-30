@@ -163,7 +163,7 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
                     state
                         .data
                         .pending_actions_queue
-                        .push(Action::Transfer(Box::new(AirdropTransfer {
+                        .push_back(Action::Transfer(Box::new(AirdropTransfer {
                             recipient: user_id,
                             amount: prize.chat_won,
                             airdrop_type: AirdropType::Lottery(LotteryAirdrop {
@@ -177,7 +177,7 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
                 state
                     .data
                     .pending_actions_queue
-                    .push(Action::Transfer(Box::new(AirdropTransfer {
+                    .push_back(Action::Transfer(Box::new(AirdropTransfer {
                         recipient: *user_id,
                         amount: prize.chat_won,
                         airdrop_type: AirdropType::Main(MainAidrop {
@@ -192,7 +192,7 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
             state
                 .data
                 .pending_actions_queue
-                .push(Action::Transfer(Box::new(AirdropTransfer {
+                .push_back(Action::Transfer(Box::new(AirdropTransfer {
                     recipient: user_id,
                     amount: prize.chat_won,
                     airdrop_type: AirdropType::Lottery(LotteryAirdrop {

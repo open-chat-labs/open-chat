@@ -16,7 +16,6 @@ impl MetadataHelper {
         let mut symbol = None;
         let mut decimals = None;
         let mut fee = None;
-        let mut burn_fee = None;
         let mut logo = None;
         let mut is_icrc1_compatible = true;
 
@@ -26,9 +25,10 @@ impl MetadataHelper {
                 ("icrc1:symbol", MetadataValue::Text(s)) => symbol = Some(s),
                 ("icrc1:decimals", MetadataValue::Nat(n)) => decimals = u8::try_from(n.0).ok(),
                 ("icrc1:fee", MetadataValue::Nat(n)) => fee = u128::try_from(n.0).ok(),
-                ("icrc1:burn_fee", MetadataValue::Nat(n)) => burn_fee = u128::try_from(n.0).ok(),
                 ("icrc1:logo", MetadataValue::Text(s)) => logo = Some(s),
-                ("icrc1:transfer_fee_rate" | "icrc1:burn_fee_rate", MetadataValue::Nat(n)) if n > Nat::default() => {
+                ("icrc1:burn_fee | icrc1:transfer_fee_rate" | "icrc1:burn_fee_rate", MetadataValue::Nat(n))
+                    if n > Nat::default() =>
+                {
                     is_icrc1_compatible = false
                 }
                 _ => {}
@@ -40,7 +40,7 @@ impl MetadataHelper {
                 name: n,
                 symbol: s,
                 decimals: d,
-                fee: f + burn_fee.unwrap_or_default(),
+                fee: f,
                 logo,
                 is_icrc1_compatible,
             }),
