@@ -27,7 +27,7 @@
 <div class="section">
     <h2>Section A: General terms applicable to all services</h2>
 
-    <ul class="custom_list bold" style={"--prefix: 'A'"}>
+    <ul class="custom_list bold" style={"--prefix: 'A'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
 
@@ -71,182 +71,139 @@
                         In these Terms, the following words and expressions have the following
                         meanings:
                     </p>
-                    <table class="interpretation">
-                        <tr>
-                            <td>"Applicable Law"</td>
-                            <td>
-                                all applicable statutes, laws, enactments, orders, regulations,
-                                regulatory rules, official guidance, standards, regulator
-                                expectations and other similar instruments in any relevant
-                                jurisdiction, as in force and amended from time to time;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Channel"</td>
-                            <td>
-                                refers to chats within Communities, to make clear that they are part
-                                of a Community;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"CHAT"</td>
-                            <td>
-                                refers to the token used to facilitate the governance of OpenChat,
-                                with the features set out at Schedule 3;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Community", "Communities"</td>
-                            <td>
-                                refers to a group of Channels users can communicate within. This is
-                                distinct from the concept of a Group, as in a Group involves users
-                                messaging within a single channel (and Communities and Groups are a
-                                distinct forms of communication within the OpenChat Platform);
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Content Standards"</td>
-                            <td>
-                                means the standards that apply to all Contributions, as set out at
-                                Schedule 2;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Contribution"</td>
-                            <td>
-                                refers to any material which you contribute to the OpenChat
-                                Platform, including any communication you make via our Services;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Cryptoassets"</td>
-                            <td>
-                                refers to CHAT as well as any and all other cryptoassets that are
-                                supported by the OpenChat Platform, a list of which are available in
-                                your OpenChat Wallet;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Diamond Membership"</td>
-                            <td>
-                                refers to our subscription service that gives members access to
-                                exclusive benefits;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Exchange Swap"</td>
-                            <td>has the meaning set out at clause D 1.2.1;</td>
-                        </tr>
-                        <tr>
-                            <td>"Gated"</td>
-                            <td
-                                >refers to the restrictions or rules that the owner of a Group,
-                                Community, or Channel may impose on users' ability to access or use
-                                that Group, Community, or Channel;</td>
-                        </tr>
-                        <tr>
-                            <td>"Governance Matters"</td>
-                            <td
-                                >refers to matters which relate to the operation or governance of
-                                the OpenChat DAO;</td>
-                        </tr>
-                        <tr>
-                            <td>"Group"</td>
-                            <td
-                                >refers to a channel in which a group of users can communicate. This
-                                is distinct from the concept of a Community, as a Community involves
-                                users messaging within a set of channels (and Communities and Groups
-                                are a distinct forms of communication within the OpenChat Platform);</td>
-                        </tr>
-                        <tr>
-                            <td>"Manifest Error"</td>
-                            <td>
-                                refers to the purported price of a Cryptoasset that differs so
-                                significantly from that reported by exchanges generally that it is
-                                clearly inaccurate due to, for example, a computer error;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"OpenChat Platform"</td>
-                            <td>
-                                refers to the platform we provide, available at <a
-                                    href="https://oc.app/">https://oc.app</a
-                                >;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"OpenChat Wallet"</td>
-                            <td
-                                >refers to the digital wallet we provide, in which you can store
-                                your Cryptoassets;</td>
-                        </tr>
-                        <tr>
-                            <td>"P2P Swap"</td>
-                            <td> has the meaning set out at clause D 1.2.2; </td>
-                        </tr>
-                        <tr>
-                            <td>"Prize Messages"</td>
-                            <td>
-                                refers to messages containing Cryptoassets which are distributed to
-                                OpenChat users, who, upon receipt of the message, can potentially be
-                                gifted Cryptoassets;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Source Cryptoasset"</td>
-                            <td
-                                >refers to the Cryptoasset you wish to exchange to obtain the Target
-                                Cryptoasset;</td>
-                        </tr>
-                        <tr>
-                            <td>"Swap(s)"</td>
-                            <td
-                                >refers to either or both an Exchange Swap and / or a P2P Swap (as
-                                relevant);</td>
-                        </tr>
-                        <tr>
-                            <td>"Swap Offer"</td>
-                            <td>has the meaning set out at clause D 1.6;</td>
-                        </tr>
-                        <tr>
-                            <td>"Target Cryptoasset"</td>
-                            <td
-                                >refers to the Cryptoasset you wish to acquire in exchange for the
-                                Source Cryptoasset;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Virus"</td>
-                            <td>
-                                means any software, thing or device which contains any malicious
-                                code, file, program, or other internal component which may prevent,
-                                impair or otherwise adversely affect the operation of any computer
-                                software, hardware or network; or which may prevent, impair or
-                                otherwise adversely affect access to or the operation of any
-                                programme or data, including the reliability of any programme or
-                                data (whether by re-arranging, altering or erasing the programme or
-                                data in whole or part or otherwise); or adversely affect the user
-                                experience, including worms, trojan horses, viruses, time bombs and
-                                other similar things or devices;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Voting Platform"</td>
-                            <td>
-                                refers to the mechanism by which CHAT holders may submit votes as
-                                prescribed from time to time; and
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>"Vulnerability"</td>
-                            <td
-                                >means a weakness, glitch or bug in the computational logic (for
-                                example, code) found in software and hardware components that, when
-                                exploited, results in a negative impact to confidentiality,
-                                integrity, or availability.
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="interpretation">
+                        <div>"Applicable Law"</div>
+                        <div>
+                            all applicable statutes, laws, enactments, orders, regulations,
+                            regulatory rules, official guidance, standards, regulator expectations
+                            and other similar instruments in any relevant jurisdiction, as in force
+                            and amended from time to time;
+                        </div>
+                        <div>"Channel"</div>
+                        <div>
+                            refers to chats within Communities, to make clear that they are part of
+                            a Community;
+                        </div>
+                        <div>"CHAT"</div>
+                        <div>
+                            refers to the token used to facilitate the governance of OpenChat, with
+                            the features set out at Schedule 3;
+                        </div>
+                        <div>"Community", "Communities"</div>
+                        <div>
+                            refers to a group of Channels users can communicate within. This is
+                            distinct from the concept of a Group, as in a Group involves users
+                            messaging within a single channel (and Communities and Groups are a
+                            distinct forms of communication within the OpenChat Platform);
+                        </div>
+                        <div>"Content Standards"</div>
+                        <div>
+                            means the standards that apply to all Contributions, as set out at
+                            Schedule 2;
+                        </div>
+                        <div>"Contribution"</div>
+                        <div>
+                            refers to any material which you contribute to the OpenChat Platform,
+                            including any communication you make via our Services;
+                        </div>
+                        <div>"Cryptoassets"</div>
+                        <div>
+                            refers to CHAT as well as any and all other cryptoassets that are
+                            supported by the OpenChat Platform, a list of which are available in
+                            your OpenChat Wallet;
+                        </div>
+                        <div>"Diamond Membership"</div>
+                        <div>
+                            refers to our subscription service that gives members access to
+                            exclusive benefits;
+                        </div>
+                        <div>"Exchange Swap"</div>
+                        <div>has the meaning set out at clause D 1.2.1;</div>
+                        <div>"Gated"</div>
+                        <div>
+                            refers to the restrictions or rules that the owner of a Group,
+                            Community, or Channel may impose on users' ability to access or use that
+                            Group, Community, or Channel;
+                        </div>
+                        <div>"Governance Matters"</div>
+                        <div>
+                            refers to matters which relate to the operation or governance of the
+                            OpenChat DAO;
+                        </div>
+                        <div>"Group"</div>
+                        <div>
+                            refers to a channel in which a group of users can communicate. This is
+                            distinct from the concept of a Community, as a Community involves users
+                            messaging within a set of channels (and Communities and Groups are a
+                            distinct forms of communication within the OpenChat Platform);
+                        </div>
+                        <div>"Manifest Error"</div>
+                        <div>
+                            refers to the purported price of a Cryptoasset that differs so
+                            significantly from that reported by exchanges generally that it is
+                            clearly inaccurate due to, for example, a computer error;
+                        </div>
+                        <div>"OpenChat Platform"</div>
+                        <div>
+                            refers to the platform we provide, available at <a
+                                href="https://oc.app/">https://oc.app</a
+                            >;
+                        </div>
+                        <div>"OpenChat Wallet"</div>
+                        <div>
+                            refers to the digital wallet we provide, in which you can store your
+                            Cryptoassets;
+                        </div>
+                        <div>"P2P Swap"</div>
+                        <div>has the meaning set out at clause D 1.2.2;</div>
+                        <div>"Prize Messages"</div>
+                        <div>
+                            refers to messages containing Cryptoassets which are distributed to
+                            OpenChat users, who, upon receipt of the message, can potentially be
+                            gifted Cryptoassets;
+                        </div>
+                        <div>"Source Cryptoasset"</div>
+                        <div>
+                            refers to the Cryptoasset you wish to exchange to obtain the Target
+                            Cryptoasset;
+                        </div>
+                        <div>"Swap(s)"</div>
+                        <div>
+                            refers to either or both an Exchange Swap and / or a P2P Swap (as
+                            relevant);
+                        </div>
+                        <div>"Swap Offer"</div>
+                        <div>has the meaning set out at clause D 1.6;</div>
+                        <div>"Target Cryptoasset"</div>
+                        <div>
+                            refers to the Cryptoasset you wish to acquire in exchange for the Source
+                            Cryptoasset;
+                        </div>
+                        <div>"Virus"</div>
+                        <div>
+                            means any software, thing or device which contains any malicious code,
+                            file, program, or other internal component which may prevent, impair or
+                            otherwise adversely affect the operation of any computer software,
+                            hardware or network; or which may prevent, impair or otherwise adversely
+                            affect access to or the operation of any programme or data, including
+                            the reliability of any programme or data (whether by re-arranging,
+                            altering or erasing the programme or data in whole or part or
+                            otherwise); or adversely affect the user experience, including worms,
+                            trojan horses, viruses, time bombs and other similar things or devices;
+                        </div>
+                        <div>"Voting Platform"</div>
+                        <div>
+                            refers to the mechanism by which CHAT holders may submit votes as
+                            prescribed from time to time; and
+                        </div>
+                        <div>"Vulnerability"</div>
+                        <div>
+                            means a weakness, glitch or bug in the computational logic (for example,
+                            code) found in software and hardware components that, when exploited,
+                            results in a negative impact to confidentiality, integrity, or
+                            availability.
+                        </div>
+                    </div>
                 </li>
                 <li>
                     Where the words "<strong>includes</strong>", "<strong>including</strong>", "<strong
@@ -917,7 +874,7 @@
 
     <h2>Section B: Additional terms for messaging on the OpenChat platform</h2>
 
-    <ul class="custom_list bold" style={"--prefix: 'B'"}>
+    <ul class="custom_list bold" style={"--prefix: 'B'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -1079,7 +1036,7 @@
     </ul>
 
     <h2>Section C: Additional terms for using the OpenChat wallet</h2>
-    <ul class="custom_list bold" style={"--prefix: 'C'"}>
+    <ul class="custom_list bold" style={"--prefix: 'C'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -1182,7 +1139,7 @@
     </ul>
 
     <h2>Section D: Additional terms applicable to making a swap</h2>
-    <ul class="custom_list bold" style={"--prefix: 'D'"}>
+    <ul class="custom_list bold" style={"--prefix: 'D'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -1341,7 +1298,7 @@
     </ul>
 
     <h2>Section E: Additional terms for dealing in CHAT</h2>
-    <ul class="custom_list bold" style={"--prefix: 'E'"}>
+    <ul class="custom_list bold" style={"--prefix: 'E'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -1414,7 +1371,7 @@
     </ul>
 
     <h2>Section F: Additional terms for Diamnond membership holders</h2>
-    <ul class="custom_list bold" style={"--prefix: 'F'"}>
+    <ul class="custom_list bold" style={"--prefix: 'F'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -1532,7 +1489,7 @@
     </ul>
 
     <h2>Section G: Participating in the OpenChat DAO</h2>
-    <ul class="custom_list bold" style={"--prefix: 'G'"}>
+    <ul class="custom_list bold" style={"--prefix: 'G'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
             <ul class="custom_list" style={"--prefix: '1.'"}>
@@ -2064,7 +2021,12 @@
             @include font(bold, normal, fs-110);
         }
 
+        .custom_list.bold > li > h3 {
+            padding-left: 60px;
+        }
+
         .custom_list {
+            --suffix: ")";
             list-style-type: none;
             counter-reset: item;
             @include font(book, normal, fs-100);
@@ -2072,13 +2034,17 @@
         }
 
         .custom_list > li {
-            padding-left: 3.5em;
+            padding-left: 60px;
             position: relative;
             margin-bottom: $sp3;
         }
 
+        .custom_list.bold > li {
+            padding-left: 0;
+        }
+
         .custom_list > li::before {
-            content: var(--prefix) counter(item);
+            content: var(--prefix) counter(item) var(--suffix);
             counter-increment: item;
             font-weight: normal;
             position: absolute;
@@ -2090,20 +2056,19 @@
         }
     }
 
-    table.interpretation {
-        width: 100;
-        border-collapse: collapse;
+    .interpretation {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: $sp4;
+        margin-bottom: $sp4;
 
-        tr {
-            display: block;
-            margin-bottom: $sp3;
+        @include mobile() {
+            grid-template-columns: 1fr;
+            gap: $sp3;
         }
 
-        td {
-            &:first-child {
-                font-weight: bold;
-                min-width: 350px;
-            }
+        :nth-child(2n-1) {
+            font-weight: bold;
         }
     }
 </style>
