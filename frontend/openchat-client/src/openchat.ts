@@ -2272,8 +2272,7 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.setProp(chat.id, "userGroupKeys", new Set<string>());
         }
 
-        const userIds = userIdsFromEvents(resp.events);
-        await this.updateUserStore(chat.id, userIds);
+        await this.updateUserStoreFromEvents(chat.id, resp.events);
 
         this.addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
@@ -2309,9 +2308,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return [...elevated, ...rest];
     }
 
-    private async updateUserStore(
+    private async updateUserStoreFromEvents(
         chatId: ChatIdentifier,
-        userIdsFromEvents: Iterable<string>,
+        events: EventWrapper<ChatEvent>[],
     ): Promise<void> {
         const userId = this._liveState.user.userId;
         const allUserIds = new Set<string>();
@@ -2320,7 +2319,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
         chatStateStore.getProp(chatId, "invitedUsers").forEach((u) => allUserIds.add(u));
-        for (const u of userIdsFromEvents) {
+        for (const u of userIdsFromEvents(events)) {
             allUserIds.add(u);
         }
 
@@ -2666,17 +2665,15 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number,
         resp: EventsResponse<ChatEvent>,
-    ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
-        if (resp === "events_failed") return [[], new Set()];
+    ): Promise<EventWrapper<ChatEvent>[]> {
+        if (resp === "events_failed") return [];
 
         const context = { chatId, threadRootMessageIndex };
 
         // make sure that the message context (chatId or threadRootMessageIndex) has not changed
-        if (!messageContextsEqual(context, this._liveState.selectedMessageContext))
-            return [[], new Set()];
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) return [];
 
-        const userIds = this.userIdsFromEvents(resp.events);
-        await this.updateUserStore(chatId, userIds);
+        await this.updateUserStoreFromEvents(chatId, resp.events);
 
         this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
@@ -2685,7 +2682,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 unconfirmed.delete(context, event.event.messageId);
             }
         }
-        return [resp.events, userIds];
+        return resp.events;
     }
 
     removeChat(chatId: ChatIdentifier): void {
@@ -3015,7 +3012,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
             }
-            await this.updateUserStore(serverChat.id, []);
+            await this.updateUserStoreFromEvents(serverChat.id, []);
         }
     }
 
@@ -5036,18 +5033,26 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    getGroupMessagesByMessageIndex(
+    async getGroupMessagesByMessageIndex(
         chatId: MultiUserChatIdentifier,
         messageIndexes: Set<number>,
     ): Promise<EventsResponse<Message>> {
         const serverChat = this._liveState.serverChatSummaries.get(chatId);
 
-        return this.sendRequest({
-            kind: "getGroupMessagesByMessageIndex",
-            chatId,
-            messageIndexes,
-            latestKnownUpdate: serverChat?.lastUpdated,
-        }).catch(() => "events_failed");
+        try {
+            const resp = await this.sendRequest({
+                kind: "getGroupMessagesByMessageIndex",
+                chatId,
+                messageIndexes,
+                latestKnownUpdate: serverChat?.lastUpdated,
+            });
+            if (resp !== "events_failed") {
+                await this.updateUserStoreFromEvents(chatId, resp.events);
+            }
+            return resp;
+        } catch {
+            return "events_failed";
+        }
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
