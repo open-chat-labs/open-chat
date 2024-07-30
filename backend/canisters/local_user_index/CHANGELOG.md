@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1267](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1267-local_user_index)] - 2024-07-29
+
 ### Changed
 
 - Remove canister holding some ckBTC from canister pool ([#6137](https://github.com/open-chat-labs/open-chat/pull/6137))
