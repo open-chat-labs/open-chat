@@ -50,6 +50,7 @@ if (dfxNetwork) {
         process.env.IDENTITY_CANISTER = canisters.identity[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
+        process.env.AIRDROP_BOT_CANISTER = canisters.airdrop_bot[dfxNetwork];
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
         process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
@@ -64,6 +65,7 @@ if (dfxNetwork) {
         console.log("IdentityCanisterId: ", process.env.IDENTITY_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
+        console.log("AirdropBotCanisterId: ", process.env.AIRDROP_BOT_CANISTER);
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
         console.log("Registry: ", process.env.REGISTRY_CANISTER);
         console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
@@ -254,6 +256,7 @@ export default {
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.PROPOSALS_BOT_CANISTER,
             ),
+            "process.env.AIRDROP_BOT_CANISTER": JSON.stringify(process.env.AIRDROP_BOT_CANISTER),
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.STORAGE_INDEX_CANISTER,
             ),

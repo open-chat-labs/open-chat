@@ -5,6 +5,7 @@ use ic_cdk::init;
 use tracing::info;
 use user_index_canister::init::Args;
 use utils::cycles::init_cycles_dispenser_client;
+use utils::env::Environment;
 
 #[init]
 #[trace]
@@ -33,6 +34,7 @@ fn init(args: Args) {
         args.video_call_operators,
         args.ic_root_key,
         args.test_mode,
+        env.now(),
     );
 
     init_state(env, data, args.wasm_version);

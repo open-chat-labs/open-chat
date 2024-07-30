@@ -37,6 +37,10 @@ impl Pool {
         self.canister_ids.push_back(canister_id);
     }
 
+    pub fn remove(&mut self, canister_id: &CanisterId) {
+        self.canister_ids.retain(|c| c != canister_id);
+    }
+
     pub fn pop(&mut self) -> Option<CanisterId> {
         self.canister_ids.pop_front()
     }
