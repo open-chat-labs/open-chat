@@ -128,7 +128,7 @@ impl Airdrops {
         let fund = config.main_chat_fund;
         let prizes = config.lottery_prizes.len();
         let mut share = fund / total_shares as u128;
-        share = share - share % 1_000_000;
+        share -= share % 1_000_000;
 
         let participants = user_shares
             .into_iter()
