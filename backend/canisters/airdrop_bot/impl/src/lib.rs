@@ -40,7 +40,7 @@ impl RuntimeState {
     }
 
     pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>) {
-        self.data.pending_actions_queue.push(action);
+        self.data.pending_actions_queue.push_back(action);
         jobs::process_pending_actions::start_job_if_required(self, after);
     }
 

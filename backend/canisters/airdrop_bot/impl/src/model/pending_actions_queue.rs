@@ -8,8 +8,12 @@ pub struct PendingActionsQueue {
 }
 
 impl PendingActionsQueue {
-    pub fn push(&mut self, action: Action) {
+    pub fn push_back(&mut self, action: Action) {
         self.queue.push_back(action);
+    }
+
+    pub fn push_front(&mut self, action: Action) {
+        self.queue.push_front(action);
     }
 
     pub fn pop(&mut self) -> Option<Action> {

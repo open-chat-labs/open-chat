@@ -133,24 +133,24 @@ async fn handle_transfer_action(action: AirdropTransfer) {
                 let fee = token.fee().unwrap();
                 let block_index = block_index.0.try_into().unwrap();
 
-                state.enqueue_pending_action(
-                    Action::SendMessage(Box::new(AirdropMessage {
-                        recipient: action.recipient,
-                        transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
-                            ledger: ledger_canister_id,
-                            token,
-                            amount: action.amount,
-                            fee,
-                            from: Account::from(this_canister_id).into(),
-                            to: to.into(),
-                            memo: Some(memo.to_vec().into()),
-                            created: now_nanos,
-                            block_index,
-                        }),
-                        airdrop_type: action.airdrop_type.clone(),
-                    })),
-                    None,
-                );
+                let message_action = Action::SendMessage(Box::new(AirdropMessage {
+                    recipient: action.recipient,
+                    transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
+                        ledger: ledger_canister_id,
+                        token,
+                        amount: action.amount,
+                        fee,
+                        from: Account::from(this_canister_id).into(),
+                        to: to.into(),
+                        memo: Some(memo.to_vec().into()),
+                        created: now_nanos,
+                        block_index,
+                    }),
+                    airdrop_type: action.airdrop_type.clone(),
+                }));
+
+                state.data.pending_actions_queue.push_front(message_action);
+                start_job_if_required(state, None);
 
                 match action.airdrop_type {
                     AirdropType::Lottery(LotteryAirdrop { position }) => {
