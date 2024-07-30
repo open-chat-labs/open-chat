@@ -194,6 +194,8 @@ import {
     platformModerator,
     platformOperator,
     videoCallBotUser,
+    AIRDROP_BOT_USER_ID,
+    airdropBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -602,9 +604,12 @@ export class OpenChat extends OpenChatAgentWorker {
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
             [OPENCHAT_VIDEO_CALL_USER_ID]: videoCallBotUser,
+            [AIRDROP_BOT_USER_ID]: airdropBotUser,
             [ANON_USER_ID]: anonymousUserSummary,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
+
+        console.log("Airdrop user: ", airdropBotUser);
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
