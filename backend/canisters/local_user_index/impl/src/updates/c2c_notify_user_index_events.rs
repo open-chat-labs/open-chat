@@ -183,6 +183,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::NotifyUniquePersonProof(user_id, proof) => {
+            if state.data.local_users.contains(&user_id) {
+                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())))
+            }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
         Event::AddCanisterToPool(canister_id) => {

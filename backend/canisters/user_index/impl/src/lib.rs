@@ -343,6 +343,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
+        now: TimestampMillis,
     ) -> Self {
         let mut data = Data {
             users: UserMap::default(),
@@ -399,7 +400,7 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
-            0,
+            now,
             None,
             UserType::OcControlledBot,
         );
@@ -409,7 +410,7 @@ impl Data {
             airdrop_bot_canister_id,
             airdrop_bot_canister_id.into(),
             "AirdropBot".to_string(),
-            0,
+            now,
             None,
             UserType::OcControlledBot,
         );
