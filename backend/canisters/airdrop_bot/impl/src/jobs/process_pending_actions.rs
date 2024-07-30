@@ -7,7 +7,7 @@ use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::{error, info, trace};
 use types::icrc1::{self};
 use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
@@ -18,15 +18,13 @@ use utils::time::{MonthKey, MONTHS};
 
 use super::execute_airdrop::start_airdrop_timer;
 
-const MAX_BATCH_SIZE: usize = 5;
-
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(after.unwrap_or_default(), run);
+        let timer_id = ic_cdk_timers::set_timer(after.unwrap_or_default(), run);
         TIMER_ID.set(Some(timer_id));
         trace!("'process_pending_actions' job started");
         true
@@ -36,25 +34,12 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration
 }
 
 fn run() {
-    let batch = mutate_state(next_batch);
-    if !batch.is_empty() {
-        ic_cdk::spawn(process_actions(batch));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'process_pending_actions' job stopped");
+    TIMER_ID.set(None);
+
+    if let Some(action) = mutate_state(|state| state.data.pending_actions_queue.pop()) {
+        ic_cdk::spawn(process_action(action));
+        read_state(|state| start_job_if_required(state, None));
     }
-}
-
-fn next_batch(state: &mut RuntimeState) -> Vec<Action> {
-    (0..MAX_BATCH_SIZE)
-        .map_while(|_| state.data.pending_actions_queue.pop())
-        .collect()
-}
-
-async fn process_actions(actions: Vec<Action>) {
-    let futures: Vec<_> = actions.into_iter().map(process_action).collect();
-
-    futures::future::join_all(futures).await;
 }
 
 async fn process_action(action: Action) {
@@ -69,6 +54,8 @@ async fn process_action(action: Action) {
 }
 
 async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
+    info!(?community_id, ?channel_id, "Join channel");
+
     let local_user_index_canister_id = match community_canister_c2c_client::local_user_index(
         community_id.into(),
         &community_canister::local_user_index::Args {},
@@ -106,10 +93,16 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
         }
     }
 
+    mutate_state(|state| state.data.channels_joined.insert((community_id, channel_id)));
+
     read_state(start_airdrop_timer);
 }
 
 async fn handle_transfer_action(action: AirdropTransfer) {
+    let amount = action.amount.into();
+
+    info!(?amount, "CHAT Transfer");
+
     let (this_canister_id, ledger_canister_id, now_nanos) = read_state(|state| {
         (
             state.env.canister_id(),
@@ -131,7 +124,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
         fee: token.fee().map(|f| f.into()),
         created_at_time: Some(now_nanos),
         memo: Some(memo.to_vec().into()),
-        amount: action.amount.into(),
+        amount,
     };
 
     match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
@@ -181,6 +174,8 @@ async fn handle_transfer_action(action: AirdropTransfer) {
 }
 
 async fn handle_main_message_action(action: AirdropMessage) {
+    info!("Send DM");
+
     let AirdropType::Main(MainAidrop { chit, shares }) = action.airdrop_type else {
         return;
     };
@@ -220,6 +215,8 @@ async fn handle_main_message_action(action: AirdropMessage) {
 }
 
 async fn handle_lottery_message_action(action: AirdropMessage) {
+    info!("Send lottery winners message");
+
     let AirdropType::Lottery(LotteryAirdrop { position }): AirdropType = action.airdrop_type else {
         return;
     };

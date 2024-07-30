@@ -25,40 +25,40 @@ impl PendingActionsQueue {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Action {
     JoinChannel(CommunityId, ChannelId),
     Transfer(Box<AirdropTransfer>),
     SendMessage(Box<AirdropMessage>),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AirdropTransfer {
     pub recipient: UserId,
     pub amount: u128,
     pub airdrop_type: AirdropType,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AirdropMessage {
     pub recipient: UserId,
     pub transaction: CompletedCryptoTransaction,
     pub airdrop_type: AirdropType,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum AirdropType {
     Main(MainAidrop),
     Lottery(LotteryAirdrop),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MainAidrop {
     pub chit: u32,
     pub shares: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LotteryAirdrop {
     pub position: usize,
 }

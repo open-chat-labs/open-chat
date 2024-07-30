@@ -127,6 +127,8 @@ impl Airdrops {
 
         let fund = config.main_chat_fund;
         let prizes = config.lottery_prizes.len();
+        let mut share = fund / total_shares as u128;
+        share = share - share % 1_000_000;
 
         let participants = user_shares
             .into_iter()
@@ -138,7 +140,7 @@ impl Airdrops {
                         shares,
                         prize: if shares > 0 {
                             Some(Prize {
-                                chat_won: (fund * shares as u128) / total_shares as u128,
+                                chat_won: shares as u128 * share,
                                 block_index: None,
                             })
                         } else {
