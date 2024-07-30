@@ -35,6 +35,7 @@ export const airdropBotUser: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 export const videoCallBotUser: UserSummary = {
@@ -49,6 +50,7 @@ export const videoCallBotUser: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 export const openChatBotUser: UserSummary = {
@@ -63,6 +65,7 @@ export const openChatBotUser: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -77,6 +80,7 @@ export const anonymousUserSummary: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -96,6 +100,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 

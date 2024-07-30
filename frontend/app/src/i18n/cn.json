@@ -307,6 +307,7 @@
         "transactions": "交易",
         "unknownTransactionType": "未知"
     },
+    "currentChitBalance": "当前 CHIT 余额",
     "currentLimit": "您当前的存储限制为 {limit}GB，您的帐户余额为 {balance} ICP。",
     "currentUsage": "当前存储使用情况",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "您的 {token} 地址",
         "zeroBalance": "您没有任何 {token}。"
     },
+    "totalChitEarned": "获得的总 CHIT",
     "transferOwnership": "转交群主给",
     "transferOwnershipFailed": "群主转交失败",
     "transferOwnershipSucceeded": "群主转交成功",

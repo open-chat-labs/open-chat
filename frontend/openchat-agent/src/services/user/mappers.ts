@@ -885,6 +885,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             streak: result.streak,
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -997,6 +998,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             streak: candid.Success.streak,
             nextDailyClaim: candid.Success.next_daily_claim,
             chitBalance: candid.Success.chit_balance,
+            totalChitEarned: candid.Success.total_chit_earned,
         };
     }
 

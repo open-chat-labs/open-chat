@@ -314,7 +314,11 @@
                     <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
                 {#if user !== undefined}
-                    <ChitBalance size={"small"} {me} balance={user.chitBalance} />
+                    <ChitBalance
+                        size={"small"}
+                        {me}
+                        balance={user.chitBalance}
+                        totalEarned={user.totalChitEarned} />
                 {/if}
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown inline={false} text={profile.bio} /></p>

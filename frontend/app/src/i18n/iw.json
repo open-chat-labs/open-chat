@@ -307,6 +307,7 @@
         "transactions": "עסקאות",
         "unknownTransactionType": "לא ידוע"
     },
+    "currentChitBalance": "מאזן CHIT נוכחי",
     "currentLimit": "מגבלת האחסון הנוכחית שלך היא {limit}GB ויתרת החשבון שלך היא {balance} ICP.",
     "currentUsage": "שימוש נוכחי באחסון",
     "dailyChit": {
@@ -1353,6 +1354,7 @@
         "yourAccount": "כתובת ה-{token} שלך",
         "zeroBalance": "אין לך {token}."
     },
+    "totalChitEarned": "סך הרווחים CHIT",
     "transferOwnership": "העברת בעלות אל",
     "transferOwnershipFailed": "העברת הבעלות נכשלה",
     "transferOwnershipSucceeded": "הבעלות הועברה בהצלחה",

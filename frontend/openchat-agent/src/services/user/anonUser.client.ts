@@ -118,6 +118,7 @@ export class AnonUserClient {
             streak: 0,
             nextDailyClaim: 0n,
             chitBalance: 0,
+            totalChitEarned: 0,
         });
     }
 

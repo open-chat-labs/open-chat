@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+    export const title = writable("");
+</script>
+
 <script lang="ts">
     import { locale } from "svelte-i18n";
     import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
@@ -8,6 +12,7 @@
     import { createEventDispatcher, onMount } from "svelte";
     import { translationCodes } from "../../i18n/i18n";
     import { weekDays } from "./weekdays";
+    import { writable } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
@@ -15,7 +20,6 @@
 
     let today = new Date();
     let showDate = new Date();
-    let title = "";
     let dates: Date[][] = [];
     let month = 0;
 
@@ -28,7 +32,7 @@
 
     function getDates(start: Date) {
         const resp = getMonthCalendar(start);
-        title = getTitleText(resp.year, resp.month, translatedLocale);
+        title.set(getTitleText(resp.year, resp.month, translatedLocale));
         dates = resp.dates;
         month = resp.month;
         const allDates = resp.dates.flatMap((d) => d);
@@ -63,7 +67,9 @@
         <HoverIcon on:click={previousMonth}>
             <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
-        <h3>{title}</h3>
+        <slot name="month-title">
+            <h3>{$title}</h3>
+        </slot>
         <HoverIcon on:click={nextMonth}>
             <NextIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
