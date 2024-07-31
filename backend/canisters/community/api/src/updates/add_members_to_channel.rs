@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, GateCheckFailedReason, UserId};
+use types::{ChannelId, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -16,6 +16,7 @@ pub enum Response {
     PartialSuccess(PartialSuccessResult),
     Failed(FailedResult),
     CommunityFrozen,
+    CommunityPublic,
     UserSuspended,
     UserNotInCommunity,
     UserNotInChannel,
@@ -30,7 +31,6 @@ pub struct PartialSuccessResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-    pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
 }
 
@@ -38,14 +38,7 @@ pub struct PartialSuccessResult {
 pub struct FailedResult {
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-    pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct UserFailedGateCheck {
-    pub user_id: UserId,
-    pub reason: GateCheckFailedReason,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
