@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "终身钻石会员",
         "lockedGate": "已锁定",
         "lockedGateInfo": "此{level}已被锁定，无法加入",
+        "messagesVisibleToNonMembers": "非会员可以预览消息",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minimumBalance": "最低代币余额",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "群规太长",
     "groupRulesTooShort": "群规不能为空",
     "groupUpdateFailed": "群聊更新失败",
-    "groupVisibilityChangedBy": "{changedBy} 创造了 {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} 对 {level} 可见性进行了更改",
     "groupWithN": "{number} 个成员",
     "guestUser": "访客用户",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "邀请朋友/家人",
     "refresh": "刷新",
     "register": {
+        "agree": "同意",
         "bioTooLong": "您的简介太长了",
         "choosePath": "您要注册吗?",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "确认转账",
         "createUser": "创建用户",
         "cyclesTransferred": " {fee} cycles 已转出",
-        "disclaimer": "注册 OpenChat 即表示您同意遵守社区准则",
+        "disclaimer": "通过在 OpenChat 注册，您同意遵守我们的条款和条件",
         "displayNameInvalid": "显示名称无效，请重试",
         "displayNameTooLong": "该显示名称太长",
         "displayNameTooShort": "该显示名称太短",

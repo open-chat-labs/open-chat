@@ -811,6 +811,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'messages_visible_to_non_members' : IDL.Bool,
     'membership' : IDL.Opt(GroupMembership),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -880,6 +881,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
     'avatar_id' : DocumentIdUpdate,
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'membership' : IDL.Opt(GroupMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
     'updated_events' : IDL.Vec(
@@ -929,6 +931,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : Rules,
     'avatar' : IDL.Opt(Document),
@@ -1149,7 +1152,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
-    'now_public' : IDL.Bool,
+    'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const PermissionsChanged = IDL.Record({
     'changed_by' : UserId,
@@ -1970,6 +1974,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'rules' : IDL.Opt(UpdatedRules),
     'avatar' : DocumentUpdate,
   });

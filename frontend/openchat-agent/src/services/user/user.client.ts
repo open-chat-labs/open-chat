@@ -330,6 +330,10 @@ export class UserClient extends CandidService {
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
                 events_ttl: apiOptional(identity, group.eventsTTL),
+                messages_visible_to_non_members: apiOptional(
+                    identity,
+                    group.messagesVisibleToNonMembers,
+                ),
             }),
             (resp) => createGroupResponse(resp, group.id),
         );

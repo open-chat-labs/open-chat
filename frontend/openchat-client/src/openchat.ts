@@ -5118,6 +5118,7 @@ export class OpenChat extends OpenChatAgentWorker {
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
@@ -5130,6 +5131,7 @@ export class OpenChat extends OpenChatAgentWorker {
             eventsTimeToLive,
             gate,
             isPublic,
+            messagesVisibleToNonMembers,
         })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -5155,6 +5157,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 return resp;
             })
             .catch(() => ({ kind: "failure" }));
+    }
+
+    private isMultiUserChat(chat: ChatSummary): chat is MultiUserChat {
+        return chat.kind === "group_chat" || chat.kind === "channel";
+    }
+
+    maskChatMessages(chat: ChatSummary): boolean {
+        // notAMember && (private || !messagesVisibleToNonMembers)
+        return (
+            this.isMultiUserChat(chat) &&
+            chat.membership.role === "none" &&
+            (!chat.public || !chat.messagesVisibleToNonMembers)
+        );
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {

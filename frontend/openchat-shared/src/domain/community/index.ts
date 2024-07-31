@@ -223,6 +223,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated: bigint | undefined;
     videoCallInProgress: OptionUpdate<number>;
+    messageVisibleToNonMembers?: boolean;
 };
 
 export type CommunityMembershipUpdates = {

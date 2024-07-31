@@ -214,6 +214,7 @@
                         bind:candidate
                         bind:valid={visibilityValid}
                         {editing}
+                        {gateDirty}
                         history={false} />
                 </div>
                 <div class="rules" class:visible={step === 2}>

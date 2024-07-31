@@ -511,6 +511,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.eventsTimeToLive,
                         payload.gate,
                         payload.isPublic,
+                        payload.messagesVisibleToNonMembers,
                     ),
                 );
                 break;

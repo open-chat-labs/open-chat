@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Adhésion Diamant à vie",
         "lockedGate": "Fermé à clé",
         "lockedGateInfo": "Ce {level} est verrouillé et ne peut pas être rejoint",
+        "messagesVisibleToNonMembers": "Les messages peuvent être prévisualisés par les non-membres",
         "minDissolveDelay": "Délai de dissolution min (jours)",
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
         "minimumBalance": "Solde minimum de jetons",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Les règles du groupe sont trop longues",
     "groupRulesTooShort": "Les règles du groupe ne doivent pas être vides",
     "groupUpdateFailed": "Désolé, nous n'avons pas pu mettre à jour votre groupe",
-    "groupVisibilityChangedBy": "{changedBy} a fait le {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} a apporté des modifications à la visibilité de {level}",
     "groupWithN": "{number} membre(s)",
     "guestUser": "Utilisateur invité",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Inviter des amis/famille",
     "refresh": "Rafraîchir",
     "register": {
+        "agree": "Accepter",
         "bioTooLong": "Votre biographie est trop longue",
         "choosePath": "Comment souhaitez-vous vous inscrire ?",
         "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Confirmer le transfert",
         "createUser": "Créer un utilisateur",
         "cyclesTransferred": "Frais de {fee} cycles confirmés",
-        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter les directives de la communauté",
+        "disclaimer": "En vous inscrivant sur OpenChat, vous acceptez de respecter nos termes et conditions.",
         "displayNameInvalid": "Nom d'affichage invalide, veuillez réessayer",
         "displayNameTooLong": "Ce nom d'affichage est trop long",
         "displayNameTooShort": "Ce nom d'affichage est trop court",

@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Thành viên kim cương trọn đời",
         "lockedGate": "Đã khóa",
         "lockedGateInfo": "{level} này đã bị khóa và không thể tham gia",
+        "messagesVisibleToNonMembers": "Tin nhắn có thể được xem trước bởi những người không phải là thành viên",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
         "minimumBalance": "Số dư mã thông báo tối thiểu",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Nội quy nhóm quá dài",
     "groupRulesTooShort": "Các quy tắc nhóm không được để trống",
     "groupUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật nhóm của bạn",
-    "groupVisibilityChangedBy": "{changedBy} đã tạo {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} đã thực hiện các thay đổi đối với chế độ hiển thị của {level}",
     "groupWithN": "{number} thành viên",
     "guestUser": "Tài khoản khách",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Mời bạn bè / gia đình",
     "refresh": "Tải lại",
     "register": {
+        "agree": "Đồng ý",
         "bioTooLong": "Tiểu sử của bạn quá dài",
         "choosePath": "Bạn muốn đăng ký như thế nào?",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Xác nhận chuyển khoản",
         "createUser": "Tạo tài khoản",
         "cyclesTransferred": "Lệ phí {fee} cycles đã được xác nhận",
-        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc cộng đồng",
+        "disclaimer": "Bằng cách đăng ký OpenChat, bạn đồng ý tuân theo các điều khoản và điều kiện của chúng tôi",
         "displayNameInvalid": "Tên hiển thị không hợp lệ, vui lòng thử lại",
         "displayNameTooLong": "Tên hiển thị đó quá dài",
         "displayNameTooShort": "Tên hiển thị đó quá ngắn",

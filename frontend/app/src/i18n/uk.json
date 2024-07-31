@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Довічне Діамантове членство",
         "lockedGate": "Заблоковано",
         "lockedGateInfo": "Цей {level} заблокований і не може приєднатися",
+        "messagesVisibleToNonMembers": "Повідомлення можуть попередньо переглядати ті, хто не є учасниками",
         "minDissolveDelay": "Мінімальна затримка розчинення (дні)",
         "minDissolveDelayN": "Мінімальна затримка розчинення {n} днів",
         "minimumBalance": "Мінімальний баланс токенів",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Правила групи занадто довгі",
     "groupRulesTooShort": "Правила групи не повинні бути порожніми",
     "groupUpdateFailed": "Вибачте, ми не змогли оновити вашу групу",
-    "groupVisibilityChangedBy": "{changedBy} зробив {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} змінив видимість {level}",
     "groupWithN": "{number} учасників",
     "guestUser": "Гість Користувач",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Запросіть друзів/сім'ю",
     "refresh": "Оновити",
     "register": {
+        "agree": "Погодьтеся",
         "bioTooLong": "Ваша біографія задовга",
         "choosePath": "Як би ви хотіли зареєструватися?",
         "closed": "Через високий попит реєстрацію нових користувачів тимчасово закрито. Незабаром ми будемо масштабуватись у кількох підмережах і тоді зможемо розвиватися нескінченно!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Підтвердити передачу",
         "createUser": "Створити користувача",
         "cyclesTransferred": "Комісія в розмірі {fee} циклів підтверджено",
-        "disclaimer": "Реєструючись в OpenChat, ви погоджуєтеся дотримуватися правил спільноти",
+        "disclaimer": "Реєструючись в OpenChat, ви погоджуєтеся дотримуватися наших умов",
         "displayNameInvalid": "Недійсне відображуване ім'я, спробуйте ще раз",
         "displayNameTooLong": "Ця відображувана назва задовга",
         "displayNameTooShort": "Відображуване ім’я занадто коротке",

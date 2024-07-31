@@ -427,7 +427,11 @@ export function event(candid: ApiChatEvent): ChatEvent {
     if ("GroupVisibilityChanged" in candid) {
         return {
             kind: "group_visibility_changed",
-            nowPublic: candid.GroupVisibilityChanged.now_public,
+            public: optional(candid.GroupVisibilityChanged.public, identity),
+            messagesVisibleToNonMembers: optional(
+                candid.GroupVisibilityChanged.messages_visible_to_non_members,
+                identity,
+            ),
             changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
         };
     }
@@ -2020,6 +2024,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited: false, // this is only applicable when we are not a member
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 
@@ -2130,6 +2135,7 @@ export function communityChannelSummary(
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 

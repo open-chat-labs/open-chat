@@ -898,6 +898,7 @@ type UpdateGroup = {
     gate?: AccessGate;
     isPublic?: boolean;
     kind: "updateGroup";
+    messagesVisibleToNonMembers?: boolean;
 };
 
 type JoinGroup = {

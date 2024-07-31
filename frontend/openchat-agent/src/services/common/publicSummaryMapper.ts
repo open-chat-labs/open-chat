@@ -62,6 +62,7 @@ export function publicGroupSummary(
         membership: nullMembership(),
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 

@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "生涯ダイヤモンド会員",
         "lockedGate": "ロックされています",
         "lockedGateInfo": "この{level}はロックされており、参加できません",
+        "messagesVisibleToNonMembers": "メッセージは非会員でもプレビューできます",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
         "minimumBalance": "最小トークン残高",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "グループ ルールが長すぎます",
     "groupRulesTooShort": "グループ ルールを空にすることはできません",
     "groupUpdateFailed": "グループを更新することができませんでした",
-    "groupVisibilityChangedBy": "{changedBy} は {level} を {visibility} にしました",
+    "groupVisibilityChangedBy": "{changedBy} が {level} の可視性を変更しました",
     "groupWithN": "{number}メンバー",
     "guestUser": "ゲストユーザー",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "友達や家族を招待する",
     "refresh": "リフレッシュ",
     "register": {
+        "agree": "同意する",
         "bioTooLong": "あなたの経歴は長すぎます",
         "choosePath": "登録はどのように行いますか？",
         "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "転送の確認",
         "createUser": "ユーザーを作成する",
         "cyclesTransferred": "{fee} cyclesの手数料を確認しました",
-        "disclaimer": "OpenChat に登録することにより、コミュニティ ガイドラインに従うことに同意したことになります",
+        "disclaimer": "OpenChatに登録することにより、利用規約に従うことに同意するものとします。",
         "displayNameInvalid": "表示名が無効です。もう一度お試しください。",
         "displayNameTooLong": "その表示名は長すぎます",
         "displayNameTooShort": "その表示名は短すぎます",

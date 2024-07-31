@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Abbonamento Diamond a vita",
         "lockedGate": "Bloccato",
         "lockedGateInfo": "Questo {level} è bloccato e non è possibile unirsi",
+        "messagesVisibleToNonMembers": "I messaggi possono essere visualizzati in anteprima dai non membri",
         "minDissolveDelay": "Ritardo dissolvenza minimo (giorni)",
         "minDissolveDelayN": "Ritardo dissolvenza minimo {n} giorni",
         "minimumBalance": "Saldo minimo dei gettoni",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Le regole del gruppo sono troppo lunghe",
     "groupRulesTooShort": "Le regole del gruppo non devono essere vuote",
     "groupUpdateFailed": "Spiacenti, non siamo riusciti ad aggiornare il tuo gruppo",
-    "groupVisibilityChangedBy": "{changedBy} ha creato {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} ha apportato modifiche alla visibilità di {level}",
     "groupWithN": "{number} membro/i",
     "guestUser": "Utente ospite",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Invita amici/familiari",
     "refresh": "ricarica",
     "register": {
+        "agree": "Essere d'accordo",
         "bioTooLong": "La tua biografia è troppo lunga",
         "choosePath": "Come vorresti registrarti?",
         "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Conferma il trasferimento",
         "createUser": "Creare un utente",
         "cyclesTransferred": "Commissione di {fee} cicli confermata",
-        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le linee guida della community",
+        "disclaimer": "Registrandoti su OpenChat accetti di rispettare i nostri termini e condizioni",
         "displayNameInvalid": "Nome visualizzato non valido, riprova",
         "displayNameTooLong": "Il nome visualizzato è troppo lungo",
         "displayNameTooShort": "Il nome visualizzato è troppo corto",

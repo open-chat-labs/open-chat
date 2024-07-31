@@ -69,7 +69,17 @@
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
-    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty || ttlDirty;
+    $: messagesVisibleToNonMembersDirty =
+        editing &&
+        candidateGroup.messagesVisibleToNonMembers !== originalGroup.messagesVisibleToNonMembers;
+    $: dirty =
+        infoDirty ||
+        rulesDirty ||
+        permissionsDirty ||
+        visDirty ||
+        gateDirty ||
+        ttlDirty ||
+        messagesVisibleToNonMembersDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
@@ -215,6 +225,9 @@
                     : undefined,
                 gateDirty ? updatedGroup.gate : undefined,
                 visDirty ? updatedGroup.public : undefined,
+                messagesVisibleToNonMembersDirty
+                    ? updatedGroup.messagesVisibleToNonMembers
+                    : undefined,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -322,7 +335,8 @@
                         history
                         {canEditDisappearingMessages}
                         bind:valid={visibilityValid}
-                        bind:candidate={candidateGroup} />
+                        bind:candidate={candidateGroup}
+                        {gateDirty} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <RulesEditor

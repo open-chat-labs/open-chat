@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Dożywotnie członkostwo Diamentowe",
         "lockedGate": "Zablokowany",
         "lockedGateInfo": "To {level} jest zablokowane i nie można do niego dołączyć",
+        "messagesVisibleToNonMembers": "Wiadomości mogą być przeglądane przez osoby niebędące członkami",
         "minDissolveDelay": "Min. opóźnienie rozpuszczania (dni)",
         "minDissolveDelayN": "Min. opóźnienie rozpuszczania {n} dni",
         "minimumBalance": "Minimalne saldo tokenów",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Zasady grupy są za długie",
     "groupRulesTooShort": "Reguły grupy nie mogą być puste",
     "groupUpdateFailed": "Przepraszamy, nie mogliśmy zaktualizować Twojej grupy",
-    "groupVisibilityChangedBy": "{changedBy} zrobił {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} wprowadził zmiany w widoczności {level}",
     "groupWithN": "{number} Członkowie",
     "guestUser": "Gościnny użytkownik",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Zaproś znajomych/rodzinę",
     "refresh": "Odświeżać",
     "register": {
+        "agree": "Zgadzać się",
         "bioTooLong": "Twoja biografia jest za długa",
         "choosePath": "Jak chcesz się zarejestrować?",
         "closed": "Ze względu na bardzo duże zainteresowanie rejestracja nowych użytkowników jest tymczasowo zamknięta. Wkrótce będziemy skalować w wielu podsieciach i wtedy będziemy mogli rozwijać się w nieskończoność!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Potwierdź przelew",
         "createUser": "Stwórz użytkownika",
         "cyclesTransferred": "Potwierdzono opłatę za {fee} cykli",
-        "disclaimer": "Rejestrując się w OpenChat, wyrażasz zgodę na przestrzeganie wytycznych społeczności",
+        "disclaimer": "Rejestrując się w OpenChat, wyrażasz zgodę na przestrzeganie naszych warunków",
         "displayNameInvalid": "Nieprawidłowa nazwa wyświetlana. Spróbuj ponownie",
         "displayNameTooLong": "Ta nazwa wyświetlana jest za długa",
         "displayNameTooShort": "Ta nazwa wyświetlana jest za krótka",

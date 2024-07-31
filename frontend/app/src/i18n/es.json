@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Membresía Diamante de por vida",
         "lockedGate": "bloqueado",
         "lockedGateInfo": "Este {level} está bloqueado y no se puede unir",
+        "messagesVisibleToNonMembers": "Los no miembros pueden obtener una vista previa de los mensajes",
         "minDissolveDelay": "Retraso mínimo de disolución (días)",
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minimumBalance": "Saldo mínimo de tokens",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "Las reglas del grupo son demasiado largas.",
     "groupRulesTooShort": "Las reglas del grupo no deben estar vacías.",
     "groupUpdateFailed": "Lo sentimos, no pudimos actualizar tu grupo",
-    "groupVisibilityChangedBy": "{changedBy} hizo el {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} realizó cambios en la visibilidad de {level}",
     "groupWithN": "{number} miembro(s)",
     "guestUser": "Usuario invitado",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "Invitar a amigos/familiares",
     "refresh": "Actualizar",
     "register": {
+        "agree": "Aceptar",
         "bioTooLong": "Tu biografía es demasiado larga",
         "choosePath": "¿Como te gustaría registrarse?",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "Confirmar transferencia",
         "createUser": "Crear usuario",
         "cyclesTransferred": "Tarifa de {fee} cycles confirmada",
-        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con las pautas de la comunidad",
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestros términos y condiciones.",
         "displayNameInvalid": "Nombre para mostrar no válido. Inténtelo de nuevo.",
         "displayNameTooLong": "Ese nombre para mostrar es demasiado largo.",
         "displayNameTooShort": "Ese nombre para mostrar es demasiado corto.",

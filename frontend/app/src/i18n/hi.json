@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "आजीवन डायमंड सदस्यता",
         "lockedGate": "बंद",
         "lockedGateInfo": "यह {level} लॉक है और इसमें शामिल नहीं हुआ जा सकता",
+        "messagesVisibleToNonMembers": "संदेशों का पूर्वावलोकन गैर-सदस्यों द्वारा भी किया जा सकता है",
         "minDissolveDelay": "न्यूनतम विघटित विलंब (दिन)",
         "minDissolveDelayN": "न्यूनतम विघटन विलंब {n} दिन",
         "minimumBalance": "न्यूनतम टोकन शेष",
@@ -481,7 +482,7 @@
     "groupRulesTooLong": "समूह के नियम बहुत लंबे हैं",
     "groupRulesTooShort": "समूह के नियम खाली नहीं होने चाहिए",
     "groupUpdateFailed": "क्षमा करें हम आपके समूह को अपडेट करने में असमर्थ रहे",
-    "groupVisibilityChangedBy": "{changedBy} ने {level} {visibility} बनाया",
+    "groupVisibilityChangedBy": "{changedBy} ने {level} दृश्यता में परिवर्तन किए",
     "groupWithN": "{number} सदस्य",
     "guestUser": "अतिथि उपयेागकर्ता",
     "halloffame": {
@@ -1064,6 +1065,7 @@
     "referralHeader": "मित्रों/परिवार को आमंत्रित करें",
     "refresh": "रिफ्रेश करें",
     "register": {
+        "agree": "सहमत",
         "bioTooLong": "आपका बायोडाटा बहुत लंबा है",
         "choosePath": "आप कैसे पंजीकरण करना चाहेंगे?",
         "closed": "बहुत अधिक मांग के कारण, नए उपयोगकर्ता पंजीकरण अस्थायी रूप से बंद कर दिए गए हैं। हम जल्द ही कई सबनेट में स्केलिंग करेंगे और फिर अनिश्चित काल तक बढ़ने में सक्षम होंगे!",
@@ -1074,7 +1076,7 @@
         "confirmTransfer": "स्थानांतरण की पुष्टि करें",
         "createUser": "उपयोगकर्ता बनाइये",
         "cyclesTransferred": "{fee} चक्रों के शुल्क की पुष्टि की गई",
-        "disclaimer": "ओपनचैट के साथ पंजीकरण करके आप सामुदायिक दिशानिर्देशों का पालन करने के लिए सहमत होते हैं",
+        "disclaimer": "ओपनचैट पर पंजीकरण करके आप हमारे नियमों और शर्तों का पालन करने के लिए सहमत होते हैं",
         "displayNameInvalid": "अमान्य प्रदर्शन नाम, कृपया पुनः प्रयास करें",
         "displayNameTooLong": "वह प्रदर्शन नाम बहुत लंबा है",
         "displayNameTooShort": "वह प्रदर्शन नाम बहुत छोटा है",
