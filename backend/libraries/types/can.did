@@ -894,7 +894,6 @@ type PermissionsChanged = record {
 };
 
 type GroupVisibilityChanged = record {
-    now_public : bool;
     public : opt bool;
     messages_visible_to_non_members : opt bool;
     changed_by : UserId;

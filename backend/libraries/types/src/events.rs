@@ -207,31 +207,10 @@ pub struct CommunityPermissionsChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "GroupVisibilityChangedPrevious")]
 pub struct GroupVisibilityChanged {
-    // TODO: deprecated
-    pub now_public: bool,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
     pub changed_by: UserId,
-}
-
-// TODO: Delete this one-time code
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupVisibilityChangedPrevious {
-    pub now_public: bool,
-    pub changed_by: UserId,
-}
-
-impl From<GroupVisibilityChangedPrevious> for GroupVisibilityChanged {
-    fn from(value: GroupVisibilityChangedPrevious) -> Self {
-        GroupVisibilityChanged {
-            now_public: value.now_public,
-            public: Some(value.now_public),
-            messages_visible_to_non_members: None,
-            changed_by: value.changed_by,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
