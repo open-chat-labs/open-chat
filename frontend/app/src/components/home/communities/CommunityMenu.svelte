@@ -34,7 +34,8 @@
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
     $: canCreateChannel = member && client.canCreateChannel(community.id);
-    $: isCommunityMuted = areAllChannelsMuted(community);
+    $: selectedCommunityChatStore = client.selectedCommunityChatStore;
+    $: isCommunityMuted = $selectedCommunityChatStore?.every((c) => c?.membership.notificationsMuted ?? true) ?? true;
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {
@@ -76,10 +77,6 @@
 
     function editCommunity() {
         canEdit && dispatch("editCommunity", community);
-    }
-
-    function areAllChannelsMuted(community: CommunitySummary) {
-        return community.channels.every((c) => c.membership.notificationsMuted);
     }
 
     function muteAllChannels() {

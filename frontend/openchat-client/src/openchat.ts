@@ -119,6 +119,7 @@ import {
     selectedChatId,
     selectedChatStore,
     selectedServerChatStore,
+    selectedCommunityChatStore,
     serverChatSummariesStore,
     setSelectedChat,
     threadsByChatStore,
@@ -1153,7 +1154,7 @@ export class OpenChat extends OpenChatAgentWorker {
             localChatSummaryUpdates.markUpdated(c.id, { notificationsMuted: true }),
         );
 
-        return this.sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: false })
+        return this.sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: true })
             .then((resp) => {
                 if (resp !== "success") {
                     community.channels.forEach((c) =>
@@ -7380,6 +7381,7 @@ export class OpenChat extends OpenChatAgentWorker {
     translationStore = translationStore;
     eventsStore = eventsStore;
     selectedChatStore = selectedChatStore;
+    selectedCommunityChatStore = selectedCommunityChatStore;
     currentChatPinnedMessages = currentChatPinnedMessages;
     currentChatRules = currentChatRules;
     proposalTopicsStore = proposalTopicsStore;
