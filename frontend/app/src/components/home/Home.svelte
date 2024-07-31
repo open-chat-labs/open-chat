@@ -1017,6 +1017,7 @@
                     ...nullMembership(),
                     role: "owner",
                 },
+                messagesVisibleToNonMembers: undefined,
             },
         };
     }
@@ -1046,6 +1047,7 @@
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
+                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
             },
         };
     }

@@ -436,6 +436,7 @@ export function communityChannelUpdates(
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
+        messageVisibleToNonMembers: optional(candid.messages_visible_to_non_members, identity),
     };
 }
 

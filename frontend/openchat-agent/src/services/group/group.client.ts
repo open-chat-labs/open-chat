@@ -552,6 +552,7 @@ export class GroupClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -578,6 +579,7 @@ export class GroupClient extends CandidService {
                         : gate.kind === "no_gate"
                           ? { SetToNone: null }
                           : { SetToSome: apiAccessGate(gate) },
+                messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,
         );

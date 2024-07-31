@@ -1374,6 +1374,7 @@ export type ChannelSummary = DataContent &
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
         isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1402,6 +1403,7 @@ export type GroupChatSummary = DataContent &
         dateReadPinned: bigint | undefined;
         localUserIndex: string;
         isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1467,6 +1469,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
         videoCallInProgress?: number;
+        messagesVisibleToNonMembers: boolean;
     };
 
 export type UpdatedEvent = {
@@ -1503,6 +1506,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
     videoCallInProgress: OptionUpdate<number>;
+    messagesVisibleToNonMembers?: boolean;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1544,6 +1548,7 @@ export type CandidateGroupChat = AccessControlled &
         members: CandidateMember[];
         avatar?: DataContent;
         eventsTTL?: bigint;
+        messagesVisibleToNonMembers?: boolean;
     };
 
 export type CandidateChannel = CandidateGroupChat;

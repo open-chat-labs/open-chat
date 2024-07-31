@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Lifetime Diamond membership",
         "lockedGate": "Locked",
         "lockedGateInfo": "This {level} is locked and cannot be joined",
+        "messagesVisibleToNonMembers": "Messages can be previewed by non-members",
         "minDissolveDelay": "Min dissolve delay (days)",
         "minDissolveDelayN": "Min dissolve delay {n} days",
         "minimumBalance": "Minimum token balance",

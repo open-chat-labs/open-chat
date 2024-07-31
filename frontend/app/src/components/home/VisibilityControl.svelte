@@ -31,6 +31,16 @@
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
+        } else {
+            if (candidate.kind === "candidate_group_chat") {
+                candidate.messagesVisibleToNonMembers = false;
+            }
+        }
+    }
+
+    function toggleVisibleToNonMembers() {
+        if (candidate.kind === "candidate_group_chat") {
+            candidate.messagesVisibleToNonMembers = !candidate.messagesVisibleToNonMembers;
         }
     }
 
@@ -136,6 +146,21 @@
                         disabled={!canEditDisappearingMessages}
                         bind:milliseconds={candidate.eventsTTL} />
                 {/if}
+            </div>
+        </Checkbox>
+    </div>
+{/if}
+
+{#if candidate.public && candidate.kind === "candidate_group_chat" && candidate.level === "channel"}
+    <div class="section">
+        <Checkbox
+            id="visible_to_non_members"
+            on:change={toggleVisibleToNonMembers}
+            label={i18nKey("access.messagesVisibleToNonMembers")}
+            align={"start"}
+            checked={candidate.messagesVisibleToNonMembers}>
+            <div class="section-title disappear">
+                <Translatable resourceKey={i18nKey("access.messagesVisibleToNonMembers")} />
             </div>
         </Checkbox>
     </div>

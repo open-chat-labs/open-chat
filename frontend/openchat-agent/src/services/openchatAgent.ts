@@ -674,6 +674,7 @@ export class OpenChatAgent extends EventTarget {
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -688,6 +689,7 @@ export class OpenChatAgent extends EventTarget {
                     eventsTimeToLive,
                     gate,
                     isPublic,
+                    messagesVisibleToNonMembers,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).updateChannel(
@@ -700,6 +702,7 @@ export class OpenChatAgent extends EventTarget {
                     eventsTimeToLive,
                     gate,
                     isPublic,
+                    messagesVisibleToNonMembers,
                 );
         }
     }
