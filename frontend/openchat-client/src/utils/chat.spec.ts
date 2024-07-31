@@ -81,6 +81,7 @@ const defaultGroupChat: GroupChatSummary = {
     },
     localUserIndex: "",
     isInvited: false,
+    messagesVisibleToNonMembers: false,
 };
 
 function createUser(userId: string, username: string): UserSummary {
