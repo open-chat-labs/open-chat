@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
@@ -8,7 +8,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::Timestamped;
 
 #[post_upgrade]
 #[trace]
@@ -30,12 +29,5 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
-    });
-
-    // TODO: Delete this one-time code
-    mutate_state(|state| {
-        if state.data.chat.is_public.value && state.data.chat.gate.value.is_none() {
-            state.data.chat.messages_visible_to_non_members = Timestamped::new(true, state.env.now());
-        }
     });
 }
