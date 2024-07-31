@@ -120,7 +120,7 @@
         <p>
             While adult material is not against our platform guidelines, we feel it is important
             that such content is clearly labelled. We ask therefore that if you would like to post
-            adult material (that complies with the platform rules above) that <strong>
+            adult material (that complies with the content standards above) that <strong>
                 you must enable group rules and you must specify in the group rules that the group
                 contains adults only material.
             </strong> This ensures that a user joining the group can only do so having first been informed
@@ -149,15 +149,16 @@
         <p>
             If you see content in a public group which you think violates the group's rules then
             your first option should be to appeal to the group owners. If you feel like content
-            violates the platform rules, you should report the content to the platform moderators
-            via the message’s context menu.
+            violates the platform's content standards, you should report the content to the platform
+            moderators via the message’s context menu.
         </p>
 
         <p>The message content will then be referred to the platform moderators for review.</p>
 
         <p>
-            The platform moderators will refer to the platform and group rules and make a decision
-            on the action to take as a group. The action taken may be one or more of the following:
+            The platform moderators will refer to the platform content standards and group rules and
+            make a decision on the action to take as a group. The action taken may be one or more of
+            the following:
         </p>
         <ul class="list">
             <li>Delete the content</li>
