@@ -11,7 +11,7 @@
     import Translatable from "../../../Translatable.svelte";
 
     const MIN_CHANNEL_LENGTH = 3;
-    const MAX_CHANNEL_LENGTH = 25;
+    const MAX_CHANNEL_LENGTH = 40;
 
     export let channels: DefaultChannel[];
     export let valid = true;
