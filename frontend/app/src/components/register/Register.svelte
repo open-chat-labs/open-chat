@@ -13,10 +13,11 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Legend from "../Legend.svelte";
-    import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Translatable from "../Translatable.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import TermsContent from "../landingpages/TermsContent.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -122,13 +123,18 @@
 </script>
 
 {#if showGuidelines}
-    <Overlay on:close={() => (showGuidelines = false)} dismissible>
-        <ModalContent large on:close={() => (showGuidelines = false)} closeIcon>
+    <Overlay on:close={() => (showGuidelines = false)} dismissible={false}>
+        <ModalContent large on:close={() => (showGuidelines = false)}>
             <span class="header" slot="header">
-                <h1>OpenChat guidelines</h1>
+                <h1>OpenChat Terms</h1>
             </span>
             <span class="guidelines-modal" slot="body">
-                <GuidelinesContent modal />
+                <TermsContent />
+            </span>
+            <span let:onClose slot="footer">
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Translatable resourceKey={i18nKey("register.agree")} />
+                </Button>
             </span>
         </ModalContent>
     </Overlay>

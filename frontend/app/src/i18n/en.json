@@ -1064,6 +1064,7 @@
     "referralHeader": "Invite friends/family",
     "refresh": "Refresh",
     "register": {
+        "agree": "Agree",
         "bioTooLong": "Your bio is too long",
         "choosePath": "How would you like to register?",
         "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!",
@@ -1074,7 +1075,7 @@
         "confirmTransfer": "Confirm transfer",
         "createUser": "Create user",
         "cyclesTransferred": "Fee of {fee} cycles confirmed",
-        "disclaimer": "By registering with OpenChat you agree to abide by community guidelines",
+        "disclaimer": "By registering with OpenChat you agree to abide by our terms and conditions",
         "displayNameInvalid": "Invalid display name, please try again",
         "displayNameTooLong": "That display name is too long",
         "displayNameTooShort": "That display name is too short",

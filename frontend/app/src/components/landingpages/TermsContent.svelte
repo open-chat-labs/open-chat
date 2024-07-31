@@ -1,4 +1,15 @@
 <script lang="ts">
+    import { location } from "../../routes";
+    import { copyToClipboard } from "../../utils/urls";
+    import HashLinkTarget from "./HashLinkTarget.svelte";
+
+    function onCopyUrl(ev: CustomEvent<string>): void {
+        copyUrl(ev.detail);
+    }
+
+    function copyUrl(section: string): void {
+        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+    }
 </script>
 
 <div class="preamble">
@@ -25,7 +36,9 @@
 </div>
 
 <div class="section">
-    <h2>Section A: General terms applicable to all services</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="1">
+        <h2>Section A: General terms applicable to all services</h2>
+    </HashLinkTarget>
 
     <ul class="custom_list bold" style={"--prefix: 'A'; --suffix: ''"}>
         <li>
@@ -872,7 +885,9 @@
         </li>
     </ul>
 
-    <h2>Section B: Additional terms for messaging on the OpenChat platform</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="2">
+        <h2>Section B: Additional terms for messaging on the OpenChat platform</h2>
+    </HashLinkTarget>
 
     <ul class="custom_list bold" style={"--prefix: 'B'; --suffix: ''"}>
         <li>
@@ -1035,7 +1050,9 @@
         </li>
     </ul>
 
-    <h2>Section C: Additional terms for using the OpenChat wallet</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="3">
+        <h2>Section C: Additional terms for using the OpenChat wallet</h2>
+    </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'C'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
@@ -1138,7 +1155,9 @@
         </li>
     </ul>
 
-    <h2>Section D: Additional terms applicable to making a swap</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="4">
+        <h2>Section D: Additional terms applicable to making a swap</h2>
+    </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'D'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
@@ -1297,7 +1316,9 @@
         </li>
     </ul>
 
-    <h2>Section E: Additional terms for dealing in CHAT</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="5">
+        <h2>Section E: Additional terms for dealing in CHAT</h2>
+    </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'E'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
@@ -1370,7 +1391,9 @@
         </li>
     </ul>
 
-    <h2>Section F: Additional terms for Diamnond membership holders</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="6">
+        <h2>Section F: Additional terms for Diamnond membership holders</h2>
+    </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'F'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
@@ -1488,7 +1511,9 @@
         </li>
     </ul>
 
-    <h2>Section G: Participating in the OpenChat DAO</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="7">
+        <h2>Section G: Participating in the OpenChat DAO</h2>
+    </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'G'; --suffix: ''"}>
         <li>
             <h3>Introduction</h3>
@@ -1540,7 +1565,9 @@
         </li>
     </ul>
 
-    <h2>Schedule 1: Risks relating to cryptoassets</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="8">
+        <h2>Schedule 1: Risks relating to cryptoassets</h2>
+    </HashLinkTarget>
     <p>
         <strong>
             DEALING IN CRYPTOASSETS INVOLVES A HIGH DEGREE OF RISK, AND, THEREFORE, SHOULD BE
@@ -1916,7 +1943,9 @@
         </li>
     </ul>
 
-    <h2>Schedule 2: Content Standards</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="9">
+        <h2>Schedule 2: Content Standards</h2>
+    </HashLinkTarget>
 
     <p>
         A Contribution must comply with Applicable Law. In addition, the Content Standards below
@@ -1962,7 +1991,9 @@
         </li>
     </ul>
 
-    <h2>Schedule 3: Chat features</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="10">
+        <h2>Schedule 3: Chat features</h2>
+    </HashLinkTarget>
     <p>
         <strong
             >PLEASE NOTE THAT THE BELOW REPRESENTS FEATURES OF CHAT AS AT THE CURRENT DATE OF THESE
