@@ -425,7 +425,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.toggleMuteNotifications(payload.chatId, payload.muted),
+                    agent.toggleMuteNotifications(payload.id, payload.muted),
                 );
                 break;
 

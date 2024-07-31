@@ -216,6 +216,7 @@
         "members": "חברים",
         "mustHaveOneChannel": "עליך ליצור לפחות ערוץ ציבורי אחד",
         "mustHaveUniqueChannels": "לא ניתן לקבל שמות ערוצים כפולים",
+        "muteAllChannels": "השתק את כל הערוצים",
         "name": "שֵׁם",
         "namedUserGroupMembers": "**{name}** חברי הקבוצה",
         "namePlaceholder": "הזן את שם הקהילה",

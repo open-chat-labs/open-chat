@@ -216,6 +216,7 @@
         "members": "成员",
         "mustHaveOneChannel": "您必须创建至少一个公共频道",
         "mustHaveUniqueChannels": "频道名称不能重复",
+        "muteAllChannels": "静音所有频道",
         "name": "姓名",
         "namedUserGroupMembers": "**{name}** 群组成员",
         "namePlaceholder": "输入社区名称",

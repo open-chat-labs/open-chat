@@ -216,6 +216,7 @@
         "members": "メンバー",
         "mustHaveOneChannel": "少なくとも 1 つのパブリック チャネルを作成する必要があります",
         "mustHaveUniqueChannels": "重複したチャンネル名は使用できません",
+        "muteAllChannels": "すべてのチャンネルをミュート",
         "name": "名前",
         "namedUserGroupMembers": "**{name}** グループのメンバー",
         "namePlaceholder": "コミュニティ名を入力してください",

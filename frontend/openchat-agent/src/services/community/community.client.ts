@@ -1111,12 +1111,12 @@ export class CommunityClient extends CandidService {
     }
 
     toggleMuteChannelNotifications(
-        chatId: ChannelIdentifier,
+        chatId: ChannelIdentifier | undefined,
         mute: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
-                channel_id: [BigInt(chatId.channelId)],
+                channel_id: chatId ? [BigInt(chatId.channelId)] : [],
                 mute,
             }),
             muteNotificationsResponse,

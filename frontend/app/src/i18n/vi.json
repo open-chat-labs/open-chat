@@ -216,6 +216,7 @@
         "members": "Các thành viên",
         "mustHaveOneChannel": "Bạn phải tạo ít nhất một kênh công khai",
         "mustHaveUniqueChannels": "Bạn không thể có tên kênh trùng lặp",
+        "muteAllChannels": "Tắt tiếng tất cả các kênh",
         "name": "Tên",
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
         "namePlaceholder": "Nhập tên cộng đồng",

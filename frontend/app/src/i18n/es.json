@@ -216,6 +216,7 @@
         "members": "Miembros",
         "mustHaveOneChannel": "Debes crear al menos un canal público",
         "mustHaveUniqueChannels": "No puede tener nombres de canales duplicados",
+        "muteAllChannels": "Silenciar todos los canales",
         "name": "Nombre",
         "namedUserGroupMembers": "**{name}** miembros del grupo",
         "namePlaceholder": "Ingrese el nombre de la comunidad",

@@ -216,6 +216,7 @@
         "members": "Membres",
         "mustHaveOneChannel": "Vous devez créer au moins une chaîne publique",
         "mustHaveUniqueChannels": "Vous ne pouvez pas avoir de noms de chaîne en double",
+        "muteAllChannels": "Couper toutes les chaînes",
         "name": "Nom",
         "namedUserGroupMembers": "**{name}** membres du groupe",
         "namePlaceholder": "Entrez le nom de la communauté",
