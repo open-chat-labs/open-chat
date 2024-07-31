@@ -78,7 +78,7 @@
     <div class:modal class="header" slot="titleSlot">
         <span class="subtitle">3</span>
         <div class="title">
-            Platform rules
+            Content Standards
             <div class="copy" on:click|stopPropagation={() => copyUrl("3")}>
                 <Copy size={copySize} {color} />
             </div>
@@ -87,60 +87,10 @@
     <div class:modal class="body">
         <p>
             For a description of our content standards, please refer to the <a
-                href={getUrl("/terms", "schedule-2")}>
+                href={getUrl("/terms", "9")}>
                 relevant section of our complete terms and conditions
             </a>.
         </p>
-        <ul class="list">
-            <li>
-                <strong>Do not threaten to harm another individual or group of people.</strong> This
-                includes direct, indirect, and suggestive threats.
-            </li>
-
-            <li>
-                <strong>
-                    Do not solicit, share, or make attempts to distribute content that depicts,
-                    promotes, or attempts to normalize child sexual abuse.
-                </strong> Also, do not post content that in any way sexualizes children.
-            </li>
-
-            <li>
-                <strong>
-                    Do not share sexually explicit or sexually suggestive content of other people
-                    without the subject’s knowledge and consent, otherwise known as “revenge porn.”
-                </strong>
-                This includes the non-consensual distribution of intimate media that was created either
-                with or without an individual’s consent.
-            </li>
-
-            <li>
-                <strong>
-                    Do not share content that glorifies, promotes, or normalizes suicide or other
-                    acts of physical self-harm.
-                </strong> This includes content that encourages others to cut, burn, or starve themselves,
-                as well as content that normalizes eating disorders, such as anorexia and bulimia. Self-harm
-                acts or threats used as a form of emotional manipulation or coercion are also prohibited.
-            </li>
-
-            <li>
-                <strong>
-                    Do not share real media depicting gore, excessive violence, or animal harm,
-                    especially with the intention to harass or shock others.
-                </strong>
-            </li>
-
-            <li>
-                <strong
-                    >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong>
-                Promoting a particular crypto token or NFT does not break this rule in general.
-            </li>
-
-            <li>
-                <strong>Do not persistently send spam messages.</strong>
-                This includes repeatedly sending the same or meaningless messages, either in the same
-                chat or across multiple chats.
-            </li>
-        </ul>
     </div>
 </CollapsibleCard>
 
@@ -156,10 +106,10 @@
     </div>
     <div class:modal class="body">
         <p>
-            In addition to the platform rules, we urge group owners to enable group rules and make
-            it very clear what standards you expect to be upheld in your group. When you join a
-            group, please read those rules carefully and keep in mind that they will be consulted in
-            moderation decisions.
+            In addition to the platform content standards rules, we urge group owners to enable
+            group rules and make it very clear what standards you expect to be upheld in your group.
+            When you join a group, please read those rules carefully and keep in mind that they will
+            be consulted in moderation decisions.
         </p>
 
         <p>

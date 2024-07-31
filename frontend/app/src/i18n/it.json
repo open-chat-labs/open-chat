@@ -1064,6 +1064,7 @@
     "referralHeader": "Invita amici/familiari",
     "refresh": "ricarica",
     "register": {
+        "agree": "Essere d'accordo",
         "bioTooLong": "La tua biografia è troppo lunga",
         "choosePath": "Come vorresti registrarti?",
         "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
@@ -1074,7 +1075,7 @@
         "confirmTransfer": "Conferma il trasferimento",
         "createUser": "Creare un utente",
         "cyclesTransferred": "Commissione di {fee} cicli confermata",
-        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le linee guida della community",
+        "disclaimer": "Registrandoti su OpenChat accetti di rispettare i nostri termini e condizioni",
         "displayNameInvalid": "Nome visualizzato non valido, riprova",
         "displayNameTooLong": "Il nome visualizzato è troppo lungo",
         "displayNameTooShort": "Il nome visualizzato è troppo corto",
