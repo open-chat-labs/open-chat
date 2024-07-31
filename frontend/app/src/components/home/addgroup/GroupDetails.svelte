@@ -8,7 +8,7 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     const MIN_LENGTH = 3;
-    const MAX_LENGTH = 25;
+    const MAX_LENGTH = 40;
     const MAX_DESC_LENGTH = 1024;
 
     export let busy: boolean;
