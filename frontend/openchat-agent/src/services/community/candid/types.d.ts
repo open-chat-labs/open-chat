@@ -1192,7 +1192,6 @@ export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'public' : [] | [boolean],
-  'now_public' : boolean,
   'messages_visible_to_non_members' : [] | [boolean],
 }
 export type Hash = Uint8Array | number[];

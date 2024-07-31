@@ -481,7 +481,7 @@
     "groupRulesTooLong": "The group rules are too long",
     "groupRulesTooShort": "The group rules must not be empty",
     "groupUpdateFailed": "Sorry we were unable to update your group",
-    "groupVisibilityChangedBy": "{changedBy} made the {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} made changes to the {level} visibility",
     "groupWithN": "{number} Members",
     "guestUser": "Guest User",
     "halloffame": {

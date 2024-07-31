@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "חברות יהלום לכל החיים",
         "lockedGate": "נָעוּל",
         "lockedGateInfo": "{level} זה נעול ולא ניתן להצטרף אליו",
+        "messagesVisibleToNonMembers": "מי שאינם חברים יכולים לצפות בהודעות בתצוגה מקדימה",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
         "minimumBalance": "יתרה סמלית מינימלית",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "חוקי הקבוצה ארוכים מדי",
     "groupRulesTooShort": "חוקי הקבוצה לא צריכים להיות ריקים",
     "groupUpdateFailed": "מצטערים שלא הצלחנו לעדכן את הקבוצה שלך",
-    "groupVisibilityChangedBy": "{changedBy} יצר את {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} ביצע שינויים בחשיפה של {level}",
     "groupWithN": "{number} חברים",
     "guestUser": "משתמש אורח",
     "halloffame": {

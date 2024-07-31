@@ -876,7 +876,8 @@ export type PermissionsChanged = {
 
 export type GroupVisibilityChanged = {
     kind: "group_visibility_changed";
-    nowPublic: boolean;
+    public?: boolean;
+    messagesVisibleToNonMembers?: boolean;
     changedBy: string;
 };
 

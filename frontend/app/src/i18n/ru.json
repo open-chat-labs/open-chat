@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Пожизненное членство со статусом Diamond",
         "lockedGate": "Заблокировано",
         "lockedGateInfo": "Этот {level} заблокирован, и к нему нельзя присоединиться.",
+        "messagesVisibleToNonMembers": "Сообщения могут быть просмотрены лицами, не являющимися участниками",
         "minDissolveDelay": "Минимальная задержка растворения (дни)",
         "minDissolveDelayN": "Минимальная задержка растворения {n} дней",
         "minimumBalance": "Минимальный баланс токена",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Правила группы слишком длинные.",
     "groupRulesTooShort": "Правила группы не должны быть пустыми.",
     "groupUpdateFailed": "К сожалению, нам не удалось обновить вашу группу",
-    "groupVisibilityChangedBy": "{changedBy} сделал {level} {visibility}",
+    "groupVisibilityChangedBy": "Пользователь {changedBy} внес изменения в видимость {level}.",
     "groupWithN": "{number} участников",
     "guestUser": "Гость пользователь",
     "halloffame": {

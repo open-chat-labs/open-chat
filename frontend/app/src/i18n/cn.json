@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "终身钻石会员",
         "lockedGate": "已锁定",
         "lockedGateInfo": "此{level}已被锁定，无法加入",
+        "messagesVisibleToNonMembers": "非会员可以预览消息",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minimumBalance": "最低代币余额",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "群规太长",
     "groupRulesTooShort": "群规不能为空",
     "groupUpdateFailed": "群聊更新失败",
-    "groupVisibilityChangedBy": "{changedBy} 创造了 {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} 对 {level} 可见性进行了更改",
     "groupWithN": "{number} 个成员",
     "guestUser": "访客用户",
     "halloffame": {

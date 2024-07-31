@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Довічне Діамантове членство",
         "lockedGate": "Заблоковано",
         "lockedGateInfo": "Цей {level} заблокований і не може приєднатися",
+        "messagesVisibleToNonMembers": "Повідомлення можуть попередньо переглядати ті, хто не є учасниками",
         "minDissolveDelay": "Мінімальна затримка розчинення (дні)",
         "minDissolveDelayN": "Мінімальна затримка розчинення {n} днів",
         "minimumBalance": "Мінімальний баланс токенів",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Правила групи занадто довгі",
     "groupRulesTooShort": "Правила групи не повинні бути порожніми",
     "groupUpdateFailed": "Вибачте, ми не змогли оновити вашу групу",
-    "groupVisibilityChangedBy": "{changedBy} зробив {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} змінив видимість {level}",
     "groupWithN": "{number} учасників",
     "guestUser": "Гість Користувач",
     "halloffame": {

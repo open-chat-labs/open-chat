@@ -427,7 +427,11 @@ export function event(candid: ApiChatEvent): ChatEvent {
     if ("GroupVisibilityChanged" in candid) {
         return {
             kind: "group_visibility_changed",
-            nowPublic: candid.GroupVisibilityChanged.now_public,
+            public: optional(candid.GroupVisibilityChanged.public, identity),
+            messagesVisibleToNonMembers: optional(
+                candid.GroupVisibilityChanged.messages_visible_to_non_members,
+                identity,
+            ),
             changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
         };
     }

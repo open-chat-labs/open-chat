@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Dożywotnie członkostwo Diamentowe",
         "lockedGate": "Zablokowany",
         "lockedGateInfo": "To {level} jest zablokowane i nie można do niego dołączyć",
+        "messagesVisibleToNonMembers": "Wiadomości mogą być przeglądane przez osoby niebędące członkami",
         "minDissolveDelay": "Min. opóźnienie rozpuszczania (dni)",
         "minDissolveDelayN": "Min. opóźnienie rozpuszczania {n} dni",
         "minimumBalance": "Minimalne saldo tokenów",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Zasady grupy są za długie",
     "groupRulesTooShort": "Reguły grupy nie mogą być puste",
     "groupUpdateFailed": "Przepraszamy, nie mogliśmy zaktualizować Twojej grupy",
-    "groupVisibilityChangedBy": "{changedBy} zrobił {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} wprowadził zmiany w widoczności {level}",
     "groupWithN": "{number} Członkowie",
     "guestUser": "Gościnny użytkownik",
     "halloffame": {

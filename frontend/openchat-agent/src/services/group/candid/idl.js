@@ -712,7 +712,6 @@ export const idlFactory = ({ IDL }) => {
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
     'public' : IDL.Opt(IDL.Bool),
-    'now_public' : IDL.Bool,
     'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const ThreadSummary = IDL.Record({
