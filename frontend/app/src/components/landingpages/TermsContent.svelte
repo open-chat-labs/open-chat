@@ -1,4 +1,25 @@
 <script lang="ts">
+    import { location, querystring } from "../../routes";
+    import { copyToClipboard, scrollToSection } from "../../utils/urls";
+    import HashLinkTarget from "./HashLinkTarget.svelte";
+
+    let linked: number | undefined = undefined;
+
+    function onCopyUrl(ev: CustomEvent<string>): void {
+        copyUrl(ev.detail);
+    }
+
+    function copyUrl(section: string): void {
+        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+    }
+
+    $: {
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
+            console.log("linked: ", linked);
+        }
+    }
 </script>
 
 <div class="preamble">
@@ -1916,7 +1937,9 @@
         </li>
     </ul>
 
-    <h2>Schedule 2: Content Standards</h2>
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="schedule-2">
+        <h2>Schedule 2: Content Standards</h2>
+    </HashLinkTarget>
 
     <p>
         A Contribution must comply with Applicable Law. In addition, the Content Standards below

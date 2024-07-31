@@ -9,7 +9,11 @@
     export let modal: boolean = false;
 
     function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+        copyToClipboard(getUrl($location, section));
+    }
+
+    function getUrl(path: string, section: string): string {
+        return `${window.location.origin}${path}?section=${section}`;
     }
 
     $: copySize = $mobileWidth ? "14px" : "16px";
@@ -81,6 +85,12 @@
         </div>
     </div>
     <div class:modal class="body">
+        <p>
+            For a description of our content standards, please refer to the <a
+                href={getUrl("/terms", "schedule-2")}>
+                relevant section of our complete terms and conditions
+            </a>.
+        </p>
         <ul class="list">
             <li>
                 <strong>Do not threaten to harm another individual or group of people.</strong> This
