@@ -46,6 +46,8 @@
         "deleted_message",
         "tipped_message",
         "forwarded_message",
+        "proved_unique_personhood",
+        "received_crypto",
     ]);
 
     let selectedTab: "todo" | "done" = "todo";
