@@ -333,7 +333,8 @@
                         history
                         {canEditDisappearingMessages}
                         bind:valid={visibilityValid}
-                        bind:candidate={candidateGroup} />
+                        bind:candidate={candidateGroup}
+                        {gateDirty} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <RulesEditor

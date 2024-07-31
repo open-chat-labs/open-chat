@@ -19,6 +19,7 @@
     export let history: boolean;
     export let canEditDisappearingMessages: boolean;
     export let valid: boolean;
+    export let gateDirty: boolean;
 
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
@@ -26,6 +27,16 @@
     $: isDiamond = client.isDiamond;
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
+
+    $: {
+        if (
+            gateDirty &&
+            candidate.kind === "candidate_group_chat" &&
+            candidate.gate.kind !== "no_gate"
+        ) {
+            candidate.messagesVisibleToNonMembers = false;
+        }
+    }
 
     function toggleScope() {
         candidate.public = !candidate.public;
