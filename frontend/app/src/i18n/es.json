@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Membresía Diamante de por vida",
         "lockedGate": "bloqueado",
         "lockedGateInfo": "Este {level} está bloqueado y no se puede unir",
+        "messagesVisibleToNonMembers": "Los no miembros pueden obtener una vista previa de los mensajes",
         "minDissolveDelay": "Retraso mínimo de disolución (días)",
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minimumBalance": "Saldo mínimo de tokens",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Las reglas del grupo son demasiado largas.",
     "groupRulesTooShort": "Las reglas del grupo no deben estar vacías.",
     "groupUpdateFailed": "Lo sentimos, no pudimos actualizar tu grupo",
-    "groupVisibilityChangedBy": "{changedBy} hizo el {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} realizó cambios en la visibilidad de {level}",
     "groupWithN": "{number} miembro(s)",
     "guestUser": "Usuario invitado",
     "halloffame": {

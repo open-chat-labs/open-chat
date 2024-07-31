@@ -144,10 +144,7 @@
         $selectedCommunity.membership.role === "none" &&
         (!$selectedCommunity.public || $selectedCommunity.gate.kind !== "no_gate");
 
-    $: privateChatPreview =
-        (chat.kind === "group_chat" || chat.kind === "channel") &&
-        chat.membership.role === "none" &&
-        (!chat.public || chat.gate.kind !== "no_gate");
+    $: privateChatPreview = client.maskChatMessages(chat);
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;

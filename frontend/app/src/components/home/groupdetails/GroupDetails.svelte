@@ -142,6 +142,13 @@
                     {/if}
                 {/if}
             </div>
+            {#if chat.messagesVisibleToNonMembers}
+                <div class="info">
+                    <p>
+                        <Translatable resourceKey={i18nKey("access.messagesVisibleToNonMembers")} />
+                    </p>
+                </div>
+            {/if}
             <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
         </CollapsibleCard>

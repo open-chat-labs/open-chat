@@ -241,6 +241,8 @@ function mergeChannelUpdates(
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
             },
             isInvited: false,
+            messagesVisibleToNonMembers:
+                c?.messageVisibleToNonMembers ?? channel.messagesVisibleToNonMembers,
         };
     });
 }

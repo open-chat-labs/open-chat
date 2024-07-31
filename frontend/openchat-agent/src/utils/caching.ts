@@ -49,7 +49,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 107;
+const CACHE_VERSION = 108;
 const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
@@ -131,12 +131,17 @@ type MigrationFunction<T> = (
 ) => Promise<void>;
 
 async function clearChatsStore(
-    principal: Principal,
+    _: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    const key = principal.toString();
-    const store = tx.objectStore("chats");
-    store.delete(key);
+    await tx.objectStore("chats").clear();
+}
+
+async function clearEventsStore(
+    _: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
@@ -153,6 +158,13 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
             chatState.chitState.totalChitEarned = chatState.chitState.chitBalance;
             await store.put(chatState, key);
         }
+    },
+    108: async (
+        principal: Principal,
+        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+    ) => {
+        await clearEventsStore(principal, tx);
+        await clearChatsStore(principal, tx);
     },
 };
 

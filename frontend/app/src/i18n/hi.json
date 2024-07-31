@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "आजीवन डायमंड सदस्यता",
         "lockedGate": "बंद",
         "lockedGateInfo": "यह {level} लॉक है और इसमें शामिल नहीं हुआ जा सकता",
+        "messagesVisibleToNonMembers": "संदेशों का पूर्वावलोकन गैर-सदस्यों द्वारा भी किया जा सकता है",
         "minDissolveDelay": "न्यूनतम विघटित विलंब (दिन)",
         "minDissolveDelayN": "न्यूनतम विघटन विलंब {n} दिन",
         "minimumBalance": "न्यूनतम टोकन शेष",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "समूह के नियम बहुत लंबे हैं",
     "groupRulesTooShort": "समूह के नियम खाली नहीं होने चाहिए",
     "groupUpdateFailed": "क्षमा करें हम आपके समूह को अपडेट करने में असमर्थ रहे",
-    "groupVisibilityChangedBy": "{changedBy} ने {level} {visibility} बनाया",
+    "groupVisibilityChangedBy": "{changedBy} ने {level} दृश्यता में परिवर्तन किए",
     "groupWithN": "{number} सदस्य",
     "guestUser": "अतिथि उपयेागकर्ता",
     "halloffame": {

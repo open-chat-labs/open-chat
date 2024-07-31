@@ -408,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : Rules,
     'avatar' : IDL.Opt(Document),
@@ -977,7 +978,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
-    'now_public' : IDL.Bool,
+    'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,
@@ -1267,6 +1269,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
+    'messages_visible_to_non_members' : IDL.Bool,
     'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),

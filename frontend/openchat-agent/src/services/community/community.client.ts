@@ -310,6 +310,10 @@ export class CommunityClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
+                messages_visible_to_non_members: apiOptional(
+                    identity,
+                    channel.messagesVisibleToNonMembers,
+                ),
             }),
             (resp) => createGroupResponse(resp, channel.id),
         );
@@ -1198,6 +1202,7 @@ export class CommunityClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
@@ -1224,6 +1229,7 @@ export class CommunityClient extends CandidService {
                                   data: avatar,
                               },
                           },
+                messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,
         );

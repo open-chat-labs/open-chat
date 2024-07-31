@@ -264,7 +264,8 @@
     <GroupVisibilityChangedEvent
         level={levelType}
         user={userSummary}
-        nowPublic={event.event.nowPublic}
+        isPublic={event.event.public}
+        messagesVisibleToNonMembers={event.event.messagesVisibleToNonMembers}
         changedBy={event.event.changedBy}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_invite_code_changed"}

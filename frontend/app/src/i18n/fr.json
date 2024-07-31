@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Adhésion Diamant à vie",
         "lockedGate": "Fermé à clé",
         "lockedGateInfo": "Ce {level} est verrouillé et ne peut pas être rejoint",
+        "messagesVisibleToNonMembers": "Les messages peuvent être prévisualisés par les non-membres",
         "minDissolveDelay": "Délai de dissolution min (jours)",
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
         "minimumBalance": "Solde minimum de jetons",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Les règles du groupe sont trop longues",
     "groupRulesTooShort": "Les règles du groupe ne doivent pas être vides",
     "groupUpdateFailed": "Désolé, nous n'avons pas pu mettre à jour votre groupe",
-    "groupVisibilityChangedBy": "{changedBy} a fait le {level} {visibility}",
+    "groupVisibilityChangedBy": "{changedBy} a apporté des modifications à la visibilité de {level}",
     "groupWithN": "{number} membre(s)",
     "guestUser": "Utilisateur invité",
     "halloffame": {

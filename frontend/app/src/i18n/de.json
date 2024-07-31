@@ -51,6 +51,7 @@
         "lifetimeDiamondMember": "Lebenslange Diamond-Mitgliedschaft",
         "lockedGate": "Gesperrt",
         "lockedGateInfo": "Dieses {level} ist gesperrt und kann nicht betreten werden",
+        "messagesVisibleToNonMembers": "Nachrichten können von Nichtmitgliedern in der Vorschau angezeigt werden",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
         "minDissolveDelayN": "Min. Auflösungsverzögerung {n} Tage",
         "minimumBalance": "Mindest-Token-Guthaben",
@@ -480,7 +481,7 @@
     "groupRulesTooLong": "Die Gruppenregeln sind zu lang",
     "groupRulesTooShort": "Die Gruppenregeln dürfen nicht leer sein",
     "groupUpdateFailed": "Leider konnten wir Ihre Gruppe nicht aktualisieren",
-    "groupVisibilityChangedBy": "{changedBy} hat den {level} {visibility} erstellt",
+    "groupVisibilityChangedBy": "{changedBy} hat Änderungen an der Sichtbarkeit von {level} vorgenommen",
     "groupWithN": "{number} Mitglied(er)",
     "guestUser": "Gastbenutzer",
     "halloffame": {
