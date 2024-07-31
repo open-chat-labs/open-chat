@@ -1571,7 +1571,6 @@ impl GroupChatCore {
 
         if public_changed || message_visbility_changed {
             let event = GroupVisibilityChanged {
-                now_public: self.is_public.value,
                 public: public_changed.then_some(self.is_public.value),
                 messages_visible_to_non_members: message_visbility_changed
                     .then_some(self.messages_visible_to_non_members.value),
