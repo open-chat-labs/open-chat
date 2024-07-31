@@ -31,11 +31,4 @@ fn post_upgrade(args: Args) {
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
     });
-
-    // TODO: Delete this one-time code
-    mutate_state(|state| {
-        if state.data.chat.is_public.value && state.data.chat.gate.value.is_none() {
-            state.data.chat.messages_visible_to_non_members = Timestamped::new(true, state.env.now());
-        }
-    });
 }

@@ -45,7 +45,6 @@ pub struct GroupChatCore {
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
-    #[serde(default)]
     pub messages_visible_to_non_members: Timestamped<bool>,
     pub members: GroupMembers,
     pub events: ChatEvents,
