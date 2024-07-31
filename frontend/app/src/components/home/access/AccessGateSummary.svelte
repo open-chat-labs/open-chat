@@ -6,6 +6,9 @@
     import Translatable from "../../Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
     import { _ } from "svelte-i18n";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let gate: AccessGate;
     export let editable: boolean;
@@ -35,15 +38,15 @@
         }
         return i18nKey(getGateResourceKey(gate));
     }
+
+    function close() {
+        showDetail = false;
+        dispatch("updated");
+    }
 </script>
 
 {#if showDetail}
-    <AccessGateBuilder
-        bind:valid
-        {level}
-        on:close={() => (showDetail = false)}
-        bind:gate
-        {editable} />
+    <AccessGateBuilder bind:valid {level} on:close={close} bind:gate {editable} />
 {/if}
 
 {#if gate.kind !== "no_gate" || showNoGate}

@@ -69,7 +69,7 @@
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
-    $: visibleToNonMembersDirty =
+    $: messagesVisibleToNonMembersDirty =
         editing &&
         candidateGroup.messagesVisibleToNonMembers !== originalGroup.messagesVisibleToNonMembers;
     $: dirty =
@@ -79,7 +79,7 @@
         visDirty ||
         gateDirty ||
         ttlDirty ||
-        visibleToNonMembersDirty;
+        messagesVisibleToNonMembersDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
@@ -225,7 +225,9 @@
                     : undefined,
                 gateDirty ? updatedGroup.gate : undefined,
                 visDirty ? updatedGroup.public : undefined,
-                visibleToNonMembersDirty ? updatedGroup.messagesVisibleToNonMembers : undefined,
+                messagesVisibleToNonMembersDirty
+                    ? updatedGroup.messagesVisibleToNonMembers
+                    : undefined,
             )
             .then((resp) => {
                 if (resp.kind === "success") {

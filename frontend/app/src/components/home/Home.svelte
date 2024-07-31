@@ -1017,7 +1017,7 @@
                     ...nullMembership(),
                     role: "owner",
                 },
-                messagesVisibleToNonMembers: undefined,
+                messagesVisibleToNonMembers: false,
             },
         };
     }

@@ -1147,6 +1147,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, isInvited: boolean): Grou
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 

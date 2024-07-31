@@ -5135,11 +5135,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     maskChatMessages(chat: ChatSummary): boolean {
-        // notAMember && (private || (gated && !messagesVisibleToNonMembers))
+        // notAMember && (private || !messagesVisibleToNonMembers)
         return (
             this.isMultiUserChat(chat) &&
             chat.membership.role === "none" &&
-            (!chat.public || (chat.gate.kind !== "no_gate" && !chat.messagesVisibleToNonMembers))
+            (!chat.public || !chat.messagesVisibleToNonMembers)
         );
     }
 

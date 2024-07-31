@@ -131,20 +131,17 @@ type MigrationFunction<T> = (
 ) => Promise<void>;
 
 async function clearChatsStore(
-    principal: Principal,
+    _: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    const key = principal.toString();
-    const store = tx.objectStore("chats");
-    store.delete(key);
+    await tx.objectStore("chats").clear();
 }
 
 async function clearEventsStore(
     _: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    const store = tx.objectStore("chat_events");
-    store.clear();
+    await tx.objectStore("chat_events").clear();
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
@@ -162,7 +159,13 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
             await store.put(chatState, key);
         }
     },
-    108: clearEventsStore,
+    108: async (
+        principal: Principal,
+        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+    ) => {
+        await clearEventsStore(principal, tx);
+        await clearChatsStore(principal, tx);
+    },
 };
 
 async function migrate(
