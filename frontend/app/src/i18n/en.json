@@ -89,7 +89,7 @@
         "uniquePerson": "Unique person",
         "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
         "uniquePersonInfo1": "What if I do not have the verifiable credential?",
-        "uniquePersonInfo2": "If you _have not_ done so, simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
+        "uniquePersonInfo2": "If you have not done so, simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
         "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you have completed the process, come back here and hit 'Verify'.",
         "verify": "Verify",
         "visibility": "Access"

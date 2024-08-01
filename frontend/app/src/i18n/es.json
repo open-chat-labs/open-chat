@@ -89,7 +89,7 @@
         "uniquePerson": "Persona unica",
         "uniquePersonInfo": "Solo se permitirá unirse a los usuarios que hayan proporcionado una prueba única de personalidad.",
         "uniquePersonInfo1": "¿Qué pasa si aún no lo he verificado?",
-        "uniquePersonInfo2": "Si _no lo ha hecho_, simplemente diríjase a <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , inicie sesión con la misma identidad de Internet que utilizó para acceder a OpenChat y siga las instrucciones para demostrar su personalidad única.",
+        "uniquePersonInfo2": "Si no lo ha hecho, simplemente diríjase a <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , inicie sesión con la misma identidad de Internet que utilizó para acceder a OpenChat y siga las instrucciones para demostrar su personalidad única.",
         "uniquePersonInfo3": "Es sencillo de hacer, sólo lleva unos minutos y sólo hay que hacerlo una vez. Cuando hayas completado el proceso, regresa aquí y presiona &#39;Verificar&#39;.",
         "verify": "Verificar",
         "visibility": "Acceso"

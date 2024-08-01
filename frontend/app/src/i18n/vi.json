@@ -89,7 +89,7 @@
         "uniquePerson": "Người độc nhất",
         "uniquePersonInfo": "Chỉ những người dùng đã cung cấp bằng chứng cá nhân duy nhất mới được phép tham gia",
         "uniquePersonInfo1": "Nếu tôi chưa xác minh thì sao?",
-        "uniquePersonInfo2": "Nếu bạn _chưa_ làm như vậy, chỉ cần truy cập <a target='_blank' href='https://id.decideai.xyz'>DecisionAI</a> , đăng nhập bằng cùng một Nhận dạng Internet mà bạn đã sử dụng để truy cập OpenChat và làm theo hướng dẫn để chứng minh tư cách cá nhân độc đáo của mình.",
+        "uniquePersonInfo2": "Nếu bạn chưa làm như vậy, chỉ cần truy cập <a target='_blank' href='https://id.decideai.xyz'>DecisionAI</a> , đăng nhập bằng cùng một Nhận dạng Internet mà bạn đã sử dụng để truy cập OpenChat và làm theo hướng dẫn để chứng minh tư cách cá nhân độc đáo của mình.",
         "uniquePersonInfo3": "Việc thực hiện rất đơn giản, chỉ mất vài phút và chỉ cần thực hiện một lần. Khi bạn đã hoàn tất quá trình, hãy quay lại đây và nhấn &#39;Xác minh&#39;.",
         "verify": "Xác minh",
         "visibility": "Truy cập"
