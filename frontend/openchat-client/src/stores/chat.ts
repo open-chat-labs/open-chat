@@ -54,11 +54,7 @@ import {
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import {
-    communityPreviewsStore,
-    currentCommunityBlockedUsers,
-    selectedCommunity,
-} from "./community";
+import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
 import { messageFiltersStore } from "./messageFilters";
 import { draftMessagesStore } from "./draftMessages";
@@ -372,16 +368,6 @@ export const selectedChatStore = derived(
     ([$chatSummaries, $selectedChatId]) => {
         if ($selectedChatId === undefined) return undefined;
         return $chatSummaries.get($selectedChatId);
-    },
-);
-
-export const selectedCommunityChatStore = derived(
-    [chatSummariesStore, selectedCommunity],
-    ([$chatSummaries, $selectedCommunity]) => {
-        if ($selectedCommunity === undefined) return undefined;
-        return $selectedCommunity.channels
-            .map((channel) => $chatSummaries.get(channel.id))
-            .filter((summary) => summary !== undefined);
     },
 );
 

@@ -34,8 +34,8 @@
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
     $: canCreateChannel = member && client.canCreateChannel(community.id);
-    $: selectedCommunityChatStore = client.selectedCommunityChatStore;
-    $: isCommunityMuted = $selectedCommunityChatStore?.every((c) => c?.membership.notificationsMuted ?? true) ?? true;
+    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {
