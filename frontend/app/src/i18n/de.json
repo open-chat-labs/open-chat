@@ -42,6 +42,7 @@
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
         "diamondGateInfo2": "Um diesem {level} beizutreten, müssen Sie eine Diamond-Mitgliedschaft besitzen.",
         "diamondMember": "Diamond-Mitgliedschaft",
+        "doYouHaveUniquePersonCredential": "WICHTIG! Bitte bestätigen Sie, dass Sie Ihre einzigartige Persönlichkeit über <a target='_blank' href='https://id.decideai.xyz'>die DecideAI-Website</a> verifiziert haben, _bevor_ Sie fortfahren.",
         "gate": "Zugangstor",
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "gateInvalid": "Das Zugangstor ist ungültig",
@@ -88,8 +89,8 @@
         "uniquePerson": "Einzigartige Person",
         "uniquePersonInfo": "Nur Benutzer, die einen eindeutigen Identitätsnachweis erbracht haben, dürfen teilnehmen",
         "uniquePersonInfo1": "Was ist, wenn ich mich noch nicht verifiziert habe?",
-        "uniquePersonInfo2": "Gehen Sie einfach zu <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, melden Sie sich mit derselben Internetidentität an, die Sie für den Zugriff auf OpenChat verwendet haben, und folgen Sie den Anweisungen, um Ihre einzigartige Identität nachzuweisen.",
-        "uniquePersonInfo3": "Das ist ganz einfach, dauert nur wenige Minuten und muss nur einmal durchgeführt werden. Wenn Sie verifiziert sind, kommen Sie hierher zurück und klicken Sie auf „Verifizieren“.",
+        "uniquePersonInfo2": "Wenn Sie dies _nicht_ getan haben, gehen Sie einfach zu <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , melden Sie sich mit derselben Internetidentität an, die Sie für den Zugriff auf OpenChat verwendet haben, und folgen Sie den Anweisungen, um Ihre einzigartige Identität nachzuweisen.",
+        "uniquePersonInfo3": "Das geht ganz einfach, dauert nur wenige Minuten und muss nur einmal durchgeführt werden. Wenn Sie den Vorgang abgeschlossen haben, kehren Sie hierher zurück und klicken Sie auf „Bestätigen“.",
         "verify": "Verifizieren",
         "visibility": "Zugang"
     },

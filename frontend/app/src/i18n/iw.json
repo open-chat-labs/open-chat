@@ -42,6 +42,7 @@
         "diamondGateInfo": "רק משתמשים עם חברות Diamond יורשו להצטרף",
         "diamondGateInfo2": "כדי להצטרף ל-{level} הזה אתה נדרש להיות חבר ב-Diamond.",
         "diamondMember": "חברות יהלום",
+        "doYouHaveUniquePersonCredential": "חָשׁוּב! אנא אשר כי אימתת את אישיותך הייחודית באמצעות <a target='_blank' href='https://id.decideai.xyz'>אתר DecideAI</a> _לפני_ שתמשיך.",
         "gate": "שער גישה",
         "gateCheckFailed": "שער הגישה לא נפגש",
         "gateInvalid": "שער הגישה אינו חוקי",
@@ -88,8 +89,8 @@
         "uniquePerson": "אדם ייחודי",
         "uniquePersonInfo": "רק משתמשים שסיפקו הוכחת אישיות ייחודית יורשו להצטרף",
         "uniquePersonInfo1": "מה אם עדיין לא ביצעתי אימות?",
-        "uniquePersonInfo2": "פשוט עבור אל <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, היכנס באמצעות אותה זהות אינטרנט שבה השתמשת כדי לגשת ל-OpenChat ופעל לפי ההוראות להוכחה האישיות הייחודית שלך.",
-        "uniquePersonInfo3": "זה פשוט לביצוע, לוקח רק כמה דקות וצריך לעשות זאת רק פעם אחת. כאשר אתה מאומת, חזור לכאן והקש על 'אמת'.",
+        "uniquePersonInfo2": "אם _לא_ עשית זאת, פשוט עברו אל <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , היכנסו באמצעות אותה זהות אינטרנט שבה השתמשתם כדי לגשת ל-OpenChat ופעלו לפי ההוראות כדי להוכיח את אישיותכם הייחודית.",
+        "uniquePersonInfo3": "זה פשוט לביצוע, לוקח רק כמה דקות וצריך לעשות זאת פעם אחת בלבד. לאחר שתסיים את התהליך, חזור לכאן והקש על &#39;אמת&#39;.",
         "verify": "תאשר",
         "visibility": "גִישָׁה"
     },

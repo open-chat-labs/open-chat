@@ -42,6 +42,7 @@
         "diamondGateInfo": "Solo los usuarios con membresía Diamond podrán unirse",
         "diamondGateInfo2": "Para unirse a este {level}, debe tener una membresía Diamond.",
         "diamondMember": "Membresía Diamante",
+        "doYouHaveUniquePersonCredential": "¡IMPORTANTE! Confirme que ha verificado su personalidad única a través <a target='_blank' href='https://id.decideai.xyz'>del sitio web de DecideAI</a> _antes_ de continuar.",
         "gate": "Puerta de acceso",
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "gateInvalid": "La puerta de acceso no es válida",
@@ -88,8 +89,8 @@
         "uniquePerson": "Persona unica",
         "uniquePersonInfo": "Solo se permitirá unirse a los usuarios que hayan proporcionado una prueba única de personalidad.",
         "uniquePersonInfo1": "¿Qué pasa si aún no lo he verificado?",
-        "uniquePersonInfo2": "Simplemente dirígete a <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, inicia sesión con la misma identidad de Internet que usaste para acceder a OpenChat y sigue las instrucciones para demostrar tu personalidad única.",
-        "uniquePersonInfo3": "Es sencillo de hacer, sólo lleva unos minutos y sólo hay que hacerlo una vez. Cuando esté verificado, regrese aquí y presione 'Verificar'.",
+        "uniquePersonInfo2": "Si _no lo ha hecho_, simplemente diríjase a <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , inicie sesión con la misma identidad de Internet que utilizó para acceder a OpenChat y siga las instrucciones para demostrar su personalidad única.",
+        "uniquePersonInfo3": "Es sencillo de hacer, sólo lleva unos minutos y sólo hay que hacerlo una vez. Cuando hayas completado el proceso, regresa aquí y presiona &#39;Verificar&#39;.",
         "verify": "Verificar",
         "visibility": "Acceso"
     },

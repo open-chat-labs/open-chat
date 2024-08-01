@@ -11,6 +11,8 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
+    import Checkbox from "../../Checkbox.svelte";
+    import AlertBox from "../../AlertBox.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,6 +21,7 @@
 
     let failed = false;
     let verifying = false;
+    let confirmed = false;
 
     function verify() {
         verifying = true;
@@ -58,6 +61,17 @@
                     )} />
             </ErrorMessage>
         </p>
+        <p class="question">
+            <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+        </p>
+
+        <p class="answer">
+            <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+        </p>
+
+        <p class="answer">
+            <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+        </p>
     {:else}
         <p class="info">
             <Translatable
@@ -70,24 +84,34 @@
                     true,
                 )} />
         </p>
+
+        <AlertBox icon={false}>
+            <Checkbox
+                id="history-visible"
+                on:change={() => console.log("Whatevs")}
+                label={i18nKey("access.doYouHaveUniquePersonCredential")}
+                align={"start"}
+                bind:checked={confirmed}>
+                <p class="question">
+                    <Markdown
+                        text={interpolate($_, i18nKey("access.doYouHaveUniquePersonCredential"))} />
+                </p>
+                <p class="answer">
+                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                </p>
+
+                <p class="answer">
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                </p>
+            </Checkbox>
+        </AlertBox>
     {/if}
-    <p class="question">
-        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-    </p>
-
-    <p class="answer">
-        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-    </p>
-
-    <p class="answer">
-        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-    </p>
 </div>
 <div>
     <ButtonGroup>
         <Button secondary on:click={() => dispatch("close")}
             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-        <Button loading={verifying} disabled={verifying} on:click={verify}
+        <Button loading={verifying} disabled={verifying || !confirmed} on:click={verify}
             ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
     </ButtonGroup>
 </div>
@@ -102,6 +126,7 @@
     }
 
     .info,
+    .question,
     .answer {
         margin-bottom: $sp4;
     }
