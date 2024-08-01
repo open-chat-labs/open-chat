@@ -17,7 +17,7 @@ use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId,
+    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -65,17 +65,20 @@ impl RuntimeState {
         self.data.global_users.get(&caller).unwrap()
     }
 
-    pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
+    pub fn get_calling_user_and_process_credentials(
+        &mut self,
+        credential_args: Option<&VerifiedCredentialGateArgs>,
+    ) -> GlobalUser {
         let mut user_details = self.calling_user();
 
-        if let Some(jwts) = credential_jwts {
+        if let Some(credential_args) = credential_args {
             let now = self.env.now();
             let user_id = user_details.user_id;
 
-            for jwt in jwts {
+            for jwt in credential_args.credential_jwts.iter() {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
-                    user_details.principal,
-                    self.data.identity_canister_id,
+                    credential_args.user_ii_principal,
+                    self.data.internet_identity_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,
@@ -90,12 +93,17 @@ impl RuntimeState {
                             UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
                         );
                     }
-                    user_details.unique_person_proof = Some(unique_person_proof);
+                    user_details.unique_person_proof = Some(unique_person_proof.clone());
+                    self.data
+                        .global_users
+                        .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
                 {
                     if claims.claim_type() == "diamond_membership" {
-                        user_details.diamond_membership_expires_at = Some(claims.custom().expires_at);
+                        let expires_at = claims.custom().expires_at;
+                        user_details.diamond_membership_expires_at = Some(expires_at);
+                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                     }
                 }
             }

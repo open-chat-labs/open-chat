@@ -42,6 +42,7 @@
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",
         "diamondGateInfo2": "In order to join this {level} you are required to have Diamond membership.",
         "diamondMember": "Diamond membership",
+        "doYouHaveUniquePersonCredential": "IMPORTANT! Please confirm that you have verified your unique personhood via <a target='_blank' href='https://id.decideai.xyz'>the DecideAI website</a> _before_ you proceed.",
         "gate": "Access gate",
         "gateCheckFailed": "Access gate not met",
         "gateInvalid": "Access gate is invalid",
@@ -88,8 +89,8 @@
         "uniquePerson": "Unique person",
         "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
         "uniquePersonInfo1": "What if I do not have the verifiable credential?",
-        "uniquePersonInfo2": "Simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
-        "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you completed the process, come back here and hit 'Verify'.",
+        "uniquePersonInfo2": "If you have not done so, simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
+        "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you have completed the process, come back here and hit 'Verify'.",
         "verify": "Verify",
         "visibility": "Access"
     },

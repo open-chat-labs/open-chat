@@ -83,7 +83,20 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     )
     .await
     {
-        Ok(_) => (),
+        Ok(local_user_index_canister::join_channel::Response::Success(_))
+        | Ok(local_user_index_canister::join_channel::Response::AlreadyInChannel(_))
+        | Ok(local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)) => (),
+        Ok(local_user_index_canister::join_channel::Response::InternalError(err)) => {
+            error!("Failed to join_channel {err:?}");
+            mutate_state(|state| {
+                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+            });
+            return;
+        }
+        Ok(resp) => {
+            error!("Failed to join_channel {resp:?}");
+            return;
+        }
         Err(err) => {
             error!("Failed to join_channel {err:?}");
             mutate_state(|state| {
@@ -206,11 +219,15 @@ async fn handle_main_message_action(action: AirdropMessage) {
         }],
     };
 
-    if user_canister_c2c_client::c2c_handle_bot_messages(CanisterId::from(action.recipient), &args)
-        .await
-        .is_err()
-    {
-        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+    match user_canister_c2c_client::c2c_handle_bot_messages(CanisterId::from(action.recipient), &args).await {
+        Ok(user_canister::c2c_handle_bot_messages::Response::Success) => (),
+        Ok(resp) => {
+            error!(?args, ?resp, "Failed to send DM");
+        }
+        Err(error) => {
+            error!(?args, ?error, "Failed to send DM");
+            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+        }
     }
 }
 
@@ -264,10 +281,14 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
         new_achievement: false,
     };
 
-    if community_canister_c2c_client::send_message(community_id.into(), &args)
-        .await
-        .is_err()
-    {
-        mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+    match community_canister_c2c_client::send_message(community_id.into(), &args).await {
+        Ok(community_canister::send_message::Response::Success(_)) => (),
+        Ok(resp) => {
+            error!(?args, ?resp, "Failed to send lottery message");
+        }
+        Err(error) => {
+            error!(?args, ?error, "Failed to send lottery message");
+            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+        }
     }
 }

@@ -42,6 +42,7 @@
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
         "diamondGateInfo2": "この {level} に参加するには、ダイヤモンド メンバーシップが必要です。",
         "diamondMember": "ダイヤモンド会員",
+        "doYouHaveUniquePersonCredential": "重要! 続行する前に、 <a target='_blank' href='https://id.decideai.xyz'>DecideAI Web サイト</a>を通じて自分の固有の人物であることを確認しておいてください。",
         "gate": "アクセスゲート",
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "gateInvalid": "アクセスゲートが無効です",
@@ -88,8 +89,8 @@
         "uniquePerson": "ユニークな人",
         "uniquePersonInfo": "固有の人格証明を提出したユーザーのみが参加できます",
         "uniquePersonInfo1": "まだ確認していない場合はどうなりますか?",
-        "uniquePersonInfo2": "<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> にアクセスし、OpenChat へのアクセスに使用したのと同じインターネット ID を使用してサインインし、指示に従って自分の固有の人物であることを証明してください。",
-        "uniquePersonInfo3": "手順は簡単で、数分しかかからず、1 回だけ実行する必要があります。認証が完了したら、ここに戻って [認証] をクリックしてください。",
+        "uniquePersonInfo2": "まだ行っていない場合は、 <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>にアクセスし、OpenChat へのアクセスに使用したのと同じインターネット ID を使用してサインインし、指示に従って自分の固有の人物であることを証明してください。",
+        "uniquePersonInfo3": "手順は簡単で、数分しかかからず、一度だけ実行すれば済みます。プロセスが完了したら、ここに戻って「確認」をクリックしてください。",
         "verify": "確認する",
         "visibility": "アクセス"
     },

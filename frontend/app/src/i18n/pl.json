@@ -42,6 +42,7 @@
         "diamondGateInfo": "Tylko użytkownicy z członkostwem Diamentowym będą mogli dołączyć",
         "diamondGateInfo2": "Aby dołączyć do tego {level}, musisz mieć członkostwo Diamentowe.",
         "diamondMember": "Członkostwo diamentowe",
+        "doYouHaveUniquePersonCredential": "WAŻNY! Przed kontynuowaniem potwierdź, że zweryfikowałeś swoją wyjątkową osobowość za pośrednictwem <a target='_blank' href='https://id.decideai.xyz'>witryny DecideAI</a> .",
         "gate": "Brama dostępowa",
         "gateCheckFailed": "Brama dostępu nie została spełniona",
         "gateInvalid": "Brama dostępu jest nieprawidłowa",
@@ -88,7 +89,7 @@
         "uniquePerson": "Wyjątkowa osoba",
         "uniquePersonInfo": "Dołączyć będą mogli tylko użytkownicy, którzy przedstawili unikalny dowód tożsamości",
         "uniquePersonInfo1": "Co się stanie, jeśli nie mam weryfikowalnego poświadczenia?",
-        "uniquePersonInfo2": "Po prostu przejdź do <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, zaloguj się przy użyciu tej samej tożsamości internetowej, której użyłeś do uzyskania dostępu do OpenChat i postępuj zgodnie z instrukcjami, aby udowodnić Twoją wyjątkową osobowość.",
+        "uniquePersonInfo2": "Jeśli jeszcze tego nie zrobiłeś, po prostu udaj się do <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , zaloguj się przy użyciu tej samej tożsamości internetowej, której użyłeś do uzyskania dostępu do OpenChat i postępuj zgodnie z instrukcjami, aby udowodnić swoją wyjątkową osobowość.",
         "uniquePersonInfo3": "Jest to proste do wykonania, zajmuje tylko kilka minut i wystarczy je wykonać tylko raz. Po zakończeniu procesu wróć tutaj i kliknij „Weryfikuj”.",
         "verify": "Zweryfikować",
         "visibility": "Dostęp"
