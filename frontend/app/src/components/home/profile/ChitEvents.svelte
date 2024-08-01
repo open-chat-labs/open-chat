@@ -1,7 +1,10 @@
 <script lang="ts">
     import { OpenChat, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
-    import Calendar, { title as monthTitle } from "../../calendar/Calendar.svelte";
+    import Calendar, {
+        title as monthTitle,
+        month as selectedMonth,
+    } from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
     import ChitBalance from "./ChitBalance.svelte";
@@ -17,7 +20,13 @@
 
     let busy = false;
     let events: ChitEarned[] = [];
-    $: totalEarned = events.reduce((total, ev) => total + ev.amount, 0);
+    $: totalEarned = events.reduce((total, ev) => {
+        const eventDate = new Date(Number(ev.timestamp));
+        if (eventDate.getMonth() === $selectedMonth) {
+            total = total + ev.amount;
+        }
+        return total;
+    }, 0);
 
     function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
         return events.filter((e) => {
@@ -67,8 +76,12 @@
             <div class="month">{$monthTitle}</div>
             <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
         </div>
-        <ChitEventsForDay {day} events={chitEventsForDay(events, day)} />
+        <ChitEventsForDay
+            {day}
+            selectedMonth={$selectedMonth}
+            events={chitEventsForDay(events, day)} />
     </Calendar>
+
     <Toggle
         id={"chit-popup"}
         small
