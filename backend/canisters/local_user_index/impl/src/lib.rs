@@ -78,7 +78,7 @@ impl RuntimeState {
             for jwt in credential_args.credential_jwts.iter() {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
                     credential_args.user_ii_principal,
-                    self.data.identity_canister_id,
+                    self.data.internet_identity_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,

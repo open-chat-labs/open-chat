@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix submitting unique person proof via LocalUserIndex ([#6168](https://github.com/open-chat-labs/open-chat/pull/6168))
 - Use correct principal when verifying credentials ([#6170](https://github.com/open-chat-labs/open-chat/pull/6170))
+- Fix incorrect canister Id being used in place of Internet Identity canister Id ([#6171](https://github.com/open-chat-labs/open-chat/pull/6171))
 
 ## [[2.0.1274](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1274-local_user_index)] - 2024-07-31
 
