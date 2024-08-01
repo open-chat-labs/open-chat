@@ -93,12 +93,17 @@ impl RuntimeState {
                             UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
                         );
                     }
-                    user_details.unique_person_proof = Some(unique_person_proof);
+                    user_details.unique_person_proof = Some(unique_person_proof.clone());
+                    self.data
+                        .global_users
+                        .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
                 {
                     if claims.claim_type() == "diamond_membership" {
-                        user_details.diamond_membership_expires_at = Some(claims.custom().expires_at);
+                        let expires_at = claims.custom().expires_at;
+                        user_details.diamond_membership_expires_at = Some(expires_at);
+                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                     }
                 }
             }
