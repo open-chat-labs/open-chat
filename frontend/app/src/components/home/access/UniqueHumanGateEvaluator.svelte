@@ -11,8 +11,7 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
-    import Checkbox from "../../Checkbox.svelte";
-    import AlertBox from "../../AlertBox.svelte";
+    import HumanityConfirmation from "../HumanityConfirmation.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -85,26 +84,7 @@
                 )} />
         </p>
 
-        <AlertBox icon={false}>
-            <Checkbox
-                id="history-visible"
-                on:change={() => console.log("Whatevs")}
-                label={i18nKey("access.doYouHaveUniquePersonCredential")}
-                align={"start"}
-                bind:checked={confirmed}>
-                <p class="question">
-                    <Markdown
-                        text={interpolate($_, i18nKey("access.doYouHaveUniquePersonCredential"))} />
-                </p>
-                <p class="answer">
-                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-                </p>
-
-                <p class="answer">
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-                </p>
-            </Checkbox>
-        </AlertBox>
+        <HumanityConfirmation bind:confirmed />
     {/if}
 </div>
 <div>

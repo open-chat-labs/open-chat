@@ -14,6 +14,7 @@
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
+    import HumanityConfirmation from "../HumanityConfirmation.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -22,6 +23,7 @@
     let verifying = false;
     let step: "linking" | "verification" = "verification";
     let error: string | undefined = undefined;
+    let confirmed = false;
 
     function verify() {
         verifying = true;
@@ -68,21 +70,23 @@
                             <Translatable resourceKey={i18nKey("human.failed")} />
                         </ErrorMessage>
                     </p>
+                    <p class="question">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                    </p>
+
+                    <p class="answer">
+                        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                    </p>
+
+                    <p class="answer">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                    </p>
+                {:else}
+                    <p class="info">
+                        <Translatable resourceKey={i18nKey("human.instruction")} />
+                    </p>
+                    <HumanityConfirmation bind:confirmed />
                 {/if}
-                <p class="info">
-                    <Translatable resourceKey={i18nKey("human.instruction")} />
-                </p>
-                <p class="question">
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-                </p>
-
-                <p class="answer">
-                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-                </p>
-
-                <p class="answer">
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-                </p>
             </div>
 
             <div slot="footer">
@@ -91,7 +95,7 @@
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <!-- <Button secondary on:click={() => (step = "linking")}
                         ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
-                    <Button loading={verifying} disabled={verifying} on:click={verify}
+                    <Button loading={verifying} disabled={verifying || !confirmed} on:click={verify}
                         ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
                 </ButtonGroup>
             </div>
@@ -113,6 +117,7 @@
     }
 
     .info,
+    .question,
     .answer {
         margin-bottom: $sp4;
     }
