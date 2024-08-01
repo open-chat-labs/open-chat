@@ -17,7 +17,7 @@ use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId,
+    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -65,16 +65,19 @@ impl RuntimeState {
         self.data.global_users.get(&caller).unwrap()
     }
 
-    pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
+    pub fn get_calling_user_and_process_credentials(
+        &mut self,
+        credential_args: Option<&VerifiedCredentialGateArgs>,
+    ) -> GlobalUser {
         let mut user_details = self.calling_user();
 
-        if let Some(jwts) = credential_jwts {
+        if let Some(credential_args) = credential_args {
             let now = self.env.now();
             let user_id = user_details.user_id;
 
-            for jwt in jwts {
+            for jwt in credential_args.credential_jwts.iter() {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
-                    user_details.principal,
+                    credential_args.user_ii_principal,
                     self.data.identity_canister_id,
                     jwt,
                     &self.data.ic_root_key,
