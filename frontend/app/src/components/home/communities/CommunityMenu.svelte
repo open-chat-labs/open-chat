@@ -1,6 +1,7 @@
 <script lang="ts">
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -18,6 +19,7 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { notificationsSupported } from "../../../utils/notifications";
 
     const client = getContext<OpenChat>("client");
 
@@ -32,6 +34,8 @@
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
     $: canCreateChannel = member && client.canCreateChannel(community.id);
+    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {
@@ -73,6 +77,10 @@
 
     function editCommunity() {
         canEdit && dispatch("editCommunity", community);
+    }
+
+    function muteAllChannels() {
+        client.muteAllChannels(community.id);
     }
 </script>
 
@@ -128,6 +136,15 @@
                     slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
             </MenuItem>
+            {#if notificationsSupported && !isCommunityMuted}
+                <MenuItem on:click={muteAllChannels}>
+                    <BellOff
+                        size={$iconSize}
+                        color={"var(--icon-inverted-txt)"}
+                        slot="icon" />
+                    <span slot="text"><Translatable resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                </MenuItem>
+            {/if}
             {#if member}
                 <MenuItem separator />
                 {#if canDelete}

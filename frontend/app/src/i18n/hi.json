@@ -218,6 +218,7 @@
         "members": "सदस्यों",
         "mustHaveOneChannel": "आपको कम से कम एक सार्वजनिक चैनल बनाना होगा",
         "mustHaveUniqueChannels": "आपके पास डुप्लिकेट चैनल नाम नहीं हो सकते",
+        "muteAllChannels": "सभी चैनल म्यूट करें",
         "name": "नाम",
         "namedUserGroupMembers": "**{name}** समूह के सदस्य",
         "namePlaceholder": "समुदाय का नाम दर्ज करें",

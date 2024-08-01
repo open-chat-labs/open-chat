@@ -218,6 +218,7 @@
         "members": "Mitglieder",
         "mustHaveOneChannel": "Sie müssen mindestens einen öffentlichen Kanal erstellen",
         "mustHaveUniqueChannels": "Es dürfen keine doppelten Kanalnamen vorhanden sein",
+        "muteAllChannels": "Alle Kanäle stummschalten",
         "name": "Name",
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
         "namePlaceholder": "Geben Sie den Community-Namen ein",
