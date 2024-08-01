@@ -42,6 +42,7 @@
         "diamondGateInfo": "只有拥有钻石会员资格的用户才能加入",
         "diamondGateInfo2": "为了加入这个{level}，您需要拥有钻石会员资格。",
         "diamondMember": "钻石会员",
+        "doYouHaveUniquePersonCredential": "重要提示！在继续操作之前，请确认您已通过<a target='_blank' href='https://id.decideai.xyz'>DecideAI 网站</a>验证了您的独特身份。",
         "gate": "门禁",
         "gateCheckFailed": "未满足访问门禁",
         "gateInvalid": "访问门无效",
@@ -88,8 +89,8 @@
         "uniquePerson": "独特的人",
         "uniquePersonInfo": "只有提供唯一身份证明的用户才允许加入",
         "uniquePersonInfo1": "如果我尚未验证怎么办？",
-        "uniquePersonInfo2": "只需前往<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>，使用您用于访问 OpenChat 的相同互联网身份登录，并按照说明证明您的独特身份。",
-        "uniquePersonInfo3": "操作简单，只需几分钟，而且只需做一次。验证通过后，返回此处并点击“验证”。",
+        "uniquePersonInfo2": "如果您还没有这样做，只需前往<a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> ，使用您用于访问 OpenChat 的相同互联网身份登录，然后按照说明证明您的独特身份。",
+        "uniquePersonInfo3": "操作简单，只需几分钟，而且只需做一次。完成此过程后，返回此处并点击“验证”。",
         "verify": "核实",
         "visibility": "能见度"
     },

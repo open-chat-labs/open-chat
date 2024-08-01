@@ -42,6 +42,7 @@
         "diamondGateInfo": "Solo gli utenti con abbonamento Diamond potranno iscriversi",
         "diamondGateInfo2": "Per iscriverti a questo {level} devi avere l'abbonamento Diamond.",
         "diamondMember": "Adesione diamante",
+        "doYouHaveUniquePersonCredential": "IMPORTANTE! Conferma di aver verificato la tua personalità unica tramite <a target='_blank' href='https://id.decideai.xyz'>il sito web DecideAI</a> _prima_ di procedere.",
         "gate": "Cancello di accesso",
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "gateInvalid": "Il cancello di accesso non è valido",
@@ -88,8 +89,8 @@
         "uniquePerson": "Persona unica",
         "uniquePersonInfo": "Solo gli utenti che hanno fornito una prova univoca della propria personalità potranno partecipare",
         "uniquePersonInfo1": "Cosa succede se non ho ancora verificato?",
-        "uniquePersonInfo2": "Basta andare su <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, accedere utilizzando la stessa identità Internet utilizzata per accedere a OpenChat e seguire le istruzioni per dimostrare la tua personalità unica.",
-        "uniquePersonInfo3": "È semplice da fare, richiede solo pochi minuti e deve essere fatto solo una volta. Una volta verificato, torna qui e premi \"Verifica\".",
+        "uniquePersonInfo2": "Se non lo hai fatto, vai semplicemente su <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a> , accedi utilizzando la stessa identità Internet che hai utilizzato per accedere a OpenChat e segui le istruzioni per dimostrare la tua personalità unica.",
+        "uniquePersonInfo3": "È semplice da fare, richiede solo pochi minuti e deve essere fatto solo una volta. Una volta completato il processo, torna qui e premi &quot;Verifica&quot;.",
         "verify": "Verificare",
         "visibility": "Accesso"
     },
