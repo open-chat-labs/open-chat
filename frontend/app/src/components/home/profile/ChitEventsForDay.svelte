@@ -8,12 +8,15 @@
 
     export let events: ChitEarned[];
     export let day: Date;
+    export let selectedMonth: number;
+
+    $: otherMonth = day.getMonth() !== selectedMonth;
 </script>
 
 {#if events.length === 0}
     <div class="day">{day.getDate()}</div>
 {:else}
-    <div class="day has-events">
+    <div class="day has-events" class:otherMonth>
         <TooltipWrapper fill position="top" align={$mobileWidth ? "middle" : "end"}>
             <div slot="target">
                 {day.getDate()}
@@ -61,6 +64,14 @@
 
             &:hover {
                 background-color: var(--button-hv);
+            }
+        }
+
+        &.otherMonth {
+            background: var(--button-disabled);
+            color: var(--button-disabled-txt);
+            &:hover {
+                background-color: var(--button-disabled);
             }
         }
     }
