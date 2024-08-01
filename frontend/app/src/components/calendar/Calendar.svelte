@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
     export const title = writable("");
+    export const month = writable(0);
 </script>
 
 <script lang="ts">
@@ -21,7 +22,6 @@
     let today = new Date();
     let showDate = new Date();
     let dates: Date[][] = [];
-    let month = 0;
 
     $: translatedLocale = translationCodes[$locale || "en"] || "en";
     $: {
@@ -34,7 +34,7 @@
         const resp = getMonthCalendar(start);
         title.set(getTitleText(resp.year, resp.month, translatedLocale));
         dates = resp.dates;
-        month = resp.month;
+        month.set(resp.month);
         const allDates = resp.dates.flatMap((d) => d);
         dispatch("dateSelected", {
             date: start,
@@ -88,7 +88,7 @@
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
-                        class:disabled={day.getMonth() !== month}
+                        class:disabled={day.getMonth() !== $month}
                         class:today={typeof day === "string" ? false : isSameDay(today, day)}
                         class="block daily-date-block pointer">
                         <slot {day}>
