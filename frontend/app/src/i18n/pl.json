@@ -218,6 +218,7 @@
         "members": "Członkowie",
         "mustHaveOneChannel": "Musisz utworzyć co najmniej jeden kanał publiczny",
         "mustHaveUniqueChannels": "Nie możesz mieć zduplikowanych nazw kanałów",
+        "muteAllChannels": "Wycisz wszystkie kanały",
         "name": "Nazwa",
         "namedUserGroupMembers": "**{name}** członkowie grupy",
         "namePlaceholder": "Wpisz nazwę społeczności",

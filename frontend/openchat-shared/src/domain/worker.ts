@@ -963,7 +963,7 @@ type ArchiveChat = {
 };
 
 type ToggleMuteNotifications = {
-    chatId: ChatIdentifier;
+    id: ChatIdentifier | CommunityIdentifier;
     muted: boolean;
     kind: "toggleMuteNotifications";
 };

@@ -1132,7 +1132,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     toggleMuteNotifications(chatId: ChatIdentifier, muted: boolean): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: muted });
-        return this.sendRequest({ kind: "toggleMuteNotifications", chatId, muted })
+        return this.sendRequest({ kind: "toggleMuteNotifications", id: chatId, muted })
             .then((resp) => {
                 if (resp !== "success") {
                     localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
@@ -1141,6 +1141,35 @@ export class OpenChat extends OpenChatAgentWorker {
             })
             .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
+                return false;
+            });
+    }
+
+    muteAllChannels(communityId: CommunityIdentifier): Promise<boolean> {
+        const community = this._liveState.communities.get(communityId);
+        if (community === undefined) {
+            return Promise.resolve(false);
+        }
+
+        community.channels.forEach((c) =>
+            localChatSummaryUpdates.markUpdated(c.id, { notificationsMuted: true }),
+        );
+
+        return this.sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: true })
+            .then((resp) => {
+                if (resp !== "success") {
+                    community.channels.forEach((c) =>
+                        localChatSummaryUpdates.markUpdated(c.id, {
+                            notificationsMuted: undefined,
+                        }),
+                    );
+                }
+                return resp === "success";
+            })
+            .catch(() => {
+                community.channels.forEach((c) =>
+                    localChatSummaryUpdates.markUpdated(c.id, { notificationsMuted: undefined }),
+                );
                 return false;
             });
     }

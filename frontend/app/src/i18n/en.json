@@ -218,6 +218,7 @@
         "members": "Members",
         "mustHaveOneChannel": "You must create at least one public channel",
         "mustHaveUniqueChannels": "You cannot have duplicate channel names",
+        "muteAllChannels": "Mute all channels",
         "name": "Name",
         "namedUserGroupMembers": "**{name}** group members",
         "namePlaceholder": "Enter community name",
