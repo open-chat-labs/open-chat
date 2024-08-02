@@ -63,7 +63,6 @@
             to = localToUtc(to);
         }
 
-        console.log("Loading events from: ", from.getTime(), " to ", to.getTime());
         busy = true;
         client
             .chitEvents({
