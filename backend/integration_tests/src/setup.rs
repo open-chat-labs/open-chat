@@ -135,6 +135,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         identity_canister_id,
         proposals_bot_canister_id,
         airdrop_bot_canister_id,
+        online_users_canister_id,
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         escrow_canister_id,
