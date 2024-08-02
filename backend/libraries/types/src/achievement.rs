@@ -18,6 +18,7 @@ pub enum Achievement {
     Streak7,
     Streak14,
     Streak30,
+    Streak365,
 
     SentPoll,
     SentText,
@@ -90,6 +91,7 @@ impl Achievement {
             Achievement::Streak7 => 3000,
             Achievement::Streak14 => 5000,
             Achievement::Streak30 => 10000,
+            Achievement::Streak365 => 50000,
             Achievement::ProvedUniquePersonhood => 10000,
             Achievement::SetCommunityDisplayName => 700,
             Achievement::ChangedTheme => 800,

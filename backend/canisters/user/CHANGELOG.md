@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
 - Ensure user has never joined a group or community before marking empty ([#6186](https://github.com/open-chat-labs/open-chat/pull/6186))
+- Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
 
 ## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
 
