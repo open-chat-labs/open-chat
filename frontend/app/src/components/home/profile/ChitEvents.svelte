@@ -4,6 +4,7 @@
     import Calendar, {
         title as monthTitle,
         month as selectedMonth,
+        selectedRange,
     } from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
@@ -11,15 +12,17 @@
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup } from "../../../stores/settings";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
+    let timezoneOffset = new Date().getTimezoneOffset() * 60000;
+    let busy = false;
+    let events: ChitEarned[] = [];
+    let utcMode = false;
 
     $: chitState = client.chitStateStore;
     $: user = client.user;
     $: streak = client.getStreak($user.userId);
-
-    let busy = false;
-    let events: ChitEarned[] = [];
     $: totalEarned = events.reduce((total, ev) => {
         const eventDate = new Date(Number(ev.timestamp));
         if (eventDate.getMonth() === $selectedMonth) {
@@ -28,6 +31,14 @@
         return total;
     }, 0);
 
+    function utcToLocal(utc: number): number {
+        return utc + timezoneOffset;
+    }
+
+    function localToUtc(date: Date): Date {
+        return new Date(date.getTime() - timezoneOffset);
+    }
+
     function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
         return events.filter((e) => {
             const eventDate = new Date(Number(e.timestamp));
@@ -35,11 +46,22 @@
         });
     }
 
-    function dateSelected(selection: { date: Date; range: [Date, Date] }) {
-        const [from, to] = selection.range;
+    function changeMode() {
+        console.log("UtcMode: ", utcMode);
+        dateSelected($selectedRange);
+    }
 
-        // TODO - need to prevent race conditions here if this takes some time and
-        // the user presses the buttons quickly, we need to make sure that the results actually correlate with the request
+    function dateSelected(selection: { date: Date; range: [Date, Date] }) {
+        let [from, to] = selection.range;
+
+        if (utcMode) {
+            // our date range will be in local dates. If we are in utc mode, we need to ask for
+            // the corresponding utc date range
+            from = localToUtc(from);
+            to = localToUtc(to);
+        }
+
+        console.log("Loading events from: ", from.getTime(), " to ", to.getTime());
         busy = true;
         client
             .chitEvents({
@@ -50,7 +72,14 @@
                 ascending: true,
             })
             .then((resp) => {
-                events = resp.events;
+                if (utcMode) {
+                    events = resp.events.map((ev) => ({
+                        ...ev,
+                        timestamp: BigInt(utcToLocal(Number(ev.timestamp))),
+                    }));
+                } else {
+                    events = resp.events;
+                }
             })
             .finally(() => (busy = false));
     }
@@ -81,6 +110,17 @@
             selectedMonth={$selectedMonth}
             events={chitEventsForDay(events, day)} />
     </Calendar>
+
+    <Toggle
+        id={"utc-mode"}
+        on:change={changeMode}
+        small
+        label={i18nKey("dailyChit.utcMode")}
+        bind:checked={utcMode} />
+
+    <div class="utc">
+        <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
+    </div>
 
     <Toggle
         id={"chit-popup"}
@@ -126,5 +166,11 @@
         text-align: center;
         color: var(--txt-light);
         @include font(book, normal, fs-60);
+    }
+
+    .utc {
+        @include font(book, normal, fs-80);
+        color: var(--txt-light);
+        margin-bottom: $sp4;
     }
 </style>

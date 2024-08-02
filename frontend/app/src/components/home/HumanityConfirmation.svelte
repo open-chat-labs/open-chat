@@ -12,7 +12,6 @@
 <AlertBox icon={false}>
     <Checkbox
         id="history-visible"
-        on:change={() => console.log("Whatevs")}
         label={i18nKey("access.doYouHaveUniquePersonCredential")}
         align={"start"}
         bind:checked={confirmed}>

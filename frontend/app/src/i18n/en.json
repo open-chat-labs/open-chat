@@ -321,7 +321,9 @@
         "extendStreak": "Extend streak",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",
-        "viewStreak": "View streak"
+        "viewStreak": "View streak",
+        "utcMode": "Show in UTC",
+        "utcInfo": "CHIT streaks and claim windows are represented using UTC so you may find it clearer to view your calendar in UTC rather than your local timezone."
     },
     "dark": "dark",
     "days": "Days",
