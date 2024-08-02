@@ -193,35 +193,19 @@
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
                 const them = $userStore.get(chatSummary.them.userId);
-                if (them) {
-                    return {
-                        kind: "chat",
-                        id: chatSummary.id,
-                        userId: chatSummary.them.userId,
-                        name: client.displayName(them),
-                        diamondStatus: them.diamondStatus,
-                        streak: client.getStreak(them.userId),
-                        avatarUrl: client.userAvatarUrl(them),
-                        description,
-                        username: "@" + them.username,
-                        lastUpdated: chatSummary.lastUpdated,
-                        uniquePerson: them.isUniquePerson,
-                    };
-                } else {
-                    return {
-                        kind: "chat",
-                        id: chatSummary.id,
-                        userId: chatSummary.them.userId,
-                        name: client.displayName(them),
-                        diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
-                        streak: 0,
-                        avatarUrl: client.userAvatarUrl(them),
-                        description,
-                        username: undefined,
-                        lastUpdated: chatSummary.lastUpdated,
-                        uniquePerson: false,
-                    };
-                }
+                return {
+                    kind: "chat",
+                    id: chatSummary.id,
+                    userId: chatSummary.them.userId,
+                    name: client.displayName(them),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
+                    avatarUrl: client.userAvatarUrl(them),
+                    description,
+                    username: them ? "@" + them.username : undefined,
+                    lastUpdated: chatSummary.lastUpdated,
+                    uniquePerson: them?.isUniquePerson ?? false,
+                };
 
             default:
                 return {

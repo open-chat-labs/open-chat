@@ -74,41 +74,22 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const them = $userStore.get(chatSummary.them.userId);
-                if (them) {
-                    return {
-                        name: client.displayName(them),
-                        diamondStatus: them.diamondStatus,
-                        streak: client.getStreak(them.userId),
-                        avatarUrl: client.userAvatarUrl(them),
-                        userId: chatSummary.them.userId,
-                        typing: client.getTypingString(
-                            $_,
-                            $userStore,
-                            { chatId: chatSummary.id },
-                            typing,
-                        ),
-                        username: "@" + them.username,
-                        eventsTTL: undefined,
-                        uniquePerson: them.isUniquePerson,
-                    };
-                } else {
-                    return {
-                        name: client.displayName(them),
-                        diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
-                        streak: 0,
-                        avatarUrl: client.userAvatarUrl(them),
-                        userId: chatSummary.them.userId,
-                        typing: client.getTypingString(
-                            $_,
-                            $userStore,
-                            { chatId: chatSummary.id },
-                            typing,
-                        ),
-                        username: undefined,
-                        eventsTTL: undefined,
-                        uniquePerson: false,
-                    };
-                }
+                return {
+                    name: client.displayName(them),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
+                    avatarUrl: client.userAvatarUrl(them),
+                    userId: chatSummary.them.userId,
+                    typing: client.getTypingString(
+                        $_,
+                        $userStore,
+                        { chatId: chatSummary.id },
+                        typing,
+                    ),
+                    username: them ? "@" + them.username : undefined,
+                    eventsTTL: undefined,
+                    uniquePerson: them?.isUniquePerson ?? false,
+                };
             default:
                 return {
                     name: chatSummary.name,
