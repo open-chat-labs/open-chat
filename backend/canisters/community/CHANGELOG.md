@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Support updating add members permission ([#6180](https://github.com/open-chat-labs/open-chat/pull/6180))
+- Support updating add members permission ([#6194](https://github.com/open-chat-labs/open-chat/pull/6194))
 
 ### Changed
 
