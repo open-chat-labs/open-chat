@@ -11,13 +11,12 @@
     import ChitBalance from "./ChitBalance.svelte";
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { chitPopup } from "../../../stores/settings";
+    import { chitPopup, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     let busy = false;
     let events: ChitEarned[] = [];
-    let utcMode = false;
 
     $: chitState = client.chitStateStore;
     $: user = client.user;
@@ -51,7 +50,6 @@
     }
 
     function changeMode() {
-        console.log("UtcMode: ", utcMode);
         dateSelected($selectedRange);
     }
 
@@ -120,7 +118,7 @@
         on:change={changeMode}
         small
         label={i18nKey("dailyChit.utcMode")}
-        bind:checked={utcMode} />
+        bind:checked={$utcMode} />
 
     <div class="utc">
         <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
