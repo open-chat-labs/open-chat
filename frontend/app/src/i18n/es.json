@@ -321,6 +321,8 @@
         "extendStreak": "Extender racha",
         "info": "¡Cuanto más tiempo mantengas tu racha, más CHIT diario podrás reclamar!",
         "title": "Mantén tu racha",
+        "utcInfo": "Las rachas de CHIT y las ventanas de reclamo se representan usando UTC, por lo que puede resultarle más claro ver su calendario en UTC en lugar de su zona horaria local.",
+        "utcMode": "Mostrar en UTC",
         "viewStreak": "Ver racha"
     },
     "dark": "dark",

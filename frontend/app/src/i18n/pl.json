@@ -321,6 +321,8 @@
         "extendStreak": "Przedłuż passę",
         "info": "Im dłużej utrzymasz swoją passę, tym więcej codziennych CHITów możesz odebrać!",
         "title": "Utrzymaj swoją passę",
+        "utcInfo": "Smugi CHIT i okna roszczeń są reprezentowane przy użyciu czasu UTC, dzięki czemu przeglądanie kalendarza w formacie UTC może być wyraźniejsze, a nie lokalnej strefy czasowej.",
+        "utcMode": "Pokaż w UTC",
         "viewStreak": "Zobacz passę"
     },
     "dark": "ciemny",
