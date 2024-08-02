@@ -119,13 +119,11 @@ export interface AddMembersToChannelArgs {
 }
 export interface AddMembersToChannelFailed {
   'users_limit_reached' : Array<UserId>,
-  'users_failed_gate_check' : Array<UserFailedGateCheck>,
   'users_already_in_channel' : Array<UserId>,
   'users_failed_with_error' : Array<UserFailedError>,
 }
 export interface AddMembersToChannelPartialSuccess {
   'users_limit_reached' : Array<UserId>,
-  'users_failed_gate_check' : Array<UserFailedGateCheck>,
   'users_already_in_channel' : Array<UserId>,
   'users_failed_with_error' : Array<UserFailedError>,
   'users_added' : Array<UserId>,
@@ -134,6 +132,7 @@ export type AddMembersToChannelResponse = {
     'Failed' : AddMembersToChannelFailed
   } |
   { 'UserNotInChannel' : null } |
+  { 'CommunityPublic' : null } |
   { 'PartialSuccess' : AddMembersToChannelPartialSuccess } |
   { 'ChannelNotFound' : null } |
   { 'UserLimitReached' : number } |
@@ -1615,6 +1614,7 @@ export interface OptionalGroupPermissions {
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
   'start_video_call' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -2355,10 +2355,6 @@ export interface UpdatedRules {
 }
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserFailedError { 'user_id' : UserId, 'error' : string }
-export interface UserFailedGateCheck {
-  'user_id' : UserId,
-  'reason' : GateCheckFailedReason,
-}
 export interface UserGroup {
   'members' : number,
   'name' : string,
