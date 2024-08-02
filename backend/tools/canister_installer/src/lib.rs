@@ -76,6 +76,7 @@ async fn install_service_canisters_impl(
         identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
         airdrop_bot_canister_id: canister_ids.airdrop_bot,
+        online_users_canister_id: canister_ids.online_users,
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         escrow_canister_id: canister_ids.escrow,

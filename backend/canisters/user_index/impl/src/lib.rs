@@ -185,6 +185,9 @@ impl RuntimeState {
 
             self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
             jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
         }
     }
 
@@ -255,6 +258,8 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -284,6 +289,8 @@ struct Data {
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub airdrop_bot_canister_id: CanisterId,
+    #[serde(default = "online_users_canister_id")]
+    pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -320,6 +327,12 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    #[serde(default)]
+    pub remove_from_online_users_queue: VecDeque<Principal>,
+}
+
+fn online_users_canister_id() -> CanisterId {
+    CanisterId::from_text("3vlw6-fiaaa-aaaaf-aaa3a-cai").unwrap()
 }
 
 impl Data {
@@ -333,6 +346,7 @@ impl Data {
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         airdrop_bot_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -356,6 +370,7 @@ impl Data {
             identity_canister_id,
             proposals_bot_canister_id,
             airdrop_bot_canister_id,
+            online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -393,6 +408,7 @@ impl Data {
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
         };
 
         // Register the ProposalsBot
@@ -480,6 +496,7 @@ impl Default for Data {
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
             airdrop_bot_canister_id: Principal::anonymous(),
+            online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
@@ -515,6 +532,7 @@ impl Default for Data {
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
         }
     }
 }
@@ -619,6 +637,8 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
+    pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,

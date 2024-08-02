@@ -5877,6 +5877,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "online_users_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.14.0",
+ "online_users_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "online_users_canister_client"
 version = "0.1.0"
 dependencies = [
@@ -8905,6 +8917,8 @@ dependencies = [
  "msgpack",
  "nns_governance_canister",
  "nns_governance_canister_c2c_client",
+ "online_users_canister",
+ "online_users_canister_c2c_client",
  "p256_key_pair",
  "proof_of_unique_personhood",
  "pulldown-cmark",
