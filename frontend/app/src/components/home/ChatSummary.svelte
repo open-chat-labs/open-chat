@@ -77,25 +77,46 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore[chatSummary.them.userId];
-                return {
-                    name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
-                    avatarUrl: client.userAvatarUrl(them),
-                    userId: chatSummary.them,
-                    typing: client.getTypingString(
-                        $_,
-                        $userStore,
-                        { chatId: chatSummary.id },
-                        typing,
-                    ),
-                    fav,
-                    eventsTTL: undefined,
-                    video,
-                    private: false,
-                    uniquePerson: them.isUniquePerson,
-                };
+                const them = $userStore.get(chatSummary.them.userId);
+                if (them) {
+                    return {
+                        name: client.displayName(them),
+                        diamondStatus: them.diamondStatus,
+                        streak: client.getStreak(them.userId),
+                        avatarUrl: client.userAvatarUrl(them),
+                        userId: chatSummary.them,
+                        typing: client.getTypingString(
+                            $_,
+                            $userStore,
+                            { chatId: chatSummary.id },
+                            typing,
+                        ),
+                        fav,
+                        eventsTTL: undefined,
+                        video,
+                        private: false,
+                        uniquePerson: them.isUniquePerson,
+                    };
+                } else {
+                    return {
+                        name: client.displayName(them),
+                        diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                        streak: 0,
+                        avatarUrl: client.userAvatarUrl(them),
+                        userId: chatSummary.them,
+                        typing: client.getTypingString(
+                            $_,
+                            $userStore,
+                            { chatId: chatSummary.id },
+                            typing,
+                        ),
+                        fav,
+                        eventsTTL: undefined,
+                        video,
+                        private: false,
+                        uniquePerson: false,
+                    };
+                }
             default:
                 return {
                     name: chatSummary.name,

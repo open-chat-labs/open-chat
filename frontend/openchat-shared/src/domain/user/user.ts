@@ -135,7 +135,7 @@ export type IdentityState =
     | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
     | { kind: "challenging"; postLogin?: PostLoginOperation };
 
-export type UserLookup = Record<string, UserSummary>;
+export type UserLookup = Map<string, UserSummary>;
 
 export type User = {
     userId: string;

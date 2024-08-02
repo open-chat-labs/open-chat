@@ -24,7 +24,7 @@
     function username(userId: string): string {
         return userId === $user.userId
             ? $_("you")
-            : `${$userStore[userId]?.username ?? $_("unknown")}`;
+            : `${$userStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
     function zoomToMessage() {

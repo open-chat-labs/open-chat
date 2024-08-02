@@ -192,20 +192,36 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = $userStore[chatSummary.them.userId];
-                return {
-                    kind: "chat",
-                    id: chatSummary.id,
-                    userId: chatSummary.them.userId,
-                    name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
-                    avatarUrl: client.userAvatarUrl(them),
-                    description,
-                    username: "@" + them.username,
-                    lastUpdated: chatSummary.lastUpdated,
-                    uniquePerson: them.isUniquePerson,
-                };
+                const them = $userStore.get(chatSummary.them.userId);
+                if (them) {
+                    return {
+                        kind: "chat",
+                        id: chatSummary.id,
+                        userId: chatSummary.them.userId,
+                        name: client.displayName(them),
+                        diamondStatus: them.diamondStatus,
+                        streak: client.getStreak(them.userId),
+                        avatarUrl: client.userAvatarUrl(them),
+                        description,
+                        username: "@" + them.username,
+                        lastUpdated: chatSummary.lastUpdated,
+                        uniquePerson: them.isUniquePerson,
+                    };
+                } else {
+                    return {
+                        kind: "chat",
+                        id: chatSummary.id,
+                        userId: chatSummary.them.userId,
+                        name: client.displayName(them),
+                        diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                        streak: 0,
+                        avatarUrl: client.userAvatarUrl(them),
+                        description,
+                        username: undefined,
+                        lastUpdated: chatSummary.lastUpdated,
+                        uniquePerson: false,
+                    };
+                }
 
             default:
                 return {

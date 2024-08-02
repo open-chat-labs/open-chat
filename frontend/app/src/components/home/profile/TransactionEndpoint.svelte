@@ -8,7 +8,7 @@
     export let accounts: Record<string, NamedAccount>;
 
     $: userStore = client.userStore;
-    $: user = address ? $userStore[address] : undefined;
+    $: user = address ? $userStore.get(address) : undefined;
 </script>
 
 {#if address !== undefined}

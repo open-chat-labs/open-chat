@@ -64,7 +64,7 @@
         $selectedChatId === undefined;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
-    $: user = $userStore[$createdUser.userId];
+    $: user = $userStore.get($createdUser.userId);
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showExploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
@@ -137,7 +137,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = $userStore[chat.them.userId];
+            const user = $userStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||

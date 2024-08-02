@@ -51,9 +51,9 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 title: $mobileWidth
-                    ? $userStore[chatSummary.them.userId]?.username
+                    ? $userStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them.userId]),
+                avatarUrl: client.userAvatarUrl($userStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,
