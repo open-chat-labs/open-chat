@@ -296,7 +296,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>
@@ -376,7 +376,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>

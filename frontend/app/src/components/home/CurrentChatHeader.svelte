@@ -45,7 +45,7 @@
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isMultiUser =
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
-    $: isBot = $userStore[userId]?.kind === "bot";
+    $: isBot = $userStore.get(userId)?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
     $: selectedChatId = client.selectedChatId;
     $: selectedCommunity = client.selectedCommunity;
@@ -73,11 +73,11 @@
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore[chatSummary.them.userId];
+                const them = $userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
@@ -86,9 +86,9 @@
                         { chatId: chatSummary.id },
                         typing,
                     ),
-                    username: "@" + them.username,
+                    username: them ? "@" + them.username : undefined,
                     eventsTTL: undefined,
-                    uniquePerson: them.isUniquePerson,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
             default:
                 return {

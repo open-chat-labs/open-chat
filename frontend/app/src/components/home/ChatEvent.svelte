@@ -128,7 +128,7 @@
 {#if event.event.kind === "message"}
     {#if !hidden}
         <ChatMessage
-            sender={$userStore[event.event.sender]}
+            sender={$userStore.get(event.event.sender)}
             senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}

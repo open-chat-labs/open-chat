@@ -48,7 +48,7 @@ export function buildUsernameList(
 
     let usernamesArray = Array.from(userIds)
         .slice(0, maxUsernames * 1.5)
-        .map((uid) => [uid, users[uid]?.username])
+        .map((uid) => [uid, users.get(uid)?.username])
         .filter(([uid, username]) => username !== undefined && uid !== myUserId)
         .map(([_, username]) => username);
 

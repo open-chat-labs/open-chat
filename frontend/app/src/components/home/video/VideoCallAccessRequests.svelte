@@ -45,13 +45,13 @@
         class="message">
         <div class="avatar">
             <Avatar
-                url={client.userAvatarUrl($userStore[request.userId])}
+                url={client.userAvatarUrl($userStore.get(request.userId))}
                 userId={request.userId}
                 size={AvatarSize.Small} />
         </div>
         <Translatable
             resourceKey={i18nKey("videoCall.accessRequest", {
-                username: $userStore[request.userId]?.username,
+                username: $userStore.get(request.userId)?.username,
             })} />
         <div role="button" on:click={() => approve(request)} class="btn">
             <ThumbUp size={$iconSize} color={"var(--vote-yes-color)"} />

@@ -44,7 +44,7 @@
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
-                    url={client.userAvatarUrl($userStore[participantId])}
+                    url={client.userAvatarUrl($userStore.get(participantId))}
                     userId={participantId}
                     size={AvatarSize.Tiny} />
             {/each}

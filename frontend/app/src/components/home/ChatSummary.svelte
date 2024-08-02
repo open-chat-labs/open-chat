@@ -77,11 +77,11 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore[chatSummary.them.userId];
+                const them = $userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -94,7 +94,7 @@
                     eventsTTL: undefined,
                     video,
                     private: false,
-                    uniquePerson: them.isUniquePerson,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
             default:
                 return {

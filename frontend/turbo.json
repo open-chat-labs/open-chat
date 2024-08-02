@@ -48,6 +48,10 @@
             "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
         },
 
+        "verify": {
+            "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
+        },
+
         "test:prod": {
             "dependsOn": ["build:prod", "^test"],
             "outputs": [],

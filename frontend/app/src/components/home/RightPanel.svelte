@@ -58,7 +58,7 @@
     $: selectedCommunity = client.selectedCommunity;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
-    $: user = $userStore[$currentUser.userId] ?? client.nullUser("unknown");
+    $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = !$fullWidth;
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;

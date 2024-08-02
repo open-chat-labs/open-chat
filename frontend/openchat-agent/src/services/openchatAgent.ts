@@ -30,7 +30,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
 import { DexesAgent } from "./dexes";
-import { chunk, distinctBy, toRecord } from "../utils/list";
+import { chunk, distinctBy } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
@@ -304,11 +304,7 @@ export class OpenChatAgent extends EventTarget {
 
     getAllCachedUsers(): Promise<UserLookup> {
         return measure("getAllUsers", () => getAllUsers()).then((users) => {
-            const lookup = toRecord(
-                users.map((user) => this.rehydrateUserSummary(user)),
-                (u) => u.userId,
-            );
-            return lookup;
+            return new Map(users.map((user) => [user.userId, this.rehydrateUserSummary(user)]));
         });
     }
 
