@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -26,7 +26,7 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    read_state(|state| {
+    mutate_state(|state| {
         let account_id =
             AccountIdentifier::from_hex("0d8b25153f3450c024a30694e8834d199387a9d9a0f2641d053719cc6068223c").unwrap();
 
@@ -35,6 +35,13 @@ fn post_upgrade(args: Args) {
                 info!("Found match: {}", user.user_id);
                 break;
             }
+        }
+
+        for user in state.data.users.iter() {
+            state
+                .data
+                .chit_leaderboard
+                .update_position(user.user_id, user.total_chit_earned());
         }
     });
 }
