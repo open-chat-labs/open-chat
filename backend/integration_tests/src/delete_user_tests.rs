@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{client, env, TestEnv};
+use crate::{client, TestEnv};
 use std::ops::Deref;
 use types::Empty;
 
