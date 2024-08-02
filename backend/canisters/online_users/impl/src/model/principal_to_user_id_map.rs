@@ -19,6 +19,10 @@ impl PrincipalToUserIdMap {
         self.map.get(principal).map(|u| u.into())
     }
 
+    pub fn remove(&mut self, principal: &Principal) -> Option<UserId> {
+        self.map.remove(principal).map(|u| u.into())
+    }
+
     pub fn clear(&mut self) {
         self.map.clear_new()
     }
