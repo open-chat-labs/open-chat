@@ -15,7 +15,6 @@
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    let timezoneOffset = new Date().getTimezoneOffset() * 60000;
     let busy = false;
     let events: ChitEarned[] = [];
     let utcMode = false;
@@ -31,12 +30,17 @@
         return total;
     }, 0);
 
+    function offset(date: Date): number {
+        return date.getTimezoneOffset() * 60000;
+    }
+
     function utcToLocal(utc: number): number {
-        return utc + timezoneOffset;
+        const utcDate = new Date(utc);
+        return new Date(utc + offset(utcDate)).getTime();
     }
 
     function localToUtc(date: Date): Date {
-        return new Date(date.getTime() - timezoneOffset);
+        return new Date(date.getTime() - offset(date));
     }
 
     function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
