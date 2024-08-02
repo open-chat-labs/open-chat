@@ -79,7 +79,8 @@ async fn run_async() {
 
         let mut neurons_updated = false;
         if !neurons_to_spawn.is_empty() {
-            if spawn_neurons(neurons_to_spawn).await {
+            let any_spawned = spawn_neurons(neurons_to_spawn).await;
+            if any_spawned {
                 neurons_updated = true;
             }
         }
