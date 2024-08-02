@@ -22,6 +22,7 @@ export const translationCodes: Record<string, string> = {
     uk: "uk",
     vi: "vi",
     pl: "pl",
+    fa: "fa",
 };
 
 export const supportedLanguages = [
@@ -77,6 +78,10 @@ export const supportedLanguages = [
         name: "Polski",
         code: "pl",
     },
+    {
+        name: "فارسی",
+        code: "fa",
+    },
 ];
 
 export const supportedLanguagesByCode = supportedLanguages.reduce(
@@ -101,6 +106,7 @@ register("ru", () => import("./ru.json"));
 register("uk", () => import("./uk.json"));
 register("vi", () => import("./vi.json"));
 register("pl", () => import("./pl.json"));
+register("fa", () => import("./fa.json"));
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
