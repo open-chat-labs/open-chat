@@ -162,6 +162,9 @@ impl Airdrops {
 
             let winner = ticket_holders.remove(winning_ticket);
 
+            // Ensure the same user can't win multiple times
+            ticket_holders.retain(|u| *u != winner);
+
             lottery_winners.push((
                 winner,
                 Prize {
