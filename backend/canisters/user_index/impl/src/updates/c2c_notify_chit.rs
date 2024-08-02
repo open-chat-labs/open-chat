@@ -22,8 +22,9 @@ fn c2c_notify_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
         args.streak_ends,
         now,
     ) {
-        state.data.chit_leaderboard.update_position(user_id, args.chit_balance);
-
+        if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+            state.data.chit_leaderboard.update_position(user_id, user.total_chit_earned());
+        }
         Success
     } else {
         UserNotFound
