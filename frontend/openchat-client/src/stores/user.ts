@@ -130,7 +130,7 @@ export const userStore = {
     },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
-            const clone = { ...users };
+            const clone = new Map(users);
             return overwriteUser(clone, user);
         });
         if (user.suspended) {
@@ -141,7 +141,7 @@ export const userStore = {
     },
     addMany: (newUsers: UserSummary[]): void => {
         normalUsers.update((users) => {
-            const clone = { ...users };
+            const clone = new Map(users);
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
         const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
