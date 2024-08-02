@@ -12,13 +12,12 @@ use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
     EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
-    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
-    VersionedRules, VideoCall,
+    GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged,
+    HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
+    MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult,
+    PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped,
+    UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -1710,7 +1709,7 @@ impl GroupChatCore {
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
-            add_members: GroupPermissionRole::Owner,
+            add_members: new.add_members.unwrap_or(old.add_members),
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),

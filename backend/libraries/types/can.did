@@ -1273,12 +1273,12 @@ type User = record {
 
 type GroupPermissions = record {
     change_roles : PermissionRole;
-    add_members : PermissionRole;
     remove_members : PermissionRole;
     delete_messages : PermissionRole;
     update_group : PermissionRole;
     pin_messages : PermissionRole;
     invite_users : PermissionRole;
+    add_members : PermissionRole;
     react_to_messages : PermissionRole;
     mention_all_members : PermissionRole;
     start_video_call : PermissionRole;
@@ -1314,6 +1314,7 @@ type OptionalGroupPermissions = record {
     update_group : opt PermissionRole;
     pin_messages : opt PermissionRole;
     invite_users : opt PermissionRole;
+    add_members : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
     start_video_call : opt PermissionRole;
