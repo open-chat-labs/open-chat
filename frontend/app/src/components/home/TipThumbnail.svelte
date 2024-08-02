@@ -46,12 +46,12 @@
                 {#each userTipsList as [userId, amount]}
                     <div class="avatar">
                         <Avatar
-                            url={client.userAvatarUrl($userStore[userId])}
+                            url={client.userAvatarUrl($userStore.get(userId))}
                             {userId}
                             size={AvatarSize.Tiny} />
                     </div>
                     <div class="username">
-                        @{$userStore[userId]?.username}
+                        @{$userStore.get(userId)?.username}
                     </div>
                     <div class="amount">
                         {client.formatTokens(amount, tokenDetails.decimals)}

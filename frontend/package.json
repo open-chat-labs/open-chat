@@ -12,7 +12,8 @@
         "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod --cache-dir .turbo",
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
         "dev": "npm i && dotenv -- turbo run dev --cache-dir .turbo",
-        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
+        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
+        "verify": "dotenv -- turbo run verify --cache-dir .turbo"
     },
     "author": "julian.jelfs@gmail.com",
     "workspaces": [

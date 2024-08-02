@@ -66,8 +66,8 @@
             if (chat.kind === "direct_chat") {
                 title = `${title} - 
                     ${
-                        users[chat.them.userId]?.displayName ??
-                        users[chat.them.userId]?.username ??
+                        users.get(chat.them.userId)?.displayName ??
+                        users.get(chat.them.userId)?.username ??
                         "Direct chat"
                     }`;
             } else {

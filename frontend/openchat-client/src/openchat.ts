@@ -601,13 +601,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
         console.log("OpenChatConfig: ", config);
 
-        specialUsers.set({
-            [OPENCHAT_BOT_USER_ID]: openChatBotUser,
-            [OPENCHAT_VIDEO_CALL_USER_ID]: videoCallBotUser,
-            [AIRDROP_BOT_USER_ID]: airdropBotUser,
-            [ANON_USER_ID]: anonymousUserSummary,
-            [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
-        });
+        specialUsers.set(
+            new Map([
+                [OPENCHAT_BOT_USER_ID, openChatBotUser],
+                [OPENCHAT_VIDEO_CALL_USER_ID, videoCallBotUser],
+                [AIRDROP_BOT_USER_ID, airdropBotUser],
+                [ANON_USER_ID, anonymousUserSummary],
+                [config.proposalBotCanister, proposalsBotUser(config.proposalBotCanister)],
+            ]),
+        );
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
@@ -883,7 +885,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     userIsDiamond(userId: string): boolean {
-        const user = this._liveState.userStore[userId];
+        const user = this._liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
         if (userId === this._liveState.user.userId) return this._liveState.isDiamond;
@@ -892,7 +894,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     userIsLifetimeDiamond(userId: string): boolean {
-        const user = this._liveState.userStore[userId];
+        const user = this._liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
 
         if (userId === this._liveState.user.userId) return this._liveState.isLifetimeDiamond;
@@ -1289,7 +1291,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
-        const partialUser = this._liveState.userStore[this._liveState.user.userId];
+        const partialUser = this._liveState.userStore.get(this._liveState.user.userId);
         if (partialUser) {
             userStore.add({
                 ...partialUser,
@@ -1700,7 +1702,7 @@ export class OpenChat extends OpenChatAgentWorker {
     ): boolean {
         return this.chatPredicate(chatId, (chat) => {
             if (chat.kind === "direct_chat") {
-                const recipient = this._liveState.userStore[chat.them.userId];
+                const recipient = this._liveState.userStore.get(chat.them.userId);
                 if (recipient !== undefined) {
                     return canSendDirectMessage(
                         recipient,
@@ -1724,7 +1726,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const chat = this._liveState.allChats.get(chatId);
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
-                const recipient = this._liveState.userStore[chat.them.userId];
+                const recipient = this._liveState.userStore.get(chat.them.userId);
                 if (recipient !== undefined) {
                     return permittedMessagesInDirectChat(
                         recipient,
@@ -2519,7 +2521,7 @@ export class OpenChat extends OpenChatAgentWorker {
     isUsernameValid = isUsernameValid;
 
     async createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
-        if (this._liveState.userStore[chatId.userId] === undefined) {
+        if (!this._liveState.userStore.has(chatId.userId)) {
             const user = await this.getUser(chatId.userId);
             if (user === undefined) {
                 return false;
@@ -2565,7 +2567,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 });
             }
             if (selectedChat.kind === "direct_chat") {
-                const them = this._liveState.userStore[selectedChat.them.userId];
+                const them = this._liveState.userStore.get(selectedChat.them.userId);
                 // Refresh user details if they are more than 5 minutes out of date
                 if (
                     them === undefined ||
@@ -4432,7 +4434,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
         for (const [userId, member] of this._liveState.currentCommunityMembers) {
-            let user = this._liveState.userStore[userId];
+            let user = this._liveState.userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
                 if (
@@ -4522,8 +4524,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getDisplayNameById(userId: string, communityMembers?: Map<string, Member>): string {
-        const user = this._liveState.userStore[userId];
-        return this.getDisplayName(user, communityMembers);
+        return this.getDisplayName(this._liveState.userStore.get(userId), communityMembers);
     }
 
     getDisplayName(
@@ -4979,7 +4980,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     async getLastOnlineDate(userId: string, now: number): Promise<number | undefined> {
-        const user = this._liveState.userStore[userId];
+        const user = this._liveState.userStore.get(userId);
         if (user === undefined || user.kind === "bot") return undefined;
 
         if (userId === this._liveState.user.userId) return now;
@@ -5375,7 +5376,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
             const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
-                const current = allUsers[userId];
+                const current = allUsers.get(userId);
                 if (current === undefined || current.updated < tenMinsAgo) {
                     usersToUpdate.add(userId);
                 }
@@ -5393,7 +5394,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
             // Also update any users who haven't been updated for at least 24 hours
             const oneDayAgo = now - BigInt(24 * ONE_HOUR);
-            for (const user of Object.values(allUsers)) {
+            for (const user of allUsers.values()) {
                 if (user.updated < oneDayAgo) {
                     usersToUpdate.add(user.userId);
                     if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
@@ -5402,13 +5403,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
-            for (const userId of Object.keys(get(specialUsers))) {
+            for (const userId of get(specialUsers).keys()) {
                 usersToUpdate.delete(userId);
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
             const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
-                return allUsers[u]?.updated ?? BigInt(0);
+                return allUsers.get(u)?.updated ?? BigInt(0);
             });
 
             await this.getUsers({
@@ -5530,8 +5531,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
-            const avatarId =
-                this._liveState.userStore[this._liveState.user.userId]?.blobReference?.blobId;
+            const currentUser = this._liveState.userStore.get(this._liveState.user.userId);
+            const avatarId = currentUser?.blobReference?.blobId;
             if (chatsResponse.state.avatarId !== avatarId) {
                 const blobReference =
                     chatsResponse.state.avatarId === undefined
@@ -5545,11 +5546,13 @@ export class OpenChat extends OpenChatAgentWorker {
                     blobData: undefined,
                     blobUrl: undefined,
                 };
-                const user = {
-                    ...this._liveState.userStore[this._liveState.user.userId],
-                    ...dataContent,
-                };
-                userStore.add(this.rehydrateDataContent(user, "avatar"));
+                if (currentUser) {
+                    const user = {
+                        ...currentUser,
+                        ...dataContent,
+                    };
+                    userStore.add(this.rehydrateDataContent(user, "avatar"));
+                }
             }
 
             // If the latest message in a chat is sent by the current user, then we know they must have read up to
@@ -5800,12 +5803,14 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    // FIXME - should this input param be a Map
     private mapVideoCallParticipants(
         users: Record<string, UserSummary>,
         participant: VideoCallParticipant,
     ): Record<string, UserSummary> {
-        if (this._liveState.userStore[participant.userId]) {
-            users[participant.userId] = this._liveState.userStore[participant.userId];
+        const user = this._liveState.userStore.get(participant.userId);
+        if (user) {
+            users[participant.userId] = user;
         }
         return users;
     }
@@ -5863,7 +5868,7 @@ export class OpenChat extends OpenChatAgentWorker {
         userId: string,
         updater: (user: UserSummary) => UserSummary | undefined,
     ): void {
-        const user = this._liveState.userStore[userId];
+        const user = this._liveState.userStore.get(userId);
         if (user !== undefined) {
             const updated = updater(user);
             if (updated !== undefined) {
@@ -6202,8 +6207,8 @@ export class OpenChat extends OpenChatAgentWorker {
             const userStore = this._liveState.userStore;
             for (const member of this._liveState.currentChatMembers) {
                 const userId = member.userId;
-                let user = userStore[userId];
-                if (this._liveState.selectedChat?.kind === "channel") {
+                let user = userStore.get(userId);
+                if (user !== undefined && this._liveState.selectedChat?.kind === "channel") {
                     user = {
                         ...user,
                         displayName: this.getDisplayName(
@@ -6212,7 +6217,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         ),
                     };
                 }
-                if (user !== undefined && user.username !== undefined) {
+                if (user?.username !== undefined) {
                     lookup[user.username.toLowerCase()] = user as UserSummary;
                 }
             }
@@ -6484,7 +6489,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
         const user = this._liveState.user;
         const username = user.username;
-        const avatarId = this._liveState.userStore[user.userId]?.blobReference?.blobId;
+        const avatarId = this._liveState.userStore.get(user.userId)?.blobReference?.blobId;
         const headers = new Headers();
         headers.append("x-auth-jwt", authToken);
 
@@ -7298,7 +7303,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 : this._liveState.chitState.streak;
         }
 
-        return this._liveState.userStore[userId]?.streak ?? 0;
+        return this._liveState.userStore.get(userId)?.streak ?? 0;
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

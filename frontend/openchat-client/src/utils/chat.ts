@@ -153,9 +153,12 @@ export function makeRtcConnections(
     if (userIds.length === 0) return;
 
     userIds
-        .map((u) => lookup[u])
-        .filter((user) => user.kind === "user")
-        .map((user) => user.userId)
+        .reduce((ids, id) => {
+            if (lookup.get(id)?.kind === "user") {
+                ids.push(id);
+            }
+            return ids;
+        }, [] as string[])
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
@@ -234,7 +237,7 @@ export function getMembersString(
         return `${memberIds.length} members`;
     }
     const sorted = memberIds
-        .map((id) => userLookup[id] ?? nullUser(unknownUser))
+        .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
 
@@ -1792,7 +1795,7 @@ export function buildCryptoTransferText(
 
         return userId === myUserId
             ? formatter("you")
-            : `${lookup[userId]?.username ?? formatter("unknown")}`;
+            : `${lookup.get(userId)?.username ?? formatter("unknown")}`;
     }
 
     const tokenDetails = cryptoLookup[content.transfer.ledger];
@@ -1853,7 +1856,7 @@ export function getTypingString(
         return formatter("membersAreTyping", { values: { number: typers.size } });
     } else {
         const userIds = [...typers];
-        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        const username = users.get(userIds[0])?.username ?? formatter("unknown");
         return formatter("memberIsTyping", { values: { username } });
     }
 }

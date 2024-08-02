@@ -30,11 +30,11 @@
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
             const chat = client.lookupChatSummary(call.chatId);
-            const initiator = $userStore[call.userId];
-            if (chat) {
+            const initiator = $userStore.get(call.userId);
+            if (chat && initiator) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore[chat.them.userId];
+                        const them = $userStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),

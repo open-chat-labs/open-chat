@@ -203,7 +203,8 @@
                         {/if}
                     </td>
                     <td class="proposed_by"
-                        >{$userStore[correction.proposedBy]?.username ?? correction.proposedBy}</td>
+                        >{$userStore.get(correction.proposedBy)?.username ??
+                            correction.proposedBy}</td>
                     <td class="proposed_at"
                         >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td>
                     <td class="action">
