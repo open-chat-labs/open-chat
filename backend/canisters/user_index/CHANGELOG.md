@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add logging to find deleted account with OGY tokens ([#6177](https://github.com/open-chat-labs/open-chat/pull/6177))
+- Return deleted users in `users` response ([#6182](https://github.com/open-chat-labs/open-chat/pull/6182))
 
 ## [[2.0.1279](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1279-user_index)] - 2024-08-01
 
