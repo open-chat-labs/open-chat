@@ -17,6 +17,7 @@ pub enum Response {
 pub struct Result {
     pub users: Vec<UserSummaryV2>,
     pub current_user: Option<CurrentUserSummary>,
+    pub deleted: Vec<UserId>,
     pub timestamp: TimestampMillis,
 }
 
