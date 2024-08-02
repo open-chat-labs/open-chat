@@ -18,6 +18,10 @@ impl PrincipalToUserIdMap {
     pub fn get(&self, principal: &Principal) -> Option<UserId> {
         self.map.get(principal).map(|u| u.into())
     }
+
+    pub fn clear(&mut self) {
+        self.map.clear_new()
+    }
 }
 
 fn init_map() -> StableBTreeMap<Principal, Principal, Memory> {
