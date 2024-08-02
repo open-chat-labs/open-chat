@@ -389,6 +389,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UsersResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'deleted' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummaryV2),
       'current_user' : IDL.Opt(CurrentUserSummary),

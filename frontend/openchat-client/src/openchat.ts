@@ -470,6 +470,7 @@ import {
     LARGE_GROUP_THRESHOLD,
     isCompositeGate,
     shouldPreprocessGate,
+    deletedUser,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4928,6 +4929,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (userGroups.length === 0) {
             return Promise.resolve({
                 users: [],
+                deletedUserIds: new Set(),
             });
         }
 
@@ -4938,7 +4940,8 @@ export class OpenChat extends OpenChatAgentWorker {
             allowStale,
         })
             .then((resp) => {
-                userStore.addMany(resp.users);
+                const deletedUsers = [...resp.deletedUserIds].map(deletedUser);
+                userStore.addMany([...resp.users, ...deletedUsers]);
                 if (resp.serverTimestamp !== undefined) {
                     // If we went to the server, all users not returned are still up to date, so we mark them as such
                     const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
@@ -4954,7 +4957,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch(() => ({ users: [] }));
+            .catch(() => ({ users: [], deletedUserIds: new Set() }));
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
