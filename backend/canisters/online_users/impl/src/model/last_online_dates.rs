@@ -19,6 +19,10 @@ impl LastOnlineDates {
         self.map.get(&user_id.into())
     }
 
+    pub fn remove(&mut self, user_id: UserId) -> Option<TimestampMillis> {
+        self.map.remove(&user_id.into())
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {
         self.map.iter()
     }

@@ -101,6 +101,7 @@ type UsersResponse = variant {
     Success : record {
         users : vec UserSummaryV2;
         current_user : opt CurrentUserSummary;
+        deleted : vec UserId;
         timestamp : TimestampMillis;
     };
 };
