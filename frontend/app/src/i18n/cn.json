@@ -321,6 +321,8 @@
         "extendStreak": "延长连胜",
         "info": "您维持连续记录的时间越长，您每天可领取的 CHIT 就越多！",
         "title": "保持连胜",
+        "utcInfo": "CHIT 连续性和领取窗口使用 UTC 表示，因此您可能会发现以 UTC 而不是当地时区查看日历更清楚。",
+        "utcMode": "以 UTC 时间显示",
         "viewStreak": "查看连胜"
     },
     "dark": "深色模式",
