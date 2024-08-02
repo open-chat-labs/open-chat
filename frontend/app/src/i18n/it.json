@@ -321,6 +321,8 @@
         "extendStreak": "Estendi la serie",
         "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
         "title": "Mantieni la tua serie di vittorie",
+        "utcInfo": "Le serie CHIT e le finestre di reclamo sono rappresentate utilizzando l'UTC, quindi potresti trovare più chiaro visualizzare il tuo calendario in UTC anziché nel fuso orario locale.",
+        "utcMode": "Mostra in UTC",
         "viewStreak": "Visualizza serie"
     },
     "dark": "buio",

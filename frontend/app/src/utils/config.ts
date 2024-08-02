@@ -33,6 +33,7 @@ export const configKeys = {
     userCreated: "openchat_user_created",
     lowBandwidth: "openchat_lowbandwidth",
     renderPreviews: "openchat_renderpreviews",
+    utcMode: "openchat_utc_mode",
     videoCameraOn: "openchat_video_cameraon",
     videoMicOn: "openchat_video_micon",
     videoSpeakerView: "openchat_video_speaker_view",

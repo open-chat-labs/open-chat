@@ -321,6 +321,8 @@
         "extendStreak": "Prolonger la séquence",
         "info": "Plus vous maintenez votre séquence longtemps, plus vous pouvez réclamer de CHIT quotidien !",
         "title": "Maintenez votre séquence",
+        "utcInfo": "Les séquences CHIT et les fenêtres de réclamation sont représentées en UTC afin que vous puissiez trouver plus clair d'afficher votre calendrier en UTC plutôt que dans votre fuseau horaire local.",
+        "utcMode": "Afficher en UTC",
         "viewStreak": "Voir la séquence"
     },
     "dark": "foncé",
