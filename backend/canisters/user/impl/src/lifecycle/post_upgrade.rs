@@ -34,6 +34,8 @@ fn post_upgrade(args: Args) {
             && state.data.communities.len() == 0
             && state.data.diamond_membership_expires_at.is_none()
             && state.data.unique_person_proof.is_none()
+            && state.data.group_chats.removed_len() == 0
+            && state.data.communities.removed_len() == 0
         {
             let now = state.env.now();
             if state.data.user_created + SIX_MONTHS < now && state.data.chit_events.last_updated() + SIX_MONTHS < now {
