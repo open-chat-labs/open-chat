@@ -1934,6 +1934,7 @@ type Achievement = variant {
     Streak7;
     Streak14;
     Streak30;
+    Streak365;
     SentPoll;
     VotedOnPoll;
     SentText;
