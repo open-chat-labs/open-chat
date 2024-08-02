@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Remove deleted users from OnlineUsers canister ([#6179](https://github.com/open-chat-labs/open-chat/pull/6179))
+
 ### Changed
 
 - Add logging to find deleted account with OGY tokens ([#6177](https://github.com/open-chat-labs/open-chat/pull/6177))
