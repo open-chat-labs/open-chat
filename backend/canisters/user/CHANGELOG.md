@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+- Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
 
 ## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
 
