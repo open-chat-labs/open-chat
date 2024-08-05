@@ -532,7 +532,7 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 import {
     capturePinNumberStore,
     pinNumberFailureStore,
@@ -7348,6 +7348,21 @@ export class OpenChat extends OpenChatAgentWorker {
                 events: [],
                 total: 0,
             };
+        });
+    }
+
+    linkIdentities(
+        initiatorKey: ECDSAKeyIdentity,
+        initiatorDelegation: DelegationChain,
+        approverKey: ECDSAKeyIdentity,
+        approverDelegation: DelegationChain,
+    ) {
+        this.sendRequest({
+            kind: "linkIdentities",
+            initiatorKey: initiatorKey.getKeyPair(),
+            initiatorDelegation: initiatorDelegation.toJSON(),
+            approverKey: approverKey.getKeyPair(),
+            approverDelegation: approverDelegation.toJSON(),
         });
     }
 

@@ -190,6 +190,8 @@ import type {
     ChitUserBalance,
     ClaimDailyChitResponse,
 } from "./chit";
+import type { JsonnableDelegationChain } from "@dfinity/identity";
+
 /**
  * Worker request types
  */
@@ -384,7 +386,8 @@ export type WorkerRequest =
     | ChitLeaderboard
     | ChitEventsRequest
     | MarkAchievementsSeen
-    | SubmitProofOfUniquePersonhood;
+    | SubmitProofOfUniquePersonhood
+    | LinkIdentities;
 
 type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
@@ -1266,6 +1269,14 @@ type GetDelegationWithWallet = {
     sessionKey: Uint8Array;
     expiration: bigint;
     kind: "getDelegationWithWallet";
+};
+
+type LinkIdentities = {
+    kind: "linkIdentities";
+    initiatorKey: CryptoKeyPair;
+    initiatorDelegation: JsonnableDelegationChain;
+    approverKey: CryptoKeyPair;
+    approverDelegation: JsonnableDelegationChain;
 };
 
 /**

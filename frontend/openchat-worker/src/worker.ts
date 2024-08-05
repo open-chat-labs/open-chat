@@ -1,6 +1,11 @@
 import { AnonymousIdentity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+} from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
@@ -40,11 +45,16 @@ let identityAgent: IdentityAgent | undefined = undefined;
 let authPrincipalString: string | undefined = undefined;
 let logger: Logger | undefined = undefined;
 let agent: OpenChatAgent | undefined = undefined;
+let identityCanister: string = "";
+let icUrl: string = "";
 
 async function initialize(
-    identityCanister: string,
-    icUrl: string,
+    _identityCanister: string,
+    _icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
+    identityCanister = _identityCanister;
+    icUrl = _icUrl;
+
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
     const authPrincipal = authProviderIdentity.getPrincipal();
     if (authPrincipal.isAnonymous()) {
@@ -1776,6 +1786,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "linkIdentities":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    linkIdentities(
+                        payload.initiatorKey,
+                        payload.initiatorDelegation,
+                        payload.approverKey,
+                        payload.approverDelegation,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1784,3 +1807,33 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         sendError(correlationId)(err);
     }
 });
+
+async function linkIdentities(
+    initiatorKey: CryptoKeyPair,
+    initiatorDelegation: JsonnableDelegationChain,
+    approverKey: CryptoKeyPair,
+    approverDelegation: JsonnableDelegationChain,
+) {
+    const initiatorIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
+        DelegationChain.fromJSON(initiatorDelegation),
+    );
+    const initiator = initiatorIdentity.getPrincipal().toString();
+    const initiatorAgent = new IdentityAgent(initiatorIdentity, identityCanister, icUrl);
+
+    const approverIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(approverKey),
+        DelegationChain.fromJSON(approverDelegation),
+    );
+    const approver = approverIdentity.getPrincipal().toString();
+    const approverAgent = new IdentityAgent(approverIdentity, identityCanister, icUrl);
+
+    if (approver != authPrincipalString) {
+        throw new Error("Identity does not match");
+    }
+
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
+    if (initiateResponse === "success") {
+        await approverAgent.approveIdentityLink(initiator);
+    }
+}
