@@ -169,6 +169,7 @@ import type {
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
+    LinkIdentitiesResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -2104,4 +2105,6 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends SubmitProofOfUniquePersonhood
     ? SubmitProofOfUniquePersonhoodResponse
+    : T extends LinkIdentities
+    ? LinkIdentitiesResponse
     : never;
