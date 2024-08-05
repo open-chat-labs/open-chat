@@ -13,8 +13,12 @@ fn initiate_identity_link(args: Args) -> Response {
 fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if is_registered_as_user(&caller, state) {
-        return AlreadyRegistered;
+    if let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) {
+        return if user.auth_principals.contains(&args.link_to_principal) {
+            AlreadyLinkedToPrincipal
+        } else {
+            AlreadyRegistered
+        };
     }
     if !is_registered_as_user(&args.link_to_principal, state) {
         return TargetUserNotFound;
