@@ -27,6 +27,22 @@ export type UserSummary = DataContent & {
     isUniquePerson: boolean;
 };
 
+export function deletedUser(userId: string): UserSummary {
+    return {
+        kind: "user",
+        userId,
+        username: "Deleted User",
+        displayName: undefined,
+        updated: BigInt(Number.MAX_VALUE), // we want to *never* request updates for a deleted user
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        isUniquePerson: false,
+        totalChitEarned: 0,
+    };
+}
+
 // Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
 export function mergeUserSummaryWithUpdates(
     cached: UserSummary | undefined,
@@ -163,6 +179,7 @@ export type UsersArgs = {
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: UserSummary[];
+    deletedUserIds: Set<string>;
     currentUser?: CurrentUserSummary;
 };
 
@@ -189,6 +206,7 @@ export type UserSummaryUpdate = {
 
 export type UsersApiResponse = {
     serverTimestamp: bigint;
+    deletedUserIds: Set<string>;
     users: UserSummaryUpdate[];
     currentUser?: CurrentUserSummary;
 };
