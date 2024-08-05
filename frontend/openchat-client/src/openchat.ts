@@ -4484,7 +4484,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
-                    gaTrack("registered_user", "registration");
+                    gaTrack("registered_user", "registration", res.userId);
                     if (this._referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }
