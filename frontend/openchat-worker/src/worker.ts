@@ -1834,6 +1834,6 @@ async function linkIdentities(
 
     const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
     if (initiateResponse === "success") {
-        const _approveResponse = await approverAgent.approveIdentityLink(initiator);
+        await approverAgent.approveIdentityLink(initiator);
     }
 }
