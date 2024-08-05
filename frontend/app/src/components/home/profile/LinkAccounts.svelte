@@ -34,8 +34,8 @@
     };
 
     type CurrentPrincipal = { kind: "current" };
-    type NextPrincipal = { kind: "next"; current: IdentityDetail };
-    type LinkPrincipals = { kind: "link"; current: IdentityDetail; next: IdentityDetail };
+    type NextPrincipal = { kind: "next"; approver: IdentityDetail };
+    type LinkPrincipals = { kind: "link"; approver: IdentityDetail; initiator: IdentityDetail };
     type LinkStage = CurrentPrincipal | NextPrincipal | LinkPrincipals;
 
     let failed = false;
@@ -87,7 +87,7 @@
                             } else {
                                 substep = {
                                     kind: "next",
-                                    current: {
+                                    approver: {
                                         key: identity,
                                         delegation: DelegationChain.fromJSON(delegation),
                                     },
@@ -106,7 +106,7 @@
 
     async function loginNext() {
         if (substep.kind !== "next") return;
-        const current = substep.current;
+        const approver = substep.approver;
 
         const identity = await ECDSAKeyIdentity.generate();
         const storage = new InMemoryAuthClientStorage();
@@ -121,17 +121,21 @@
                     // TODO - we need to check that the two identities are not the same somehow
                     const delegation = await storage.get("delegation");
                     if (delegation) {
-                        const next = {
+                        const initiator = {
                             key: identity,
                             delegation: DelegationChain.fromJSON(delegation),
                         };
 
-                        client.linkIdentities(
-                            current.key,
-                            current.delegation,
-                            next.key,
-                            next.delegation,
-                        );
+                        client
+                            .linkIdentities(
+                                initiator.key,
+                                initiator.delegation,
+                                approver.key,
+                                approver.delegation,
+                            )
+                            .then((resp) => {
+                                console.log("Response from linkIdentities: ", resp);
+                            });
                     }
                 },
                 onError: (err) => {
