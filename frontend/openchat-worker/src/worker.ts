@@ -23,6 +23,7 @@ import {
     type GetOpenChatIdentityResponse,
     type ChallengeAttempt,
     type CreateOpenChatIdentityError,
+    type LinkIdentitiesResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1813,7 +1814,7 @@ async function linkIdentities(
     initiatorDelegation: JsonnableDelegationChain,
     approverKey: CryptoKeyPair,
     approverDelegation: JsonnableDelegationChain,
-) {
+): Promise<LinkIdentitiesResponse> {
     const initiatorIdentity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
         DelegationChain.fromJSON(initiatorDelegation),
@@ -1833,7 +1834,8 @@ async function linkIdentities(
     }
 
     const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
-    if (initiateResponse === "success") {
-        await approverAgent.approveIdentityLink(initiator);
+    if (initiateResponse !== "success") {
+        return initiateResponse;
     }
+    return await approverAgent.approveIdentityLink(initiator);
 }

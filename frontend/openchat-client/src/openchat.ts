@@ -420,6 +420,7 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     Achievement,
     PayForDiamondMembershipResponse,
+    LinkIdentitiesResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -7356,8 +7357,8 @@ export class OpenChat extends OpenChatAgentWorker {
         initiatorDelegation: DelegationChain,
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
-    ) {
-        this.sendRequest({
+    ): Promise<LinkIdentitiesResponse> {
+        return this.sendRequest({
             kind: "linkIdentities",
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
