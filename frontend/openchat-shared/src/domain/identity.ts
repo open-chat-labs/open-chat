@@ -96,3 +96,5 @@ export type ApproveIdentityLinkResponse =
     | "link_request_not_found"
     | "invalid_signature"
     | "delegation_too_old";
+
+export type LinkIdentitiesResponse = InitiateIdentityLinkResponse | ApproveIdentityLinkResponse;
