@@ -6723,7 +6723,11 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-    ): Promise<GetDelegationResponse> {
+        connectWorker: boolean,
+    ): Promise<
+        | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
+        | { kind: "failure" }
+    > {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
@@ -6749,12 +6753,20 @@ export class OpenChat extends OpenChatAgentWorker {
                     getDelegationResponse.delegation,
                     getDelegationResponse.signature,
                 );
-                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-                this.loadedAuthenticationIdentity(identity);
+                const delegation = identity.getDelegation();
+                await storeIdentity(this._authClientStorage, sessionKey, delegation);
+                if (connectWorker) {
+                    this.loadedAuthenticationIdentity(identity);
+                }
+                return {
+                    kind: "success",
+                    key: sessionKey,
+                    delegation,
+                };
             }
-            return getDelegationResponse;
+            return { kind: "failure" };
         } else {
-            return loginResponse;
+            return { kind: "failure" };
         }
     }
 

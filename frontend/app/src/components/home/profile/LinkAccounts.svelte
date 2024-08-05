@@ -33,16 +33,22 @@
         delegation: DelegationChain;
     };
 
-    type CurrentPrincipal = { kind: "current" };
-    type NextPrincipal = { kind: "next"; approver: IdentityDetail };
-    type LinkPrincipals = { kind: "link"; approver: IdentityDetail; initiator: IdentityDetail };
-    type LinkStage = CurrentPrincipal | NextPrincipal | LinkPrincipals;
+    type ApproverIdentity = { kind: "approver"; initiator: IdentityDetail };
+    type InitiatorIdentity = { kind: "initiator" };
+    type ReadyToLink = {
+        kind: "ready_to_link";
+        approver: IdentityDetail;
+        initiator: IdentityDetail;
+    };
+    type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
     let failed = false;
     let step: "explain" | "linking" = "explain";
-    let substep: LinkStage = { kind: "current" };
+    let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
     let email = "";
+    let approverStep: "choose_provider" | "choose_eth_wallet" | "choose_sol_wallet" =
+        "choose_provider";
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
@@ -50,7 +56,12 @@
         step = "linking";
     }
 
-    async function loginCurrent(ev: CustomEvent<AuthProvider>) {
+    // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
+    async function loginApprover(ev: CustomEvent<AuthProvider>) {
+        if (substep.kind !== "approver") return;
+
+        const { initiator } = substep;
+
         const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
@@ -64,9 +75,9 @@
             // ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
             console.log("TODO Logging in with email");
         } else if (provider === AuthProvider.ETH) {
-            console.log("Logging in with ETH");
+            approverStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
-            console.log("Logging in with SOL");
+            approverStep = "choose_sol_wallet";
         } else {
             // This is the II / NFID case
             const identity = await ECDSAKeyIdentity.generate();
@@ -86,7 +97,8 @@
                                 error = "Principal mismatch";
                             } else {
                                 substep = {
-                                    kind: "next",
+                                    kind: "ready_to_link",
+                                    initiator,
                                     approver: {
                                         key: identity,
                                         delegation: DelegationChain.fromJSON(delegation),
@@ -104,9 +116,9 @@
         }
     }
 
-    async function loginNext() {
-        if (substep.kind !== "next") return;
-        const approver = substep.approver;
+    // This is where we login in with the Internet Identity that we want to link to our existing OC account aka the Initiator
+    async function loginInitiator() {
+        if (substep.kind !== "initiator") return;
 
         const identity = await ECDSAKeyIdentity.generate();
         const storage = new InMemoryAuthClientStorage();
@@ -118,24 +130,15 @@
             c.login({
                 ...client.getAuthClientOptions(AuthProvider.II),
                 onSuccess: async () => {
-                    // TODO - we need to check that the two identities are not the same somehow
                     const delegation = await storage.get("delegation");
                     if (delegation) {
-                        const initiator = {
-                            key: identity,
-                            delegation: DelegationChain.fromJSON(delegation),
+                        substep = {
+                            kind: "approver",
+                            initiator: {
+                                key: identity,
+                                delegation: DelegationChain.fromJSON(delegation),
+                            },
                         };
-
-                        client
-                            .linkIdentities(
-                                initiator.key,
-                                initiator.delegation,
-                                approver.key,
-                                approver.delegation,
-                            )
-                            .then((resp) => {
-                                console.log("Response from linkIdentities: ", resp);
-                            });
                     }
                 },
                 onError: (err) => {
@@ -144,6 +147,38 @@
                 },
             });
         });
+    }
+
+    function walletConnected(
+        ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
+    ) {
+        if (substep.kind !== "approver") return;
+        substep = {
+            kind: "ready_to_link",
+            initiator: substep.initiator,
+            approver: {
+                key: ev.detail.key,
+                delegation: ev.detail.delegation,
+            },
+        };
+    }
+
+    // Link the two identities that we have built together
+    function linkIdentities() {
+        if (substep.kind !== "ready_to_link") return;
+
+        const { initiator, approver } = substep;
+
+        client
+            .linkIdentities(initiator.key, initiator.delegation, approver.key, approver.delegation)
+            .then((resp) => {
+                console.log("Response from linkIdentities: ", resp);
+                if (resp === "already_registered" || resp === "success") {
+                    dispatch("proceed");
+                } else {
+                    error = "identity.failed";
+                }
+            });
     }
 </script>
 
@@ -171,24 +206,48 @@
                 {/each}
             </AlertBox>
         {:else if step === "linking"}
-            {#if substep.kind === "current"}
-                <div class="info center">
-                    <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
-                </div>
-                <ChooseSignInOption
-                    mode={"signin"}
-                    bind:emailInvalid
-                    bind:email
-                    on:login={loginCurrent} />
-            {:else if substep.kind === "next"}
+            {#if substep.kind === "approver"}
+                {#if approverStep === "choose_provider"}
+                    <div class="info center">
+                        <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
+                    </div>
+                    <ChooseSignInOption
+                        mode={"signin"}
+                        bind:emailInvalid
+                        bind:email
+                        on:login={loginApprover} />
+                {:else if approverStep === "choose_eth_wallet"}
+                    <div class="eth-options">
+                        {#await import("../SigninWithEth.svelte")}
+                            <div class="loading">...</div>
+                        {:then { default: SigninWithEth }}
+                            <SigninWithEth assumeIdentity={false} on:connected={walletConnected} />
+                        {/await}
+                    </div>
+                {:else if approverStep === "choose_sol_wallet"}
+                    <div class="sol-options">
+                        {#await import("../SigninWithSol.svelte")}
+                            <div class="loading">...</div>
+                        {:then { default: SigninWithSol }}
+                            <SigninWithSol assumeIdentity={false} on:connected={walletConnected} />
+                        {/await}
+                    </div>
+                {/if}
+            {:else if substep.kind === "initiator"}
                 <div class="info">
                     <Translatable resourceKey={i18nKey("identity.signInNext")} />
                 </div>
-                <Button on:click={loginNext}>
+                <Button on:click={loginInitiator}>
                     <span class="link-ii-logo">
                         <InternetIdentityLogo />
                     </span>
                     <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+            {:else if substep.kind === "ready_to_link"}
+                <div class="info">
+                    <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
+                </div>
+                <Button on:click={linkIdentities}>
+                    <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {/if}
         {/if}
     </div>
@@ -228,5 +287,13 @@
         &.center {
             text-align: center;
         }
+    }
+
+    .eth-options,
+    .sol-options {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
     }
 </style>
