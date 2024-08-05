@@ -8,13 +8,17 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { AuthProvider, type OpenChat, type ResourceKey } from "openchat-client";
+    import {
+        AuthProvider,
+        InMemoryAuthClientStorage,
+        type OpenChat,
+        type ResourceKey,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
-    import { DelegationChain } from "@dfinity/identity";
     // import { ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
@@ -59,12 +63,13 @@
             console.log("Logging in with SOL");
         } else {
             // This is the II / NFID case
-            const authClient = AuthClient.create();
+            const authClient = AuthClient.create({ storage: new InMemoryAuthClientStorage() });
             authClient.then((c) => {
                 c.login({
                     ...client.getAuthClientOptions(provider),
                     onSuccess: () => {
                         console.log("success", c.getIdentity());
+
                         const principal = c.getIdentity().getPrincipal().toString();
                         if (principal !== client.AuthPrincipal) {
                             error = "Principal mismatch";
