@@ -71,7 +71,7 @@ async function getDeletedUserIdsList(): Promise<string[]> {
     return (await lazyOpenUserCache()).getAll("deletedUserIds");
 }
 
-export async function getDeletedUserIds(): Promise<Set<string>> {
+export async function getCachedDeletedUserIds(): Promise<Set<string>> {
     return getDeletedUserIdsList().then((list) => new Set(list));
 }
 

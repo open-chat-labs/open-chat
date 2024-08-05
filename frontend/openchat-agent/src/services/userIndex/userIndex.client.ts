@@ -52,7 +52,7 @@ import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 import {
     getCachedUsers,
-    getDeletedUserIds,
+    getCachedDeletedUserIds,
     getSuspendedUsersSyncedUpTo,
     setCachedDeletedUserIds,
     setCachedUsers,
@@ -146,7 +146,7 @@ export class UserIndexClient extends CandidService {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
-        const deletedUserIds = await getDeletedUserIds();
+        const deletedUserIds = await getCachedDeletedUserIds();
         const suspendedUsersSyncedTo = await getSuspendedUsersSyncedUpTo();
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
