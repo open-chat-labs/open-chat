@@ -32,7 +32,6 @@ import type {
     UpdatedEvent,
     UpdateUserGroupResponse,
     UserFailedError,
-    UserFailedGateCheck,
     UserGroupDetails,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
@@ -54,7 +53,6 @@ import type {
     ApiOptionalCommunityPermissions,
     ApiAddMembersToChannelFailed,
     ApiAddMembersToChannelPartialSuccess,
-    ApiUserFailedGateCheck,
     ApiUserFailedError,
     ApiMessageMatch,
     ApiCommunityCanisterCommunitySummaryUpdates,
@@ -83,7 +81,6 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
-    gateCheckFailedReason,
     groupPermissions,
     groupSubtype,
     memberRole,
@@ -136,6 +133,9 @@ export function addMembersToChannelResponse(
     if ("InternalError" in candid) {
         return CommonResponses.internalError();
     }
+    if ("CommunityPublic" in candid) {
+        return CommonResponses.communityPublic();
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
         candid,
@@ -147,7 +147,6 @@ function addToChannelFailed(candid: ApiAddMembersToChannelFailed): AddMembersToC
         kind: "add_to_channel_failed",
         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
     };
 }
@@ -159,13 +158,6 @@ function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
     };
 }
 
-function userFailedGateCheck(candid: ApiUserFailedGateCheck): UserFailedGateCheck {
-    return {
-        userId: candid.user_id.toString(),
-        reason: gateCheckFailedReason(candid.reason),
-    };
-}
-
 function addToChannelPartialSuccess(
     candid: ApiAddMembersToChannelPartialSuccess,
 ): AddMembersToChannelResponse {
@@ -173,7 +165,6 @@ function addToChannelPartialSuccess(
         kind: "add_to_channel_partial_success",
         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
         usersAdded: candid.users_added.map((u) => u.toString()),
     };

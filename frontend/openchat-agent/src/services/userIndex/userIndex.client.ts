@@ -146,12 +146,12 @@ export class UserIndexClient extends CandidService {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
-        const deletedUserIds = await getCachedDeletedUserIds();
+        const cachedDeletedUserIds = await getCachedDeletedUserIds();
         const suspendedUsersSyncedTo = await getSuspendedUsersSyncedUpTo();
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
-        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale, deletedUserIds);
+        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale, cachedDeletedUserIds);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
@@ -217,7 +217,7 @@ export class UserIndexClient extends CandidService {
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
-        deletedUserIds: Set<string>,
+        cachedDeletedUserIds: Set<string>,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
@@ -227,7 +227,9 @@ export class UserIndexClient extends CandidService {
         };
 
         // Add the users not found in the cache and ask for all updates
-        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u) && !deletedUserIds.has(u));
+        const notFoundInCache = users.filter(
+            (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
+        );
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
@@ -239,7 +241,9 @@ export class UserIndexClient extends CandidService {
             // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
             for (const [updatedSince, users] of fromCacheGrouped) {
                 args.userGroups.push({
-                    users: users.filter((u) => !deletedUserIds.has(u.userId)).map((u) => u.userId),
+                    users: users
+                        .filter((u) => !cachedDeletedUserIds.has(u.userId))
+                        .map((u) => u.userId),
                     updatedSince,
                 });
             }
