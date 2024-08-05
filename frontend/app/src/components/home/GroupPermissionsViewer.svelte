@@ -12,6 +12,8 @@
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
+    export let isCommunityPublic: boolean;
+    export let isChannel: boolean;
 
     let generalPartition: PermissionsByRole;
     let messagePartition: PermissionsByRole;
@@ -24,6 +26,7 @@
                 changeRoles: permissions.changeRoles,
                 updateGroup: permissions.updateGroup,
                 inviteUsers: permissions.inviteUsers,
+                addMembers: permissions.addMembers,
                 removeMembers: permissions.removeMembers,
                 deleteMessages: permissions.deleteMessages,
                 startVideoCall: permissions.startVideoCall,
@@ -71,6 +74,9 @@
 
     function filterPermissions([key, _]: PermissionsEntry): boolean {
         if (isPublic && key === "inviteUsers") {
+            return false;
+        }
+        if (key === "addMembers" && (!isChannel || isCommunityPublic)) {
             return false;
         }
         return true;

@@ -27,6 +27,7 @@ import type {
 import type {
     ChatNotFound,
     CommunityFrozen,
+    CommunityPublic,
     Failure,
     InternalError,
     NotAuthorised,
@@ -104,14 +105,12 @@ export interface UserFailedError {
 export type AddMembersToChannelFailed = {
     kind: "add_to_channel_failed";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
 };
 export interface AddMembersToChannelPartialSuccess {
     kind: "add_to_channel_partial_success";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
     usersAdded: string[];
@@ -127,6 +126,7 @@ export type AddMembersToChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
+    | CommunityPublic
     | InternalError
     | Offline;
 

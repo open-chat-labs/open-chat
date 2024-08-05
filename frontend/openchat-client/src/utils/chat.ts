@@ -380,6 +380,8 @@ export function mergeLocalSummaryUpdates(
                     current.latestEventIndex,
                 );
 
+                console.log(`updated.kind: ${updated.kind}`, `current.kind: ${current.kind}`);
+
                 if (updated.kind === undefined) {
                     merged.set(chatId, {
                         ...current,
@@ -395,7 +397,7 @@ export function mergeLocalSummaryUpdates(
                                 updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
-                } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
+                } else if (current.kind === updated.kind) {
                     merged.set(chatId, {
                         ...current,
                         latestMessage,
@@ -542,6 +544,7 @@ function mergePermissions(
         changeRoles: updated.changeRoles ?? current.changeRoles,
         updateGroup: updated.updateGroup ?? current.updateGroup,
         inviteUsers: updated.inviteUsers ?? current.inviteUsers,
+        addMembers: updated.addMembers ?? current.addMembers,
         removeMembers: updated.removeMembers ?? current.removeMembers,
         deleteMessages: updated.deleteMessages ?? current.deleteMessages,
         pinMessages: updated.pinMessages ?? current.pinMessages,
@@ -1098,6 +1101,14 @@ export function canInviteUsers(chat: ChatSummary): boolean {
         chat.kind !== "direct_chat" &&
         !chat.frozen &&
         isPermitted(chat.membership.role, chat.permissions.inviteUsers)
+    );
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    return (
+        chat.kind === "channel" &&
+        !chat.frozen &&
+        isPermitted(chat.membership.role, chat.permissions.addMembers)
     );
 }
 
@@ -1902,6 +1913,9 @@ export function diffGroupPermissions(
     }
     if (original.inviteUsers !== updated.inviteUsers) {
         diff.inviteUsers = updated.inviteUsers;
+    }
+    if (original.addMembers !== updated.addMembers) {
+        diff.addMembers = updated.addMembers;
     }
     if (original.removeMembers !== updated.removeMembers) {
         diff.removeMembers = updated.removeMembers;

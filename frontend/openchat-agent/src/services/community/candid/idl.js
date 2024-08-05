@@ -72,35 +72,17 @@ export const idlFactory = ({ IDL }) => {
     'TooOld' : IDL.Null,
     'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
   });
-  const GateCheckFailedReason = IDL.Variant({
-    'NotLifetimeDiamondMember' : IDL.Null,
-    'NotDiamondMember' : IDL.Null,
-    'PaymentFailed' : ICRC2_TransferFromError,
-    'InsufficientBalance' : IDL.Nat,
-    'NoSnsNeuronsFound' : IDL.Null,
-    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
-    'Locked' : IDL.Null,
-    'NoUniquePersonProof' : IDL.Null,
-    'FailedVerifiedCredentialCheck' : IDL.Text,
-    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
-  });
-  const UserFailedGateCheck = IDL.Record({
-    'user_id' : UserId,
-    'reason' : GateCheckFailedReason,
-  });
   const UserFailedError = IDL.Record({
     'user_id' : UserId,
     'error' : IDL.Text,
   });
   const AddMembersToChannelFailed = IDL.Record({
     'users_limit_reached' : IDL.Vec(UserId),
-    'users_failed_gate_check' : IDL.Vec(UserFailedGateCheck),
     'users_already_in_channel' : IDL.Vec(UserId),
     'users_failed_with_error' : IDL.Vec(UserFailedError),
   });
   const AddMembersToChannelPartialSuccess = IDL.Record({
     'users_limit_reached' : IDL.Vec(UserId),
-    'users_failed_gate_check' : IDL.Vec(UserFailedGateCheck),
     'users_already_in_channel' : IDL.Vec(UserId),
     'users_failed_with_error' : IDL.Vec(UserFailedError),
     'users_added' : IDL.Vec(UserId),
@@ -108,6 +90,7 @@ export const idlFactory = ({ IDL }) => {
   const AddMembersToChannelResponse = IDL.Variant({
     'Failed' : AddMembersToChannelFailed,
     'UserNotInChannel' : IDL.Null,
+    'CommunityPublic' : IDL.Null,
     'PartialSuccess' : AddMembersToChannelPartialSuccess,
     'ChannelNotFound' : IDL.Null,
     'UserLimitReached' : IDL.Nat32,
@@ -1953,6 +1936,7 @@ export const idlFactory = ({ IDL }) => {
     'thread_permissions' : OptionalMessagePermissionsUpdate,
     'change_roles' : IDL.Opt(PermissionRole),
     'start_video_call' : IDL.Opt(PermissionRole),
+    'add_members' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });

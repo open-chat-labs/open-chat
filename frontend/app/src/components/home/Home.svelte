@@ -1001,6 +1001,7 @@
                     updateGroup: "admin",
                     pinMessages: "admin",
                     inviteUsers: "admin",
+                    addMembers: "admin",
                     mentionAllMembers: "member",
                     reactToMessages: "member",
                     startVideoCall: "member",
