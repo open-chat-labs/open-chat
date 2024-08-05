@@ -21,7 +21,7 @@
 
     let failed = false;
     let verifying = false;
-    let step: "linking" | "verification" = "verification";
+    let step: "linking" | "verification" = "linking";
     let error: string | undefined = undefined;
     let confirmed = false;
 

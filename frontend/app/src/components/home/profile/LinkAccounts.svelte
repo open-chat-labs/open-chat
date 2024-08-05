@@ -3,7 +3,6 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
-    import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { iconSize } from "../../../stores/iconSize";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -14,6 +13,8 @@
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
+    import AlertBox from "../../AlertBox.svelte";
+    import { DelegationChain } from "@dfinity/identity";
     // import { ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
@@ -123,18 +124,13 @@
             </p>
         {/if}
         {#if step === "explain"}
-            <div class="explain">
-                <div class="explain-icon">
-                    <Alert size={$iconSize} color={"var(--warn"} />
-                </div>
-                <div class="explain-txt">
-                    {#each explanations as explanation}
-                        <p class="info">
-                            <Translatable resourceKey={explanation} />
-                        </p>
-                    {/each}
-                </div>
-            </div>
+            <AlertBox>
+                {#each explanations as explanation}
+                    <p class="info">
+                        <Translatable resourceKey={explanation} />
+                    </p>
+                {/each}
+            </AlertBox>
         {:else if step === "linking"}
             {#if substep.kind === "current"}
                 <div class="info center">
@@ -158,9 +154,9 @@
         {/if}
     </div>
 
-    <div let:onClose slot="footer">
+    <div slot="footer">
         <ButtonGroup>
-            <Button secondary on:click={onClose}
+            <Button secondary on:click={() => dispatch("close")}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             {#if step === "explain"}
                 <Button secondary on:click={linkIdentity}>
@@ -192,23 +188,6 @@
 
         &.center {
             text-align: center;
-        }
-    }
-
-    .explain {
-        padding: $sp4;
-        border: 1px solid var(--warn);
-        display: flex;
-        align-items: flex-start;
-        gap: $sp3;
-        border-radius: var(--rd);
-
-        .explain-icon {
-            flex: 0 0 25px;
-        }
-
-        .explain-txt {
-            flex: auto;
         }
     }
 </style>
