@@ -19,6 +19,7 @@
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
+    import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     // import { ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
@@ -27,9 +28,14 @@
     export let explanations: ResourceKey[];
     export let error: string | undefined;
 
+    type IdentityDetail = {
+        key: ECDSAKeyIdentity;
+        delegation: DelegationChain;
+    };
+
     type CurrentPrincipal = { kind: "current" };
-    type NextPrincipal = { kind: "next"; currentPrincipal: string };
-    type LinkPrincipals = { kind: "link"; currentPrincipal: string; nextPrincipal: string };
+    type NextPrincipal = { kind: "next"; current: IdentityDetail };
+    type LinkPrincipals = { kind: "link"; current: IdentityDetail; next: IdentityDetail };
     type LinkStage = CurrentPrincipal | NextPrincipal | LinkPrincipals;
 
     let failed = false;
@@ -44,7 +50,7 @@
         step = "linking";
     }
 
-    function loginCurrent(ev: CustomEvent<AuthProvider>) {
+    async function loginCurrent(ev: CustomEvent<AuthProvider>) {
         const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
@@ -63,18 +69,30 @@
             console.log("Logging in with SOL");
         } else {
             // This is the II / NFID case
-            const authClient = AuthClient.create({ storage: new InMemoryAuthClientStorage() });
+            const identity = await ECDSAKeyIdentity.generate();
+            const storage = new InMemoryAuthClientStorage();
+            const authClient = AuthClient.create({
+                storage,
+                identity: identity,
+            });
             authClient.then((c) => {
                 c.login({
                     ...client.getAuthClientOptions(provider),
-                    onSuccess: () => {
-                        console.log("success", c.getIdentity());
-
-                        const principal = c.getIdentity().getPrincipal().toString();
-                        if (principal !== client.AuthPrincipal) {
-                            error = "Principal mismatch";
-                        } else {
-                            substep = { kind: "next", currentPrincipal: principal };
+                    onSuccess: async () => {
+                        const delegation = await storage.get("delegation");
+                        if (delegation) {
+                            const principal = c.getIdentity().getPrincipal().toString();
+                            if (principal !== client.AuthPrincipal) {
+                                error = "Principal mismatch";
+                            } else {
+                                substep = {
+                                    kind: "next",
+                                    current: {
+                                        key: identity,
+                                        delegation: DelegationChain.fromJSON(delegation),
+                                    },
+                                };
+                            }
                         }
                     },
                     onError: (err) => {
@@ -86,22 +104,34 @@
         }
     }
 
-    function loginNext() {
+    async function loginNext() {
         if (substep.kind !== "next") return;
-        const currentPrincipal = substep.currentPrincipal;
+        const current = substep.current;
 
-        const authClient = AuthClient.create();
+        const identity = await ECDSAKeyIdentity.generate();
+        const storage = new InMemoryAuthClientStorage();
+        const authClient = AuthClient.create({
+            storage,
+            identity: identity,
+        });
         authClient.then((c) => {
             c.login({
                 ...client.getAuthClientOptions(AuthProvider.II),
-                onSuccess: () => {
-                    const principal = c.getIdentity().getPrincipal().toString();
-                    if (principal === currentPrincipal) {
-                        error =
-                            "The principal you are trying to link is the same as the current principal";
-                    } else {
-                        substep = { kind: "link", currentPrincipal, nextPrincipal: principal };
-                        // Probably we can just go ahead and link at this point and we don't need another state
+                onSuccess: async () => {
+                    // TODO - we need to check that the two identities are not the same somehow
+                    const delegation = await storage.get("delegation");
+                    if (delegation) {
+                        const next = {
+                            key: identity,
+                            delegation: DelegationChain.fromJSON(delegation),
+                        };
+
+                        client.linkIdentities(
+                            current.key,
+                            current.delegation,
+                            next.key,
+                            next.delegation,
+                        );
                     }
                 },
                 onError: (err) => {
