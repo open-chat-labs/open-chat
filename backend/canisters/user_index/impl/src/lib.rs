@@ -289,7 +289,6 @@ struct Data {
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub airdrop_bot_canister_id: CanisterId,
-    #[serde(default = "online_users_canister_id")]
     pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -327,12 +326,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
-    #[serde(default)]
     pub remove_from_online_users_queue: VecDeque<Principal>,
-}
-
-fn online_users_canister_id() -> CanisterId {
-    CanisterId::from_text("3vlw6-fiaaa-aaaaf-aaa3a-cai").unwrap()
 }
 
 impl Data {
