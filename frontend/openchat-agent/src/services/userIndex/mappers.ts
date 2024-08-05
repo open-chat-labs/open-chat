@@ -68,6 +68,7 @@ export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
         return {
             serverTimestamp: timestamp,
             users: candid.Success.users.map(userSummaryUpdate),
+            deletedUserIds: new Set(candid.Success.deleted.map((d) => d.toString())),
             currentUser: optional(candid.Success.current_user, (u) =>
                 currentUserSummary(u, timestamp),
             ),
