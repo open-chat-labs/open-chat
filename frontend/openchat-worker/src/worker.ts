@@ -1830,7 +1830,7 @@ async function linkIdentities(
     const approverAgent = new IdentityAgent(approverIdentity, identityCanister, icUrl);
 
     if (approver != authPrincipalString) {
-        throw new Error("Identity does not match");
+        return "approver_principal_mismatch";
     }
 
     const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
