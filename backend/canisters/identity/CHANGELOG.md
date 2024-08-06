@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `AlreadyLinkedToPrincipal` to `initiate_identity_link` response ([#6204](https://github.com/open-chat-labs/open-chat/pull/6204))
+
 ## [[2.0.1251](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1251-identity)] - 2024-07-25
 
 ### Changed
