@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+###
+
+- Add `user_principals` showing current user's principals per auth provider ([#6205](https://github.com/open-chat-labs/open-chat/pull/6205))
+
 ### Changed
 
 - Add `AlreadyLinkedToPrincipal` to `initiate_identity_link` response ([#6204](https://github.com/open-chat-labs/open-chat/pull/6204))
