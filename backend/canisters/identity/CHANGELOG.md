@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Add new principal to `auth_principals` list after linking ([#6207](https://github.com/open-chat-labs/open-chat/pull/6207))
+- Only return `AlreadyRegistered` if identity is linked to an OC account ([#6208](https://github.com/open-chat-labs/open-chat/pull/6208))
 
 ## [[2.0.1251](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1251-identity)] - 2024-07-25
 
