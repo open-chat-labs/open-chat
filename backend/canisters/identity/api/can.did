@@ -75,6 +75,7 @@ type InitiateIdentityLinkArgs = record {
 
 type InitiateIdentityLinkResponse = variant {
     Success;
+    AlreadyLinkedToPrincipal;
     AlreadyRegistered;
     TargetUserNotFound;
     PublicKeyInvalid : text;
