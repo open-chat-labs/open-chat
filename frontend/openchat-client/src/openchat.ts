@@ -404,7 +404,6 @@ import type {
     HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
-    GetDelegationResponse,
     VideoCallPresence,
     VideoCallParticipant,
     AcceptedRules,
@@ -6688,7 +6687,8 @@ export class OpenChat extends OpenChatAgentWorker {
         connectToWorker: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
-        | { kind: "failure" }
+        | { kind: "error" }
+        | { kind: "not_found" }
     > {
         const sessionKeyDer = toDer(sessionKey);
         const getDelegationResponse = await this.sendRequest({
@@ -6715,7 +6715,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 delegation,
             };
         }
-        return { kind: "failure" };
+        return getDelegationResponse;
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

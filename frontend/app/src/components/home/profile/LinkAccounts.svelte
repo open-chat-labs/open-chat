@@ -234,7 +234,7 @@
                                         provider: AuthProvider.EMAIL,
                                     },
                                 };
-                            } else if (response.kind === "failure") {
+                            } else if (response.kind === "error") {
                                 console.debug("getSignInWithEmailDelegation error");
                             }
                         })

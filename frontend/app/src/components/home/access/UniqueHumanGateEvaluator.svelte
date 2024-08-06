@@ -22,16 +22,23 @@
     let verifying = false;
     let confirmed = false;
 
+    // TODO - we need to integrate the whole account linking thing into this
     function verify() {
         verifying = true;
         failed = false;
         client
-            .verifyAccessGate(uniquePersonCredentialGate)
-            .then((credential) => {
-                if (credential === undefined) {
-                    failed = true;
-                } else {
-                    dispatch("credentialReceived", credential);
+            .getLinkedIIPrincipal()
+            .then((principal) => {
+                if (principal) {
+                    return client
+                        .verifyAccessGate(uniquePersonCredentialGate, principal)
+                        .then((credential) => {
+                            if (credential === undefined) {
+                                failed = true;
+                            } else {
+                                dispatch("credentialReceived", credential);
+                            }
+                        });
                 }
             })
             .catch(() => (failed = true))

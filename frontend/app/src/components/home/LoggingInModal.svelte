@@ -138,14 +138,14 @@
                                 client.gaTrack("received_email_signin_delegation", "registration");
                                 emailSignInPoller?.stop();
                                 emailSignInPoller == undefined;
-                            } else if (response.kind === "failure") {
+                            } else if (response.kind === "error") {
                                 console.debug("getSignInWithEmailDelegation error");
-                                error = "loginDialog.unexpectedError";
+                                error = "identity.failure.loginApprover";
                             }
                         })
                         .catch((err) => {
                             console.warn("getSignInWithEmailDelegation error", err);
-                            error = "loginDialog.unexpectedError";
+                            error = "identity.failure.loginApprover";
                         });
                 }
             },
