@@ -11,6 +11,7 @@ fn initiate_identity_link(args: Args) -> Response {
 }
 
 fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // this is the initiator
     let caller = state.env.caller();
 
     if let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) {

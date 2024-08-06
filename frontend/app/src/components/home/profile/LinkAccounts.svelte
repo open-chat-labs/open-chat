@@ -3,6 +3,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
+    import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { iconSize } from "../../../stores/iconSize";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -20,6 +21,7 @@
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import SignInOption from "./SignInOption.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -31,6 +33,7 @@
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
+        provider: AuthProvider;
     };
 
     type ApproverIdentity = { kind: "approver"; initiator: IdentityDetail };
@@ -104,6 +107,7 @@
                                         approver: {
                                             key: identity,
                                             delegation: DelegationChain.fromJSON(delegation),
+                                            provider,
                                         },
                                     };
                                 }
@@ -148,6 +152,7 @@
                                 initiator: {
                                     key: identity,
                                     delegation: DelegationChain.fromJSON(delegation),
+                                    provider: AuthProvider.II,
                                 },
                             };
                         }
@@ -168,6 +173,7 @@
     }
 
     function walletConnected(
+        provider: AuthProvider.ETH | AuthProvider.SOL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
     ) {
         if (substep.kind !== "approver") return;
@@ -177,6 +183,7 @@
             approver: {
                 key: ev.detail.key,
                 delegation: ev.detail.delegation,
+                provider,
             },
         };
     }
@@ -194,10 +201,15 @@
             .then((resp) => {
                 console.log("Response from linkIdentities: ", resp);
                 if (resp === "already_registered" || resp === "success") {
-                    dispatch("proceed");
-                } else if (resp === "already_linked_to_principal") {
-                    console.log("Identity already linked: ", resp);
+                    console.log("Identity already linked by someone else: ", resp);
                     error = "identity.failure.alreadyLinked";
+                    substep = { kind: "initiator" };
+                } else if (resp === "already_linked_to_principal") {
+                    console.log("Identity already linked by you: ", resp);
+                    dispatch("proceed");
+                } else if (resp === "principal_mismatch") {
+                    console.log("Approval principal mismatch: ", resp);
+                    error = "identity.failure.principalMismatch";
                     substep = { kind: "initiator" };
                 } else {
                     console.log("Failed to link identities: ", resp);
@@ -253,7 +265,9 @@
                         {#await import("../SigninWithEth.svelte")}
                             <div class="loading">...</div>
                         {:then { default: SigninWithEth }}
-                            <SigninWithEth assumeIdentity={false} on:connected={walletConnected} />
+                            <SigninWithEth
+                                assumeIdentity={false}
+                                on:connected={(ev) => walletConnected(AuthProvider.ETH, ev)} />
                         {/await}
                     </div>
                 {:else if approverStep === "choose_sol_wallet"}
@@ -261,7 +275,9 @@
                         {#await import("../SigninWithSol.svelte")}
                             <div class="loading">...</div>
                         {:then { default: SigninWithSol }}
-                            <SigninWithSol assumeIdentity={false} on:connected={walletConnected} />
+                            <SigninWithSol
+                                assumeIdentity={false}
+                                on:connected={(ev) => walletConnected(AuthProvider.SOL, ev)} />
                         {/await}
                     </div>
                 {/if}
@@ -280,6 +296,17 @@
             {:else if substep.kind === "ready_to_link"}
                 <div class="info">
                     <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
+                </div>
+                <div class="identities">
+                    <SignInOption
+                        hollow
+                        provider={AuthProvider.II}
+                        name={i18nKey(AuthProvider.II)} />
+                    <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <SignInOption
+                        hollow
+                        provider={substep.approver.provider}
+                        name={i18nKey(substep.approver.provider)} />
                 </div>
             {/if}
         {/if}
@@ -336,5 +363,12 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
+    }
+
+    .identities {
+        display: flex;
+        gap: $sp3;
+        justify-content: space-between;
+        align-items: center;
     }
 </style>

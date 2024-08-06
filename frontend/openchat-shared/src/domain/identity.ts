@@ -99,7 +99,10 @@ export type ApproveIdentityLinkResponse =
     | "invalid_signature"
     | "delegation_too_old";
 
-export type LinkIdentitiesResponse = InitiateIdentityLinkResponse | ApproveIdentityLinkResponse;
+export type LinkIdentitiesResponse =
+    | InitiateIdentityLinkResponse
+    | ApproveIdentityLinkResponse
+    | "principal_mismatch";
 
 export type AuthenticationPrincipal = {
     principal: string;
