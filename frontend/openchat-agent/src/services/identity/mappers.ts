@@ -138,6 +138,9 @@ export function initiateIdentityLinkResponse(
     if ("AlreadyRegistered" in candid) {
         return "already_registered";
     }
+    if ("AlreadyLinkedToPrincipal" in candid) {
+        return "already_linked_to_principal";
+    }
     if ("TargetUserNotFound" in candid) {
         return "target_user_not_found";
     }

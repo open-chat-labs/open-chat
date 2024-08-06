@@ -521,7 +521,6 @@
     },
     "identity": {
         "back": "Back",
-        "failed": "Sorry but we failed to link an Internet Identity to your OpenChat account",
         "link": "Link",
         "linkIdentity": "Link Identity",
         "linkTwoIdentities": "We are now ready to link the two identities together.",
@@ -529,8 +528,15 @@
         "proceed": "Proceed",
         "signInCurrent": "Sign in with the identity provider that you are currently using",
         "signInNext": "Create or signin with the internet identity that you would like to link to your OpenChat account",
-        "warning1": "You must be signed in using Internet Identity to confirm your unique personhood. If you registered using another method you will need to create and link an Internet Identity to your OpenChat account first.",
-        "warning2": "If you are already signed in with Internet Identity, you can proceed."
+        "tryAgain": "Try again",
+        "warning1": "You must have an Internet Identity associated with your OpenChat account to confirm your unique personhood. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
+        "warning2": "If you are already signed in with Internet Identity, you can proceed.",
+        "failure": {
+            "loginInitiator": "Sorry we were unable to sign into your chosen Internet Identity",
+            "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
+            "link": "Sorry but we were unable to link your Internet Identity to your OpenChat account",
+            "alreadyLinked": "Sorry but it looks like that Internet Identity is already linked to your OpenChat account"
+        }
     },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",

@@ -1376,14 +1376,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
+    verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
         if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
             return Promise.resolve(undefined);
         }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._authPrincipal,
+            iiPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.issuerCanisterId,
             gate.credential.credentialType,
@@ -7361,6 +7361,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 events: [],
                 total: 0,
             };
+        });
+    }
+
+    getLinkedIIPrincipal(): Promise<string | undefined> {
+        // TODO - we will replace this with an api call when available
+        return new Promise((resolve) => {
+            window.setTimeout(() => {
+                // resolve(this._authPrincipal);
+                resolve(undefined);
+            }, 2000);
         });
     }
 

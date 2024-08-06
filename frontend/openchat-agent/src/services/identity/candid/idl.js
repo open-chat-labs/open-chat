@@ -68,6 +68,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'TargetUserNotFound' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
+    'AlreadyLinkedToPrincipal' : IDL.Null,
   });
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,

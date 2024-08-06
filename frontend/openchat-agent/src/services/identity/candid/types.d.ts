@@ -43,7 +43,8 @@ export interface InitiateIdentityLinkArgs {
 export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
   { 'TargetUserNotFound' : null } |
-  { 'PublicKeyInvalid' : string };
+  { 'PublicKeyInvalid' : string } |
+  { 'AlreadyLinkedToPrincipal' : null };
 export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,

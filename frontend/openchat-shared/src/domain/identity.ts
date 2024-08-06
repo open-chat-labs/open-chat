@@ -87,6 +87,7 @@ export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityE
 export type InitiateIdentityLinkResponse =
     | "success"
     | "already_registered"
+    | "already_linked_to_principal"
     | "target_user_not_found"
     | "public_key_invalid";
 
@@ -94,6 +95,7 @@ export type ApproveIdentityLinkResponse =
     | "success"
     | "caller_not_recognised"
     | "link_request_not_found"
+    | "already_linked_to_principal"
     | "invalid_signature"
     | "delegation_too_old";
 

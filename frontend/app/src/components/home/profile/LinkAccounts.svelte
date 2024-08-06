@@ -20,13 +20,13 @@
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
-    // import { ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let explanations: ResourceKey[];
     export let error: string | undefined;
+    export let iiPrincipal: string | undefined;
 
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
@@ -42,17 +42,18 @@
     };
     type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
-    let failed = false;
     let step: "explain" | "linking" = "explain";
     let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
     let email = "";
     let approverStep: "choose_provider" | "choose_eth_wallet" | "choose_sol_wallet" =
         "choose_provider";
+    let linking = false;
+    let loggingInInitiator = false;
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
-    function linkIdentity() {
+    function initiateLinking() {
         step = "linking";
     }
 
@@ -86,33 +87,38 @@
                 storage,
                 identity: identity,
             });
-            authClient.then((c) => {
-                c.login({
-                    ...client.getAuthClientOptions(provider),
-                    onSuccess: async () => {
-                        const delegation = await storage.get("delegation");
-                        if (delegation) {
-                            const principal = c.getIdentity().getPrincipal().toString();
-                            if (principal !== client.AuthPrincipal) {
-                                error = "Principal mismatch";
-                            } else {
-                                substep = {
-                                    kind: "ready_to_link",
-                                    initiator,
-                                    approver: {
-                                        key: identity,
-                                        delegation: DelegationChain.fromJSON(delegation),
-                                    },
-                                };
+            authClient
+                .then((c) => {
+                    c.login({
+                        ...client.getAuthClientOptions(provider),
+                        onSuccess: async () => {
+                            const delegation = await storage.get("delegation");
+                            if (delegation) {
+                                const principal = c.getIdentity().getPrincipal().toString();
+                                if (principal !== client.AuthPrincipal) {
+                                    error = "Principal mismatch";
+                                } else {
+                                    substep = {
+                                        kind: "ready_to_link",
+                                        initiator,
+                                        approver: {
+                                            key: identity,
+                                            delegation: DelegationChain.fromJSON(delegation),
+                                        },
+                                    };
+                                }
                             }
-                        }
-                    },
-                    onError: (err) => {
-                        error = "we weren't able to sign into II at all";
-                        console.warn("Login error from auth client: ", err);
-                    },
+                        },
+                        onError: (err) => {
+                            console.log("Failed to log into approver: ", err);
+                            error = "identity.failure.loginApprover";
+                        },
+                    });
+                })
+                .catch((err) => {
+                    console.log("Failed to log into approver: ", err);
+                    error = "identity.failure.loginApprover";
                 });
-            });
         }
     }
 
@@ -120,33 +126,45 @@
     async function loginInitiator() {
         if (substep.kind !== "initiator") return;
 
+        error = undefined;
+        loggingInInitiator = true;
+
         const identity = await ECDSAKeyIdentity.generate();
         const storage = new InMemoryAuthClientStorage();
         const authClient = AuthClient.create({
             storage,
             identity: identity,
         });
-        authClient.then((c) => {
-            c.login({
-                ...client.getAuthClientOptions(AuthProvider.II),
-                onSuccess: async () => {
-                    const delegation = await storage.get("delegation");
-                    if (delegation) {
-                        substep = {
-                            kind: "approver",
-                            initiator: {
-                                key: identity,
-                                delegation: DelegationChain.fromJSON(delegation),
-                            },
-                        };
-                    }
-                },
-                onError: (err) => {
-                    error = "we weren't able to sign into II at all";
-                    console.warn("Login error from auth client: ", err);
-                },
+        authClient
+            .then((c) => {
+                c.login({
+                    ...client.getAuthClientOptions(AuthProvider.II),
+                    onSuccess: async () => {
+                        iiPrincipal = c.getIdentity().getPrincipal().toString();
+                        const delegation = await storage.get("delegation");
+                        if (delegation) {
+                            substep = {
+                                kind: "approver",
+                                initiator: {
+                                    key: identity,
+                                    delegation: DelegationChain.fromJSON(delegation),
+                                },
+                            };
+                        }
+                        loggingInInitiator = false;
+                    },
+                    onError: (err) => {
+                        error = "identity.failure.loginInitiator";
+                        console.warn("Failed to log into initiator: ", err);
+                        loggingInInitiator = false;
+                    },
+                });
+            })
+            .catch((err) => {
+                console.log("Failed to log into initiator: ", err);
+                error = "identity.failure.loginInitiator";
+                loggingInInitiator = false;
             });
-        });
     }
 
     function walletConnected(
@@ -169,16 +187,31 @@
 
         const { initiator, approver } = substep;
 
+        error = undefined;
+        linking = true;
         client
             .linkIdentities(initiator.key, initiator.delegation, approver.key, approver.delegation)
             .then((resp) => {
                 console.log("Response from linkIdentities: ", resp);
                 if (resp === "already_registered" || resp === "success") {
                     dispatch("proceed");
+                } else if (resp === "already_linked_to_principal") {
+                    console.log("Identity already linked: ", resp);
+                    error = "identity.failure.alreadyLinked";
+                    substep = { kind: "initiator" };
                 } else {
-                    error = "identity.failed";
+                    console.log("Failed to link identities: ", resp);
+                    error = "identity.failure.link";
+                    substep = { kind: "initiator" };
                 }
-            });
+            })
+            .finally(() => (linking = false));
+    }
+
+    function reset() {
+        error = undefined;
+        step = "explain";
+        substep = { kind: "initiator" };
     }
 </script>
 
@@ -190,14 +223,13 @@
         </div>
     </div>
     <div slot="body">
-        {#if failed}
+        {#if error !== undefined}
             <p class="info">
                 <ErrorMessage>
-                    <Translatable resourceKey={i18nKey("identity.failed")} />
+                    <Translatable resourceKey={i18nKey(error)} />
                 </ErrorMessage>
             </p>
-        {/if}
-        {#if step === "explain"}
+        {:else if step === "explain"}
             <AlertBox>
                 {#each explanations as explanation}
                     <p class="info">
@@ -237,7 +269,10 @@
                 <div class="info">
                     <Translatable resourceKey={i18nKey("identity.signInNext")} />
                 </div>
-                <Button on:click={loginInitiator}>
+                <Button
+                    loading={loggingInInitiator}
+                    disabled={loggingInInitiator}
+                    on:click={loginInitiator}>
                     <span class="link-ii-logo">
                         <InternetIdentityLogo />
                     </span>
@@ -246,8 +281,6 @@
                 <div class="info">
                     <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
                 </div>
-                <Button on:click={linkIdentities}>
-                    <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {/if}
         {/if}
     </div>
@@ -256,17 +289,25 @@
         <ButtonGroup>
             <Button secondary on:click={() => dispatch("close")}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-            {#if step === "explain"}
-                <Button secondary on:click={linkIdentity}>
+            {#if error !== undefined}
+                <Button secondary on:click={reset}
+                    ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
+            {:else if step === "explain"}
+                <Button on:click={initiateLinking}>
                     <span class="link-ii-logo">
                         <InternetIdentityLogo />
                     </span>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
-                <Button on:click={() => dispatch("proceed")}
-                    ><Translatable resourceKey={i18nKey("identity.proceed")} /></Button>
             {:else if step === "linking"}
-                <Button secondary on:click={() => (step = "explain")}
+                <Button secondary on:click={reset}
                     ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
+                {#if substep.kind === "ready_to_link"}
+                    <Button loading={linking} disabled={linking} on:click={linkIdentities}>
+                        <span class="link-ii-logo">
+                            <InternetIdentityLogo />
+                        </span>
+                        <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+                {/if}
             {/if}
         </ButtonGroup>
     </div>
