@@ -2,6 +2,14 @@ type Nanoseconds = nat64;
 type PublicKey = blob;
 type TimestampNanoseconds = nat64;
 
+type AuthPrincipalsResponse = variant {
+    Success : vec record {
+        "principal" : principal;
+        originating_canister : principal;
+    };
+    NotFound;
+};
+
 type CheckAuthPrincipalResponse = variant {
     Success;
     NotFound;
@@ -23,14 +31,6 @@ type SignedDelegation = record {
         expiration : TimestampNanoseconds;
     };
     signature : blob;
-};
-
-type UserPrincipalsResponse = variant {
-    Success : vec record {
-        "principal" : principal;
-        originating_canister : principal;
-    };
-    NotFound;
 };
 
 type GenerateChallengeResponse = variant {
@@ -105,9 +105,9 @@ type PrepareDelegationSuccess = record {
 };
 
 service : {
+    auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
-    user_principals : (record {}) -> (UserPrincipalsResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     generate_challenge : (record {}) -> (GenerateChallengeResponse);
