@@ -25,6 +25,14 @@ type SignedDelegation = record {
     signature : blob;
 };
 
+type UserPrincipalsResponse = variant {
+    Success : vec record {
+        "principal" : principal;
+        originating_canister : principal;
+    };
+    NotFound;
+};
+
 type GenerateChallengeResponse = variant {
     Success : record {
         key : nat32;
@@ -99,6 +107,7 @@ type PrepareDelegationSuccess = record {
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    user_principals : (record {}) -> (UserPrincipalsResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     generate_challenge : (record {}) -> (GenerateChallengeResponse);
