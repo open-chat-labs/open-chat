@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import { AuthProvider, type ResourceKey } from "openchat-client";
     import Button from "../../Button.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
@@ -13,6 +14,8 @@
     <div class="icon center">
         {#if provider === AuthProvider.II}
             <InternetIdentityLogo />
+        {:else if provider === AuthProvider.EMAIL}
+            <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
         {:else if provider === AuthProvider.ETH}
             <img class="eth-img" src="/assets/ethereum.svg" alt="ethereum" />
         {:else if provider === AuthProvider.SOL}

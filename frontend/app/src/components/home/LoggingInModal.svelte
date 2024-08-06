@@ -132,14 +132,14 @@
             async () => {
                 if (emailSignInPoller !== undefined) {
                     client
-                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
+                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration, true)
                         .then((response) => {
                             if (response.kind === "success") {
                                 client.gaTrack("received_email_signin_delegation", "registration");
                                 emailSignInPoller?.stop();
                                 emailSignInPoller == undefined;
-                            } else if (response.kind === "error") {
-                                console.debug("getSignInWithEmailDelegation error", response.error);
+                            } else if (response.kind === "failure") {
+                                console.debug("getSignInWithEmailDelegation error");
                                 error = "loginDialog.unexpectedError";
                             }
                         })

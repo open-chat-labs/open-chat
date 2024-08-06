@@ -6663,6 +6663,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 session.userKey,
                 session.key,
                 session.expiration,
+                true,
             ).catch((error) => ({
                 kind: "error",
                 error: error.toString(),
@@ -6684,7 +6685,11 @@ export class OpenChat extends OpenChatAgentWorker {
         userKey: Uint8Array,
         sessionKey: ECDSAKeyIdentity,
         expiration: bigint,
-    ): Promise<GetDelegationResponse> {
+        connectToWorker: boolean,
+    ): Promise<
+        | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
+        | { kind: "failure" }
+    > {
         const sessionKeyDer = toDer(sessionKey);
         const getDelegationResponse = await this.sendRequest({
             kind: "getSignInWithEmailDelegation",
@@ -6699,10 +6704,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 getDelegationResponse.delegation,
                 getDelegationResponse.signature,
             );
-            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-            this.loadedAuthenticationIdentity(identity);
+            const delegation = identity.getDelegation();
+            await storeIdentity(this._authClientStorage, sessionKey, delegation);
+            if (connectToWorker) {
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return {
+                kind: "success",
+                key: sessionKey,
+                delegation,
+            };
         }
-        return getDelegationResponse;
+        return { kind: "failure" };
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

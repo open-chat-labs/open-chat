@@ -535,7 +535,7 @@
             "loginInitiator": "Sorry we were unable to sign into your chosen Internet Identity",
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
             "link": "Sorry but we were unable to link your Internet Identity to your OpenChat account",
-            "alreadyLinked": "Sorry but it looks like that Internet Identity is already linked to your OpenChat account",
+            "alreadyLinked": "Sorry but it looks like that Internet Identity is already linked to an OpenChat account",
             "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with"
         }
     },

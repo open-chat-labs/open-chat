@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -12,16 +13,18 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
+        Poller,
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import SignInOption from "./SignInOption.svelte";
+    import { toastStore } from "../../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -49,12 +52,23 @@
     let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
     let email = "";
-    let approverStep: "choose_provider" | "choose_eth_wallet" | "choose_sol_wallet" =
-        "choose_provider";
+    let approverStep:
+        | "choose_provider"
+        | "choose_eth_wallet"
+        | "choose_sol_wallet"
+        | "signing_in_with_email" = "choose_provider";
     let linking = false;
     let loggingInInitiator = false;
+    let emailSignInPoller: Poller | undefined = undefined;
+    let verificationCode: string | undefined = undefined;
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
+
+    $: console.log("Approver step: ", approverStep);
+
+    onMount(() => {
+        return () => emailSignInPoller?.stop();
+    });
 
     function initiateLinking() {
         step = "linking";
@@ -76,8 +90,8 @@
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            // ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
-            console.log("TODO Logging in with email");
+            approverStep = "signing_in_with_email";
+            ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
         } else if (provider === AuthProvider.ETH) {
             approverStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
@@ -172,6 +186,81 @@
             });
     }
 
+    function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
+        verificationCode = undefined;
+        client
+            .generateMagicLink(email, sessionKey)
+            .then((response) => {
+                if (response.kind === "success") {
+                    verificationCode = response.code;
+                    startPoller(email, sessionKey, response.userKey, response.expiration);
+                } else if (response.kind === "email_invalid") {
+                    error = "loginDialog.invalidEmail";
+                } else if (response.kind === "failed_to_send_email") {
+                    console.debug("generateMagicLink failed_to_send_email", response.error);
+                    error = "loginDialog.failedToSendEmail";
+                } else if (response.kind === "blocked") {
+                    error = "identity.failure.loginApprover";
+                }
+            })
+            .catch((err) => {
+                console.warn("generateMagicLink error", err);
+                error = "identity.failure.loginApprover";
+            });
+    }
+
+    function startPoller(
+        email: string,
+        sessionKey: ECDSAKeyIdentity,
+        userKey: Uint8Array,
+        expiration: bigint,
+    ) {
+        emailSignInPoller = new Poller(
+            async () => {
+                if (emailSignInPoller !== undefined) {
+                    client
+                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration, false)
+                        .then((response) => {
+                            if (response.kind === "success" && substep.kind === "approver") {
+                                client.gaTrack("received_email_signin_delegation", "registration");
+                                emailSignInPoller?.stop();
+                                emailSignInPoller == undefined;
+                                substep = {
+                                    kind: "ready_to_link",
+                                    initiator: substep.initiator,
+                                    approver: {
+                                        key: response.key,
+                                        delegation: response.delegation,
+                                        provider: AuthProvider.EMAIL,
+                                    },
+                                };
+                            } else if (response.kind === "failure") {
+                                console.debug("getSignInWithEmailDelegation error");
+                            }
+                        })
+                        .catch((err) => {
+                            console.warn("getSignInWithEmailDelegation error", err);
+                        });
+                }
+            },
+            1000,
+            1000,
+        );
+    }
+
+    function copyCode() {
+        if (verificationCode === undefined) return;
+
+        navigator.clipboard.writeText(verificationCode).then(
+            () => {
+                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
+            },
+            () => {
+                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
+            },
+        );
+    }
+
     function walletConnected(
         provider: AuthProvider.ETH | AuthProvider.SOL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
@@ -199,14 +288,15 @@
         client
             .linkIdentities(initiator.key, initiator.delegation, approver.key, approver.delegation)
             .then((resp) => {
-                console.log("Response from linkIdentities: ", resp);
-                if (resp === "already_registered" || resp === "success") {
-                    console.log("Identity already linked by someone else: ", resp);
-                    error = "identity.failure.alreadyLinked";
-                    substep = { kind: "initiator" };
+                if (resp === "success") {
+                    dispatch("proceed");
                 } else if (resp === "already_linked_to_principal") {
                     console.log("Identity already linked by you: ", resp);
                     dispatch("proceed");
+                } else if (resp === "already_registered") {
+                    console.log("Identity already linked by someone else: ", resp);
+                    error = "identity.failure.alreadyLinked";
+                    substep = { kind: "initiator" };
                 } else if (resp === "principal_mismatch") {
                     console.log("Approval principal mismatch: ", resp);
                     error = "identity.failure.principalMismatch";
@@ -221,6 +311,9 @@
     }
 
     function reset() {
+        emailSignInPoller?.stop();
+        emailSignInPoller = undefined;
+        approverStep = "choose_provider";
         error = undefined;
         step = "explain";
         substep = { kind: "initiator" };
@@ -280,6 +373,29 @@
                                 on:connected={(ev) => walletConnected(AuthProvider.SOL, ev)} />
                         {/await}
                     </div>
+                {:else if approverStep === "signing_in_with_email"}
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                emailSignInPoller === undefined
+                                    ? "loginDialog.generatingLink"
+                                    : "loginDialog.checkEmail",
+                            )} />
+
+                        {#if emailSignInPoller !== undefined && verificationCode !== undefined}
+                            <div class="code-wrapper">
+                                <div class="code">
+                                    {verificationCode}
+                                </div>
+                                <div class="copy" on:click={copyCode}>
+                                    <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                                </div>
+                            </div>
+                        {/if}
+                    </p>
+                    {#if error !== undefined}
+                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                    {/if}
                 {/if}
             {:else if substep.kind === "initiator"}
                 <div class="info">
@@ -370,5 +486,25 @@
         gap: $sp3;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .code-wrapper {
+        margin-top: $sp4;
+        display: flex;
+        gap: $sp3;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .code {
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        @include font-size(fs-160);
+    }
+
+    .copy {
+        cursor: pointer;
+        position: relative;
+        top: 2px;
     }
 </style>
