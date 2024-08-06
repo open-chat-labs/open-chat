@@ -3,6 +3,7 @@ import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
     ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
@@ -13,6 +14,7 @@ import type {
 } from "openchat-shared";
 import {
     approveIdentityLinkResponse,
+    authPrincipalsResponse,
     checkAuthPrincipalResponse,
     createIdentityResponse,
     generateChallengeResponse,
@@ -112,6 +114,13 @@ export class IdentityClient extends CandidService {
                 delegation: this.delegation(),
             }),
             approveIdentityLinkResponse,
+        );
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this.handleQueryResponse(
+            () => this.service.auth_principals({}),
+            authPrincipalsResponse,
         );
     }
 

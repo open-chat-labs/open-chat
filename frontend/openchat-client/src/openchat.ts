@@ -7365,13 +7365,27 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {
-        // TODO - we will replace this with an api call when available
-        return new Promise((resolve) => {
-            window.setTimeout(() => {
-                // resolve(this._authPrincipal);
-                resolve(undefined);
-            }, 2000);
-        });
+        return this.sendRequest({
+            kind: "getAuthenticationPrincipals",
+        })
+            .then((resp) => {
+                const iiPrincipals = resp
+                    .filter(
+                        ({ originatingCanister }) =>
+                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID,
+                    )
+                    .map((p) => p.principal);
+                if (iiPrincipals.length === 0) {
+                    console.debug(
+                        "No II principals found, we will have to ask the user to link one",
+                    );
+                }
+                return iiPrincipals[0];
+            })
+            .catch((err) => {
+                console.log("Error loading authentication principals: ", err);
+                return undefined;
+            });
     }
 
     linkIdentities(

@@ -1,5 +1,6 @@
 import type {
     ApiApproveIdentityLinkResponse,
+    ApiAuthPrincipalsResponse,
     ApiCheckAuthPrincipalResponse,
     ApiCreateIdentityResponse,
     ApiGenerateChallengeResponse,
@@ -9,6 +10,7 @@ import type {
 } from "./candid/idl";
 import {
     type ApproveIdentityLinkResponse,
+    type AuthenticationPrincipalsResponse,
     type CheckAuthPrincipalResponse,
     type CreateIdentityResponse,
     type GenerateChallengeResponse,
@@ -151,6 +153,23 @@ export function initiateIdentityLinkResponse(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
         candid,
     );
+}
+
+export function authPrincipalsResponse(
+    candid: ApiAuthPrincipalsResponse,
+): AuthenticationPrincipalsResponse {
+    if ("NotFound" in candid) {
+        return [];
+    }
+
+    if ("Success" in candid) {
+        return candid.Success.map((p) => ({
+            principal: p.principal.toString(),
+            originatingCanister: p.originating_canister.toString(),
+        }));
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", candid);
 }
 
 export function approveIdentityLinkResponse(

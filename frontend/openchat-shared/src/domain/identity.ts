@@ -100,3 +100,10 @@ export type ApproveIdentityLinkResponse =
     | "delegation_too_old";
 
 export type LinkIdentitiesResponse = InitiateIdentityLinkResponse | ApproveIdentityLinkResponse;
+
+export type AuthenticationPrincipal = {
+    principal: string;
+    originatingCanister: string;
+};
+
+export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];

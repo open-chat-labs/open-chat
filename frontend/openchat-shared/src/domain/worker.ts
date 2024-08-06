@@ -164,6 +164,7 @@ import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
     GenerateChallengeResponse,
@@ -388,7 +389,12 @@ export type WorkerRequest =
     | ChitEventsRequest
     | MarkAchievementsSeen
     | SubmitProofOfUniquePersonhood
-    | LinkIdentities;
+    | LinkIdentities
+    | GetAuthenticationPrincipals;
+
+type GetAuthenticationPrincipals = {
+    kind: "getAuthenticationPrincipals";
+};
 
 type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
@@ -1436,7 +1442,8 @@ export type WorkerResponseInner =
     | ClaimDailyChitResponse
     | ChitUserBalance[]
     | ChitEventsResponse
-    | SubmitProofOfUniquePersonhoodResponse;
+    | SubmitProofOfUniquePersonhoodResponse
+    | AuthenticationPrincipalsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2107,4 +2114,6 @@ export type WorkerResult<T> = T extends Init
     ? SubmitProofOfUniquePersonhoodResponse
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
+    : T extends GetAuthenticationPrincipals
+    ? AuthenticationPrincipalsResponse
     : never;
