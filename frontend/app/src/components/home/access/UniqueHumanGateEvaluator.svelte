@@ -24,7 +24,6 @@
     let verifying = false;
     let confirmed = false;
     let step: "linking" | "verification" = "linking";
-    let error: string | undefined = undefined;
     let iiPrincipal: string | undefined = undefined;
     let checkingPrincipal = true;
 
@@ -43,19 +42,14 @@
     function verify() {
         verifying = true;
         failed = false;
+        if (iiPrincipal === undefined) return;
         client
-            .getLinkedIIPrincipal()
-            .then((principal) => {
-                if (principal) {
-                    return client
-                        .verifyAccessGate(uniquePersonCredentialGate, principal)
-                        .then((credential) => {
-                            if (credential === undefined) {
-                                failed = true;
-                            } else {
-                                dispatch("credentialReceived", credential);
-                            }
-                        });
+            .verifyAccessGate(uniquePersonCredentialGate, iiPrincipal)
+            .then((credential) => {
+                if (credential === undefined) {
+                    failed = true;
+                } else {
+                    dispatch("credentialReceived", credential);
                 }
             })
             .catch(() => (failed = true))
@@ -69,7 +63,6 @@
     </div>
 {:else if step === "linking"}
     <LinkAccounts
-        bind:error
         bind:iiPrincipal
         on:close
         on:proceed={() => (step = "verification")}
@@ -127,8 +120,10 @@
         <ButtonGroup>
             <Button secondary on:click={() => dispatch("close")}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-            <Button loading={verifying} disabled={verifying || !confirmed} on:click={verify}
-                ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+            <Button
+                loading={verifying}
+                disabled={verifying || !confirmed || iiPrincipal === undefined}
+                on:click={verify}><Translatable resourceKey={i18nKey("access.verify")} /></Button>
         </ButtonGroup>
     </div>
 {/if}

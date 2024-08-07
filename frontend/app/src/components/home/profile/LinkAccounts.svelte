@@ -28,7 +28,6 @@
     const dispatch = createEventDispatcher();
 
     export let explanations: ResourceKey[];
-    export let error: string | undefined;
     export let iiPrincipal: string | undefined;
 
     type IdentityDetail = {
@@ -46,6 +45,7 @@
     };
     type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
+    let error: string | undefined;
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking");
     let step: "explain" | "linking" = "explain";
     let substep: LinkStage = { kind: "initiator" };

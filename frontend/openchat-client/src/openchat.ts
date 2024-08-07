@@ -7382,7 +7382,6 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "getAuthenticationPrincipals",
         })
             .then((resp) => {
-                console.log("Auth principals: ", resp);
                 const iiPrincipals = resp
                     .filter(
                         ({ originatingCanister }) =>

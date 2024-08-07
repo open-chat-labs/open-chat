@@ -12,7 +12,6 @@ fn initiate_identity_link(args: Args) -> Response {
 }
 
 fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
-    // this is the initiator
     let caller = state.env.caller();
 
     if let Some(user) = get_user_principal_for_oc_user(&caller, state) {

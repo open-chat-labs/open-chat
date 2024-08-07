@@ -24,7 +24,6 @@
     let failed = false;
     let verifying = false;
     let step: "linking" | "verification" = "linking";
-    let error: string | undefined = undefined;
     let confirmed = false;
     let iiPrincipal: string | undefined = undefined;
     let checkingPrincipal = true;
@@ -78,7 +77,6 @@
     {:else if step === "linking"}
         <LinkAccountsModal>
             <LinkAccounts
-                bind:error
                 bind:iiPrincipal
                 on:close
                 on:proceed={() => (step = "verification")}
