@@ -1,11 +1,13 @@
 <script lang="ts">
     import type { CredentialGate, Level, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import LinkAccounts from "../profile/LinkAccounts.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -15,8 +17,23 @@
 
     let failed = false;
     let verifying = false;
+    let step: "linking" | "verification" = "linking";
+    let error: string | undefined = undefined;
+    let iiPrincipal: string | undefined = undefined;
+    let checkingPrincipal = true;
 
-    // TODO - we need to integrate the whole account linking thing into this
+    onMount(() => {
+        client
+            .getLinkedIIPrincipal()
+            .then((p) => {
+                iiPrincipal = p;
+                if (iiPrincipal !== undefined) {
+                    step = "verification";
+                }
+            })
+            .finally(() => (checkingPrincipal = false));
+    });
+
     function verify() {
         verifying = true;
         failed = false;
@@ -38,45 +55,60 @@
     }
 </script>
 
-<div class="header">
-    <div class="credential">🔒️</div>
-    <div class="title">
-        <Translatable resourceKey={i18nKey("access.credential.initiateCredentialCheck")} />
+{#if checkingPrincipal}
+    <div class="loader">
+        <FancyLoader />
     </div>
-</div>
-<div>
-    {#if failed}
-        <ErrorMessage>
+{:else if step === "linking"}
+    <LinkAccounts
+        bind:error
+        bind:iiPrincipal
+        on:close
+        on:proceed={() => (step = "verification")}
+        explanations={[
+            i18nKey("identity.credentialWarning", { name: gate.credential.credentialName }),
+        ]} />
+{:else}
+    <div class="header">
+        <div class="credential">🔒️</div>
+        <div class="title">
+            <Translatable resourceKey={i18nKey("access.credential.initiateCredentialCheck")} />
+        </div>
+    </div>
+    <div>
+        {#if failed}
+            <ErrorMessage>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "access.credential.credentialCheckFailed",
+                        {
+                            credential: gate.credential.credentialName,
+                        },
+                        level,
+                        true,
+                    )} />
+            </ErrorMessage>
+        {:else}
             <Translatable
                 resourceKey={i18nKey(
-                    "access.credential.credentialCheckFailed",
+                    "access.credential.credentialCheckMessage",
                     {
                         credential: gate.credential.credentialName,
                     },
                     level,
                     true,
                 )} />
-        </ErrorMessage>
-    {:else}
-        <Translatable
-            resourceKey={i18nKey(
-                "access.credential.credentialCheckMessage",
-                {
-                    credential: gate.credential.credentialName,
-                },
-                level,
-                true,
-            )} />
-    {/if}
-</div>
-<div>
-    <ButtonGroup>
-        <Button secondary on:click={() => dispatch("close")}
-            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-        <Button loading={verifying} disabled={verifying} on:click={verify}
-            ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-    </ButtonGroup>
-</div>
+        {/if}
+    </div>
+    <div>
+        <ButtonGroup>
+            <Button secondary on:click={() => dispatch("close")}
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+            <Button loading={verifying} disabled={verifying} on:click={verify}
+                ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+        </ButtonGroup>
+    </div>
+{/if}
 
 <style lang="scss">
     .header {
@@ -90,5 +122,10 @@
     .credential {
         cursor: pointer;
         @include font-size(fs-130);
+    }
+
+    .loader {
+        width: 100px;
+        margin: 100px auto;
     }
 </style>

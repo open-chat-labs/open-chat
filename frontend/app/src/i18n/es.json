@@ -7,7 +7,6 @@
         "amountN": "Cantidad de tokens {n}",
         "and": "Requerir todas las puertas",
         "approvePaymentTitle": "Aprobar pago",
-        "bypassWarning": "⚠️ Cualquier usuario que esté invitado explícitamente a este {level} no tendrá que pasar las puertas de acceso.",
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
         "chooseGate": "Elige una puerta de acceso",
         "chooseNervousSystem": "Elige sistema nervioso",

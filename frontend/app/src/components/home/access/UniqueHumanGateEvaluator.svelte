@@ -1,7 +1,7 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import type { Level, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -12,6 +12,8 @@
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import LinkAccounts from "../profile/LinkAccounts.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -21,8 +23,23 @@
     let failed = false;
     let verifying = false;
     let confirmed = false;
+    let step: "linking" | "verification" = "linking";
+    let error: string | undefined = undefined;
+    let iiPrincipal: string | undefined = undefined;
+    let checkingPrincipal = true;
 
-    // TODO - we need to integrate the whole account linking thing into this
+    onMount(() => {
+        client
+            .getLinkedIIPrincipal()
+            .then((p) => {
+                iiPrincipal = p;
+                if (iiPrincipal !== undefined) {
+                    step = "verification";
+                }
+            })
+            .finally(() => (checkingPrincipal = false));
+    });
+
     function verify() {
         verifying = true;
         failed = false;
@@ -46,62 +63,75 @@
     }
 </script>
 
-<div class="header">
-    <AccountCheck size={$iconSize} color={"var(--txt)"} />
-    <div class="title">
-        <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+{#if checkingPrincipal}
+    <div class="loader">
+        <FancyLoader />
     </div>
-</div>
-<div>
-    {#if failed}
-        <p class="info">
-            <ErrorMessage>
+{:else if step === "linking"}
+    <LinkAccounts
+        bind:error
+        bind:iiPrincipal
+        on:close
+        on:proceed={() => (step = "verification")}
+        explanations={[i18nKey("identity.warning1")]} />
+{:else}
+    <div class="header">
+        <AccountCheck size={$iconSize} color={"var(--txt)"} />
+        <div class="title">
+            <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+        </div>
+    </div>
+    <div>
+        {#if failed}
+            <p class="info">
+                <ErrorMessage>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.credential.credentialCheckFailed",
+                            {
+                                credential: "Unique person",
+                            },
+                            level,
+                            true,
+                        )} />
+                </ErrorMessage>
+            </p>
+            <p class="question">
+                <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+            </p>
+
+            <p class="answer">
+                <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+            </p>
+
+            <p class="answer">
+                <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+            </p>
+        {:else}
+            <p class="info">
                 <Translatable
                     resourceKey={i18nKey(
-                        "access.credential.credentialCheckFailed",
+                        "access.credential.credentialCheckMessage",
                         {
                             credential: "Unique person",
                         },
                         level,
                         true,
                     )} />
-            </ErrorMessage>
-        </p>
-        <p class="question">
-            <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-        </p>
+            </p>
 
-        <p class="answer">
-            <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-        </p>
-
-        <p class="answer">
-            <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-        </p>
-    {:else}
-        <p class="info">
-            <Translatable
-                resourceKey={i18nKey(
-                    "access.credential.credentialCheckMessage",
-                    {
-                        credential: "Unique person",
-                    },
-                    level,
-                    true,
-                )} />
-        </p>
-
-        <HumanityConfirmation bind:confirmed />
-    {/if}
-</div>
-<div>
-    <ButtonGroup>
-        <Button secondary on:click={() => dispatch("close")}
-            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-        <Button loading={verifying} disabled={verifying || !confirmed} on:click={verify}
-            ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-    </ButtonGroup>
-</div>
+            <HumanityConfirmation bind:confirmed />
+        {/if}
+    </div>
+    <div>
+        <ButtonGroup>
+            <Button secondary on:click={() => dispatch("close")}
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+            <Button loading={verifying} disabled={verifying || !confirmed} on:click={verify}
+                ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+        </ButtonGroup>
+    </div>
+{/if}
 
 <style lang="scss">
     .header {
@@ -125,5 +155,10 @@
     .answer {
         color: var(--txt-light);
         @include font(book, normal, fs-90);
+    }
+
+    .loader {
+        width: 100px;
+        margin: 100px auto;
     }
 </style>

@@ -7,7 +7,6 @@
         "amountN": "Montant {n} jetons",
         "and": "Exiger toutes les portes",
         "approvePaymentTitle": "Approuver le paiement",
-        "bypassWarning": "⚠️ Les utilisateurs explicitement invités à ce {level} ne seront pas tenus de franchir les portes d'accès.",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",

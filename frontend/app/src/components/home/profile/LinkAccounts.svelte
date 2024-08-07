@@ -1,13 +1,12 @@
 <script lang="ts">
+    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { iconSize } from "../../../stores/iconSize";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import {
         AuthProvider,
@@ -262,126 +261,122 @@
     }
 </script>
 
-<ModalContent fadeDelay={0} fadeDuration={0}>
-    <div slot="header" class="header">
-        <LinkVariant size={$iconSize} color={"var(--txt)"} />
-        <div class="title">
-            <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
-        </div>
+<div class="header">
+    <LinkVariant size={$iconSize} color={"var(--txt)"} />
+    <div class="title">
+        <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </div>
-    <div slot="body">
-        {#if error !== undefined}
-            <p class="info">
-                <ErrorMessage>
-                    <Translatable resourceKey={i18nKey(error)} />
-                </ErrorMessage>
-            </p>
-        {:else if step === "explain"}
-            <AlertBox>
-                {#each explanations as explanation}
-                    <p class="info">
-                        <Translatable resourceKey={explanation} />
-                    </p>
-                {/each}
-            </AlertBox>
-        {:else if step === "linking"}
-            {#if substep.kind === "approver"}
-                {#if approverStep === "choose_provider"}
-                    <div class="info center">
-                        <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
-                    </div>
-                    <ChooseSignInOption
-                        mode={"signin"}
-                        bind:emailInvalid
-                        bind:email
-                        on:login={loginApprover} />
-                {:else if approverStep === "choose_eth_wallet"}
-                    <div class="eth-options">
-                        {#await import("../SigninWithEth.svelte")}
-                            <div class="loading">...</div>
-                        {:then { default: SigninWithEth }}
-                            <SigninWithEth
-                                assumeIdentity={false}
-                                on:connected={(ev) => walletConnected(AuthProvider.ETH, ev)} />
-                        {/await}
-                    </div>
-                {:else if approverStep === "choose_sol_wallet"}
-                    <div class="sol-options">
-                        {#await import("../SigninWithSol.svelte")}
-                            <div class="loading">...</div>
-                        {:then { default: SigninWithSol }}
-                            <SigninWithSol
-                                assumeIdentity={false}
-                                on:connected={(ev) => walletConnected(AuthProvider.SOL, ev)} />
-                        {/await}
-                    </div>
-                {:else if approverStep === "signing_in_with_email"}
-                    <EmailSigninFeedback
-                        code={verificationCode}
-                        polling={$emailSigninHandler}
-                        on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-                    {#if error !== undefined}
-                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                    {/if}
-                {/if}
-            {:else if substep.kind === "initiator"}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("identity.signInNext")} />
-                </div>
-                <Button
-                    loading={loggingInInitiator}
-                    disabled={loggingInInitiator}
-                    on:click={loginInitiator}>
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
-                    <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
-            {:else if substep.kind === "ready_to_link"}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
-                </div>
-                <div class="identities">
-                    <SignInOption
-                        hollow
-                        provider={AuthProvider.II}
-                        name={i18nKey(AuthProvider.II)} />
-                    <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    <SignInOption
-                        hollow
-                        provider={substep.approver.provider}
-                        name={i18nKey(substep.approver.provider)} />
-                </div>
-            {/if}
-        {/if}
-    </div>
+</div>
 
-    <div slot="footer">
-        <ButtonGroup>
-            <Button secondary on:click={() => dispatch("close")}
-                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-            {#if error !== undefined}
-                <Button secondary on:click={reset}
-                    ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
-            {:else if step === "explain"}
-                <Button on:click={initiateLinking}>
+<div class="body">
+    {#if error !== undefined}
+        <p class="info">
+            <ErrorMessage>
+                <Translatable resourceKey={i18nKey(error)} />
+            </ErrorMessage>
+        </p>
+    {:else if step === "explain"}
+        <AlertBox>
+            {#each explanations as explanation}
+                <p class="info">
+                    <Translatable resourceKey={explanation} />
+                </p>
+            {/each}
+        </AlertBox>
+    {:else if step === "linking"}
+        {#if substep.kind === "approver"}
+            {#if approverStep === "choose_provider"}
+                <div class="info center">
+                    <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
+                </div>
+                <ChooseSignInOption
+                    mode={"signin"}
+                    bind:emailInvalid
+                    bind:email
+                    on:login={loginApprover} />
+            {:else if approverStep === "choose_eth_wallet"}
+                <div class="eth-options">
+                    {#await import("../SigninWithEth.svelte")}
+                        <div class="loading">...</div>
+                    {:then { default: SigninWithEth }}
+                        <SigninWithEth
+                            assumeIdentity={false}
+                            on:connected={(ev) => walletConnected(AuthProvider.ETH, ev)} />
+                    {/await}
+                </div>
+            {:else if approverStep === "choose_sol_wallet"}
+                <div class="sol-options">
+                    {#await import("../SigninWithSol.svelte")}
+                        <div class="loading">...</div>
+                    {:then { default: SigninWithSol }}
+                        <SigninWithSol
+                            assumeIdentity={false}
+                            on:connected={(ev) => walletConnected(AuthProvider.SOL, ev)} />
+                    {/await}
+                </div>
+            {:else if approverStep === "signing_in_with_email"}
+                <EmailSigninFeedback
+                    code={verificationCode}
+                    polling={$emailSigninHandler}
+                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                {#if error !== undefined}
+                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                {/if}
+            {/if}
+        {:else if substep.kind === "initiator"}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("identity.signInNext")} />
+            </div>
+            <Button
+                loading={loggingInInitiator}
+                disabled={loggingInInitiator}
+                on:click={loginInitiator}>
+                <span class="link-ii-logo">
+                    <InternetIdentityLogo />
+                </span>
+                <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+        {:else if substep.kind === "ready_to_link"}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
+            </div>
+            <div class="identities">
+                <SignInOption hollow provider={AuthProvider.II} name={i18nKey(AuthProvider.II)} />
+                <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <SignInOption
+                    hollow
+                    provider={substep.approver.provider}
+                    name={i18nKey(substep.approver.provider)} />
+            </div>
+        {/if}
+    {/if}
+</div>
+
+<div class="footer">
+    <ButtonGroup>
+        <Button secondary on:click={() => dispatch("close")}
+            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+        {#if error !== undefined}
+            <Button secondary on:click={reset}
+                ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
+        {:else if step === "explain"}
+            <Button on:click={initiateLinking}>
+                <span class="link-ii-logo">
+                    <InternetIdentityLogo />
+                </span>
+                <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+        {:else if step === "linking"}
+            <Button secondary on:click={reset}
+                ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
+            {#if substep.kind === "ready_to_link"}
+                <Button loading={linking} disabled={linking} on:click={linkIdentities}>
                     <span class="link-ii-logo">
                         <InternetIdentityLogo />
                     </span>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
-            {:else if step === "linking"}
-                <Button secondary on:click={reset}
-                    ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
-                {#if substep.kind === "ready_to_link"}
-                    <Button loading={linking} disabled={linking} on:click={linkIdentities}>
-                        <span class="link-ii-logo">
-                            <InternetIdentityLogo />
-                        </span>
-                        <Translatable resourceKey={i18nKey("identity.link")} /></Button>
-                {/if}
             {/if}
-        </ButtonGroup>
-    </div>
-</ModalContent>
+        {/if}
+    </ButtonGroup>
+</div>
 
 <style lang="scss">
     .header {
@@ -390,6 +385,11 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+    }
+
+    .body,
+    .header {
+        margin-bottom: $sp5;
     }
 
     .info {

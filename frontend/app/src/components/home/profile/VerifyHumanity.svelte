@@ -16,6 +16,7 @@
     import LinkAccounts from "./LinkAccounts.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
+    import LinkAccountsModal from "./LinkAccountsModal.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -27,8 +28,6 @@
     let confirmed = false;
     let iiPrincipal: string | undefined = undefined;
     let checkingPrincipal = true;
-
-    $: console.log("II Principal: ", iiPrincipal);
 
     onMount(() => {
         client
@@ -77,12 +76,14 @@
             </div>
         </ModalContent>
     {:else if step === "linking"}
-        <LinkAccounts
-            bind:error
-            bind:iiPrincipal
-            on:close
-            on:proceed={() => (step = "verification")}
-            explanations={[i18nKey("identity.warning1"), i18nKey("identity.warning2")]} />
+        <LinkAccountsModal>
+            <LinkAccounts
+                bind:error
+                bind:iiPrincipal
+                on:close
+                on:proceed={() => (step = "verification")}
+                explanations={[i18nKey("identity.warning1")]} />
+        </LinkAccountsModal>
     {:else}
         <ModalContent fadeDelay={0} fadeDuration={0}>
             <div slot="header" class="header">

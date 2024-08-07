@@ -7,7 +7,7 @@
         "amountN": "Amount {n} tokens",
         "and": "Require all gates",
         "approvePaymentTitle": "Approve payment",
-        "bypassWarning": "⚠️ Any users who are explicitly invited to this {level} will not be required to pass the access gates",
+        "bypassWarning": "Any users who are explicitly invited to this {level} will not be required to pass the access gates",
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
         "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
@@ -521,6 +521,7 @@
     },
     "identity": {
         "back": "Back",
+        "credentialWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your possession of the {name} credential. The credential issuer must be associated with the same Internet Identity. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "link": "Link",
         "linkIdentity": "Link Identity",
         "linkTwoIdentities": "We are now ready to link the two identities together.",
@@ -530,7 +531,6 @@
         "signInNext": "Create or signin with the internet identity that you would like to link to your OpenChat account",
         "tryAgain": "Try again",
         "warning1": "You must have an Internet Identity associated with your OpenChat account to confirm your unique personhood. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
-        "warning2": "If you are already signed in with Internet Identity, you can proceed.",
         "failure": {
             "loginInitiator": "Sorry we were unable to sign into your chosen Internet Identity",
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
