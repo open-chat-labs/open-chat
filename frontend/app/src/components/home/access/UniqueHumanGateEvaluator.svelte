@@ -73,7 +73,7 @@
         bind:iiPrincipal
         on:close
         on:proceed={() => (step = "verification")}
-        explanations={[i18nKey("identity.warning1")]} />
+        explanations={[i18nKey("identity.humanityWarning")]} />
 {:else}
     <div class="header">
         <AccountCheck size={$iconSize} color={"var(--txt)"} />

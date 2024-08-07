@@ -82,7 +82,7 @@
                 bind:iiPrincipal
                 on:close
                 on:proceed={() => (step = "verification")}
-                explanations={[i18nKey("identity.warning1")]} />
+                explanations={[i18nKey("identity.humanityWarning")]} />
         </LinkAccountsModal>
     {:else}
         <ModalContent fadeDelay={0} fadeDuration={0}>
