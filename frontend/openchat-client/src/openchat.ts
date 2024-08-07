@@ -6687,7 +6687,7 @@ export class OpenChat extends OpenChatAgentWorker {
         connectToWorker: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
-        | { kind: "error" }
+        | { kind: "error"; error: string }
         | { kind: "not_found" }
     > {
         const sessionKeyDer = toDer(sessionKey);

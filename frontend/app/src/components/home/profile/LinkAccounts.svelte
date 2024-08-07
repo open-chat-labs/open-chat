@@ -1,5 +1,4 @@
 <script lang="ts">
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -13,7 +12,6 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
-        Poller,
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
@@ -24,7 +22,8 @@
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import SignInOption from "./SignInOption.svelte";
-    import { toastStore } from "../../../stores/toast";
+    import { EmailPollerError, EmailSigninHandler } from "../../../utils/signin";
+    import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,6 +47,7 @@
     };
     type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
+    let emailSigninHandler = new EmailSigninHandler(client, "account_linking");
     let step: "explain" | "linking" = "explain";
     let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
@@ -59,16 +59,23 @@
         | "signing_in_with_email" = "choose_provider";
     let linking = false;
     let loggingInInitiator = false;
-    let emailSignInPoller: Poller | undefined = undefined;
     let verificationCode: string | undefined = undefined;
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
-    $: console.log("Approver step: ", approverStep);
-
     onMount(() => {
-        return () => emailSignInPoller?.stop();
+        emailSigninHandler.addEventListener("email_signin_event", emailEvent);
+        return () => {
+            emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
+            emailSigninHandler.destroy();
+        };
     });
+
+    function emailEvent(ev: Event): void {
+        if (ev instanceof EmailPollerError) {
+            error = "identity.failure.pollingError";
+        }
+    }
 
     function initiateLinking() {
         step = "linking";
@@ -91,7 +98,18 @@
 
         if (provider === AuthProvider.EMAIL) {
             approverStep = "signing_in_with_email";
-            ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
+            emailSigninHandler.generateMagicLink(email).then((resp) => {
+                if (resp.kind === "success") {
+                    verificationCode = resp.code;
+                } else if (resp.kind === "email_invalid") {
+                    error = "loginDialog.invalidEmail";
+                } else if (resp.kind === "failed_to_send_email") {
+                    console.debug("generateMagicLink failed_to_send_email", resp.error);
+                    error = "loginDialog.failedToSendEmail";
+                } else {
+                    error = "identity.failure.loginApprover";
+                }
+            });
         } else if (provider === AuthProvider.ETH) {
             approverStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
@@ -186,81 +204,6 @@
             });
     }
 
-    function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
-        verificationCode = undefined;
-        client
-            .generateMagicLink(email, sessionKey)
-            .then((response) => {
-                if (response.kind === "success") {
-                    verificationCode = response.code;
-                    startPoller(email, sessionKey, response.userKey, response.expiration);
-                } else if (response.kind === "email_invalid") {
-                    error = "loginDialog.invalidEmail";
-                } else if (response.kind === "failed_to_send_email") {
-                    console.debug("generateMagicLink failed_to_send_email", response.error);
-                    error = "loginDialog.failedToSendEmail";
-                } else if (response.kind === "blocked") {
-                    error = "identity.failure.loginApprover";
-                }
-            })
-            .catch((err) => {
-                console.warn("generateMagicLink error", err);
-                error = "identity.failure.loginApprover";
-            });
-    }
-
-    function startPoller(
-        email: string,
-        sessionKey: ECDSAKeyIdentity,
-        userKey: Uint8Array,
-        expiration: bigint,
-    ) {
-        emailSignInPoller = new Poller(
-            async () => {
-                if (emailSignInPoller !== undefined) {
-                    client
-                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration, false)
-                        .then((response) => {
-                            if (response.kind === "success" && substep.kind === "approver") {
-                                client.gaTrack("received_email_signin_delegation", "registration");
-                                emailSignInPoller?.stop();
-                                emailSignInPoller == undefined;
-                                substep = {
-                                    kind: "ready_to_link",
-                                    initiator: substep.initiator,
-                                    approver: {
-                                        key: response.key,
-                                        delegation: response.delegation,
-                                        provider: AuthProvider.EMAIL,
-                                    },
-                                };
-                            } else if (response.kind === "error") {
-                                console.debug("getSignInWithEmailDelegation error");
-                            }
-                        })
-                        .catch((err) => {
-                            console.warn("getSignInWithEmailDelegation error", err);
-                        });
-                }
-            },
-            1000,
-            1000,
-        );
-    }
-
-    function copyCode() {
-        if (verificationCode === undefined) return;
-
-        navigator.clipboard.writeText(verificationCode).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
-            },
-        );
-    }
-
     function walletConnected(
         provider: AuthProvider.ETH | AuthProvider.SOL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
@@ -311,8 +254,7 @@
     }
 
     function reset() {
-        emailSignInPoller?.stop();
-        emailSignInPoller = undefined;
+        emailSigninHandler.stopPolling();
         approverStep = "choose_provider";
         error = undefined;
         step = "explain";
@@ -374,25 +316,10 @@
                         {/await}
                     </div>
                 {:else if approverStep === "signing_in_with_email"}
-                    <p>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                emailSignInPoller === undefined
-                                    ? "loginDialog.generatingLink"
-                                    : "loginDialog.checkEmail",
-                            )} />
-
-                        {#if emailSignInPoller !== undefined && verificationCode !== undefined}
-                            <div class="code-wrapper">
-                                <div class="code">
-                                    {verificationCode}
-                                </div>
-                                <div class="copy" on:click={copyCode}>
-                                    <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                                </div>
-                            </div>
-                        {/if}
-                    </p>
+                    <EmailSigninFeedback
+                        code={verificationCode}
+                        polling={$emailSigninHandler}
+                        on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
                     {#if error !== undefined}
                         <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                     {/if}
@@ -486,25 +413,5 @@
         gap: $sp3;
         justify-content: space-between;
         align-items: center;
-    }
-
-    .code-wrapper {
-        margin-top: $sp4;
-        display: flex;
-        gap: $sp3;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .code {
-        font-family: Menlo, Monaco, "Courier New", monospace;
-        @include font-size(fs-160);
-    }
-
-    .copy {
-        cursor: pointer;
-        position: relative;
-        top: 2px;
     }
 </style>

@@ -536,7 +536,8 @@
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
             "link": "Sorry but we were unable to link your Internet Identity to your OpenChat account",
             "alreadyLinked": "Sorry but it looks like that Internet Identity is already linked to an OpenChat account",
-            "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with"
+            "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with",
+            "pollingError": "There was an unexpected error waiting for email signin"
         }
     },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",

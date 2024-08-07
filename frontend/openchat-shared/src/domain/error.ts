@@ -63,4 +63,9 @@ export class InvalidDelegationError extends HttpError {
 }
 
 // We'll use this is the front end tries to do something that the anonymous user should not be able to do
-export class AnonymousOperationError extends Error {}
+export class AnonymousOperationError extends Error {
+    constructor() {
+        super();
+        this.name = "AnonymousOperationError";
+    }
+}
