@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix month in AirdropBot messages ([#6212](https://github.com/open-chat-labs/open-chat/pull/6212))
+
+## [[2.0.1285](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1285-airdrop_bot)] - 2024-08-07
+
 ### Added
 
 - Add Airdrop Bot ([#6088](https://github.com/open-chat-labs/open-chat/pull/6088))

@@ -89,7 +89,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
     }
 
-    // Call the configured community canister to fetch the particpants of the configured channel
+    // Call the configured community canister to fetch the participants of the configured channel
     let members = match community_canister_c2c_client::selected_channel_initial(
         config.community_id.into(),
         &community_canister::selected_channel_initial::Args {
