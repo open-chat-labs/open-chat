@@ -6,7 +6,7 @@ use types::{BotConfig, Cycles};
 pub struct Args {
     pub username: String,
     pub display_name: Option<String>,
-    pub config: BotConfig,
+    pub config: OptionalBotConfig,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -22,7 +22,7 @@ pub enum Response {
     InternalError(String),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct OptionalBotConfig {
     pub supports_direct_messages: Option<bool>,
     pub can_be_added_to_groups: Option<bool>,
@@ -31,6 +31,7 @@ pub struct OptionalBotConfig {
 impl From<OptionalBotConfig> for BotConfig {
     fn from(value: OptionalBotConfig) -> Self {
         BotConfig {
+            is_oc_controlled: false,
             supports_direct_messages: value.supports_direct_messages.unwrap_or_default(),
             can_be_added_to_groups: value.can_be_added_to_groups.unwrap_or_default(),
         }
