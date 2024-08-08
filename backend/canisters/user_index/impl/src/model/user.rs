@@ -38,8 +38,6 @@ pub struct User {
     pub phone_status: PhoneStatus,
     #[serde(rename = "rb", default, skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    #[serde(rename = "ib", default, skip_serializing_if = "is_default")]
-    pub is_bot: bool,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
     #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
@@ -54,9 +52,6 @@ pub struct User {
     pub moderation_flags_enabled: u32,
     #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
-    #[deprecated]
-    pub chit_balance: i32,
     #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
     pub chit_per_month: BTreeMap<MonthKey, i32>,
     #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
@@ -105,7 +100,6 @@ impl User {
         referred_by: Option<UserId>,
         user_type: UserType,
     ) -> User {
-        #[allow(deprecated)]
         User {
             principal,
             user_id,
@@ -120,13 +114,11 @@ impl User {
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by,
-            is_bot: user_type.is_bot(),
             user_type,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            chit_balance: 0,
             chit_per_month: BTreeMap::new(),
             chit_updated: now,
             streak: 0,
@@ -143,7 +135,7 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
+            is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
@@ -171,7 +163,7 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
+            is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
             is_unique_person: self.unique_person_proof.is_some(),
@@ -229,7 +221,6 @@ impl From<&SuspensionDetails> for types::SuspensionDetails {
 #[cfg(test)]
 impl Default for User {
     fn default() -> Self {
-        #[allow(deprecated)]
         User {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
@@ -244,13 +235,11 @@ impl Default for User {
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by: None,
-            is_bot: false,
             user_type: UserType::User,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            chit_balance: 0,
             chit_per_month: BTreeMap::new(),
             streak: 0,
             streak_ends: 0,

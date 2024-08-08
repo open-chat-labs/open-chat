@@ -199,7 +199,7 @@ impl RuntimeState {
                 username: user.username.clone(),
                 date_created: user.date_created,
                 date_updated: user.date_updated,
-                is_bot: user.is_bot,
+                is_bot: user.user_type.is_bot(),
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
                 chit_balance: user

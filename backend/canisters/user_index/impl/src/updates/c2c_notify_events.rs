@@ -142,7 +142,6 @@ fn process_new_user(
             user_id,
             user_principal: caller,
             username: username.clone(),
-            is_bot: false,
             user_type: UserType::User,
             referred_by,
         }),

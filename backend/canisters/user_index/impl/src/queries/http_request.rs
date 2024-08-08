@@ -25,7 +25,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .data
             .users
             .iter()
-            .filter(|u| u.is_bot)
+            .filter(|u| u.user_type.is_bot())
             .map(|u| (u.user_id.to_string(), u.username.clone()))
             .collect();
 
