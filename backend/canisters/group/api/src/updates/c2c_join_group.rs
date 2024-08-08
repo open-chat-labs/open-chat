@@ -12,8 +12,8 @@ pub struct Args {
     pub invite_code: Option<u64>,
     pub correlation_id: u64,
     pub is_platform_moderator: bool,
+    #[deprecated]
     pub is_bot: bool,
-    #[serde(default)]
     pub user_type: UserType,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,

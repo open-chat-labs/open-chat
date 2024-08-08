@@ -77,7 +77,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),
-                    is_bot: user.is_bot,
                     user_type: user.user_type,
                     referred_by: user.referred_by,
                 }),
