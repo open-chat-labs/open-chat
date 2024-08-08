@@ -1911,6 +1911,7 @@ type CurrentUserSummary = record {
 };
 
 type BotConfig = record {
+    is_oc_controlled : bool;
     supports_direct_messages : bool;
     can_be_added_to_groups : bool;
 };
