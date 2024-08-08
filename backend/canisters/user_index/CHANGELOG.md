@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_config` to bot users ([#6220](https://github.com/open-chat-labs/open-chat/pull/6220))
+
 ### Removed
 
 - Remove deprecated `is_bot` field from user records ([#6219](https://github.com/open-chat-labs/open-chat/pull/6219))
