@@ -45,10 +45,15 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
     ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
 
-    state
-        .data
-        .users
-        .register(caller, user_id, args.username.clone(), now, None, UserType::Bot);
+    state.data.users.register(
+        caller,
+        user_id,
+        args.username.clone(),
+        now,
+        None,
+        UserType::Bot,
+        Some(args.config.into()),
+    );
 
     state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
