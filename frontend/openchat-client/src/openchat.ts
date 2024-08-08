@@ -7226,6 +7226,9 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondDurationToMs = diamondDurationToMs;
 
     swapRestricted(): Promise<boolean> {
+        if (this._liveState.user.isPlatformOperator) {
+            return Promise.resolve(false);
+        }
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
