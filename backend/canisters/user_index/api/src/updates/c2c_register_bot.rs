@@ -1,11 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::Cycles;
+use types::{BotConfig, Cycles};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
     pub display_name: Option<String>,
+    pub config: BotConfig,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,4 +20,19 @@ pub enum Response {
     UsernameTooLong(u16),
     InsufficientCyclesProvided(Cycles),
     InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct OptionalBotConfig {
+    pub supports_direct_messages: Option<bool>,
+    pub can_be_added_to_groups: Option<bool>,
+}
+
+impl From<OptionalBotConfig> for BotConfig {
+    fn from(value: OptionalBotConfig) -> Self {
+        BotConfig {
+            supports_direct_messages: value.supports_direct_messages.unwrap_or_default(),
+            can_be_added_to_groups: value.can_be_added_to_groups.unwrap_or_default(),
+        }
+    }
 }

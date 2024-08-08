@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, PrizeData};
 use canister_tracing_macros::trace;
 use group_prize_bot::initialize_bot::{Response::*, *};
 use ic_cdk::update;
-use types::Cycles;
+use types::{BotConfig, Cycles};
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
@@ -21,6 +21,7 @@ async fn initialize_bot(args: Args) -> Response {
             let register_bot_args = user_index_canister::c2c_register_bot::Args {
                 username: args.username.clone(),
                 display_name: None,
+                config: BotConfig::default(),
             };
             user_index_canister_c2c_client::c2c_register_bot(user_index_canister_id, &register_bot_args, BOT_REGISTRATION_FEE)
                 .await

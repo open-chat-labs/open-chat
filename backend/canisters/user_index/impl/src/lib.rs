@@ -26,7 +26,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -413,6 +413,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         // Register the AirdropBot
@@ -423,6 +424,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         data

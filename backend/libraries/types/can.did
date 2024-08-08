@@ -1885,6 +1885,7 @@ type UserSummaryStable = record {
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
     is_unique_person : bool;
+    bot_config : opt BotConfig;
 };
 
 type UserSummaryVolatile = record {
@@ -1907,6 +1908,11 @@ type CurrentUserSummary = record {
     diamond_membership_status : DiamondMembershipStatusFull;
     moderation_flags_enabled : nat32;
     is_unique_person : bool;
+};
+
+type BotConfig = record {
+    supports_direct_messages : bool;
+    can_be_added_to_groups : bool;
 };
 
 type SuspensionDetails = record {

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
+use types::{BotConfig, CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -62,11 +62,12 @@ impl UserMap {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
+        bot_config: Option<BotConfig>,
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, user_type);
+        let user = User::new(principal, user_id, username, now, referred_by, user_type, bot_config);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
@@ -386,6 +387,7 @@ impl UserMap {
             user.date_created,
             None,
             UserType::User,
+            None,
         );
         self.update(user, date_created, false);
     }
@@ -457,9 +459,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, username1.clone(), 1, None, UserType::User);
-        user_map.register(principal2, user_id2, username2.clone(), 2, None, UserType::User);
-        user_map.register(principal3, user_id3, username3.clone(), 3, None, UserType::User);
+        user_map.register(principal1, user_id1, username1.clone(), 1, None, UserType::User, None);
+        user_map.register(principal2, user_id2, username2.clone(), 2, None, UserType::User, None);
+        user_map.register(principal3, user_id3, username3.clone(), 3, None, UserType::User, None);
 
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
@@ -496,7 +498,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, username1, 1, None, UserType::User);
+        user_map.register(principal, user_id, username1, 1, None, UserType::User, None);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();
