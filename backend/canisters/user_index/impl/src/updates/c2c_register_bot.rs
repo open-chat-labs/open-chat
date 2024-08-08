@@ -55,7 +55,6 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             user_id,
             user_principal: caller,
             username: args.username,
-            is_bot: true,
             user_type: UserType::Bot,
             referred_by: None,
         }),
