@@ -13,6 +13,12 @@ export type ApproveIdentityLinkResponse = { 'LinkRequestNotFound' : null } |
   { 'MalformedSignature' : string } |
   { 'DelegationTooOld' : null } |
   { 'CallerNotRecognised' : null };
+export type AuthPrincipalsResponse = { 'NotFound' : null } |
+  {
+    'Success' : Array<
+      { 'principal' : Principal, 'originating_canister' : Principal }
+    >
+  };
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
   { 'Success' : null };
 export interface CreateIdentityArgs {
@@ -43,7 +49,8 @@ export interface InitiateIdentityLinkArgs {
 export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
   { 'TargetUserNotFound' : null } |
-  { 'PublicKeyInvalid' : string };
+  { 'PublicKeyInvalid' : string } |
+  { 'AlreadyLinkedToPrincipal' : null };
 export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,
@@ -66,6 +73,7 @@ export interface _SERVICE {
     [ApproveIdentityLinkArgs],
     ApproveIdentityLinkResponse
   >,
+  'auth_principals' : ActorMethod<[{}], AuthPrincipalsResponse>,
   'check_auth_principal' : ActorMethod<[{}], CheckAuthPrincipalResponse>,
   'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
   'generate_challenge' : ActorMethod<[{}], GenerateChallengeResponse>,

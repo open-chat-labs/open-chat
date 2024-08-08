@@ -3,6 +3,7 @@ import type { Identity, SignIdentity } from "@dfinity/agent";
 import { DelegationIdentity } from "@dfinity/identity";
 import type {
     ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
@@ -71,6 +72,10 @@ export class IdentityAgent {
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
         return this._identityClient.approveIdentityLink(linkInitiatedBy);
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals();
     }
 
     private async getDelegation(

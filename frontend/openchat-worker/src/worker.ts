@@ -62,17 +62,17 @@ async function initialize(
         return { kind: "auth_identity_not_found" };
     }
 
-    authPrincipalString = authPrincipal.toString();
-    const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
-    if (ocIdentity !== undefined) {
-        return { kind: "success", identity: ocIdentity };
-    }
-
     identityAgent = new IdentityAgent(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
     );
+
+    authPrincipalString = authPrincipal.toString();
+    const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
+    if (ocIdentity !== undefined) {
+        return { kind: "success", identity: ocIdentity };
+    }
 
     const ocIdentityExists = await identityAgent.checkOpenChatIdentityExists();
     if (ocIdentityExists) {
@@ -1800,6 +1800,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getAuthenticationPrincipals":
+                if (identityAgent === undefined) {
+                    throw new Error("IdentityAgent not initialized");
+                }
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent.getAuthenticationPrincipals(),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1830,7 +1841,7 @@ async function linkIdentities(
     const approverAgent = new IdentityAgent(approverIdentity, identityCanister, icUrl);
 
     if (approver != authPrincipalString) {
-        throw new Error("Identity does not match");
+        return "principal_mismatch";
     }
 
     const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);

@@ -7,7 +7,7 @@
         "amountN": "Montant {n} jetons",
         "and": "Exiger toutes les portes",
         "approvePaymentTitle": "Approuver le paiement",
-        "bypassWarning": "⚠️ Les utilisateurs explicitement invités à ce {level} ne seront pas tenus de franchir les portes d'accès.",
+        "bypassWarning": "Les utilisateurs explicitement invités à ce {level} ne seront pas tenus de franchir les portes d'accès.",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",
@@ -521,15 +521,24 @@
     },
     "identity": {
         "back": "Dos",
-        "failed": "Désolé mais nous n'avons pas réussi à associer une identité Internet à votre compte OpenChat",
+        "credentialWarning": "Vous devez avoir une identité Internet associée à votre compte OpenChat pour confirmer votre possession de l'identifiant {name}. L'émetteur des informations d'identification doit être associé à la même identité Internet. Si vous vous êtes inscrit auprès d'un autre fournisseur, vous devrez créer et lier une identité Internet à votre compte OpenChat avant de continuer.",
+        "failure": {
+            "alreadyLinked": "Désolé mais il semble que cette identité Internet soit déjà liée à un compte OpenChat",
+            "link": "Désolé mais nous n'avons pas pu associer votre identité Internet à votre compte OpenChat",
+            "loginApprover": "Désolé, nous n'avons pas pu nous connecter à votre fournisseur d'authentification OpenChat actuel.",
+            "loginInitiator": "Désolé, nous n'avons pas pu vous connecter à l'identité Internet que vous avez choisie.",
+            "pollingError": "Une erreur inattendue s'est produite lors de l'attente de la connexion par e-mail",
+            "principalMismatch": "Il semble que vous ne vous soyez pas réauthentifié auprès du même fournisseur avec lequel vous êtes actuellement connecté."
+        },
+        "humanityWarning": "Vous devez avoir une identité Internet associée à votre compte OpenChat pour confirmer votre personnalité unique. Si vous vous êtes inscrit auprès d'un autre fournisseur, vous devrez créer et lier une identité Internet à votre compte OpenChat avant de continuer.",
         "link": "Lien",
         "linkIdentity": "Identité du lien",
+        "linkTwoIdentities": "Nous sommes désormais prêts à lier les deux identités.",
         "mismatch": "Cela ne correspond pas au compte principal avec lequel vous êtes actuellement connecté. Êtes-vous sûr d'avoir utilisé le même fournisseur d'authentification ?",
         "proceed": "Procéder",
         "signInCurrent": "Connectez-vous avec le fournisseur d'identité que vous utilisez actuellement",
         "signInNext": "Créez ou connectez-vous avec l'identité Internet que vous souhaitez associer à votre compte OpenChat",
-        "warning1": "Vous devez être connecté en utilisant votre identité Internet pour confirmer votre personnalité unique. Si vous vous êtes inscrit en utilisant une autre méthode, vous devrez d'abord créer et lier une identité Internet à votre compte OpenChat.",
-        "warning2": "Si vous êtes déjà connecté avec Internet Identity, vous pouvez continuer."
+        "tryAgain": "Essayer à nouveau"
     },
     "identityMigrationMessage": "Veuillez patienter pendant que votre compte est mis à niveau vers notre nouveau système. Cela nous permettra de prendre en charge de nombreuses autres options de connexion à l'avenir, y compris la récupération facultative des e-mails au cas où vous perdriez l'accès à votre appareil.",
     "inheritSystem": "Hériter du thème système",
