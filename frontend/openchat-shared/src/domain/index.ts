@@ -10,7 +10,7 @@ export * from "./email";
 export * from "./error";
 export * from "./events";
 export * from "./faq";
-export * from "./giff";
+export * from "./gif";
 export * from "./i18n";
 export * from "./identity";
 export * from "./inviteCodes";
