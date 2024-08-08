@@ -1,6 +1,5 @@
-import { AnonymousIdentity, type Identity } from "@dfinity/agent";
+import { AnonymousIdentity, type HttpAgent, type Identity } from "@dfinity/agent";
 import type { DexId, TokenSwapPool } from "openchat-shared";
-import type { AgentConfig } from "../../config";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
 import { IcpSwapPoolClient } from "./icpSwap/pool/icpSwap.pool.client";
 import { SonicSwapsClient } from "./sonic/swaps/sonic.swaps.client";
@@ -10,10 +9,10 @@ export class DexesAgent {
     private _icpSwapIndexClient: IcpSwapIndexClient;
     private _sonicSwapsClient: SonicSwapsClient;
 
-    constructor(private config: AgentConfig) {
+    constructor(private agent: HttpAgent) {
         this._identity = new AnonymousIdentity();
-        this._icpSwapIndexClient = IcpSwapIndexClient.create(this._identity, config);
-        this._sonicSwapsClient = SonicSwapsClient.create(this._identity, config);
+        this._icpSwapIndexClient = new IcpSwapIndexClient(this._identity, this.agent);
+        this._sonicSwapsClient = new SonicSwapsClient(this._identity, this.agent);
     }
 
     async getSwapPools(inputToken: string, outputTokens: Set<string>): Promise<TokenSwapPool[]> {
@@ -73,16 +72,16 @@ export class DexesAgent {
         amountIn: bigint,
     ): Promise<bigint> {
         if (pool.dex === "icpswap") {
-            const client = IcpSwapPoolClient.create(
+            const client = new IcpSwapPoolClient(
                 this._identity,
-                this.config,
+                this.agent,
                 pool.canisterId,
                 pool.token0,
                 pool.token1,
             );
             return client.quote(inputToken, outputToken, amountIn);
         } else if (pool.dex === "sonic") {
-            const client = SonicSwapsClient.create(this._identity, this.config);
+            const client = new SonicSwapsClient(this._identity, this.agent);
             return client.quote(inputToken, outputToken, amountIn);
         } else {
             return Promise.resolve(BigInt(0));

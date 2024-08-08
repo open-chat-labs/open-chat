@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
 import { idlFactory, type MarketMakerService } from "./candid/idl";
 import { CandidService } from "../candidService";
@@ -10,18 +10,13 @@ import { identity } from "../../utils/mapping";
 export class MarketMakerClient extends CandidService {
     private service: MarketMakerService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<MarketMakerService>(
             idlFactory,
             config.marketMakerCanister,
-            config
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): MarketMakerClient {
-        return new MarketMakerClient(identity, config);
     }
 
     updateConfig(config: UpdateMarketMakerConfigArgs): Promise<UpdateMarketMakerConfigResponse> {
@@ -38,11 +33,11 @@ export class MarketMakerClient extends CandidService {
             max_orders_per_direction: apiOptional(identity, config.maxOrdersPerDirection),
             max_orders_to_make_per_iteration: apiOptional(
                 identity,
-                config.maxOrdersToMakePerIteration
+                config.maxOrdersToMakePerIteration,
             ),
             max_orders_to_cancel_per_iteration: apiOptional(
                 identity,
-                config.maxOrdersToCancelPerIteration
+                config.maxOrdersToCancelPerIteration,
             ),
         };
         return this.handleResponse(this.service.update_config(args), updateConfigResponse);

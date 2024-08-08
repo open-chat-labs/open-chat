@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
@@ -12,18 +12,13 @@ import type { AgentConfig } from "../../config";
 export class StorageIndexClient extends CandidService {
     private service: StorageIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<StorageIndexService>(
             idlFactory,
             config.openStorageIndexCanister,
-            config
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): StorageIndexClient {
-        return new StorageIndexClient(identity, config);
     }
 
     user(): Promise<StorageUserResponse> {
@@ -33,7 +28,7 @@ export class StorageIndexClient extends CandidService {
     allocatedBucket(
         fileHash: Uint8Array,
         fileSize: bigint,
-        fileIdSeed: bigint | undefined
+        fileIdSeed: bigint | undefined,
     ): Promise<AllocatedBucketResponse> {
         return this.handleResponse(
             this.service.allocated_bucket_v2({
@@ -41,14 +36,14 @@ export class StorageIndexClient extends CandidService {
                 file_size: fileSize,
                 file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],
             }),
-            allocatedBucketResponse
+            allocatedBucketResponse,
         );
     }
 
     canForward(fileHash: Uint8Array, fileSize: bigint): Promise<CanForwardResponse> {
         return this.handleResponse(
             this.service.can_forward({ file_hash: fileHash, file_size: fileSize }),
-            canForwardResponse
+            canForwardResponse,
         );
     }
 }

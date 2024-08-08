@@ -62,7 +62,7 @@ async function initialize(
         return { kind: "auth_identity_not_found" };
     }
 
-    identityAgent = new IdentityAgent(
+    identityAgent = await IdentityAgent.create(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
@@ -1831,14 +1831,14 @@ async function linkIdentities(
         DelegationChain.fromJSON(initiatorDelegation),
     );
     const initiator = initiatorIdentity.getPrincipal().toString();
-    const initiatorAgent = new IdentityAgent(initiatorIdentity, identityCanister, icUrl);
+    const initiatorAgent = await IdentityAgent.create(initiatorIdentity, identityCanister, icUrl);
 
     const approverIdentity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(approverKey),
         DelegationChain.fromJSON(approverDelegation),
     );
     const approver = approverIdentity.getPrincipal().toString();
-    const approverAgent = new IdentityAgent(approverIdentity, identityCanister, icUrl);
+    const approverAgent = await IdentityAgent.create(approverIdentity, identityCanister, icUrl);
 
     if (approver != authPrincipalString) {
         return "principal_mismatch";

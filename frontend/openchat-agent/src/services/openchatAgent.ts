@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
+import { HttpAgent, type Identity } from "@dfinity/agent";
 import {
     type Database,
     getCachedChats,
@@ -246,6 +246,7 @@ import type { ClaimDailyChitResponse } from "openchat-shared";
 import type { ChitUserBalance } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
+    private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
@@ -254,6 +255,7 @@ export class OpenChatAgent extends EventTarget {
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
+    private _dataClient: DataClient;
     private _localUserIndexClients: Record<string, LocalUserIndexClient>;
     private _ledgerClients: Record<string, LedgerClient>;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
@@ -276,30 +278,48 @@ export class OpenChatAgent extends EventTarget {
     ) {
         super();
         this._logger = config.logger;
+        this._agent = this.createHttpAgent();
         this.db = initDb(this.principal);
-        this._onlineClient = OnlineClient.create(identity, config);
-        this._userIndexClient = new UserIndexClient(identity, config);
-        this._groupIndexClient = GroupIndexClient.create(identity, config);
-        this._notificationClient = NotificationsClient.create(identity, config);
-        this._proposalsBotClient = ProposalsBotClient.create(identity, config);
-        this._marketMakerClient = MarketMakerClient.create(identity, config);
-        this._registryClient = RegistryClient.create(identity, config);
-        this._icpcoinsClient = ICPCoinsClient.create(identity, config);
-        this.translationsClient = new TranslationsClient(identity, config);
-        this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
-        this._signInWithEthereumClient = SignInWithEthereumClient.create(identity, config);
-        this._signInWithSolanaClient = SignInWithSolanaClient.create(identity, config);
+        this._onlineClient = new OnlineClient(identity, this._agent, config);
+        this._userIndexClient = new UserIndexClient(identity, this._agent, config);
+        this._groupIndexClient = new GroupIndexClient(identity, this._agent, config);
+        this._notificationClient = new NotificationsClient(identity, this._agent, config);
+        this._proposalsBotClient = new ProposalsBotClient(identity, this._agent, config);
+        this._marketMakerClient = new MarketMakerClient(identity, this._agent, config);
+        this._registryClient = new RegistryClient(identity, this._agent, config);
+        this._dataClient = new DataClient(identity, this._agent, config);
+        this._icpcoinsClient = new ICPCoinsClient(identity, this._agent);
+        this.translationsClient = new TranslationsClient(identity, this._agent, config);
+        this._signInWithEmailClient = new SignInWithEmailClient(identity, this._agent, config);
+        this._signInWithEthereumClient = new SignInWithEthereumClient(
+            identity,
+            this._agent,
+            config,
+        );
+        this._signInWithSolanaClient = new SignInWithSolanaClient(identity, this._agent, config);
         this._localUserIndexClients = {};
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
-        this._dexesAgent = new DexesAgent(config);
+        this._dexesAgent = new DexesAgent(this._agent);
         this._groupInvite = config.groupInvite;
     }
 
     private get principal(): Principal {
         return this.identity.getPrincipal();
+    }
+
+    private createHttpAgent(): HttpAgent {
+        const agent = HttpAgent.createSync({
+            identity: this.identity,
+            host: this.config.icUrl,
+            verifyQuerySignatures: false,
+        });
+        if (!isMainnet(this.config.icUrl) && !offline()) {
+            agent.fetchRootKey();
+        }
+        return agent;
     }
 
     getAllCachedUsers(): Promise<UserLookup> {
@@ -324,7 +344,13 @@ export class OpenChatAgent extends EventTarget {
         if (userId === ANON_USER_ID) {
             this._userClient = AnonUserClient.create();
         } else {
-            this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
+            this._userClient = new UserClient(
+                userId,
+                this.identity,
+                this._agent,
+                this.config,
+                this.db,
+            );
         }
         return this;
     }
@@ -332,10 +358,11 @@ export class OpenChatAgent extends EventTarget {
     communityClient(communityId: string): CommunityClient {
         if (!this._communityClients[communityId]) {
             const inviteCode = this.getProvidedCommunityInviteCode(communityId);
-            this._communityClients[communityId] = CommunityClient.create(
-                communityId,
+            this._communityClients[communityId] = new CommunityClient(
                 this.identity,
+                this._agent,
                 this.config,
+                communityId,
                 this.db,
                 inviteCode,
             );
@@ -349,10 +376,11 @@ export class OpenChatAgent extends EventTarget {
                 kind: "group_chat",
                 groupId: chatId,
             });
-            this._groupClients[chatId] = GroupClient.create(
-                { kind: "group_chat", groupId: chatId },
+            this._groupClients[chatId] = new GroupClient(
                 this.identity,
+                this._agent,
                 this.config,
+                { kind: "group_chat", groupId: chatId },
                 this.db,
                 inviteCode,
             );
@@ -369,16 +397,16 @@ export class OpenChatAgent extends EventTarget {
 
     getLedgerClient(ledger: string): LedgerClient {
         if (!this._ledgerClients[ledger]) {
-            this._ledgerClients[ledger] = LedgerClient.create(this.identity, this.config, ledger);
+            this._ledgerClients[ledger] = new LedgerClient(this.identity, this._agent, ledger);
         }
         return this._ledgerClients[ledger];
     }
 
     getLedgerIndexClient(ledgerIndex: string): LedgerIndexClient {
         if (!this._ledgerIndexClients[ledgerIndex]) {
-            this._ledgerIndexClients[ledgerIndex] = LedgerIndexClient.create(
+            this._ledgerIndexClients[ledgerIndex] = new LedgerIndexClient(
                 this.identity,
-                this.config,
+                this._agent,
                 ledgerIndex,
             );
         }
@@ -387,9 +415,9 @@ export class OpenChatAgent extends EventTarget {
 
     private getLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
         if (!this._localUserIndexClients[canisterId]) {
-            this._localUserIndexClients[canisterId] = LocalUserIndexClient.create(
+            this._localUserIndexClients[canisterId] = new LocalUserIndexClient(
                 this.identity,
-                this.config,
+                this._agent,
                 canisterId,
                 this.db,
             );
@@ -2410,14 +2438,14 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("");
 
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db)
+            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db)
+            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -2439,7 +2467,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
-        return DataClient.create(this.identity, this.config).storageStatus();
+        return this._dataClient.storageStatus();
     }
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
@@ -2652,15 +2680,15 @@ export class OpenChatAgent extends EventTarget {
         isNns: boolean,
     ): Promise<ProposalVoteDetails> {
         if (isNns) {
-            return NnsGovernanceClient.create(
+            return new NnsGovernanceClient(
                 this.identity,
-                this.config,
+                this._agent,
                 governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         } else {
-            return SnsGovernanceClient.create(
+            return new SnsGovernanceClient(
                 this.identity,
-                this.config,
+                this._agent,
                 governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         }
@@ -2669,9 +2697,9 @@ export class OpenChatAgent extends EventTarget {
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string,
     ): Promise<ListNervousSystemFunctionsResponse> {
-        return SnsGovernanceClient.create(
+        return new SnsGovernanceClient(
             this.identity,
-            this.config,
+            this._agent,
             snsGovernanceCanisterId,
         ).listNervousSystemFunctions();
     }
@@ -3423,7 +3451,7 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndex !== undefined) {
             return localUserIndex;
         }
-        return UserClient.create(userId, this.identity, this.config, this.db)
+        return new UserClient(userId, this.identity, this._agent, this.config, this.db)
             .localUserIndex()
             .then((localUserIndex) => {
                 return cacheLocalUserIndexForUser(userId, localUserIndex);
@@ -3431,7 +3459,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
-        return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
+        return new CkbtcMinterClient(this.identity, this._agent).updateBalance(userId);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

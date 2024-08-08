@@ -1,4 +1,4 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
@@ -31,16 +31,10 @@ import type { DelegationIdentity } from "@dfinity/identity";
 export class IdentityClient extends CandidService {
     private service: IdentityService;
 
-    private constructor(identity: Identity, identityCanister: string, icUrl: string) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
+        super(identity, agent);
 
-        this.service = this.createServiceClient<IdentityService>(idlFactory, identityCanister, {
-            icUrl,
-        });
-    }
-
-    static create(identity: Identity, identityCanister: string, icUrl: string): IdentityClient {
-        return new IdentityClient(identity, identityCanister, icUrl);
+        this.service = this.createServiceClient<IdentityService>(idlFactory, identityCanister);
     }
 
     createIdentity(
