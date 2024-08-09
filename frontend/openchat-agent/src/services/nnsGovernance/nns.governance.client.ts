@@ -10,9 +10,9 @@ export class NnsGovernanceClient extends CandidService {
     private service: NnsGovernanceService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent);
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<NnsGovernanceService>(idlFactory, canisterId);
+        this.service = this.createServiceClient<NnsGovernanceService>(idlFactory);
     }
 
     registerVote(

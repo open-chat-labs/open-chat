@@ -12,12 +12,9 @@ export class CkbtcMinterClient extends CandidService {
     private service: CkbtcMinterService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent);
+        super(identity, agent, CKBTC_MINTER_CANISTER_ID);
 
-        this.service = this.createServiceClient<CkbtcMinterService>(
-            idlFactory,
-            CKBTC_MINTER_CANISTER_ID,
-        );
+        this.service = this.createServiceClient<CkbtcMinterService>(idlFactory);
     }
 
     updateBalance(userId: string): Promise<UpdateBtcBalanceResponse> {

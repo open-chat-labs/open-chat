@@ -15,12 +15,9 @@ export class SonicSwapsClient extends CandidService {
     private poolsLastUpdated: number = 0;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent);
+        super(identity, agent, SONIC_INDEX_CANISTER_ID);
 
-        this.service = this.createServiceClient<SonicSwapsService>(
-            idlFactory,
-            SONIC_INDEX_CANISTER_ID,
-        );
+        this.service = this.createServiceClient<SonicSwapsService>(idlFactory);
     }
 
     async getPools(): Promise<TokenSwapPool[]> {

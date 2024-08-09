@@ -7,18 +7,14 @@ import type {
     SiwePrepareLoginResponse,
 } from "openchat-shared";
 import { getDelegationResponse, loginResponse, prepareLoginResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
 
 export class SignInWithEthereumClient extends CandidService {
     private service: SignInWithEthereumService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<SignInWithEthereumService>(
-            idlFactory,
-            config.signInWithEthereumCanister,
-        );
+        this.service = this.createServiceClient<SignInWithEthereumService>(idlFactory);
     }
 
     prepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

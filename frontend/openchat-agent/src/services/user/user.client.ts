@@ -174,10 +174,10 @@ export class UserClient extends CandidService {
         private config: AgentConfig,
         private db: Database,
     ) {
-        super(identity, agent);
+        super(identity, agent, userId);
         this.userId = userId;
         this.chatId = { kind: "direct_chat", userId: userId };
-        this.userService = this.createServiceClient<UserService>(idlFactory, userId);
+        this.userService = this.createServiceClient<UserService>(idlFactory);
     }
 
     private setCachedEvents(

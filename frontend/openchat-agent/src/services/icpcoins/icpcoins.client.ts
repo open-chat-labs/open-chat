@@ -10,9 +10,9 @@ export class ICPCoinsClient extends CandidService {
     private service: ICPCoinsService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent);
+        super(identity, agent, ICPCOINS_CANISTER_ID);
 
-        this.service = this.createServiceClient<ICPCoinsService>(idlFactory, ICPCOINS_CANISTER_ID);
+        this.service = this.createServiceClient<ICPCoinsService>(idlFactory);
     }
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {

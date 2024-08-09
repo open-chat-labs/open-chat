@@ -3,16 +3,15 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, type OnlineService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
 import { lastOnlineResponse } from "./mappers";
 
 export class OnlineClient extends CandidService {
     private service: OnlineService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<OnlineService>(idlFactory, config.onlineCanister);
+        this.service = this.createServiceClient<OnlineService>(idlFactory);
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {

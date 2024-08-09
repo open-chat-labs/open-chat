@@ -32,9 +32,9 @@ export class IdentityClient extends CandidService {
     private service: IdentityService;
 
     constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
-        super(identity, agent);
+        super(identity, agent, identityCanister);
 
-        this.service = this.createServiceClient<IdentityService>(idlFactory, identityCanister);
+        this.service = this.createServiceClient<IdentityService>(idlFactory);
     }
 
     createIdentity(

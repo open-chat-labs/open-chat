@@ -7,18 +7,14 @@ import type {
     CanForwardResponse,
     StorageUserResponse,
 } from "openchat-shared";
-import type { AgentConfig } from "../../config";
 
 export class StorageIndexClient extends CandidService {
     private service: StorageIndexService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<StorageIndexService>(
-            idlFactory,
-            config.openStorageIndexCanister,
-        );
+        this.service = this.createServiceClient<StorageIndexService>(idlFactory);
     }
 
     user(): Promise<StorageUserResponse> {

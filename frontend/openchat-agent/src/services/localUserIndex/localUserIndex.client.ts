@@ -55,12 +55,9 @@ export class LocalUserIndexClient extends CandidService {
         canisterId: string,
         private db: Database,
     ) {
-        super(identity, agent);
+        super(identity, agent, canisterId);
 
-        this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(
-            idlFactory,
-            canisterId,
-        );
+        this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(idlFactory);
     }
 
     groupAndCommunitySummaryUpdates(
