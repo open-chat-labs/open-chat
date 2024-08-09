@@ -523,6 +523,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.gate,
                         payload.isPublic,
                         payload.messagesVisibleToNonMembers,
+                        payload.externalUrl,
                     ),
                 );
                 break;

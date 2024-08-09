@@ -2088,6 +2088,16 @@ export function userGroup(candid: ApiUserGroup): [number, UserGroupSummary] {
     ];
 }
 
+// TODO - temporary hack
+function getExternalUrl(desc: string): string | undefined {
+    try {
+        new URL(desc);
+        return desc;
+    } catch (_) {
+        return undefined;
+    }
+}
+
 export function communityChannelSummary(
     candid: ApiCommunityCanisterChannelSummary,
     communityId: string,
@@ -2137,6 +2147,7 @@ export function communityChannelSummary(
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
         messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
+        externalUrl: getExternalUrl(candid.description),
     };
 }
 

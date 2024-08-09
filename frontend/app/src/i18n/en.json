@@ -179,6 +179,7 @@
         "details": "Details",
         "directChats": "Direct chats",
         "edit": "Edit community",
+        "embed": "Add embedded channel",
         "enterUserGroupName": "Enter user group name",
         "errors": {
             "convertFailed": "Sorry but we were unable to convert your groups to a community",
@@ -448,6 +449,9 @@
         "details": "Details",
         "edit": "Edit {level}",
         "editGroupPhoto": "Edit {level} photo",
+        "externalUrl": "External Url",
+        "externalUrlPlaceholder": "External Url of content to embed",
+        "externalUrlWarning": "It must be possible to host the external site in an iframe. This is something that OpenChat has no control over.",
         "getRulesFailed": "Failed to get {level} rules",
         "groupInfo": "{level} info",
         "historyPrivateMessage": "Old messages are not visible to new members",

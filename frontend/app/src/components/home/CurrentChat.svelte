@@ -39,6 +39,7 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ExternalContent from "./ExternalContent.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -82,7 +83,6 @@
     $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
-
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
@@ -92,6 +92,7 @@
     $: canReact = client.canReactToMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
+    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
 
     $: {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
@@ -363,62 +364,67 @@
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
-    <CurrentChatMessages
-        bind:this={currentChatMessages}
-        on:replyPrivatelyTo
-        on:replyTo={replyTo}
-        on:chatWith
-        on:upgrade
-        on:forward
-        on:retrySend
-        on:startVideoCall
-        on:removePreview={onRemovePreview}
-        {chat}
-        {events}
-        {filteredProposals}
-        {canPin}
-        {canBlockUsers}
-        {canDelete}
-        {canReplyInThread}
-        {canSendAny}
-        {canReact}
-        {canInvite}
-        {readonly}
-        {firstUnreadMention}
-        footer={showFooter}
-        {unreadMessages} />
-    {#if showFooter}
-        <Footer
-            {chat}
-            attachment={$currentChatAttachment}
-            editingEvent={$currentChatEditingEvent}
-            replyingTo={$currentChatReplyingTo}
-            textContent={$currentChatTextContent}
-            user={$user}
-            mode={"message"}
-            {joining}
-            {preview}
-            {blocked}
-            on:joinGroup
+    {#if externalUrl !== undefined}
+        <ExternalContent {externalUrl} />
+    {:else}
+        <CurrentChatMessages
+            bind:this={currentChatMessages}
+            on:replyPrivatelyTo
+            on:replyTo={replyTo}
+            on:chatWith
             on:upgrade
-            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-            on:clearAttachment={() =>
-                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
-            on:setTextContent={setTextContent}
-            on:startTyping={() => client.startTyping(chat, $user.userId)}
-            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-            on:fileSelected={fileSelected}
-            on:audioCaptured={fileSelected}
-            on:sendMessage={sendMessage}
-            on:createTestMessages={createTestMessages}
-            on:attachGif={attachGif}
-            on:makeMeme={makeMeme}
-            on:tokenTransfer={tokenTransfer}
-            on:createPrizeMessage={createPrizeMessage}
-            on:createP2PSwapMessage={createP2PSwapMessage}
-            on:searchChat={searchChat}
-            on:createPoll={createPoll} />
+            on:forward
+            on:retrySend
+            on:startVideoCall
+            on:removePreview={onRemovePreview}
+            {chat}
+            {events}
+            {filteredProposals}
+            {canPin}
+            {canBlockUsers}
+            {canDelete}
+            {canReplyInThread}
+            {canSendAny}
+            {canReact}
+            {canInvite}
+            {readonly}
+            {firstUnreadMention}
+            footer={showFooter}
+            {unreadMessages} />
+        {#if showFooter}
+            <Footer
+                {chat}
+                attachment={$currentChatAttachment}
+                editingEvent={$currentChatEditingEvent}
+                replyingTo={$currentChatReplyingTo}
+                textContent={$currentChatTextContent}
+                user={$user}
+                mode={"message"}
+                {joining}
+                {preview}
+                {blocked}
+                on:joinGroup
+                on:upgrade
+                on:cancelReply={() =>
+                    draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+                on:clearAttachment={() =>
+                    draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+                on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
+                on:setTextContent={setTextContent}
+                on:startTyping={() => client.startTyping(chat, $user.userId)}
+                on:stopTyping={() => client.stopTyping(chat, $user.userId)}
+                on:fileSelected={fileSelected}
+                on:audioCaptured={fileSelected}
+                on:sendMessage={sendMessage}
+                on:createTestMessages={createTestMessages}
+                on:attachGif={attachGif}
+                on:makeMeme={makeMeme}
+                on:tokenTransfer={tokenTransfer}
+                on:createPrizeMessage={createPrizeMessage}
+                on:createP2PSwapMessage={createP2PSwapMessage}
+                on:searchChat={searchChat}
+                on:createPoll={createPoll} />
+        {/if}
     {/if}
 </div>
 

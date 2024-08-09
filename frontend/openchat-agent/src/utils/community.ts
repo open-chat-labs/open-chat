@@ -162,6 +162,16 @@ function mergeUserGroups(
     return new Map(existing);
 }
 
+// TODO - temporary hack
+function getExternalUrl(desc: string): string | undefined {
+    try {
+        new URL(desc);
+        return desc;
+    } catch (_) {
+        return undefined;
+    }
+}
+
 function mergeChannelUpdates(
     channels: ChannelSummary[],
     userCanisterUpdates: UserCanisterChannelSummaryUpdates[],
@@ -184,11 +194,14 @@ function mergeChannelUpdates(
             canisterId: channel.id.communityId,
         }));
 
+        const description = c?.description ?? channel.description;
+        const externalUrl = getExternalUrl(description);
+
         return {
             kind: "channel",
             id: channel.id,
             name: c?.name ?? channel.name,
-            description: c?.description ?? channel.description,
+            description,
             minVisibleEventIndex: channel.minVisibleEventIndex,
             minVisibleMessageIndex: channel.minVisibleMessageIndex,
             lastUpdated: c?.lastUpdated ?? channel.lastUpdated,
@@ -243,6 +256,7 @@ function mergeChannelUpdates(
             isInvited: false,
             messagesVisibleToNonMembers:
                 c?.messageVisibleToNonMembers ?? channel.messagesVisibleToNonMembers,
+            externalUrl,
         };
     });
 }

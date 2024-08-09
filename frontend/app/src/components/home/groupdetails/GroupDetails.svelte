@@ -45,6 +45,7 @@
     $: combinedRulesText = canSend
         ? client.combineRulesText($currentChatRules, $currentCommunityRules)
         : "";
+    $: embeddedContent = chat.kind === "channel" && chat.externalUrl !== undefined;
 
     function editGroup() {
         if (canEdit) {
@@ -134,7 +135,7 @@
                             )} />
                     </p>
                 {/if}
-                {#if !chat.public}
+                {#if !chat.public && !embeddedContent}
                     {#if chat.historyVisible}
                         <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                     {:else}
@@ -149,7 +150,9 @@
                     </p>
                 </div>
             {/if}
-            <DisappearingMessagesSummary ttl={chat.eventsTTL} />
+            {#if !embeddedContent}
+                <DisappearingMessagesSummary ttl={chat.eventsTTL} />
+            {/if}
             <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
@@ -174,12 +177,14 @@
             headerText={i18nKey("permissions.permissions")}>
             <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
         </CollapsibleCard>
-        <CollapsibleCard
-            on:toggle={groupStatsOpen.toggle}
-            open={$groupStatsOpen}
-            headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
-            <Stats showReported={false} stats={chat.metrics} />
-        </CollapsibleCard>
+        {#if !embeddedContent}
+            <CollapsibleCard
+                on:toggle={groupStatsOpen.toggle}
+                open={$groupStatsOpen}
+                headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
+                <Stats showReported={false} stats={chat.metrics} />
+            </CollapsibleCard>
+        {/if}
         {#if client.canDeleteGroup(chat.id)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}

@@ -286,7 +286,7 @@ export class CommunityClient extends CandidService {
                 name: channel.name,
                 subtype: [],
                 events_ttl: apiOptional(identity, channel.eventsTTL),
-                description: channel.description,
+                description: channel.externalUrl ?? channel.description, //TODO temporary hack for testing
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional(
                     (data) => {
@@ -1194,7 +1194,11 @@ export class CommunityClient extends CandidService {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
+        if (externalUrl !== undefined) {
+            description = externalUrl; // TODO this is a temporary hack
+        }
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(chatId.channelId),

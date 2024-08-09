@@ -909,6 +909,7 @@ type UpdateGroup = {
     isPublic?: boolean;
     kind: "updateGroup";
     messagesVisibleToNonMembers?: boolean;
+    externalUrl?: string;
 };
 
 type JoinGroup = {

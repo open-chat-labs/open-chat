@@ -688,6 +688,7 @@ export class OpenChatAgent extends EventTarget {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -716,6 +717,7 @@ export class OpenChatAgent extends EventTarget {
                     gate,
                     isPublic,
                     messagesVisibleToNonMembers,
+                    externalUrl,
                 );
         }
     }

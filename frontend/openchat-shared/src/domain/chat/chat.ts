@@ -1376,6 +1376,7 @@ export type ChannelSummary = DataContent &
         dateReadPinned: bigint | undefined;
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
+        externalUrl?: string;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1550,6 +1551,7 @@ export type CandidateGroupChat = AccessControlled &
         avatar?: DataContent;
         eventsTTL?: bigint;
         messagesVisibleToNonMembers?: boolean;
+        externalUrl?: string;
     };
 
 export type CandidateChannel = CandidateGroupChat;
