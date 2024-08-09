@@ -9,8 +9,8 @@ import type {
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
 } from "openchat-shared";
-import { buildDelegationIdentity, offline, toDer } from "openchat-shared";
-import { isMainnet } from "../utils/network";
+import { buildDelegationIdentity, toDer } from "openchat-shared";
+import { createHttpAgent } from "../utils/httpAgent";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
@@ -24,10 +24,7 @@ export class IdentityAgent {
         identityCanister: string,
         icUrl: string,
     ): Promise<IdentityAgent> {
-        const agent = HttpAgent.createSync({ identity, host: icUrl });
-        if (!isMainnet(icUrl) && !offline()) {
-            await agent.fetchRootKey();
-        }
+        const agent = await createHttpAgent(identity, icUrl);
         return new IdentityAgent(identity, agent, identityCanister);
     }
 

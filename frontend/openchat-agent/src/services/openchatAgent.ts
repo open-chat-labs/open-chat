@@ -244,6 +244,7 @@ import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberSettings } from "openchat-shared";
 import type { ClaimDailyChitResponse } from "openchat-shared";
 import type { ChitUserBalance } from "openchat-shared";
+import { createHttpAgentSync } from "../utils/httpAgent";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -278,7 +279,7 @@ export class OpenChatAgent extends EventTarget {
     ) {
         super();
         this._logger = config.logger;
-        this._agent = this.createHttpAgent();
+        this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
         this._onlineClient = new OnlineClient(identity, this._agent, config);
         this._userIndexClient = new UserIndexClient(identity, this._agent, config);
@@ -308,18 +309,6 @@ export class OpenChatAgent extends EventTarget {
 
     private get principal(): Principal {
         return this.identity.getPrincipal();
-    }
-
-    private createHttpAgent(): HttpAgent {
-        const agent = HttpAgent.createSync({
-            identity: this.identity,
-            host: this.config.icUrl,
-            verifyQuerySignatures: false,
-        });
-        if (!isMainnet(this.config.icUrl) && !offline()) {
-            agent.fetchRootKey();
-        }
-        return agent;
     }
 
     getAllCachedUsers(): Promise<UserLookup> {
