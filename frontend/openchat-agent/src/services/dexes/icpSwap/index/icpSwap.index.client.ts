@@ -13,12 +13,9 @@ export class IcpSwapIndexClient extends CandidService {
     private poolsLastUpdated: number = 0;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent);
+        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID);
 
-        this.service = this.createServiceClient<IcpSwapIndexService>(
-            idlFactory,
-            ICPSWAP_INDEX_CANISTER_ID,
-        );
+        this.service = this.createServiceClient<IcpSwapIndexService>(idlFactory);
     }
 
     async getPools(): Promise<TokenSwapPool[]> {

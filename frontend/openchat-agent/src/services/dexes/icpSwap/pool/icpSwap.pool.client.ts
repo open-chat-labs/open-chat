@@ -13,9 +13,9 @@ export class IcpSwapPoolClient extends CandidService {
         private token0: string,
         private token1: string,
     ) {
-        super(identity, agent);
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<IcpSwapPoolService>(idlFactory, canisterId);
+        this.service = this.createServiceClient<IcpSwapPoolService>(idlFactory);
     }
 
     quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {

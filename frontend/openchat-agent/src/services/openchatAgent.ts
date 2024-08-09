@@ -281,23 +281,60 @@ export class OpenChatAgent extends EventTarget {
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
-        this._onlineClient = new OnlineClient(identity, this._agent, config);
-        this._userIndexClient = new UserIndexClient(identity, this._agent, config);
-        this._groupIndexClient = new GroupIndexClient(identity, this._agent, config);
-        this._notificationClient = new NotificationsClient(identity, this._agent, config);
-        this._proposalsBotClient = new ProposalsBotClient(identity, this._agent, config);
-        this._marketMakerClient = new MarketMakerClient(identity, this._agent, config);
-        this._registryClient = new RegistryClient(identity, this._agent, config);
+        this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
+        this._userIndexClient = new UserIndexClient(
+            identity,
+            this._agent,
+            config.userIndexCanister,
+        );
+        this._groupIndexClient = new GroupIndexClient(
+            identity,
+            this._agent,
+            config.groupIndexCanister,
+        );
+        this._notificationClient = new NotificationsClient(
+            identity,
+            this._agent,
+            config.notificationsCanister,
+        );
+        this._proposalsBotClient = new ProposalsBotClient(
+            identity,
+            this._agent,
+            config.proposalBotCanister,
+        );
+        this._marketMakerClient = new MarketMakerClient(
+            identity,
+            this._agent,
+            config.marketMakerCanister,
+        );
+        this._registryClient = new RegistryClient(
+            identity,
+            this._agent,
+            config.registryCanister,
+            config.blobUrlPattern,
+        );
         this._dataClient = new DataClient(identity, this._agent, config);
         this._icpcoinsClient = new ICPCoinsClient(identity, this._agent);
-        this.translationsClient = new TranslationsClient(identity, this._agent, config);
-        this._signInWithEmailClient = new SignInWithEmailClient(identity, this._agent, config);
+        this.translationsClient = new TranslationsClient(
+            identity,
+            this._agent,
+            config.translationsCanister,
+        );
+        this._signInWithEmailClient = new SignInWithEmailClient(
+            identity,
+            this._agent,
+            config.signInWithEmailCanister,
+        );
         this._signInWithEthereumClient = new SignInWithEthereumClient(
             identity,
             this._agent,
-            config,
+            config.signInWithEthereumCanister,
         );
-        this._signInWithSolanaClient = new SignInWithSolanaClient(identity, this._agent, config);
+        this._signInWithSolanaClient = new SignInWithSolanaClient(
+            identity,
+            this._agent,
+            config.signInWithSolanaCanister,
+        );
         this._localUserIndexClients = {};
         this._ledgerClients = {};
         this._ledgerIndexClients = {};

@@ -8,18 +8,14 @@ import type {
 } from "openchat-shared";
 import { prepareLoginResponse } from "./mappers";
 import { getDelegationResponse, loginResponse } from "../signInWithEthereum/mappers";
-import type { AgentConfig } from "../../config";
 
 export class SignInWithSolanaClient extends CandidService {
     private service: SignInWithSolanaService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<SignInWithSolanaService>(
-            idlFactory,
-            config.signInWithSolanaCanister,
-        );
+        this.service = this.createServiceClient<SignInWithSolanaService>(idlFactory);
     }
 
     prepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {

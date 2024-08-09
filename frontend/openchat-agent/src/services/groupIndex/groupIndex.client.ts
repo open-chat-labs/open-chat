@@ -1,6 +1,5 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import type { AgentConfig } from "../../config";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
@@ -39,13 +38,10 @@ import { identity } from "../../utils/mapping";
 export class GroupIndexClient extends CandidService {
     private groupIndexService: GroupIndexService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.groupIndexService = this.createServiceClient<GroupIndexService>(
-            idlFactory,
-            config.groupIndexCanister,
-        );
+        this.groupIndexService = this.createServiceClient<GroupIndexService>(idlFactory);
     }
 
     activeGroups(
