@@ -1,7 +1,6 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
 import { CandidService } from "../../../candidService";
-import type { AgentConfig } from "../../../../config";
 import type { TokenSwapPool } from "openchat-shared";
 import { getPoolsResponse } from "./mappers";
 
@@ -13,18 +12,13 @@ export class IcpSwapIndexClient extends CandidService {
     private pools: TokenSwapPool[] = []; // Cache the pools for 10 minutes
     private poolsLastUpdated: number = 0;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<IcpSwapIndexService>(
             idlFactory,
             ICPSWAP_INDEX_CANISTER_ID,
-            config,
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): IcpSwapIndexClient {
-        return new IcpSwapIndexClient(identity, config);
     }
 
     async getPools(): Promise<TokenSwapPool[]> {

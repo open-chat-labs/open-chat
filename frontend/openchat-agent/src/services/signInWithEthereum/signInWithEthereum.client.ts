@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEthereumService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
@@ -12,20 +12,13 @@ import type { AgentConfig } from "../../config";
 export class SignInWithEthereumClient extends CandidService {
     private service: SignInWithEthereumService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<SignInWithEthereumService>(
             idlFactory,
             config.signInWithEthereumCanister,
-            {
-                icUrl: config.icUrl,
-            },
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): SignInWithEthereumClient {
-        return new SignInWithEthereumClient(identity, config);
     }
 
     prepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

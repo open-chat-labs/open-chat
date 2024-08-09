@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type ProposalsBotService } from "./candid/idl";
 import { CandidService } from "../candidService";
@@ -12,18 +12,13 @@ import { stakeNeuronForSubmittingProposalsResponse, topUpNeuronResponse } from "
 export class ProposalsBotClient extends CandidService {
     private service: ProposalsBotService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<ProposalsBotService>(
             idlFactory,
             config.proposalBotCanister,
-            config,
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): ProposalsBotClient {
-        return new ProposalsBotClient(identity, config);
     }
 
     stakeNeuronForSubmittingProposals(

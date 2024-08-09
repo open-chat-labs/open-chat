@@ -1,5 +1,5 @@
 import { groupBy } from "../../utils/list";
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type UserIndexService } from "./candid/idl";
 import type {
@@ -72,13 +72,12 @@ import {
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
 
-    constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.userIndexService = this.createServiceClient<UserIndexService>(
             idlFactory,
             config.userIndexCanister,
-            config,
         );
     }
 

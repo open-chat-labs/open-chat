@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithSolanaService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
@@ -13,20 +13,13 @@ import type { AgentConfig } from "../../config";
 export class SignInWithSolanaClient extends CandidService {
     private service: SignInWithSolanaService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.service = this.createServiceClient<SignInWithSolanaService>(
             idlFactory,
             config.signInWithSolanaCanister,
-            {
-                icUrl: config.icUrl,
-            },
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): SignInWithSolanaClient {
-        return new SignInWithSolanaClient(identity, config);
     }
 
     prepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {

@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
 import type {
@@ -39,18 +39,13 @@ import { identity } from "../../utils/mapping";
 export class GroupIndexClient extends CandidService {
     private groupIndexService: GroupIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
+        super(identity, agent);
 
         this.groupIndexService = this.createServiceClient<GroupIndexService>(
             idlFactory,
             config.groupIndexCanister,
-            config,
         );
-    }
-
-    static create(identity: Identity, config: AgentConfig): GroupIndexClient {
-        return new GroupIndexClient(identity, config);
     }
 
     activeGroups(
