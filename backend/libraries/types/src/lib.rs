@@ -1,7 +1,8 @@
+use crate::nns::Tokens;
 use candid::{CandidType, Principal};
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use ts_rs::TS;
 
 mod access_tokens;
 mod achievement;
@@ -159,7 +160,8 @@ pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts(export)]
 pub struct Empty {}
 
 pub trait PushIfNotContains<T> {

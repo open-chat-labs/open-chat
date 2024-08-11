@@ -2,8 +2,10 @@ use crate::{CanisterId, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, TS)]
+#[ts(as = "String", export)]
 pub struct CommunityId(CanisterId);
 
 impl From<Principal> for CommunityId {

@@ -1,8 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, TS)]
+#[ts(export)]
 pub struct Version(u32);
 
 impl Version {

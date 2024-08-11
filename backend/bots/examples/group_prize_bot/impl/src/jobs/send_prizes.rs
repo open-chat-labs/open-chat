@@ -1,9 +1,9 @@
 use crate::{mutate_state, Prize, RuntimeState};
-use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1;
 use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
+use types::icrc1::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,

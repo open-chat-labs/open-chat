@@ -2,11 +2,11 @@ use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
+use types::icrc1::Account;
 use types::{
     icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
     MessageContentInitial,
@@ -89,7 +89,7 @@ async fn process_action(action: Action) {
 
             let args = TransferArg {
                 from_subaccount: None,
-                to: Account::from(Principal::from(user_id)),
+                to: Account::from(Principal::from(user_id)).into(),
                 fee: Some(10u32.into()),
                 created_at_time: Some(now_nanos),
                 memo: None,

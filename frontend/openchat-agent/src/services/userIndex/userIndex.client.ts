@@ -1,28 +1,29 @@
 import { groupBy } from "../../utils/list";
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import { type HttpAgent, type Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import * as t from "io-ts";
 import { idlFactory, type UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
+    ChitState,
+    ChitUserBalance,
     CurrentUserResponse,
-    SetUsernameResponse,
-    UsersArgs,
-    UsersResponse,
-    UserSummary,
-    SuspendUserResponse,
-    UnsuspendUserResponse,
     DiamondMembershipDuration,
+    DiamondMembershipFees,
     PayForDiamondMembershipResponse,
-    SetUserUpgradeConcurrencyResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
-    DiamondMembershipFees,
-    ChitUserBalance,
-    UsersApiResponse,
-    UserSummaryUpdate,
-    ChitState,
+    SetUsernameResponse,
+    SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
+    UsersApiResponse,
+    UsersArgs,
+    UsersResponse,
+    UserSummary,
+    UserSummaryUpdate,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -32,26 +33,25 @@ import {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
-    checkUsernameResponse,
-    setUsernameResponse,
-    currentUserResponse,
-    usersApiResponse,
-    userSearchResponse,
-    suspendUserResponse,
-    unsuspendUserResponse,
     apiDiamondDuration,
+    checkUsernameResponse,
+    chitLeaderboardResponse,
+    diamondMembershipFeesResponse,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
-    userRegistrationCanisterResponse,
     setDisplayNameResponse,
-    diamondMembershipFeesResponse,
-    chitLeaderboardResponse,
+    setUsernameResponse,
     submitProofOfUniquePersonhoodResponse,
+    suspendUserResponse,
+    unsuspendUserResponse,
+    userRegistrationCanisterResponse,
+    usersApiResponse,
+    userSearchResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import {
-    getCachedUsers,
     getCachedDeletedUserIds,
+    getCachedUsers,
     getSuspendedUsersSyncedUpTo,
     setCachedDeletedUserIds,
     setCachedUsers,
@@ -64,7 +64,6 @@ import { identity } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     mergeCachedCurrentUser,
-    setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
 
@@ -90,14 +89,38 @@ export class UserIndexClient extends CandidService {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.handleQueryResponse(
-                        () => this.userIndexService.current_user({}),
-                        currentUserResponse,
+                    const successType = t.type({
+                        Success: t.type({
+                            username: t.string,
+                            date_created: t.bigint,
+                            is_platform_operator: t.boolean,
+                            // 'diamond_membership_status' : DiamondMembershipStatusFull,
+                            // 'wasm_version' : BuildVersion,
+                            // 'icp_account' : AccountIdentifier,
+                            // 'is_unique_person' : boolean,
+                            // 'referrals' : Array<UserId>,
+                            // 'user_id' : UserId,
+                            // 'display_name' : [] | [string],
+                            // 'avatar_id' : [] | [bigint],
+                            // 'moderation_flags_enabled' : number,
+                            // 'is_suspected_bot' : boolean,
+                            // 'canister_upgrade_status' : CanisterUpgradeStatus,
+                            // 'suspension_details' : [] | [SuspensionDetails],
+                            // 'is_platform_moderator' : boolean,
+                            // 'diamond_membership_details' : [] | [DiamondMembershipDetails],
+                        }),
+                    });
+                    const notFoundType = t.typ({
+                        UserNotFound: t.null,
+                    });
+                    const response = await this.queryJson(
+                        "current_user_json",
+                        {},
+                        t.UnknownRecord,
+                        t.union([successType, notFoundType]),
                     );
-                    if (liveUser.kind === "created_user") {
-                        setCachedCurrentUser(principal, liveUser);
-                    }
-                    resolve(liveUser, true);
+                    console.log("Response: ", response);
+                    throw new Error();
                 }
             } catch (err) {
                 reject(err);

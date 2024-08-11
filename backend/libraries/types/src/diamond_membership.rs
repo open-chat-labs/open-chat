@@ -2,22 +2,26 @@ use crate::{Milliseconds, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts(export)]
 pub struct DiamondMembershipDetails {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,
     pub subscription: DiamondMembershipSubscription,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub enum DiamondMembershipStatusFull {
     Inactive,
     Active(DiamondMembershipDetails),
     Lifetime,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, TS)]
+#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipStatus {
     Inactive = 0,
@@ -25,7 +29,8 @@ pub enum DiamondMembershipStatus {
     Lifetime = 2,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, TS)]
+#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,
@@ -34,13 +39,15 @@ pub enum DiamondMembershipPlanDuration {
     Lifetime = 255,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
+#[ts(export)]
 pub struct DiamondMembershipFees {
     pub chat_fees: DiamondMembershipFeesByDuration,
     pub icp_fees: DiamondMembershipFeesByDuration,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
+#[ts(export)]
 pub struct DiamondMembershipFeesByDuration {
     pub one_month: u64,
     pub three_months: u64,
@@ -105,7 +112,8 @@ impl DiamondMembershipPlanDuration {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq, TS)]
+#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipSubscription {
     #[default]

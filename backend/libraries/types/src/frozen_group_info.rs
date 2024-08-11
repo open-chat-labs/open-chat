@@ -1,10 +1,12 @@
 use crate::{TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 pub type FrozenCommunityInfo = FrozenGroupInfo;
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
+#[ts(export)]
 pub struct FrozenGroupInfo {
     pub timestamp: TimestampMillis,
     pub frozen_by: UserId,

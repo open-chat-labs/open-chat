@@ -1,7 +1,7 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
-use icrc_ledger_types::icrc1::account::Account;
 use sha2::{Digest, Sha256};
+use types::icrc1::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
     UserId,

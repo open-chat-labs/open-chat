@@ -9,8 +9,11 @@ edition = "2021"
 candid = { workspace = true }
 getrandom = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic_principal = { workspace = true, features = ["ts-rs"] }
 icrc-ledger-types = { workspace = true }
 rand = { workspace = true }
 range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_json.workspace = true
+ts-rs.workspace = true

@@ -5,8 +5,10 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct CommunityCanisterCommunitySummary {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
@@ -29,7 +31,8 @@ pub struct CommunityCanisterCommunitySummary {
     pub metrics: ChatMetrics,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
@@ -37,7 +40,8 @@ pub struct CommunityMembership {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct CommunityCanisterCommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub last_updated: TimestampMillis,
@@ -61,7 +65,8 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub metrics: Option<ChatMetrics>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,

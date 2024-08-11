@@ -2,8 +2,10 @@ use crate::{is_default, EventIndex, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct EventWrapper<T> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,

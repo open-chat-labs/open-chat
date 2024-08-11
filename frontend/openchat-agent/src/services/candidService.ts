@@ -4,6 +4,7 @@ import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { ResponseTooLargeError } from "openchat-shared";
+import * as t from "io-ts";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -22,6 +23,29 @@ export abstract class CandidService {
 
     protected get principal(): Principal {
         return this.identity.getPrincipal();
+    }
+
+    protected async queryJson<From, To>(
+        methodName: string,
+        args: From,
+        encoder: t.Encoder<From, unknown>,
+        decoder: t.Decoder<unknown, To>,
+    ): Promise<To> {
+        const encoded = encoder.encode(args);
+        const bytes = new TextEncoder().encode(JSON.stringify(encoded));
+        const response = await this.agent.query(this.canisterId, { methodName, arg: bytes });
+        if (response.status === "replied") {
+            const responseText = new TextDecoder().decode(response.reply.arg);
+            const responseJson = JSON.parse(responseText);
+            const result = decoder.decode(responseJson);
+            if (result._tag === "Right") {
+                return result.right;
+            } else {
+                throw new Error("Failed to decode response: " + result.left);
+            }
+        } else {
+            throw new Error();
+        }
     }
 
     protected handleResponse<From, To>(

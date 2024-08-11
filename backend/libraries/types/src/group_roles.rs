@@ -1,8 +1,10 @@
 use crate::OptionUpdate;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq, TS)]
+#[ts(export)]
 pub enum GroupRole {
     Owner,
     Admin,
@@ -11,7 +13,8 @@ pub enum GroupRole {
     Participant,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct GroupPermissions {
     pub change_roles: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
@@ -32,7 +35,8 @@ fn admin() -> GroupPermissionRole {
     GroupPermissionRole::Admins
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct MessagePermissions {
     pub default: GroupPermissionRole,
     pub text: Option<GroupPermissionRole>,
@@ -50,13 +54,15 @@ pub struct MessagePermissions {
     pub custom: Vec<CustomPermission>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub struct CustomPermission {
     pub subtype: String,
     pub role: GroupPermissionRole,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts(export)]
 pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
@@ -71,7 +77,8 @@ pub struct OptionalGroupPermissions {
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts(export)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
     pub text: OptionUpdate<GroupPermissionRole>,
@@ -129,7 +136,8 @@ impl Default for MessagePermissions {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, TS)]
+#[ts(export)]
 pub enum GroupPermissionRole {
     None,
     Owner,
