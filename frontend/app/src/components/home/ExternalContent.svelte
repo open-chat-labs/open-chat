@@ -5,19 +5,16 @@
     import type { Theme } from "../../theme/types";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import FancyLoader from "../icons/FancyLoader.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { OpenChat } from "openchat-client";
 
-    type OpenChatXFrame = {};
-
-    const TIMEOUT_ITERATIONS = 5;
     const client = getContext<OpenChat>("client");
 
     export let externalUrl: string;
     export let frozen: boolean;
 
-    let ready = false;
+    let iframe: HTMLIFrameElement;
+    let connected = false;
     let error = false;
 
     $: origin = new URL(externalUrl).origin;
@@ -28,25 +25,28 @@
     }
 
     $: {
-        error = false;
-        ready = false;
-        // this is going to react *only* if the url changes. You could strictly speaking have two
-        // chats with the same externalUrl, but it begs the question why would you and why would it matter?
-        waitUntilReady(externalUrl);
+        // This is just a bit of a hack to make sure we pick up when the external url changes
+        if (externalUrl !== undefined) {
+            error = false;
+            connected = false;
+        }
     }
 
-    function waitUntilReady(url: string, iterations: number = 0, defer: number = 300) {
-        if (iterations >= TIMEOUT_ITERATIONS) {
-            error = true;
-            return;
-        }
-        if (!ready) {
-            window.setTimeout(() => waitUntilReady(url, iterations + 1), defer * 2);
-        }
+    onMount(() => {
+        window.addEventListener("message", onMessage);
+        iframe.addEventListener("error", onError);
+        return () => {
+            window.removeEventListener("message", onMessage);
+            iframe.removeEventListener("error", onError);
+        };
+    });
+
+    function onError() {
+        error = true;
     }
 
     function updateTheme(theme: Theme) {
-        if (ready) {
+        if (connected) {
             sendMessage(iframe, origin, {
                 kind: "set_theme",
                 theme,
@@ -54,28 +54,20 @@
         }
     }
 
-    let iframe: HTMLIFrameElement;
-
     function debug(msg: string, ...params: unknown[]): void {
         console.debug(`OPENCHAT_EXTERNAL_HOST: ${msg}`, params);
     }
 
-    async function onFrameLoaded(iframe: HTMLIFrameElement): Promise<OpenChatXFrame> {
-        debug("iframe loaded");
-        return new Promise((resolve) => {
-            window.addEventListener("message", (ev) => {
-                if (ev.origin === origin && ev.data.kind === "external_content_ready") {
-                    debug("External content signals its readiness");
-                    sendMessage(iframe, origin, {
-                        kind: "initialise_external_content",
-                        theme: $currentTheme,
-                        username: $user.username,
-                    });
-                    ready = true;
-                    resolve({});
-                }
+    function onMessage(ev: MessageEvent<{ kind: "external_content_ready" }>) {
+        if (ev.origin === origin && ev.data.kind === "external_content_ready") {
+            debug("External content signals its readiness");
+            sendMessage(iframe, origin, {
+                kind: "initialise_external_content",
+                theme: $currentTheme,
+                username: $user.username,
             });
-        });
+            connected = true;
+        }
     }
 
     function sendMessage(frame: HTMLIFrameElement, targetOrigin: string, msg: unknown) {
@@ -99,37 +91,19 @@
         <AlertCircleOutline size={"2em"} color={"var(--error)"} />
         <Translatable resourceKey={i18nKey("externalContent.error")} />
     </div>
-{:else if !ready}
-    <div class="loading">
-        <div class="loader">
-            <FancyLoader />
-        </div>
-        <Translatable resourceKey={i18nKey("externalContent.initialising")} />
-    </div>
 {/if}
 
 {#if !frozen}
-    <iframe
-        class:ready
-        title="External Content"
-        on:load={() => onFrameLoaded(iframe)}
-        bind:this={iframe}
-        src={externalUrl} />
+    <iframe title="External Content" bind:this={iframe} src={externalUrl} />
 {/if}
 
 <style lang="scss">
     iframe {
         height: 100%;
         width: 100%;
-        display: none;
-
-        &.ready {
-            display: block;
-        }
     }
 
-    .error,
-    .loading {
+    .error {
         display: flex;
         flex-direction: column;
         gap: $sp5;
@@ -140,10 +114,5 @@
         padding: 0 toRem(100);
 
         @include font(bold, normal, fs-140);
-    }
-
-    .loader {
-        width: toRem(48);
-        height: toRem(48);
     }
 </style>

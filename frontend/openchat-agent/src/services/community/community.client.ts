@@ -286,7 +286,8 @@ export class CommunityClient extends CandidService {
                 name: channel.name,
                 subtype: [],
                 events_ttl: apiOptional(identity, channel.eventsTTL),
-                description: channel.externalUrl ?? channel.description, //TODO temporary hack for testing
+                description: channel.description,
+                external_url: apiOptional(identity, channel.externalUrl),
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional(
                     (data) => {
@@ -1204,6 +1205,8 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(chatId.channelId),
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
+                external_url:
+                    externalUrl === undefined ? { NoChange: null } : { SetToSome: externalUrl },
                 permissions_v2: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),

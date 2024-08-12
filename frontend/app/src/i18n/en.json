@@ -385,7 +385,9 @@
         "disclaimer": "This content is external to OpenChat. Any issues with this content should be reported to the Community owner",
         "error": "External content failed to load",
         "frozen": "External content has been frozen by a platform moderator",
-        "initialising": "Initialising external content"
+        "initialising": "Initialising external content",
+        "label": "External Content",
+        "name": "External content url"
     },
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",

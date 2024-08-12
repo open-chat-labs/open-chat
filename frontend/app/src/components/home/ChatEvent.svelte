@@ -260,6 +260,13 @@
         changedBy={event.event.updatedBy}
         property={$_("access.gate").toLowerCase()}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "external_url_updated"}
+    <GroupChangedEvent
+        {level}
+        user={userSummary}
+        changedBy={event.event.updatedBy}
+        property={$_("externalContent.name").toLowerCase()}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent
         level={levelType}

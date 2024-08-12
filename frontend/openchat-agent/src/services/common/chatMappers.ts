@@ -485,6 +485,14 @@ export function event(candid: ApiChatEvent): ChatEvent {
         return { kind: "empty" };
     }
 
+    if ("ExternalUrlUpdated" in candid) {
+        return {
+            kind: "external_url_updated",
+            newUrl: optional(candid.ExternalUrlUpdated.new_url, identity),
+            updatedBy: candid.ExternalUrlUpdated.updated_by.toString(),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
@@ -2089,16 +2097,6 @@ export function userGroup(candid: ApiUserGroup): [number, UserGroupSummary] {
     ];
 }
 
-// TODO - temporary hack
-function getExternalUrl(desc: string): string | undefined {
-    try {
-        new URL(desc);
-        return desc;
-    } catch (_) {
-        return undefined;
-    }
-}
-
 export function communityChannelSummary(
     candid: ApiCommunityCanisterChannelSummary,
     communityId: string,
@@ -2148,7 +2146,7 @@ export function communityChannelSummary(
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
         messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
-        externalUrl: getExternalUrl(candid.description),
+        externalUrl: optional(candid.external_url, identity),
     };
 }
 
@@ -2345,7 +2343,8 @@ export function updateGroupResponse(
         "CommunityFrozen" in candid ||
         "CannotMakeChannelPublic" in candid ||
         "CannotMakeGroupPublic" in candid ||
-        "CannotMakeDefaultChannelPrivate" in candid
+        "CannotMakeDefaultChannelPrivate" in candid ||
+        "ExternalUrlInvalid" in candid
     ) {
         console.warn("UpdateGroupResponse failed with: ", candid);
         return { kind: "failure" };
@@ -2443,6 +2442,10 @@ export function createGroupResponse(
 
     if ("AccessGateInvalid" in candid) {
         return { kind: "access_gate_invalid" };
+    }
+
+    if ("ExternalUrlInvalid" in candid) {
+        return { kind: "external_url_invalid" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);

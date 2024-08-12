@@ -45,7 +45,8 @@
     $: combinedRulesText = canSend
         ? client.combineRulesText($currentChatRules, $currentCommunityRules)
         : "";
-    $: embeddedContent = chat.kind === "channel" && chat.externalUrl !== undefined;
+    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
+    $: externalContent = externalUrl !== undefined;
 
     function editGroup() {
         if (canEdit) {
@@ -102,6 +103,14 @@
                     <Markdown text={description(chat)} />
                 </fieldset>
             {/if}
+            {#if externalUrl !== undefined && externalUrl.length > 0}
+                <fieldset>
+                    <legend>
+                        <Legend label={i18nKey("externalContent.label")} />
+                    </legend>
+                    <Markdown text={externalUrl} />
+                </fieldset>
+            {/if}
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupVisibilityOpen.toggle}
@@ -135,7 +144,7 @@
                             )} />
                     </p>
                 {/if}
-                {#if !chat.public && !embeddedContent}
+                {#if !chat.public && !externalContent}
                     {#if chat.historyVisible}
                         <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                     {:else}
@@ -150,7 +159,7 @@
                     </p>
                 </div>
             {/if}
-            {#if !embeddedContent}
+            {#if !externalContent}
                 <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             {/if}
             <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
@@ -175,14 +184,13 @@
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={i18nKey("permissions.permissions")}>
-            <GroupPermissionsViewer 
-                bind:permissions={chat.permissions} 
+            <GroupPermissionsViewer
+                bind:permissions={chat.permissions}
                 isPublic={chat.public}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
                 isChannel={chat.id.kind === "channel"} />
-
         </CollapsibleCard>
-        {#if !embeddedContent}
+        {#if !externalContent}
             <CollapsibleCard
                 on:toggle={groupStatsOpen.toggle}
                 open={$groupStatsOpen}

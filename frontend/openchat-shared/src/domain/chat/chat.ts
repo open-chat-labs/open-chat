@@ -726,7 +726,8 @@ export type ChatEvent =
     | EventsTimeToLiveUpdated
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
-    | EmptyEvent;
+    | EmptyEvent
+    | ExternalUrlUpdated;
 
 export type MembersAdded = {
     kind: "members_added";
@@ -1576,7 +1577,8 @@ export type CreateGroupResponse =
     | UserSuspended
     | { kind: "access_gate_invalid" }
     | Offline
-    | DefaultMustBePublic;
+    | DefaultMustBePublic
+    | { kind: "external_url_invalid" };
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1826,6 +1828,12 @@ export type MembersAddedToDefaultChannel = {
 
 export type EmptyEvent = {
     kind: "empty";
+};
+
+export type ExternalUrlUpdated = {
+    kind: "external_url_updated";
+    newUrl?: string;
+    updatedBy: string;
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
