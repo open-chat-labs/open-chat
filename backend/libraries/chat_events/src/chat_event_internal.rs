@@ -109,6 +109,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
+                | ChatEventInternal::ExternalUrlUpdated(_)
         )
     }
 
