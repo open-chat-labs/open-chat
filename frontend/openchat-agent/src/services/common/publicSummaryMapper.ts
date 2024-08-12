@@ -41,6 +41,7 @@ export function publicGroupSummary(
             updateGroup: "none",
             pinMessages: "none",
             inviteUsers: "none",
+            addMembers: "none",
             reactToMessages: "none",
             mentionAllMembers: "none",
             startVideoCall: "none",

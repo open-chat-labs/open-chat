@@ -63,6 +63,7 @@ export const CommonResponses = {
         ({ kind: "user_not_in_community" }) as UserNotInCommunity,
     userSuspended: (): UserSuspended => ({ kind: "user_suspended" }) as UserSuspended,
     communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" }) as CommunityFrozen,
+    communityPublic: (): CommunityPublic => ({ kind: "community_public" }) as CommunityPublic,
     messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" }) as MessageNotFound,
     noChange: (): NoChange => ({ kind: "no_change" }) as NoChange,
     communityNotPublic: (): CommunityNotPublic =>
@@ -78,7 +79,6 @@ export const CommonResponses = {
     offline: (): Offline => ({ kind: "offline" }) as Offline,
     blocked: (): Blocked => ({ kind: "blocked" }) as Blocked,
     userNotFound: (): UserNotFound => ({ kind: "unknown_user" }),
-    communityPublic: (): CommunityPublic => ({ kind: "community_public" }),
 };
 
 export type Blocked = {
