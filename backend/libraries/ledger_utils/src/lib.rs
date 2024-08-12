@@ -1,7 +1,6 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use sha2::{Digest, Sha256};
-use types::icrc1::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
     UserId,
@@ -25,7 +24,7 @@ pub fn create_pending_transaction(
         fee,
         token,
         amount,
-        to: Account::from(Principal::from(user_id)),
+        to: user_id.into(),
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })

@@ -64,7 +64,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                             subaccount: args.from_subaccount,
                         }
                         .into(),
-                        to: Account::from(Principal::from(pending_payment.user_id)).into(),
+                        to: Account::from(pending_payment.user_id).into(),
                         fee: pending_payment.token_info.fee,
                         memo: None,
                         created: created_at_time,

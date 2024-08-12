@@ -2,7 +2,6 @@ use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use ic_cdk::update;
@@ -180,7 +179,7 @@ fn process_charge(
                 amount: amount_to_referrer,
                 currency: args.token.clone(),
                 timestamp: now_nanos,
-                recipient_account: Account::from(Principal::from(share_with)),
+                recipient_account: share_with.into(),
                 memo: state.env.rng().gen(),
                 reason: PendingPaymentReason::ReferralReward,
             };

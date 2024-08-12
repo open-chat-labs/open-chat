@@ -1,6 +1,5 @@
 use crate::model::pending_actions_queue::{Action, AirdropMessage, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
 use crate::{mutate_state, read_state, RuntimeState, USERNAME};
-use candid::Principal;
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
@@ -124,7 +123,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
     });
 
     let token = Cryptocurrency::CHAT;
-    let to = Account::from(Principal::from(action.recipient));
+    let to = Account::from(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,

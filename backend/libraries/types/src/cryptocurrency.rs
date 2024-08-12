@@ -464,10 +464,10 @@ pub mod icrc1 {
         pub subaccount: Option<[u8; 32]>,
     }
 
-    impl From<Principal> for Account {
-        fn from(value: Principal) -> Self {
+    impl<T: Into<Principal>> From<T> for Account {
+        fn from(value: T) -> Self {
             Account {
-                owner: value,
+                owner: value.into(),
                 subaccount: None,
             }
         }
