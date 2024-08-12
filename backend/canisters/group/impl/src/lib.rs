@@ -513,6 +513,7 @@ impl Data {
             events_ttl,
             creator_user_type,
             anonymized_chat_id,
+            None,
             now,
         );
 

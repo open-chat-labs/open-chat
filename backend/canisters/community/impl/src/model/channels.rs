@@ -214,6 +214,7 @@ impl Channel {
                 None,
                 created_by_user_type,
                 anonymized_id,
+                None,
                 now,
             ),
             date_imported: None,
@@ -305,6 +306,7 @@ impl Channel {
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
             is_invited,
+            external_url: chat.external_url.value.clone(),
         })
     }
 
@@ -388,6 +390,7 @@ impl Channel {
             gate: updates.gate,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
+            external_url: updates.external_url,
         })
     }
 

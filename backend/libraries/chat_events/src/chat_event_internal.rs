@@ -6,12 +6,12 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
-    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped,
-    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
+    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
+    MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
+    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -66,6 +66,8 @@ pub enum ChatEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
     MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
+    #[serde(rename = "xu")]
+    ExternalUrlUpdated(Box<ExternalUrlUpdated>),
     #[serde(rename = "e")]
     Empty,
 }
