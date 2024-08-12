@@ -5,7 +5,6 @@ use std::fmt::Debug;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct EventWrapper<T> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,

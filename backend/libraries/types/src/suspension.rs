@@ -20,7 +20,6 @@ impl From<SuspensionDuration> for Option<Milliseconds> {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct SuspensionDetails {
     pub reason: String,
     pub action: SuspensionAction,
@@ -28,7 +27,6 @@ pub struct SuspensionDetails {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub enum SuspensionAction {
     Unsuspend(TimestampMillis),
     Delete(TimestampMillis),

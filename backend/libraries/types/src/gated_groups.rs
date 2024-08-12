@@ -8,7 +8,6 @@ use ts_rs::TS;
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
@@ -54,7 +53,6 @@ impl AccessGate {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
@@ -64,14 +62,12 @@ pub struct VerifiedCredentialGate {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub enum VerifiedCredentialArgumentValue {
     String(String),
     Int(i32),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
     pub min_stake_e8s: Option<u64>,
@@ -79,7 +75,6 @@ pub struct SnsNeuronGate {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct PaymentGate {
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
@@ -87,21 +82,18 @@ pub struct PaymentGate {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct TokenBalanceGate {
     pub ledger_canister_id: CanisterId,
     pub min_balance: u128,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct CompositeGate {
     pub inner: Vec<AccessGate>,
     pub and: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
     NotLifetimeDiamondMember,
@@ -116,7 +108,6 @@ pub enum GateCheckFailedReason {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
@@ -136,7 +127,6 @@ impl VerifiedCredentialGateArgs {
 }
 
 #[derive(TS)]
-#[ts(export)]
 pub enum TransferFromErrorJS {
     BadFee { expected_fee: u128 },
     BadBurn { min_burn_amount: u128 },

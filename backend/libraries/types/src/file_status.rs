@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum FileStatus {
     Completed(FileStatusCompleted),
     Uploading(FileStatusUploading),
@@ -12,7 +11,6 @@ pub enum FileStatus {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, TS)]
-#[ts(export)]
 pub enum RejectedReason {
     UserNotFound,
     AllowanceExceeded,
@@ -21,7 +19,6 @@ pub enum RejectedReason {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct FileStatusCompleted {
     pub created: TimestampMillis,
     pub index_sync_complete: bool,
@@ -30,7 +27,6 @@ pub struct FileStatusCompleted {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct FileStatusUploading {
     pub created: TimestampMillis,
     pub index_sync_complete: bool,
@@ -41,7 +37,6 @@ pub struct FileStatusUploading {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct FileStatusRejected {
     pub reason: RejectedReason,
 }

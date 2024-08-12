@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct UserSummary {
     pub user_id: UserId,
     pub username: String,
@@ -23,7 +22,6 @@ pub struct UserSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct UserSummaryV2 {
     pub user_id: UserId,
     pub stable: Option<UserSummaryStable>,
@@ -31,7 +29,6 @@ pub struct UserSummaryV2 {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct UserSummaryStable {
     pub username: String,
     pub display_name: Option<String>,
@@ -44,7 +41,6 @@ pub struct UserSummaryStable {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct UserSummaryVolatile {
     pub total_chit_earned: i32,
     pub chit_balance: i32,
@@ -52,7 +48,6 @@ pub struct UserSummaryVolatile {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
 pub struct CurrentUserSummary {
     pub user_id: UserId,
     pub username: String,

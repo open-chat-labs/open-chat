@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CommunityCanisterChannelSummary {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -37,7 +36,6 @@ pub struct CommunityCanisterChannelSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CommunityCanisterChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -64,7 +62,6 @@ pub struct CommunityCanisterChannelSummaryUpdates {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ChannelLatestMessageIndex {
     pub channel_id: ChannelId,
     pub latest_message_index: Option<MessageIndex>,

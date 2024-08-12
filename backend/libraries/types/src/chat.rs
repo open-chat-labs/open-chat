@@ -5,7 +5,6 @@ use std::fmt::Debug;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, TS)]
-#[ts(export)]
 pub enum Chat {
     Direct(ChatId),
     Group(ChatId),
@@ -31,7 +30,6 @@ impl Chat {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, TS)]
-#[ts(export)]
 pub enum MultiUserChat {
     Group(ChatId),
     Channel(CommunityId, ChannelId),

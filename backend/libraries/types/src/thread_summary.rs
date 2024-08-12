@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ThreadSummary {
     pub participant_ids: Vec<UserId>,
     pub followed_by_me: bool,

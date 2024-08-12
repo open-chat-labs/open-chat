@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, TS)]
-#[ts(export)]
 pub enum Achievement {
     JoinedGroup,
     JoinedCommunity,

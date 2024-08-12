@@ -14,7 +14,6 @@ pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum MessageContentInitial {
     Text(TextContent),
     Image(ImageContent),
@@ -34,7 +33,6 @@ pub enum MessageContentInitial {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum MessageContent {
     Text(TextContent),
     Image(ImageContent),
@@ -57,7 +55,6 @@ pub enum MessageContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
@@ -411,7 +408,6 @@ impl From<MessageContentInitial> for MessageContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct TextContent {
     pub text: String,
 }
@@ -423,7 +419,6 @@ impl From<String> for TextContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ImageContent {
     pub width: u32,
     pub height: u32,
@@ -434,7 +429,6 @@ pub struct ImageContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct GiphyImageVariant {
     pub width: u32,
     pub height: u32,
@@ -443,7 +437,6 @@ pub struct GiphyImageVariant {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct GiphyContent {
     pub caption: Option<String>,
     pub title: String,
@@ -452,7 +445,6 @@ pub struct GiphyContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct VideoContent {
     pub width: u32,
     pub height: u32,
@@ -464,7 +456,6 @@ pub struct VideoContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct AudioContent {
     pub caption: Option<String>,
     pub mime_type: String,
@@ -472,7 +463,6 @@ pub struct AudioContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct FileContent {
     pub name: String,
     pub caption: Option<String>,
@@ -482,7 +472,6 @@ pub struct FileContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PollContent {
     pub config: PollConfig,
     pub votes: PollVotes,
@@ -516,7 +505,6 @@ pub enum RegisterVoteResult {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CryptoContent {
     pub recipient: UserId,
     pub transfer: CryptoTransaction,
@@ -524,7 +512,6 @@ pub struct CryptoContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PrizeContentInitial {
     pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
@@ -534,7 +521,6 @@ pub struct PrizeContentInitial {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
@@ -546,7 +532,6 @@ pub struct PrizeContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PrizeWinnerContent {
     pub winner: UserId,
     pub transaction: CompletedCryptoTransaction,
@@ -554,7 +539,6 @@ pub struct PrizeWinnerContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
     pub remind_at: TimestampMillis,
@@ -563,21 +547,18 @@ pub struct MessageReminderCreatedContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
     pub notes: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct MessageReport {
     pub reported_by: UserId,
     pub timestamp: TimestampMillis,
@@ -586,7 +567,6 @@ pub struct MessageReport {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct P2PSwapContentInitial {
     pub token0: TokenInfo,
     pub token0_amount: u128,
@@ -597,7 +577,6 @@ pub struct P2PSwapContentInitial {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct P2PSwapContent {
     pub swap_id: u32,
     pub token0: TokenInfo,
@@ -611,13 +590,11 @@ pub struct P2PSwapContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct VideoCallContentInitial {
     pub initiator: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct VideoCallContent {
     pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
@@ -626,7 +603,6 @@ pub struct VideoCallContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CallParticipant {
     pub user_id: UserId,
     pub joined: TimestampMillis,
@@ -724,7 +700,6 @@ impl P2PSwapContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CustomContent {
     pub kind: String,
     #[serde(with = "serde_bytes")]
@@ -733,14 +708,12 @@ pub struct CustomContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, TS)]
-#[ts(export)]
 pub struct BlobReference {
     #[ts(as = "String")]
     pub canister_id: CanisterId,
@@ -754,7 +727,6 @@ impl BlobReference {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, TS)]
-#[ts(export)]
 pub struct ThumbnailData(pub String);
 
 impl Debug for ThumbnailData {

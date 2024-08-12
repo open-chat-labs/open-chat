@@ -8648,6 +8648,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ts_gen"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "ttf-parser"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8884,6 +8892,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "ts-rs",
+ "ts_gen",
  "types",
 ]
 

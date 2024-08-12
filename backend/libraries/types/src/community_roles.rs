@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub enum CommunityRole {
     Owner,
     Admin,
@@ -11,7 +10,6 @@ pub enum CommunityRole {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct CommunityPermissions {
     pub change_roles: CommunityPermissionRole,
     pub update_details: CommunityPermissionRole,
@@ -23,7 +21,6 @@ pub struct CommunityPermissions {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct OptionalCommunityPermissions {
     pub change_roles: Option<CommunityPermissionRole>,
     pub update_details: Option<CommunityPermissionRole>,
@@ -49,7 +46,6 @@ impl Default for CommunityPermissions {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, TS)]
-#[ts(export)]
 pub enum CommunityPermissionRole {
     Owners,
     Admins,

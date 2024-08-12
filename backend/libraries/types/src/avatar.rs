@@ -4,7 +4,6 @@ use std::fmt::{Debug, Formatter};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, TS)]
-#[ts(export)]
 pub struct Document {
     pub id: u128,
     pub mime_type: String,

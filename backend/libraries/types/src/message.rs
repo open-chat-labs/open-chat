@@ -5,7 +5,6 @@ use std::ops::{Deref, DerefMut};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
@@ -22,14 +21,12 @@ pub struct Message {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ReplyContext {
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
 }
@@ -67,7 +64,6 @@ pub struct MessageEditedEventPayload {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
-#[ts(export)]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
 impl Deref for Tips {

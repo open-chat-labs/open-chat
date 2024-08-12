@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct ChitEarned {
     pub amount: i32,
     pub timestamp: TimestampMillis,
@@ -12,7 +11,6 @@ pub struct ChitEarned {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum ChitEarnedReason {
     DailyClaim,
     Achievement(Achievement),

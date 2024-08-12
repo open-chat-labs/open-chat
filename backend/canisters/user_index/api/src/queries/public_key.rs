@@ -6,7 +6,8 @@ use types::Empty;
 pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/publicKey.ts")]
+#[serde(tag = "kind")]
 pub enum Response {
     Success(String),
     NotInitialised,

@@ -8,7 +8,6 @@ use ts_rs::TS;
 const ICP_FEE: u128 = 10_000;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash, TS)]
-#[ts(export)]
 pub enum Cryptocurrency {
     InternetComputer,
     SNS1,
@@ -67,7 +66,6 @@ impl Cryptocurrency {
 pub type TransactionHash = [u8; 32];
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum CryptoTransaction {
     Pending(PendingCryptoTransaction),
     Completed(CompletedCryptoTransaction),
@@ -75,7 +73,6 @@ pub enum CryptoTransaction {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
@@ -83,7 +80,6 @@ pub enum PendingCryptoTransaction {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum CompletedCryptoTransaction {
     NNS(nns::CompletedCryptoTransaction),
     ICRC1(icrc1::CompletedCryptoTransaction),
@@ -91,7 +87,6 @@ pub enum CompletedCryptoTransaction {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum FailedCryptoTransaction {
     NNS(nns::FailedCryptoTransaction),
     ICRC1(icrc1::FailedCryptoTransaction),
@@ -378,7 +373,6 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct Account {
         pub owner: Principal,
         #[ts(as = "[u8; 32]")]
@@ -386,28 +380,24 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct CryptoAmount {
         pub token: Cryptocurrency,
         pub amount: Tokens,
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub enum CryptoAccount {
         Mint,
         Account(#[ts(as = "String")] AccountIdentifier),
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub enum UserOrAccount {
         User(UserId),
         Account(#[ts(as = "String")] AccountIdentifier),
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -420,7 +410,6 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -437,7 +426,6 @@ pub mod nns {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -483,14 +471,12 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub enum CryptoAccount {
         Mint,
         Account(Account),
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct PendingCryptoTransaction {
         #[ts(as = "String")]
         pub ledger: CanisterId,
@@ -504,7 +490,6 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -519,7 +504,6 @@ pub mod icrc1 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -558,7 +542,6 @@ pub mod icrc2 {
     use icrc_ledger_types::icrc1::transfer::Memo;
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -572,7 +555,6 @@ pub mod icrc2 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
@@ -588,7 +570,6 @@ pub mod icrc2 {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-    #[ts(export)]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
         pub token: Cryptocurrency,

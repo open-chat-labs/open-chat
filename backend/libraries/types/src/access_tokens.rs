@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
-#[ts(export)]
 pub enum AccessTokenType {
     StartVideoCall,
     StartVideoCallV2(VideoCallAccessTokenArgs),
@@ -13,7 +12,6 @@ pub enum AccessTokenType {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
-#[ts(export)]
 pub struct VideoCallAccessTokenArgs {
     pub call_type: VideoCallType,
 }

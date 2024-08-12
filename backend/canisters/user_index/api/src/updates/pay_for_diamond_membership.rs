@@ -4,7 +4,7 @@ use ts_rs::TS;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubscription, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/payForDiamondMembership.ts")]
 pub struct Args {
     pub duration: DiamondMembershipPlanDuration,
     pub token: Cryptocurrency,
@@ -13,7 +13,8 @@ pub struct Args {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/payForDiamondMembership.ts")]
+#[serde(tag = "kind")]
 pub enum Response {
     Success(SuccessResult),
     AlreadyLifetimeDiamondMember,
@@ -27,7 +28,7 @@ pub enum Response {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/payForDiamondMembership.ts")]
 pub struct SuccessResult {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,

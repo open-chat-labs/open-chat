@@ -6,7 +6,6 @@ use ts_rs::TS;
 pub const MAX_RETURNED_MENTIONS: usize = 50;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct HydratedMention {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
@@ -16,7 +15,6 @@ pub struct HydratedMention {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct Mention {
     pub timestamp: TimestampMillis,
     pub thread_root_message_index: Option<MessageIndex>,

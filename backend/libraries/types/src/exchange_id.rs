@@ -4,7 +4,6 @@ use std::fmt::{Display, Formatter};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq, TS)]
-#[ts(export)]
 pub enum ExchangeId {
     ICPSwap,
     Sonic,

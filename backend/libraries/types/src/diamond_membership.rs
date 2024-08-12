@@ -5,7 +5,6 @@ use std::fmt::{Display, Formatter};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
-#[ts(export)]
 pub struct DiamondMembershipDetails {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,
@@ -13,7 +12,6 @@ pub struct DiamondMembershipDetails {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum DiamondMembershipStatusFull {
     Inactive,
     Active(DiamondMembershipDetails),
@@ -21,7 +19,6 @@ pub enum DiamondMembershipStatusFull {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, TS)]
-#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipStatus {
     Inactive = 0,
@@ -30,7 +27,6 @@ pub enum DiamondMembershipStatus {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, TS)]
-#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,
@@ -40,14 +36,12 @@ pub enum DiamondMembershipPlanDuration {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
-#[ts(export)]
 pub struct DiamondMembershipFees {
     pub chat_fees: DiamondMembershipFeesByDuration,
     pub icp_fees: DiamondMembershipFeesByDuration,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
-#[ts(export)]
 pub struct DiamondMembershipFeesByDuration {
     pub one_month: u64,
     pub three_months: u64,
@@ -113,7 +107,6 @@ impl DiamondMembershipPlanDuration {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq, TS)]
-#[ts(export)]
 #[repr(u8)]
 pub enum DiamondMembershipSubscription {
     #[default]

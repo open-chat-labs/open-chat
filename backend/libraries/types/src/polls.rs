@@ -5,7 +5,6 @@ use std::collections::{HashMap, HashSet};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PollConfig {
     pub text: Option<String>,
     pub options: Vec<String>,
@@ -17,7 +16,6 @@ pub struct PollConfig {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct PollVotes {
     pub total: TotalVotes,
     pub user: Vec<u32>,
@@ -50,7 +48,6 @@ impl PollConfig {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum TotalVotes {
     Visible(HashMap<u32, Vec<UserId>>),
     Anonymous(HashMap<u32, u32>),
@@ -58,7 +55,6 @@ pub enum TotalVotes {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, TS)]
-#[ts(export)]
 pub enum VoteOperation {
     RegisterVote,
     DeleteVote,
@@ -69,7 +65,6 @@ const MAX_POLL_OPTIONS: usize = 10;
 const MAX_POLL_OPTION_LENGTH: usize = 100;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub enum InvalidPollReason {
     TooFewOptions(u32),
     TooManyOptions(u32),

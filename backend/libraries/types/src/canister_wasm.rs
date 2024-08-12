@@ -5,7 +5,6 @@ use std::fmt::{Debug, Formatter};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
     pub filter: Option<UpgradesFilter>,
@@ -13,7 +12,6 @@ pub struct UpgradeCanisterWasmArgs {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, TS)]
-#[ts(export)]
 pub struct ChunkedCanisterWasm {
     pub wasm: CanisterWasm,
     pub chunks: Vec<Hash>,
@@ -31,7 +29,6 @@ impl From<CanisterWasm> for ChunkedCanisterWasm {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, TS)]
-#[ts(export)]
 pub struct CanisterWasm {
     pub version: BuildVersion,
     #[serde(with = "serde_bytes")]
@@ -58,7 +55,6 @@ impl Debug for CanisterWasm {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct UpgradesFilter {
     pub include: Vec<CanisterId>,
     pub exclude: Vec<CanisterId>,

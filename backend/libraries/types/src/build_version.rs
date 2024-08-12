@@ -5,7 +5,6 @@ use std::str::FromStr;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Ord, PartialOrd, Eq, PartialEq, TS)]
-#[ts(export)]
 pub struct BuildVersion {
     pub major: u32,
     pub minor: u32,

@@ -5,7 +5,6 @@ use ts_rs::TS;
 const MAX_REACTION_LENGTH_BYTES: usize = 40;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, TS)]
-#[ts(export)]
 pub struct Reaction(String);
 
 impl Reaction {

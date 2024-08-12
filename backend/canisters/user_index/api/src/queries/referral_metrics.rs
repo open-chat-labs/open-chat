@@ -6,13 +6,13 @@ use types::Empty;
 pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/referralMetrics.ts")]
 pub enum Response {
     Success(ReferralMetrics),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export)]
+#[ts(export_to = "userIndex/referralMetrics.ts")]
 pub struct ReferralMetrics {
     pub users_who_referred: u32,
     pub users_who_referred_paid_diamond: u32,
