@@ -7,7 +7,7 @@
         "amountN": "{n} 代币数量",
         "and": "要求所有门",
         "approvePaymentTitle": "批准付款",
-        "bypassWarning": "⚠️ 任何明确受邀参加此 {level} 的用户都无需通过访问门",
+        "bypassWarning": "任何明确受邀参加此 {level} 的用户都无需通过访问门",
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
         "chooseGate": "选择一个门禁",
         "chooseNervousSystem": "选择神经系统",
@@ -521,15 +521,24 @@
     },
     "identity": {
         "back": "后退",
-        "failed": "抱歉，我们未能将互联网身份链接到您的 OpenChat 帐户",
+        "credentialWarning": "您必须拥有与您的 OpenChat 帐户关联的互联网身份，才能确认您拥有 {name} 凭证。凭证颁发者必须与相同的互联网身份关联。如果您使用其他提供商注册，则需要创建互联网身份并将其链接到您的 OpenChat 帐户，然后才能继续。",
+        "failure": {
+            "alreadyLinked": "抱歉，但 Internet Identity 似乎已链接到 OpenChat 帐户",
+            "link": "抱歉，我们无法将您的互联网身份链接到您的 OpenChat 帐户",
+            "loginApprover": "抱歉，我们无法登录您当前的 OpenChat 身份验证提供商",
+            "loginInitiator": "抱歉，我们无法登录您选择的互联网身份",
+            "pollingError": "等待电子邮件登录时出现意外错误",
+            "principalMismatch": "似乎您没有使用当前登录的同一提供商重新进行身份验证"
+        },
+        "humanityWarning": "您必须拥有与您的 OpenChat 帐户关联的互联网身份，以确认您的唯一身份。如果您使用其他提供商注册，则需要创建互联网身份并将其链接到您的 OpenChat 帐户，然后才能继续。",
         "link": "关联",
         "linkIdentity": "链接标识",
+        "linkTwoIdentities": "我们现在准备将这两种身份联系在一起。",
         "mismatch": "这与您当前登录的主体不匹配。您确定使用了相同的身份验证提供程序吗？",
         "proceed": "继续",
         "signInCurrent": "使用您当前正在使用的身份提供商登录",
         "signInNext": "创建或使用您想要链接到 OpenChat 帐户的互联网身份登录",
-        "warning1": "您必须使用互联网身份登录才能确认您的唯一身份。如果您使用其他方法注册，则需要先创建互联网身份并将其链接到您的 OpenChat 帐户。",
-        "warning2": "如果您已经使用 Internet Identity 登录，则可以继续。"
+        "tryAgain": "再试一次"
     },
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",

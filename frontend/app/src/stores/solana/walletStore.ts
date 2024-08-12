@@ -186,7 +186,6 @@ function createWalletStore() {
         let signMessage: MessageSignerWalletAdapter["signMessage"] | undefined = undefined;
 
         if (adapter) {
-            console.log("Are we getting here: ", adapter);
             // Sign a transaction if the wallet supports it
             if ("signTransaction" in adapter) {
                 signTransaction = async function <T extends Transaction | VersionedTransaction>(

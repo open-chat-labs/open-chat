@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type CommunityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { apiOptionUpdate, identity } from "../../utils/mapping";
@@ -182,26 +182,17 @@ import {
 export class CommunityClient extends CandidService {
     private service: CommunityService;
 
-    private constructor(
-        private communityId: string,
+    constructor(
         identity: Identity,
+        agent: HttpAgent,
         private config: AgentConfig,
+        private communityId: string,
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity);
+        super(identity, agent, communityId);
 
-        this.service = this.createServiceClient<CommunityService>(idlFactory, communityId, config);
-    }
-
-    static create(
-        communityId: string,
-        identity: Identity,
-        config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined,
-    ): CommunityClient {
-        return new CommunityClient(communityId, identity, config, db, inviteCode);
+        this.service = this.createServiceClient<CommunityService>(idlFactory);
     }
 
     claimPrize(channelId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
@@ -382,7 +373,7 @@ export class CommunityClient extends CandidService {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.config)
+        return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [chatId.communityId])
             .then((content) => {
                 return this.handleResponse(
@@ -982,7 +973,7 @@ export class CommunityClient extends CandidService {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
 
-        const dataClient = DataClient.create(this.identity, this.config);
+        const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [chatId.communityId])
             : dataClient.uploadData(event.event.content, [chatId.communityId]);

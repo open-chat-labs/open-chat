@@ -196,7 +196,7 @@ async fn handle_main_message_action(action: AirdropMessage) {
     let Some(month) = read_state(|state| {
         state.data.airdrops.current(state.env.now()).map(|c| {
             let mk = MonthKey::from_timestamp(c.start).previous();
-            MONTHS[mk.month() as usize]
+            MONTHS[mk.month() as usize - 1]
         })
     }) else {
         return;

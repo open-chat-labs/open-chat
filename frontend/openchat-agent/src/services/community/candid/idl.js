@@ -58,49 +58,17 @@ export const idlFactory = ({ IDL }) => {
     'added_by_name' : IDL.Text,
     'added_by_display_name' : IDL.Opt(IDL.Text),
   });
-  const ICRC2_TransferFromError = IDL.Variant({
-    'GenericError' : IDL.Record({
-      'message' : IDL.Text,
-      'error_code' : IDL.Nat,
-    }),
-    'TemporarilyUnavailable' : IDL.Null,
-    'InsufficientAllowance' : IDL.Record({ 'allowance' : IDL.Nat }),
-    'BadBurn' : IDL.Record({ 'min_burn_amount' : IDL.Nat }),
-    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
-    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
-    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
-    'TooOld' : IDL.Null,
-    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
-  });
-  const GateCheckFailedReason = IDL.Variant({
-    'NotLifetimeDiamondMember' : IDL.Null,
-    'NotDiamondMember' : IDL.Null,
-    'PaymentFailed' : ICRC2_TransferFromError,
-    'InsufficientBalance' : IDL.Nat,
-    'NoSnsNeuronsFound' : IDL.Null,
-    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
-    'Locked' : IDL.Null,
-    'NoUniquePersonProof' : IDL.Null,
-    'FailedVerifiedCredentialCheck' : IDL.Text,
-    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
-  });
-  const UserFailedGateCheck = IDL.Record({
-    'user_id' : UserId,
-    'reason' : GateCheckFailedReason,
-  });
   const UserFailedError = IDL.Record({
     'user_id' : UserId,
     'error' : IDL.Text,
   });
   const AddMembersToChannelFailed = IDL.Record({
     'users_limit_reached' : IDL.Vec(UserId),
-    'users_failed_gate_check' : IDL.Vec(UserFailedGateCheck),
     'users_already_in_channel' : IDL.Vec(UserId),
     'users_failed_with_error' : IDL.Vec(UserFailedError),
   });
   const AddMembersToChannelPartialSuccess = IDL.Record({
     'users_limit_reached' : IDL.Vec(UserId),
-    'users_failed_gate_check' : IDL.Vec(UserFailedGateCheck),
     'users_already_in_channel' : IDL.Vec(UserId),
     'users_failed_with_error' : IDL.Vec(UserFailedError),
     'users_added' : IDL.Vec(UserId),
@@ -108,6 +76,7 @@ export const idlFactory = ({ IDL }) => {
   const AddMembersToChannelResponse = IDL.Variant({
     'Failed' : AddMembersToChannelFailed,
     'UserNotInChannel' : IDL.Null,
+    'CommunityPublic' : IDL.Null,
     'PartialSuccess' : AddMembersToChannelPartialSuccess,
     'ChannelNotFound' : IDL.Null,
     'UserLimitReached' : IDL.Nat32,

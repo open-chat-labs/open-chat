@@ -1,4 +1,4 @@
-export type TrackingCategory = "registration";
+export type TrackingCategory = "registration" | "account_linking";
 
 export function gaTrack(
     name: string,

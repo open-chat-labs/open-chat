@@ -7,7 +7,7 @@
         "amountN": "Cantidad de tokens {n}",
         "and": "Requerir todas las puertas",
         "approvePaymentTitle": "Aprobar pago",
-        "bypassWarning": "⚠️ Cualquier usuario que esté invitado explícitamente a este {level} no tendrá que pasar las puertas de acceso.",
+        "bypassWarning": "Cualquier usuario que esté invitado explícitamente a este {level} no tendrá que pasar las puertas de acceso.",
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
         "chooseGate": "Elige una puerta de acceso",
         "chooseNervousSystem": "Elige sistema nervioso",
@@ -521,15 +521,24 @@
     },
     "identity": {
         "back": "Atrás",
-        "failed": "Lo sentimos, pero no pudimos vincular una identidad de Internet a su cuenta de OpenChat.",
+        "credentialWarning": "Debe tener una identidad de Internet asociada con su cuenta de OpenChat para confirmar su posesión de la credencial {name}. El emisor de la credencial debe estar asociado con la misma identidad de Internet. Si se registró con otro proveedor, deberá crear y vincular una identidad de Internet a su cuenta de OpenChat antes de continuar.",
+        "failure": {
+            "alreadyLinked": "Lo sentimos, pero parece que Internet Identity ya está vinculado a una cuenta de OpenChat.",
+            "link": "Lo sentimos, pero no pudimos vincular su identidad de Internet a su cuenta de OpenChat.",
+            "loginApprover": "Lo sentimos, no pudimos iniciar sesión en su proveedor de autenticación OpenChat actual.",
+            "loginInitiator": "Lo sentimos, no pudimos iniciar sesión en su identidad de Internet elegida.",
+            "pollingError": "Se produjo un error inesperado al esperar el inicio de sesión del correo electrónico.",
+            "principalMismatch": "Parece que no se volvió a autenticar con el mismo proveedor con el que inició sesión actualmente."
+        },
+        "humanityWarning": "Debe tener una identidad de Internet asociada con su cuenta de OpenChat para confirmar su personalidad única. Si se registró con otro proveedor, deberá crear y vincular una identidad de Internet a su cuenta de OpenChat antes de continuar.",
         "link": "Enlace",
         "linkIdentity": "Identidad del enlace",
+        "linkTwoIdentities": "Ahora estamos listos para vincular las dos identidades.",
         "mismatch": "Esto no coincide con el principal con el que inició sesión actualmente. ¿Está seguro de que utilizó el mismo proveedor de autenticación?",
         "proceed": "Proceder",
         "signInCurrent": "Inicie sesión con el proveedor de identidad que está utilizando actualmente",
         "signInNext": "Cree o inicie sesión con la identidad de Internet que desea vincular a su cuenta de OpenChat.",
-        "warning1": "Debe iniciar sesión con Internet Identity para confirmar su personalidad única. Si se registró utilizando otro método, primero deberá crear y vincular una identidad de Internet a su cuenta de OpenChat.",
-        "warning2": "Si ya has iniciado sesión con Internet Identity, puedes continuar."
+        "tryAgain": "Intentar otra vez"
     },
     "identityMigrationMessage": "Espere mientras su cuenta se actualiza a nuestro nuevo sistema. Esto nos permitirá admitir muchas más opciones de inicio de sesión en el futuro, incluida la recuperación de correo electrónico opcional en caso de que pierda el acceso a su dispositivo.",
     "inheritSystem": "Heredar tema del sistema",

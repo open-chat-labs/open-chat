@@ -1,10 +1,9 @@
 import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
-import { AuthError, DestinationInvalidError, SessionExpiryError, offline } from "openchat-shared";
+import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { ResponseTooLargeError } from "openchat-shared";
-import { isMainnet } from "../utils/network";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -14,19 +13,10 @@ function debug(msg: string): void {
 }
 
 export abstract class CandidService {
-    protected createServiceClient<T>(
-        factory: IDL.InterfaceFactory,
-        canisterId: string,
-        config: { icUrl: string },
-    ): T {
-        const host = config.icUrl;
-        const agent = HttpAgent.createSync({ identity: this.identity, host, retryTimes: 5 });
-        if (!isMainnet(config.icUrl) && !offline()) {
-            agent.fetchRootKey();
-        }
+    protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
         return Actor.createActor<T>(factory, {
-            agent,
-            canisterId,
+            agent: this.agent,
+            canisterId: this.canisterId,
         });
     }
 
@@ -94,5 +84,9 @@ export abstract class CandidService {
             });
     }
 
-    constructor(protected identity: Identity) {}
+    constructor(
+        protected identity: Identity,
+        protected agent: HttpAgent,
+        protected canisterId: string,
+    ) {}
 }

@@ -8,7 +8,7 @@
         "ROLLBAR_ACCESS_TOKEN",
         "TRANSLATE_API_KEY",
         "PUBLIC_TRANSLATE_API_KEY",
-        "GIPHY_APIKEY",
+        "TENOR_APIKEY",
         "CORS_APIKEY"
     ],
     "pipeline": {
