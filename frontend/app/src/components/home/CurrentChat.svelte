@@ -82,6 +82,7 @@
     $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
+    $: frozen = isFrozen(chat);
     $: communities = client.communities;
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
@@ -271,6 +272,10 @@
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
+    function isFrozen(chatSummary: ChatSummary): boolean {
+        return chatSummary.kind !== "direct_chat" && chatSummary.frozen;
+    }
+
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
@@ -365,7 +370,7 @@
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     {#if externalUrl !== undefined}
-        <ExternalContent {externalUrl} />
+        <ExternalContent {frozen} {externalUrl} />
     {:else}
         <CurrentChatMessages
             bind:this={currentChatMessages}
@@ -391,40 +396,40 @@
             {firstUnreadMention}
             footer={showFooter}
             {unreadMessages} />
-        {#if showFooter}
-            <Footer
-                {chat}
-                attachment={$currentChatAttachment}
-                editingEvent={$currentChatEditingEvent}
-                replyingTo={$currentChatReplyingTo}
-                textContent={$currentChatTextContent}
-                user={$user}
-                mode={"message"}
-                {joining}
-                {preview}
-                {blocked}
-                on:joinGroup
-                on:upgrade
-                on:cancelReply={() =>
-                    draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-                on:clearAttachment={() =>
-                    draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-                on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
-                on:setTextContent={setTextContent}
-                on:startTyping={() => client.startTyping(chat, $user.userId)}
-                on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-                on:fileSelected={fileSelected}
-                on:audioCaptured={fileSelected}
-                on:sendMessage={sendMessage}
-                on:createTestMessages={createTestMessages}
-                on:attachGif={attachGif}
-                on:makeMeme={makeMeme}
-                on:tokenTransfer={tokenTransfer}
-                on:createPrizeMessage={createPrizeMessage}
-                on:createP2PSwapMessage={createP2PSwapMessage}
-                on:searchChat={searchChat}
-                on:createPoll={createPoll} />
-        {/if}
+    {/if}
+    {#if showFooter}
+        <Footer
+            {chat}
+            attachment={$currentChatAttachment}
+            editingEvent={$currentChatEditingEvent}
+            replyingTo={$currentChatReplyingTo}
+            textContent={$currentChatTextContent}
+            user={$user}
+            mode={"message"}
+            {joining}
+            {preview}
+            {blocked}
+            externalContent={externalUrl !== undefined}
+            on:joinGroup
+            on:upgrade
+            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+            on:clearAttachment={() =>
+                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
+            on:setTextContent={setTextContent}
+            on:startTyping={() => client.startTyping(chat, $user.userId)}
+            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
+            on:fileSelected={fileSelected}
+            on:audioCaptured={fileSelected}
+            on:sendMessage={sendMessage}
+            on:createTestMessages={createTestMessages}
+            on:attachGif={attachGif}
+            on:makeMeme={makeMeme}
+            on:tokenTransfer={tokenTransfer}
+            on:createPrizeMessage={createPrizeMessage}
+            on:createP2PSwapMessage={createP2PSwapMessage}
+            on:searchChat={searchChat}
+            on:createPoll={createPoll} />
     {/if}
 </div>
 

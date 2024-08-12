@@ -179,6 +179,7 @@
         "details": "Chi tiết",
         "directChats": "trò chuyện trực tiếp",
         "edit": "Chỉnh sửa cộng đồng",
+        "embed": "Thêm kênh nhúng",
         "enterUserGroupName": "Nhập tên nhóm người dùng",
         "errors": {
             "convertFailed": "Xin lỗi nhưng chúng tôi không thể chuyển đổi nhóm của bạn thành cộng đồng",
@@ -380,6 +381,12 @@
     "expand": "Mở rộng",
     "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
     "exploreGroups": "Khám phá các nhóm",
+    "externalContent": {
+        "disclaimer": "Nội dung này nằm ngoài OpenChat. Bất kỳ vấn đề nào với nội dung này phải được báo cáo cho chủ sở hữu Cộng đồng",
+        "error": "Nội dung bên ngoài không tải được",
+        "frozen": "Nội dung bên ngoài đã bị đóng băng bởi người kiểm duyệt nền tảng",
+        "initialising": "Khởi tạo nội dung bên ngoài"
+    },
     "failedToCopyLinkToClipboard": "Không thể sao chép liên kết vào khay nhớ tạm",
     "failedToCopyToClipboard": "Không thể sao chép {account}",
     "failedToCopyUrlToClipboard": "Không thể sao chép đường dẫn ({url})",
@@ -448,6 +455,9 @@
         "details": "Chi tiết",
         "edit": "Chỉnh sửa {level}",
         "editGroupPhoto": "Chỉnh sửa ảnh {level}",
+        "externalUrl": "Url bên ngoài",
+        "externalUrlPlaceholder": "Url bên ngoài của nội dung để nhúng",
+        "externalUrlWarning": "Phải có khả năng lưu trữ trang web bên ngoài trong iframe. Đây là điều mà OpenChat không thể kiểm soát.",
         "getRulesFailed": "Không lấy được quy tắc {level}",
         "groupInfo": "thông tin {level}",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",

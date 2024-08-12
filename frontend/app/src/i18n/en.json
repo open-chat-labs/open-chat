@@ -381,6 +381,12 @@
     "expand": "Expand",
     "expandDeletedMessages": "Expand deleted messages in this chat",
     "exploreGroups": "Explore groups",
+    "externalContent": {
+        "disclaimer": "This content is external to OpenChat. Any issues with this content should be reported to the Community owner",
+        "error": "External content failed to load",
+        "frozen": "External content has been frozen by a platform moderator",
+        "initialising": "Initialising external content"
+    },
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
     "failedToCopyUrlToClipboard": "Unable to copy url ({url}) to clipboard",

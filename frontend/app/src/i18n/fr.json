@@ -179,6 +179,7 @@
         "details": "Détails",
         "directChats": "Chats directs",
         "edit": "Modifier la communauté",
+        "embed": "Ajouter une chaîne intégrée",
         "enterUserGroupName": "Entrez le nom du groupe d'utilisateurs",
         "errors": {
             "convertFailed": "Désolé, mais nous n'avons pas pu convertir vos groupes en communauté",
@@ -380,6 +381,12 @@
     "expand": "Développer",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
     "exploreGroups": "Explorer les groupes",
+    "externalContent": {
+        "disclaimer": "Ce contenu est externe à OpenChat. Tout problème avec ce contenu doit être signalé au propriétaire de la communauté",
+        "error": "Le chargement du contenu externe a échoué",
+        "frozen": "Le contenu externe a été gelé par un modérateur de la plateforme",
+        "initialising": "Initialisation du contenu externe"
+    },
     "failedToCopyLinkToClipboard": "Impossible de copier le lien dans le presse-papiers",
     "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers {account}",
     "failedToCopyUrlToClipboard": "Impossible de copier l'URL ({url}) dans le presse-papiers",
@@ -448,6 +455,9 @@
         "details": "Détails",
         "edit": "Modifier {level}",
         "editGroupPhoto": "Modifier la photo {level}",
+        "externalUrl": "URL externe",
+        "externalUrlPlaceholder": "URL externe du contenu à intégrer",
+        "externalUrlWarning": "Il doit être possible d'héberger le site externe dans un iframe. OpenChat n'a aucun contrôle sur ce point.",
         "getRulesFailed": "Impossible d'obtenir les règles {level}",
         "groupInfo": "{level} infos",
         "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
