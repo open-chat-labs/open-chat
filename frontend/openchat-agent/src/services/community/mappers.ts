@@ -136,6 +136,9 @@ export function addMembersToChannelResponse(
     if ("InternalError" in candid) {
         return CommonResponses.internalError();
     }
+    if ("CommunityPublic" in candid) {
+        return CommonResponses.communityPublic();
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
         candid,

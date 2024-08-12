@@ -11,6 +11,7 @@ export type CommunityFrozen = { kind: "community_frozen" };
 export type CommunityPublic = { kind: "community_public" };
 export type ChatFrozen = { kind: "chat_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
+export type CommunityPublic = { kind: "community_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
 };
@@ -79,6 +80,7 @@ export const CommonResponses = {
     offline: (): Offline => ({ kind: "offline" }) as Offline,
     blocked: (): Blocked => ({ kind: "blocked" }) as Blocked,
     userNotFound: (): UserNotFound => ({ kind: "unknown_user" }),
+    communityPublic: (): CommunityPublic => ({ kind: "community_public" }),
 };
 
 export type Blocked = {

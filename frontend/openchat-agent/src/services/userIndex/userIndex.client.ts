@@ -1,5 +1,5 @@
 import { groupBy } from "../../utils/list";
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type UserIndexService } from "./candid/idl";
 import type {
@@ -49,10 +49,11 @@ import {
     submitProofOfUniquePersonhoodResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
-import type { AgentConfig } from "../../config";
 import {
     getCachedUsers,
+    getCachedDeletedUserIds,
     getSuspendedUsersSyncedUpTo,
+    setCachedDeletedUserIds,
     setCachedUsers,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
@@ -70,14 +71,10 @@ import {
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
 
-    constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.userIndexService = this.createServiceClient<UserIndexService>(
-            idlFactory,
-            config.userIndexCanister,
-            config,
-        );
+        this.userIndexService = this.createServiceClient<UserIndexService>(idlFactory);
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
@@ -144,15 +141,16 @@ export class UserIndexClient extends CandidService {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
+        const cachedDeletedUserIds = await getCachedDeletedUserIds();
         const suspendedUsersSyncedTo = await getSuspendedUsersSyncedUpTo();
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
-        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
-
-        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
+        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale, cachedDeletedUserIds);
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
+
+        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
@@ -162,6 +160,8 @@ export class UserIndexClient extends CandidService {
             apiResponse,
             fromCache,
         );
+
+        setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
@@ -188,6 +188,7 @@ export class UserIndexClient extends CandidService {
             return Promise.resolve({
                 serverTimestamp: 0n,
                 users: [],
+                deletedUserIds: new Set(),
             });
 
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
@@ -211,6 +212,7 @@ export class UserIndexClient extends CandidService {
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
+        cachedDeletedUserIds: Set<string>,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
@@ -220,7 +222,9 @@ export class UserIndexClient extends CandidService {
         };
 
         // Add the users not found in the cache and ask for all updates
-        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
+        const notFoundInCache = users.filter(
+            (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
+        );
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
@@ -232,7 +236,9 @@ export class UserIndexClient extends CandidService {
             // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
             for (const [updatedSince, users] of fromCacheGrouped) {
                 args.userGroups.push({
-                    users: users.map((u) => u.userId),
+                    users: users
+                        .filter((u) => !cachedDeletedUserIds.has(u.userId))
+                        .map((u) => u.userId),
                     updatedSince,
                 });
             }
@@ -312,6 +318,7 @@ export class UserIndexClient extends CandidService {
             serverTimestamp: apiResponse.serverTimestamp,
             users,
             currentUser: apiResponse.currentUser,
+            deletedUserIds: apiResponse.deletedUserIds,
         };
     }
 

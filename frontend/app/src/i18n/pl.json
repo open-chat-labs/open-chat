@@ -7,7 +7,7 @@
         "amountN": "Ilość tokenów {n}",
         "and": "Wymagaj wszystkich bram",
         "approvePaymentTitle": "Zatwierdź płatność",
-        "bypassWarning": "⚠️ Użytkownicy wyraźnie zaproszeni do tego {level} nie będą musieli przechodzić przez bramki dostępu",
+        "bypassWarning": "Użytkownicy wyraźnie zaproszeni do tego {level} nie będą musieli przechodzić przez bramki dostępu",
         "cannotMakePublic": "Nie możesz ustawić prywatnego {level} jako publicznego, ponieważ zagroziłoby to prywatności istniejących członków.",
         "chooseGate": "Wybierz bramę dostępową",
         "chooseNervousSystem": "Wybierz układ nerwowy",
@@ -530,15 +530,24 @@
     },
     "identity": {
         "back": "Z powrotem",
-        "failed": "Przepraszamy, ale nie udało nam się połączyć tożsamości internetowej z Twoim kontem OpenChat",
+        "credentialWarning": "Aby potwierdzić posiadanie danych uwierzytelniających {name}, musisz mieć tożsamość internetową powiązaną ze swoim kontem OpenChat. Wystawca danych uwierzytelniających musi być powiązany z tą samą tożsamością internetową. Jeśli zarejestrowałeś się przy użyciu innego dostawcy, przed kontynuowaniem będziesz musiał utworzyć tożsamość internetową i połączyć ją ze swoim kontem OpenChat.",
+        "failure": {
+            "alreadyLinked": "Przepraszamy, ale wygląda na to, że tożsamość internetowa jest już połączona z kontem OpenChat",
+            "link": "Przepraszamy, ale nie udało nam się połączyć Twojej tożsamości internetowej z kontem OpenChat",
+            "loginApprover": "Przepraszamy, nie mogliśmy zalogować się do Twojego obecnego dostawcy uwierzytelniania OpenChat",
+            "loginInitiator": "Przepraszamy, nie mogliśmy zalogować się do wybranej tożsamości internetowej",
+            "pollingError": "Wystąpił nieoczekiwany błąd podczas oczekiwania na logowanie e-mailem",
+            "principalMismatch": "Wygląda na to, że nie dokonałeś ponownego uwierzytelnienia u tego samego dostawcy, u którego jesteś obecnie zalogowany"
+        },
+        "humanityWarning": "Aby potwierdzić swoją wyjątkową osobowość, musisz mieć tożsamość internetową powiązaną z kontem OpenChat. Jeśli zarejestrowałeś się przy użyciu innego dostawcy, przed kontynuowaniem będziesz musiał utworzyć tożsamość internetową i połączyć ją ze swoim kontem OpenChat.",
         "link": "Połączyć",
         "linkIdentity": "Tożsamość łącza",
+        "linkTwoIdentities": "Jesteśmy teraz gotowi połączyć ze sobą obie tożsamości.",
         "mismatch": "To nie jest zgodne z podmiotem zabezpieczeń, za pomocą którego jesteś aktualnie zalogowany. Czy na pewno korzystałeś z usług tego samego dostawcy uwierzytelniania?",
         "proceed": "Przystępować",
         "signInCurrent": "Zaloguj się przy użyciu dostawcy tożsamości, którego aktualnie używasz",
         "signInNext": "Utwórz lub zaloguj się przy użyciu tożsamości internetowej, którą chcesz połączyć ze swoim kontem OpenChat",
-        "warning1": "Aby potwierdzić swoją wyjątkową osobowość, musisz zalogować się przy użyciu tożsamości internetowej. Jeśli zarejestrowałeś się przy użyciu innej metody, będziesz musiał najpierw utworzyć i połączyć tożsamość internetową ze swoim kontem OpenChat.",
-        "warning2": "Jeśli jesteś już zalogowany przy użyciu tożsamości internetowej, możesz kontynuować."
+        "tryAgain": "Spróbuj ponownie"
     },
     "identityMigrationMessage": "Poczekaj, aż Twoje konto zostanie zaktualizowane do nowego systemu. Dzięki temu będziemy mogli w przyszłości obsługiwać znacznie więcej opcji logowania, w tym opcjonalne odzyskiwanie poczty e-mail w przypadku utraty dostępu do urządzenia.",
     "inheritSystem": "Dziedzicz motyw systemu",

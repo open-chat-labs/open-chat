@@ -128,7 +128,8 @@ export type AddMembersToChannelResponse =
     | CommunityFrozen
     | CommunityPublic
     | InternalError
-    | Offline;
+    | Offline
+    | CommunityPublic;
 
 export type BlockCommunityUserResponse = Success | Failure | Offline;
 

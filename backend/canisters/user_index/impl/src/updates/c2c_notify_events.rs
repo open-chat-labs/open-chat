@@ -133,7 +133,7 @@ fn process_new_user(
     state
         .data
         .users
-        .register(caller, user_id, username.clone(), now, referred_by, UserType::User);
+        .register(caller, user_id, username.clone(), now, referred_by, UserType::User, None);
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
@@ -142,7 +142,6 @@ fn process_new_user(
             user_id,
             user_principal: caller,
             username: username.clone(),
-            is_bot: false,
             user_type: UserType::User,
             referred_by,
         }),

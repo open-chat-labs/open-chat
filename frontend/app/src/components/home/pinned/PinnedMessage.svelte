@@ -177,10 +177,6 @@
             color: var(--currentChat-msg-me-txt);
         }
 
-        &.crypto {
-            @include gold();
-        }
-
         &.fill {
             padding: 0;
             overflow: hidden;

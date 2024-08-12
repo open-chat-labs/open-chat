@@ -1,6 +1,11 @@
 import { AnonymousIdentity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+} from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
@@ -18,6 +23,7 @@ import {
     type GetOpenChatIdentityResponse,
     type ChallengeAttempt,
     type CreateOpenChatIdentityError,
+    type LinkIdentitiesResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -40,28 +46,33 @@ let identityAgent: IdentityAgent | undefined = undefined;
 let authPrincipalString: string | undefined = undefined;
 let logger: Logger | undefined = undefined;
 let agent: OpenChatAgent | undefined = undefined;
+let identityCanister: string = "";
+let icUrl: string = "";
 
 async function initialize(
-    identityCanister: string,
-    icUrl: string,
+    _identityCanister: string,
+    _icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
+    identityCanister = _identityCanister;
+    icUrl = _icUrl;
+
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
     const authPrincipal = authProviderIdentity.getPrincipal();
     if (authPrincipal.isAnonymous()) {
         return { kind: "auth_identity_not_found" };
     }
 
+    identityAgent = await IdentityAgent.create(
+        authProviderIdentity as SignIdentity,
+        identityCanister,
+        icUrl,
+    );
+
     authPrincipalString = authPrincipal.toString();
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
         return { kind: "success", identity: ocIdentity };
     }
-
-    identityAgent = new IdentityAgent(
-        authProviderIdentity as SignIdentity,
-        identityCanister,
-        icUrl,
-    );
 
     const ocIdentityExists = await identityAgent.checkOpenChatIdentityExists();
     if (ocIdentityExists) {
@@ -1770,6 +1781,30 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "linkIdentities":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    linkIdentities(
+                        payload.initiatorKey,
+                        payload.initiatorDelegation,
+                        payload.approverKey,
+                        payload.approverDelegation,
+                    ),
+                );
+                break;
+
+            case "getAuthenticationPrincipals":
+                if (identityAgent === undefined) {
+                    throw new Error("IdentityAgent not initialized");
+                }
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent.getAuthenticationPrincipals(),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1778,3 +1813,34 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         sendError(correlationId)(err);
     }
 });
+
+async function linkIdentities(
+    initiatorKey: CryptoKeyPair,
+    initiatorDelegation: JsonnableDelegationChain,
+    approverKey: CryptoKeyPair,
+    approverDelegation: JsonnableDelegationChain,
+): Promise<LinkIdentitiesResponse> {
+    const initiatorIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
+        DelegationChain.fromJSON(initiatorDelegation),
+    );
+    const initiator = initiatorIdentity.getPrincipal().toString();
+    const initiatorAgent = await IdentityAgent.create(initiatorIdentity, identityCanister, icUrl);
+
+    const approverIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(approverKey),
+        DelegationChain.fromJSON(approverDelegation),
+    );
+    const approver = approverIdentity.getPrincipal().toString();
+    const approverAgent = await IdentityAgent.create(approverIdentity, identityCanister, icUrl);
+
+    if (approver != authPrincipalString) {
+        return "principal_mismatch";
+    }
+
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
+    if (initiateResponse !== "success") {
+        return initiateResponse;
+    }
+    return await approverAgent.approveIdentityLink(initiator);
+}

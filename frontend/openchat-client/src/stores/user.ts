@@ -140,13 +140,15 @@ export const userStore = {
         }
     },
     addMany: (newUsers: UserSummary[]): void => {
-        normalUsers.update((users) => {
-            const clone = new Map(users);
-            return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
-        });
-        const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
-        suspendedUsers.addMany(suspended);
-        suspendedUsers.deleteMany(notSuspended);
+        if (newUsers.length > 0) {
+            normalUsers.update((users) => {
+                const clone = new Map(users);
+                return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
+            });
+            const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
+            suspendedUsers.addMany(suspended);
+            suspendedUsers.deleteMany(notSuspended);
+        }
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {

@@ -110,6 +110,7 @@ const SERVICE_WORKER_PATH = `/service_worker.js?v=${version}`;
 console.log("BUILD_ENV", build_env);
 console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
+console.log("INTERNET IDENTITY CANISTER", process.env.INTERNET_IDENTITY_CANISTER_ID);
 console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
 
@@ -238,6 +239,9 @@ export default {
         replace({
             preventAssignment: true,
             "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
+            "process.env.INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
+                process.env.INTERNET_IDENTITY_CANISTER_ID,
+            ),
             "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
             "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
             "process.env.NODE_ENV": JSON.stringify(env),
@@ -275,7 +279,7 @@ export default {
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
-            "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            "process.env.TENOR_APIKEY": JSON.stringify(process.env.TENOR_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,

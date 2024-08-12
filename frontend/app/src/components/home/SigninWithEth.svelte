@@ -3,10 +3,13 @@
     import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
+
+    export let assumeIdentity = true;
 
     let connecting: Connector | undefined;
 
@@ -23,12 +26,11 @@
     });
 
     const connectorNames = new Set<string>();
-    const uniqueConnectors = wagmiConfig.connectors
-        .filter((c) => {
-            if (connectorNames.has(c.name)) return false;
-            connectorNames.add(c.name);
-            return true;
-        });
+    const uniqueConnectors = wagmiConfig.connectors.filter((c) => {
+        if (connectorNames.has(c.name)) return false;
+        connectorNames.add(c.name);
+        return true;
+    });
 
     async function connectWith(connector: Connector) {
         try {
@@ -43,7 +45,13 @@
                         connector,
                         message: prepareResponse.siweMessage,
                     });
-                    client.signInWithWallet("eth", account, signResponse);
+                    client
+                        .signInWithWallet("eth", account, signResponse, assumeIdentity)
+                        .then((resp) => {
+                            if (resp.kind === "success") {
+                                dispatch("connected", resp);
+                            }
+                        });
                 }
             } else {
                 console.error("Didn't get an address back from the connector");

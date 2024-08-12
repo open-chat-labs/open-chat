@@ -7,7 +7,7 @@
         "amountN": "Anzahl {n} Token",
         "and": "Alle Tore anfordern",
         "approvePaymentTitle": "Zahlung genehmigen",
-        "bypassWarning": "⚠️ Benutzer, die ausdrücklich zu diesem {level} eingeladen sind, müssen die Zugangstore nicht passieren.",
+        "bypassWarning": "Benutzer, die ausdrücklich zu diesem {level} eingeladen werden, müssen die Zugangstore nicht passieren.",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
         "chooseGate": "Wählen Sie ein Zugangstor",
         "chooseNervousSystem": "Wählen Sie das Nervensystem",
@@ -530,15 +530,24 @@
     },
     "identity": {
         "back": "Zurück",
-        "failed": "Es ist uns leider nicht gelungen, eine Internetidentität mit Ihrem OpenChat-Konto zu verknüpfen.",
+        "credentialWarning": "Sie müssen über eine Internetidentität verfügen, die mit Ihrem OpenChat-Konto verknüpft ist, um Ihren Besitz der Anmeldeinformationen {name} zu bestätigen. Der Anmeldeinformationsaussteller muss mit derselben Internetidentität verknüpft sein. Wenn Sie sich über einen anderen Anbieter registriert haben, müssen Sie eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen, bevor Sie fortfahren können.",
+        "failure": {
+            "alreadyLinked": "Es tut uns leid, aber es sieht so aus, als ob diese Internetidentität bereits mit einem OpenChat-Konto verknüpft ist.",
+            "link": "Es ist uns leider nicht gelungen, Ihre Internetidentität mit Ihrem OpenChat-Konto zu verknüpfen.",
+            "loginApprover": "Leider konnten wir uns nicht bei Ihrem aktuellen OpenChat-Authentifizierungsanbieter anmelden",
+            "loginInitiator": "Leider konnten wir uns nicht mit Ihrer gewählten Internetidentität anmelden",
+            "pollingError": "Beim Warten auf die E-Mail-Anmeldung ist ein unerwarteter Fehler aufgetreten",
+            "principalMismatch": "Es scheint, als hätten Sie sich nicht bei demselben Anbieter erneut authentifiziert, bei dem Sie aktuell angemeldet sind"
+        },
+        "humanityWarning": "Sie müssen über eine Internetidentität verfügen, die mit Ihrem OpenChat-Konto verknüpft ist, um Ihre eindeutige Identität zu bestätigen. Wenn Sie sich über einen anderen Anbieter registriert haben, müssen Sie eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen, bevor Sie fortfahren können.",
         "link": "Verknüpfung",
         "linkIdentity": "Link-Identität",
+        "linkTwoIdentities": "Jetzt sind wir bereit, die beiden Identitäten miteinander zu verknüpfen.",
         "mismatch": "Dies stimmt nicht mit dem Principal überein, mit dem Sie derzeit angemeldet sind. Sind Sie sicher, dass Sie denselben Authentifizierungsanbieter verwendet haben?",
         "proceed": "Fortfahren",
         "signInCurrent": "Melden Sie sich mit dem Identitätsanbieter an, den Sie aktuell verwenden",
         "signInNext": "Erstellen Sie die Internetidentität, die Sie mit Ihrem OpenChat-Konto verknüpfen möchten, oder melden Sie sich damit an.",
-        "warning1": "Sie müssen mit Ihrer Internetidentität angemeldet sein, um Ihre eindeutige Identität zu bestätigen. Wenn Sie sich mit einer anderen Methode registriert haben, müssen Sie zuerst eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen.",
-        "warning2": "Wenn Sie bereits mit Internet Identity angemeldet sind, können Sie fortfahren."
+        "tryAgain": "Versuchen Sie es erneut"
     },
     "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",

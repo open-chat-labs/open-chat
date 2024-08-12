@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type GroupService } from "./candid/idl";
 import type {
     EventsResponse,
@@ -145,27 +145,14 @@ export class GroupClient extends CandidService {
 
     constructor(
         identity: Identity,
+        agent: HttpAgent,
         private config: AgentConfig,
         private chatId: GroupChatIdentifier,
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity);
-        this.groupService = this.createServiceClient<GroupService>(
-            idlFactory,
-            chatId.groupId,
-            config,
-        );
-    }
-
-    static create(
-        chatId: GroupChatIdentifier,
-        identity: Identity,
-        config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined,
-    ): GroupClient {
-        return new GroupClient(identity, config, chatId, db, inviteCode);
+        super(identity, agent, chatId.groupId);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory);
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
@@ -452,7 +439,7 @@ export class GroupClient extends CandidService {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.config)
+        return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
                 const args: EditMessageV2Args = {
@@ -494,7 +481,7 @@ export class GroupClient extends CandidService {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
 
-        const dataClient = DataClient.create(this.identity, this.config);
+        const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);

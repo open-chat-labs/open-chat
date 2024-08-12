@@ -72,9 +72,6 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub user_principal: Principal,
     pub username: String,
-    #[serde(default)]
-    pub is_bot: bool,
-    #[serde(default)]
     pub user_type: UserType,
     pub referred_by: Option<UserId>,
 }

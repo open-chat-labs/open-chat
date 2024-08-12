@@ -7,7 +7,7 @@
         "amountN": "Importo {n} token",
         "and": "Richiedono tutti i cancelli",
         "approvePaymentTitle": "Approva il pagamento",
-        "bypassWarning": "⚠️ Eventuali utenti esplicitamente invitati a questo {level} non saranno tenuti a oltrepassare i varchi di accesso",
+        "bypassWarning": "A tutti gli utenti esplicitamente invitati a questo {level} non verrà richiesto di superare le porte di accesso",
         "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti.",
         "chooseGate": "Scegli un varco di accesso",
         "chooseNervousSystem": "Scegli il sistema nervoso",
@@ -530,15 +530,24 @@
     },
     "identity": {
         "back": "Indietro",
-        "failed": "Siamo spiacenti ma non siamo riusciti a collegare un'identità Internet al tuo account OpenChat",
+        "credentialWarning": "Devi avere un'identità Internet associata al tuo account OpenChat per confermare il tuo possesso delle credenziali {name}. L'emittente delle credenziali deve essere associato alla stessa identità Internet. Se ti sei registrato utilizzando un altro provider dovrai creare e collegare un'identità Internet al tuo account OpenChat prima di procedere.",
+        "failure": {
+            "alreadyLinked": "Siamo spiacenti ma sembra che l'identità Internet sia già collegata a un account OpenChat",
+            "link": "Siamo spiacenti ma non siamo riusciti a collegare la tua identità Internet al tuo account OpenChat",
+            "loginApprover": "Siamo spiacenti, non siamo riusciti ad accedere al tuo attuale provider di autenticazione OpenChat",
+            "loginInitiator": "Siamo spiacenti, non siamo riusciti ad accedere all'identità Internet scelta",
+            "pollingError": "Si è verificato un errore imprevisto durante l'attesa dell'accesso all'e-mail",
+            "principalMismatch": "Sembra che tu non abbia effettuato nuovamente l'autenticazione con lo stesso provider con cui hai attualmente effettuato l'accesso"
+        },
+        "humanityWarning": "Devi avere un'identità Internet associata al tuo account OpenChat per confermare la tua personalità unica. Se ti sei registrato utilizzando un altro provider dovrai creare e collegare un'identità Internet al tuo account OpenChat prima di procedere.",
         "link": "Collegamento",
         "linkIdentity": "Collegamento Identità",
+        "linkTwoIdentities": "Ora siamo pronti a collegare insieme le due identità.",
         "mismatch": "Questo non corrisponde all'entità con cui hai attualmente effettuato l'accesso. Sei sicuro di aver utilizzato lo stesso provider di autenticazione?",
         "proceed": "Procedere",
         "signInCurrent": "Accedi con il provider di identità che stai attualmente utilizzando",
         "signInNext": "Crea o accedi con l'identità Internet che desideri collegare al tuo account OpenChat",
-        "warning1": "Devi aver effettuato l'accesso utilizzando l'identità Internet per confermare la tua personalità univoca. Se ti sei registrato utilizzando un altro metodo, dovrai prima creare e collegare un'identità Internet al tuo account OpenChat.",
-        "warning2": "Se hai già effettuato l'accesso con Identità Internet, puoi procedere."
+        "tryAgain": "Riprova"
     },
     "identityMigrationMessage": "Attendi mentre il tuo account viene aggiornato al nostro nuovo sistema. Ciò ci consentirà di supportare molte più opzioni di accesso in futuro, incluso il recupero facoltativo della posta elettronica nel caso in cui perdi l'accesso al tuo dispositivo.",
     "inheritSystem": "Eredita il tema del sistema",

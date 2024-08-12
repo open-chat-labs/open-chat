@@ -44,6 +44,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
@@ -1860,6 +1861,7 @@ export interface UsersInvited {
 }
 export type UsersResponse = {
     'Success' : {
+      'deleted' : Array<UserId>,
       'timestamp' : TimestampMillis,
       'users' : Array<UserSummaryV2>,
       'current_user' : [] | [CurrentUserSummary],

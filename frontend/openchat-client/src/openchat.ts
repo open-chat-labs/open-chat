@@ -405,7 +405,6 @@ import type {
     HandleMagicLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
-    GetDelegationResponse,
     VideoCallPresence,
     VideoCallParticipant,
     AcceptedRules,
@@ -421,6 +420,7 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     Achievement,
     PayForDiamondMembershipResponse,
+    LinkIdentitiesResponse,
     AddMembersToChannelResponse,
 } from "openchat-shared";
 import {
@@ -472,6 +472,7 @@ import {
     LARGE_GROUP_THRESHOLD,
     isCompositeGate,
     shouldPreprocessGate,
+    deletedUser,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -533,7 +534,7 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 import {
     capturePinNumberStore,
     pinNumberFailureStore,
@@ -1376,14 +1377,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
+    verifyAccessGate(gate: AccessGate, iiPrincipal: string): Promise<string | undefined> {
         if (gate.kind !== "credential_gate" || this._authPrincipal === undefined) {
             return Promise.resolve(undefined);
         }
 
         return verifyCredential(
             this.config.internetIdentityUrl,
-            this._authPrincipal,
+            iiPrincipal,
             gate.credential.issuerOrigin,
             gate.credential.issuerCanisterId,
             gate.credential.credentialType,
@@ -4502,7 +4503,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
-                    gaTrack("registered_user", "registration");
+                    gaTrack("registered_user", "registration", res.userId);
                     if (this._referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }
@@ -4958,6 +4959,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (userGroups.length === 0) {
             return Promise.resolve({
                 users: [],
+                deletedUserIds: new Set(),
             });
         }
 
@@ -4968,7 +4970,8 @@ export class OpenChat extends OpenChatAgentWorker {
             allowStale,
         })
             .then((resp) => {
-                userStore.addMany(resp.users);
+                const deletedUsers = [...resp.deletedUserIds].map(deletedUser);
+                userStore.addMany([...resp.users, ...deletedUsers]);
                 if (resp.serverTimestamp !== undefined) {
                     // If we went to the server, all users not returned are still up to date, so we mark them as such
                     const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
@@ -4984,7 +4987,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch(() => ({ users: [] }));
+            .catch(() => ({ users: [], deletedUserIds: new Set() }));
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
@@ -6679,6 +6682,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 session.userKey,
                 session.key,
                 session.expiration,
+                true,
             ).catch((error) => ({
                 kind: "error",
                 error: error.toString(),
@@ -6700,7 +6704,12 @@ export class OpenChat extends OpenChatAgentWorker {
         userKey: Uint8Array,
         sessionKey: ECDSAKeyIdentity,
         expiration: bigint,
-    ): Promise<GetDelegationResponse> {
+        connectToWorker: boolean,
+    ): Promise<
+        | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
+        | { kind: "error"; error: string }
+        | { kind: "not_found" }
+    > {
         const sessionKeyDer = toDer(sessionKey);
         const getDelegationResponse = await this.sendRequest({
             kind: "getSignInWithEmailDelegation",
@@ -6715,8 +6724,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 getDelegationResponse.delegation,
                 getDelegationResponse.signature,
             );
-            await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-            this.loadedAuthenticationIdentity(identity);
+            const delegation = identity.getDelegation();
+            await storeIdentity(this._authClientStorage, sessionKey, delegation);
+            if (connectToWorker) {
+                this.loadedAuthenticationIdentity(identity);
+            }
+            return {
+                kind: "success",
+                key: sessionKey,
+                delegation,
+            };
         }
         return getDelegationResponse;
     }
@@ -6739,7 +6756,11 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-    ): Promise<GetDelegationResponse> {
+        connectWorker: boolean,
+    ): Promise<
+        | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
+        | { kind: "failure" }
+    > {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const sessionKeyDer = toDer(sessionKey);
         const loginResponse = await this.sendRequest({
@@ -6765,12 +6786,20 @@ export class OpenChat extends OpenChatAgentWorker {
                     getDelegationResponse.delegation,
                     getDelegationResponse.signature,
                 );
-                await storeIdentity(this._authClientStorage, sessionKey, identity.getDelegation());
-                this.loadedAuthenticationIdentity(identity);
+                const delegation = identity.getDelegation();
+                await storeIdentity(this._authClientStorage, sessionKey, delegation);
+                if (connectWorker) {
+                    this.loadedAuthenticationIdentity(identity);
+                }
+                return {
+                    kind: "success",
+                    key: sessionKey,
+                    delegation,
+                };
             }
-            return getDelegationResponse;
+            return { kind: "failure" };
         } else {
-            return loginResponse;
+            return { kind: "failure" };
         }
     }
 
@@ -7241,6 +7270,9 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondDurationToMs = diamondDurationToMs;
 
     swapRestricted(): Promise<boolean> {
+        if (this._liveState.user.isPlatformOperator) {
+            return Promise.resolve(false);
+        }
         return this.getUserLocation().then((location) => featureRestricted(location, "swap"));
     }
 
@@ -7364,6 +7396,45 @@ export class OpenChat extends OpenChatAgentWorker {
                 events: [],
                 total: 0,
             };
+        });
+    }
+
+    getLinkedIIPrincipal(): Promise<string | undefined> {
+        return this.sendRequest({
+            kind: "getAuthenticationPrincipals",
+        })
+            .then((resp) => {
+                const iiPrincipals = resp
+                    .filter(
+                        ({ originatingCanister }) =>
+                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID,
+                    )
+                    .map((p) => p.principal);
+                if (iiPrincipals.length === 0) {
+                    console.debug(
+                        "No II principals found, we will have to ask the user to link one",
+                    );
+                }
+                return iiPrincipals[0];
+            })
+            .catch((err) => {
+                console.log("Error loading authentication principals: ", err);
+                return undefined;
+            });
+    }
+
+    linkIdentities(
+        initiatorKey: ECDSAKeyIdentity,
+        initiatorDelegation: DelegationChain,
+        approverKey: ECDSAKeyIdentity,
+        approverDelegation: DelegationChain,
+    ): Promise<LinkIdentitiesResponse> {
+        return this.sendRequest({
+            kind: "linkIdentities",
+            initiatorKey: initiatorKey.getKeyPair(),
+            initiatorDelegation: initiatorDelegation.toJSON(),
+            approverKey: approverKey.getKeyPair(),
+            approverDelegation: approverDelegation.toJSON(),
         });
     }
 

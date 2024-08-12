@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `user_principals` showing current user's principals per auth provider ([#6205](https://github.com/open-chat-labs/open-chat/pull/6205))
+
+### Changed
+
+- Add `AlreadyLinkedToPrincipal` to `initiate_identity_link` response ([#6204](https://github.com/open-chat-labs/open-chat/pull/6204))
+- Rename `user_principals` to `auth_principals` ([#6206](https://github.com/open-chat-labs/open-chat/pull/6206))
+
+### Fixed
+
+- Add new principal to `auth_principals` list after linking ([#6207](https://github.com/open-chat-labs/open-chat/pull/6207))
+- Only return `AlreadyRegistered` if identity is linked to an OC account ([#6208](https://github.com/open-chat-labs/open-chat/pull/6208))
+
 ## [[2.0.1251](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1251-identity)] - 2024-07-25
 
 ### Changed

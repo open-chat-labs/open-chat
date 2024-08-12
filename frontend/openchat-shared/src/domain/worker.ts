@@ -164,11 +164,13 @@ import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
+    LinkIdentitiesResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -190,6 +192,8 @@ import type {
     ChitUserBalance,
     ClaimDailyChitResponse,
 } from "./chit";
+import type { JsonnableDelegationChain } from "@dfinity/identity";
+
 /**
  * Worker request types
  */
@@ -384,7 +388,13 @@ export type WorkerRequest =
     | ChitLeaderboard
     | ChitEventsRequest
     | MarkAchievementsSeen
-    | SubmitProofOfUniquePersonhood;
+    | SubmitProofOfUniquePersonhood
+    | LinkIdentities
+    | GetAuthenticationPrincipals;
+
+type GetAuthenticationPrincipals = {
+    kind: "getAuthenticationPrincipals";
+};
 
 type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
@@ -1264,6 +1274,14 @@ type GetDelegationWithWallet = {
     kind: "getDelegationWithWallet";
 };
 
+type LinkIdentities = {
+    kind: "linkIdentities";
+    initiatorKey: CryptoKeyPair;
+    initiatorDelegation: JsonnableDelegationChain;
+    approverKey: CryptoKeyPair;
+    approverDelegation: JsonnableDelegationChain;
+};
+
 /**
  * Worker error type
  */
@@ -1420,7 +1438,8 @@ export type WorkerResponseInner =
     | ClaimDailyChitResponse
     | ChitUserBalance[]
     | ChitEventsResponse
-    | SubmitProofOfUniquePersonhoodResponse;
+    | SubmitProofOfUniquePersonhoodResponse
+    | AuthenticationPrincipalsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2089,4 +2108,8 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends SubmitProofOfUniquePersonhood
     ? SubmitProofOfUniquePersonhoodResponse
+    : T extends LinkIdentities
+    ? LinkIdentitiesResponse
+    : T extends GetAuthenticationPrincipals
+    ? AuthenticationPrincipalsResponse
     : never;

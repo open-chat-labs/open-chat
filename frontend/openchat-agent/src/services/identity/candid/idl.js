@@ -21,6 +21,15 @@ export const idlFactory = ({ IDL }) => {
     'DelegationTooOld' : IDL.Null,
     'CallerNotRecognised' : IDL.Null,
   });
+  const AuthPrincipalsResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Vec(
+      IDL.Record({
+        'principal' : IDL.Principal,
+        'originating_canister' : IDL.Principal,
+      })
+    ),
+  });
   const CheckAuthPrincipalResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
@@ -68,6 +77,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'TargetUserNotFound' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
+    'AlreadyLinkedToPrincipal' : IDL.Null,
   });
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
@@ -82,6 +92,11 @@ export const idlFactory = ({ IDL }) => {
         [ApproveIdentityLinkArgs],
         [ApproveIdentityLinkResponse],
         [],
+      ),
+    'auth_principals' : IDL.Func(
+        [IDL.Record({})],
+        [AuthPrincipalsResponse],
+        ['query'],
       ),
     'check_auth_principal' : IDL.Func(
         [IDL.Record({})],

@@ -1,28 +1,17 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEmailService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
 import { generateMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
-import type { AgentConfig } from "../../config";
 
 export class SignInWithEmailClient extends CandidService {
     private service: SignInWithEmailService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<SignInWithEmailService>(
-            idlFactory,
-            config.signInWithEmailCanister,
-            {
-                icUrl: config.icUrl,
-            },
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): SignInWithEmailClient {
-        return new SignInWithEmailClient(identity, config);
+        this.service = this.createServiceClient<SignInWithEmailService>(idlFactory);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
