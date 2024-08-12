@@ -1,8 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubscription, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts(export)]
 pub struct Args {
     pub duration: DiamondMembershipPlanDuration,
     pub token: Cryptocurrency,
@@ -10,7 +12,8 @@ pub struct Args {
     pub recurring: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts(export)]
 pub enum Response {
     Success(SuccessResult),
     AlreadyLifetimeDiamondMember,
@@ -23,7 +26,8 @@ pub enum Response {
     InternalError(String),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts(export)]
 pub struct SuccessResult {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,

@@ -1,10 +1,10 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use std::{cmp::Reverse, collections::HashMap};
 use types::UserId;
 use user_index_canister::referral_metrics::{Response::*, *};
 
-#[query]
+#[query(candid = true, json = true)]
 fn referral_metrics(_args: Args) -> Response {
     read_state(referral_metrics_impl)
 }

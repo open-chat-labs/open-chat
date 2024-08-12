@@ -1,15 +1,18 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use types::Empty;
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts(export)]
 pub enum Response {
     Success(ReferralMetrics),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts(export)]
 pub struct ReferralMetrics {
     pub users_who_referred: u32,
     pub users_who_referred_paid_diamond: u32,

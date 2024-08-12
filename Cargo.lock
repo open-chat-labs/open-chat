@@ -8883,6 +8883,7 @@ dependencies = [
  "modclub_canister",
  "serde",
  "serde_bytes",
+ "ts-rs",
  "types",
 ]
 

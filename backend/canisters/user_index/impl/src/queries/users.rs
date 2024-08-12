@@ -1,11 +1,11 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use std::collections::HashSet;
 use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
 use utils::time::MonthKey;
 
-#[query]
+#[query(candid = true, json = true)]
 fn users(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }

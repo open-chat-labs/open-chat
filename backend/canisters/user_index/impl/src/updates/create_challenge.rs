@@ -1,8 +1,8 @@
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use user_index_canister::create_challenge::{Response::*, *};
 
-#[update]
+#[update(candid = true, json = true)]
 #[trace]
 fn create_challenge(_args: Args) -> Response {
     NotRequired

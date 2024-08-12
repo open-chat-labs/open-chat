@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use user_index_canister::referral_leaderboard::{Response::*, *};
 use utils::time::MonthKey;
 
-#[query]
+#[query(candid = true, json = true)]
 fn referral_leaderboard(args: Args) -> Response {
     read_state(|state| referral_leaderboard_impl(args, state))
 }
