@@ -380,8 +380,6 @@ export function mergeLocalSummaryUpdates(
                     current.latestEventIndex,
                 );
 
-                console.log(`updated.kind: ${updated.kind}`, `current.kind: ${current.kind}`);
-
                 if (updated.kind === undefined) {
                     merged.set(chatId, {
                         ...current,

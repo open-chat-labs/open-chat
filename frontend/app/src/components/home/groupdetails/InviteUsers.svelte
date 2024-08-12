@@ -78,8 +78,7 @@
                     }
                 }
             })
-            .catch((err) => {
-                client.logError("AddMembersFailed", err);
+            .catch(() => {
                 toastStore.showFailureToast(
                     i18nKey("group.addMembersFailed"),
                 );
