@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
 
-## [[2.0.1272](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1286-community)] - 2024-08-12
+## [[2.0.1286](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1286-community)] - 2024-08-12
 
 ### Added
 
