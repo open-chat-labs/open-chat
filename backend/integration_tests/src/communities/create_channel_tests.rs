@@ -68,6 +68,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             permissions_v2: None,
             events_ttl: None,
             gate: diamond_gate.then_some(AccessGate::DiamondMember),
+            external_url: None,
         },
     );
 

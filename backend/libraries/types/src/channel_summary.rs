@@ -32,6 +32,7 @@ pub struct CommunityCanisterChannelSummary {
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
     pub is_invited: Option<bool>,
+    pub external_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -58,6 +59,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<GroupMembershipUpdates>,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub external_url: OptionUpdate<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

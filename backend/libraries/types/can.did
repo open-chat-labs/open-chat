@@ -241,6 +241,7 @@ type ChatEvent = variant {
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
+    ExternalUrlUpdated : ExternalUrlUpdated;
 };
 
 type ChatEventWrapper = record {
@@ -419,7 +420,7 @@ type CommunityCanisterChannelSummary = record {
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
     is_invited : opt bool;
-    
+    external_url : opt text;
 };
 
 type GroupMembership = record {
@@ -484,6 +485,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     gate : AccessGateUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    external_url : TextUpdate;
 };
 
 type GroupMembershipUpdates = record {
@@ -1550,6 +1552,11 @@ type AccessGateUpdate = variant {
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+};
+
+type ExternalUrlUpdated = record {
+    updated_by : UserId;
+    new_url : opt text;
 };
 
 type VerifiedCredentialGate = record {

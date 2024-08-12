@@ -33,6 +33,7 @@ pub enum ChatEvent {
     GroupGateUpdated(GroupGateUpdated),
     UsersInvited(UsersInvited),
     MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
+    ExternalUrlUpdated(ExternalUrlUpdated),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -253,6 +254,12 @@ pub struct EventsTimeToLiveUpdated {
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
     pub new_gate: Option<AccessGate>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalUrlUpdated {
+    pub updated_by: UserId,
+    pub new_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
