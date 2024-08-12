@@ -40,7 +40,7 @@ fn main() {
     generate_candid_method!(user_index, unsuspend_user, update);
     generate_candid_method!(user_index, update_diamond_membership_subscription, update);
 
-    let directory = env::current_dir().unwrap().join("bindings/userIndex");
+    let directory = env::current_dir().unwrap().join("ts_bindings/userIndex");
     if directory.exists() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
