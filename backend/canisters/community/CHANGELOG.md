@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support updating add members permission ([#6194](https://github.com/open-chat-labs/open-chat/pull/6194))
+
 ### Changed
 
 - Members of private communities can be added to channels skipping gate checks ([#6159](https://github.com/open-chat-labs/open-chat/pull/6159))
