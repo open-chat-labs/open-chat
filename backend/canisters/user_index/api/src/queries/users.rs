@@ -4,21 +4,21 @@ use ts_rs::TS;
 use types::{CurrentUserSummary, TimestampMillis, UserId, UserSummaryV2};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/users.ts")]
+#[ts(export_to = "userIndex/users/")]
 pub struct Args {
     pub user_groups: Vec<UserGroup>,
     pub users_suspended_since: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/users.ts")]
+#[ts(export_to = "userIndex/users/")]
 #[serde(tag = "kind")]
 pub enum Response {
     Success(Result),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/users.ts")]
+#[ts(export_to = "userIndex/users/")]
 pub struct Result {
     pub users: Vec<UserSummaryV2>,
     pub current_user: Option<CurrentUserSummary>,
@@ -27,7 +27,7 @@ pub struct Result {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/users.ts")]
+#[ts(export_to = "userIndex/users/")]
 pub struct UserGroup {
     pub users: Vec<UserId>,
     pub updated_since: TimestampMillis,

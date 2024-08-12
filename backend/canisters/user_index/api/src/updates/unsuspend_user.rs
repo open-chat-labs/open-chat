@@ -4,13 +4,13 @@ use ts_rs::TS;
 use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/unsuspendUser.ts")]
+#[ts(export_to = "userIndex/unsuspendUser/")]
 pub struct Args {
     pub user_id: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/unsuspendUser.ts")]
+#[ts(export_to = "userIndex/unsuspendUser/")]
 #[serde(tag = "kind")]
 pub enum Response {
     Success,

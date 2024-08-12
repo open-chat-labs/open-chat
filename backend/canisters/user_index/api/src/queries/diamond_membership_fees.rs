@@ -7,14 +7,14 @@ pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/diamondMembershipFees.ts")]
+#[ts(export_to = "userIndex/diamondMembershipFees/")]
 #[serde(tag = "kind")]
 pub enum Response {
     Success(Vec<DiamondMembershipFees>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/diamondMembershipFees.ts")]
+#[ts(export_to = "userIndex/diamondMembershipFees/")]
 pub struct DiamondMembershipFees {
     pub token: Cryptocurrency,
     pub one_month: u64,

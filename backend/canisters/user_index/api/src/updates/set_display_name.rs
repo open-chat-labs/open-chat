@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/setDisplayName.ts")]
+#[ts(export_to = "userIndex/setDisplayName/")]
 pub struct Args {
     pub display_name: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/setDisplayName.ts")]
+#[ts(export_to = "userIndex/setDisplayName/")]
 #[serde(tag = "kind", content = "value")]
 pub enum Response {
     Success,

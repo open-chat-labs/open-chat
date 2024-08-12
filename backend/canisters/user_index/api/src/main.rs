@@ -1,4 +1,5 @@
 use candid_gen::generate_candid_method;
+use std::env;
 use ts_gen::generate_ts_method;
 
 #[allow(deprecated)]
@@ -38,6 +39,11 @@ fn main() {
     generate_candid_method!(user_index, suspend_user, update);
     generate_candid_method!(user_index, unsuspend_user, update);
     generate_candid_method!(user_index, update_diamond_membership_subscription, update);
+
+    let directory = env::current_dir().unwrap().join("bindings/userIndex");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
 
     generate_ts_method!(user_index, check_username);
     generate_ts_method!(user_index, chit_balances);

@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, HumanReadable, Clone, Debug, TS)]
-#[ts(export_to = "userIndex/setUserUpgradeConcurrency.ts")]
+#[ts(export_to = "userIndex/setUserUpgradeConcurrency/")]
 pub struct Args {
     pub value: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/setUserUpgradeConcurrency.ts")]
+#[ts(export_to = "userIndex/setUserUpgradeConcurrency/")]
 #[serde(tag = "kind")]
 pub enum Response {
     Success,

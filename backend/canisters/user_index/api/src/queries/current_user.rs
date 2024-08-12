@@ -11,7 +11,7 @@ pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/currentUser.ts")]
+#[ts(export_to = "userIndex/currentUser/")]
 #[serde(tag = "kind")]
 pub enum Response {
     Success(SuccessResult),
@@ -19,7 +19,7 @@ pub enum Response {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/currentUser.ts")]
+#[ts(export_to = "userIndex/currentUser/")]
 pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
