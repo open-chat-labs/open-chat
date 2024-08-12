@@ -25,6 +25,7 @@ import {
 import {
     buildUserAvatarUrl,
     canBlockUsers,
+    canAddMembers,
     canChangePermissions,
     canChangeRoles,
     canDeleteGroup,
@@ -420,6 +421,7 @@ import type {
     Achievement,
     PayForDiamondMembershipResponse,
     LinkIdentitiesResponse,
+    AddMembersToChannelResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1456,15 +1458,9 @@ export class OpenChat extends OpenChatAgentWorker {
             return approveResponse;
         }
 
-        const localUserIndex =
-            chat.kind === "group_chat"
-                ? chat.localUserIndex
-                : this.localUserIndexForCommunity(chat.id.communityId);
-
         return this.sendRequest({
             kind: "joinGroup",
             chatId: chat.id,
-            localUserIndex,
             credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {
@@ -1852,6 +1848,10 @@ export class OpenChat extends OpenChatAgentWorker {
             default:
                 return this.chatPredicate(id, canInviteUsers);
         }
+    }
+
+    canAddMembers(id: ChatIdentifier): boolean {
+        return this.chatPredicate(id, canAddMembers);
     }
 
     canCreateChannel(id: CommunityIdentifier): boolean {
@@ -4427,6 +4427,25 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    searchCommunityMembersToAdd(
+        searchTerm: string,
+        maxResults: number,
+    ): Promise<[UserSummary[], UserSummary[]]> {
+        // Put the existing channel members into a map for quick lookup
+        const channelMembers = new Map(
+            this._liveState.currentChatMembers.map((m) => [m.userId, m]),
+        );
+
+        // Search the community members excluding the existing channel members
+        const communityMatches = this.searchCommunityUsersForChannelInvite(
+            searchTerm,
+            maxResults,
+            channelMembers,
+        );
+
+        return Promise.resolve([communityMatches, []]);
+    }
+
     private searchCommunityUsersForChannelInvite(
         term: string,
         maxResults: number,
@@ -4567,11 +4586,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
     inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
-        const localUserIndex = this.localUserIndexForChat(chatId);
         return this.sendRequest({
             kind: "inviteUsers",
             chatId,
-            localUserIndex,
             userIds,
             callerUsername: this._liveState.user.username,
         })
@@ -4585,6 +4602,21 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.uninviteUsersLocally(chatId, userIds);
                 return "failure";
             });
+    }
+
+    addMembersToChannel(
+        chatId: ChannelIdentifier,
+        userIds: string[],
+    ): Promise<AddMembersToChannelResponse> {
+        return this.sendRequest({
+            kind: "addMembersToChannel",
+            chatId,
+            userIds,
+            username: this._liveState.user.username,
+            displayName: this._liveState.user.displayName,
+        }).catch((err) => {
+            return { kind: "internal_error", error: err.toString() };
+        });
     }
 
     private inviteUsersToCommunityLocally(id: CommunityIdentifier, userIds: string[]): void {
@@ -4602,11 +4634,9 @@ export class OpenChat extends OpenChatAgentWorker {
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         this.inviteUsersToCommunityLocally(id, userIds);
-        const localUserIndex = this.localUserIndexForCommunity(id.communityId);
         return this.sendRequest({
             kind: "inviteUsersToCommunity",
             id,
-            localUserIndex,
             userIds,
             callerUsername: this._liveState.user.username,
         })
@@ -5142,7 +5172,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
-                        kind: "group_chat",
+                        kind: chatId.kind,
                         name,
                         description: desc,
                         permissions,
@@ -6377,16 +6407,6 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private localUserIndexForChat(chatId: MultiUserChatIdentifier): string {
-        const chat = this._liveState.allChats.get(chatId);
-        if (chat?.kind === "group_chat") {
-            return chat.localUserIndex;
-        } else if (chat?.kind === "channel") {
-            return this.localUserIndexForCommunity(chat.id.communityId);
-        }
-        throw new Error("Chat not found");
-    }
-
     localUserIndexForCommunity(communityId: string): string {
         const community = this._liveState.communities.get({ kind: "community", communityId });
         if (community === undefined) {
@@ -6932,7 +6952,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "joinCommunity",
             id: community.id,
-            localUserIndex: community.localUserIndex,
             credentialArgs: this.buildVerifiedCredentialArgs(credentials),
         })
             .then((resp) => {

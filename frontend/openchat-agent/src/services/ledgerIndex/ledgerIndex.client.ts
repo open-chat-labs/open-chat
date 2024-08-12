@@ -11,9 +11,9 @@ export class LedgerIndexClient extends CandidService {
     private service: LedgerIndexService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent);
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<LedgerIndexService>(idlFactory, canisterId);
+        this.service = this.createServiceClient<LedgerIndexService>(idlFactory);
     }
 
     getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {

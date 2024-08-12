@@ -4,18 +4,14 @@ import { idlFactory, type NotificationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
 
 export class NotificationsClient extends CandidService {
     private service: NotificationsService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<NotificationsService>(
-            idlFactory,
-            config.notificationsCanister,
-        );
+        this.service = this.createServiceClient<NotificationsService>(idlFactory);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {

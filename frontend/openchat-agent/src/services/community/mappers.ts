@@ -130,6 +130,9 @@ export function addMembersToChannelResponse(
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
     }
+    if ("CommunityPublic" in candid) {
+        return CommonResponses.communityPublic();
+    }
     if ("InternalError" in candid) {
         return CommonResponses.internalError();
     }

@@ -190,9 +190,9 @@ export class CommunityClient extends CandidService {
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity, agent);
+        super(identity, agent, communityId);
 
-        this.service = this.createServiceClient<CommunityService>(idlFactory, communityId);
+        this.service = this.createServiceClient<CommunityService>(idlFactory);
     }
 
     claimPrize(channelId: string, messageId: bigint): Promise<ClaimPrizeResponse> {

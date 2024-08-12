@@ -12,6 +12,7 @@ use group_chat_core::GroupChatCore;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId, UserType};
+use url::Url;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
@@ -73,6 +74,12 @@ fn create_channel_impl(
 ) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
+    }
+
+    if let Some(external_url) = &args.external_url {
+        if Url::parse(external_url).is_err() {
+            return ExternalUrlInvalid;
+        }
     }
 
     let messages_visible_to_non_members = args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate.is_none());
@@ -137,6 +144,7 @@ fn create_channel_impl(
                 args.events_ttl,
                 member.user_type,
                 state.env.rng().gen(),
+                args.external_url,
                 now,
             );
 

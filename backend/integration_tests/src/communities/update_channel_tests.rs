@@ -73,6 +73,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
             gate: if !make_public { OptionUpdate::SetToNone } else { OptionUpdate::NoChange },
             public: make_public.then_some(true),
             messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 

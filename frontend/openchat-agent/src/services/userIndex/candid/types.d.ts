@@ -1318,6 +1318,7 @@ export interface OptionalGroupPermissions {
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
   'start_video_call' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }

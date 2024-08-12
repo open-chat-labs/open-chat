@@ -27,7 +27,11 @@ export class DataClient extends EventTarget {
         private config: AgentConfig,
     ) {
         super();
-        this.storageIndexClient = new StorageIndexClient(identity, agent, config);
+        this.storageIndexClient = new StorageIndexClient(
+            identity,
+            agent,
+            config.openStorageIndexCanister,
+        );
     }
 
     static newBlobId(): bigint {

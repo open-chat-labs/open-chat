@@ -209,6 +209,7 @@ export function apiOptionalGroupPermissions(
         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
+        add_members: apiOptional(apiPermissionRole, permissions.addMembers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),

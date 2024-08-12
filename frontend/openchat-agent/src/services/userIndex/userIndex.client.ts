@@ -49,7 +49,6 @@ import {
     submitProofOfUniquePersonhoodResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
-import type { AgentConfig } from "../../config";
 import {
     getCachedUsers,
     getCachedDeletedUserIds,
@@ -72,13 +71,10 @@ import {
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.userIndexService = this.createServiceClient<UserIndexService>(
-            idlFactory,
-            config.userIndexCanister,
-        );
+        this.userIndexService = this.createServiceClient<UserIndexService>(idlFactory);
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {

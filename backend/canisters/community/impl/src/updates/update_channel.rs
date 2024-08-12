@@ -5,6 +5,7 @@ use community_canister::update_channel::{Response::*, *};
 use group_chat_core::UpdateResult;
 use ic_cdk::update;
 use types::OptionUpdate;
+use url::Url;
 
 #[update]
 #[trace]
@@ -19,6 +20,12 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
     if state.data.is_frozen() {
         return CommunityFrozen;
+    }
+
+    if let OptionUpdate::SetToSome(external_url) = &args.external_url {
+        if Url::parse(external_url).is_err() {
+            return ExternalUrlInvalid;
+        }
     }
 
     if let OptionUpdate::SetToSome(gate) = &args.gate {
@@ -49,6 +56,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,
+                args.external_url,
                 now,
             ) {
                 UpdateResult::Success(result) => {

@@ -11,8 +11,8 @@ use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
-    EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
-    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
@@ -57,6 +57,8 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+    #[serde(default)]
+    pub external_url: Timestamped<Option<String>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -77,6 +79,7 @@ impl GroupChatCore {
         events_ttl: Option<Milliseconds>,
         created_by_user_type: UserType,
         anonymized_chat_id: u128,
+        external_url: Option<String>,
         now: TimestampMillis,
     ) -> GroupChatCore {
         let members = GroupMembers::new(created_by, created_by_user_type, now);
@@ -110,6 +113,7 @@ impl GroupChatCore {
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
+            external_url: Timestamped::new(external_url, now),
         }
     }
 
@@ -232,6 +236,11 @@ impl GroupChatCore {
             video_call_in_progress: self
                 .events
                 .video_call_in_progress()
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            external_url: self
+                .external_url
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
@@ -1336,6 +1345,7 @@ impl GroupChatCore {
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
+        external_url: OptionUpdate<String>,
         now: TimestampMillis,
     ) -> UpdateResult {
         match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
@@ -1350,6 +1360,7 @@ impl GroupChatCore {
                 public,
                 messages_visible_to_non_members,
                 events_ttl,
+                external_url,
                 now,
             ))),
             Err(result) => result,
@@ -1430,6 +1441,7 @@ impl GroupChatCore {
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
+        external_url: OptionUpdate<String>,
         now: TimestampMillis,
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
@@ -1539,6 +1551,21 @@ impl GroupChatCore {
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                         updated_by: user_id,
                         new_gate: gate,
+                    })),
+                    0,
+                    now,
+                );
+            }
+        }
+
+        if let Some(external_url) = external_url.expand() {
+            if self.external_url.value != external_url {
+                self.external_url = Timestamped::new(external_url.clone(), now);
+
+                events.push_main_event(
+                    ChatEventInternal::ExternalUrlUpdated(Box::new(ExternalUrlUpdated {
+                        updated_by: user_id,
+                        new_url: external_url,
                     })),
                     0,
                     now,
@@ -1710,7 +1737,7 @@ impl GroupChatCore {
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
-            add_members: GroupPermissionRole::Owner,
+            add_members: new.add_members.unwrap_or(old.add_members),
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
@@ -2017,6 +2044,7 @@ pub struct SummaryUpdates {
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub external_url: OptionUpdate<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

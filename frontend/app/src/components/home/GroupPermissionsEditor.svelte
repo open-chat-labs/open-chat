@@ -9,6 +9,7 @@
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
     export let isCommunityPublic: boolean;
+    export let isChannel: boolean;
 
     let selectedTab = 0;
     let roles = [...chatRoles];
@@ -45,6 +46,12 @@
             {roles}
             label={i18nKey("permissions.updateGroup")}
             bind:rolePermission={permissions.updateGroup} />
+        {#if isChannel && !isCommunityPublic}
+            <SelectPermissionRole
+                {roles}
+                label={i18nKey("permissions.addMembers")}
+                bind:rolePermission={permissions.addMembers} />
+        {/if}
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.inviteUsers")}

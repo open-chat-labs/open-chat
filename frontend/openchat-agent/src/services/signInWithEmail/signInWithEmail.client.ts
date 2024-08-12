@@ -4,18 +4,14 @@ import { CandidService } from "../candidService";
 import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
 import { generateMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
-import type { AgentConfig } from "../../config";
 
 export class SignInWithEmailClient extends CandidService {
     private service: SignInWithEmailService;
 
-    constructor(identity: Identity, agent: HttpAgent, config: AgentConfig) {
-        super(identity, agent);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<SignInWithEmailService>(
-            idlFactory,
-            config.signInWithEmailCanister,
-        );
+        this.service = this.createServiceClient<SignInWithEmailService>(idlFactory);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

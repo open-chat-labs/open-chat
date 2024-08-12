@@ -1588,6 +1588,7 @@ export const idlFactory = ({ IDL }) => {
     'thread_permissions' : OptionalMessagePermissionsUpdate,
     'change_roles' : IDL.Opt(PermissionRole),
     'start_video_call' : IDL.Opt(PermissionRole),
+    'add_members' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });

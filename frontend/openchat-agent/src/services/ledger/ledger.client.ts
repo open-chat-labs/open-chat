@@ -7,9 +7,9 @@ export class LedgerClient extends CandidService {
     private service: LedgerService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent);
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<LedgerService>(idlFactory, canisterId);
+        this.service = this.createServiceClient<LedgerService>(idlFactory);
     }
 
     accountBalance(principal: string): Promise<bigint> {

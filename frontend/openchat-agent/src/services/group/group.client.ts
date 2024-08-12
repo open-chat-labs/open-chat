@@ -151,8 +151,8 @@ export class GroupClient extends CandidService {
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity, agent);
-        this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId.groupId);
+        super(identity, agent, chatId.groupId);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory);
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {

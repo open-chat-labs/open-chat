@@ -359,11 +359,14 @@
                             {editing}
                             bind:permissions={candidateGroup.permissions}
                             isPublic={candidateGroup.public}
-                            isCommunityPublic={$selectedCommunity?.public ?? true} />
+                            isCommunityPublic={$selectedCommunity?.public ?? true}
+                            isChannel={candidateGroup.id.kind === "channel"} />
                     {:else}
                         <GroupPermissionsViewer
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.public} />
+                            isPublic={candidateGroup.public} 
+                            isCommunityPublic={$selectedCommunity?.public ?? true}
+                            isChannel={candidateGroup.id.kind === "channel"} />
                     {/if}
                 </div>
                 {#if !editing && !hideInviteUsers}

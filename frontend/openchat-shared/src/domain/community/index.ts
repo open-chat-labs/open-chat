@@ -126,6 +126,7 @@ export type AddMembersToChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
+    | CommunityPublic
     | InternalError
     | Offline
     | CommunityPublic;

@@ -13,10 +13,10 @@ function debug(msg: string): void {
 }
 
 export abstract class CandidService {
-    protected createServiceClient<T>(factory: IDL.InterfaceFactory, canisterId: string): T {
+    protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
         return Actor.createActor<T>(factory, {
             agent: this.agent,
-            canisterId,
+            canisterId: this.canisterId,
         });
     }
 
@@ -87,5 +87,6 @@ export abstract class CandidService {
     constructor(
         protected identity: Identity,
         protected agent: HttpAgent,
+        protected canisterId: string,
     ) {}
 }
