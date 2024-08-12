@@ -478,6 +478,7 @@ type CreateChannelArgs = record {
     permissions_v2 : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
+    external_url : opt text;
     messages_visible_to_non_members: opt bool;
 };
 
@@ -498,6 +499,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    ExternalUrlInvalid;
     InternalError : text;
 };
 
@@ -958,6 +960,7 @@ type UpdateChannelArgs = record {
     gate : AccessGateUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;
+    external_url : TextUpdate;
 };
 
 type UpdateChannelResponse = variant {
@@ -979,6 +982,7 @@ type UpdateChannelResponse = variant {
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
     CommunityFrozen;
+    ExternalUrlInvalid;
 };
 
 type UpdateCommunityArgs = record {

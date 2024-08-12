@@ -62,6 +62,7 @@ pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
     pub invite_users: Option<GroupPermissionRole>,
+    pub add_members: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,

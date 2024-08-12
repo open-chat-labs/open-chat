@@ -43,6 +43,7 @@ const defaultGroupChat: GroupChatSummary = {
         updateGroup: "admin",
         pinMessages: "admin",
         inviteUsers: "admin",
+        addMembers: "admin",
         reactToMessages: "member",
         mentionAllMembers: "member",
         startVideoCall: "admin",

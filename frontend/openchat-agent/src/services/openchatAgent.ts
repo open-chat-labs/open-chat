@@ -759,7 +759,6 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
-        _localUserIndex: string,
         userIds: string[],
         callerUsername: string,
     ): Promise<InviteUsersResponse> {
@@ -779,7 +778,6 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
-        _localUserIndex: string,
         userIds: string[],
         callerUsername: string,
     ): Promise<InviteUsersResponse> {
@@ -2135,7 +2133,6 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
-        _localUserIndex: string,
         credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
@@ -2168,7 +2165,6 @@ export class OpenChatAgent extends EventTarget {
 
     async joinCommunity(
         id: CommunityIdentifier,
-        _localUserIndex: string,
         credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());

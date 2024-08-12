@@ -152,6 +152,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         args.public,
         args.messages_visible_to_non_members,
         args.events_ttl,
+        OptionUpdate::NoChange,
         state.env.now(),
     );
 

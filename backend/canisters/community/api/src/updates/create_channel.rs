@@ -18,6 +18,7 @@ pub struct Args {
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
+    pub external_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -36,6 +37,7 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     CommunityFrozen,
+    ExternalUrlInvalid,
     InternalError(String),
 }
 

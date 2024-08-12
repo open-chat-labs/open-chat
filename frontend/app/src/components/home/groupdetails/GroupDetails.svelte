@@ -39,7 +39,7 @@
     $: canInvite =
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
     $: avatarSrc = client.groupAvatarUrl(chat);
-
+    $: selectedCommunity = client.selectedCommunity;
     $: currentChatRules = client.currentChatRules;
     $: currentCommunityRules = client.currentCommunityRules;
     $: combinedRulesText = canSend
@@ -172,7 +172,12 @@
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={i18nKey("permissions.permissions")}>
-            <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
+            <GroupPermissionsViewer 
+                bind:permissions={chat.permissions} 
+                isPublic={chat.public}
+                isCommunityPublic={$selectedCommunity?.public ?? true}
+                isChannel={chat.id.kind === "channel"} />
+
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
