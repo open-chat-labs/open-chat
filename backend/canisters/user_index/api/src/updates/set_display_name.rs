@@ -10,7 +10,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 #[ts(export_to = "userIndex/setDisplayName.ts")]
-#[serde(tag = "kind")]
+#[serde(tag = "kind", content = "value")]
 pub enum Response {
     Success,
     Unauthorized,
