@@ -1,16 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use ts_gen::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/setDisplayName/")]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, set_display_name)]
 pub struct Args {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
-#[ts(export_to = "userIndex/setDisplayName/")]
-#[serde(tag = "kind", content = "value")]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, set_display_name)]
 pub enum Response {
     Success,
     Unauthorized,

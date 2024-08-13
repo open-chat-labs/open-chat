@@ -13,7 +13,8 @@
         "test": "jest --detectOpenHandles --runInBand",
         "test:watch": "jest --watch --detectOpenHandles --runInBand",
         "lint": "eslint ./src --fix",
-        "codegen": "sh ./codegen.sh"
+        "codegen": "sh ./codegen.sh",
+        "ts-to-zod": "ts-to-zod"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
