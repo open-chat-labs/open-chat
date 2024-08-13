@@ -1,4 +1,5 @@
 <script lang="ts">
+    import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ModalContent from "../../ModalContent.svelte";
@@ -7,11 +8,14 @@
     import Accounts from "./Accounts.svelte";
     import Button from "../../Button.svelte";
     import LinkButton from "../../LinkButton.svelte";
+    import { iconSize } from "../../../stores/iconSize";
+    import ManageTokens from "./ManageTokens.svelte";
 
     const dispatch = createEventDispatcher();
 
     let showZeroBalance = false;
     let zeroCount = 0;
+    let mode: "manage" | "wallet" = "wallet";
 </script>
 
 <ModalContent closeIcon on:close>
@@ -20,21 +24,19 @@
         {$_("wallet")}
     </div>
     <div slot="body">
-        <Accounts bind:showZeroBalance bind:zeroCount />
+        {#if mode === "wallet"}
+            <Accounts bind:showZeroBalance bind:zeroCount />
+        {:else if mode === "manage"}
+            <ManageTokens on:close={() => mode === "wallet"} />
+        {/if}
     </div>
     <div slot="footer">
         <div class="footer">
             {#if zeroCount > 0}
                 <div class="show-more">
-                    <LinkButton
-                        light
-                        underline={"hover"}
-                        on:click={() => (showZeroBalance = !showZeroBalance)}
-                        >{$_(
-                            showZeroBalance
-                                ? "cryptoAccount.hideZeroBalance"
-                                : "cryptoAccount.showZeroBalance"
-                        )}</LinkButton>
+                    <TuneVertical size={$iconSize} color={"var(--icon-txt)"} />
+                    <LinkButton light underline={"hover"} on:click={() => (mode = "manage")}
+                        >{$_("cryptoAccount.manage")}</LinkButton>
                 </div>
             {/if}
             <Button on:click={() => dispatch("close")} small={!$mobileWidth} tiny={$mobileWidth}>
