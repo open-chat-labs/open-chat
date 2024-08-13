@@ -6,19 +6,20 @@
     const dispatch = createEventDispatcher();
 
     type Step = {
+        key: string;
         labelKey: string;
         valid: boolean;
     };
 
-    export let step: number;
+    export let step: string;
     export let enabled: boolean;
     export let steps: Step[];
 
     afterUpdate(() => menuStore.hideMenu());
 
-    function selectStep(n: number) {
+    function selectStep(key: string) {
         if (enabled) {
-            dispatch("step", n);
+            dispatch("step", key);
         }
     }
 </script>
@@ -28,8 +29,8 @@
         <div
             role="button"
             class:invalid={!s.valid}
-            on:click={() => selectStep(i)}
-            class:selected={step === i}
+            on:click={() => selectStep(s.key)}
+            class:selected={step === s.key}
             class="step">
             <Translatable resourceKey={i18nKey(s.labelKey)} />
         </div>
