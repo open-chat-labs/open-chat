@@ -32,7 +32,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             reaction: args.reaction.clone(),
             now,
         }) {
-            AddRemoveReactionResult::Success => {
+            AddRemoveReactionResult::Success(_) => {
                 let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
                 state.push_user_canister_event(

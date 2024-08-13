@@ -538,6 +538,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.answerIdx,
                         payload.voteType,
                         payload.threadRootMessageIndex,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -1450,7 +1451,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setMemberDisplayName(payload.communityId, payload.displayName),
+                    agent.setMemberDisplayName(
+                        payload.communityId,
+                        payload.displayName,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -1628,6 +1633,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.threadRootMessageIndex,
                         payload.messageId,
                         payload.pin,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -1648,7 +1654,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinVideoCall(payload.chatId, payload.messageId),
+                    agent.joinVideoCall(payload.chatId, payload.messageId, payload.newAchievement),
                 );
                 break;
 
@@ -1668,7 +1674,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setVideoCallPresence(payload.chatId, payload.messageId, payload.presence),
+                    agent.setVideoCallPresence(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.presence,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 

@@ -228,25 +228,29 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
+        let now = state.env.now();
+
         let add_remove_reaction_args = AddRemoveReactionArgs {
             user_id: caller_user_id,
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            now: state.env.now(),
+            now,
         };
 
         if args.added {
             if matches!(
                 chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
-                AddRemoveReactionResult::Success
+                AddRemoveReactionResult::Success(_)
             ) && !state.data.suspended.value
             {
                 if let Some((recipient, notification)) = build_notification(args, chat) {
                     state.push_notification(recipient, notification);
                 }
             }
+
+            state.data.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
         } else {
             chat.events.remove_reaction(add_remove_reaction_args);
         }
@@ -330,6 +334,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 });
                 state.push_notification(my_user_id, notification);
             }
+
+            state.data.award_achievement_and_notify(Achievement::HadMessageTipped, now);
         }
     }
 }

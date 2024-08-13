@@ -2,6 +2,7 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::{Response::*, *};
 use ic_cdk::update;
+use types::Achievement;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
 #[update]
@@ -37,6 +38,15 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
     };
 
     state.data.members.set_display_name(user_id, args.display_name, now);
+
+    if args.new_achievement {
+        state.data.achievements.notify_user(
+            user_id,
+            vec![Achievement::SetCommunityDisplayName],
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
+
     handle_activity_notification(state);
     Success
 }

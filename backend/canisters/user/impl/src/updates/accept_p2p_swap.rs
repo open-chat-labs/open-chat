@@ -9,8 +9,8 @@ use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
-    AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, UserId,
+    AcceptP2PSwapResult, AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus,
+    ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
@@ -93,10 +93,14 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             })),
                         );
                         crate::jobs::push_user_canister_events::start_job_if_required(state);
+                        state
+                            .data
+                            .award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);
                     }
                 }
             });
             NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
+
             Success(AcceptSwapSuccess { token1_txn_in: index })
         }
         Err(response) => {

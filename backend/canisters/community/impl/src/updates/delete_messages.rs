@@ -103,7 +103,11 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                 handle_activity_notification(state);
 
                 if args.new_achievement {
-                    state.notify_user_of_achievements(user_id, vec![Achievement::DeletedMessage]);
+                    state.data.achievements.notify_user(
+                        user_id,
+                        vec![Achievement::DeletedMessage],
+                        &mut state.data.fire_and_forget_handler,
+                    );
                 }
 
                 Success

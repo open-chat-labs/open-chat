@@ -9,6 +9,7 @@ pub struct Args {
     pub message_index: MessageIndex,
     pub poll_option: u32,
     pub operation: VoteOperation,
+    pub new_achievement: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
