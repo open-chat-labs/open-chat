@@ -4,6 +4,8 @@ import type { Principal } from "@dfinity/principal";
 import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { ResponseTooLargeError } from "openchat-shared";
+import { ZodType } from "zod";
+import { identity } from "../utils/mapping";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -22,6 +24,39 @@ export abstract class CandidService {
 
     protected get principal(): Principal {
         return this.identity.getPrincipal();
+    }
+
+    protected async executeJsonQuery<In, Resp, Out>(
+        methodName: string,
+        args: In,
+        responseValidator: ZodType<Resp>,
+        mapper: (from: Resp) => Out,
+    ): Promise<Out> {
+        const json = JSON.stringify(args);
+        const bytes = new TextEncoder().encode(json);
+
+        const response = await this.handleQueryResponse(
+            () =>
+                this.agent.query(this.canisterId, { methodName: methodName + "_json", arg: bytes }),
+            identity,
+            args,
+        );
+        if (response.status === "replied") {
+            const responseJson = new TextDecoder().decode(response.reply.arg);
+            const validationResult = responseValidator.safeParse(JSON.parse(responseJson));
+            if (validationResult.success) {
+                return mapper(validationResult.data);
+            } else {
+                throw new Error(validationResult.error.toString());
+            }
+        } else {
+            throw new Error(
+                `query rejected. ${{
+                    code: response.reject_code,
+                    message: response.reject_message,
+                }}`,
+            );
+        }
     }
 
     protected handleResponse<From, To>(

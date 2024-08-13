@@ -50,9 +50,17 @@ import type {
     ApiUserSummary,
     ApiUserSummaryUpdate,
 } from "./candid/idl";
-import { bytesToHexString, identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional, optionalJson } from "../../utils/mapping";
 import { token } from "../common/chatMappers";
 import type { ChitLeaderboardResponse } from "./candid/types";
+import type {
+    DiamondMembershipDetails as DiamondMembershipDetailsJson,
+    DiamondMembershipStatusFull as DiamondMembershipStatusFullJson,
+    DiamondMembershipSubscription as DiamondMembershipSubscriptionJson,
+    SuspensionAction as SuspensionActionJson,
+    SuspensionDetails as SuspensionDetailsJson,
+    UserIndex_CurrentUser_Response,
+} from "../../tsBindingsMerged";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -168,6 +176,38 @@ export function userRegistrationCanisterResponse(
     throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`);
 }
 
+export function currentUserResponseJson(json: UserIndex_CurrentUser_Response): CurrentUserResponse {
+    if (json === "UserNotFound") {
+        return { kind: "unknown_user" };
+    }
+
+    if ("Success" in json) {
+        const r = json.Success;
+
+        console.log("User: ", r);
+        return {
+            kind: "created_user",
+            userId: r.user_id,
+            username: r.username,
+            dateCreated: r.date_created,
+            displayName: r.display_name ?? undefined,
+            cryptoAccount: bytesToHexString(r.icp_account),
+            referrals: r.referrals,
+            isPlatformModerator: r.is_platform_moderator,
+            isPlatformOperator: r.is_platform_operator,
+            suspensionDetails: optionalJson(r.suspension_details, suspensionDetailsJson),
+            isSuspectedBot: r.is_suspected_bot,
+            diamondStatus: diamondMembershipStatusJson(r.diamond_membership_status),
+            moderationFlagsEnabled: r.moderation_flags_enabled,
+            isBot: false,
+            updated: BigInt(Date.now()),
+            isUniquePerson: json.Success.is_unique_person,
+        };
+    }
+
+    throw new Error(`Unexpected CurrentUserResponseJson type received: ${json}`);
+}
+
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Success" in candid) {
         const r = candid.Success;
@@ -219,11 +259,40 @@ function diamondMembershipStatus(candid: ApiDiamondMembershipStatusFull): Diamon
     );
 }
 
+function diamondMembershipStatusJson(
+    json: DiamondMembershipStatusFullJson,
+): DiamondMembershipStatus {
+    if (json === "Inactive") {
+        return { kind: "inactive" };
+    }
+    if (json === "Lifetime") {
+        return { kind: "lifetime" };
+    }
+    if ("Active" in json) {
+        return {
+            kind: "active",
+            ...diamondMembershipJson(json.Active),
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected DiamondMembershipStatusFullJson type received",
+        json,
+    );
+}
+
 function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembershipDetails {
     return {
         expiresAt: candid.expires_at,
         subscription: diamondMembershipSubscription(candid.subscription),
         payInChat: candid.pay_in_chat,
+    };
+}
+
+function diamondMembershipJson(json: DiamondMembershipDetailsJson): DiamondMembershipDetails {
+    return {
+        expiresAt: json.expires_at,
+        subscription: diamondMembershipSubscriptionJson(json.subscription),
+        payInChat: json.pay_in_chat,
     };
 }
 
@@ -248,11 +317,40 @@ function diamondMembershipSubscription(
     );
 }
 
+function diamondMembershipSubscriptionJson(
+    json: DiamondMembershipSubscriptionJson,
+): DiamondMembershipSubscription {
+    if (json === "OneMonth") {
+        return "one_month";
+    }
+    if (json === "ThreeMonths") {
+        return "three_months";
+    }
+    if (json === "OneYear") {
+        return "one_year";
+    }
+    if (json === "Disabled") {
+        return "disabled";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected DiamondMembershipSubscriptionJson type received",
+        json,
+    );
+}
+
 function suspensionDetails(candid: ApiSuspensionDetails): SuspensionDetails {
     return {
         reason: candid.reason,
         action: suspensionAction(candid.action),
         suspendedBy: candid.suspended_by.toString(),
+    };
+}
+
+function suspensionDetailsJson(json: SuspensionDetailsJson): SuspensionDetails {
+    return {
+        reason: json.reason,
+        action: suspensionActionJson(json.action),
+        suspendedBy: json.suspended_by,
     };
 }
 
@@ -270,6 +368,22 @@ function suspensionAction(candid: ApiSuspensionAction): SuspensionAction {
     }
 
     throw new Error(`Unexpected ApiSuspensionAction type received: ${candid}`);
+}
+
+function suspensionActionJson(json: SuspensionActionJson): SuspensionAction {
+    if ("Unsuspend" in json) {
+        return {
+            kind: "unsuspend_action",
+            timestamp: json.Unsuspend,
+        };
+    } else if ("Delete" in json) {
+        return {
+            kind: "delete_action",
+            timestamp: json.Delete,
+        };
+    }
+
+    throw new Error(`Unexpected SuspensionActionJson type received: ${json}`);
 }
 
 export function checkUsernameResponse(candid: ApiCheckUsernameResponse): CheckUsernameResponse {

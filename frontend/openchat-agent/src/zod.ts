@@ -10,10 +10,10 @@ export const diamondMembershipPlanDurationSchema = z.union([
 
 export const suspensionActionSchema = z.union([
     z.object({
-        Unsuspend: z.bigint(),
+        Unsuspend: z.coerce.bigint(),
     }),
     z.object({
-        Delete: z.bigint(),
+        Delete: z.coerce.bigint(),
     }),
 ]);
 
@@ -39,10 +39,10 @@ export const userSummaryVolatileSchema = z.object({
 });
 
 export const diamondMembershipFeesByDurationSchema = z.object({
-    one_month: z.bigint(),
-    three_months: z.bigint(),
-    one_year: z.bigint(),
-    lifetime: z.bigint(),
+    one_month: z.coerce.bigint(),
+    three_months: z.coerce.bigint(),
+    one_year: z.coerce.bigint(),
+    lifetime: z.coerce.bigint(),
 });
 
 export const botConfigSchema = z.object({
@@ -78,10 +78,10 @@ export const cryptocurrencySchema = z.union([
 
 export const userIndexDiamondMembershipFeesDiamondMembershipFeesSchema = z.object({
     token: cryptocurrencySchema,
-    one_month: z.bigint(),
-    three_months: z.bigint(),
-    one_year: z.bigint(),
-    lifetime: z.bigint(),
+    one_month: z.coerce.bigint(),
+    three_months: z.coerce.bigint(),
+    one_year: z.coerce.bigint(),
+    lifetime: z.coerce.bigint(),
 });
 
 export const userIndexDiamondMembershipFeesResponseSchema = z.object({
@@ -129,7 +129,7 @@ export const userIndexSuspendUserResponseSchema = z.union([
 
 export const userIndexSuspendUserArgsSchema = z.object({
     user_id: userIdSchema,
-    duration: z.bigint().nullable(),
+    duration: z.coerce.bigint().nullable(),
     reason: z.string(),
 });
 
@@ -182,7 +182,7 @@ export const userSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
     display_name: z.string().nullable(),
-    avatar_id: z.bigint().nullable(),
+    avatar_id: z.coerce.bigint().nullable(),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_member: z.boolean(),
@@ -210,7 +210,7 @@ export const userIndexReferralMetricsReferralMetricsSchema = z.object({
 });
 
 export const userIndexPayForDiamondMembershipSuccessResultSchema = z.object({
-    expires_at: z.bigint(),
+    expires_at: z.coerce.bigint(),
     pay_in_chat: z.boolean(),
     subscription: diamondMembershipSubscriptionSchema,
     proof_jwt: z.string(),
@@ -226,7 +226,7 @@ export const userIndexPayForDiamondMembershipResponseSchema = z.union([
     z.literal("PaymentAlreadyInProgress"),
     z.literal("UserNotFound"),
     z.object({
-        InsufficientFunds: z.bigint(),
+        InsufficientFunds: z.coerce.bigint(),
     }),
     z.object({
         TransferFailed: z.string(),
@@ -239,13 +239,13 @@ export const userIndexPayForDiamondMembershipResponseSchema = z.union([
 export const userIndexPayForDiamondMembershipArgsSchema = z.object({
     duration: diamondMembershipPlanDurationSchema,
     token: cryptocurrencySchema,
-    expected_price_e8s: z.bigint(),
+    expected_price_e8s: z.coerce.bigint(),
     recurring: z.boolean(),
 });
 
 export const userIndexSearchResultSchema = z.object({
     users: z.array(userSummarySchema),
-    timestamp: z.bigint(),
+    timestamp: z.coerce.bigint(),
 });
 
 export const userIndexSearchResponseSchema = z.object({
@@ -272,7 +272,7 @@ export const userIndexUnsuspendUserArgsSchema = z.object({
 
 export const userIndexUsersUserGroupSchema = z.object({
     users: z.array(userIdSchema),
-    updated_since: z.bigint(),
+    updated_since: z.coerce.bigint(),
 });
 
 export const userIndexSubmitProofOfUniquePersonhoodResponseSchema = z.union([
@@ -338,7 +338,7 @@ export const diamondMembershipFeesSchema = z.object({
 export const userIndexReferralLeaderboardReferralStatsSchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    total_rewards_e8s: z.bigint(),
+    total_rewards_e8s: z.coerce.bigint(),
     diamond_members: z.number(),
     total_users: z.number(),
 });
@@ -386,7 +386,7 @@ export const userIndexUserRegistrationCanisterResponseSchema = z.union([
 ]);
 
 export const diamondMembershipDetailsSchema = z.object({
-    expires_at: z.bigint(),
+    expires_at: z.coerce.bigint(),
     pay_in_chat: z.boolean(),
     subscription: diamondMembershipSubscriptionSchema,
 });
@@ -402,7 +402,7 @@ export const diamondMembershipStatusFullSchema = z.union([
 export const userSummaryStableSchema = z.object({
     username: z.string(),
     display_name: z.string().nullable(),
-    avatar_id: z.bigint().nullable(),
+    avatar_id: z.coerce.bigint().nullable(),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_membership_status: diamondMembershipStatusSchema,
@@ -414,7 +414,7 @@ export const currentUserSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
     display_name: z.string().nullable(),
-    avatar_id: z.bigint().nullable(),
+    avatar_id: z.coerce.bigint().nullable(),
     is_bot: z.boolean(),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),
@@ -466,14 +466,14 @@ export const userSummaryV2Schema = z.object({
 
 export const userIndexUsersArgsSchema = z.object({
     user_groups: z.array(userIndexUsersUserGroupSchema),
-    users_suspended_since: z.bigint().nullable(),
+    users_suspended_since: z.coerce.bigint().nullable(),
 });
 
 export const userIndexUsersResultSchema = z.object({
     users: z.array(userSummaryV2Schema),
     current_user: currentUserSummarySchema.nullable(),
     deleted: z.array(userIdSchema),
-    timestamp: z.bigint(),
+    timestamp: z.coerce.bigint(),
 });
 
 export const userIndexSubmitProofOfUniquePersonhoodArgsSchema = z.object({
@@ -505,12 +505,45 @@ export const userIndexReportedMessagesResponseSchema = z.object({
 export const userIndexCurrentUserSuccessResultSchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    date_created: z.bigint(),
+    date_created: z.coerce.bigint(),
     display_name: z.string().nullable(),
-    avatar_id: z.bigint().nullable(),
+    avatar_id: z.coerce.bigint().nullable(),
     canister_upgrade_status: canisterUpgradeStatusSchema,
     wasm_version: buildVersionSchema,
-    icp_account: z.string(),
+    icp_account: z.tuple([
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+        z.number(),
+    ]),
     referrals: z.array(userIdSchema),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),

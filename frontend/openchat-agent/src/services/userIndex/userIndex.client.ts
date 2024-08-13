@@ -34,7 +34,6 @@ import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
     setUsernameResponse,
-    currentUserResponse,
     usersApiResponse,
     userSearchResponse,
     suspendUserResponse,
@@ -47,6 +46,7 @@ import {
     diamondMembershipFeesResponse,
     chitLeaderboardResponse,
     submitProofOfUniquePersonhoodResponse,
+    currentUserResponseJson,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import {
@@ -67,6 +67,7 @@ import {
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
+import { userIndexCurrentUserResponseSchema } from "../../zod";
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
@@ -90,9 +91,11 @@ export class UserIndexClient extends CandidService {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.handleQueryResponse(
-                        () => this.userIndexService.current_user({}),
-                        currentUserResponse,
+                    const liveUser = await this.executeJsonQuery(
+                        "current_user",
+                        {},
+                        userIndexCurrentUserResponseSchema,
+                        currentUserResponseJson,
                     );
                     if (liveUser.kind === "created_user") {
                         setCachedCurrentUser(principal, liveUser);

@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_gen::ts_export;
-use ts_rs::TS;
 use types::UserId;
 
 type Year = u32;

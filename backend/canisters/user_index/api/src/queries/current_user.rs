@@ -27,7 +27,7 @@ pub struct SuccessResult {
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub wasm_version: BuildVersion,
-    #[ts(as = "String")]
+    #[ts(as = "[u8; 32]")]
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
     pub is_platform_moderator: bool,
