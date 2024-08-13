@@ -45,6 +45,7 @@
     export let canReplyInThread: boolean;
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
+    export let privateChatPreview: boolean;
 
     $: user = client.user;
     $: isProposalGroup = client.isProposalGroup;
@@ -143,8 +144,6 @@
         $selectedCommunity !== undefined &&
         $selectedCommunity.membership.role === "none" &&
         (!$selectedCommunity.public || $selectedCommunity.gate.kind !== "no_gate");
-
-    $: privateChatPreview = client.maskChatMessages(chat);
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;

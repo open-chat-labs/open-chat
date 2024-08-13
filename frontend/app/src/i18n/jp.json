@@ -179,6 +179,7 @@
         "details": "詳細",
         "directChats": "ダイレクトチャット",
         "edit": "コミュニティを編集する",
+        "embed": "埋め込みチャンネルを追加",
         "enterUserGroupName": "ユーザーグループ名を入力してください",
         "errors": {
             "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
@@ -380,6 +381,12 @@
     "expand": "拡大",
     "expandDeletedMessages": "このチャットで削除されたメッセージを展開する",
     "exploreGroups": "グループを探索する",
+    "externalContent": {
+        "disclaimer": "このコンテンツはOpenChatの外部にあります。このコンテンツに関する問題があればコミュニティのオーナーに報告してください。",
+        "error": "外部コンテンツの読み込みに失敗しました",
+        "frozen": "外部コンテンツはプラットフォームモデレーターによって凍結されました",
+        "initialising": "外部コンテンツの初期化"
+    },
     "failedToCopyLinkToClipboard": "リンクをクリップボードにコピーできません",
     "failedToCopyToClipboard": "クリップボードにコピーができません. {account}",
     "failedToCopyUrlToClipboard": "url ({url}) をクリップボードにコピーできません",
@@ -453,6 +460,9 @@
         "details": "詳細",
         "edit": "{level}の設定",
         "editGroupPhoto": "{level} の写真を編集",
+        "externalUrl": "外部URL",
+        "externalUrlPlaceholder": "埋め込むコンテンツの外部 URL",
+        "externalUrlWarning": "外部サイトを iframe でホストできる必要があります。これは OpenChat では制御できません。",
         "getRulesFailed": "{level} ルールを取得できませんでした",
         "groupInfo": "{level} 情報",
         "historyPrivateMessage": "古いメッセージは新しいメンバーには表示されません",

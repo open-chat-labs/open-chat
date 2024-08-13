@@ -179,6 +179,7 @@
         "details": "细节",
         "directChats": "直接聊天",
         "edit": "编辑社区",
+        "embed": "添加内嵌频道",
         "enterUserGroupName": "输入用户组名称",
         "errors": {
             "convertFailed": "抱歉，我们无法将您的群组转换为社区",
@@ -380,6 +381,12 @@
     "expand": "展示",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
     "exploreGroups": "探索群组",
+    "externalContent": {
+        "disclaimer": "此内容是 OpenChat 的外部内容。有关此内容的任何问题都应报告给社区所有者",
+        "error": "外部内容加载失败",
+        "frozen": "外部内容已被平台管理员冻结",
+        "initialising": "初始化外部内容"
+    },
     "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
     "failedToCopyToClipboard": "无法复制到粘贴板 {account}",
     "failedToCopyUrlToClipboard": "无法复制 URL ({url}) 到粘贴板",
@@ -453,6 +460,9 @@
         "details": "细节",
         "edit": "编辑 {level}",
         "editGroupPhoto": "编辑 {level} 照片",
+        "externalUrl": "外部网址",
+        "externalUrlPlaceholder": "要嵌入内容的外部 URL",
+        "externalUrlWarning": "必须能够将外部网站托管在 iframe 中。这是 OpenChat 无法控制的。",
         "getRulesFailed": "未能获得 {level} 规则",
         "groupInfo": "{level}信息",
         "historyPrivateMessage": "旧消息对新成员不可见",

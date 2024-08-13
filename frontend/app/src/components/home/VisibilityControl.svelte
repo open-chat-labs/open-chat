@@ -20,6 +20,7 @@
     export let canEditDisappearingMessages: boolean;
     export let valid: boolean;
     export let gateDirty: boolean;
+    export let embeddedContent: boolean = false;
 
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
@@ -116,7 +117,7 @@
     </Radio>
 </div>
 
-{#if history}
+{#if history && !embeddedContent}
     <div class="section">
         <Checkbox
             id="history-visible"
@@ -139,7 +140,7 @@
     </div>
 {/if}
 
-{#if candidate.kind === "candidate_group_chat"}
+{#if candidate.kind === "candidate_group_chat" && !embeddedContent}
     <div class="section">
         <Checkbox
             id="disappearing-messages"

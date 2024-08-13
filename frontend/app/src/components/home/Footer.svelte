@@ -36,6 +36,7 @@
     export let textContent: string | undefined;
     export let user: CreatedUser;
     export let mode: "thread" | "message" = "message";
+    export let externalContent: boolean = false;
 
     const dispatch = createEventDispatcher();
 
@@ -136,6 +137,7 @@
         bind:messageAction
         on:paste={onPaste}
         on:drop={onDrop}
+        {externalContent}
         {mode}
         {preview}
         {blocked}

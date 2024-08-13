@@ -179,6 +179,7 @@
         "details": "Detale",
         "directChats": "Bezpośrednie czaty",
         "edit": "Edytuj społeczność",
+        "embed": "Dodaj osadzony kanał",
         "enterUserGroupName": "Wprowadź nazwę grupy użytkowników",
         "errors": {
             "convertFailed": "Przepraszamy, ale nie udało nam się przekonwertować Twoich grup w społeczność",
@@ -380,6 +381,12 @@
     "expand": "Zwiększać",
     "expandDeletedMessages": "Rozwiń usunięte wiadomości na tym czacie",
     "exploreGroups": "Przeglądaj grupy",
+    "externalContent": {
+        "disclaimer": "Ta treść jest zewnętrzna w stosunku do OpenChat. Wszelkie problemy z tą treścią należy zgłaszać właścicielowi społeczności",
+        "error": "Nie udało się załadować zawartości zewnętrznej",
+        "frozen": "Treść zewnętrzna została zamrożona przez moderatora platformy",
+        "initialising": "Inicjowanie zawartości zewnętrznej"
+    },
     "failedToCopyLinkToClipboard": "Nie można skopiować linku do schowka",
     "failedToCopyToClipboard": "Nie można skopiować do schowka. {account}",
     "failedToCopyUrlToClipboard": "Nie można skopiować adresu URL ({url}) do schowka",
@@ -453,6 +460,9 @@
         "details": "Detale",
         "edit": "Edytuj {level}",
         "editGroupPhoto": "Edytuj zdjęcie {level}",
+        "externalUrl": "Zewnętrzny adres URL",
+        "externalUrlPlaceholder": "Zewnętrzny adres URL treści do osadzenia",
+        "externalUrlWarning": "Musi być możliwe hostowanie zewnętrznej witryny w ramce iframe. To jest coś, nad czym OpenChat nie ma kontroli.",
         "getRulesFailed": "Nie udało się pobrać reguł {level}",
         "groupInfo": "Informacje o {level}",
         "historyPrivateMessage": "Stare wiadomości nie są widoczne dla nowych członków",

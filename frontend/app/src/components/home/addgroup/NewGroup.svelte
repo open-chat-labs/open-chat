@@ -34,6 +34,7 @@
     const dispatch = createEventDispatcher();
 
     export let candidateGroup: CandidateGroupChat;
+    export let embeddedContent: boolean;
 
     let confirming = false;
     let busy = false;
@@ -64,9 +65,10 @@
             candidateGroup.rules.text !== originalGroup.rules.text);
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
+    $: externalUrlDirty = editing && candidateGroup.externalUrl !== originalGroup.externalUrl;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.public !== originalGroup.public;
-    $: infoDirty = nameDirty || descDirty || avatarDirty;
+    $: infoDirty = nameDirty || descDirty || avatarDirty || externalUrlDirty;
     $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
     $: messagesVisibleToNonMembersDirty =
@@ -228,6 +230,7 @@
                 messagesVisibleToNonMembersDirty
                     ? updatedGroup.messagesVisibleToNonMembers
                     : undefined,
+                externalUrlDirty ? updatedGroup.externalUrl : undefined,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -326,10 +329,15 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <GroupDetails bind:valid={detailsValid} {busy} bind:candidateGroup />
+                    <GroupDetails
+                        {embeddedContent}
+                        bind:valid={detailsValid}
+                        {busy}
+                        bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl
+                        {embeddedContent}
                         on:upgrade
                         {editing}
                         history

@@ -5153,6 +5153,7 @@ export class OpenChat extends OpenChatAgentWorker {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
@@ -5166,6 +5167,7 @@ export class OpenChat extends OpenChatAgentWorker {
             gate,
             isPublic,
             messagesVisibleToNonMembers,
+            externalUrl,
         })
             .then((resp) => {
                 if (resp.kind === "success") {

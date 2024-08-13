@@ -419,6 +419,7 @@ export function communityChannelUpdates(
         gate: optionUpdate(candid.gate, accessGate),
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
+        externalUrl: optionUpdate(candid.external_url, identity),
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
         membership: optional(candid.membership, GroupMembershipUpdates),
