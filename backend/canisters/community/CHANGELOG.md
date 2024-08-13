@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+
+## [[2.0.1287](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1287-community)] - 2024-08-13
+
 ### Added
 
 - Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
