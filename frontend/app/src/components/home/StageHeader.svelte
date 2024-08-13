@@ -25,7 +25,7 @@
 </script>
 
 <div class="steps" class:enabled>
-    {#each steps as s, i}
+    {#each steps as s}
         <div
             role="button"
             class:invalid={!s.valid}
