@@ -185,6 +185,7 @@
             open={$groupPermissionsOpen}
             headerText={i18nKey("permissions.permissions")}>
             <GroupPermissionsViewer
+                embeddedContent={externalContent}
                 bind:permissions={chat.permissions}
                 isPublic={chat.public}
                 isCommunityPublic={$selectedCommunity?.public ?? true}

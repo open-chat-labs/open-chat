@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
   const AcceptP2PSwapArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -1325,6 +1326,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const JoinVideoCallArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'message_id' : MessageId,
   });
   const JoinVideoCallResponse = IDL.Variant({
@@ -1393,6 +1395,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RegisterPollVoteArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'poll_option' : IDL.Nat32,
     'operation' : VoteOperation,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1684,6 +1687,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesNotAccepted' : IDL.Null,
   });
   const SetMemberDisplayNameArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
   });
   const SetMemberDisplayNameResponse = IDL.Variant({
@@ -1702,6 +1706,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SetVideoCallPresenceArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'presence' : VideoCallPresence,
     'message_id' : MessageId,
   });

@@ -5,6 +5,7 @@ import type { IDL } from '@dfinity/candid';
 export interface AcceptP2PSwapArgs {
   'pin' : [] | [string],
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -65,6 +66,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
@@ -1380,6 +1382,7 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'UserNotInCommunity' : null };
 export interface JoinVideoCallArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
@@ -1832,6 +1835,7 @@ export interface PushEventResult {
 export type Reaction = string;
 export interface RegisterPollVoteArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'poll_option' : number,
   'operation' : VoteOperation,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -2081,7 +2085,10 @@ export interface SendMessageSuccess {
   'expires_at' : [] | [TimestampMillis],
   'message_index' : MessageIndex,
 }
-export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
+export interface SetMemberDisplayNameArgs {
+  'new_achievement' : boolean,
+  'display_name' : [] | [string],
+}
 export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
   { 'DisplayNameTooLong' : number } |
@@ -2091,6 +2098,7 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'DisplayNameTooShort' : number };
 export interface SetVideoCallPresenceArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'presence' : VideoCallPresence,
   'message_id' : MessageId,
 }

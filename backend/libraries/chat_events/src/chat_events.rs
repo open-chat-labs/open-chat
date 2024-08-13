@@ -613,6 +613,8 @@ impl ChatEvents {
                 return AddRemoveReactionResult::NoChange;
             }
 
+            let sender = message.sender;
+
             if let Some(client) = event_store_client {
                 let payload = ReactionAddedEventPayload {
                     message_type: message.content.message_type(),
@@ -641,7 +643,7 @@ impl ChatEvents {
             self.last_updated_timestamps
                 .mark_updated(args.thread_root_message_index, event_index, args.now);
 
-            AddRemoveReactionResult::Success
+            AddRemoveReactionResult::Success(sender)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -668,6 +670,8 @@ impl ChatEvents {
                 message.reactions.retain(|(_, u)| !u.is_empty());
             }
 
+            let sender = message.sender;
+
             self.last_updated_timestamps
                 .mark_updated(args.thread_root_message_index, event_index, args.now);
 
@@ -679,7 +683,7 @@ impl ChatEvents {
                 args.now,
             );
 
-            AddRemoveReactionResult::Success
+            AddRemoveReactionResult::Success(sender)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -1965,7 +1969,7 @@ pub struct AddRemoveReactionArgs {
 }
 
 pub enum AddRemoveReactionResult {
-    Success,
+    Success(UserId),
     NoChange,
     MessageNotFound,
 }

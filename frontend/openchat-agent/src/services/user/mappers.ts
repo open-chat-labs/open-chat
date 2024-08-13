@@ -393,6 +393,9 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("Streak7" in candid) {
         return "streak_7";
     }
+    if ("Streak100" in candid) {
+        return "streak_100";
+    }
     if ("Streak365" in candid) {
         return "streak_365";
     }

@@ -822,7 +822,8 @@ export class GroupClient extends CandidService {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
@@ -830,6 +831,7 @@ export class GroupClient extends CandidService {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                new_achievement: newAchievement,
                 correlation_id: generateUint64(),
             }),
             registerPollVoteResponse,
@@ -994,12 +996,14 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 pin: apiOptional(identity, pin),
+                new_achievement: newAchievement,
             }),
             acceptP2PSwapResponse,
         );
@@ -1018,10 +1022,11 @@ export class GroupClient extends CandidService {
         );
     }
 
-    joinVideoCall(messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.groupService.join_video_call({
                 message_id: messageId,
+                new_achievement: newAchievement,
             }),
             joinVideoCallResponse,
         );
@@ -1030,11 +1035,13 @@ export class GroupClient extends CandidService {
     setVideoCallPresence(
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.groupService.set_video_call_presence({
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
+                new_achievement: newAchievement,
             }),
             setVideoCallPresence,
         );

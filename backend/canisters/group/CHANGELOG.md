@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+
 ## [[2.0.1273](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1273-group)] - 2024-07-31
 
 ### Changed

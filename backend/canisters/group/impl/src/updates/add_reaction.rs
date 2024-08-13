@@ -32,10 +32,20 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             now,
             &mut state.data.event_store_client,
         ) {
-            AddRemoveReactionResult::Success => {
+            AddRemoveReactionResult::Success(sender) => {
                 if args.new_achievement {
-                    state.notify_user_of_achievements(user_id, vec![Achievement::ReactedToMessage]);
+                    state.data.achievements.notify_user(
+                        user_id,
+                        vec![Achievement::ReactedToMessage],
+                        &mut state.data.fire_and_forget_handler,
+                    );
                 }
+
+                state.data.achievements.notify_user(
+                    sender,
+                    vec![Achievement::HadMessageReactedTo],
+                    &mut state.data.fire_and_forget_handler,
+                );
 
                 handle_activity_notification(state);
                 handle_notification(args, user_id, state);

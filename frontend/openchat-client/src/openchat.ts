@@ -1542,10 +1542,15 @@ export class OpenChat extends OpenChatAgentWorker {
         id: CommunityIdentifier,
         displayName: string | undefined,
     ): Promise<SetMemberDisplayNameResponse> {
+        const newAchievement = !this._liveState.globalState.achievements.has(
+            "set_community_display_name",
+        );
+
         return this.sendRequest({
             kind: "setMemberDisplayName",
             communityId: id.communityId,
             displayName,
+            newAchievement,
         }).then((resp) => {
             if (resp === "success") {
                 communityStateStore.updateProp(id, "members", (ms) => {
@@ -1975,6 +1980,8 @@ export class OpenChat extends OpenChatAgentWorker {
             userId,
         });
 
+        const newAchievement = !this._liveState.globalState.achievements.has("voted_on_poll");
+
         return this.sendRequest({
             kind: "registerPollVote",
             chatId,
@@ -1982,6 +1989,7 @@ export class OpenChat extends OpenChatAgentWorker {
             answerIdx,
             voteType: type,
             threadRootMessageIndex,
+            newAchievement,
         })
             .then((resp) => resp === "success")
             .catch(() => false);
@@ -5762,12 +5770,15 @@ export class OpenChat extends OpenChatAgentWorker {
             reservedBy: this._liveState.user.userId,
         });
 
+        const newAchievement = !this._liveState.globalState.achievements.has("accepted_swap_offer");
+
         return this.sendRequest({
             kind: "acceptP2PSwap",
             chatId,
             threadRootMessageIndex,
             messageId,
             pin,
+            newAchievement,
         })
             .then((resp) => {
                 localMessageUpdates.setP2PSwapStatus(
@@ -5819,10 +5830,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+        const newAchievement = !this._liveState.globalState.achievements.has("joined_call");
+
         return this.sendRequest({
             kind: "joinVideoCall",
             chatId,
             messageId,
+            newAchievement,
         });
     }
 
@@ -5831,11 +5845,14 @@ export class OpenChat extends OpenChatAgentWorker {
         messageId: bigint,
         presence: VideoCallPresence,
     ): Promise<boolean> {
+        const newAchievement = !this._liveState.globalState.achievements.has("joined_call");
+
         return this.sendRequest({
             kind: "setVideoCallPresence",
             chatId,
             messageId,
             presence,
+            newAchievement,
         })
             .then((resp) => resp === "success")
             .catch(() => false);

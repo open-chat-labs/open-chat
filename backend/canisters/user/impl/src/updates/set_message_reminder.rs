@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
 use ic_cdk::update;
 use rand::RngCore;
-use types::FieldTooLongResult;
+use types::{Achievement, FieldTooLongResult};
 use user_canister::set_message_reminder_v2::{Response::*, *};
 use user_canister::C2CReplyContext;
 
@@ -70,6 +70,8 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         args.remind_at,
         now,
     );
+
+    state.data.award_achievement_and_notify(Achievement::SentReminder, now);
 
     Success(reminder_id)
 }
