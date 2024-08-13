@@ -72,7 +72,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                     state.data.achievements.notify_user(
                         args.recipient,
-                        vec![Achievement::HadMessageReactedTo],
+                        vec![Achievement::HadMessageTipped],
                         &mut state.data.fire_and_forget_handler,
                     );
 
