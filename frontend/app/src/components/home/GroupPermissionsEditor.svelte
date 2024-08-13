@@ -10,8 +10,16 @@
     export let isPublic: boolean;
     export let isCommunityPublic: boolean;
     export let isChannel: boolean;
+    export let embeddedContent: boolean;
 
-    let selectedTab = 0;
+    let items = embeddedContent
+        ? [i18nKey("permissions.general")]
+        : [
+              i18nKey("permissions.general"),
+              i18nKey("permissions.message"),
+              i18nKey("permissions.thread"),
+          ];
+    let selectedTab = items[0].key;
     let roles = [...chatRoles];
     let overrideChatMessages = permissions.threadPermissions !== undefined;
 
@@ -28,16 +36,10 @@
     }
 </script>
 
-<TabHeader
-    bind:selected={selectedTab}
-    items={[
-        i18nKey("permissions.general"),
-        i18nKey("permissions.message"),
-        i18nKey("permissions.thread"),
-    ]} />
+<TabHeader bind:selected={selectedTab} {items} />
 
 <div class="permissions">
-    {#if selectedTab === 0}
+    {#if selectedTab === "permissions.general"}
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.changeRoles")}
@@ -80,7 +82,7 @@
             {roles}
             label={i18nKey("permissions.mentionAllMembers", { mention: "@everyone" })}
             bind:rolePermission={permissions.mentionAllMembers} />
-    {:else if selectedTab === 1}
+    {:else if selectedTab === "permissions.message"}
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.messagePermissions.default")}
@@ -140,7 +142,7 @@
             defaultRole={permissions.messagePermissions.default}
             label={i18nKey("permissions.messagePermissions.p2pSwap")}
             bind:rolePermission={permissions.messagePermissions.p2pSwap} />
-    {:else if selectedTab === 2}
+    {:else if selectedTab === "permissions.thread"}
         <Toggle
             id="override-chat-messages"
             small
