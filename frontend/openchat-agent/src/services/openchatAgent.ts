@@ -725,6 +725,7 @@ export class OpenChatAgent extends EventTarget {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -753,6 +754,7 @@ export class OpenChatAgent extends EventTarget {
                     gate,
                     isPublic,
                     messagesVisibleToNonMembers,
+                    externalUrl,
                 );
         }
     }
@@ -2568,7 +2570,8 @@ export class OpenChatAgent extends EventTarget {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -2579,6 +2582,7 @@ export class OpenChatAgent extends EventTarget {
                     answerIdx,
                     voteType,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).registerPollVote(
@@ -2587,6 +2591,7 @@ export class OpenChatAgent extends EventTarget {
                     answerIdx,
                     voteType,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
         }
     }
@@ -3130,10 +3135,11 @@ export class OpenChatAgent extends EventTarget {
     setMemberDisplayName(
         communityId: string,
         display_name: string | undefined,
+        newAchievement: boolean,
     ): Promise<SetMemberDisplayNameResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this.communityClient(communityId).setMemberDisplayName(display_name);
+        return this.communityClient(communityId).setMemberDisplayName(display_name, newAchievement);
     }
 
     deleteUserGroups(
@@ -3362,6 +3368,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
@@ -3369,12 +3376,14 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 pin,
+                newAchievement,
             );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).acceptP2PSwap(
                 threadRootMessageIndex,
                 messageId,
                 pin,
+                newAchievement,
             );
         } else {
             return this.userClient.acceptP2PSwap(
@@ -3427,14 +3436,19 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        newAchievement: boolean,
+    ): Promise<JoinVideoCallResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).joinVideoCall(
                 chatId.channelId,
                 messageId,
+                newAchievement,
             );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId, newAchievement);
         } else {
             return this.userClient.joinVideoCall(chatId.userId, messageId);
         }
@@ -3444,6 +3458,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         switch (chatId.kind) {
             case "channel":
@@ -3451,11 +3466,13 @@ export class OpenChatAgent extends EventTarget {
                     chatId.channelId,
                     messageId,
                     presence,
+                    newAchievement,
                 );
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).setVideoCallPresence(
                     messageId,
                     presence,
+                    newAchievement,
                 );
         }
     }

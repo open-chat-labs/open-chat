@@ -44,6 +44,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
@@ -142,6 +143,11 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
+export interface BotConfig {
+  'can_be_added_to_groups' : boolean,
+  'is_oc_controlled' : boolean,
+  'supports_direct_messages' : boolean,
+}
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -237,6 +243,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : GroupUnfrozen } |
+  { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -298,6 +305,7 @@ export interface CommunityCanisterChannelSummary {
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : [] | [string],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -324,6 +332,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'latest_message_index' : [] | [MessageIndex],
@@ -644,6 +653,10 @@ export type ExploreGroupsResponse = { 'TermTooShort' : number } |
 export interface ExploreGroupsSuccess {
   'total' : number,
   'matches' : Array<GroupMatch>,
+}
+export interface ExternalUrlUpdated {
+  'new_url' : [] | [string],
+  'updated_by' : UserId,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction } |
@@ -1789,6 +1802,7 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
+  'bot_config' : [] | [BotConfig],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,

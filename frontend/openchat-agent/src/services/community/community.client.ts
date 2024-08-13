@@ -287,6 +287,7 @@ export class CommunityClient extends CandidService {
                 subtype: [],
                 events_ttl: apiOptional(identity, channel.eventsTTL),
                 description: channel.description,
+                external_url: apiOptional(identity, channel.externalUrl),
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional(
                     (data) => {
@@ -1027,7 +1028,8 @@ export class CommunityClient extends CandidService {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.service.register_poll_vote({
@@ -1036,6 +1038,7 @@ export class CommunityClient extends CandidService {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                new_achievement: newAchievement,
             }),
             registerPollVoteResponse,
         );
@@ -1194,12 +1197,15 @@ export class CommunityClient extends CandidService {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(chatId.channelId),
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
+                external_url:
+                    externalUrl === undefined ? { NoChange: null } : { SetToSome: externalUrl },
                 permissions_v2: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
@@ -1303,10 +1309,14 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    setMemberDisplayName(displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
+    setMemberDisplayName(
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<SetMemberDisplayNameResponse> {
         return this.handleResponse(
             this.service.set_member_display_name({
                 display_name: apiOptional(identity, displayName),
+                new_achievement: newAchievement,
             }),
             setMemberDisplayNameResponse,
         );
@@ -1358,6 +1368,7 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.service.accept_p2p_swap({
@@ -1365,6 +1376,7 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 pin: apiOptional(identity, pin),
+                new_achievement: newAchievement,
             }),
             acceptP2PSwapResponse,
         );
@@ -1385,11 +1397,16 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    joinVideoCall(channelId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(
+        channelId: string,
+        messageId: bigint,
+        newAchievement: boolean,
+    ): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.service.join_video_call({
                 message_id: messageId,
                 channel_id: BigInt(channelId),
+                new_achievement: newAchievement,
             }),
             joinVideoCallResponse,
         );
@@ -1399,12 +1416,14 @@ export class CommunityClient extends CandidService {
         channelId: string,
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.service.set_video_call_presence({
                 channel_id: BigInt(channelId),
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
+                new_achievement: newAchievement,
             }),
             setVideoCallPresence,
         );

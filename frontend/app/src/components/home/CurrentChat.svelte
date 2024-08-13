@@ -39,6 +39,7 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ExternalContent from "./ExternalContent.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -81,8 +82,8 @@
     $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
+    $: frozen = isFrozen(chat);
     $: communities = client.communities;
-
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
@@ -92,6 +93,8 @@
     $: canReact = client.canReactToMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
+    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
+    $: privateChatPreview = client.maskChatMessages(chat);
 
     $: {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
@@ -270,6 +273,10 @@
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
+    function isFrozen(chatSummary: ChatSummary): boolean {
+        return chatSummary.kind !== "direct_chat" && chatSummary.frozen;
+    }
+
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
@@ -363,30 +370,35 @@
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
-    <CurrentChatMessages
-        bind:this={currentChatMessages}
-        on:replyPrivatelyTo
-        on:replyTo={replyTo}
-        on:chatWith
-        on:upgrade
-        on:forward
-        on:retrySend
-        on:startVideoCall
-        on:removePreview={onRemovePreview}
-        {chat}
-        {events}
-        {filteredProposals}
-        {canPin}
-        {canBlockUsers}
-        {canDelete}
-        {canReplyInThread}
-        {canSendAny}
-        {canReact}
-        {canInvite}
-        {readonly}
-        {firstUnreadMention}
-        footer={showFooter}
-        {unreadMessages} />
+    {#if externalUrl !== undefined}
+        <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
+    {:else}
+        <CurrentChatMessages
+            bind:this={currentChatMessages}
+            on:replyPrivatelyTo
+            on:replyTo={replyTo}
+            on:chatWith
+            on:upgrade
+            on:forward
+            on:retrySend
+            on:startVideoCall
+            on:removePreview={onRemovePreview}
+            {privateChatPreview}
+            {chat}
+            {events}
+            {filteredProposals}
+            {canPin}
+            {canBlockUsers}
+            {canDelete}
+            {canReplyInThread}
+            {canSendAny}
+            {canReact}
+            {canInvite}
+            {readonly}
+            {firstUnreadMention}
+            footer={showFooter}
+            {unreadMessages} />
+    {/if}
     {#if showFooter}
         <Footer
             {chat}
@@ -399,6 +411,7 @@
             {joining}
             {preview}
             {blocked}
+            externalContent={externalUrl !== undefined}
             on:joinGroup
             on:upgrade
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}

@@ -63,6 +63,7 @@
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
     $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
+    $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -489,7 +490,7 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
-                                {#if notificationsSupported}
+                                {#if notificationsSupported && !externalContent}
                                     {#if muted}
                                         <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                             <BellIcon
@@ -514,17 +515,19 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                <MenuItem
-                                    disabled={unreadMessages === 0}
-                                    on:click={() => client.markAllRead(chatSummary)}>
-                                    <CheckboxMultipleMarked
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable resourceKey={i18nKey("markAllRead")} />
-                                    </div>
-                                </MenuItem>
+                                {#if !externalContent}
+                                    <MenuItem
+                                        disabled={unreadMessages === 0}
+                                        on:click={() => client.markAllRead(chatSummary)}>
+                                        <CheckboxMultipleMarked
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("markAllRead")} />
+                                        </div>
+                                    </MenuItem>
+                                {/if}
                                 {#if chatSummary.membership.archived}
                                     <MenuItem on:click={selectChat}>
                                         <ArchiveOffIcon

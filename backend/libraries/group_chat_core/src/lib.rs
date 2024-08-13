@@ -1843,7 +1843,7 @@ pub struct SendMessageSuccess {
 }
 
 pub enum AddRemoveReactionResult {
-    Success,
+    Success(UserId),
     NoChange,
     InvalidReaction,
     MessageNotFound,
@@ -1855,7 +1855,7 @@ pub enum AddRemoveReactionResult {
 impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
     fn from(value: chat_events::AddRemoveReactionResult) -> Self {
         match value {
-            chat_events::AddRemoveReactionResult::Success => AddRemoveReactionResult::Success,
+            chat_events::AddRemoveReactionResult::Success(sender) => AddRemoveReactionResult::Success(sender),
             chat_events::AddRemoveReactionResult::NoChange => AddRemoveReactionResult::NoChange,
             chat_events::AddRemoveReactionResult::MessageNotFound => AddRemoveReactionResult::MessageNotFound,
         }

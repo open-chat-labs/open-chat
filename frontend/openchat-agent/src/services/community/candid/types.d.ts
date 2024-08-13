@@ -5,6 +5,7 @@ import type { IDL } from '@dfinity/candid';
 export interface AcceptP2PSwapArgs {
   'pin' : [] | [string],
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -65,6 +66,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
@@ -204,6 +206,11 @@ export type BlockUserResponse = { 'NotAuthorized' : null } |
   { 'InternalError' : string } |
   { 'CannotBlockSelf' : null } |
   { 'CannotBlockUser' : null };
+export interface BotConfig {
+  'can_be_added_to_groups' : boolean,
+  'is_oc_controlled' : boolean,
+  'supports_direct_messages' : boolean,
+}
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -358,6 +365,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : GroupUnfrozen } |
+  { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -435,6 +443,7 @@ export interface CommunityCanisterChannelSummary {
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : [] | [string],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -461,6 +470,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'latest_message_index' : [] | [MessageIndex],
@@ -574,6 +584,7 @@ export interface CreateChannelArgs {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : [] | [GroupPermissions],
+  'external_url' : [] | [string],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -588,6 +599,7 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'ExternalUrlInvalid' : null } |
   { 'AccessGateInvalid' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
@@ -890,6 +902,10 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
+export interface ExternalUrlUpdated {
+  'new_url' : [] | [string],
+  'updated_by' : UserId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction } |
   { 'ICRC2' : Icrc2FailedCryptoTransaction };
@@ -1366,6 +1382,7 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'UserNotInCommunity' : null };
 export interface JoinVideoCallArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
@@ -1818,6 +1835,7 @@ export interface PushEventResult {
 export type Reaction = string;
 export interface RegisterPollVoteArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'poll_option' : number,
   'operation' : VoteOperation,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -2067,7 +2085,10 @@ export interface SendMessageSuccess {
   'expires_at' : [] | [TimestampMillis],
   'message_index' : MessageIndex,
 }
-export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
+export interface SetMemberDisplayNameArgs {
+  'new_achievement' : boolean,
+  'display_name' : [] | [string],
+}
 export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
   { 'DisplayNameTooLong' : number } |
@@ -2077,6 +2098,7 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'DisplayNameTooShort' : number };
 export interface SetVideoCallPresenceArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'presence' : VideoCallPresence,
   'message_id' : MessageId,
 }
@@ -2281,6 +2303,7 @@ export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |
 export interface UpdateChannelArgs {
   'channel_id' : ChannelId,
   'permissions_v2' : [] | [OptionalGroupPermissions],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
@@ -2294,6 +2317,7 @@ export type UpdateChannelResponse = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'ExternalUrlInvalid' : null } |
   { 'UserNotInChannel' : null } |
   { 'AccessGateInvalid' : null } |
   { 'ChannelNotFound' : null } |
@@ -2383,6 +2407,7 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
+  'bot_config' : [] | [BotConfig],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,

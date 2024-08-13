@@ -197,6 +197,7 @@ fn p2p_swap_in_group_succeeds() {
             thread_root_message_index: None,
             message_id,
             pin: None,
+            new_achievement: false,
         },
     );
 

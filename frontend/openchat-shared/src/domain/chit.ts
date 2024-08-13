@@ -57,6 +57,7 @@ export const achievements = [
     "streak_7",
     "streak_14",
     "streak_30",
+    "streak_100",
     "streak_365",
     "sent_reminder",
     "proved_unique_personhood",

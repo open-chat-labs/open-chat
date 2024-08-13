@@ -2974,11 +2974,13 @@ name = "group_community_common"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "fire_and_forget_handler",
  "icrc-ledger-types",
  "msgpack",
  "serde",
  "serde_repr",
  "types",
+ "user_canister",
 ]
 
 [[package]]

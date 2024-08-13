@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
   const AcceptP2PSwapArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -772,6 +773,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : IDL.Opt(IDL.Text),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -810,6 +812,11 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : GroupSubtype,
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
   const AccessGateUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -843,6 +850,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : TextUpdate,
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'latest_message_index' : IDL.Opt(MessageIndex),
@@ -896,6 +904,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : IDL.Opt(GroupPermissions),
+    'external_url' : IDL.Opt(IDL.Text),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -919,6 +928,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'ExternalUrlInvalid' : IDL.Null,
     'AccessGateInvalid' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,
@@ -1148,6 +1158,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -1202,6 +1216,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -1311,6 +1326,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const JoinVideoCallArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'message_id' : MessageId,
   });
   const JoinVideoCallResponse = IDL.Variant({
@@ -1379,6 +1395,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RegisterPollVoteArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'poll_option' : IDL.Nat32,
     'operation' : VoteOperation,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1670,6 +1687,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesNotAccepted' : IDL.Null,
   });
   const SetMemberDisplayNameArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
   });
   const SetMemberDisplayNameResponse = IDL.Variant({
@@ -1688,6 +1706,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SetVideoCallPresenceArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'new_achievement' : IDL.Bool,
     'presence' : VideoCallPresence,
     'message_id' : MessageId,
   });
@@ -1773,11 +1792,6 @@ export const idlFactory = ({ IDL }) => {
   const SummaryUpdatesArgs = IDL.Record({
     'updates_since' : TimestampMillis,
     'invite_code' : IDL.Opt(IDL.Nat64),
-  });
-  const TextUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : IDL.Text,
   });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
@@ -1939,6 +1953,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdateChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
     'permissions_v2' : IDL.Opt(OptionalGroupPermissions),
+    'external_url' : TextUpdate,
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
@@ -1953,6 +1968,7 @@ export const idlFactory = ({ IDL }) => {
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
     'NameTooShort' : FieldTooShortResult,
+    'ExternalUrlInvalid' : IDL.Null,
     'UserNotInChannel' : IDL.Null,
     'AccessGateInvalid' : IDL.Null,
     'ChannelNotFound' : IDL.Null,

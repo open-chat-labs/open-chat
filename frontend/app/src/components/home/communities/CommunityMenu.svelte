@@ -3,6 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import Contain from "svelte-material-icons/Contain.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -64,7 +65,11 @@
     }
 
     function newChannel() {
-        canCreateChannel && dispatch("newChannel");
+        canCreateChannel && dispatch("newChannel", false);
+    }
+
+    function embedContent() {
+        canCreateChannel && dispatch("newChannel", true);
     }
 
     function showMembers() {
@@ -129,6 +134,13 @@
                         ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
                 </MenuItem>
             {/if}
+            {#if canCreateChannel}
+                <MenuItem on:click={embedContent}>
+                    <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <span slot="text"
+                        ><Translatable resourceKey={i18nKey("communities.embed")} /></span>
+                </MenuItem>
+            {/if}
             <MenuItem disabled={!canMarkAllRead} on:click={markAllRead}>
                 <CheckboxMultipleMarked
                     size={$iconSize}
@@ -138,11 +150,10 @@
             </MenuItem>
             {#if notificationsSupported && !isCommunityMuted}
                 <MenuItem on:click={muteAllChannels}>
-                    <BellOff
-                        size={$iconSize}
-                        color={"var(--icon-inverted-txt)"}
-                        slot="icon" />
-                    <span slot="text"><Translatable resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <span slot="text"
+                        ><Translatable
+                            resourceKey={i18nKey("communities.muteAllChannels")} /></span>
                 </MenuItem>
             {/if}
             {#if member}

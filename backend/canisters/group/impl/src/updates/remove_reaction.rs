@@ -26,7 +26,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             .chat
             .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)
         {
-            AddRemoveReactionResult::Success => {
+            AddRemoveReactionResult::Success(_) => {
                 handle_activity_notification(state);
                 Success
             }

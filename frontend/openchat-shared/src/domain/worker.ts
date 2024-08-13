@@ -418,6 +418,7 @@ type SetVideoCallPresence = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
     presence: VideoCallPresence;
+    newAchievement: boolean;
 };
 
 type GetLocalUserIndexForUser = {
@@ -436,6 +437,7 @@ type JoinVideoCall = {
     kind: "joinVideoCall";
     chatId: ChatIdentifier;
     messageId: bigint;
+    newAchievement: boolean;
 };
 
 type ProposeTranslation = {
@@ -891,7 +893,8 @@ type RegisterPollVote = {
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";
-    threadRootMessageIndex?: number;
+    threadRootMessageIndex: number | undefined;
+    newAchievement: boolean;
     kind: "registerPollVote";
 };
 
@@ -907,6 +910,7 @@ type UpdateGroup = {
     isPublic?: boolean;
     kind: "updateGroup";
     messagesVisibleToNonMembers?: boolean;
+    externalUrl?: string;
 };
 
 type JoinGroup = {
@@ -1669,6 +1673,7 @@ type UpdateRegistry = {
 type SetMemberDisplayName = {
     communityId: string;
     displayName: string | undefined;
+    newAchievement: boolean;
     kind: "setMemberDisplayName";
 };
 
@@ -1713,6 +1718,7 @@ type AcceptP2PSwap = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     pin: string | undefined;
+    newAchievement: boolean;
     kind: "acceptP2PSwap";
 };
 

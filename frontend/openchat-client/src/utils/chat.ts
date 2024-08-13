@@ -883,7 +883,7 @@ export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
 ): MultiUserChat {
-    return {
+    const chat = {
         kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
@@ -913,6 +913,12 @@ export function groupChatFromCandidate(
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
+
+    if (chat.kind === "channel") {
+        chat.externalUrl = candidate.externalUrl;
+    }
+
+    return chat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {

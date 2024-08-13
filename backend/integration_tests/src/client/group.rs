@@ -131,6 +131,7 @@ pub mod happy_path {
                 message_index,
                 poll_option,
                 operation: VoteOperation::RegisterVote,
+                new_achievement: false,
                 correlation_id: 0,
             },
         );
@@ -368,7 +369,10 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::join_video_call::Args { message_id },
+            &group_canister::join_video_call::Args {
+                message_id,
+                new_achievement: false,
+            },
         );
 
         match response {

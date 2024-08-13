@@ -174,6 +174,7 @@ export const idlFactory = ({ IDL }) => {
     'StartedCall' : IDL.Null,
     'ChosenAsGroupOwner' : IDL.Null,
     'TippedMessage' : IDL.Null,
+    'Streak100' : IDL.Null,
     'Streak365' : IDL.Null,
     'SentGiphy' : IDL.Null,
     'SetCommunityAccessGate' : IDL.Null,
@@ -1032,6 +1033,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -1092,6 +1097,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,

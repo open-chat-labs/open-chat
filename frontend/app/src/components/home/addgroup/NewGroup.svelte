@@ -34,19 +34,28 @@
     const dispatch = createEventDispatcher();
 
     export let candidateGroup: CandidateGroupChat;
+    export let embeddedContent: boolean;
 
     let confirming = false;
     let busy = false;
-    let step = 0;
+    let step = "details";
     let actualWidth = 0;
     let detailsValid = true;
     let visibilityValid = true;
     let originalGroup = structuredClone(candidateGroup);
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid, visibilityValid, rulesValid, hideInviteUsers);
+    $: steps = getSteps(
+        editing,
+        detailsValid,
+        visibilityValid,
+        rulesValid,
+        hideInviteUsers,
+        embeddedContent,
+    );
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
-    $: left = step * (actualWidth - padding);
+    $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
+    $: left = stepIndex * (actualWidth - padding);
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
     $: canEditDisappearingMessages = !editing
         ? true
@@ -64,9 +73,10 @@
             candidateGroup.rules.text !== originalGroup.rules.text);
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
+    $: externalUrlDirty = editing && candidateGroup.externalUrl !== originalGroup.externalUrl;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.public !== originalGroup.public;
-    $: infoDirty = nameDirty || descDirty || avatarDirty;
+    $: infoDirty = nameDirty || descDirty || avatarDirty || externalUrlDirty;
     $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
     $: messagesVisibleToNonMembersDirty =
@@ -96,16 +106,21 @@
         visibilityValid: boolean,
         rulesValid: boolean,
         hideInviteUsers: boolean,
+        embeddedContent: boolean,
     ) {
         let steps = [
-            { labelKey: "group.details", valid: detailsValid },
-            { labelKey: "access.visibility", valid: visibilityValid },
-            { labelKey: "rules.rules", valid: rulesValid },
-            { labelKey: "permissions.permissions", valid: true },
+            { key: "details", labelKey: "group.details", valid: detailsValid },
+            { key: "visibility", labelKey: "access.visibility", valid: visibilityValid },
         ];
 
+        if (!embeddedContent) {
+            steps.push({ key: "rules", labelKey: "rules.rules", valid: rulesValid });
+        }
+
+        steps.push({ key: "permissions", labelKey: "permissions.permissions", valid: true });
+
         if (!editing && !hideInviteUsers) {
-            steps.push({ labelKey: "invite.invite", valid: true });
+            steps.push({ key: "invite", labelKey: "invite.invite", valid: true });
         }
         return steps;
     }
@@ -228,6 +243,7 @@
                 messagesVisibleToNonMembersDirty
                     ? updatedGroup.messagesVisibleToNonMembers
                     : undefined,
+                externalUrlDirty ? updatedGroup.externalUrl : undefined,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -267,12 +283,12 @@
                             level,
                             lowercase: true,
                         });
-                    step = 0;
+                    step = "details";
                 } else if (!hideInviteUsers) {
                     onGroupCreated(resp.canisterId);
                     optionallyInviteUsers(resp.canisterId).catch((_err) => {
                         toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                        step = 0;
+                        step = "details";
                     });
                 } else {
                     onGroupCreated(resp.canisterId);
@@ -280,7 +296,7 @@
             })
             .catch((_err) => {
                 toastStore.showFailureToast(i18nKey("groupCreationFailed"));
-                step = 0;
+                step = "details";
             })
             .finally(() => (busy = false));
     }
@@ -298,7 +314,7 @@
         tick().then(() => page(url)); // trigger the selection of the chat
     }
 
-    function changeStep(ev: CustomEvent<number>) {
+    function changeStep(ev: CustomEvent<string>) {
         step = ev.detail;
     }
 </script>
@@ -325,11 +341,16 @@
         <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
-                <div class="details" class:visible={step === 0}>
-                    <GroupDetails bind:valid={detailsValid} {busy} bind:candidateGroup />
+                <div class="details" class:visible={step === "details"}>
+                    <GroupDetails
+                        {embeddedContent}
+                        bind:valid={detailsValid}
+                        {busy}
+                        bind:candidateGroup />
                 </div>
-                <div class="visibility" class:visible={step === 1}>
+                <div class="visibility" class:visible={step === "visibility"}>
                     <VisibilityControl
+                        {embeddedContent}
                         on:upgrade
                         {editing}
                         history
@@ -338,16 +359,19 @@
                         bind:candidate={candidateGroup}
                         {gateDirty} />
                 </div>
-                <div class="rules" class:visible={step === 2}>
-                    <RulesEditor
-                        bind:valid={rulesValid}
-                        level={candidateGroup.level}
-                        bind:rules={candidateGroup.rules}
-                        {editing} />
-                </div>
-                <div use:menuCloser class="permissions" class:visible={step === 3}>
+                {#if !embeddedContent}
+                    <div class="rules" class:visible={step === "rules"}>
+                        <RulesEditor
+                            bind:valid={rulesValid}
+                            level={candidateGroup.level}
+                            bind:rules={candidateGroup.rules}
+                            {editing} />
+                    </div>
+                {/if}
+                <div use:menuCloser class="permissions" class:visible={step === "permissions"}>
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
+                            {embeddedContent}
                             {editing}
                             bind:permissions={candidateGroup.permissions}
                             isPublic={candidateGroup.public}
@@ -355,14 +379,15 @@
                             isChannel={candidateGroup.id.kind === "channel"} />
                     {:else}
                         <GroupPermissionsViewer
+                            {embeddedContent}
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.public} 
+                            isPublic={candidateGroup.public}
                             isCommunityPublic={$selectedCommunity?.public ?? true}
                             isChannel={candidateGroup.id.kind === "channel"} />
                     {/if}
                 </div>
                 {#if !editing && !hideInviteUsers}
-                    <div class="members" class:visible={step === 4}>
+                    <div class="members" class:visible={step === "invite"}>
                         <ChooseMembers
                             userLookup={searchUsers}
                             bind:members={candidateGroup.members}
@@ -375,12 +400,12 @@
     <span class="footer" slot="footer">
         <div class="group-buttons">
             <div class="back">
-                {#if !editing && step > 0}
+                {#if !editing && stepIndex > 0}
                     <Button
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}
+                        on:click={() => (step = steps[stepIndex - 1].key)}
                         ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                 {/if}
             </div>
@@ -406,11 +431,11 @@
                                 candidateGroup.level,
                                 true,
                             )} /></Button>
-                {:else if step < steps.length - 1}
+                {:else if stepIndex < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}
+                        on:click={() => (step = steps[stepIndex + 1].key)}
                         ><Translatable resourceKey={i18nKey("group.next")} />
                     </Button>
                 {:else}

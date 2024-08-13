@@ -48,6 +48,10 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
         state.data.award_achievement(Achievement::Streak30, now);
     }
 
+    if streak >= 100 {
+        state.data.award_achievement(Achievement::Streak100, now);
+    }
+
     if streak >= 365 {
         state.data.award_achievement(Achievement::Streak365, now);
     }
