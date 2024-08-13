@@ -8,6 +8,7 @@ pub struct Args {
     pub message_index: MessageIndex,
     pub poll_option: u32,
     pub operation: VoteOperation,
+    pub new_achievement: bool,
     pub correlation_id: u64,
 }
 

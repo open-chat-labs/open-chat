@@ -4,6 +4,7 @@ import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'pin' : [] | [string],
+  'new_achievement' : boolean,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -62,6 +63,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
@@ -1217,7 +1219,10 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
-export interface JoinVideoCallArgs { 'message_id' : MessageId }
+export interface JoinVideoCallArgs {
+  'new_achievement' : boolean,
+  'message_id' : MessageId,
+}
 export type JoinVideoCallResponse = { 'GroupFrozen' : null } |
   { 'AlreadyEnded' : null } |
   { 'UserNotInGroup' : null } |
@@ -1663,6 +1668,7 @@ export interface PushEventResult {
 }
 export type Reaction = string;
 export interface RegisterPollVoteArgs {
+  'new_achievement' : boolean,
   'poll_option' : number,
   'operation' : VoteOperation,
   'correlation_id' : bigint,
@@ -1846,6 +1852,7 @@ export interface SendMessageV2Args {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface SetVideoCallPresenceArgs {
+  'new_achievement' : boolean,
   'presence' : VideoCallPresence,
   'message_id' : MessageId,
 }

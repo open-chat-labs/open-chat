@@ -299,6 +299,7 @@ type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     pin : opt text;
+    new_achievement : bool;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -647,6 +648,7 @@ type ImportGroupResponse = variant {
 type JoinVideoCallArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
+    new_achievement : bool;
 };
 
 type JoinVideoCallResponse = variant {
@@ -697,6 +699,7 @@ type RegisterPollVoteArgs = record {
     message_index : MessageIndex;
     poll_option : nat32;
     operation : VoteOperation;
+    new_achievement : bool;
 };
 
 type RegisterPollVoteResponse = variant {
@@ -859,6 +862,7 @@ type SendMessageSuccess = record {
 
 type SetMemberDisplayNameArgs = record {
     display_name : opt text;
+    new_achievement : bool;
 };
 
 type SetMemberDisplayNameResponse = variant {
@@ -875,6 +879,7 @@ type SetVideoCallPresenceArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
     presence : VideoCallPresence;
+    new_achievement : bool;
 };
 
 type SetVideoCallPresenceResponse = variant {

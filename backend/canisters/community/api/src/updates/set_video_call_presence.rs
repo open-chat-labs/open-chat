@@ -7,6 +7,7 @@ pub struct Args {
     pub channel_id: ChannelId,
     pub message_id: MessageId,
     pub presence: VideoCallPresence,
+    pub new_achievement: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -4,6 +4,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
     'pin' : IDL.Opt(IDL.Text),
+    'new_achievement' : IDL.Bool,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
@@ -969,7 +970,10 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
-  const JoinVideoCallArgs = IDL.Record({ 'message_id' : MessageId });
+  const JoinVideoCallArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
+    'message_id' : MessageId,
+  });
   const JoinVideoCallResponse = IDL.Variant({
     'GroupFrozen' : IDL.Null,
     'AlreadyEnded' : IDL.Null,
@@ -1074,6 +1078,7 @@ export const idlFactory = ({ IDL }) => {
     'DeleteVote' : IDL.Null,
   });
   const RegisterPollVoteArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'poll_option' : IDL.Nat32,
     'operation' : VoteOperation,
     'correlation_id' : IDL.Nat64,
@@ -1290,6 +1295,7 @@ export const idlFactory = ({ IDL }) => {
     'Owner' : IDL.Null,
   });
   const SetVideoCallPresenceArgs = IDL.Record({
+    'new_achievement' : IDL.Bool,
     'presence' : VideoCallPresence,
     'message_id' : MessageId,
   });

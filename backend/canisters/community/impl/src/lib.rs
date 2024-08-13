@@ -12,7 +12,9 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
-use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
+use group_community_common::{
+    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
@@ -24,12 +26,11 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, Achievement, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
-use user_canister::c2c_notify_achievement;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -275,15 +276,6 @@ impl RuntimeState {
             },
         }
     }
-
-    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
-        let args = c2c_notify_achievement::Args { achievements };
-        self.data.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_notify_achievement_msgpack".to_string(),
-            serialize_then_unwrap(args),
-        );
-    }
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -333,6 +325,8 @@ struct Data {
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+    #[serde(default)]
+    achievements: Achievements,
 }
 
 impl Data {
@@ -429,6 +423,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            achievements: Achievements::default(),
         }
     }
 

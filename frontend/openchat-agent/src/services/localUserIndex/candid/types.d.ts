@@ -51,6 +51,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |

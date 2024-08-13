@@ -177,9 +177,18 @@ fn process_send_message_result(
             handle_activity_notification(state);
 
             if new_achievement {
-                state.notify_user_of_achievements(
+                state.data.achievements.notify_user(
                     sender,
                     Achievement::from_message(false, &result.message_event.event, thread_root_message_index.is_some()),
+                    &mut state.data.fire_and_forget_handler,
+                );
+            }
+
+            if let MessageContent::Crypto(c) = &result.message_event.event.content {
+                state.data.achievements.notify_user(
+                    c.recipient,
+                    vec![Achievement::ReceivedCrypto],
+                    &mut state.data.fire_and_forget_handler,
                 );
             }
 
