@@ -7,11 +7,13 @@
     import { i18nKey } from "../../i18n/i18n";
     import { getContext, onMount } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import PrivatePreview from "./PrivatePreview.svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let externalUrl: string;
     export let frozen: boolean;
+    export let privateChatPreview: boolean;
 
     let iframe: HTMLIFrameElement;
     let connected = false;
@@ -32,12 +34,20 @@
         }
     }
 
+    $: {
+        if (iframe && !frozen && !privateChatPreview) {
+            iframe.removeEventListener("error", onError);
+            iframe.addEventListener("error", onError);
+        }
+    }
+
     onMount(() => {
         window.addEventListener("message", onMessage);
-        iframe.addEventListener("error", onError);
         return () => {
             window.removeEventListener("message", onMessage);
-            iframe.removeEventListener("error", onError);
+            if (iframe) {
+                iframe.removeEventListener("error", onError);
+            }
         };
     });
 
@@ -86,6 +96,10 @@
         <Cancel size={"2em"} color={"var(--error)"} />
         <Translatable resourceKey={i18nKey("externalContent.frozen")} />
     </div>
+{:else if privateChatPreview}
+    <div class="preview">
+        <PrivatePreview />
+    </div>
 {:else if error}
     <div class="error">
         <AlertCircleOutline size={"2em"} color={"var(--error)"} />
@@ -93,7 +107,7 @@
     </div>
 {/if}
 
-{#if !frozen}
+{#if !frozen && !privateChatPreview}
     <iframe title="External Content" bind:this={iframe} src={externalUrl} />
 {/if}
 
@@ -114,5 +128,12 @@
         padding: 0 toRem(100);
 
         @include font(bold, normal, fs-140);
+    }
+
+    .preview {
+        display: flex;
+        flex-direction: column-reverse;
+        padding: $sp3 $sp4;
+        flex: auto;
     }
 </style>

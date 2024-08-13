@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Alert from "svelte-material-icons/Alert.svelte";
     import { _ } from "svelte-i18n";
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
@@ -121,57 +120,51 @@
 {/if}
 
 <div class="footer">
-    {#if externalContent}
-        <div class="disclaimer">
-            <Alert size={$iconSize} color={"var(--warn"} />
-            <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
-        </div>
-    {:else}
-        <div class="footer-overlay">
-            {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
-                <div class="draft-container">
-                    {#if replyingTo}
-                        <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
-                    {/if}
-                    {#if attachment !== undefined}
-                        <DraftMediaMessage content={attachment} />
-                    {/if}
-                </div>
-            {/if}
-        </div>
-        <MessageEntry
-            bind:this={messageEntry}
-            bind:messageAction
-            on:paste={onPaste}
-            on:drop={onDrop}
-            {mode}
-            {preview}
-            {blocked}
-            {joining}
-            {attachment}
-            {editingEvent}
-            {replyingTo}
-            {textContent}
-            {chat}
-            on:sendMessage
-            on:cancelEditEvent
-            on:setTextContent
-            on:startTyping
-            on:stopTyping
-            on:createPoll
-            on:searchChat
-            on:tokenTransfer
-            on:createPrizeMessage
-            on:createP2PSwapMessage
-            on:attachGif
-            on:makeMeme
-            on:clearAttachment
-            on:fileSelected
-            on:audioCaptured
-            on:joinGroup
-            on:upgrade
-            on:createTestMessages />
-    {/if}
+    <div class="footer-overlay">
+        {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
+            <div class="draft-container">
+                {#if replyingTo}
+                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
+                {/if}
+                {#if attachment !== undefined}
+                    <DraftMediaMessage content={attachment} />
+                {/if}
+            </div>
+        {/if}
+    </div>
+    <MessageEntry
+        bind:this={messageEntry}
+        bind:messageAction
+        on:paste={onPaste}
+        on:drop={onDrop}
+        {externalContent}
+        {mode}
+        {preview}
+        {blocked}
+        {joining}
+        {attachment}
+        {editingEvent}
+        {replyingTo}
+        {textContent}
+        {chat}
+        on:sendMessage
+        on:cancelEditEvent
+        on:setTextContent
+        on:startTyping
+        on:stopTyping
+        on:createPoll
+        on:searchChat
+        on:tokenTransfer
+        on:createPrizeMessage
+        on:createP2PSwapMessage
+        on:attachGif
+        on:makeMeme
+        on:clearAttachment
+        on:fileSelected
+        on:audioCaptured
+        on:joinGroup
+        on:upgrade
+        on:createTestMessages />
 </div>
 
 <style lang="scss">
@@ -237,13 +230,5 @@
     .draft-container {
         max-width: 80%;
         padding: 0 $sp4 $sp4 $sp4;
-    }
-
-    .disclaimer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        gap: $sp4;
     }
 </style>

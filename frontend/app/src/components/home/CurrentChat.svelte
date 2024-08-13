@@ -94,6 +94,7 @@
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
     $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
+    $: privateChatPreview = client.maskChatMessages(chat);
 
     $: {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
@@ -370,7 +371,7 @@
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}
     {#if externalUrl !== undefined}
-        <ExternalContent {frozen} {externalUrl} />
+        <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
     {:else}
         <CurrentChatMessages
             bind:this={currentChatMessages}
@@ -382,6 +383,7 @@
             on:retrySend
             on:startVideoCall
             on:removePreview={onRemovePreview}
+            {privateChatPreview}
             {chat}
             {events}
             {filteredProposals}

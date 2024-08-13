@@ -1197,9 +1197,6 @@ export class CommunityClient extends CandidService {
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
-        if (externalUrl !== undefined) {
-            description = externalUrl; // TODO this is a temporary hack
-        }
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(chatId.channelId),
