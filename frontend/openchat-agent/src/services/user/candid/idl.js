@@ -174,6 +174,7 @@ export const idlFactory = ({ IDL }) => {
     'StartedCall' : IDL.Null,
     'ChosenAsGroupOwner' : IDL.Null,
     'TippedMessage' : IDL.Null,
+    'Streak100' : IDL.Null,
     'Streak365' : IDL.Null,
     'SentGiphy' : IDL.Null,
     'SetCommunityAccessGate' : IDL.Null,
