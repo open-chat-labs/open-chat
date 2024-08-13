@@ -371,6 +371,7 @@
                 <div use:menuCloser class="permissions" class:visible={step === "permissions"}>
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
+                            {embeddedContent}
                             {editing}
                             bind:permissions={candidateGroup.permissions}
                             isPublic={candidateGroup.public}
@@ -378,6 +379,7 @@
                             isChannel={candidateGroup.id.kind === "channel"} />
                     {:else}
                         <GroupPermissionsViewer
+                            {embeddedContent}
                             bind:permissions={candidateGroup.permissions}
                             isPublic={candidateGroup.public}
                             isCommunityPublic={$selectedCommunity?.public ?? true}
