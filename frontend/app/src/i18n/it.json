@@ -385,7 +385,9 @@
         "disclaimer": "Questo contenuto è esterno a OpenChat. Eventuali problemi con questo contenuto devono essere segnalati al proprietario della Community",
         "error": "Impossibile caricare il contenuto esterno",
         "frozen": "Il contenuto esterno è stato congelato da un moderatore della piattaforma",
-        "initialising": "Inizializzazione del contenuto esterno"
+        "initialising": "Inizializzazione del contenuto esterno",
+        "label": "Contenuto esterno",
+        "name": "URL del contenuto esterno"
     },
     "failedToCopyLinkToClipboard": "Impossibile copiare il collegamento negli appunti",
     "failedToCopyToClipboard": "Impossibile copiare negli appunti {account}",
@@ -613,7 +615,7 @@
         "favourited_chat": "Contrassegnata la tua prima chat come preferita",
         "followed_thread": "La prima volta che seguo un thread",
         "forwarded_message": "Primo messaggio inoltrato",
-        "had_message_tipped": "Il tuo primo messaggio aveva ricevuto una soffiata",
+        "had_message_tipped": "Ricevuto il tuo primo messaggio suggerimento",
         "joined_call": "Partecipa alla tua prima chiamata",
         "joined_community": "Ti sei unito alla tua prima community",
         "joined_gated_group_or_community": "Ti sei unito al tuo primo gruppo/canale delimitato",
@@ -642,6 +644,7 @@
         "sent_meme": "Hai inviato il tuo primo messaggio meme",
         "sent_poll": "Inviato il tuo primo sondaggio",
         "sent_prize": "Inviato il tuo primo premio",
+        "sent_reminder": "Inviato il tuo primo promemoria",
         "sent_swap_offer": "Inviata la prima offerta di scambio P2P",
         "sent_text": "Inviato il tuo primo messaggio di testo",
         "sent_video": "Hai inviato il tuo primo video",

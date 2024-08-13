@@ -385,7 +385,9 @@
         "disclaimer": "このコンテンツはOpenChatの外部にあります。このコンテンツに関する問題があればコミュニティのオーナーに報告してください。",
         "error": "外部コンテンツの読み込みに失敗しました",
         "frozen": "外部コンテンツはプラットフォームモデレーターによって凍結されました",
-        "initialising": "外部コンテンツの初期化"
+        "initialising": "外部コンテンツの初期化",
+        "label": "外部コンテンツ",
+        "name": "外部コンテンツのURL"
     },
     "failedToCopyLinkToClipboard": "リンクをクリップボードにコピーできません",
     "failedToCopyToClipboard": "クリップボードにコピーができません. {account}",
@@ -613,7 +615,7 @@
         "favourited_chat": "最初のチャットをお気に入りとしてマークしました",
         "followed_thread": "初めてスレッドをフォローする",
         "forwarded_message": "最初のメッセージを転送しました",
-        "had_message_tipped": "最初のメッセージにチップを贈った",
+        "had_message_tipped": "最初のメッセージのヒントを受け取りました",
         "joined_call": "最初の通話に参加しました",
         "joined_community": "最初のコミュニティに参加しました",
         "joined_gated_group_or_community": "最初のゲートグループ/チャンネルに参加しました",
@@ -642,6 +644,7 @@
         "sent_meme": "最初のミームメッセージを送信しました",
         "sent_poll": "最初のアンケートを送信しました",
         "sent_prize": "最初の賞品を発送しました",
+        "sent_reminder": "最初のリマインダーを送信しました",
         "sent_swap_offer": "最初のP2Pスワップオファーを送信しました",
         "sent_text": "最初のテキストメッセージを送信しました",
         "sent_video": "最初のビデオを送信しました",

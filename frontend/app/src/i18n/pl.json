@@ -385,7 +385,9 @@
         "disclaimer": "Ta treść jest zewnętrzna w stosunku do OpenChat. Wszelkie problemy z tą treścią należy zgłaszać właścicielowi społeczności",
         "error": "Nie udało się załadować zawartości zewnętrznej",
         "frozen": "Treść zewnętrzna została zamrożona przez moderatora platformy",
-        "initialising": "Inicjowanie zawartości zewnętrznej"
+        "initialising": "Inicjowanie zawartości zewnętrznej",
+        "label": "Treść zewnętrzna",
+        "name": "Adres URL treści zewnętrznej"
     },
     "failedToCopyLinkToClipboard": "Nie można skopiować linku do schowka",
     "failedToCopyToClipboard": "Nie można skopiować do schowka. {account}",
@@ -613,7 +615,7 @@
         "favourited_chat": "Oznaczono Twój pierwszy czat jako ulubiony",
         "followed_thread": "Pierwszy raz śledzę wątek",
         "forwarded_message": "Przekazano pierwszą wiadomość",
-        "had_message_tipped": "Twoja pierwsza wiadomość została przekazana napiwek",
+        "had_message_tipped": "Otrzymałem Twoją pierwszą wiadomość z poradą",
         "joined_call": "Dołączyłem do Twojej pierwszej rozmowy",
         "joined_community": "Dołączyłeś do swojej pierwszej społeczności",
         "joined_gated_group_or_community": "Dołączyłeś do swojej pierwszej zamkniętej grupy/kanału",
@@ -642,6 +644,7 @@
         "sent_meme": "Wysłałeś swoją pierwszą wiadomość w postaci mema",
         "sent_poll": "Wysłałeś swoją pierwszą ankietę",
         "sent_prize": "Wysłałeś pierwszą nagrodę",
+        "sent_reminder": "Wysłano pierwsze przypomnienie",
         "sent_swap_offer": "Wysłano pierwszą ofertę wymiany P2P",
         "sent_text": "Wysłałeś pierwszą wiadomość tekstową",
         "sent_video": "Wysłałeś swój pierwszy film",
