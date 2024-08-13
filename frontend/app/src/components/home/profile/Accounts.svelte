@@ -26,9 +26,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let showZeroBalance = false;
-    export let zeroCount = 0;
-
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
@@ -43,34 +40,29 @@
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
     let swappableTokensPromise = client.swappableTokens();
 
-    $: accountsSorted = client.cryptoTokensSorted;
+    $: accountsSorted = client.favouriteTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
             .filter((ns) => !ns.isNns)
             .map((ns) => ns.ledgerCanisterId),
     );
     $: total =
-        selectedConversion === "none" ? "" : calculateTotal($cryptoLookup, selectedConversion);
-
-    $: {
-        zeroCount = $accountsSorted.filter((a) => a.zero).length;
-    }
+        selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion);
 
     function calculateTotal(
-        lookup: Record<string, EnhancedTokenDetails>,
+        accounts: EnhancedTokenDetails[],
         conversion: "usd" | "icp" | "btc" | "eth",
     ): string {
         switch (conversion) {
             case "usd":
-                return sum(Object.values(lookup).map((c) => c.dollarBalance ?? 0)).toFixed(2);
+                return sum(accounts.map((c) => c.dollarBalance ?? 0)).toFixed(2);
             case "icp":
-                return sum(Object.values(lookup).map((c) => c.icpBalance ?? 0)).toFixed(3);
+                return sum(accounts.map((c) => c.icpBalance ?? 0)).toFixed(3);
             case "btc":
-                return sum(Object.values(lookup).map((c) => c.btcBalance ?? 0)).toFixed(6);
+                return sum(accounts.map((c) => c.btcBalance ?? 0)).toFixed(6);
             case "eth":
-                return sum(Object.values(lookup).map((c) => c.ethBalance ?? 0)).toFixed(6);
+                return sum(accounts.map((c) => c.ethBalance ?? 0)).toFixed(6);
         }
     }
 
@@ -143,7 +135,7 @@
         </th>
     </tr>
     {#each $accountsSorted as token}
-        <tr class:hidden={token.zero && !showZeroBalance}>
+        <tr>
             <td width="99%">
                 <div class="token">
                     <img
@@ -266,10 +258,6 @@
 
     table {
         width: 100%;
-
-        tr.hidden {
-            display: none;
-        }
 
         th {
             @include font(book, normal, fs-70);

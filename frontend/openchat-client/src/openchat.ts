@@ -149,6 +149,9 @@ import {
     cryptoTokensSorted,
     enhancedCryptoLookup,
     exchangeRatesLookupStore,
+    favouriteCryptoLookup,
+    favouriteTokensSorted,
+    favouriteTokenSymbols,
     lastCryptoSent,
     nervousSystemLookup,
 } from "./stores/crypto";
@@ -7470,6 +7473,8 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoLookup = cryptoLookup;
     cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
+    favouriteTokensSorted = favouriteTokensSorted;
+    favouriteTokenSymbols = favouriteTokenSymbols;
     nervousSystemLookup = nervousSystemLookup;
     exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;

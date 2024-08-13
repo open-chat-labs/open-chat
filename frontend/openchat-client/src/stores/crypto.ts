@@ -8,6 +8,7 @@ import {
     type TokenExchangeRates,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
+import { currentUser } from "./user";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -88,40 +89,55 @@ export const enhancedCryptoLookup = derived(
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)
         .filter((t) => t.enabled || !t.zero)
-        .sort((a, b) => {
-            // Sort by non-zero balances first
-            // Then by $ balance
-            // Then by whether token is a default
-            // Then by default precedence
-            // Then alphabetically by symbol
-
-            const aNonZero = a.balance > 0;
-            const bNonZero = b.balance > 0;
-
-            if (aNonZero !== bNonZero) {
-                return aNonZero ? -1 : 1;
-            }
-
-            const aDollarBalance = a.dollarBalance ?? -1;
-            const bDollarBalance = b.dollarBalance ?? -1;
-
-            if (aDollarBalance < bDollarBalance) {
-                return 1;
-            } else if (aDollarBalance > bDollarBalance) {
-                return -1;
-            } else {
-                const defA = DEFAULT_TOKENS.indexOf(a.symbol);
-                const defB = DEFAULT_TOKENS.indexOf(b.symbol);
-
-                if (defA >= 0 && defB >= 0) {
-                    return defA < defB ? 1 : -1;
-                } else if (defA >= 0) {
-                    return 1;
-                } else if (defB >= 0) {
-                    return -1;
-                } else {
-                    return a.symbol.localeCompare(b.symbol);
-                }
-            }
-        });
+        .sort(compareTokens);
 });
+
+export const favouriteTokenSymbols = derived(currentUser, ($user) => {
+    return $user.favouriteTokens.size === 0 ? new Set(DEFAULT_TOKENS) : $user.favouriteTokens;
+});
+
+export const favouriteTokensSorted = derived(
+    [cryptoTokensSorted, currentUser],
+    ([$sorted, $user]) => {
+        const favs =
+            $user.favouriteTokens.size === 0 ? new Set(DEFAULT_TOKENS) : $user.favouriteTokens;
+        return $sorted.filter((t) => favs.has(t.symbol));
+    },
+);
+
+function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
+    // Sort by non-zero balances first
+    // Then by $ balance
+    // Then by whether token is a default
+    // Then by default precedence
+    // Then alphabetically by symbol
+
+    const aNonZero = a.balance > 0;
+    const bNonZero = b.balance > 0;
+
+    if (aNonZero !== bNonZero) {
+        return aNonZero ? -1 : 1;
+    }
+
+    const aDollarBalance = a.dollarBalance ?? -1;
+    const bDollarBalance = b.dollarBalance ?? -1;
+
+    if (aDollarBalance < bDollarBalance) {
+        return 1;
+    } else if (aDollarBalance > bDollarBalance) {
+        return -1;
+    } else {
+        const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+        const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+        if (defA >= 0 && defB >= 0) {
+            return defA < defB ? 1 : -1;
+        } else if (defA >= 0) {
+            return 1;
+        } else if (defB >= 0) {
+            return -1;
+        } else {
+            return a.symbol.localeCompare(b.symbol);
+        }
+    }
+}
