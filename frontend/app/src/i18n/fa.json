@@ -179,6 +179,7 @@
         "details": "جزئیات",
         "directChats": "چت های مستقیم",
         "edit": "انجمن را ویرایش کنید",
+        "embed": "کانال تعبیه شده را اضافه کنید",
         "enterUserGroupName": "نام گروه کاربری را وارد کنید",
         "errors": {
             "convertFailed": "متأسفیم، اما نتوانستیم گروه های شما را به انجمن تبدیل کنیم",
@@ -380,6 +381,12 @@
     "expand": "بسط دادن",
     "expandDeletedMessages": "پیام های حذف شده را در این گپ بزرگ کنید",
     "exploreGroups": "گروه ها را کاوش کنید",
+    "externalContent": {
+        "disclaimer": "این محتوا برای OpenChat خارجی است. هر گونه مشکل در مورد این محتوا باید به مالک انجمن گزارش شود",
+        "error": "محتوای خارجی بارگیری نشد",
+        "frozen": "محتوای خارجی توسط ناظر پلتفرم مسدود شده است",
+        "initialising": "مقداردهی اولیه محتوای خارجی"
+    },
     "failedToCopyLinkToClipboard": "پیوند در کلیپ بورد کپی نشد",
     "failedToCopyToClipboard": "امکان کپی در کلیپ بورد وجود ندارد. {account}",
     "failedToCopyUrlToClipboard": "کپی URL ({url}) در کلیپ بورد امکان پذیر نیست",
@@ -448,6 +455,9 @@
         "details": "جزئیات",
         "edit": "ویرایش {level}",
         "editGroupPhoto": "عکس {level} را ویرایش کنید",
+        "externalUrl": "آدرس خارجی",
+        "externalUrlPlaceholder": "نشانی اینترنتی محتوای خارجی برای جاسازی",
+        "externalUrlWarning": "باید امکان میزبانی سایت خارجی در iframe وجود داشته باشد. این چیزی است که OpenChat هیچ کنترلی روی آن ندارد.",
         "getRulesFailed": "قوانین {level} دریافت نشد",
         "groupInfo": "اطلاعات {level}",
         "historyPrivateMessage": "پیام های قدیمی برای اعضای جدید قابل مشاهده نیستند",

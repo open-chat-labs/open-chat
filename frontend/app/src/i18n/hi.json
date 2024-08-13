@@ -179,6 +179,7 @@
         "details": "विवरण",
         "directChats": "सीधी बातचीत",
         "edit": "समुदाय संपादित करें",
+        "embed": "एम्बेडेड चैनल जोड़ें",
         "enterUserGroupName": "उपयोगकर्ता समूह का नाम दर्ज करें",
         "errors": {
             "convertFailed": "क्षमा करें, लेकिन हम आपके समूहों को एक समुदाय में परिवर्तित करने में असमर्थ रहे",
@@ -380,6 +381,12 @@
     "expand": "बढ़ाना",
     "expandDeletedMessages": "इस चैट में हटाए गए संदेशों का विस्तार करें",
     "exploreGroups": "समूहों की खोज करें ",
+    "externalContent": {
+        "disclaimer": "यह सामग्री OpenChat से बाहर की है। इस सामग्री से जुड़ी किसी भी समस्या की रिपोर्ट समुदाय के स्वामी को करनी चाहिए",
+        "error": "बाह्य सामग्री लोड करने में विफल",
+        "frozen": "बाहरी सामग्री को प्लेटफ़ॉर्म मॉडरेटर द्वारा फ़्रीज़ कर दिया गया है",
+        "initialising": "बाह्य सामग्री आरंभ करना"
+    },
     "failedToCopyLinkToClipboard": "क्लिपबोर्ड पर लिंक कॉपी करने में असमर्थ",
     "failedToCopyToClipboard": "क्लिपबोर्ड पर कॉपी करने में असमर्थ. {account}",
     "failedToCopyUrlToClipboard": "यूआरएल ({url}) को क्लिपबोर्ड पर कॉपी करने में असमर्थ",
@@ -453,6 +460,9 @@
         "details": "विवरण",
         "edit": "{level} संपादित करें",
         "editGroupPhoto": "{level} फ़ोटो संपादित करें",
+        "externalUrl": "बाहरी यूआरएल",
+        "externalUrlPlaceholder": "एम्बेड की जाने वाली सामग्री का बाह्य URL",
+        "externalUrlWarning": "बाहरी साइट को iframe में होस्ट करना संभव होना चाहिए। यह ऐसी चीज़ है जिस पर OpenChat का कोई नियंत्रण नहीं है।",
         "getRulesFailed": "{level} नियम प्राप्त करने में विफल",
         "groupInfo": "{level} जानकारी",
         "historyPrivateMessage": "पुराने संदेश नये सदस्यों को दिखाई नहीं देते",

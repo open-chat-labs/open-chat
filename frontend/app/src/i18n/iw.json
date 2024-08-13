@@ -179,6 +179,7 @@
         "details": "פרטים",
         "directChats": "צ'אטים ישירים",
         "edit": "ערוך קהילה",
+        "embed": "הוסף ערוץ מוטבע",
         "enterUserGroupName": "הזן את שם קבוצת המשתמשים",
         "errors": {
             "convertFailed": "מצטערים אבל לא הצלחנו להמיר את הקבוצות שלך לקהילה",
@@ -380,6 +381,12 @@
     "expand": "לְהַרְחִיב",
     "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
     "exploreGroups": "חקור קבוצות",
+    "externalContent": {
+        "disclaimer": "תוכן זה חיצוני ל-OpenChat. יש לדווח לבעל הקהילה על כל בעיה בתוכן זה",
+        "error": "הטעינה של תוכן חיצוני נכשלה",
+        "frozen": "תוכן חיצוני הוקפא על ידי מנחה פלטפורמה",
+        "initialising": "אתחול תוכן חיצוני"
+    },
     "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
     "failedToCopyToClipboard": "לא ניתן להעתיק ללוח. {account}",
     "failedToCopyUrlToClipboard": "לא ניתן להעתיק את כתובת האתר ({url}) ללוח",
@@ -453,6 +460,9 @@
         "details": "פרטים",
         "edit": "ערוך {level}",
         "editGroupPhoto": "ערוך תמונה של {level}",
+        "externalUrl": "כתובת אתר חיצונית",
+        "externalUrlPlaceholder": "כתובת אתר חיצונית של תוכן להטמעה",
+        "externalUrlWarning": "חייב להיות אפשרי לארח את האתר החיצוני ב-iframe. זה משהו שאין ל-OpenChat שליטה עליו.",
         "getRulesFailed": "קבלת הכללים של {level} נכשלה",
         "groupInfo": "מידע על {level}",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",

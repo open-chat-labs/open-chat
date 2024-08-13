@@ -584,6 +584,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -687,6 +691,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -822,6 +827,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : IDL.Opt(IDL.Text),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -959,6 +965,11 @@ export const idlFactory = ({ IDL }) => {
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
   const CommunityCanisterChannelSummaryUpdates = IDL.Record({
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
@@ -968,6 +979,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : TextUpdate,
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'latest_message_index' : IDL.Opt(MessageIndex),
@@ -984,11 +996,6 @@ export const idlFactory = ({ IDL }) => {
     'member_count' : IDL.Opt(IDL.Nat32),
     'events_ttl_last_updated' : IDL.Opt(TimestampMillis),
     'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const TextUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : IDL.Text,
   });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
