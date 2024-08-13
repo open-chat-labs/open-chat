@@ -44,7 +44,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.input.sh = "none";
     base.entry.input.bd = black;
     base.panel.bg = "transparent";
-    base.panel.nav.bg = "transparent";
+    base.panel.nav.bg = white;
     base.panel.left.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;

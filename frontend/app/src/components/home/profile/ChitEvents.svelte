@@ -13,6 +13,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     let busy = false;
@@ -86,7 +87,7 @@
     }
 </script>
 
-<div class="chit-events">
+<div use:menuCloser class="chit-events">
     <div class="header">
         {#if streak > 0}
             <div class="streak">
@@ -136,6 +137,7 @@
         display: flex;
         flex-direction: column;
         padding: $sp5 $sp5 0 $sp5;
+        @include nice-scrollbar();
         @include mobile() {
             padding: $sp4 $sp4 0 $sp4;
         }
