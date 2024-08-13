@@ -19,7 +19,7 @@
 <style lang="scss">
     .alert-box {
         padding: $sp4;
-        border: 1px solid var(--warn);
+        border: var(--bw) solid var(--warn);
         display: flex;
         align-items: flex-start;
         gap: $sp3;
