@@ -17,4 +17,4 @@ for filename in $(find ./tsBindings -name '*.ts'); do
     done
 done
 
-npm run ts-to-zod $mergedFile ./zod.ts
+npm run ts-to-zod $mergedFile ./src/zod.ts
