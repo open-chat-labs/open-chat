@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
+import { toRecord } from "./list";
 
 const CACHE_VERSION = 10;
 
@@ -64,7 +65,9 @@ export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> 
 export async function getAllUsers(): Promise<UserSummary[]> {
     const users = await (await lazyOpenUserCache()).getAll("users");
     const deleted = await getDeletedUserIdsList();
-    return [...users, ...deleted.map(deletedUser)];
+    const userIds = new Set(users.map((u) => u.userId));
+    const reallyDeleted = deleted.filter((u) => !userIds.has(u));
+    return [...users, ...reallyDeleted.map(deletedUser)];
 }
 
 async function getDeletedUserIdsList(): Promise<string[]> {
