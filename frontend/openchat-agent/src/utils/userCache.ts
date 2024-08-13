@@ -1,6 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
-import { toRecord } from "./list";
 
 const CACHE_VERSION = 10;
 
