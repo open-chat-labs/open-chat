@@ -156,6 +156,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/tools/principal_generator",
     "backend/tools/translation_tool",
 ]
 resolver = "2"
@@ -173,6 +174,7 @@ canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev 
 ciborium = "0.2.2"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
+data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dirs = "5.0.1"
 dotenv = "0.15.0"
@@ -193,6 +195,7 @@ ic-cdk-timers = "0.8.0"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-ledger-types = "0.11.0"
+ic_principal = "0.1.1"
 ic-stable-structures = "0.6.4"
 ic-transport-types = "0.35.0"
 ic-utils = "0.35.0"
