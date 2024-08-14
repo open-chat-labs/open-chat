@@ -3,7 +3,6 @@ use user_index_canister::*;
 
 // Queries
 generate_query_call!(check_username);
-generate_query_call!(chit_balances);
 generate_query_call!(current_user);
 generate_query_call!(search);
 generate_query_call!(platform_moderators);
@@ -11,6 +10,7 @@ generate_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
 generate_query_call!(user);
 generate_query_call!(users);
+generate_query_call!(users_chit);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -34,7 +34,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use std::collections::HashMap;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
+        CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
         UserSummary,
     };
     use user_index_canister::users::UserGroup;
@@ -233,18 +233,18 @@ pub mod happy_path {
         }
     }
 
-    pub fn chit_balances(
+    pub fn chit(
         env: &PocketIc,
         user_index_canister_id: CanisterId,
         users: Vec<UserId>,
         year: u16,
         month: u8,
-    ) -> HashMap<UserId, i32> {
-        let response = super::chit_balances(
+    ) -> HashMap<UserId, Chit> {
+        let response = super::users_chit(
             env,
             Principal::anonymous(),
             user_index_canister_id,
-            &user_index_canister::chit_balances::Args {
+            &user_index_canister::users_chit::Args {
                 users: users.clone(),
                 year,
                 month,
@@ -252,7 +252,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::chit_balances::Response::Success(result) => users.into_iter().zip(result.balances).collect(),
+            user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
         }
     }
 }

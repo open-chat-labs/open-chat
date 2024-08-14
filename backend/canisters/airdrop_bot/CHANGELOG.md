@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- New lottery algorithm for next airdrop ([#6238](https://github.com/open-chat-labs/open-chat/pull/6238))
+
 ### Fixed
 
 - Fix month in AirdropBot messages ([#6212](https://github.com/open-chat-labs/open-chat/pull/6212))

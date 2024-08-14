@@ -102,7 +102,7 @@ fn chit_stored_per_month() {
 
     let mut month = start_month;
     for i in 1..5 {
-        let chit_balance = client::user_index::happy_path::chit_balances(
+        let chit = client::user_index::happy_path::chit(
             env,
             canister_ids.user_index,
             vec![user.user_id],
@@ -111,10 +111,10 @@ fn chit_stored_per_month() {
         )
         .values()
         .next()
-        .copied()
+        .cloned()
         .unwrap();
 
-        assert_eq!(chit_balance, i * 200);
+        assert_eq!(chit.balance, i * 200);
 
         month = month.next();
     }
