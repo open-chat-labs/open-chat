@@ -24,7 +24,8 @@ const FRAME_ANCESTORS = [
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
     "https://bxnm7-oqaaa-aaaag-albpq-cai.icp0.io", // ZKP
     "https://panoramablock.com", // Panorama Block Live
-    "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io" // tendy zone test
+    "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendy zone test
+    "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io"
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
