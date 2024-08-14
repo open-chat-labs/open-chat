@@ -19,8 +19,8 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     assert_eq!(attr_inputs.len(), 2);
 
-    let canister_name = attr_inputs.get(0).unwrap();
-    let method_name = attr_inputs.get(1).unwrap();
+    let canister_name = attr_inputs.first().unwrap();
+    let method_name = attr_inputs.last().unwrap();
 
     let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
 
