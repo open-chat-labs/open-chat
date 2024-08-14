@@ -34,7 +34,7 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::consts::{DELETED_USER_ID, OPENCHAT_BOT_USER_ID};
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
@@ -63,6 +63,66 @@ pub struct GroupChatCore {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
+    // TODO remove this
+    pub fn process_deleted_users(&mut self, deleted_users: &HashSet<UserId>, now: TimestampMillis) {
+        let cutoff = 1709251200000; // 1st March 2024
+        self.members.blocked.retain(|u| !deleted_users.contains(u));
+        let mut invites_to_remove = Vec::new();
+        for invitation in self.invited_users.iter() {
+            if invitation.timestamp < cutoff && deleted_users.contains(&invitation.invited) {
+                invites_to_remove.push(invitation.invited);
+            }
+        }
+        for invited in invites_to_remove {
+            self.invited_users.remove(&invited, now);
+        }
+
+        fn overwrite_if_deleted(user_id: &mut UserId, deleted_users: &HashSet<UserId>) {
+            if deleted_users.contains(user_id) {
+                *user_id = DELETED_USER_ID;
+            }
+        }
+
+        for event in self.events.iter_all_events_mut().filter(|e| e.timestamp < cutoff) {
+            match &mut event.event {
+                ChatEventInternal::Message(m) => overwrite_if_deleted(&mut m.sender, deleted_users),
+                ChatEventInternal::ParticipantJoined(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
+                ChatEventInternal::ParticipantLeft(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
+                ChatEventInternal::ParticipantsAdded(p) => {
+                    overwrite_if_deleted(&mut p.added_by, deleted_users);
+                    for user_id in p.user_ids.iter_mut() {
+                        overwrite_if_deleted(user_id, deleted_users);
+                    }
+                }
+                ChatEventInternal::ParticipantsRemoved(p) => {
+                    overwrite_if_deleted(&mut p.removed_by, deleted_users);
+                    for user_id in p.user_ids.iter_mut() {
+                        overwrite_if_deleted(user_id, deleted_users);
+                    }
+                }
+                ChatEventInternal::UsersBlocked(b) => {
+                    overwrite_if_deleted(&mut b.blocked_by, deleted_users);
+                    for user_id in b.user_ids.iter_mut() {
+                        overwrite_if_deleted(user_id, deleted_users);
+                    }
+                }
+                ChatEventInternal::UsersUnblocked(u) => {
+                    overwrite_if_deleted(&mut u.unblocked_by, deleted_users);
+                    for user_id in u.user_ids.iter_mut() {
+                        overwrite_if_deleted(user_id, deleted_users);
+                    }
+                }
+                ChatEventInternal::UsersInvited(i) => {
+                    overwrite_if_deleted(&mut i.invited_by, deleted_users);
+                    for user_id in i.user_ids.iter_mut() {
+                        overwrite_if_deleted(user_id, deleted_users);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,
