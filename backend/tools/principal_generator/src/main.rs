@@ -28,11 +28,12 @@ fn run(target_name: String) -> Option<String> {
         let canister_id = Principal::from_slice(&canister_id_bytes);
         let canister_id_string = canister_id.to_string();
 
-        if canister_id_string.as_str()[6..6 + target_name.len()] == target_name && canister_id_string.ends_with("cai") {
-            if best.as_ref().map_or(true, |s| canister_id_string > *s) {
-                println!("Principal: {canister_id_string}. Bytes: {canister_id_bytes:?}");
-                best = Some(canister_id_string);
-            }
+        if canister_id_string.as_str()[6..6 + target_name.len()] == target_name
+            && canister_id_string.ends_with("cai")
+            && best.as_ref().map_or(true, |s| canister_id_string > *s)
+        {
+            println!("Principal: {canister_id_string}. Bytes: {canister_id_bytes:?}");
+            best = Some(canister_id_string);
         }
     }
 
