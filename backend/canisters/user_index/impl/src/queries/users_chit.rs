@@ -11,15 +11,14 @@ fn users_chit(args: Args) -> Response {
 
 fn users_chit_impl(args: Args, state: &RuntimeState) -> Response {
     let month_key = MonthKey::new(args.year as u32, args.month);
+    let now = state.env.now();
 
-    let chit = args.users.iter().map(|u| chit_for_user(u, month_key, state)).collect();
+    let chit = args.users.iter().map(|u| chit_for_user(u, now, month_key, state)).collect();
 
     Success(SuccessResult { chit })
 }
 
-fn chit_for_user(user_id: &UserId, month_key: MonthKey, state: &RuntimeState) -> Chit {
-    let now = state.env.now();
-
+fn chit_for_user(user_id: &UserId, now: u64, month_key: MonthKey, state: &RuntimeState) -> Chit {
     state
         .data
         .users
