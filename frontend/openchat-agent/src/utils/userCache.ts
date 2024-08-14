@@ -64,7 +64,12 @@ export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> 
 export async function getAllUsers(): Promise<UserSummary[]> {
     const users = await (await lazyOpenUserCache()).getAll("users");
     const deleted = await getDeletedUserIdsList();
-    return [...users, ...deleted.map(deletedUser)];
+    const userIds = new Set(users.map((u) => u.userId));
+
+    // only consider records from the deleted list that do not exist in the real users list
+    // this is necessary because a userId can be resurrected by being re-used
+    const reallyDeleted = deleted.filter((u) => !userIds.has(u));
+    return [...users, ...reallyDeleted.map(deletedUser)];
 }
 
 async function getDeletedUserIdsList(): Promise<string[]> {
@@ -83,9 +88,19 @@ export async function setCachedUsers(users: UserSummary[]): Promise<void> {
 export async function setCachedDeletedUserIds(deletedUserIds: Set<string>): Promise<void> {
     if (deletedUserIds.size === 0) return;
     const db = await lazyOpenUserCache();
-    const tx = (await db).transaction("deletedUserIds", "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore("deletedUserIds");
-    Promise.all([...deletedUserIds].map((d) => store.put(d, d)));
+    const tx = (await db).transaction(["deletedUserIds", "users"], "readwrite", {
+        durability: "relaxed",
+    });
+    const deletedStore = tx.objectStore("deletedUserIds");
+    const userStore = tx.objectStore("users");
+
+    // insert all the deletedIds into the deletedUserIds store
+    const inserts = [...deletedUserIds].map((userId) => deletedStore.put(userId, userId));
+
+    // delete all the deletedIds from the main userStore
+    const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
+
+    Promise.all([...inserts, ...deletes]);
     await tx.done;
 }
 
