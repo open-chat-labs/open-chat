@@ -18,13 +18,15 @@ fn users_chit_impl(args: Args, state: &RuntimeState) -> Response {
 }
 
 fn chit_for_user(user_id: &UserId, month_key: MonthKey, state: &RuntimeState) -> Chit {
+    let now = state.env.now();
+
     state
         .data
         .users
         .get_by_user_id(user_id)
         .map(|user| {
             let balance = user.chit_per_month.get(&month_key).copied().unwrap_or_default();
-            let streak = user.streak(state.env.now());
+            let streak = user.streak(now);
             Chit { balance, streak }
         })
         .unwrap_or_default()
