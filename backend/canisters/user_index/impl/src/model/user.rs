@@ -70,21 +70,6 @@ pub struct User {
     pub unique_person_proof: Option<UniquePersonProof>,
 }
 
-impl User {
-    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
-        self.avatar_id = avatar_id;
-        self.date_updated = now;
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up.into())
-    }
-
-    pub fn total_chit_earned(&self) -> i32 {
-        self.chit_per_month.values().copied().sum()
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub enum PhoneStatus {
     #[default]
@@ -189,6 +174,19 @@ impl User {
         } else {
             0
         }
+    }
+
+    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
+        self.avatar_id = avatar_id;
+        self.date_updated = now;
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up.into())
+    }
+
+    pub fn total_chit_earned(&self) -> i32 {
+        self.chit_per_month.values().copied().sum()
     }
 }
 

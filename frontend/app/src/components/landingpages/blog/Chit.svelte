@@ -118,6 +118,11 @@
         for the 20,000 CHAT pot. 3 tickets will be drawn randomly and the holders will receive
         12,000, 5,000 and 3,000 CHAT respectively.
     </p>
+    <p>
+        <b>EDIT:</b> For the end of August airdrop we are changing the lottery rules and prizes. 
+        Airdrop participants with at least 25,000 CHIT or at least a 30 day streak will get a single
+        lottery ticket. 10 tickets will be drawn randomly and the holders will receive 2000 CHAT each.
+    </p>
 </section>
 <section>
     <h2>Future airdrops</h2>

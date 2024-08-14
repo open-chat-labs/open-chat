@@ -2004,3 +2004,8 @@ type Achievement = variant {
     DirectChats10;
     DirectChats20;
 };
+
+type Chit = record {
+    balance : int32;
+    streak : nat16;
+};

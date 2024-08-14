@@ -1,6 +1,5 @@
 pub mod c2c_lookup_user;
 pub mod check_username;
-pub mod chit_balances;
 pub mod chit_leaderboard;
 pub mod current_user;
 pub mod diamond_membership_fees;
@@ -16,3 +15,4 @@ pub mod suspected_bots;
 pub mod user;
 pub mod user_registration_canister;
 pub mod users;
+pub mod users_chit;
