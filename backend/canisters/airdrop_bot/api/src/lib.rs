@@ -8,7 +8,7 @@ pub use updates::*;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, CommunityId, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(from = "AirdropConfigPrev")]
 pub struct AirdropConfig {
     pub community_id: CommunityId,
