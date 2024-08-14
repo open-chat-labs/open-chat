@@ -3,6 +3,7 @@
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -27,7 +28,7 @@
     const client = getContext<OpenChat>("client");
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
+    let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
     let conversionOptions = [
@@ -75,26 +76,26 @@
     }
 
     function hideManageModal() {
-        manageMode = "none";
+        actionMode = "none";
     }
 
     function showReceive(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "receive";
+        actionMode = "receive";
     }
 
     function showSend(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "send";
+        actionMode = "send";
     }
 
     function showSwap(ledger: string) {
         selectedLedger = ledger;
         client.swapRestricted().then((restricted) => {
             if (restricted) {
-                manageMode = "restricted";
+                actionMode = "restricted";
             } else {
-                manageMode = "swap";
+                actionMode = "swap";
             }
         });
     }
@@ -102,26 +103,30 @@
     function showTransactions(token: { ledger: string; urlFormat: string }) {
         selectedLedger = token.ledger;
         transactionsFormat = token.urlFormat;
-        manageMode = "transactions";
+        actionMode = "transactions";
+    }
+
+    function removeFromWallet(symbol: string) {
+        client.removeTokenFromWallet(symbol);
     }
 </script>
 
-{#if manageMode !== "none" && selectedLedger !== undefined}
+{#if actionMode !== "none" && selectedLedger !== undefined}
     <Overlay
-        dismissible={manageMode === "receive" || manageMode === "transactions"}
+        dismissible={actionMode === "receive" || actionMode === "transactions"}
         on:close={hideManageModal}>
-        {#if manageMode === "receive"}
+        {#if actionMode === "receive"}
             <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "send"}
+        {:else if actionMode === "send"}
             <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "swap"}
+        {:else if actionMode === "swap"}
             <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "transactions"}
+        {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}
                 on:close={hideManageModal}
                 urlFormat={transactionsFormat} />
-        {:else if manageMode === "restricted"}
+        {:else if actionMode === "restricted"}
             <RestrictedFeature on:close={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
@@ -218,6 +223,16 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
+                                <MenuItem on:click={() => removeFromWallet(token.symbol)}>
+                                    <HeartRemoveOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.remove")} />
+                                    </div>
+                                </MenuItem>
                             </Menu>
                         </span>
                     </MenuIcon>

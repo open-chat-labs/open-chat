@@ -23,6 +23,7 @@
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
     import { pinEnabledStore } from "../../../stores/settings";
     import ManageAccounts from "./ManageAccounts.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -99,9 +100,19 @@
         <Accounts />
     </div>
     <div slot="footer">
-        <Button on:click={() => dispatch("close")} small={!$mobileWidth} tiny={$mobileWidth}>
-            <Translatable resourceKey={i18nKey("close")} />
-        </Button>
+        <ButtonGroup>
+            <Button
+                secondary
+                on:click={() => (managing = true)}
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
+            </Button>
+
+            <Button on:click={() => dispatch("close")} small={!$mobileWidth} tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("close")} />
+            </Button>
+        </ButtonGroup>
     </div>
 </ModalContent>
 

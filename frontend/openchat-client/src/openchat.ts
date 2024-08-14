@@ -149,7 +149,6 @@ import {
     cryptoTokensSorted,
     enhancedCryptoLookup,
     exchangeRatesLookupStore,
-    favouriteCryptoLookup,
     favouriteTokensSorted,
     favouriteTokenSymbols,
     lastCryptoSent,
@@ -4539,8 +4538,17 @@ export class OpenChat extends OpenChatAgentWorker {
             this.sendStreamRequest({ kind: "getCurrentUser" })
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
+                        // TODO - undo this
+                        let favsSet = user.favouriteTokens;
+                        const favsStr = localStorage.getItem("openchat_favourite_tokens");
+                        if (favsStr) {
+                            favsSet = new Set<string>(JSON.parse(favsStr));
+                        }
                         userCreatedStore.set(true);
-                        this.user.set(user);
+                        this.user.set({
+                            ...user,
+                            favouriteTokens: favsSet,
+                        });
                         this.setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
@@ -6227,7 +6235,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async refreshBalancesInSeries() {
         for (const t of Object.values(get(cryptoLookup))) {
-            await this.refreshAccountBalance(t.ledger);
+            if (this._liveState.user.favouriteTokens.has(t.symbol)) {
+                await this.refreshAccountBalance(t.ledger);
+            }
         }
     }
 
@@ -7457,6 +7467,28 @@ export class OpenChat extends OpenChatAgentWorker {
             initiatorDelegation: initiatorDelegation.toJSON(),
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
+        });
+    }
+
+    removeTokenFromWallet(symbol: string) {
+        if (this._liveState.user.favouriteTokens.delete(symbol)) {
+            return this.setFavouriteTokens(this._liveState.user.favouriteTokens);
+        }
+    }
+
+    setFavouriteTokens(favouriteTokens: Set<string>): Promise<void> {
+        this.user.update((u) => {
+            return {
+                ...u,
+                favouriteTokens,
+            };
+        });
+        // TODO wait for a proper api
+        return new Promise((resolve) => {
+            localStorage.setItem("openchat_favourite_tokens", JSON.stringify([...favouriteTokens]));
+            setTimeout(() => {
+                resolve();
+            }, 1000);
         });
     }
 
