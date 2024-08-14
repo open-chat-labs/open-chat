@@ -1,6 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, DeletedByInternal, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs,
+    UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use lazy_static::lazy_static;
@@ -85,7 +86,15 @@ impl GroupChatCore {
 
         for event in self.events.iter_all_events_mut().filter(|e| e.timestamp < cutoff) {
             match &mut event.event {
-                ChatEventInternal::Message(m) => overwrite_if_deleted(&mut m.sender, deleted_users),
+                ChatEventInternal::Message(m) => {
+                    overwrite_if_deleted(&mut m.sender, deleted_users);
+                    let deleted_by = DeletedByInternal {
+                        deleted_by: DELETED_USER_ID,
+                        timestamp: now,
+                    };
+                    m.deleted_by = Some(deleted_by.clone());
+                    m.content = MessageContentInternal::Deleted(deleted_by);
+                }
                 ChatEventInternal::ParticipantJoined(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
                 ChatEventInternal::ParticipantLeft(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
                 ChatEventInternal::ParticipantsAdded(p) => {
