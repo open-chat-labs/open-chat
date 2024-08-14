@@ -26,7 +26,6 @@ import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiChitUserBalance,
-    ApiCurrentUserResponse,
     ApiCurrentUserSummary,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipFeesResponse,
@@ -206,38 +205,6 @@ export function currentUserResponseJson(json: UserIndex_CurrentUser_Response): C
     }
 
     throw new Error(`Unexpected CurrentUserResponseJson type received: ${json}`);
-}
-
-export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    if ("Success" in candid) {
-        const r = candid.Success;
-
-        console.log("User: ", r);
-        return {
-            kind: "created_user",
-            userId: r.user_id.toString(),
-            username: r.username,
-            dateCreated: r.date_created,
-            displayName: optional(r.display_name, identity),
-            cryptoAccount: bytesToHexString(r.icp_account),
-            referrals: r.referrals.map((p) => p.toString()),
-            isPlatformModerator: r.is_platform_moderator,
-            isPlatformOperator: r.is_platform_operator,
-            suspensionDetails: optional(r.suspension_details, suspensionDetails),
-            isSuspectedBot: r.is_suspected_bot,
-            diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
-            moderationFlagsEnabled: r.moderation_flags_enabled,
-            isBot: false,
-            updated: BigInt(Date.now()),
-            isUniquePerson: candid.Success.is_unique_person,
-        };
-    }
-
-    if ("UserNotFound" in candid) {
-        return { kind: "unknown_user" };
-    }
-
-    throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
 }
 
 function diamondMembershipStatus(candid: ApiDiamondMembershipStatusFull): DiamondMembershipStatus {
