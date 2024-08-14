@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove deprecated `is_bot` field from user records ([#6219](https://github.com/open-chat-labs/open-chat/pull/6219))
 
+### Fixed
+
+- Fix `is_deleted` check to only return true if userId hasn't been reused ([#6235](https://github.com/open-chat-labs/open-chat/pull/6235))
+
 ## [[2.0.1284](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1284-user_index)] - 2024-08-06
 
 ### Added
