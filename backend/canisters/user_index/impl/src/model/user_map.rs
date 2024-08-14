@@ -161,6 +161,10 @@ impl UserMap {
         Some(user)
     }
 
+    pub fn is_deleted(&self, user_id: &UserId) -> bool {
+        self.deleted_users.contains_key(user_id) && !self.users.contains_key(user_id)
+    }
+
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
         self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
     }
