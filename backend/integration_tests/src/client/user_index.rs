@@ -233,7 +233,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn chit(
+    pub fn users_chit(
         env: &PocketIc,
         user_index_canister_id: CanisterId,
         users: Vec<UserId>,

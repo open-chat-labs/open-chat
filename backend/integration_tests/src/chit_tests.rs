@@ -102,7 +102,7 @@ fn chit_stored_per_month() {
 
     let mut month = start_month;
     for i in 1..5 {
-        let chit = client::user_index::happy_path::chit(
+        let chit = client::user_index::happy_path::users_chit(
             env,
             canister_ids.user_index,
             vec![user.user_id],
