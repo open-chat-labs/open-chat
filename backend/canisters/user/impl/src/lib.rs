@@ -28,13 +28,13 @@ use std::ops::Deref;
 use std::time::Duration;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{today, tomorrow, MINUTE_IN_MS};
+use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
 
 mod crypto;
 mod governance_clients;
@@ -53,6 +53,7 @@ mod updates;
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
+const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -144,6 +145,23 @@ impl RuntimeState {
             self.data.user_canister_events_queue.push(canister_id, event);
             jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
         }
+    }
+
+    pub fn is_empty_and_dormant(&self) -> bool {
+        if self.data.direct_chats.len() <= 1
+            && self.data.group_chats.len() == 0
+            && self.data.communities.len() == 0
+            && self.data.diamond_membership_expires_at.is_none()
+            && self.data.unique_person_proof.is_none()
+            && self.data.group_chats.removed_len() == 0
+            && self.data.communities.removed_len() == 0
+        {
+            let now = self.env.now();
+            if self.data.user_created + SIX_MONTHS < now && self.data.chit_events.last_updated() + SIX_MONTHS < now {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn metrics(&self) -> Metrics {
