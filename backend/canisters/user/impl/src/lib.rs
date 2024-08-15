@@ -30,7 +30,7 @@ use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{NamedAccount, UserCanisterEvent};
+use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -226,6 +226,8 @@ struct Data {
     pub achievements: HashSet<Achievement>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
 }
 
@@ -289,6 +291,7 @@ impl Data {
             achievements_last_seen: 0,
             unique_person_proof: None,
             rng_seed: [0; 32],
+            wallet_config: Timestamped::default(),
         }
     }
 

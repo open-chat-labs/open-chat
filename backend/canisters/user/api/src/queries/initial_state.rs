@@ -2,6 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, Chat, ChatId, ChitEarned, DirectChatSummary, Empty, GroupChatSummary, TimestampMillis, UserId};
 
+use crate::WalletConfig;
+
 pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -29,6 +31,7 @@ pub struct SuccessResult {
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: bool,
+    pub wallet_config: WalletConfig,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

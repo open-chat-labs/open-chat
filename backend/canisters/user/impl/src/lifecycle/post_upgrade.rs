@@ -1,14 +1,15 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::{Empty, Milliseconds};
+use types::{Empty, Milliseconds, Timestamped};
 use user_canister::post_upgrade::Args;
+use user_canister::WalletConfig;
 use utils::time::DAY_IN_MS;
 
 const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
@@ -42,6 +43,11 @@ fn post_upgrade(args: Args) {
                 ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
             }
         }
+    });
+
+    // TODO: Remove this after the next release
+    mutate_state(|state| {
+        state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
     });
 }
 
