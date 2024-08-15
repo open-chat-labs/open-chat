@@ -19,7 +19,7 @@
     import SwapCrypto from "./SwapCrypto.svelte";
     import SendCrypto from "./SendCrypto.svelte";
     import ReceiveCrypto from "./ReceiveCrypto.svelte";
-    import MultiToggle from "../../MultiToggle.svelte";
+    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
     import { sum } from "../../../utils/math";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -27,18 +27,13 @@
 
     const client = getContext<OpenChat>("client");
 
+    export let conversionOptions: Option[];
+    export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+
     let balanceError: string | undefined;
     let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
-    let conversionOptions = [
-        { id: "none", label: $_("cryptoAccount.tokens") },
-        { id: "usd", label: "USD" },
-        { id: "icp", label: "ICP" },
-        { id: "btc", label: "BTC" },
-        { id: "eth", label: "ETH" },
-    ];
-    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
     let swappableTokensPromise = client.swappableTokens();
 
     $: accountsSorted = client.walletTokensSorted;

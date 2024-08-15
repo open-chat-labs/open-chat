@@ -10,8 +10,12 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
+    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
 
     const client = getContext<OpenChat>("client");
+
+    export let conversionOptions: Option[];
+    export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
     let searchTerm = "";
     let searching = false;
@@ -57,6 +61,17 @@
             config = { kind: "auto_wallet", minDollarValue: 1 };
         }
     }
+
+    function selectMode(kind: WalletConfig["kind"]) {
+        switch (kind) {
+            case "auto_wallet":
+                config = { kind: "auto_wallet", minDollarValue: 1 };
+                break;
+            case "manual_wallet":
+                config = { kind: "manual_wallet", tokens: new Set(DEFAULT_TOKENS) };
+                break;
+        }
+    }
 </script>
 
 <Overlay>
@@ -66,7 +81,10 @@
         </div>
         <div slot="body">
             <div class="select-mode">
-                <div class="mode-label" class:selected={config.kind === "manual_wallet"}>
+                <div
+                    on:click={() => selectMode("manual_wallet")}
+                    class="mode-label"
+                    class:selected={config.kind === "manual_wallet"}>
                     <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
                 </div>
                 <Toggle
@@ -75,7 +93,10 @@
                     small
                     bottomMargin={false}
                     id={"wallet-mode-select"}></Toggle>
-                <div class="mode-label" class:selected={config.kind === "auto_wallet"}>
+                <div
+                    on:click={() => selectMode("auto_wallet")}
+                    class="mode-label"
+                    class:selected={config.kind === "auto_wallet"}>
                     <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
                 </div>
             </div>
@@ -100,6 +121,12 @@
                         bind:searchTerm
                         bind:searching
                         placeholder={i18nKey("cryptoAccount.search")} />
+                    <div class="token-header">
+                        <Translatable resourceKey={i18nKey("cryptoAccount.token")} />
+                        <MultiToggle
+                            options={conversionOptions}
+                            bind:selected={selectedConversion} />
+                    </div>
                     <div class="tokens">
                         {#each filteredTokens as token}
                             <div class="token">
@@ -116,7 +143,7 @@
                                 <BalanceWithRefresh
                                     ledger={token.ledger}
                                     value={token.balance}
-                                    conversion={"none"} />
+                                    conversion={selectedConversion} />
                                 <Toggle
                                     checked={config.tokens.has(token.symbol)}
                                     on:change={() => toggle(token.symbol)}
@@ -141,12 +168,21 @@
         margin-bottom: $sp4;
 
         .mode-label {
+            cursor: pointer;
             color: var(--txt-light);
 
             &.selected {
                 color: var(--txt);
             }
         }
+    }
+
+    .token-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        @include font(book, normal, fs-70);
+        text-transform: uppercase;
     }
 
     .auto-mode {

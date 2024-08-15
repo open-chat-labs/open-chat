@@ -30,6 +30,14 @@
 
     let pinAction: "set" | "clear" | "change" | undefined = undefined;
     let managing = false;
+    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    let conversionOptions = [
+        { id: "none", label: $_("cryptoAccount.tokens") },
+        { id: "usd", label: "USD" },
+        { id: "icp", label: "ICP" },
+        { id: "btc", label: "BTC" },
+        { id: "eth", label: "ETH" },
+    ];
 
     $: pinNumberRequiredStore = client.pinNumberRequiredStore;
 </script>
@@ -97,7 +105,7 @@
         </div>
     </div>
     <div slot="body">
-        <Accounts />
+        <Accounts bind:selectedConversion {conversionOptions} />
     </div>
     <div slot="footer">
         <ButtonGroup>
@@ -123,7 +131,10 @@
 {/if}
 
 {#if managing}
-    <ManageAccounts on:close={() => (managing = false)} />
+    <ManageAccounts
+        bind:selectedConversion
+        {conversionOptions}
+        on:close={() => (managing = false)} />
 {/if}
 
 <style lang="scss">
