@@ -29,17 +29,14 @@ import type {
     ApiDiamondMembershipPlanDuration,
     ApiDiamondMembershipSubscription,
     ApiPayForDiamondMembershipResponse,
-    ApiSetDisplayNameResponse,
-    ApiSetUsernameResponse,
     ApiSubmitProofOfUniquePersonhoodResponse,
-    ApiSuspendUserResponse,
-    ApiUnsuspendUserResponse,
 } from "./candid/idl";
 import { bytesToHexString, identity, mapOptional } from "../../utils/mapping";
 import { tokenJson } from "../common/chatMappers";
 import {
     currentUserSummarySchema,
     diamondMembershipDetailsSchema,
+    diamondMembershipPlanDurationSchema,
     diamondMembershipStatusFullSchema,
     diamondMembershipStatusSchema,
     diamondMembershipSubscriptionSchema,
@@ -53,6 +50,10 @@ import {
     userIndexReferralLeaderboardReferralStatsSchema,
     userIndexReferralLeaderboardResponseSchema,
     userIndexSearchResponseSchema,
+    userIndexSetDisplayNameResponseSchema,
+    userIndexSetUsernameResponseSchema,
+    userIndexSuspendUserResponseSchema,
+    userIndexUnsuspendUserResponseSchema,
     userIndexUserRegistrationCanisterResponseSchema,
     userIndexUsersResponseSchema,
     userSummarySchema,
@@ -342,80 +343,88 @@ export function checkUsernameResponse(
     throw new UnsupportedValueError("Unexpected CheckUsernameResponse type received", json);
 }
 
-export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {
-    if ("Success" in candid) {
+export function setUsernameResponse(
+    json: z.infer<typeof userIndexSetUsernameResponseSchema>,
+): SetUsernameResponse {
+    if (json === "Success") {
         return "success";
     }
-    if ("UsernameTaken" in candid) {
+    if (json === "UsernameTaken") {
         return "username_taken";
     }
-    if ("UserNotFound" in candid) {
+    if (json === "UserNotFound") {
         return "user_not_found";
     }
-    if ("UsernameTooShort" in candid) {
-        return "username_too_short";
-    }
-    if ("UsernameTooLong" in candid) {
-        return "username_too_long";
-    }
-    if ("UsernameInvalid" in candid) {
+    if (json === "UsernameInvalid") {
         return "username_invalid";
     }
-    throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
+    if ("UsernameTooShort" in json) {
+        return "username_too_short";
+    }
+    if ("UsernameTooLong" in json) {
+        return "username_too_long";
+    }
+    throw new UnsupportedValueError("Unexpected SetUsernameResponse type received", json);
 }
 
-export function setDisplayNameResponse(candid: ApiSetDisplayNameResponse): SetDisplayNameResponse {
-    if ("Success" in candid) {
+export function setDisplayNameResponse(
+    json: z.infer<typeof userIndexSetDisplayNameResponseSchema>,
+): SetDisplayNameResponse {
+    if (json === "Success") {
         return "success";
     }
-    if ("UserNotFound" in candid) {
+    if (json === "UserNotFound") {
         return "user_not_found";
     }
-    if ("DisplayNameTooShort" in candid) {
-        return "display_name_too_short";
-    }
-    if ("DisplayNameTooLong" in candid) {
-        return "display_name_too_long";
-    }
-    if ("DisplayNameInvalid" in candid) {
+    if (json === "DisplayNameInvalid") {
         return "display_name_invalid";
     }
-    if ("Unauthorized" in candid) {
+    if (json === "Unauthorized") {
         return "unauthorized";
     }
-    throw new UnsupportedValueError("Unexpected ApiSetDisplayNameResponse type received", candid);
+    if ("DisplayNameTooShort" in json) {
+        return "display_name_too_short";
+    }
+    if ("DisplayNameTooLong" in json) {
+        return "display_name_too_long";
+    }
+    throw new UnsupportedValueError("Unexpected SetDisplayNameResponse type received", json);
 }
 
-export function suspendUserResponse(candid: ApiSuspendUserResponse): SuspendUserResponse {
-    if ("Success" in candid) {
+export function suspendUserResponse(
+    json: z.infer<typeof userIndexSuspendUserResponseSchema>,
+): SuspendUserResponse {
+    if (json === "Success") {
         return "success";
     }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("UserAlreadySuspended" in candid) {
+    if (json === "UserAlreadySuspended") {
         return "user_already_suspended";
     }
-    if ("UserNotFound" in candid) {
+    if (json === "UserNotFound") {
         return "user_not_found";
     }
-    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
-}
-
-export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): UnsuspendUserResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("InternalError" in candid) {
+    if ("InternalError" in json) {
         return "internal_error";
     }
-    if ("UserNotFound" in candid) {
+    throw new UnsupportedValueError("Unexpected SuspendUserResponse type received", json);
+}
+
+export function unsuspendUserResponse(
+    json: z.infer<typeof userIndexUnsuspendUserResponseSchema>,
+): UnsuspendUserResponse {
+    if (json === "Success") {
+        return "success";
+    }
+    if (json === "UserNotFound") {
         return "user_not_found";
     }
-    if ("UserNotSuspended" in candid) {
+    if (json === "UserNotSuspended") {
         return "user_not_suspended";
     }
-    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
+    if ("InternalError" in json) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected UnsuspendUserResponse type received", json);
 }
 
 export function referralStat(
@@ -444,10 +453,7 @@ export function referralLeaderboardResponse(
             month: json.Month.month,
         };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiReferralLeaderboardResponse type received",
-        json,
-    );
+    throw new UnsupportedValueError("Unexpected ReferralLeaderboardResponse type received", json);
 }
 
 export function payForDiamondMembershipResponse(
@@ -497,20 +503,20 @@ export function payForDiamondMembershipResponse(
     );
 }
 
-export function apiDiamondDuration(
+export function apiJsonDiamondDuration(
     domain: DiamondMembershipDuration,
-): ApiDiamondMembershipPlanDuration {
+): z.infer<typeof diamondMembershipPlanDurationSchema> {
     if (domain === "one_month") {
-        return { OneMonth: null };
+        return "OneMonth";
     }
     if (domain === "three_months") {
-        return { ThreeMonths: null };
+        return "ThreeMonths";
     }
     if (domain === "one_year") {
-        return { OneYear: null };
+        return "OneYear";
     }
     if (domain === "lifetime") {
-        return { Lifetime: null };
+        return "Lifetime";
     }
     throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
 }
@@ -550,19 +556,19 @@ function chitUserBalance(
 }
 
 export function submitProofOfUniquePersonhoodResponse(
-    candid: ApiSubmitProofOfUniquePersonhoodResponse,
+    json: ApiSubmitProofOfUniquePersonhoodResponse,
 ): SubmitProofOfUniquePersonhoodResponse {
-    if ("Success" in candid) {
+    if ("Success" in json) {
         return CommonResponses.success();
     }
-    if ("Invalid" in candid) {
+    if ("Invalid" in json) {
         return CommonResponses.invalid();
     }
-    if ("UserNotFound" in candid) {
+    if ("UserNotFound" in json) {
         return CommonResponses.userNotFound();
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
-        candid,
+        json,
     );
 }

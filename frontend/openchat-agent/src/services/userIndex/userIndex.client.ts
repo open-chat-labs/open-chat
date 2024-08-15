@@ -48,7 +48,7 @@ import {
     userRegistrationCanisterResponseJson,
     userSearchResponseJson,
 } from "./mappers";
-import { apiOptional, apiToken } from "../common/chatMappers";
+import { apiJsonToken, apiOptional, apiToken } from "../common/chatMappers";
 import {
     getCachedUsers,
     getCachedDeletedUserIds,
@@ -74,6 +74,8 @@ import {
     userIndexChitLeaderboardResponseSchema,
     userIndexCurrentUserResponseSchema,
     userIndexDiamondMembershipFeesResponseSchema,
+    userIndexPayForDiamondMembershipArgsSchema,
+    userIndexPayForDiamondMembershipResponseSchema,
     userIndexPlatformModeratorsGroupResponseSchema,
     userIndexReferralLeaderboardArgsSchema,
     userIndexReferralLeaderboardResponseSchema,
@@ -81,6 +83,21 @@ import {
     userIndexReportedMessagesResponseSchema,
     userIndexSearchArgsSchema,
     userIndexSearchResponseSchema,
+    userIndexSetDiamondMembershipFeesArgsSchema,
+    userIndexSetDiamondMembershipFeesResponseSchema,
+    userIndexSetDisplayNameArgsSchema,
+    userIndexSetDisplayNameResponseSchema,
+    userIndexSetModerationFlagsArgsSchema,
+    userIndexSetUsernameArgsSchema,
+    userIndexSetUsernameResponseSchema,
+    userIndexSetUserUpgradeConcurrencyArgsSchema,
+    userIndexSetUserUpgradeConcurrencyResponseSchema,
+    userIndexSubmitProofOfUniquePersonhoodArgsSchema,
+    userIndexSubmitProofOfUniquePersonhoodResponseSchema,
+    userIndexSuspendUserArgsSchema,
+    userIndexSuspendUserResponseSchema,
+    userIndexUnsuspendUserArgsSchema,
+    userIndexUnsuspendUserResponseSchema,
     userIndexUserRegistrationCanisterResponseSchema,
     userIndexUsersArgsSchema,
     userIndexUsersResponseSchema,
@@ -127,11 +144,14 @@ export class UserIndexClient extends CandidService {
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
-        return this.handleResponse(
-            this.userIndexService.set_moderation_flags({
+        return this.executeJsonUpdate(
+            "set_moderation_flags",
+            {
                 moderation_flags_enabled: flags,
-            }),
+            },
             (_) => true,
+            userIndexSetModerationFlagsArgsSchema,
+            userIndexSetModerationFlagsArgsSchema,
         );
     }
 
@@ -365,9 +385,12 @@ export class UserIndexClient extends CandidService {
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_username({ username }),
+        return this.executeJsonUpdate(
+            "set_username",
+            { username },
             setUsernameResponse,
+            userIndexSetUsernameArgsSchema,
+            userIndexSetUsernameResponseSchema,
         ).then((res) => {
             if (res === "success") {
                 setUsernameInCache(userId, username);
@@ -380,11 +403,14 @@ export class UserIndexClient extends CandidService {
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_display_name({
-                display_name: apiOptional(identity, displayName),
-            }),
+        return this.executeJsonUpdate(
+            "set_display_name",
+            {
+                display_name: displayName,
+            },
             setDisplayNameResponse,
+            userIndexSetDisplayNameArgsSchema,
+            userIndexSetDisplayNameResponseSchema,
         ).then((res) => {
             if (res === "success") {
                 setDisplayNameInCache(userId, displayName);
@@ -394,22 +420,27 @@ export class UserIndexClient extends CandidService {
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
-        return this.handleResponse(
-            this.userIndexService.suspend_user({
-                user_id: Principal.fromText(userId),
-                duration: [],
+        return this.executeJsonUpdate(
+            "suspend_user",
+            {
+                user_id: userId,
                 reason,
-            }),
+            },
             suspendUserResponse,
+            userIndexSuspendUserArgsSchema,
+            userIndexSuspendUserResponseSchema,
         );
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
-        return this.handleResponse(
-            this.userIndexService.unsuspend_user({
-                user_id: Principal.fromText(userId),
-            }),
+        return this.executeJsonUpdate(
+            "unsuspend_user",
+            {
+                user_id: userId,
+            },
             unsuspendUserResponse,
+            userIndexUnsuspendUserArgsSchema,
+            userIndexUnsuspendUserResponseSchema,
         );
     }
 
@@ -420,14 +451,17 @@ export class UserIndexClient extends CandidService {
         recurring: boolean,
         expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
-        return this.handleResponse(
-            this.userIndexService.pay_for_diamond_membership({
-                token: apiToken(token),
+        return this.executeJsonUpdate(
+            "pay_for_diamond_membership",
+            {
+                token: apiJsonToken(token),
                 duration: apiDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
-            }),
+            },
             (res) => payForDiamondMembershipResponse(duration, res),
+            userIndexPayForDiamondMembershipArgsSchema,
+            userIndexPayForDiamondMembershipResponseSchema,
         ).then((res) => {
             if (res.kind === "success") {
                 const principal = this.identity.getPrincipal().toString();
@@ -439,9 +473,12 @@ export class UserIndexClient extends CandidService {
     }
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_user_upgrade_concurrency({ value }),
+        return this.executeJsonUpdate(
+            "set_user_upgrade_concurrency",
+            { value },
             () => "success",
+            userIndexSetUserUpgradeConcurrencyArgsSchema,
+            userIndexSetUserUpgradeConcurrencyResponseSchema,
         );
     }
 
@@ -510,12 +547,14 @@ export class UserIndexClient extends CandidService {
             },
         };
 
-        return this.handleResponse(
-            this.userIndexService.set_diamond_membership_fees(args),
+        return this.executeJsonUpdate(
+            "set_diamond_membership_fees",
+            args,
             (res) => {
                 return "Success" in res;
             },
-            args,
+            userIndexSetDiamondMembershipFeesArgsSchema,
+            userIndexSetDiamondMembershipFeesResponseSchema,
         );
     }
 
@@ -546,13 +585,15 @@ export class UserIndexClient extends CandidService {
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         const args = {
-            user_ii_principal: Principal.fromText(iiPrincipal),
+            user_ii_principal: iiPrincipal,
             credential_jwt: credential,
         };
-        return this.handleResponse(
-            this.userIndexService.submit_proof_of_unique_personhood(args),
-            submitProofOfUniquePersonhoodResponse,
+        return this.executeJsonUpdate(
+            "submit_proof_of_unique_personhood",
             args,
+            submitProofOfUniquePersonhoodResponse,
+            userIndexSubmitProofOfUniquePersonhoodArgsSchema,
+            userIndexSubmitProofOfUniquePersonhoodResponseSchema,
         );
     }
 }

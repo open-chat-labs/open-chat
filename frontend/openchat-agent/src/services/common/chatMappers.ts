@@ -997,6 +997,23 @@ export function apiToken(token: string): ApiCryptocurrency {
     }
 }
 
+export function apiJsonToken(token: string): z.infer<typeof cryptocurrencySchema> {
+    switch (token) {
+        case ICP_SYMBOL:
+            return "InternetComputer";
+        case SNS1_SYMBOL:
+            return "SNS1";
+        case CKBTC_SYMBOL:
+            return "CKBTC";
+        case CHAT_SYMBOL:
+            return "CHAT";
+        case KINIC_SYMBOL:
+            return "KINIC";
+        default:
+            return { Other: token };
+    }
+}
+
 function cryptoTransfer(
     candid: ApiCryptoTransaction,
     sender: string,

@@ -1,11 +1,16 @@
-import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
+import { Actor, HttpAgent, type Identity, polling } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import type { Principal } from "@dfinity/principal";
-import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
+import { Principal } from "@dfinity/principal";
+import {
+    AuthError,
+    DestinationInvalidError,
+    ResponseTooLargeError,
+    SessionExpiryError,
+} from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
-import { ResponseTooLargeError } from "openchat-shared";
 import { ZodType } from "zod";
 import { identity } from "../utils/mapping";
+import { UpdateCallRejectedError } from "@dfinity/agent/lib/esm/actor";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -33,27 +38,19 @@ export abstract class CandidService {
         requestValidator: ZodType<In>,
         responseValidator: ZodType<Resp>,
     ): Promise<Out> {
-        const requestValidationResult = requestValidator.safeParse(args);
-        if (!requestValidationResult.success) {
-            throw new Error("Invalid request: " + requestValidationResult.error.toString());
-        }
-        const json = JSON.stringify(args);
-        const bytes = new TextEncoder().encode(json);
+        const payload = CandidService.prepareJsonArgs(args, requestValidator);
 
         const response = await this.handleQueryResponse(
             () =>
-                this.agent.query(this.canisterId, { methodName: methodName + "_json", arg: bytes }),
+                this.agent.query(this.canisterId, {
+                    methodName: methodName + "_json",
+                    arg: payload,
+                }),
             identity,
             args,
         );
         if (response.status === "replied") {
-            const responseJson = new TextDecoder().decode(response.reply.arg);
-            const validationResult = responseValidator.safeParse(JSON.parse(responseJson));
-            if (validationResult.success) {
-                return mapper(validationResult.data);
-            } else {
-                throw new Error(validationResult.error.toString());
-            }
+            return CandidService.processJsonResponse(response.reply.arg, mapper, responseValidator);
         } else {
             throw new Error(
                 `query rejected. ${{
@@ -62,6 +59,32 @@ export abstract class CandidService {
                 }}`,
             );
         }
+    }
+
+    protected async executeJsonUpdate<In, Resp, Out>(
+        methodName: string,
+        args: In,
+        mapper: (from: Resp) => Out,
+        requestValidator: ZodType<In>,
+        responseValidator: ZodType<Resp>,
+    ): Promise<Out> {
+        const payload = CandidService.prepareJsonArgs(args, requestValidator);
+
+        const { requestId, response } = await this.agent.call(this.canisterId, {
+            methodName: methodName + "_json",
+            arg: payload,
+        });
+        const canisterId = Principal.fromText(this.canisterId);
+        if (!response.ok || response.body) {
+            throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
+        }
+        const { reply } = await polling.pollForResponse(
+            this.agent,
+            canisterId,
+            requestId,
+            polling.defaultStrategy(),
+        );
+        return CandidService.processJsonResponse(reply, mapper, responseValidator);
     }
 
     protected handleResponse<From, To>(
@@ -122,6 +145,29 @@ export abstract class CandidService {
                     throw responseErr;
                 }
             });
+    }
+
+    private static validate<T>(value: unknown, validator: ZodType<T>): T {
+        const validationResult = validator.safeParse(value);
+        if (validationResult.success) {
+            return validationResult.data;
+        } else {
+            throw new Error("Validation failed: " + validationResult.error.toString());
+        }
+    }
+
+    private static prepareJsonArgs<T>(value: T, validator: ZodType<T>): ArrayBuffer {
+        const validated = CandidService.validate(value, validator);
+        return new TextEncoder().encode(JSON.stringify(validated));
+    }
+
+    private static processJsonResponse<Resp, Out>(
+        responseBytes: ArrayBuffer,
+        mapper: (from: Resp) => Out,
+        validator: ZodType<Resp>,
+    ): Out {
+        const responseJson = new TextDecoder().decode(responseBytes);
+        return mapper(CandidService.validate(JSON.parse(responseJson), validator));
     }
 
     constructor(
