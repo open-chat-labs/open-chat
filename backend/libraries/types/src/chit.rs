@@ -17,7 +17,7 @@ pub enum ChitEarnedReason {
     MemeContestWinner,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
 pub struct Chit {
     pub balance: i32,
     pub streak: u16,

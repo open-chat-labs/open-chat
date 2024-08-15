@@ -48,7 +48,6 @@ fn main() {
     }
 
     generate_ts_method!(user_index, check_username);
-    generate_ts_method!(user_index, chit_balances);
     generate_ts_method!(user_index, chit_leaderboard);
     generate_ts_method!(user_index, current_user);
     generate_ts_method!(user_index, diamond_membership_fees);
@@ -64,6 +63,7 @@ fn main() {
     generate_ts_method!(user_index, user);
     generate_ts_method!(user_index, user_registration_canister);
     generate_ts_method!(user_index, users);
+    generate_ts_method!(user_index, users_chit);
     generate_ts_method!(user_index, update_diamond_membership_subscription);
 
     generate_ts_method!(user_index, pay_for_diamond_membership);
