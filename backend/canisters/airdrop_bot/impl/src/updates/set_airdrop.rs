@@ -17,7 +17,7 @@ fn set_airdrop_impl(args: Args, state: &mut RuntimeState) -> Response {
     let community_id = args.community_id;
     let channel_id = args.channel_id;
 
-    match state.data.airdrops.set_next(args, state.env.now()) {
+    match state.data.airdrops.set_next(args.into(), state.env.now()) {
         SetNextResult::Success => {
             if state.data.channels_joined.contains(&(community_id, channel_id)) {
                 start_airdrop_timer(state);
