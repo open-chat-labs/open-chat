@@ -2,7 +2,12 @@
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { getContext, onMount } from "svelte";
-    import { DEFAULT_TOKENS, OpenChat, type WalletConfig } from "openchat-client";
+    import {
+        DEFAULT_TOKENS,
+        OpenChat,
+        type CryptocurrencyDetails,
+        type WalletConfig,
+    } from "openchat-client";
     import Toggle from "../../Toggle.svelte";
     import Search from "../../Search.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -23,6 +28,8 @@
     $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
     $: walletConfig = client.walletConfigStore;
     $: accountsSorted = client.cryptoTokensSorted;
+    $: cryptoLookup = client.cryptoLookup;
+    $: defaultLedgers = getDefaultLedgers($cryptoLookup);
     $: searchTermLower = searchTerm.toLowerCase();
     $: filteredTokens = $accountsSorted.filter(
         (token) =>
@@ -43,12 +50,23 @@
         };
     });
 
-    function toggle(symbol: string) {
+    function getDefaultLedgers(ledgerLookup: Record<string, CryptocurrencyDetails>): Set<string> {
+        const lookup = Object.entries(ledgerLookup).reduce(
+            (bySymbol, [k, v]) => {
+                bySymbol[v.symbol] = k;
+                return bySymbol;
+            },
+            {} as Record<string, string>,
+        );
+        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]));
+    }
+
+    function toggle(ledger: string) {
         if (config.kind === "manual_wallet") {
-            if (config.tokens.has(symbol)) {
-                config.tokens.delete(symbol);
+            if (config.tokens.has(ledger)) {
+                config.tokens.delete(ledger);
             } else {
-                config.tokens.add(symbol);
+                config.tokens.add(ledger);
             }
             config = config;
         }
@@ -56,7 +74,7 @@
 
     function toggleMode() {
         if (config.kind === "auto_wallet") {
-            config = { kind: "manual_wallet", tokens: new Set(DEFAULT_TOKENS) };
+            config = { kind: "manual_wallet", tokens: defaultLedgers };
         } else {
             config = { kind: "auto_wallet", minDollarValue: 1 };
         }
@@ -145,8 +163,8 @@
                                     value={token.balance}
                                     conversion={selectedConversion} />
                                 <Toggle
-                                    checked={config.tokens.has(token.symbol)}
-                                    on:change={() => toggle(token.symbol)}
+                                    checked={config.tokens.has(token.ledger)}
+                                    on:change={() => toggle(token.ledger)}
                                     small
                                     bottomMargin={false}
                                     id={`token_${token.symbol}_toggle`}></Toggle>

@@ -7,7 +7,6 @@ import {
     DEFAULT_TOKENS,
     type TokenExchangeRates,
     type WalletConfig,
-    type AutoWallet,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
 
@@ -95,14 +94,25 @@ export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) =>
         .sort(compareTokens);
 });
 
+function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return (
+        config.kind === "auto_wallet" &&
+        (DEFAULT_TOKENS.includes(token.symbol) ||
+            (token.dollarBalance ?? 0) >= config.minDollarValue)
+    );
+}
+
+function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
+}
+
 export const walletTokensSorted = derived(
     [cryptoTokensSorted, walletConfigStore],
     ([$tokens, $walletConfig]) => {
         return $tokens.filter(
             (t) =>
-                ($walletConfig.kind === "auto_wallet" &&
-                    (t.dollarBalance ?? 0) >= $walletConfig.minDollarValue) ||
-                ($walletConfig.kind === "manual_wallet" && $walletConfig.tokens.has(t.symbol)),
+                meetsAutoWalletCriteria($walletConfig, t) ||
+                meetsManualWalletCriteria($walletConfig, t),
         );
     },
 );
