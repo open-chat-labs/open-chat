@@ -57,6 +57,11 @@ export const suspensionDetailsSchema = z.object({
     suspended_by: userIdSchema,
 });
 
+export const chitSchema = z.object({
+    balance: z.number(),
+    streak: z.number(),
+});
+
 export const emptySchema = z.record(z.never());
 
 export const buildVersionSchema = z.object({
@@ -88,22 +93,22 @@ export const userIndexDiamondMembershipFeesResponseSchema = z.object({
     Success: z.array(userIndexDiamondMembershipFeesDiamondMembershipFeesSchema),
 });
 
+export const userIndexUsersChitSuccessResultSchema = z.object({
+    chit: z.array(chitSchema),
+});
+
+export const userIndexUsersChitArgsSchema = z.object({
+    users: z.array(userIdSchema),
+    year: z.number(),
+    month: z.number(),
+});
+
 export const userIndexPublicKeyResponseSchema = z.union([
     z.object({
         Success: z.string(),
     }),
     z.literal("NotInitialised"),
 ]);
-
-export const userIndexChitBalancesArgsSchema = z.object({
-    users: z.array(userIdSchema),
-    year: z.number(),
-    month: z.number(),
-});
-
-export const userIndexChitBalancesSuccessResultSchema = z.object({
-    balances: z.array(z.number()),
-});
 
 export const userIndexUpdateDiamondMembershipSubscriptionResponseSchema = z.union([
     z.literal("Success"),
@@ -129,7 +134,7 @@ export const userIndexSuspendUserResponseSchema = z.union([
 
 export const userIndexSuspendUserArgsSchema = z.object({
     user_id: userIdSchema,
-    duration: z.coerce.bigint().nullable(),
+    duration: z.union([z.coerce.bigint(), z.undefined()]),
     reason: z.string(),
 });
 
@@ -174,15 +179,15 @@ export const userIndexSuspectedBotsSuccessResultSchema = z.object({
 });
 
 export const userIndexSuspectedBotsArgsSchema = z.object({
-    after: userIdSchema.nullable(),
+    after: z.union([userIdSchema, z.undefined()]),
     count: z.number(),
 });
 
 export const userSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    display_name: z.string().nullable(),
-    avatar_id: z.coerce.bigint().nullable(),
+    display_name: z.union([z.string(), z.undefined()]),
+    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_member: z.boolean(),
@@ -194,8 +199,8 @@ export const userSummarySchema = z.object({
 });
 
 export const userIndexUserArgsSchema = z.object({
-    user_id: userIdSchema.nullable(),
-    username: z.string().nullable(),
+    user_id: z.union([userIdSchema, z.undefined()]),
+    username: z.union([z.string(), z.undefined()]),
 });
 
 export const userIndexReferralMetricsReferralMetricsSchema = z.object({
@@ -309,7 +314,7 @@ export const userIndexSetUsernameResponseSchema = z.union([
 ]);
 
 export const userIndexSetDisplayNameArgsSchema = z.object({
-    display_name: z.string().nullable(),
+    display_name: z.union([z.string(), z.undefined()]),
 });
 
 export const userIndexSetDisplayNameResponseSchema = z.union([
@@ -362,7 +367,7 @@ export const userIndexReferralLeaderboardLeaderboardFilterSchema = z.union([
 ]);
 
 export const userIndexReferralLeaderboardArgsSchema = z.object({
-    filter: userIndexReferralLeaderboardLeaderboardFilterSchema.nullable(),
+    filter: z.union([userIndexReferralLeaderboardLeaderboardFilterSchema, z.undefined()]),
     count: z.number(),
 });
 
@@ -375,7 +380,7 @@ export const userIndexReportedMessagesSuccessResultSchema = z.object({
 });
 
 export const userIndexReportedMessagesArgsSchema = z.object({
-    user_id: userIdSchema.nullable(),
+    user_id: z.union([userIdSchema, z.undefined()]),
 });
 
 export const userIndexUserRegistrationCanisterResponseSchema = z.union([
@@ -401,38 +406,38 @@ export const diamondMembershipStatusFullSchema = z.union([
 
 export const userSummaryStableSchema = z.object({
     username: z.string(),
-    display_name: z.string().nullable(),
-    avatar_id: z.coerce.bigint().nullable(),
+    display_name: z.union([z.string(), z.undefined()]),
+    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_membership_status: diamondMembershipStatusSchema,
     is_unique_person: z.boolean(),
-    bot_config: botConfigSchema.nullable(),
+    bot_config: z.union([botConfigSchema, z.undefined()]),
 });
 
 export const currentUserSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    display_name: z.string().nullable(),
-    avatar_id: z.coerce.bigint().nullable(),
+    display_name: z.union([z.string(), z.undefined()]),
+    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
     is_bot: z.boolean(),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),
-    suspension_details: suspensionDetailsSchema.nullable(),
+    suspension_details: z.union([suspensionDetailsSchema, z.undefined()]),
     is_suspected_bot: z.boolean(),
-    diamond_membership_details: diamondMembershipDetailsSchema.nullable(),
+    diamond_membership_details: z.union([diamondMembershipDetailsSchema, z.undefined()]),
     diamond_membership_status: diamondMembershipStatusFullSchema,
     moderation_flags_enabled: z.number(),
     is_unique_person: z.boolean(),
 });
 
-export const userIndexChitBalancesResponseSchema = z.object({
-    Success: userIndexChitBalancesSuccessResultSchema,
+export const userIndexUsersChitResponseSchema = z.object({
+    Success: userIndexUsersChitSuccessResultSchema,
 });
 
 export const userIndexUpdateDiamondMembershipSubscriptionArgsSchema = z.object({
-    pay_in_chat: z.boolean().nullable(),
-    subscription: diamondMembershipSubscriptionSchema.nullable(),
+    pay_in_chat: z.union([z.boolean(), z.undefined()]),
+    subscription: z.union([diamondMembershipSubscriptionSchema, z.undefined()]),
 });
 
 export const userIndexPlatformOperatorsResponseSchema = z.object({
@@ -460,18 +465,18 @@ export const userIndexReferralMetricsResponseSchema = z.object({
 
 export const userSummaryV2Schema = z.object({
     user_id: userIdSchema,
-    stable: userSummaryStableSchema.nullable(),
-    volatile: userSummaryVolatileSchema.nullable(),
+    stable: z.union([userSummaryStableSchema, z.undefined()]),
+    volatile: z.union([userSummaryVolatileSchema, z.undefined()]),
 });
 
 export const userIndexUsersArgsSchema = z.object({
     user_groups: z.array(userIndexUsersUserGroupSchema),
-    users_suspended_since: z.coerce.bigint().nullable(),
+    users_suspended_since: z.union([z.coerce.bigint(), z.undefined()]),
 });
 
 export const userIndexUsersResultSchema = z.object({
     users: z.array(userSummaryV2Schema),
-    current_user: currentUserSummarySchema.nullable(),
+    current_user: z.union([currentUserSummarySchema, z.undefined()]),
     deleted: z.array(userIdSchema),
     timestamp: z.coerce.bigint(),
 });
@@ -506,8 +511,8 @@ export const userIndexCurrentUserSuccessResultSchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
     date_created: z.coerce.bigint(),
-    display_name: z.string().nullable(),
-    avatar_id: z.coerce.bigint().nullable(),
+    display_name: z.union([z.string(), z.undefined()]),
+    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
     canister_upgrade_status: canisterUpgradeStatusSchema,
     wasm_version: buildVersionSchema,
     icp_account: z.tuple([
@@ -547,9 +552,9 @@ export const userIndexCurrentUserSuccessResultSchema = z.object({
     referrals: z.array(userIdSchema),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),
-    suspension_details: suspensionDetailsSchema.nullable(),
+    suspension_details: z.union([suspensionDetailsSchema, z.undefined()]),
     is_suspected_bot: z.boolean(),
-    diamond_membership_details: diamondMembershipDetailsSchema.nullable(),
+    diamond_membership_details: z.union([diamondMembershipDetailsSchema, z.undefined()]),
     diamond_membership_status: diamondMembershipStatusFullSchema,
     moderation_flags_enabled: z.number(),
     is_unique_person: z.boolean(),

@@ -35,18 +35,18 @@ import {
     checkUsernameResponse,
     setUsernameResponse,
     usersApiResponse,
-    userSearchResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
-    userRegistrationCanisterResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
-    chitLeaderboardResponse,
+    chitLeaderboardResponseJson,
     submitProofOfUniquePersonhoodResponse,
     currentUserResponseJson,
+    userRegistrationCanisterResponseJson,
+    userSearchResponseJson,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import {
@@ -60,14 +60,31 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { identity } from "../../utils/mapping";
+import { identity, mapOptional } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     mergeCachedCurrentUser,
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
-import { userIndexCurrentUserResponseSchema } from "../../zod";
+import {
+    emptySchema,
+    userIndexCheckUsernameArgsSchema,
+    userIndexCheckUsernameResponseSchema,
+    userIndexChitLeaderboardResponseSchema,
+    userIndexCurrentUserResponseSchema,
+    userIndexDiamondMembershipFeesResponseSchema,
+    userIndexPlatformModeratorsGroupResponseSchema,
+    userIndexReferralLeaderboardArgsSchema,
+    userIndexReferralLeaderboardResponseSchema,
+    userIndexReportedMessagesArgsSchema,
+    userIndexReportedMessagesResponseSchema,
+    userIndexSearchArgsSchema,
+    userIndexSearchResponseSchema,
+    userIndexUserRegistrationCanisterResponseSchema,
+    userIndexUsersArgsSchema,
+    userIndexUsersResponseSchema,
+} from "../../zod";
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
@@ -94,8 +111,9 @@ export class UserIndexClient extends CandidService {
                     const liveUser = await this.executeJsonQuery(
                         "current_user",
                         {},
-                        userIndexCurrentUserResponseSchema,
                         currentUserResponseJson,
+                        emptySchema,
+                        userIndexCurrentUserResponseSchema,
                     );
                     if (liveUser.kind === "created_user") {
                         setCachedCurrentUser(principal, liveUser);
@@ -118,9 +136,12 @@ export class UserIndexClient extends CandidService {
     }
 
     userRegistrationCanister(): Promise<string> {
-        return this.handleResponse(
-            this.userIndexService.user_registration_canister({}),
-            userRegistrationCanisterResponse,
+        return this.executeJsonQuery(
+            "user_registration_canister",
+            {},
+            userRegistrationCanisterResponseJson,
+            emptySchema,
+            userIndexUserRegistrationCanisterResponseSchema,
         );
     }
 
@@ -129,10 +150,12 @@ export class UserIndexClient extends CandidService {
             search_term: searchTerm,
             max_results: maxResults,
         };
-        return this.handleQueryResponse(
-            () => this.userIndexService.search(args),
-            userSearchResponse,
+        return this.executeJsonQuery(
+            "search",
             args,
+            userSearchResponseJson,
+            userIndexSearchArgsSchema,
+            userIndexSearchResponseSchema,
         );
     }
 
@@ -198,16 +221,18 @@ export class UserIndexClient extends CandidService {
 
         const args = {
             user_groups: userGroups.map(({ users, updatedSince }) => ({
-                users: users.map((u) => Principal.fromText(u)),
+                users,
                 updated_since: updatedSince,
             })),
-            users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
+            users_suspended_since: suspendedUsersSyncedUpTo,
         };
 
-        return this.handleQueryResponse(
-            () => this.userIndexService.users(args),
-            usersApiResponse,
+        return this.executeJsonQuery(
+            "users",
             args,
+            usersApiResponse,
+            userIndexUsersArgsSchema,
+            userIndexUsersResponseSchema,
         );
     }
 
@@ -330,10 +355,12 @@ export class UserIndexClient extends CandidService {
         const args = {
             username: username,
         };
-        return this.handleQueryResponse(
-            () => this.userIndexService.check_username(args),
-            checkUsernameResponse,
+        return this.executeJsonQuery(
+            "check_username",
             args,
+            checkUsernameResponse,
+            userIndexCheckUsernameArgsSchema,
+            userIndexCheckUsernameResponseSchema,
         );
     }
 
@@ -419,32 +446,42 @@ export class UserIndexClient extends CandidService {
     }
 
     getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this.handleResponse(
-            this.userIndexService.referral_leaderboard({
+        return this.executeJsonQuery(
+            "referral_leaderboard",
+            {
                 count: 10,
-                filter: apiOptional((r) => {
+                filter: mapOptional(req, (r) => {
                     return {
                         Month: {
                             year: r.year,
                             month: r.month,
                         },
                     };
-                }, req),
-            }),
+                }),
+            },
             referralLeaderboardResponse,
+            userIndexReferralLeaderboardArgsSchema,
+            userIndexReferralLeaderboardResponseSchema,
         );
     }
 
     getPlatformModeratorGroup(): Promise<string> {
-        return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
-            res.Success.toString(),
+        return this.executeJsonQuery(
+            "platform_moderators_group",
+            {},
+            (res) => res.Success,
+            emptySchema,
+            userIndexPlatformModeratorsGroupResponseSchema,
         );
     }
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.diamond_membership_fees({}),
+        return this.executeJsonQuery(
+            "diamond_membership_fees",
+            {},
             diamondMembershipFeesResponse,
+            emptySchema,
+            userIndexDiamondMembershipFeesResponseSchema,
         );
     }
 
@@ -473,28 +510,34 @@ export class UserIndexClient extends CandidService {
             },
         };
 
-        return this.handleQueryResponse(
-            () => this.userIndexService.set_diamond_membership_fees(args),
+        return this.handleResponse(
+            this.userIndexService.set_diamond_membership_fees(args),
             (res) => {
                 return "Success" in res;
             },
+            args,
         );
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
-        return this.handleQueryResponse(
-            () =>
-                this.userIndexService.reported_messages({
-                    user_id: userId !== undefined ? [Principal.fromText(userId)] : [],
-                }),
+        return this.executeJsonQuery(
+            "reported_messages",
+            {
+                user_id: userId,
+            },
             (res) => res.Success.json,
+            userIndexReportedMessagesArgsSchema,
+            userIndexReportedMessagesResponseSchema,
         );
     }
 
     chitLeaderboard(): Promise<ChitUserBalance[]> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.chit_leaderboard({}),
-            chitLeaderboardResponse,
+        return this.executeJsonQuery(
+            "chit_leaderboard",
+            {},
+            chitLeaderboardResponseJson,
+            emptySchema,
+            userIndexChitLeaderboardResponseSchema,
         );
     }
 
@@ -502,12 +545,14 @@ export class UserIndexClient extends CandidService {
         iiPrincipal: string,
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        const args = {
+            user_ii_principal: Principal.fromText(iiPrincipal),
+            credential_jwt: credential,
+        };
         return this.handleResponse(
-            this.userIndexService.submit_proof_of_unique_personhood({
-                user_ii_principal: Principal.fromText(iiPrincipal),
-                credential_jwt: credential,
-            }),
+            this.userIndexService.submit_proof_of_unique_personhood(args),
             submitProofOfUniquePersonhoodResponse,
+            args,
         );
     }
 }

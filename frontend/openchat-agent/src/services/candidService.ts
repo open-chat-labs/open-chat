@@ -29,9 +29,14 @@ export abstract class CandidService {
     protected async executeJsonQuery<In, Resp, Out>(
         methodName: string,
         args: In,
-        responseValidator: ZodType<Resp>,
         mapper: (from: Resp) => Out,
+        requestValidator: ZodType<In>,
+        responseValidator: ZodType<Resp>,
     ): Promise<Out> {
+        const requestValidationResult = requestValidator.safeParse(args);
+        if (!requestValidationResult.success) {
+            throw new Error("Invalid request: " + requestValidationResult.error.toString());
+        }
         const json = JSON.stringify(args);
         const bytes = new TextEncoder().encode(json);
 
