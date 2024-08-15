@@ -91,12 +91,18 @@ impl GroupChatCore {
             match &mut event.event {
                 ChatEventInternal::Message(m) => {
                     if overwrite_if_deleted(&mut m.sender, deleted_users) {
-                        let deleted_by = DeletedByInternal {
-                            deleted_by: DELETED_USER_ID,
-                            timestamp: now,
-                        };
-                        m.deleted_by = Some(deleted_by.clone());
-                        m.content = MessageContentInternal::Deleted(deleted_by);
+                        if m.deleted_by.is_none() {
+                            m.deleted_by = Some(DeletedByInternal {
+                                deleted_by: OPENCHAT_BOT_USER_ID,
+                                timestamp: now,
+                            });
+                        }
+                        if !matches!(m.content, MessageContentInternal::Deleted(_)) {
+                            m.content = MessageContentInternal::Deleted(DeletedByInternal {
+                                deleted_by: OPENCHAT_BOT_USER_ID,
+                                timestamp: now,
+                            });
+                        }
                     }
                 }
                 ChatEventInternal::ParticipantJoined(p) => {
