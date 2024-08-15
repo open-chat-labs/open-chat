@@ -12,8 +12,6 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     SetDisplayNameResponse,
     DiamondMembershipFees,
     ChitUserBalance,
@@ -36,14 +34,13 @@ import {
     suspendUserResponse,
     unsuspendUserResponse,
     payForDiamondMembershipResponse,
-    referralLeaderboardResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
-    chitLeaderboardResponseJson,
+    chitLeaderboardResponse,
     submitProofOfUniquePersonhoodResponse,
-    currentUserResponseJson,
-    userRegistrationCanisterResponseJson,
-    userSearchResponseJson,
+    currentUserResponse,
+    userRegistrationCanisterResponse,
+    userSearchResponse,
     apiJsonDiamondDuration,
 } from "./mappers";
 import { apiJsonToken } from "../common/chatMappers";
@@ -58,7 +55,6 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { mapOptional } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     mergeCachedCurrentUser,
@@ -75,8 +71,6 @@ import {
     userIndexPayForDiamondMembershipArgsSchema,
     userIndexPayForDiamondMembershipResponseSchema,
     userIndexPlatformModeratorsGroupResponseSchema,
-    userIndexReferralLeaderboardArgsSchema,
-    userIndexReferralLeaderboardResponseSchema,
     userIndexReportedMessagesArgsSchema,
     userIndexReportedMessagesResponseSchema,
     userIndexSearchArgsSchema,
@@ -122,7 +116,7 @@ export class UserIndexClient extends CandidService {
                     const liveUser = await this.executeJsonQuery(
                         "current_user",
                         {},
-                        currentUserResponseJson,
+                        currentUserResponse,
                         emptySchema,
                         userIndexCurrentUserResponseSchema,
                     );
@@ -153,7 +147,7 @@ export class UserIndexClient extends CandidService {
         return this.executeJsonQuery(
             "user_registration_canister",
             {},
-            userRegistrationCanisterResponseJson,
+            userRegistrationCanisterResponse,
             emptySchema,
             userIndexUserRegistrationCanisterResponseSchema,
         );
@@ -167,7 +161,7 @@ export class UserIndexClient extends CandidService {
         return this.executeJsonQuery(
             "search",
             args,
-            userSearchResponseJson,
+            userSearchResponse,
             userIndexSearchArgsSchema,
             userIndexSearchResponseSchema,
         );
@@ -476,26 +470,6 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this.executeJsonQuery(
-            "referral_leaderboard",
-            {
-                count: 10,
-                filter: mapOptional(req, (r) => {
-                    return {
-                        Month: {
-                            year: r.year,
-                            month: r.month,
-                        },
-                    };
-                }),
-            },
-            referralLeaderboardResponse,
-            userIndexReferralLeaderboardArgsSchema,
-            userIndexReferralLeaderboardResponseSchema,
-        );
-    }
-
     getPlatformModeratorGroup(): Promise<string> {
         return this.executeJsonQuery(
             "platform_moderators_group",
@@ -566,7 +540,7 @@ export class UserIndexClient extends CandidService {
         return this.executeJsonQuery(
             "chit_leaderboard",
             {},
-            chitLeaderboardResponseJson,
+            chitLeaderboardResponse,
             emptySchema,
             userIndexChitLeaderboardResponseSchema,
         );

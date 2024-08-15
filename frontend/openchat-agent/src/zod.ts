@@ -340,37 +340,6 @@ export const diamondMembershipFeesSchema = z.object({
     icp_fees: diamondMembershipFeesByDurationSchema,
 });
 
-export const userIndexReferralLeaderboardReferralStatsSchema = z.object({
-    user_id: userIdSchema,
-    username: z.string(),
-    total_rewards_e8s: z.coerce.bigint(),
-    diamond_members: z.number(),
-    total_users: z.number(),
-});
-
-export const userIndexReferralLeaderboardMonthSuccessResultSchema = z.object({
-    year: z.number(),
-    month: z.number(),
-    results: z.array(userIndexReferralLeaderboardReferralStatsSchema),
-});
-
-export const userIndexReferralLeaderboardYearAndMonthSchema = z.object({
-    year: z.number(),
-    month: z.number(),
-});
-
-export const userIndexReferralLeaderboardLeaderboardFilterSchema = z.union([
-    z.object({
-        Month: userIndexReferralLeaderboardYearAndMonthSchema,
-    }),
-    z.literal("CurrentMonth"),
-]);
-
-export const userIndexReferralLeaderboardArgsSchema = z.object({
-    filter: z.union([userIndexReferralLeaderboardLeaderboardFilterSchema, z.undefined()]),
-    count: z.number(),
-});
-
 export const userIndexPlatformModeratorsGroupResponseSchema = z.object({
     Success: chatIdSchema,
 });
@@ -493,15 +462,6 @@ export const userIndexChitLeaderboardResponseSchema = z.object({
 export const userIndexSetDiamondMembershipFeesArgsSchema = z.object({
     fees: diamondMembershipFeesSchema,
 });
-
-export const userIndexReferralLeaderboardResponseSchema = z.union([
-    z.object({
-        AllTime: z.array(userIndexReferralLeaderboardReferralStatsSchema),
-    }),
-    z.object({
-        Month: userIndexReferralLeaderboardMonthSuccessResultSchema,
-    }),
-]);
 
 export const userIndexReportedMessagesResponseSchema = z.object({
     Success: userIndexReportedMessagesSuccessResultSchema,

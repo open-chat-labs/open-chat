@@ -54,7 +54,6 @@ fn main() {
     generate_ts_method!(user_index, platform_moderators_group);
     generate_ts_method!(user_index, platform_operators);
     generate_ts_method!(user_index, public_key);
-    generate_ts_method!(user_index, referral_leaderboard);
     generate_ts_method!(user_index, referral_metrics);
     generate_ts_method!(user_index, reported_messages);
     generate_ts_method!(user_index, search);

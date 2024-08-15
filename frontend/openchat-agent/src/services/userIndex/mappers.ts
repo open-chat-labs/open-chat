@@ -12,8 +12,6 @@ import type {
     DiamondMembershipDuration,
     DiamondMembershipFees,
     PayForDiamondMembershipResponse,
-    ReferralLeaderboardResponse,
-    ReferralStats,
     SetDisplayNameResponse,
     DiamondMembershipSubscription,
     DiamondMembershipStatus,
@@ -41,8 +39,6 @@ import {
     userIndexCurrentUserResponseSchema,
     userIndexDiamondMembershipFeesResponseSchema,
     userIndexPayForDiamondMembershipResponseSchema,
-    userIndexReferralLeaderboardReferralStatsSchema,
-    userIndexReferralLeaderboardResponseSchema,
     userIndexSearchResponseSchema,
     userIndexSetDisplayNameResponseSchema,
     userIndexSetUsernameResponseSchema,
@@ -55,12 +51,12 @@ import {
     userSummaryV2Schema,
 } from "../../zod";
 
-export function userSearchResponseJson(
+export function userSearchResponse(
     json: z.infer<typeof userIndexSearchResponseSchema>,
 ): UserSummary[] {
     if ("Success" in json) {
         const timestamp = json.Success.timestamp;
-        return json.Success.users.map((u) => userSummaryJson(u, timestamp));
+        return json.Success.users.map((u) => userSummary(u, timestamp));
     }
     throw new Error(`Unknown UserIndex.SearchResponse of ${json}`);
 }
@@ -75,14 +71,14 @@ export function usersApiResponse(
             users: json.Success.users.map(userSummaryUpdate),
             deletedUserIds: new Set(json.Success.deleted),
             currentUser: mapOptional(json.Success.current_user, (u) =>
-                currentUserSummaryJson(u, timestamp),
+                currentUserSummary(u, timestamp),
             ),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${json}`);
 }
 
-export function currentUserSummaryJson(
+export function currentUserSummary(
     json: z.infer<typeof currentUserSummarySchema>,
     timestamp: bigint,
 ): CurrentUserSummary {
@@ -90,15 +86,15 @@ export function currentUserSummaryJson(
         kind: "current_user_summary",
         username: json.username,
         isPlatformOperator: json.is_platform_operator,
-        diamondStatus: diamondMembershipStatusJson(json.diamond_membership_status),
+        diamondStatus: diamondMembershipStatus(json.diamond_membership_status),
         userId: json.user_id,
         isBot: json.is_bot,
         displayName: mapOptional(json.display_name, identity),
         moderationFlagsEnabled: json.moderation_flags_enabled,
         isSuspectedBot: json.is_suspected_bot,
-        suspensionDetails: mapOptional(json.suspension_details, suspensionDetailsJson),
+        suspensionDetails: mapOptional(json.suspension_details, suspensionDetails),
         isPlatformModerator: json.is_platform_moderator,
-        diamondDetails: mapOptional(json.diamond_membership_details, diamondMembershipJson),
+        diamondDetails: mapOptional(json.diamond_membership_details, diamondMembership),
         updated: timestamp,
         blobReference: mapOptional(json.avatar_id, (id) => ({
             blobId: id,
@@ -131,7 +127,7 @@ export function userSummaryUpdate(json: z.infer<typeof userSummaryV2Schema>): Us
     };
 }
 
-export function userSummaryJson(
+export function userSummary(
     json: z.infer<typeof userSummarySchema>,
     timestamp: bigint,
 ): UserSummary {
@@ -169,7 +165,7 @@ export function diamondStatus(
     throw new UnsupportedValueError("Unexpected DiamondMembershipStatus type received", json);
 }
 
-export function userRegistrationCanisterResponseJson(
+export function userRegistrationCanisterResponse(
     json: z.infer<typeof userIndexUserRegistrationCanisterResponseSchema>,
 ): string {
     if (json !== "NewRegistrationsClosed" && "Success" in json) {
@@ -178,7 +174,7 @@ export function userRegistrationCanisterResponseJson(
     throw new Error(`Unexpected UserRegistrationCanisterResponse type received: ${json}`);
 }
 
-export function currentUserResponseJson(
+export function currentUserResponse(
     json: z.infer<typeof userIndexCurrentUserResponseSchema>,
 ): CurrentUserResponse {
     if (json === "UserNotFound") {
@@ -199,9 +195,9 @@ export function currentUserResponseJson(
             referrals: r.referrals,
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
-            suspensionDetails: mapOptional(r.suspension_details, suspensionDetailsJson),
+            suspensionDetails: mapOptional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
-            diamondStatus: diamondMembershipStatusJson(r.diamond_membership_status),
+            diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
@@ -212,7 +208,7 @@ export function currentUserResponseJson(
     throw new Error(`Unexpected CurrentUserResponse type received: ${json}`);
 }
 
-function diamondMembershipStatusJson(
+function diamondMembershipStatus(
     json: z.infer<typeof diamondMembershipStatusFullSchema>,
 ): DiamondMembershipStatus {
     if (json === "Inactive") {
@@ -224,7 +220,7 @@ function diamondMembershipStatusJson(
     if ("Active" in json) {
         return {
             kind: "active",
-            ...diamondMembershipJson(json.Active),
+            ...diamondMembership(json.Active),
         };
     }
     throw new UnsupportedValueError(
@@ -233,17 +229,17 @@ function diamondMembershipStatusJson(
     );
 }
 
-function diamondMembershipJson(
+function diamondMembership(
     json: z.infer<typeof diamondMembershipDetailsSchema>,
 ): DiamondMembershipDetails {
     return {
         expiresAt: json.expires_at,
-        subscription: diamondMembershipSubscriptionJson(json.subscription),
+        subscription: diamondMembershipSubscription(json.subscription),
         payInChat: json.pay_in_chat,
     };
 }
 
-function diamondMembershipSubscriptionJson(
+function diamondMembershipSubscription(
     json: z.infer<typeof diamondMembershipSubscriptionSchema>,
 ): DiamondMembershipSubscription {
     if (json === "OneMonth") {
@@ -264,15 +260,15 @@ function diamondMembershipSubscriptionJson(
     );
 }
 
-function suspensionDetailsJson(json: z.infer<typeof suspensionDetailsSchema>): SuspensionDetails {
+function suspensionDetails(json: z.infer<typeof suspensionDetailsSchema>): SuspensionDetails {
     return {
         reason: json.reason,
-        action: suspensionActionJson(json.action),
+        action: suspensionAction(json.action),
         suspendedBy: json.suspended_by,
     };
 }
 
-function suspensionActionJson(json: z.infer<typeof suspensionActionSchema>): SuspensionAction {
+function suspensionAction(json: z.infer<typeof suspensionActionSchema>): SuspensionAction {
     if ("Unsuspend" in json) {
         return {
             kind: "unsuspend_action",
@@ -393,35 +389,6 @@ export function unsuspendUserResponse(
     throw new UnsupportedValueError("Unexpected UnsuspendUserResponse type received", json);
 }
 
-export function referralStat(
-    json: z.infer<typeof userIndexReferralLeaderboardReferralStatsSchema>,
-): ReferralStats {
-    return {
-        username: json.username,
-        totalUsers: json.total_users,
-        userId: json.user_id,
-        diamondMembers: json.diamond_members,
-        totalRewardsE8s: json.total_rewards_e8s,
-    };
-}
-
-export function referralLeaderboardResponse(
-    json: z.infer<typeof userIndexReferralLeaderboardResponseSchema>,
-): ReferralLeaderboardResponse {
-    if ("AllTime" in json) {
-        return { kind: "all_time", stats: json.AllTime.map(referralStat) };
-    }
-    if ("Month" in json) {
-        return {
-            kind: "monthly",
-            stats: json.Month.results.map(referralStat),
-            year: json.Month.year,
-            month: json.Month.month,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ReferralLeaderboardResponse type received", json);
-}
-
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
     json: z.infer<typeof userIndexPayForDiamondMembershipResponseSchema>,
@@ -448,7 +415,7 @@ export function payForDiamondMembershipResponse(
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }
-                    : { kind: "active", ...diamondMembershipJson(json.Success) },
+                    : { kind: "active", ...diamondMembership(json.Success) },
         };
     }
     if ("TransferFailed" in json) {
@@ -499,7 +466,7 @@ export function diamondMembershipFeesResponse(
     throw new UnsupportedValueError("Unexpected DiamondMembershipFeesResponse type received", json);
 }
 
-export function chitLeaderboardResponseJson(
+export function chitLeaderboardResponse(
     json: z.infer<typeof userIndexChitLeaderboardResponseSchema>,
 ): ChitUserBalance[] {
     if ("Success" in json) {
