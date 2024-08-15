@@ -24,13 +24,6 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
-import type {
-    ApiDiamondMembershipDetails,
-    ApiDiamondMembershipPlanDuration,
-    ApiDiamondMembershipSubscription,
-    ApiPayForDiamondMembershipResponse,
-    ApiSubmitProofOfUniquePersonhoodResponse,
-} from "./candid/idl";
 import { bytesToHexString, identity, mapOptional } from "../../utils/mapping";
 import { tokenJson } from "../common/chatMappers";
 import {
@@ -47,11 +40,13 @@ import {
     userIndexChitLeaderboardResponseSchema,
     userIndexCurrentUserResponseSchema,
     userIndexDiamondMembershipFeesResponseSchema,
+    userIndexPayForDiamondMembershipResponseSchema,
     userIndexReferralLeaderboardReferralStatsSchema,
     userIndexReferralLeaderboardResponseSchema,
     userIndexSearchResponseSchema,
     userIndexSetDisplayNameResponseSchema,
     userIndexSetUsernameResponseSchema,
+    userIndexSubmitProofOfUniquePersonhoodResponseSchema,
     userIndexSuspendUserResponseSchema,
     userIndexUnsuspendUserResponseSchema,
     userIndexUserRegistrationCanisterResponseSchema,
@@ -238,14 +233,6 @@ function diamondMembershipStatusJson(
     );
 }
 
-function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembershipDetails {
-    return {
-        expiresAt: candid.expires_at,
-        subscription: diamondMembershipSubscription(candid.subscription),
-        payInChat: candid.pay_in_chat,
-    };
-}
-
 function diamondMembershipJson(
     json: z.infer<typeof diamondMembershipDetailsSchema>,
 ): DiamondMembershipDetails {
@@ -254,27 +241,6 @@ function diamondMembershipJson(
         subscription: diamondMembershipSubscriptionJson(json.subscription),
         payInChat: json.pay_in_chat,
     };
-}
-
-function diamondMembershipSubscription(
-    candid: ApiDiamondMembershipSubscription,
-): DiamondMembershipSubscription {
-    if ("OneMonth" in candid) {
-        return "one_month";
-    }
-    if ("ThreeMonths" in candid) {
-        return "three_months";
-    }
-    if ("OneYear" in candid) {
-        return "one_year";
-    }
-    if ("Disabled" in candid) {
-        return "disabled";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDiamondMembershipSubscription type received",
-        candid,
-    );
 }
 
 function diamondMembershipSubscriptionJson(
@@ -458,48 +424,45 @@ export function referralLeaderboardResponse(
 
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
-    candid: ApiPayForDiamondMembershipResponse,
+    json: z.infer<typeof userIndexPayForDiamondMembershipResponseSchema>,
 ): PayForDiamondMembershipResponse {
-    if ("PaymentAlreadyInProgress" in candid) {
+    if (json === "PaymentAlreadyInProgress") {
         return { kind: "payment_already_in_progress" };
     }
-    if ("CurrencyNotSupported" in candid) {
+    if (json === "CurrencyNotSupported") {
         return { kind: "currency_not_supported" };
     }
-    if ("Success" in candid) {
+    if (json === "UserNotFound") {
+        return { kind: "user_not_found" };
+    }
+    if (json === "PriceMismatch") {
+        return { kind: "price_mismatch" };
+    }
+    if (json === "AlreadyLifetimeDiamondMember") {
+        return { kind: "already_lifetime_diamond_member" };
+    }
+    if ("Success" in json) {
         return {
             kind: "success",
-            proof: candid.Success.proof_jwt,
+            proof: json.Success.proof_jwt,
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }
-                    : { kind: "active", ...diamondMembership(candid.Success) },
+                    : { kind: "active", ...diamondMembershipJson(json.Success) },
         };
     }
-    if ("PriceMismatch" in candid) {
-        return { kind: "price_mismatch" };
-    }
-    if ("TransferFailed" in candid) {
+    if ("TransferFailed" in json) {
         return { kind: "transfer_failed" };
     }
-    if ("InternalError" in candid) {
+    if ("InternalError" in json) {
         return { kind: "internal_error" };
     }
-    if ("CannotExtend" in candid) {
-        return { kind: "cannot_extend" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "user_not_found" };
-    }
-    if ("InsufficientFunds" in candid) {
+    if ("InsufficientFunds" in json) {
         return { kind: "insufficient_funds" };
-    }
-    if ("AlreadyLifetimeDiamondMember" in candid) {
-        return { kind: "already_lifetime_diamond_member" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        candid,
+        json,
     );
 }
 
@@ -556,19 +519,19 @@ function chitUserBalance(
 }
 
 export function submitProofOfUniquePersonhoodResponse(
-    json: ApiSubmitProofOfUniquePersonhoodResponse,
+    json: z.infer<typeof userIndexSubmitProofOfUniquePersonhoodResponseSchema>,
 ): SubmitProofOfUniquePersonhoodResponse {
-    if ("Success" in json) {
+    if (json === "Success") {
         return CommonResponses.success();
+    }
+    if (json === "UserNotFound") {
+        return CommonResponses.userNotFound();
     }
     if ("Invalid" in json) {
         return CommonResponses.invalid();
     }
-    if ("UserNotFound" in json) {
-        return CommonResponses.userNotFound();
-    }
     throw new UnsupportedValueError(
-        "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
+        "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
         json,
     );
 }

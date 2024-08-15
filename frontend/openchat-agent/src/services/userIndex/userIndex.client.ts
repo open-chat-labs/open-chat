@@ -1,7 +1,5 @@
 import { groupBy } from "../../utils/list";
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { idlFactory, type UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
     CurrentUserResponse,
@@ -37,7 +35,6 @@ import {
     usersApiResponse,
     suspendUserResponse,
     unsuspendUserResponse,
-    apiDiamondDuration,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
     setDisplayNameResponse,
@@ -47,8 +44,9 @@ import {
     currentUserResponseJson,
     userRegistrationCanisterResponseJson,
     userSearchResponseJson,
+    apiJsonDiamondDuration,
 } from "./mappers";
-import { apiJsonToken, apiOptional, apiToken } from "../common/chatMappers";
+import { apiJsonToken } from "../common/chatMappers";
 import {
     getCachedUsers,
     getCachedDeletedUserIds,
@@ -60,7 +58,7 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { identity, mapOptional } from "../../utils/mapping";
+import { mapOptional } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     mergeCachedCurrentUser,
@@ -104,12 +102,8 @@ import {
 } from "../../zod";
 
 export class UserIndexClient extends CandidService {
-    private userIndexService: UserIndexService;
-
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId);
-
-        this.userIndexService = this.createServiceClient<UserIndexService>(idlFactory);
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
@@ -455,7 +449,7 @@ export class UserIndexClient extends CandidService {
             "pay_for_diamond_membership",
             {
                 token: apiJsonToken(token),
-                duration: apiDiamondDuration(duration),
+                duration: apiJsonDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
             },
@@ -550,9 +544,7 @@ export class UserIndexClient extends CandidService {
         return this.executeJsonUpdate(
             "set_diamond_membership_fees",
             args,
-            (res) => {
-                return "Success" in res;
-            },
+            (res) => res === "Success",
             userIndexSetDiamondMembershipFeesArgsSchema,
             userIndexSetDiamondMembershipFeesResponseSchema,
         );
