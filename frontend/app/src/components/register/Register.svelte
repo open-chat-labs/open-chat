@@ -106,7 +106,6 @@
                     updated: 0n,
                     isBot: false,
                     isUniquePerson: false,
-                    favouriteTokens: new Set<string>(),
                 };
                 dispatch("createdUser", createdUser);
             } else {

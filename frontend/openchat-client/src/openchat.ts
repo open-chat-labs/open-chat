@@ -149,10 +149,11 @@ import {
     cryptoTokensSorted,
     enhancedCryptoLookup,
     exchangeRatesLookupStore,
-    favouriteTokensSorted,
-    favouriteTokenSymbols,
     lastCryptoSent,
     nervousSystemLookup,
+    saveWalletConfig,
+    walletConfigStore,
+    walletTokensSorted,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
@@ -424,6 +425,7 @@ import type {
     PayForDiamondMembershipResponse,
     LinkIdentitiesResponse,
     AddMembersToChannelResponse,
+    WalletConfig,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4538,17 +4540,8 @@ export class OpenChat extends OpenChatAgentWorker {
             this.sendStreamRequest({ kind: "getCurrentUser" })
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
-                        // TODO - undo this
-                        let favsSet = user.favouriteTokens;
-                        const favsStr = localStorage.getItem("openchat_favourite_tokens");
-                        if (favsStr) {
-                            favsSet = new Set<string>(JSON.parse(favsStr));
-                        }
                         userCreatedStore.set(true);
-                        this.user.set({
-                            ...user,
-                            favouriteTokens: favsSet,
-                        });
+                        this.user.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
@@ -6234,8 +6227,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async refreshBalancesInSeries() {
+        const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            if (this._liveState.user.favouriteTokens.has(t.symbol)) {
+            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.symbol))) {
                 await this.refreshAccountBalance(t.ledger);
             }
         }
@@ -7471,21 +7465,18 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeTokenFromWallet(symbol: string) {
-        if (this._liveState.user.favouriteTokens.delete(symbol)) {
-            return this.setFavouriteTokens(this._liveState.user.favouriteTokens);
+        const config = get(walletConfigStore);
+        if (config.kind === "manual_wallet") {
+            if (config.tokens.delete(symbol)) {
+                return this.setWalletConfig(config);
+            }
         }
     }
 
-    setFavouriteTokens(favouriteTokens: Set<string>): Promise<void> {
-        this.user.update((u) => {
-            return {
-                ...u,
-                favouriteTokens,
-            };
-        });
+    setWalletConfig(walletConfig: WalletConfig): Promise<void> {
         // TODO wait for a proper api
         return new Promise((resolve) => {
-            localStorage.setItem("openchat_favourite_tokens", JSON.stringify([...favouriteTokens]));
+            saveWalletConfig(walletConfig);
             setTimeout(() => {
                 resolve();
             }, 1000);
@@ -7495,6 +7486,7 @@ export class OpenChat extends OpenChatAgentWorker {
     /**
      * Reactive state provided in the form of svelte stores
      */
+    walletConfigStore = walletConfigStore;
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;
@@ -7521,9 +7513,8 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     cryptoTokensSorted = cryptoTokensSorted;
+    walletTokensSorted = walletTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
-    favouriteTokensSorted = favouriteTokensSorted;
-    favouriteTokenSymbols = favouriteTokenSymbols;
     nervousSystemLookup = nervousSystemLookup;
     exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;

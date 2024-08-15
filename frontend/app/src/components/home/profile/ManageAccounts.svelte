@@ -2,19 +2,23 @@
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { getContext, onMount } from "svelte";
-    import { OpenChat } from "openchat-client";
+    import { DEFAULT_TOKENS, OpenChat, type WalletConfig } from "openchat-client";
     import Toggle from "../../Toggle.svelte";
     import Search from "../../Search.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
 
     const client = getContext<OpenChat>("client");
 
     let searchTerm = "";
     let searching = false;
 
+    $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
+    $: walletConfig = client.walletConfigStore;
     $: accountsSorted = client.cryptoTokensSorted;
-    $: favouriteTokenSymbols = client.favouriteTokenSymbols;
     $: searchTermLower = searchTerm.toLowerCase();
     $: filteredTokens = $accountsSorted.filter(
         (token) =>
@@ -23,78 +27,155 @@
             token.symbol.toLowerCase().startsWith(searchTermLower),
     );
 
-    let favourites = new Set<string>();
+    $: console.log("Wallet config: ", $walletConfig);
+
+    let config: WalletConfig = { ...$walletConfig };
 
     onMount(() => {
-        favourites = new Set($favouriteTokenSymbols);
+        config = { ...$walletConfig };
+
         return () => {
-            client.setFavouriteTokens(favourites);
+            client.setWalletConfig(config);
         };
     });
 
     function toggle(symbol: string) {
-        if (favourites.has(symbol)) {
-            favourites.delete(symbol);
-        } else {
-            favourites.add(symbol);
+        if (config.kind === "manual_wallet") {
+            if (config.tokens.has(symbol)) {
+                config.tokens.delete(symbol);
+            } else {
+                config.tokens.add(symbol);
+            }
+            config = config;
         }
-        favourites = favourites;
+    }
+
+    function toggleMode() {
+        if (config.kind === "auto_wallet") {
+            config = { kind: "manual_wallet", tokens: new Set(DEFAULT_TOKENS) };
+        } else {
+            config = { kind: "auto_wallet", minDollarValue: 1 };
+        }
     }
 </script>
 
 <Overlay>
     <ModalContent closeIcon on:close>
         <div slot="header">
-            <Translatable resourceKey={i18nKey("cryptoAccount.manageTokens")} />
+            <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />
         </div>
-        <div slot="body" class="body">
-            <Search
-                fill
-                bind:searchTerm
-                bind:searching
-                placeholder={i18nKey("cryptoAccount.search")} />
-            <div class="tokens">
-                {#each filteredTokens as token}
-                    <div class="token">
-                        <div class="token-details">
-                            <img
-                                alt={token.name}
-                                class:disabled={!token.enabled}
-                                class="icon"
-                                src={token.logo} />
-                            <div>
-                                {token.symbol}
-                            </div>
-                        </div>
-                        <Toggle
-                            checked={favourites.has(token.symbol)}
-                            on:change={() => toggle(token.symbol)}
-                            small
-                            id={`token_${token.symbol}_toggle`}></Toggle>
-                    </div>
-                {/each}
+        <div slot="body">
+            <div class="select-mode">
+                <div class="mode-label" class:selected={config.kind === "manual_wallet"}>
+                    <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
+                </div>
+                <Toggle
+                    checked={config.kind === "auto_wallet"}
+                    on:change={toggleMode}
+                    small
+                    bottomMargin={false}
+                    id={"wallet-mode-select"}></Toggle>
+                <div class="mode-label" class:selected={config.kind === "auto_wallet"}>
+                    <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
+                </div>
             </div>
+            {#if config.kind === "auto_wallet"}
+                <div class="auto-mode">
+                    <div class="info">
+                        <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
+                    </div>
+                    <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+                    <Input
+                        invalid={!valid}
+                        bind:value={config.minDollarValue}
+                        placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+                </div>
+            {:else if config.kind === "manual_wallet"}
+                <div class="info">
+                    <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
+                </div>
+                <div class="token-selection">
+                    <Search
+                        fill
+                        bind:searchTerm
+                        bind:searching
+                        placeholder={i18nKey("cryptoAccount.search")} />
+                    <div class="tokens">
+                        {#each filteredTokens as token}
+                            <div class="token">
+                                <div class="token-details">
+                                    <img
+                                        alt={token.name}
+                                        class:disabled={!token.enabled}
+                                        class="icon"
+                                        src={token.logo} />
+                                    <div>
+                                        {token.symbol}
+                                    </div>
+                                </div>
+                                <BalanceWithRefresh
+                                    ledger={token.ledger}
+                                    value={token.balance}
+                                    conversion={"none"} />
+                                <Toggle
+                                    checked={config.tokens.has(token.symbol)}
+                                    on:change={() => toggle(token.symbol)}
+                                    small
+                                    bottomMargin={false}
+                                    id={`token_${token.symbol}_toggle`}></Toggle>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
         </div>
     </ModalContent>
 </Overlay>
 
 <style lang="scss">
-    .body {
+    .select-mode {
+        display: flex;
+        gap: $sp4;
+        align-items: center;
+        @include font(medium, normal, fs-120);
+        margin-bottom: $sp4;
+
+        .mode-label {
+            color: var(--txt-light);
+
+            &.selected {
+                color: var(--txt);
+            }
+        }
+    }
+
+    .auto-mode {
+        margin-bottom: 380px;
+    }
+
+    .token-selection {
         display: flex;
         flex-direction: column;
-        max-height: 500px;
-        gap: $sp5;
+        gap: $sp4;
     }
+
+    .tokens {
+        height: 400px;
+        @include nice-scrollbar();
+        flex: auto;
+    }
+
     .token {
         display: flex;
         gap: $sp3;
         justify-content: space-between;
-        @include nice-scrollbar();
-        flex: auto;
+        align-items: center;
+        margin-bottom: $sp3;
 
         .token-details {
             display: flex;
             gap: $sp3;
+            flex: auto;
         }
 
         .icon {
@@ -109,5 +190,11 @@
                 filter: grayscale(1);
             }
         }
+    }
+
+    .info {
+        @include font(light, normal, fs-70);
+        margin-bottom: $sp4;
+        color: var(--txt-light);
     }
 </style>

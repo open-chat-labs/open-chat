@@ -190,7 +190,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isBot: false,
             updated: BigInt(Date.now()),
             isUniquePerson: candid.Success.is_unique_person,
-            favouriteTokens: new Set(),
         };
     }
 

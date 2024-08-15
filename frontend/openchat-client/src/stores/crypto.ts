@@ -6,9 +6,10 @@ import {
     type NervousSystemDetails,
     DEFAULT_TOKENS,
     type TokenExchangeRates,
+    type WalletConfig,
+    type AutoWallet,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
-import { currentUser } from "./user";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -86,22 +87,63 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
+type SerialisableWalletConfig = AutoWallet | SerialisableManualWallet;
+
+type SerialisableManualWallet = {
+    kind: "manual_wallet";
+    tokens: string[];
+};
+
+function deserialiseWalletConfig(walletStr: string | null): WalletConfig {
+    if (walletStr === null) return { kind: "auto_wallet", minDollarValue: 1 };
+    const intermediate = JSON.parse(walletStr) as SerialisableWalletConfig;
+    switch (intermediate.kind) {
+        case "auto_wallet":
+            return intermediate;
+        case "manual_wallet":
+            return {
+                kind: "manual_wallet",
+                tokens: new Set(intermediate.tokens),
+            };
+    }
+}
+
+function serialiseWalletConfig(config: WalletConfig): string {
+    switch (config.kind) {
+        case "auto_wallet":
+            return JSON.stringify(config);
+        case "manual_wallet":
+            return JSON.stringify({
+                ...config,
+                tokens: [...config.tokens],
+            });
+    }
+}
+
+export function saveWalletConfig(config: WalletConfig) {
+    localStorage.setItem("openchat_wallet_config", serialiseWalletConfig(config));
+    walletConfigStore.set(config);
+}
+
+export const walletConfigStore = writable<WalletConfig>(
+    deserialiseWalletConfig(localStorage.getItem("openchat_wallet_config")),
+);
+
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)
         .filter((t) => t.enabled || !t.zero)
         .sort(compareTokens);
 });
 
-export const favouriteTokenSymbols = derived(currentUser, ($user) => {
-    return $user.favouriteTokens.size === 0 ? new Set(DEFAULT_TOKENS) : $user.favouriteTokens;
-});
-
-export const favouriteTokensSorted = derived(
-    [cryptoTokensSorted, currentUser],
-    ([$sorted, $user]) => {
-        const favs =
-            $user.favouriteTokens.size === 0 ? new Set(DEFAULT_TOKENS) : $user.favouriteTokens;
-        return $sorted.filter((t) => favs.has(t.symbol));
+export const walletTokensSorted = derived(
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, $walletConfig]) => {
+        return $tokens.filter(
+            (t) =>
+                ($walletConfig.kind === "auto_wallet" &&
+                    (t.dollarBalance ?? 0) >= $walletConfig.minDollarValue) ||
+                ($walletConfig.kind === "manual_wallet" && $walletConfig.tokens.has(t.symbol)),
+        );
     },
 );
 

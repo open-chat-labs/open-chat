@@ -41,7 +41,7 @@
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
     let swappableTokensPromise = client.swappableTokens();
 
-    $: accountsSorted = client.favouriteTokensSorted;
+    $: accountsSorted = client.walletTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)

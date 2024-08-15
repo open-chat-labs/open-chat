@@ -10,9 +10,10 @@
     export let id: string;
     export let small: boolean = false;
     export let bigGap: boolean = false;
+    export let bottomMargin: boolean = true;
 </script>
 
-<div class="toggle-wrapper" class:big-gap={bigGap}>
+<div class="toggle-wrapper" class:big-gap={bigGap} class:bottomMargin>
     <div class="toggle">
         <Checkbox {small} {disabled} {waiting} {id} toggle on:change {label} bind:checked />
     </div>
@@ -28,7 +29,9 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        margin-bottom: $sp4;
+        &.bottomMargin {
+            margin-bottom: $sp4;
+        }
         .toggle {
             flex: 0 0 40px;
         }

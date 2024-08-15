@@ -262,7 +262,6 @@ export type CreatedUser = CurrentUserCommon & {
     dateCreated: bigint;
     cryptoAccount: string;
     referrals: string[];
-    favouriteTokens: Set<string>;
 };
 
 export function anonymousUser(): CreatedUser {
@@ -283,7 +282,6 @@ export function anonymousUser(): CreatedUser {
         isBot: false,
         updated: 0n,
         isUniquePerson: false,
-        favouriteTokens: new Set(),
     };
 }
 
