@@ -117,8 +117,6 @@ fn process_charge(
     );
 
     if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {
-        let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
-
         diamond_membership.add_payment(
             args.token.clone(),
             args.expected_price_e8s,
@@ -185,13 +183,6 @@ fn process_charge(
                 reason: PendingPaymentReason::ReferralReward,
             };
             state.queue_payment(referral_payment);
-
-            state.data.user_referral_leaderboards.add_reward(
-                share_with,
-                !has_ever_been_diamond_member,
-                amount_to_referrer,
-                now,
-            );
         }
 
         let (recipient_account, reason) = if let Some(neuron_account) = matches!(
