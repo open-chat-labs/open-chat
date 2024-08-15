@@ -297,3 +297,25 @@ pub struct NamedAccount {
     pub name: String,
     pub account: String,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WalletConfig {
+    Auto(AutoWallet),
+    Manual(ManualWallet),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AutoWallet {
+    min_cents_visible: u32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ManualWallet {
+    tokens: Vec<CanisterId>,
+}
+
+impl Default for WalletConfig {
+    fn default() -> Self {
+        WalletConfig::Auto(AutoWallet { min_cents_visible: 100 })
+    }
+}

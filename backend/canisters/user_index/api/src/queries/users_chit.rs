@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_gen::ts_export;
-use types::UserId;
+use types::{Chit, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, chit_balances)]
@@ -20,5 +19,5 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, chit_balances)]
 pub struct SuccessResult {
-    pub balances: Vec<i32>,
+    pub chit: Vec<Chit>,
 }

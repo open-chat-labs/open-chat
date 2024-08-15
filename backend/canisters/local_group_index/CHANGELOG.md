@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
 ## [[2.0.1271](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1271-local_group_index)] - 2024-07-31
 
 ### Changed

@@ -5,7 +5,6 @@ use ts_gen::generate_ts_method;
 #[allow(deprecated)]
 fn main() {
     generate_candid_method!(user_index, check_username, query);
-    generate_candid_method!(user_index, chit_balances, query);
     generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, diamond_membership_fees, query);
@@ -21,6 +20,7 @@ fn main() {
     generate_candid_method!(user_index, user, query);
     generate_candid_method!(user_index, user_registration_canister, query);
     generate_candid_method!(user_index, users, query);
+    generate_candid_method!(user_index, users_chit, query);
 
     generate_candid_method!(user_index, add_platform_moderator, update);
     generate_candid_method!(user_index, add_platform_operator, update);

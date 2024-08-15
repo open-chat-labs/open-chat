@@ -1,12 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
-use types::BotConfig;
+use types::CanisterId;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -26,25 +27,29 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| {
-        let now = state.env.now();
-        state.data.users.set_bot_config(
-            state.data.proposals_bot_canister_id.into(),
-            BotConfig {
-                is_oc_controlled: true,
-                supports_direct_messages: false,
-                can_be_added_to_groups: false,
-            },
-            now,
-        );
-        state.data.users.set_bot_config(
-            state.data.airdrop_bot_canister_id.into(),
-            BotConfig {
-                is_oc_controlled: true,
-                supports_direct_messages: true,
-                can_be_added_to_groups: false,
-            },
-            now,
-        );
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(sync_deleted_users()));
+}
+
+async fn sync_deleted_users() {
+    let (deleted_users, test_mode) = read_state(|state| {
+        (
+            state.data.deleted_users.iter().map(|u| u.user_id).collect(),
+            state.data.test_mode,
+        )
     });
+
+    let local_group_indexes = if test_mode {
+        vec![CanisterId::from_text("sbhuw-gyaaa-aaaaf-bfynq-cai").unwrap()]
+    } else {
+        vec![
+            CanisterId::from_text("suaf3-hqaaa-aaaaf-bfyoa-cai").unwrap(),
+            CanisterId::from_text("ainth-qaaaa-aaaar-aaaba-cai").unwrap(),
+        ]
+    };
+
+    let args = local_group_index_canister::c2c_sync_deleted_users::Args { user_ids: deleted_users };
+
+    for canister_id in local_group_indexes {
+        let _ = local_group_index_canister_c2c_client::c2c_sync_deleted_users(canister_id, &args).await;
+    }
 }

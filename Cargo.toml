@@ -159,6 +159,7 @@ members = [
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
     "backend/tools/canister_upgrader",
+    "backend/tools/principal_generator",
     "backend/tools/translation_tool",
 ]
 resolver = "2"
@@ -176,6 +177,7 @@ canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev 
 ciborium = "0.2.2"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
+data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dirs = "5.0.1"
 dotenv = "0.15.0"

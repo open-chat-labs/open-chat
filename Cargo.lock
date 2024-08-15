@@ -2063,9 +2063,9 @@ dependencies = [
 
 [[package]]
 name = "data-encoding"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
+checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
 name = "data-encoding-macro"
@@ -6332,6 +6332,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "principal_generator"
+version = "0.1.0"
+dependencies = [
+ "data-encoding",
+ "ic_principal",
+]
+
+[[package]]
 name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8958,6 +8966,8 @@ dependencies = [
  "json",
  "jwt",
  "ledger_utils",
+ "local_group_index_canister",
+ "local_group_index_canister_c2c_client",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "modclub_canister",

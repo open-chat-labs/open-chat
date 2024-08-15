@@ -68,7 +68,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     volatile: Some(user.to_summary_volatile(now, now_month)),
                 });
                 // TODO maybe convert `deleted_users` to a HashMap?
-            } else if state.data.deleted_users.iter().any(|u| u.user_id == user_id) {
+            } else if state.data.users.is_deleted(&user_id) {
                 deleted.push(user_id)
             }
         }

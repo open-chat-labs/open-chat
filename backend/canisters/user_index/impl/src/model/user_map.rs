@@ -161,6 +161,10 @@ impl UserMap {
         Some(user)
     }
 
+    pub fn is_deleted(&self, user_id: &UserId) -> bool {
+        self.deleted_users.contains_key(user_id) && !self.users.contains_key(user_id)
+    }
+
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
         self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
     }
@@ -445,6 +449,10 @@ impl From<UserMapTrimmed> for UserMap {
                 user_map.unique_person_proofs_submitted += 1;
             }
         }
+
+        user_map
+            .suspended_or_unsuspended_users
+            .retain(|(_, u)| !user_map.deleted_users.contains_key(u));
 
         user_map
     }

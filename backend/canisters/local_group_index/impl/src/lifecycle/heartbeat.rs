@@ -76,6 +76,7 @@ mod upgrade_groups {
             deposit_cycles_if_needed,
             args: group_canister::post_upgrade::Args {
                 wasm_version: new_wasm_version,
+                deleted_users: state.data.deleted_users.clone(),
             },
             mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,
@@ -201,6 +202,7 @@ mod upgrade_communities {
             deposit_cycles_if_needed,
             args: community_canister::post_upgrade::Args {
                 wasm_version: new_wasm_version,
+                deleted_users: state.data.deleted_users.clone(),
             },
             mode: CanisterInstallMode::Upgrade(None),
             stop_start_canister: true,

@@ -53,7 +53,7 @@ import {
     getCachedUsers,
     getCachedDeletedUserIds,
     getSuspendedUsersSyncedUpTo,
-    setCachedDeletedUserIds,
+    // setCachedDeletedUserIds,
     setCachedUsers,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
@@ -164,7 +164,7 @@ export class UserIndexClient extends CandidService {
             fromCache,
         );
 
-        setCachedDeletedUserIds(apiResponse.deletedUserIds);
+        // setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
@@ -215,7 +215,7 @@ export class UserIndexClient extends CandidService {
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
-        cachedDeletedUserIds: Set<string>,
+        _cachedDeletedUserIds: Set<string>,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
@@ -226,7 +226,8 @@ export class UserIndexClient extends CandidService {
 
         // Add the users not found in the cache and ask for all updates
         const notFoundInCache = users.filter(
-            (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
+            // (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
+            (u) => !fromCacheSet.has(u),
         );
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
@@ -240,7 +241,7 @@ export class UserIndexClient extends CandidService {
             for (const [updatedSince, users] of fromCacheGrouped) {
                 args.userGroups.push({
                     users: users
-                        .filter((u) => !cachedDeletedUserIds.has(u.userId))
+                        // .filter((u) => !cachedDeletedUserIds.has(u.userId))
                         .map((u) => u.userId),
                     updatedSince,
                 });
