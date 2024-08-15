@@ -70,21 +70,26 @@ export abstract class CandidService {
     ): Promise<Out> {
         const payload = CandidService.prepareJsonArgs(args, requestValidator);
 
-        const { requestId, response } = await this.agent.call(this.canisterId, {
-            methodName: methodName + "_json",
-            arg: payload,
-        });
-        const canisterId = Principal.fromText(this.canisterId);
-        if (!response.ok || response.body) {
-            throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
+        try {
+            const { requestId, response } = await this.agent.call(this.canisterId, {
+                methodName: methodName + "_json",
+                arg: payload,
+            });
+            const canisterId = Principal.fromText(this.canisterId);
+            if (!response.ok || response.body) {
+                throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
+            }
+            const { reply } = await polling.pollForResponse(
+                this.agent,
+                canisterId,
+                requestId,
+                polling.defaultStrategy(),
+            );
+            return CandidService.processJsonResponse(reply, mapper, responseValidator);
+        } catch (err) {
+            console.log(err, args);
+            throw toCanisterResponseError(err as Error, this.identity);
         }
-        const { reply } = await polling.pollForResponse(
-            this.agent,
-            canisterId,
-            requestId,
-            polling.defaultStrategy(),
-        );
-        return CandidService.processJsonResponse(reply, mapper, responseValidator);
     }
 
     protected handleResponse<From, To>(
