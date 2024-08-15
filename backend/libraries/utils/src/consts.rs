@@ -16,6 +16,7 @@ pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 100_000_000_000; // 0.1T cycles
 pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 120_000_000_000; // 0.12T cycles
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+pub const DELETED_USER_ID: UserId = UserId::new(Principal::from_slice(&[139, 36, 200, 58, 72, 145, 241, 66, 97, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 pub const SNS_ROOT_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 23, 1, 1]);
@@ -53,6 +54,14 @@ mod tests {
         assert_eq!(
             OPENCHAT_BOT_USER_ID,
             UserId::new(Principal::from_text("zzyk3-openc-hatbo-tq7my-cai").unwrap())
+        );
+    }
+
+    #[test]
+    fn deleted_user_id() {
+        assert_eq!(
+            DELETED_USER_ID,
+            UserId::new(Principal::from_text("zzvcw-delet-eduse-r6fbg-cai").unwrap())
         );
     }
 

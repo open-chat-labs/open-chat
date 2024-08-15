@@ -112,7 +112,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
 }
 
 fn process_new_user(
-    caller: Principal,
+    principal: Principal,
     username: String,
     user_id: UserId,
     referred_by: Option<UserId>,
@@ -133,14 +133,14 @@ fn process_new_user(
     state
         .data
         .users
-        .register(caller, user_id, username.clone(), now, referred_by, UserType::User, None);
+        .register(principal, user_id, username.clone(), now, referred_by, UserType::User, None);
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
     state.push_event_to_all_local_user_indexes(
         LocalUserIndexEvent::UserRegistered(UserRegistered {
             user_id,
-            user_principal: caller,
+            user_principal: principal,
             username: username.clone(),
             user_type: UserType::User,
             referred_by,
@@ -181,7 +181,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     }
 
     state.data.storage_index_user_sync_queue.push(UserConfig {
-        user_id: caller,
+        user_id: principal,
         byte_limit: 100 * ONE_MB,
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
@@ -189,7 +189,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     state
         .data
         .identity_canister_user_sync_queue
-        .push_back((caller, Some(user_id)));
+        .push_back((principal, Some(user_id)));
     crate::jobs::sync_users_to_identity_canister::try_run_now(state);
 
     if let Some(referrer) = referred_by {
