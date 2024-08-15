@@ -87,47 +87,7 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
-type SerialisableWalletConfig = AutoWallet | SerialisableManualWallet;
-
-type SerialisableManualWallet = {
-    kind: "manual_wallet";
-    tokens: string[];
-};
-
-function deserialiseWalletConfig(walletStr: string | null): WalletConfig {
-    if (walletStr === null) return { kind: "auto_wallet", minDollarValue: 1 };
-    const intermediate = JSON.parse(walletStr) as SerialisableWalletConfig;
-    switch (intermediate.kind) {
-        case "auto_wallet":
-            return intermediate;
-        case "manual_wallet":
-            return {
-                kind: "manual_wallet",
-                tokens: new Set(intermediate.tokens),
-            };
-    }
-}
-
-function serialiseWalletConfig(config: WalletConfig): string {
-    switch (config.kind) {
-        case "auto_wallet":
-            return JSON.stringify(config);
-        case "manual_wallet":
-            return JSON.stringify({
-                ...config,
-                tokens: [...config.tokens],
-            });
-    }
-}
-
-export function saveWalletConfig(config: WalletConfig) {
-    localStorage.setItem("openchat_wallet_config", serialiseWalletConfig(config));
-    walletConfigStore.set(config);
-}
-
-export const walletConfigStore = writable<WalletConfig>(
-    deserialiseWalletConfig(localStorage.getItem("openchat_wallet_config")),
-);
+export const walletConfigStore = writable<WalletConfig>({ kind: "auto_wallet", minDollarValue: 1 });
 
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)

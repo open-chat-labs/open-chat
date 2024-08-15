@@ -151,7 +151,6 @@ import {
     exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
-    saveWalletConfig,
     walletConfigStore,
     walletTokensSorted,
 } from "./stores/crypto";
@@ -5564,6 +5563,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
+                chatsResponse.state.walletConfig,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -7473,13 +7473,11 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    setWalletConfig(walletConfig: WalletConfig): Promise<void> {
-        // TODO wait for a proper api
-        return new Promise((resolve) => {
-            saveWalletConfig(walletConfig);
-            setTimeout(() => {
-                resolve();
-            }, 1000);
+    setWalletConfig(config: WalletConfig): Promise<void> {
+        walletConfigStore.set(config);
+        return this.sendRequest({
+            kind: "configureWallet",
+            config,
         });
     }
 

@@ -12,12 +12,14 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    WalletConfig,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
 import { derived } from "svelte/store";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
+import { walletConfigStore } from "./crypto";
 
 export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -336,6 +338,7 @@ export function setGlobalState(
     pinnedChats: PinnedByScope,
     achievements: Set<Achievement>,
     chitState: ChitState,
+    walletConfig: WalletConfig,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -360,6 +363,7 @@ export function setGlobalState(
 
     globalStateStore.set(state);
     chitStateStore.set(chitState);
+    walletConfigStore.set(walletConfig);
 }
 
 function partitionChats(

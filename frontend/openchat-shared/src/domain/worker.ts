@@ -161,7 +161,12 @@ import type {
 } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
+import type {
+    AccountTransactionResult,
+    CryptocurrencyDetails,
+    TokenExchangeRates,
+    WalletConfig,
+} from "./crypto";
 import type { DexId } from "./dexes";
 import type {
     AuthenticationPrincipalsResponse,
@@ -390,7 +395,13 @@ export type WorkerRequest =
     | MarkAchievementsSeen
     | SubmitProofOfUniquePersonhood
     | LinkIdentities
-    | GetAuthenticationPrincipals;
+    | GetAuthenticationPrincipals
+    | ConfigureWallet;
+
+type ConfigureWallet = {
+    kind: "configureWallet";
+    config: WalletConfig;
+};
 
 type GetAuthenticationPrincipals = {
     kind: "getAuthenticationPrincipals";
@@ -2118,4 +2129,6 @@ export type WorkerResult<T> = T extends Init
     ? LinkIdentitiesResponse
     : T extends GetAuthenticationPrincipals
     ? AuthenticationPrincipalsResponse
+    : T extends ConfigureWallet
+    ? void
     : never;

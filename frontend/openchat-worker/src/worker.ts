@@ -1817,6 +1817,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "configureWallet":
+                executeThenReply(payload, correlationId, agent.configureWallet(payload.config));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
