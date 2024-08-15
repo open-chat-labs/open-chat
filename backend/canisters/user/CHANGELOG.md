@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Set/store user's wallet configuration ([#6242](https://github.com/open-chat-labs/open-chat/pull/6242))
+
 ### Changed
 
 - Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))

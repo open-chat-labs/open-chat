@@ -1,14 +1,14 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
-use airdrop_bot_canister::set_airdrop;
+use airdrop_bot_canister::{set_airdrop, AirdropAlgorithm, V1Algorithm};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{AccessGate, ChatEvent, CryptoContent, EventIndex, GroupRole, Message, MessageContent, UserId};
 use utils::time::MonthKey;
 
 #[test]
-fn airdrop_end_to_end() {
+fn airdrop_v1_end_to_end() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -85,10 +85,12 @@ fn airdrop_end_to_end() {
             community_id,
             channel_id,
             start: start_airdrop,
-            main_chat_fund: 5_500_000_000_000,
-            main_chit_band: 500,
-            lottery_prizes: vec![1_200_000_000_000, 500_000_000_000, 300_000_000_000],
-            lottery_chit_band: 500,
+            algorithm: AirdropAlgorithm::V1(V1Algorithm {
+                main_chat_fund: 5_500_000_000_000,
+                main_chit_band: 500,
+                lottery_prizes: vec![1_200_000_000_000, 500_000_000_000, 300_000_000_000],
+                lottery_chit_band: 500,
+            }),
         },
     );
 
