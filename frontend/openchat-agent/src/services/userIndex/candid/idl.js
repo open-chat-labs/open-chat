@@ -34,14 +34,6 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
   });
-  const ChitBalancesArgs = IDL.Record({
-    'month' : IDL.Nat8,
-    'year' : IDL.Nat16,
-    'users' : IDL.Vec(UserId),
-  });
-  const ChitBalancesResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'balances' : IDL.Vec(IDL.Int32) }),
-  });
   const EmptyArgs = IDL.Record({});
   const ChitUserBalance = IDL.Record({
     'username' : IDL.Text,
@@ -401,6 +393,15 @@ export const idlFactory = ({ IDL }) => {
       'current_user' : IDL.Opt(CurrentUserSummary),
     }),
   });
+  const UsersChitArgs = IDL.Record({
+    'month' : IDL.Nat8,
+    'year' : IDL.Nat16,
+    'users' : IDL.Vec(UserId),
+  });
+  const Chit = IDL.Record({ 'streak' : IDL.Nat16, 'balance' : IDL.Int32 });
+  const UsersChitResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'chit' : IDL.Vec(Chit) }),
+  });
   return IDL.Service({
     'add_platform_moderator' : IDL.Func(
         [AddPlatformModeratorArgs],
@@ -425,11 +426,6 @@ export const idlFactory = ({ IDL }) => {
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
-        ['query'],
-      ),
-    'chit_balances' : IDL.Func(
-        [ChitBalancesArgs],
-        [ChitBalancesResponse],
         ['query'],
       ),
     'chit_leaderboard' : IDL.Func(
@@ -544,6 +540,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
+    'users_chit' : IDL.Func([UsersChitArgs], [UsersChitResponse], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

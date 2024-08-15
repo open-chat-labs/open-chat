@@ -170,6 +170,7 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface AutoWallet { 'min_cents_visible' : number }
 export interface AvatarChanged {
   'changed_by' : UserId,
   'previous_avatar' : [] | [bigint],
@@ -364,6 +365,7 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
+export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
   'amount' : number,
@@ -550,6 +552,8 @@ export type CompletedCryptoTransaction = {
   } |
   { 'ICRC1' : Icrc1CompletedCryptoTransaction } |
   { 'ICRC2' : Icrc2CompletedCryptoTransaction };
+export interface ConfigureWalletArgs { 'config' : WalletConfig }
+export type ConfigureWalletResponse = { 'Success' : null };
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
 export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
@@ -1349,6 +1353,7 @@ export type InitialStateResponse = {
       'pin_number_settings' : [] | [PinNumberSettings],
       'communities' : CommunitiesInitial,
       'total_chit_earned' : number,
+      'wallet_config' : WalletConfig,
       'blocked_users' : Array<UserId>,
       'is_unique_person' : boolean,
       'next_daily_claim' : TimestampMillis,
@@ -1408,6 +1413,7 @@ export interface ManageFavouriteChatsArgs {
 }
 export type ManageFavouriteChatsResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface ManualWallet { 'tokens' : Array<CanisterId> }
 export interface MarkAchievementsSeenArgs { 'last_seen' : TimestampMillis }
 export type MarkAchievementsSeenResponse = { 'Success' : null };
 export interface MarkReadArgs {
@@ -2384,6 +2390,7 @@ export type UpdatesResponse = {
       'communities' : CommunitiesUpdates,
       'username' : [] | [string],
       'total_chit_earned' : number,
+      'wallet_config' : [] | [WalletConfig],
       'blocked_users' : [] | [Array<UserId>],
       'is_unique_person' : [] | [boolean],
       'next_daily_claim' : TimestampMillis,
@@ -2557,6 +2564,8 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
+export type WalletConfig = { 'Auto' : AutoWallet } |
+  { 'Manual' : ManualWallet };
 export interface WithdrawCryptoArgs {
   'pin' : [] | [string],
   'withdrawal' : PendingCryptoTransaction,
@@ -2593,6 +2602,10 @@ export interface _SERVICE {
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'chit_events' : ActorMethod<[ChitEventsArgs], ChitEventsResponse>,
   'claim_daily_chit' : ActorMethod<[EmptyArgs], ClaimDailyChitResponse>,
+  'configure_wallet' : ActorMethod<
+    [ConfigureWalletArgs],
+    ConfigureWalletResponse
+  >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],

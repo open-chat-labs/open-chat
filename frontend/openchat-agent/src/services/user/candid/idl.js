@@ -249,6 +249,14 @@ export const idlFactory = ({ IDL }) => {
       'next_claim' : TimestampMillis,
     }),
   });
+  const AutoWallet = IDL.Record({ 'min_cents_visible' : IDL.Nat32 });
+  const ManualWallet = IDL.Record({ 'tokens' : IDL.Vec(CanisterId) });
+  const WalletConfig = IDL.Variant({
+    'Auto' : AutoWallet,
+    'Manual' : ManualWallet,
+  });
+  const ConfigureWalletArgs = IDL.Record({ 'config' : WalletConfig });
+  const ConfigureWalletResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -1330,6 +1338,7 @@ export const idlFactory = ({ IDL }) => {
       'pin_number_settings' : IDL.Opt(PinNumberSettings),
       'communities' : CommunitiesInitial,
       'total_chit_earned' : IDL.Int32,
+      'wallet_config' : WalletConfig,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
       'next_daily_claim' : TimestampMillis,
@@ -1984,6 +1993,7 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesUpdates,
       'username' : IDL.Opt(IDL.Text),
       'total_chit_earned' : IDL.Int32,
+      'wallet_config' : IDL.Opt(WalletConfig),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
       'next_daily_claim' : TimestampMillis,
@@ -2048,6 +2058,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'chit_events' : IDL.Func([ChitEventsArgs], [ChitEventsResponse], ['query']),
     'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
+    'configure_wallet' : IDL.Func(
+        [ConfigureWalletArgs],
+        [ConfigureWalletResponse],
+        [],
+      ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_community' : IDL.Func(
         [CreateCommunityArgs],

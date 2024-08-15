@@ -290,14 +290,7 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
-export interface ChitBalancesArgs {
-  'month' : number,
-  'year' : number,
-  'users' : Array<UserId>,
-}
-export type ChitBalancesResponse = {
-    'Success' : { 'balances' : Int32Array | number[] }
-  };
+export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
   'amount' : number,
@@ -1869,6 +1862,12 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersChitArgs {
+  'month' : number,
+  'year' : number,
+  'users' : Array<UserId>,
+}
+export type UsersChitResponse = { 'Success' : { 'chit' : Array<Chit> } };
 export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
@@ -1963,7 +1962,6 @@ export interface _SERVICE {
     AssignPlatformModeratorsGroupResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'chit_balances' : ActorMethod<[ChitBalancesArgs], ChitBalancesResponse>,
   'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<
@@ -2040,6 +2038,7 @@ export interface _SERVICE {
     UserRegistrationCanisterResponse
   >,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
+  'users_chit' : ActorMethod<[UsersChitArgs], UsersChitResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
