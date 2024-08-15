@@ -78,25 +78,33 @@ impl GroupChatCore {
             self.invited_users.remove(&invited, now);
         }
 
-        fn overwrite_if_deleted(user_id: &mut UserId, deleted_users: &HashSet<UserId>) {
+        fn overwrite_if_deleted(user_id: &mut UserId, deleted_users: &HashSet<UserId>) -> bool {
             if deleted_users.contains(user_id) {
                 *user_id = DELETED_USER_ID;
+                true
+            } else {
+                false
             }
         }
 
         for event in self.events.iter_all_events_mut().filter(|e| e.timestamp < cutoff) {
             match &mut event.event {
                 ChatEventInternal::Message(m) => {
-                    overwrite_if_deleted(&mut m.sender, deleted_users);
-                    let deleted_by = DeletedByInternal {
-                        deleted_by: DELETED_USER_ID,
-                        timestamp: now,
-                    };
-                    m.deleted_by = Some(deleted_by.clone());
-                    m.content = MessageContentInternal::Deleted(deleted_by);
+                    if overwrite_if_deleted(&mut m.sender, deleted_users) {
+                        let deleted_by = DeletedByInternal {
+                            deleted_by: DELETED_USER_ID,
+                            timestamp: now,
+                        };
+                        m.deleted_by = Some(deleted_by.clone());
+                        m.content = MessageContentInternal::Deleted(deleted_by);
+                    }
                 }
-                ChatEventInternal::ParticipantJoined(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
-                ChatEventInternal::ParticipantLeft(p) => overwrite_if_deleted(&mut p.user_id, deleted_users),
+                ChatEventInternal::ParticipantJoined(p) => {
+                    overwrite_if_deleted(&mut p.user_id, deleted_users);
+                }
+                ChatEventInternal::ParticipantLeft(p) => {
+                    overwrite_if_deleted(&mut p.user_id, deleted_users);
+                }
                 ChatEventInternal::ParticipantsAdded(p) => {
                     overwrite_if_deleted(&mut p.added_by, deleted_users);
                     for user_id in p.user_ids.iter_mut() {
