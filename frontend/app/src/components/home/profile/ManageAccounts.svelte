@@ -105,7 +105,7 @@
                 config =
                     $walletConfig.kind === "auto_wallet"
                         ? $walletConfig
-                        : { kind: "auto_wallet", minDollarValue: 1 };
+                        : { kind: "auto_wallet", minDollarValue: 0 };
                 break;
             case "manual_wallet":
                 config =
