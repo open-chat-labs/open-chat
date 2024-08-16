@@ -247,6 +247,8 @@ struct Data {
     #[serde(default)]
     pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
 }
 
 impl Data {
@@ -262,6 +264,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         username: String,
         test_mode: bool,
+        referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> Data {
         Data {
@@ -310,6 +313,7 @@ impl Data {
             unique_person_proof: None,
             rng_seed: [0; 32],
             wallet_config: Timestamped::default(),
+            referred_by,
         }
     }
 

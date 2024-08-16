@@ -29,4 +29,9 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
     });
+
+    // TODO: Remove this after the next release
+    mutate_state(|state| {
+        state.data.referred_by = args.referred_by;
+    });
 }
