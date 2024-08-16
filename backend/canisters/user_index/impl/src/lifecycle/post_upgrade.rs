@@ -1,10 +1,12 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use local_user_index_canister::Event;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
@@ -23,5 +25,15 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(sync_referred_users()));
+
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+async fn sync_referred_users() {
+    mutate_state(|state| {
+        for referral in state.data.users.all_referrals() {
+            state.push_event_to_local_user_index(referral.referred, Event::ReferredBy(referral))
+        }
+    });
 }

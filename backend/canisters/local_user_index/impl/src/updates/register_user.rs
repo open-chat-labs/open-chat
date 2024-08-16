@@ -152,6 +152,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+    let referred_by = referral_code
+        .as_ref()
+        .and_then(|rc| if let ReferralCode::User(user_id) = rc { Some(user_id) } else { None })
+        .copied();
+
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,
@@ -164,6 +169,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         username: args.username.clone(),
         openchat_bot_messages,
         video_call_operators: state.data.video_call_operators.clone(),
+        referred_by,
         test_mode: state.data.test_mode,
     };
 

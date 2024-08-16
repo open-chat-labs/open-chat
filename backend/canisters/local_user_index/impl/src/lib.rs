@@ -291,6 +291,8 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    #[serde(default)]
+    pub user_referred_by: HashMap<UserId, UserId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -359,6 +361,7 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
+            user_referred_by: HashMap::new(),
         }
     }
 }

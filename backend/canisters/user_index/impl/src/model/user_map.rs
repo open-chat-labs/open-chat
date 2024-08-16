@@ -3,6 +3,7 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
+use local_user_index_canister::ReferredBy;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
@@ -318,6 +319,18 @@ impl UserMap {
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
+    }
+
+    pub fn all_referrals(&self) -> Vec<ReferredBy> {
+        self.user_referrals
+            .iter()
+            .flat_map(|(referrer, referred_list)| {
+                referred_list.iter().map(|referred| ReferredBy {
+                    referred_by: *referrer,
+                    referred: *referred,
+                })
+            })
+            .collect()
     }
 
     pub fn mark_suspected_bot(&mut self, principal: &Principal) {

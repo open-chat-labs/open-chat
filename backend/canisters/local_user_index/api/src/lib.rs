@@ -37,6 +37,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
+    ReferredBy(ReferredBy),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -155,6 +156,12 @@ pub struct ReferralCodeAdded {
 pub struct DeleteUser {
     pub user_id: UserId,
     pub triggered_by_user: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ReferredBy {
+    pub referred_by: UserId,
+    pub referred: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

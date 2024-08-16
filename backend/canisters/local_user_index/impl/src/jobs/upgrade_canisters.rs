@@ -76,6 +76,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let current_wasm_version = user.wasm_version;
     let new_wasm_version = user_canister_wasm.wasm.version;
     let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
+    let referred_by = state.data.user_referred_by.get(&user_id).copied();
 
     if current_wasm_version == new_wasm_version && !force {
         return None;
@@ -98,6 +99,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
         },
         deposit_cycles_if_needed,
         args: user_canister::post_upgrade::Args {
+            referred_by,
             wasm_version: new_wasm_version,
         },
         mode: CanisterInstallMode::Upgrade(None),
