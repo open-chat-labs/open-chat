@@ -53,4 +53,8 @@ impl InvitedUsers {
     pub fn is_empty(&self) -> bool {
         self.users.is_empty()
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &UserInvitation> {
+        self.users.values()
+    }
 }

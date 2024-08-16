@@ -451,6 +451,10 @@ impl From<UserMapTrimmed> for UserMap {
         }
 
         user_map
+            .suspended_or_unsuspended_users
+            .retain(|(_, u)| !user_map.deleted_users.contains_key(u));
+
+        user_map
     }
 }
 

@@ -7,7 +7,6 @@ pub mod platform_moderators;
 pub mod platform_moderators_group;
 pub mod platform_operators;
 pub mod public_key;
-pub mod referral_leaderboard;
 pub mod referral_metrics;
 pub mod reported_messages;
 pub mod search;
