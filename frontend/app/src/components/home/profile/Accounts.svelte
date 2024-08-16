@@ -101,8 +101,8 @@
         actionMode = "transactions";
     }
 
-    function removeFromWallet(symbol: string) {
-        client.removeTokenFromWallet(symbol);
+    function removeFromWallet(ledger: string) {
+        client.removeTokenFromWallet(ledger);
     }
 </script>
 
@@ -218,7 +218,7 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
-                                <MenuItem on:click={() => removeFromWallet(token.symbol)}>
+                                <MenuItem on:click={() => removeFromWallet(token.ledger)}>
                                     <HeartRemoveOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}

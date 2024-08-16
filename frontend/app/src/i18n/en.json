@@ -288,6 +288,7 @@
         "manualInfo": "Organise your wallet manually by selected exactly the tokens that you want to see",
         "minDollarPlaceholder": "Minimum dollar balance",
         "configureWallet": "Configure you wallet",
+        "configureWalletFailure": "Sorry we were unable to save your wallet config",
         "receive": "Receive",
         "receiveToken": "Receive {symbol}",
         "remove": "Remove from wallet",

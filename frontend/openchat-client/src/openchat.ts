@@ -7464,21 +7464,23 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    removeTokenFromWallet(symbol: string) {
+    removeTokenFromWallet(ledger: string) {
         const config = get(walletConfigStore);
         if (config.kind === "manual_wallet") {
-            if (config.tokens.delete(symbol)) {
+            if (config.tokens.delete(ledger)) {
                 return this.setWalletConfig(config);
             }
         }
     }
 
-    setWalletConfig(config: WalletConfig): Promise<void> {
+    setWalletConfig(config: WalletConfig): Promise<boolean> {
         walletConfigStore.set(config);
         return this.sendRequest({
             kind: "configureWallet",
             config,
-        });
+        })
+            .then(() => true)
+            .catch(() => false);
     }
 
     /**

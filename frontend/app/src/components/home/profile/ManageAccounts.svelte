@@ -16,6 +16,7 @@
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
+    import { toastStore } from "../../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -24,6 +25,7 @@
 
     let searchTerm = "";
     let searching = false;
+    let dirty = false;
 
     $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
     $: walletConfig = client.walletConfigStore;
@@ -34,11 +36,9 @@
     $: filteredTokens = $accountsSorted.filter(
         (token) =>
             searchTermLower === "" ||
-            token.name.toLowerCase().startsWith(searchTermLower) ||
-            token.symbol.toLowerCase().startsWith(searchTermLower),
+            token.name.toLowerCase().includes(searchTermLower) ||
+            token.symbol.toLowerCase().includes(searchTermLower),
     );
-
-    $: console.log("Wallet config: ", $walletConfig);
 
     let config: WalletConfig = { ...$walletConfig };
 
@@ -46,7 +46,15 @@
         config = { ...$walletConfig };
 
         return () => {
-            client.setWalletConfig(config);
+            if (dirty) {
+                client.setWalletConfig(config).then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast(
+                            i18nKey("cryptoAccount.configureWalletFailure"),
+                        );
+                    }
+                });
+            }
         };
     });
 
@@ -69,32 +77,34 @@
                 config.tokens.add(ledger);
             }
             config = config;
+            dirty = true;
         }
     }
 
     function toggleMode() {
         if (config.kind === "auto_wallet") {
-            config =
-                $walletConfig.kind === "manual_wallet"
-                    ? $walletConfig
-                    : { kind: "manual_wallet", tokens: defaultLedgers };
+            selectMode("manual_wallet");
         } else {
-            config =
-                $walletConfig.kind === "auto_wallet"
-                    ? $walletConfig
-                    : { kind: "auto_wallet", minDollarValue: 1 };
+            selectMode("auto_wallet");
         }
     }
 
     function selectMode(kind: WalletConfig["kind"]) {
         switch (kind) {
             case "auto_wallet":
-                config = { kind: "auto_wallet", minDollarValue: 1 };
+                config =
+                    $walletConfig.kind === "auto_wallet"
+                        ? $walletConfig
+                        : { kind: "auto_wallet", minDollarValue: 1 };
                 break;
             case "manual_wallet":
-                config = { kind: "manual_wallet", tokens: new Set(DEFAULT_TOKENS) };
+                config =
+                    $walletConfig.kind === "manual_wallet"
+                        ? $walletConfig
+                        : { kind: "manual_wallet", tokens: defaultLedgers };
                 break;
         }
+        dirty = true;
     }
 </script>
 
