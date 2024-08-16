@@ -58,7 +58,7 @@
             },
             {} as Record<string, string>,
         );
-        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]));
+        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]).filter((l) => l !== undefined));
     }
 
     function toggle(ledger: string) {
@@ -74,9 +74,15 @@
 
     function toggleMode() {
         if (config.kind === "auto_wallet") {
-            config = { kind: "manual_wallet", tokens: defaultLedgers };
+            config =
+                $walletConfig.kind === "manual_wallet"
+                    ? $walletConfig
+                    : { kind: "manual_wallet", tokens: defaultLedgers };
         } else {
-            config = { kind: "auto_wallet", minDollarValue: 1 };
+            config =
+                $walletConfig.kind === "auto_wallet"
+                    ? $walletConfig
+                    : { kind: "auto_wallet", minDollarValue: 1 };
         }
     }
 
@@ -204,7 +210,7 @@
     }
 
     .auto-mode {
-        margin-bottom: 380px;
+        margin-bottom: 400px;
     }
 
     .token-selection {
