@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -36,27 +36,5 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
-    });
-
-    mutate_state(|state| {
-        let now = state.env.now();
-        let cutoff = 1709251200000; // 1st March 2024
-        for channel in state.data.channels.iter_mut() {
-            channel.chat.process_deleted_users(&args.deleted_users, now);
-        }
-        let mut invites_to_remove = Vec::new();
-        for (user_id, invitation) in state.data.invited_users.iter() {
-            if invitation.timestamp < cutoff && args.deleted_users.contains(user_id) {
-                invites_to_remove.push(*user_id);
-            }
-        }
-        for invited in invites_to_remove {
-            state.data.invited_users.remove(&invited, now);
-        }
-        for blocked in state.data.members.blocked() {
-            if args.deleted_users.contains(&blocked) {
-                state.data.members.unblock(&blocked);
-            }
-        }
     });
 }
