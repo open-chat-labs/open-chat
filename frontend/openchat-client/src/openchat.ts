@@ -7465,7 +7465,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeTokenFromWallet(ledger: string) {
-        const config = get(walletConfigStore);
+        const config = this._liveState.walletConfig;
         if (config.kind === "manual_wallet") {
             if (config.tokens.delete(ledger)) {
                 return this.setWalletConfig(config);
