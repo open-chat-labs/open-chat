@@ -10,8 +10,8 @@ pub async fn process_transaction(
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let args = TransferFromArgs {
         spender_subaccount: None,
-        from: transaction.from,
-        to: transaction.to,
+        from: transaction.from.into(),
+        to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
         created_at_time: Some(transaction.created),
         memo: transaction.memo.clone(),

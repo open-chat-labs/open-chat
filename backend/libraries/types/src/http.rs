@@ -11,14 +11,16 @@ pub struct HttpRequest {
     pub method: String,
     pub url: String,
     pub headers: Vec<(String, String)>,
-    pub body: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub body: Vec<u8>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct HttpResponse {
     pub status_code: u16,
     pub headers: Vec<HeaderField>,
-    pub body: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub body: Vec<u8>,
     pub streaming_strategy: Option<StreamingStrategy>,
 }
 
@@ -41,7 +43,8 @@ pub enum StreamingStrategy {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct StreamingCallbackHttpResponse {
-    pub body: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub body: Vec<u8>,
     pub token: Option<Token>,
 }
 
@@ -60,7 +63,7 @@ impl HttpResponse {
         HttpResponse {
             status_code: code,
             headers: Vec::new(),
-            body: ByteBuf::default(),
+            body: Vec::new(),
             streaming_strategy: None,
         }
     }
@@ -92,7 +95,7 @@ impl HttpResponse {
         HttpResponse {
             status_code,
             headers,
-            body: ByteBuf::default(),
+            body: Vec::new(),
             streaming_strategy: None,
         }
     }

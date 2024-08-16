@@ -2,10 +2,9 @@ use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
-use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
@@ -20,7 +19,7 @@ use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
     let Some(user_id) = read_state(|state| {
@@ -178,7 +177,7 @@ fn process_charge(
                 amount: amount_to_referrer,
                 currency: args.token.clone(),
                 timestamp: now_nanos,
-                recipient_account: Account::from(Principal::from(share_with)),
+                recipient_account: share_with.into(),
                 memo: state.env.rng().gen(),
                 reason: PendingPaymentReason::ReferralReward,
             };

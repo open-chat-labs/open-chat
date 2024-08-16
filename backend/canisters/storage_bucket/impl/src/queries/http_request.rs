@@ -2,7 +2,6 @@ use crate::{calc_chunk_count, read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use num_traits::cast::ToPrimitive;
-use serde_bytes::ByteBuf;
 use std::cmp::min;
 use types::{
     CallbackFunc, FileId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy,
@@ -94,12 +93,12 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
     }
 
     StreamingCallbackHttpResponse {
-        body: ByteBuf::new(),
+        body: Vec::new(),
         token: None,
     }
 }
 
-fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (ByteBuf, bool) {
+fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (Vec<u8>, bool) {
     let total_size = blob_bytes.len();
     let total_chunks = calc_chunk_count(BLOB_RESPONSE_CHUNK_SIZE_BYTES, total_size as u64);
     let last_chunk_index = total_chunks - 1;
@@ -115,7 +114,7 @@ fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (ByteBuf, bool) {
     blob_bytes.drain(end..);
     blob_bytes.drain(0..start);
 
-    (ByteBuf::from(blob_bytes), stream_next_chunk)
+    (blob_bytes, stream_next_chunk)
 }
 
 fn build_token(blob_id: u128, index: u32) -> Token {

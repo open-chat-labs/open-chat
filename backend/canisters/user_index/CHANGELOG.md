@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `bot_config` to bot users ([#6220](https://github.com/open-chat-labs/open-chat/pull/6220))
+- Expose JSON versions of UserIndex APIs + generate Typescript bindings ([#6225](https://github.com/open-chat-labs/open-chat/pull/6225))
 
 ### Removed
 

@@ -1,5 +1,6 @@
 use crate::default_ledger_account;
-use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
+use ic_ledger_types::{Memo, Timestamp, TransferArgs};
+use types::nns::Tokens;
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 
 pub async fn process_transaction(
@@ -7,7 +8,7 @@ pub async fn process_transaction(
     sender: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let memo = transaction.memo.unwrap_or(Memo(0));
-    let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
+    let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
     let from = default_ledger_account(sender);
     let to = match transaction.to {
@@ -17,8 +18,8 @@ pub async fn process_transaction(
 
     let transfer_args = TransferArgs {
         memo,
-        amount: transaction.amount,
-        fee,
+        amount: transaction.amount.into(),
+        fee: fee.into(),
         from_subaccount: None,
         to,
         created_at_time: Some(Timestamp {

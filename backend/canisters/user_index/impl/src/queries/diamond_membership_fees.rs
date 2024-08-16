@@ -1,10 +1,9 @@
-use ic_cdk::query;
+use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use types::Cryptocurrency;
 use user_index_canister::diamond_membership_fees::{Response::*, *};
 
-use crate::{read_state, RuntimeState};
-
-#[query]
+#[query(candid = true, json = true)]
 fn diamond_membership_fees(_args: Args) -> Response {
     read_state(diamond_membership_fees_impl)
 }

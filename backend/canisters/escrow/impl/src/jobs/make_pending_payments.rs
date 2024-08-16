@@ -3,13 +3,12 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use escrow_canister::{deposit_subaccount, SwapStatus};
 use ic_cdk_timers::TimerId;
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::icrc1::CompletedCryptoTransaction;
+use types::icrc1::{Account, CompletedCryptoTransaction};
 use utils::time::NANOS_PER_MILLISECOND;
 
 thread_local! {
@@ -65,7 +64,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                             subaccount: args.from_subaccount,
                         }
                         .into(),
-                        to: Account::from(Principal::from(pending_payment.user_id)).into(),
+                        to: Account::from(pending_payment.user_id).into(),
                         fee: pending_payment.token_info.fee,
                         memo: None,
                         created: created_at_time,
