@@ -24,7 +24,7 @@ pub struct DeletedGroupInfoInternal {
     pub community_imported_into: Option<CommunityImportedInto>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, TS)]
 pub struct DeletedCommunityInfo {
     pub id: CommunityId,
     pub timestamp: TimestampMillis,

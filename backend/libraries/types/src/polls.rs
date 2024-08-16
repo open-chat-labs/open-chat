@@ -6,8 +6,10 @@ use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct PollConfig {
+    #[ts(optional)]
     pub text: Option<String>,
     pub options: Vec<String>,
+    #[ts(optional)]
     pub end_date: Option<TimestampMillis>,
     pub anonymous: bool,
     pub show_votes_before_end_date: bool,

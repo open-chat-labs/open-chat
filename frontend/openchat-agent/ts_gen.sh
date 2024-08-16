@@ -15,7 +15,7 @@ for filename in $(find ./tsBindings -name '*.ts'); do
     cat $filename | while read line
     do
         if [[ $line == export* ]]; then
-            echo $line | sed s/null/undefined/g >> $mergedFile
+            echo $line >> $mergedFile
         fi
     done
 done
