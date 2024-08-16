@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
 ## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13
 
 ### Added
