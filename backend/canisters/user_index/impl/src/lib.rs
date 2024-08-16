@@ -1,7 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -311,7 +310,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -388,7 +386,6 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -514,7 +511,6 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),

@@ -7,6 +7,7 @@ use event_store_utils::EventDeduper;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
@@ -49,6 +50,11 @@ impl RuntimeState {
     pub fn is_caller_group_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_index_canister_id == caller
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
     }
 
     pub fn is_caller_local_group_canister(&self) -> bool {
@@ -109,6 +115,7 @@ impl RuntimeState {
             },
             group_upgrades_failed: group_upgrades_metrics.failed,
             community_upgrades_failed: community_upgrades_metrics.failed,
+            deleted_users: self.data.deleted_users.len() as u32,
         }
     }
 }
@@ -143,6 +150,8 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
+    #[serde(default)]
+    pub deleted_users: HashSet<UserId>,
     pub rng_seed: [u8; 32],
 }
 
@@ -196,6 +205,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
+            deleted_users: HashSet::new(),
         }
     }
 }
@@ -228,6 +238,7 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub deleted_users: u32,
 }
 
 #[derive(Serialize, Debug)]

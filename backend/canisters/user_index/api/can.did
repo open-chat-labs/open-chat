@@ -313,23 +313,6 @@ type ReferralMetricsResponse = variant {
     };
 };
 
-type ReferralLeaderboardArgs = record {
-    filter : opt variant {
-        Month : record { year : nat32; month : nat8 };
-        CurrentMonth;
-    };
-    count : nat32;
-};
-
-type ReferralLeaderboardResponse = variant {
-    AllTime : vec ReferralStats;
-    Month : record {
-        year : nat32;
-        month : nat8;
-        results : vec ReferralStats;
-    };
-};
-
 type ReferralStats = record {
     user_id : UserId;
     username : text;
@@ -431,7 +414,6 @@ service : {
     submit_proof_of_unique_personhood : (SubmitProofOfUniquePersonhoodArgs) -> (SubmitProofOfUniquePersonhoodResponse);
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
-    referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators

@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
 - Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
 
+### Removed
+
+- Remove code to flag empty and dormant users for deletion ([#6246](https://github.com/open-chat-labs/open-chat/pull/6246))
+
 ## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
 
 ### Added

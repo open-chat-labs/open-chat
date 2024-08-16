@@ -10,7 +10,6 @@ fn main() {
     generate_candid_method!(user_index, platform_moderators_group, query);
     generate_candid_method!(user_index, platform_operators, query);
     generate_candid_method!(user_index, public_key, query);
-    generate_candid_method!(user_index, referral_leaderboard, query);
     generate_candid_method!(user_index, referral_metrics, query);
     generate_candid_method!(user_index, reported_messages, query);
     generate_candid_method!(user_index, search, query);
