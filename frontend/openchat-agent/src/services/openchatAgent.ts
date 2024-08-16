@@ -143,8 +143,6 @@ import type {
     UpdateMarketMakerConfigResponse,
     ProposalVoteDetails,
     SetMessageReminderResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
     AccessGate,
@@ -3032,10 +3030,6 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(false);
 
         return this.userClient.cancelMessageReminder(reminderId);
-    }
-
-    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this._userIndexClient.getReferralLeaderboard(req);
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {

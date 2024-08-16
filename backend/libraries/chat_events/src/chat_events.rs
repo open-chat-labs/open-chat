@@ -14,14 +14,14 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
-    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VoteOperation,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompletedEventPayload,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
+    VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -42,26 +42,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    // TODO remove this
-    pub fn iter_all_events_mut(&mut self) -> impl Iterator<Item = &mut EventWrapperInternal<ChatEventInternal>> {
-        self.main
-            .iter_events_mut()
-            .chain(self.threads.values_mut().flat_map(|t| t.iter_events_mut()))
-    }
-
-    pub fn mark_video_call_ended_if_message_deleted(&mut self, now: TimestampMillis) {
-        if let Some(message_index) = self.video_call_in_progress.value.as_ref().map(|v| v.message_index) {
-            let is_deleted = self
-                .main_events_reader()
-                .message_internal(message_index.into())
-                .map_or(true, |m| m.deleted_by.is_some());
-
-            if is_deleted {
-                self.video_call_in_progress = Timestamped::new(None, now);
-            }
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,

@@ -333,8 +333,6 @@ import type {
     ProposalVoteDetails,
     MessageReminderCreatedContent,
     InviteUsersResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     CommunityPermissions,
     CommunitySummary,
     CreateCommunityResponse,
@@ -6069,10 +6067,6 @@ export class OpenChat extends OpenChatAgentWorker {
         config: UpdateMarketMakerConfigArgs,
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.sendRequest({ kind: "updateMarketMakerConfig", ...config });
-    }
-
-    getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this.sendRequest({ kind: "getReferralLeaderboard", args });
     }
 
     displayName(user?: UserSummary): string {

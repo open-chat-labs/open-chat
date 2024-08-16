@@ -1036,9 +1036,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.10.8"
+version = "0.10.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd5902d37352dffd8bd9177a2daa6444ce3cd0279c91763fb0171c053aa04335"
+checksum = "6c30ee7f886f296b6422c0ff017e89dd4f831521dfdcc76f3f71aae1ce817222"
 dependencies = [
  "anyhow",
  "binread",
@@ -4327,14 +4327,14 @@ dependencies = [
 [[package]]
 name = "ic_principal"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1762deb6f7c8d8c2bdee4b6c5a47b60195b74e9b5280faa5ba29692f8e17429c"
+source = "git+https://github.com/hpeebles/candid?rev=e404498843bdc83df29745956e64f3d2e1f425bc#e404498843bdc83df29745956e64f3d2e1f425bc"
 dependencies = [
  "crc32fast",
  "data-encoding",
  "serde",
  "sha2 0.10.8",
  "thiserror",
+ "ts-rs",
 ]
 
 [[package]]
@@ -4907,6 +4907,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "406cda4b368d531c842222cf9d2600a9a4acce8d29423695379c6868a143a9ee"
 dependencies = [
  "wasm-bindgen",
+]
+
+[[package]]
+name = "json"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -8629,6 +8637,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
+name = "ts-rs"
+version = "9.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b44017f9f875786e543595076374b9ef7d13465a518dd93d6ccdbf5b432dde8c"
+dependencies = [
+ "thiserror",
+ "ts-rs-macros",
+]
+
+[[package]]
+name = "ts-rs-macros"
+version = "9.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c88cc88fd23b5a04528f3a8436024f20010a16ec18eb23c164b1242f65860130"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+ "termcolor",
+]
+
+[[package]]
+name = "ts_gen"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "ttf-parser"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8653,11 +8692,14 @@ dependencies = [
  "candid",
  "getrandom 0.2.15",
  "ic-ledger-types",
+ "ic_principal",
  "icrc-ledger-types",
  "rand 0.8.5",
  "range-set",
  "serde",
  "serde_bytes",
+ "serde_json",
+ "ts-rs",
 ]
 
 [[package]]
@@ -8861,6 +8903,8 @@ dependencies = [
  "modclub_canister",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_gen",
  "types",
 ]
 
@@ -8919,6 +8963,7 @@ dependencies = [
  "identity_canister",
  "identity_canister_c2c_client",
  "itertools 0.13.0",
+ "json",
  "jwt",
  "ledger_utils",
  "local_group_index_canister",

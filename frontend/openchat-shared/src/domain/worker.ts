@@ -99,8 +99,6 @@ import type {
     DiamondMembershipFees,
     PayForDiamondMembershipResponse,
     SetMessageReminderResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
     SetDisplayNameResponse,
@@ -315,7 +313,6 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
-    | ReferralLeaderboard
     | ReportMessage
     | DeclineInvitation
     | AddMembersToChannel
@@ -598,11 +595,6 @@ type ExploreChannels = {
 type GetCommunitySummary = {
     communityId: string;
     kind: "getCommunitySummary";
-};
-
-type ReferralLeaderboard = {
-    args?: ReferralLeaderboardRange;
-    kind: "getReferralLeaderboard";
 };
 
 type SetCachedMessageFromNotification = {
@@ -1394,7 +1386,6 @@ export type WorkerResponseInner =
     | ClaimPrizeResponse
     | UpdateMarketMakerConfigResponse
     | SetMessageReminderResponse
-    | ReferralLeaderboardResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
     | ToggleMuteCommunityNotificationsResponse
@@ -1977,8 +1968,6 @@ export type WorkerResult<T> = T extends Init
     ? SetMessageReminderResponse
     : T extends CancelMessageReminder
     ? boolean
-    : T extends ReferralLeaderboard
-    ? ReferralLeaderboardResponse
     : T extends ReportMessage
     ? boolean
     : T extends ApproveTransfer

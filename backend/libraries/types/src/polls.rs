@@ -2,8 +2,9 @@ use crate::{TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct PollConfig {
     pub text: Option<String>,
     pub options: Vec<String>,
@@ -14,7 +15,7 @@ pub struct PollConfig {
     pub allow_user_to_change_vote: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct PollVotes {
     pub total: TotalVotes,
     pub user: Vec<u32>,
@@ -46,14 +47,14 @@ impl PollConfig {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub enum TotalVotes {
     Visible(HashMap<u32, Vec<UserId>>),
     Anonymous(HashMap<u32, u32>),
     Hidden(u32),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, TS)]
 pub enum VoteOperation {
     RegisterVote,
     DeleteVote,
@@ -63,7 +64,7 @@ const MIN_POLL_OPTIONS: usize = 2;
 const MAX_POLL_OPTIONS: usize = 10;
 const MAX_POLL_OPTION_LENGTH: usize = 100;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub enum InvalidPollReason {
     TooFewOptions(u32),
     TooManyOptions(u32),

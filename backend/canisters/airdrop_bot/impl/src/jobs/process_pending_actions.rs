@@ -1,14 +1,12 @@
 use crate::model::pending_actions_queue::{Action, AirdropMessage, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
 use crate::{mutate_state, read_state, RuntimeState, USERNAME};
-use candid::Principal;
 use ic_cdk_timers::TimerId;
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info, trace};
-use types::icrc1::{self};
+use types::icrc1::{self, Account};
 use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
     Cryptocurrency, MessageContentInitial,
@@ -125,7 +123,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
     });
 
     let token = Cryptocurrency::CHAT;
-    let to = Account::from(Principal::from(action.recipient));
+    let to = Account::from(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,
@@ -133,7 +131,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
 
     let args = TransferArg {
         from_subaccount: None,
-        to,
+        to: to.into(),
         fee: token.fee().map(|f| f.into()),
         created_at_time: Some(now_nanos),
         memo: Some(memo.to_vec().into()),

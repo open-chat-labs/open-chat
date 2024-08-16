@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ts-to-zod": "^3.11.0"
+  }
+}

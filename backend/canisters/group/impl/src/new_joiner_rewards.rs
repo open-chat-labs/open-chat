@@ -4,7 +4,7 @@ use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::default_ledger_account;
 use rand::Rng;
 use tracing::error;
-use types::nns::CryptoAccount;
+use types::nns::{CryptoAccount, Tokens};
 use types::{nns, CanisterId, CompletedCryptoTransaction, Cryptocurrency, TimestampMillis, UserId, ICP};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -19,7 +19,7 @@ pub async fn process_new_joiner_reward(
 
     let transfer_args = TransferArgs {
         memo: Memo(0),
-        amount,
+        amount: amount.into(),
         fee: DEFAULT_FEE,
         from_subaccount: None,
         to,
@@ -39,7 +39,7 @@ pub async fn process_new_joiner_reward(
                         ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
                         token: Cryptocurrency::InternetComputer,
                         amount,
-                        fee: DEFAULT_FEE,
+                        fee: Tokens::DEFAULT_FEE,
                         from: CryptoAccount::Account(default_ledger_account(this_canister_id)),
                         to: CryptoAccount::Account(to),
                         memo: Memo(0),

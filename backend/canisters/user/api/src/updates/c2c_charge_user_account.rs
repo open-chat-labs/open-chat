@@ -1,6 +1,7 @@
 use candid::CandidType;
-use ic_ledger_types::{BlockIndex, Tokens, TransferError};
+use ic_ledger_types::{BlockIndex, TransferError};
 use serde::{Deserialize, Serialize};
+use types::nns::Tokens;
 use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
