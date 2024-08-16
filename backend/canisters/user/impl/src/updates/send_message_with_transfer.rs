@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
 use ic_cdk::update;
-use icrc_ledger_types::icrc1::account::Account;
+use types::icrc1::Account;
 use types::{
     icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
     MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,

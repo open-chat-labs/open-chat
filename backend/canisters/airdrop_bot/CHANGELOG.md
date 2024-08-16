@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1294](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1294-airdrop_bot)] - 2024-08-16
+
 ### Changed
 
 - New lottery algorithm for next airdrop ([#6238](https://github.com/open-chat-labs/open-chat/pull/6238))

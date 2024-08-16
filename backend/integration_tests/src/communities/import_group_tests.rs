@@ -2,7 +2,6 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use icrc_ledger_types::icrc1::account::Account;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -189,7 +188,7 @@ fn pending_prizes_transferred_to_community() {
                     ledger: canister_ids.icp_ledger,
                     token: token.clone(),
                     amount: amount_to_transfer,
-                    to: Account::from(Principal::from(group_id)),
+                    to: group_id.into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
