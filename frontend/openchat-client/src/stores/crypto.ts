@@ -99,7 +99,7 @@ function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetai
         config.kind === "auto_wallet" &&
         (DEFAULT_TOKENS.includes(token.symbol) ||
             (config.minDollarValue <= 0 && token.balance > 0) ||
-            (token.dollarBalance ?? 0) >= config.minDollarValue)
+            (config.minDollarValue > 0 && (token.dollarBalance ?? 0) >= config.minDollarValue))
     );
 }
 
