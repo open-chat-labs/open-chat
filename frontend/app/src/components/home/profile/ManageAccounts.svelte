@@ -224,7 +224,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        @include font(book, normal, fs-70);
+        @include font(book, normal, fs-60);
         text-transform: uppercase;
     }
 
