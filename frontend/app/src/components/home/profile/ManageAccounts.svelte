@@ -42,7 +42,7 @@
     let config: WalletConfig = { ...$walletConfig };
 
     onMount(() => {
-        config = { ...$walletConfig };
+        config = clone($walletConfig);
 
         return () => {
             if (client.walletConfigChanged($walletConfig, config)) {
@@ -56,6 +56,18 @@
             }
         };
     });
+
+    function clone(config: WalletConfig): WalletConfig {
+        switch (config.kind) {
+            case "auto_wallet":
+                return { ...config };
+            case "manual_wallet":
+                return {
+                    kind: "manual_wallet",
+                    tokens: new Set(config.tokens),
+                };
+        }
+    }
 
     function getDefaultLedgers(ledgerLookup: Record<string, CryptocurrencyDetails>): Set<string> {
         const lookup = Object.entries(ledgerLookup).reduce(
