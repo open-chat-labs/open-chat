@@ -7473,6 +7473,25 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
+        if (a.size !== b.size) return false;
+        for (const item of a) {
+            if (!b.has(item)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
+        if (a.kind !== b.kind) return true;
+        if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
+            return a.minDollarValue !== b.minDollarValue;
+        if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
+            return !this.setsAreEqual(a.tokens, b.tokens);
+        return false;
+    }
+
     setWalletConfig(config: WalletConfig): Promise<boolean> {
         walletConfigStore.set(config);
         return this.sendRequest({

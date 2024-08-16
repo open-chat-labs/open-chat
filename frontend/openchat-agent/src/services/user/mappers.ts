@@ -903,7 +903,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 export function apiWalletConfig(domain: WalletConfig): ApiWalletConfig {
     switch (domain.kind) {
         case "auto_wallet": {
-            return { Auto: { min_cents_visible: domain.minDollarValue * 100 } };
+            return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
         }
         case "manual_wallet": {
             return { Manual: { tokens: [...domain.tokens].map((t) => Principal.fromText(t)) } };

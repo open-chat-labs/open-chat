@@ -45,9 +45,7 @@
         config = { ...$walletConfig };
 
         return () => {
-            const orig = JSON.stringify($walletConfig);
-            const updated = JSON.stringify(config);
-            if (orig !== updated) {
+            if (client.walletConfigChanged($walletConfig, config)) {
                 client.setWalletConfig(config).then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(
