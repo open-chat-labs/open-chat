@@ -1139,14 +1139,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getReferralLeaderboard":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.getReferralLeaderboard(payload.args),
-                );
-                break;
-
             case "reportMessage":
                 executeThenReply(
                     payload,

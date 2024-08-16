@@ -1,8 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
-use candid::Principal;
-use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -52,7 +50,7 @@ fn prize_messages_can_be_claimed_successfully() {
                     ledger: canister_ids.icp_ledger,
                     token,
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
-                    to: Account::from(Principal::from(group_id)),
+                    to: group_id.into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
@@ -142,7 +140,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
                     ledger: canister_ids.icp_ledger,
                     token,
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
-                    to: Account::from(Principal::from(group_id)),
+                    to: group_id.into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
@@ -222,7 +220,7 @@ fn old_transactions_fixed_by_updating_created_date() {
                     ledger: canister_ids.icp_ledger,
                     token,
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
-                    to: Account::from(Principal::from(group_id)),
+                    to: group_id.into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
