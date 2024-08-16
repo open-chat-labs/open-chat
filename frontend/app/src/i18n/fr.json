@@ -278,7 +278,7 @@
     "createNewGroup": "Créer un nouveau groupe",
     "cryptoAccount": {
         "auto": "Automatique",
-        "autoInfo": "Organisez votre portefeuille automatiquement. Tout jeton dont la valeur est supérieure à la valeur minimale en dollars saisie ci-dessous sera affiché",
+        "autoInfo": "Organisez votre portefeuille automatiquement. Tout jeton avec un solde différent de zéro ou avec une valeur en dollars supérieure à la valeur minimale en dollars saisie ci-dessous sera affiché",
         "comingSoon": "(Bientôt disponible)",
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",

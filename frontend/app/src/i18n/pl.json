@@ -278,7 +278,7 @@
     "createNewGroup": "Utwórz nową grupę",
     "cryptoAccount": {
         "auto": "Automatyczny",
-        "autoInfo": "Zorganizuj swój portfel automatycznie. Każdy token o wartości większej niż minimalna wartość w dolarach wpisana poniżej zostanie wyświetlony",
+        "autoInfo": "Zorganizuj swój portfel automatycznie. Każdy token z saldem tokenów innym niż zero lub z wartością w dolarach większą niż minimalna wartość w dolarach wprowadzona poniżej zostanie wyświetlony",
         "comingSoon": "(wkrótce)",
         "configureWallet": "Skonfiguruj swój portfel",
         "configureWalletFailure": "Przepraszamy, nie udało nam się zapisać konfiguracji Twojego portfela",

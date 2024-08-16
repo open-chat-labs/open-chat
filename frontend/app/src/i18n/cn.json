@@ -278,7 +278,7 @@
     "createNewGroup": "创建群聊",
     "cryptoAccount": {
         "auto": "自动的",
-        "autoInfo": "自动整理您的钱包。任何价值大于下面输入的最低美元价值的代币都将显示",
+        "autoInfo": "自动整理您的钱包。任何代币余额不为零或美元价值大于下面输入的最低美元价值的代币都将显示",
         "comingSoon": "（快来了）",
         "configureWallet": "配置你的钱包",
         "configureWalletFailure": "抱歉，我们无法保存您的钱包配置",

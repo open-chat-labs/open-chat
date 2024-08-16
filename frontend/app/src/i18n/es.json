@@ -278,7 +278,7 @@
     "createNewGroup": "Crear un nuevo grupo",
     "cryptoAccount": {
         "auto": "Automático",
-        "autoInfo": "Organiza tu billetera automáticamente. Se mostrarán todos los tokens con un valor mayor al valor mínimo en dólares ingresado a continuación.",
+        "autoInfo": "Organiza tu billetera automáticamente. Se mostrarán todos los tokens con un saldo de tokens distinto de cero o con un valor en dólares mayor que el valor mínimo en dólares ingresado a continuación.",
         "comingSoon": "(próximamente)",
         "configureWallet": "Configura tu billetera",
         "configureWalletFailure": "Lo sentimos, no pudimos guardar la configuración de tu billetera.",

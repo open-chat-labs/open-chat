@@ -25,7 +25,6 @@
 
     let searchTerm = "";
     let searching = false;
-    let dirty = false;
 
     $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
     $: walletConfig = client.walletConfigStore;
@@ -46,7 +45,9 @@
         config = { ...$walletConfig };
 
         return () => {
-            if (dirty) {
+            const orig = JSON.stringify($walletConfig);
+            const updated = JSON.stringify(config);
+            if (orig !== updated) {
                 client.setWalletConfig(config).then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(
@@ -77,7 +78,6 @@
                 config.tokens.add(ledger);
             }
             config = config;
-            dirty = true;
         }
     }
 
@@ -104,7 +104,6 @@
                         : { kind: "manual_wallet", tokens: defaultLedgers };
                 break;
         }
-        dirty = true;
     }
 </script>
 
