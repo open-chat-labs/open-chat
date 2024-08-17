@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure user has never joined a group or community before marking empty ([#6186](https://github.com/open-chat-labs/open-chat/pull/6186))
 - Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
 - Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Award more daily CHIT when on 100 or 365 day streaks ([#6253](https://github.com/open-chat-labs/open-chat/pull/6253))
 
 ### Removed
 

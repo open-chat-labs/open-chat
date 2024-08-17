@@ -90,7 +90,13 @@ fn chit_for_streak(days: u16) -> u32 {
     if days < 30 {
         return 500;
     }
-    600
+    if days < 100 {
+        return 600;
+    }
+    if days < 365 {
+        return 700;
+    }
+    800
 }
 
 #[derive(Serialize)]
