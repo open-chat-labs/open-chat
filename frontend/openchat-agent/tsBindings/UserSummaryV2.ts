@@ -3,4 +3,4 @@ import type { UserId } from "./UserId";
 import type { UserSummaryStable } from "./UserSummaryStable";
 import type { UserSummaryVolatile } from "./UserSummaryVolatile";
 
-export type UserSummaryV2 = { user_id: UserId, stable: UserSummaryStable | null, volatile: UserSummaryVolatile | null, };
+export type UserSummaryV2 = { user_id: UserId, stable?: UserSummaryStable, volatile?: UserSummaryVolatile, };

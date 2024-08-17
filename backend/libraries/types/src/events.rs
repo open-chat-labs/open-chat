@@ -39,6 +39,7 @@ pub enum ChatEvent {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct EventsResponse {
+    #[ts(as = "Vec<crate::EventWrapperChatEvent>")]
     pub events: Vec<EventWrapper<ChatEvent>>,
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
@@ -82,6 +83,7 @@ impl EventOrExpiredRange {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct MessagesResponse {
+    #[ts(as = "Vec<crate::EventWrapperMessage>")]
     pub messages: Vec<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub chat_last_updated: TimestampMillis,
@@ -237,6 +239,7 @@ pub enum GroupInviteCodeChange {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GroupFrozen {
     pub frozen_by: UserId,
+    #[ts(optional)]
     pub reason: Option<String>,
 }
 
@@ -248,18 +251,21 @@ pub struct GroupUnfrozen {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct EventsTimeToLiveUpdated {
     pub updated_by: UserId,
+    #[ts(optional)]
     pub new_ttl: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
+    #[ts(optional)]
     pub new_gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct ExternalUrlUpdated {
     pub updated_by: UserId,
+    #[ts(optional)]
     pub new_url: Option<String>,
 }
 

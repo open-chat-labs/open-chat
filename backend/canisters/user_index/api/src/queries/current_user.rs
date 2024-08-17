@@ -23,7 +23,9 @@ pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
+    #[ts(optional)]
     pub display_name: Option<String>,
+    #[ts(optional)]
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub wasm_version: BuildVersion,
@@ -32,8 +34,10 @@ pub struct SuccessResult {
     pub referrals: Vec<UserId>,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
+    #[ts(optional)]
     pub suspension_details: Option<SuspensionDetails>,
     pub is_suspected_bot: bool,
+    #[ts(optional)]
     pub diamond_membership_details: Option<DiamondMembershipDetails>,
     pub diamond_membership_status: DiamondMembershipStatusFull,
     pub moderation_flags_enabled: u32,

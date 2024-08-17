@@ -70,7 +70,9 @@ pub enum VerifiedCredentialArgumentValue {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
+    #[ts(optional)]
     pub min_stake_e8s: Option<u64>,
+    #[ts(optional)]
     pub min_dissolve_delay: Option<Milliseconds>,
 }
 

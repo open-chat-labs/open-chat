@@ -423,8 +423,10 @@ pub struct ImageContent {
     pub width: u32,
     pub height: u32,
     pub thumbnail_data: ThumbnailData,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub mime_type: String,
+    #[ts(optional)]
     pub blob_reference: Option<BlobReference>,
 }
 
@@ -438,6 +440,7 @@ pub struct GiphyImageVariant {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GiphyContent {
+    #[ts(optional)]
     pub caption: Option<String>,
     pub title: String,
     pub desktop: GiphyImageVariant,
@@ -449,25 +452,32 @@ pub struct VideoContent {
     pub width: u32,
     pub height: u32,
     pub thumbnail_data: ThumbnailData,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub mime_type: String,
+    #[ts(optional)]
     pub image_blob_reference: Option<BlobReference>,
+    #[ts(optional)]
     pub video_blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct AudioContent {
+    #[ts(optional)]
     pub caption: Option<String>,
     pub mime_type: String,
+    #[ts(optional)]
     pub blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct FileContent {
     pub name: String,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub mime_type: String,
     pub file_size: u32,
+    #[ts(optional)]
     pub blob_reference: Option<BlobReference>,
 }
 
@@ -508,6 +518,7 @@ pub enum RegisterVoteResult {
 pub struct CryptoContent {
     pub recipient: UserId,
     pub transfer: CryptoTransaction,
+    #[ts(optional)]
     pub caption: Option<String>,
 }
 
@@ -516,6 +527,7 @@ pub struct PrizeContentInitial {
     pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub diamond_only: bool,
 }
@@ -527,6 +539,7 @@ pub struct PrizeContent {
     pub winners: Vec<UserId>,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub diamond_only: bool,
 }
@@ -542,6 +555,7 @@ pub struct PrizeWinnerContent {
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
     pub remind_at: TimestampMillis,
+    #[ts(optional)]
     pub notes: Option<String>,
     pub hidden: bool,
 }
@@ -549,6 +563,7 @@ pub struct MessageReminderCreatedContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
+    #[ts(optional)]
     pub notes: Option<String>,
 }
 
@@ -563,6 +578,7 @@ pub struct MessageReport {
     pub reported_by: UserId,
     pub timestamp: TimestampMillis,
     pub reason_code: u32,
+    #[ts(optional)]
     pub notes: Option<String>,
 }
 
@@ -573,6 +589,7 @@ pub struct P2PSwapContentInitial {
     pub token1: TokenInfo,
     pub token1_amount: u128,
     pub expires_in: Milliseconds,
+    #[ts(optional)]
     pub caption: Option<String>,
 }
 
@@ -584,6 +601,7 @@ pub struct P2PSwapContent {
     pub token1: TokenInfo,
     pub token1_amount: u128,
     pub expires_at: TimestampMillis,
+    #[ts(optional)]
     pub caption: Option<String>,
     pub token0_txn_in: u64,
     pub status: P2PSwapStatus,
@@ -597,6 +615,7 @@ pub struct VideoCallContentInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct VideoCallContent {
     pub call_type: VideoCallType,
+    #[ts(optional)]
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
     pub hidden_participants: u32,

@@ -32,6 +32,7 @@ pub struct ReserveP2PSwapSuccess {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct P2PSwapCancelled {
+    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 
@@ -91,11 +92,13 @@ pub struct SwapStatusErrorCompleted {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct SwapStatusErrorExpired {
+    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct SwapStatusErrorCancelled {
+    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 

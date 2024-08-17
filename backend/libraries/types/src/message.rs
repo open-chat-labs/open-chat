@@ -10,9 +10,11 @@ pub struct Message {
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
+    #[ts(optional)]
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
+    #[ts(optional)]
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
@@ -22,6 +24,7 @@ pub struct Message {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct ReplyContext {
+    #[ts(optional)]
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
