@@ -1,4 +1,6 @@
 use candid_gen::generate_candid_method;
+use std::env;
+use ts_gen::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
@@ -20,6 +22,32 @@ fn main() {
     generate_candid_method!(group_index, set_group_upgrade_concurrency, update);
     generate_candid_method!(group_index, unfreeze_community, update);
     generate_candid_method!(group_index, unfreeze_group, update);
+
+    let directory = env::current_dir()
+        .unwrap()
+        .join("frontend/openchat-agent/tsBindings/groupIndex");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
+
+    generate_ts_method!(group_index, active_groups);
+    generate_ts_method!(group_index, active_groups);
+    generate_ts_method!(group_index, explore_communities);
+    generate_ts_method!(group_index, explore_groups);
+    generate_ts_method!(group_index, lookup_channel_by_group_id);
+    generate_ts_method!(group_index, recommended_groups);
+
+    generate_ts_method!(group_index, add_hot_group_exclusion);
+    generate_ts_method!(group_index, delete_frozen_group);
+    generate_ts_method!(group_index, freeze_community);
+    generate_ts_method!(group_index, freeze_group);
+    generate_ts_method!(group_index, mark_local_group_index_full);
+    generate_ts_method!(group_index, remove_hot_group_exclusion);
+    generate_ts_method!(group_index, set_community_moderation_flags);
+    generate_ts_method!(group_index, set_community_upgrade_concurrency);
+    generate_ts_method!(group_index, set_group_upgrade_concurrency);
+    generate_ts_method!(group_index, unfreeze_community);
+    generate_ts_method!(group_index, unfreeze_group);
 
     candid::export_service!();
     std::print!("{}", __export_service());

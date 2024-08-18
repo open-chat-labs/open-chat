@@ -2992,6 +2992,8 @@ dependencies = [
  "human_readable",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_gen",
  "types",
 ]
 

@@ -8,9 +8,6 @@ didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/c
 didc bind ../../backend/canisters/group/api/can.did -t ts > ./src/services/group/candid/types.d.ts
 didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group/candid/idl.js
 
-didc bind ../../backend/canisters/group_index/api/can.did -t ts > ./src/services/groupIndex/candid/types.d.ts
-didc bind ../../backend/canisters/group_index/api/can.did -t js > ./src/services/groupIndex/candid/idl.js
-
 didc bind ../../backend/canisters/identity/api/can.did -t ts > ./src/services/identity/candid/types.d.ts
 didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/identity/candid/idl.js
 

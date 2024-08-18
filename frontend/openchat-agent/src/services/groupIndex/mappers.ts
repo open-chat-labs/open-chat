@@ -1,4 +1,5 @@
-import { identity, optional } from "../../utils/mapping";
+import * as z from "zod";
+import { mapOptional } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
@@ -16,41 +17,43 @@ import type {
     ChannelIdentifier,
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
+import { publicGroupSummaryJson } from "../common/publicSummaryMapper";
+import { accessGateJson, groupSubtypeJson } from "../common/chatMappers";
 import type {
-    ApiActiveGroupsResponse,
-    ApiAddHotGroupExclusionResponse,
-    ApiCommunityMatch,
-    ApiDeleteFrozenGroupResponse,
-    ApiFreezeGroupResponse,
-    ApiGroupMatch,
-    ApiSearchResponse,
-    ApiRecommendedGroupsResponse,
-    ApiRemoveHotGroupExclusionResponse,
-    ApiSetCommunityModerationFlagsResponse,
-    ApiSetUpgradeConcurrencyResponse,
-    ApiUnfreezeGroupResponse,
-    ApiExploreCommunitiesResponse,
-    ApiLookupChannelByGroupIdResponse,
-} from "./candid/idl";
-import { publicGroupSummary } from "../common/publicSummaryMapper";
-import { accessGate, groupSubtype } from "../common/chatMappers";
+    communityMatchSchema,
+    groupIndexActiveGroupsResponseSchema,
+    groupIndexAddHotGroupExclusionResponseSchema,
+    groupIndexDeleteFrozenGroupResponseSchema,
+    groupIndexExploreCommunitiesResponseSchema,
+    groupIndexExploreGroupsResponseSchema,
+    groupIndexFreezeGroupResponseSchema,
+    groupIndexLookupChannelByGroupIdResponseSchema,
+    groupIndexRecommendedGroupsResponseSchema,
+    groupIndexRemoveHotGroupExclusionResponseSchema,
+    groupIndexSetCommunityModerationFlagsResponseSchema,
+    groupIndexSetCommunityUpgradeConcurrencyResponseSchema,
+    groupIndexUnfreezeGroupResponseSchema,
+    groupMatchSchema,
+} from "../../zod";
 
-export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
+export function activeGroupsResponse(
+    json: z.infer<typeof groupIndexActiveGroupsResponseSchema>,
+): ActiveGroupsResponse {
     return {
-        timestamp: candid.Success.timestamp,
-        activeGroups: candid.Success.active_groups.map((g) => g.toString()),
-        activeCommunities: candid.Success.active_communities.map((c) => c.toString()),
-        deletedCommunities: candid.Success.deleted_communities.map((d) => ({
-            id: d.id.toString(),
+        timestamp: json.Success.timestamp,
+        activeGroups: json.Success.active_groups,
+        activeCommunities: json.Success.active_communities,
+        deletedCommunities: json.Success.deleted_communities.map((d) => ({
+            id: d.id,
             timestamp: d.timestamp,
-            deletedBy: d.deleted_by.toString(),
+            deletedBy: d.deleted_by,
             name: d.name,
             public: d.public,
         })),
-        deletedGroups: candid.Success.deleted_groups.map((d) => ({
-            id: d.id.toString(),
+        deletedGroups: json.Success.deleted_groups.map((d) => ({
+            id: d.id,
             timestamp: d.timestamp,
-            deletedBy: d.deleted_by.toString(),
+            deletedBy: d.deleted_by,
             name: d.name,
             public: d.public,
         })),
@@ -58,265 +61,276 @@ export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGro
 }
 
 export function recommendedGroupsResponse(
-    candid: ApiRecommendedGroupsResponse,
+    json: z.infer<typeof groupIndexRecommendedGroupsResponseSchema>,
 ): GroupChatSummary[] {
-    if ("Success" in candid) {
+    if ("Success" in json) {
         // TODO - we are hard-coding is_invited to false here which is something we have to live with for the moment
-        return candid.Success.groups.map((g) => publicGroupSummary(g, false));
+        return json.Success.groups.map((g) => publicGroupSummaryJson(g, false));
     }
-    throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
+    throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${json}`);
 }
 
 export function lookupChannelResponse(
-    candid: ApiLookupChannelByGroupIdResponse,
+    json: z.infer<typeof groupIndexLookupChannelByGroupIdResponseSchema>,
 ): ChannelIdentifier | undefined {
-    if ("Success" in candid) {
+    if (json !== "NotFound" && "Success" in json) {
         return {
             kind: "channel",
-            communityId: candid.Success.community_id.toString(),
-            channelId: candid.Success.channel_id.toString(),
+            communityId: json.Success.community_id,
+            channelId: json.Success.channel_id.toString(),
         };
     }
-    console.warn("ApiLookupChannelByGroupIdResponse failed with ", candid);
+    console.warn("ApiLookupChannelByGroupIdResponse failed with ", json);
     return undefined;
 }
 
 export function exploreCommunitiesResponse(
-    candid: ApiExploreCommunitiesResponse,
+    json: z.infer<typeof groupIndexExploreCommunitiesResponseSchema>,
 ): ExploreCommunitiesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            matches: candid.Success.matches.map(communityMatch),
-            total: candid.Success.total,
-        };
-    }
-    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
+    if (
+        json === "InvalidTerm" ||
+        json === "InvalidFlags" ||
+        "TermTooShort" in json ||
+        "TermTooLong" in json
+    ) {
         return { kind: "term_invalid" };
     }
-    throw new Error(`Unknown GroupIndex.SearchResponse of ${candid}`);
-}
-
-export function searchGroupsResponse(candid: ApiSearchResponse): GroupSearchResponse {
-    if ("Success" in candid) {
+    if ("Success" in json) {
         return {
             kind: "success",
-            matches: candid.Success.matches.map(groupMatch),
-            total: candid.Success.total,
+            matches: json.Success.matches.map(communityMatch),
+            total: json.Success.total,
         };
-    }
-    if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
-        return { kind: "term_invalid" };
-    }
-    throw new Error(`Unknown GroupIndex.GroupSearchResponse of ${candid}`);
-}
-
-export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroupResponse {
-    if ("Success" in candid) {
-        return {
-            event: {
-                kind: "chat_frozen",
-                frozenBy: candid.Success.event.frozen_by.toString(),
-                reason: optional(candid.Success.event.reason, identity),
-            },
-            timestamp: candid.Success.timestamp,
-            index: candid.Success.index,
-            expiresAt: optional(candid.Success.expires_at, Number),
-        };
-    }
-    if ("ChatAlreadyFrozen" in candid) {
-        return "chat_already_frozen";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiFreezeGroupResponse type received", candid);
-}
-
-export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): UnfreezeGroupResponse {
-    if ("Success" in candid) {
-        return {
-            event: {
-                kind: "chat_unfrozen",
-                unfrozenBy: candid.Success.event.unfrozen_by.toString(),
-            },
-            timestamp: candid.Success.timestamp,
-            index: candid.Success.index,
-            expiresAt: optional(candid.Success.expires_at, Number),
-        };
-    }
-    if ("ChatNotFrozen" in candid) {
-        return "chat_not_frozen";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiUnfreezeGroupResponse type received", candid);
-}
-
-export function deleteFrozenGroupResponse(
-    candid: ApiDeleteFrozenGroupResponse,
-): DeleteFrozenGroupResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("ChatNotFrozen" in candid) {
-        return "chat_not_frozen";
-    }
-    if ("ChatNotFrozenLongEnough" in candid) {
-        return "chat_not_frozen_long_enough";
-    }
-    if ("ChatNotFound" in candid) {
-        return "chat_not_found";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorized";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiDeleteFrozenGroupResponse type received",
-        candid,
+        "Unexpected GroupIndex.ExploreCommunitiesResponse type received",
+        json,
     );
 }
 
-export function addHotGroupExclusionResponse(
-    candid: ApiAddHotGroupExclusionResponse,
-): AddHotGroupExclusionResponse {
-    if ("Success" in candid) {
-        return "success";
+export function exploreGroupsResponse(
+    json: z.infer<typeof groupIndexExploreGroupsResponseSchema>,
+): GroupSearchResponse {
+    if (json === "InvalidTerm" || "TermTooShort" in json || "TermTooLong" in json) {
+        return { kind: "term_invalid" };
     }
-    if ("ChatAlreadyExcluded" in candid) {
-        return "chat_already_excluded";
+    if ("Success" in json) {
+        return {
+            kind: "success",
+            matches: json.Success.matches.map(groupMatch),
+            total: json.Success.total,
+        };
     }
-    if ("ChatNotFound" in candid) {
+    throw new UnsupportedValueError(
+        "Unexpected GroupIndex.ExploreGroupsResponse type received",
+        json,
+    );
+}
+
+export function freezeGroupResponse(
+    json: z.infer<typeof groupIndexFreezeGroupResponseSchema>,
+): FreezeGroupResponse {
+    if (json === "ChatAlreadyFrozen") {
+        return "chat_already_frozen";
+    }
+    if (json === "ChatNotFound") {
         return "chat_not_found";
     }
-    if ("NotAuthorized" in candid) {
+    if (json === "NotAuthorized") {
         return "not_authorized";
     }
-    if ("InternalError" in candid) {
+    if ("Success" in json) {
+        return {
+            event: {
+                kind: "chat_frozen",
+                frozenBy: json.Success.event.frozen_by,
+                reason: json.Success.event.reason,
+            },
+            timestamp: json.Success.timestamp,
+            index: json.Success.index,
+            expiresAt: mapOptional(json.Success.expires_at, Number),
+        };
+    }
+    if ("InternalError" in json) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiFreezeGroupResponse type received", json);
+}
+
+export function unfreezeGroupResponse(
+    json: z.infer<typeof groupIndexUnfreezeGroupResponseSchema>,
+): UnfreezeGroupResponse {
+    if (json === "ChatNotFrozen") {
+        return "chat_not_frozen";
+    }
+    if (json === "ChatNotFound") {
+        return "chat_not_found";
+    }
+    if (json === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("Success" in json) {
+        return {
+            event: {
+                kind: "chat_unfrozen",
+                unfrozenBy: json.Success.event.unfrozen_by,
+            },
+            timestamp: json.Success.timestamp,
+            index: json.Success.index,
+            expiresAt: mapOptional(json.Success.expires_at, Number),
+        };
+    }
+    if ("InternalError" in json) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiUnfreezeGroupResponse type received", json);
+}
+
+export function deleteFrozenGroupResponse(
+    json: z.infer<typeof groupIndexDeleteFrozenGroupResponseSchema>,
+): DeleteFrozenGroupResponse {
+    if (json === "Success") {
+        return "success";
+    }
+    if (json === "ChatNotFrozen") {
+        return "chat_not_frozen";
+    }
+    if (json === "ChatNotFound") {
+        return "chat_not_found";
+    }
+    if (json === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("InternalError" in json) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteFrozenGroupResponse type received", json);
+}
+
+export function addHotGroupExclusionResponse(
+    json: z.infer<typeof groupIndexAddHotGroupExclusionResponseSchema>,
+): AddHotGroupExclusionResponse {
+    if (json === "Success") {
+        return "success";
+    }
+    if (json === "ChatAlreadyExcluded") {
+        return "chat_already_excluded";
+    }
+    if (json === "ChatNotFound") {
+        return "chat_not_found";
+    }
+    if (json === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("InternalError" in json) {
         return "internal_error";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddHotGroupExclusionResponse type received",
-        candid,
+        json,
     );
 }
 
 export function removeHotGroupExclusionResponse(
-    candid: ApiRemoveHotGroupExclusionResponse,
+    json: z.infer<typeof groupIndexRemoveHotGroupExclusionResponseSchema>,
 ): RemoveHotGroupExclusionResponse {
-    if ("Success" in candid) {
+    if (json === "Success") {
         return "success";
     }
-    if ("ChatNotExcluded" in candid) {
+    if (json === "ChatNotExcluded") {
         return "chat_not_excluded";
     }
-    if ("ChatNotFound" in candid) {
+    if (json === "ChatNotFound") {
         return "chat_not_found";
     }
-    if ("NotAuthorized" in candid) {
+    if (json === "NotAuthorized") {
         return "not_authorized";
     }
-    if ("InternalError" in candid) {
+    if ("InternalError" in json) {
         return "internal_error";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveHotGroupExclusionResponse type received",
-        candid,
+        json,
     );
 }
 
 export function setUpgradeConcurrencyResponse(
-    candid: ApiSetUpgradeConcurrencyResponse,
+    json: z.infer<typeof groupIndexSetCommunityUpgradeConcurrencyResponseSchema>,
 ): SetGroupUpgradeConcurrencyResponse {
-    if ("Success" in candid) {
+    if (json === "Success") {
         return "success";
     }
-    if ("NotAuthorized" in candid) {
+    if (json === "NotAuthorized") {
         return "not_authorized";
     }
-    if ("InternalError" in candid) {
+    if ("InternalError" in json) {
         return "internal_error";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
-        candid,
+        json,
     );
 }
 
 export function setCommunityModerationFlagsResponse(
-    candid: ApiSetCommunityModerationFlagsResponse,
+    json: z.infer<typeof groupIndexSetCommunityModerationFlagsResponseSchema>,
 ): SetCommunityModerationFlagsResponse {
-    if ("Success" in candid || "Unchanged" in candid) {
+    if (json === "Success" || json === "Unchanged") {
         return "success";
     }
-    if ("CommunityNotFound" in candid) {
+    if (json === "CommunityNotFound") {
         return "community_not_found";
     }
-    if ("InvalidFlags" in candid) {
+    if (json === "InvalidFlags") {
         return "invalid_flags";
     }
-    if ("NotAuthorized" in candid) {
+    if (json === "NotAuthorized") {
         return "not_authorized";
     }
-    if ("InternalError" in candid) {
+    if ("InternalError" in json) {
         return "internal_error";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
-        candid,
+        json,
     );
 }
 
-function groupMatch(candid: ApiGroupMatch): GroupMatch {
+function groupMatch(json: z.infer<typeof groupMatchSchema>): GroupMatch {
     return {
-        chatId: { kind: "group_chat", groupId: candid.id.toString() },
-        name: candid.name,
-        description: candid.description,
-        subtype: optional(candid.subtype, groupSubtype),
-        blobReference: optional(candid.avatar_id, (blobId) => ({
+        chatId: { kind: "group_chat", groupId: json.id },
+        name: json.name,
+        description: json.description,
+        subtype: mapOptional(json.subtype, groupSubtypeJson),
+        blobReference: mapOptional(json.avatar_id, (blobId) => ({
             blobId,
-            canisterId: candid.id.toString(),
+            canisterId: json.id,
         })),
     };
 }
 
-function communityMatch(candid: ApiCommunityMatch): CommunityMatch {
+function communityMatch(json: z.infer<typeof communityMatchSchema>): CommunityMatch {
     return {
-        id: { kind: "community", communityId: candid.id.toString() },
-        name: candid.name,
-        description: candid.description,
+        id: { kind: "community", communityId: json.id },
+        name: json.name,
+        description: json.description,
         avatar: {
-            blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobReference: mapOptional(json.avatar_id, (blobId) => ({
                 blobId,
-                canisterId: candid.id.toString(),
+                canisterId: json.id,
             })),
         },
         banner: {
-            blobReference: optional(candid.banner_id, (blobId) => ({
+            blobReference: mapOptional(json.banner_id, (blobId) => ({
                 blobId,
-                canisterId: candid.id.toString(),
+                canisterId: json.id,
             })),
         },
-        memberCount: candid.member_count,
-        channelCount: candid.channel_count,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        flags: candid.moderation_flags,
-        primaryLanguage: candid.primary_language === "" ? "en" : candid.primary_language,
+        memberCount: json.member_count,
+        channelCount: json.channel_count,
+        gate: mapOptional(json.gate, accessGateJson) ?? { kind: "no_gate" },
+        flags: json.moderation_flags,
+        primaryLanguage: json.primary_language === "" ? "en" : json.primary_language,
     };
 }
