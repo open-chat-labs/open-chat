@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose JSON versions of GroupIndex APIs ([#6254](https://github.com/open-chat-labs/open-chat/pull/6254))
+
 ## [[2.0.1270](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1270-group_index)] - 2024-07-31
 
 ### Changed
