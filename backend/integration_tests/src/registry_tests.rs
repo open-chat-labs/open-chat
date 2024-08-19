@@ -153,6 +153,7 @@ fn update_token_succeeds() {
             how_to_buy_url: None,
             transaction_url_format: None,
             logo: None,
+            fee: None,
         },
     );
 
