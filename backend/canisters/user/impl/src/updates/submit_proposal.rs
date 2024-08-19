@@ -2,7 +2,6 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1::process_transaction;
 use types::icrc1::PendingCryptoTransaction;
 use types::{CanisterId, UserId};
@@ -71,7 +70,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 ledger: args.ledger,
                 token: args.token.clone(),
                 amount: args.proposal_rejection_fee + args.transaction_fee,
-                to: Account::from(state.data.proposals_bot_canister_id),
+                to: state.data.proposals_bot_canister_id.into(),
                 fee: args.transaction_fee,
                 memo: None,
                 created: state.env.now_nanos(),

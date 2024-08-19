@@ -1,6 +1,7 @@
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use tracing::error;
+use types::icrc1::Account;
 use types::{
     icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
     CanisterId,
@@ -15,7 +16,7 @@ pub async fn process_transaction(
 
     let args = TransferArg {
         from_subaccount: None,
-        to: transaction.to,
+        to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
         created_at_time: Some(transaction.created),
         memo: transaction.memo.clone(),

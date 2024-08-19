@@ -1,6 +1,7 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
+use ts_gen::ts_export;
 use types::{
     BuildVersion, CanisterUpgradeStatus, DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails,
     TimestampMillis, UserId,
@@ -10,12 +11,14 @@ pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, current_user)]
 pub enum Response {
     Success(SuccessResult),
     UserNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, current_user)]
 pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
@@ -24,6 +27,7 @@ pub struct SuccessResult {
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub wasm_version: BuildVersion,
+    #[ts(as = "[u8; 32]")]
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
     pub is_platform_moderator: bool,

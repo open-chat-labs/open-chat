@@ -1,13 +1,13 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
 #[trace]
 fn set_username(args: Args) -> Response {
     mutate_state(|state| set_username_impl(args, state))

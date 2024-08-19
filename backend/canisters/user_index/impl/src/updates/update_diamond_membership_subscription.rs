@@ -1,10 +1,10 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use user_index_canister::update_diamond_membership_subscription::{Response::*, *};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
 #[trace]
 fn update_diamond_membership_subscription(args: Args) -> Response {
     mutate_state(|state| update_diamond_membership_subscription_impl(args, state))
