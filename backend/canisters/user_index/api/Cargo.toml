@@ -14,5 +14,6 @@ modclub_canister = { path = "../../../external_canisters/modclub/api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 ts_gen = { path = "../../../libraries/ts_gen" }
+ts_optional = { path = "../../../libraries/ts_optional" }
 ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }

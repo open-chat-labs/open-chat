@@ -32,6 +32,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
                 convert_case(canister_name, true),
                 convert_case(method_name, true)
             );
+            s.attrs.insert(0, parse_quote!( #[ts_optional::ts_optional] ));
             s.attrs.push(parse_quote!( #[derive(ts_rs::TS)] ));
             s.attrs.push(parse_quote!( #[ts(export_to = #export_to, rename = #rename)] ));
         }

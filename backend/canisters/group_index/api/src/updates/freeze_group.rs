@@ -7,16 +7,13 @@ use types::{ChatId, EventWrapper, GroupFrozen, Milliseconds};
 #[ts_export(group_index, freeze_group)]
 pub struct Args {
     pub chat_id: ChatId,
-    #[ts(optional)]
     pub reason: Option<String>,
-    #[ts(optional)]
     pub suspend_members: Option<SuspensionDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(group_index, freeze_group)]
 pub struct SuspensionDetails {
-    #[ts(optional)]
     pub duration: Option<Milliseconds>,
     pub reason: String,
 }

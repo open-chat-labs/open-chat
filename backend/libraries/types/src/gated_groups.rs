@@ -3,6 +3,7 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_optional::ts_optional;
 use ts_rs::TS;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
@@ -67,12 +68,11 @@ pub enum VerifiedCredentialArgumentValue {
     Int(i32),
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
-    #[ts(optional)]
     pub min_stake_e8s: Option<u64>,
-    #[ts(optional)]
     pub min_dissolve_delay: Option<Milliseconds>,
 }
 

@@ -4,6 +4,7 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_optional::ts_optional;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
@@ -117,6 +118,7 @@ pub struct GroupRulesChanged {
     pub changed_by: UserId,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct AvatarChanged {
     pub new_avatar: Option<u128>,
@@ -124,6 +126,7 @@ pub struct AvatarChanged {
     pub changed_by: UserId,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct BannerChanged {
     pub new_banner: Option<u128>,
@@ -156,6 +159,7 @@ pub struct UsersUnblocked {
     pub unblocked_by: UserId,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct MemberJoined {
     pub user_id: UserId,
@@ -236,10 +240,10 @@ pub enum GroupInviteCodeChange {
     Reset,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GroupFrozen {
     pub frozen_by: UserId,
-    #[ts(optional)]
     pub reason: Option<String>,
 }
 
@@ -248,24 +252,24 @@ pub struct GroupUnfrozen {
     pub unfrozen_by: UserId,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct EventsTimeToLiveUpdated {
     pub updated_by: UserId,
-    #[ts(optional)]
     pub new_ttl: Option<Milliseconds>,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
-    #[ts(optional)]
     pub new_gate: Option<AccessGate>,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct ExternalUrlUpdated {
     pub updated_by: UserId,
-    #[ts(optional)]
     pub new_url: Option<String>,
 }
 

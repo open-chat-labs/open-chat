@@ -16,4 +16,5 @@ range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json.workspace = true
+ts_optional = { path = "../ts_optional" }
 ts-rs.workspace = true

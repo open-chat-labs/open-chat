@@ -150,6 +150,7 @@ members = [
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
     "backend/libraries/ts_gen",
+    "backend/libraries/ts_optional",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -242,7 +243,7 @@ tokio = "1.37.0"
 tracing = "0.1.40"
 tracing-attributes = "0.1.27"
 tracing-subscriber = "0.3.18"
-ts-rs = "9.0.1"
+ts-rs = {  version = "9.0.1", features = ["no-serde-warnings"] }
 url = "2.5.2"
 web-push = { version = "0.10.1", default-features = false, features = [
     "hyper-client",

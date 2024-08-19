@@ -1,6 +1,7 @@
 use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_optional::ts_optional;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
@@ -30,9 +31,9 @@ pub struct ReserveP2PSwapSuccess {
     pub created_by: UserId,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct P2PSwapCancelled {
-    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 
@@ -90,15 +91,15 @@ pub struct SwapStatusErrorCompleted {
     pub token1_txn_out: u64,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct SwapStatusErrorExpired {
-    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Debug, TS)]
 pub struct SwapStatusErrorCancelled {
-    #[ts(optional)]
     pub token0_txn_out: Option<u64>,
 }
 

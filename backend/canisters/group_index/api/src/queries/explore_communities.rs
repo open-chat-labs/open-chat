@@ -6,7 +6,6 @@ use types::CommunityMatch;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(group_index, explore_communities)]
 pub struct Args {
-    #[ts(optional)]
     pub search_term: Option<String>,
     pub languages: Vec<String>,
     pub page_index: u32,

@@ -3,6 +3,7 @@ use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::{Deserialize, Serialize};
+use ts_optional::ts_optional;
 use ts_rs::TS;
 
 const ICP_FEE: u128 = 10_000;
@@ -372,11 +373,12 @@ pub mod nns {
         }
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "AccountNNS")]
     pub struct Account {
         pub owner: Principal,
-        #[ts(as = "Option<[u8; 32]>", optional)]
+        #[ts(as = "Option<[u8; 32]>")]
         pub subaccount: Option<Subaccount>,
     }
 
@@ -399,6 +401,7 @@ pub mod nns {
         Account(#[ts(as = "String")] AccountIdentifier),
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "PendingCryptoTransactionNNS")]
     pub struct PendingCryptoTransaction {
@@ -406,9 +409,8 @@ pub mod nns {
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
-        #[ts(optional)]
         pub fee: Option<Tokens>,
-        #[ts(as = "Option<u64>", optional)]
+        #[ts(as = "Option<u64>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
@@ -452,11 +454,11 @@ pub mod icrc1 {
     use super::*;
     use icrc_ledger_types::icrc1::transfer::Memo;
 
+    #[ts_optional]
     #[derive(Serialize, CandidType, Deserialize, Clone, Debug, Copy, TS)]
     #[ts(rename = "AccountICRC1")]
     pub struct Account {
         pub owner: Principal,
-        #[ts(optional)]
         pub subaccount: Option<[u8; 32]>,
     }
 
@@ -485,6 +487,7 @@ pub mod icrc1 {
         Account(Account),
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
@@ -494,11 +497,12 @@ pub mod icrc1 {
         pub amount: u128,
         pub to: Account,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "CompletedCryptoTransactionICRC1")]
     pub struct CompletedCryptoTransaction {
@@ -508,12 +512,13 @@ pub mod icrc1 {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub block_index: u64,
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "FailedCryptoTransactionICRC1")]
     pub struct FailedCryptoTransaction {
@@ -523,7 +528,7 @@ pub mod icrc1 {
         pub fee: u128,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
@@ -553,6 +558,7 @@ pub mod icrc2 {
     use icrc1::Account;
     use icrc_ledger_types::icrc1::transfer::Memo;
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "PendingCryptoTransactionICRC2")]
     pub struct PendingCryptoTransaction {
@@ -562,11 +568,12 @@ pub mod icrc2 {
         pub from: Account,
         pub to: Account,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "CompletedCryptoTransactionICRC2")]
     pub struct CompletedCryptoTransaction {
@@ -577,12 +584,13 @@ pub mod icrc2 {
         pub from: icrc1::CryptoAccount,
         pub to: icrc1::CryptoAccount,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub block_index: u64,
     }
 
+    #[ts_optional]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
     #[ts(rename = "FailedCryptoTransactionICRC2")]
     pub struct FailedCryptoTransaction {
@@ -593,7 +601,7 @@ pub mod icrc2 {
         pub spender: UserId,
         pub from: icrc1::CryptoAccount,
         pub to: icrc1::CryptoAccount,
-        #[ts(as = "Option<Vec<u8>>", optional)]
+        #[ts(as = "Option<Vec<u8>>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,

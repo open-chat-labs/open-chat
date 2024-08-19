@@ -7,7 +7,6 @@ use types::{Milliseconds, UserId};
 #[ts_export(user_index, suspend_user)]
 pub struct Args {
     pub user_id: UserId,
-    #[ts(optional)]
     pub duration: Option<Milliseconds>,
     pub reason: String,
 }

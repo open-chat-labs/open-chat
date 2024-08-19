@@ -2994,6 +2994,7 @@ dependencies = [
  "serde_bytes",
  "ts-rs",
  "ts_gen",
+ "ts_optional",
  "types",
 ]
 
@@ -8671,6 +8672,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ts_optional"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "ttf-parser"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8703,6 +8713,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "ts-rs",
+ "ts_optional",
 ]
 
 [[package]]
@@ -8908,6 +8919,7 @@ dependencies = [
  "serde_bytes",
  "ts-rs",
  "ts_gen",
+ "ts_optional",
  "types",
 ]
 

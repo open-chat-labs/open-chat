@@ -8,7 +8,6 @@ use types::{ChatId, CommunityId, DeletedCommunityInfo, DeletedGroupInfo, Timesta
 pub struct Args {
     pub group_ids: Vec<ChatId>,
     pub community_ids: Vec<CommunityId>,
-    #[ts(optional)]
     pub active_since: Option<TimestampMillis>,
 }
 

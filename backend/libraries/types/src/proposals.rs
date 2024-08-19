@@ -1,6 +1,7 @@
 use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_optional::ts_optional;
 use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
@@ -82,6 +83,7 @@ impl Proposal {
     }
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct NnsProposal {
     pub id: ProposalId,
@@ -95,7 +97,6 @@ pub struct NnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
-    #[ts(optional)]
     pub payload_text_rendering: Option<String>,
     pub last_updated: TimestampMillis,
 }
@@ -118,6 +119,7 @@ impl NnsProposal {
     }
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct SnsProposal {
     pub id: ProposalId,
@@ -131,7 +133,6 @@ pub struct SnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
-    #[ts(optional)]
     pub payload_text_rendering: Option<String>,
     pub minimum_yes_proportion_of_total: u32,
     pub minimum_yes_proportion_of_exercised: u32,
@@ -156,11 +157,11 @@ impl SnsProposal {
     }
 }
 
+#[ts_optional]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
-    #[ts(optional)]
     pub my_vote: Option<bool>,
 }
 
