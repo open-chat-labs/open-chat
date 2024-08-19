@@ -194,7 +194,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::ReferredBy(ev) => {
-            state.data.user_referred_by.insert(ev.referred, ev.referred_by);
+            state.data.referrals.insert(ev.user_id, ev);
         }
     }
 }

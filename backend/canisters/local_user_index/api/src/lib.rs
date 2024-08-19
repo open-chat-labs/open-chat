@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralStatus,
+    ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
 };
 
 mod lifecycle;
@@ -37,7 +39,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
-    ReferredBy(ReferredBy),
+    ReferredBy(Referrals),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -159,9 +161,10 @@ pub struct DeleteUser {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ReferredBy {
-    pub referred_by: UserId,
-    pub referred: UserId,
+pub struct Referrals {
+    pub user_id: UserId,
+    pub referred_by: Option<UserId>,
+    pub referrals: HashMap<UserId, ReferralStatus>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

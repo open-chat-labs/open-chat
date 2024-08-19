@@ -18,6 +18,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -249,6 +250,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     #[serde(default)]
     pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub referrals: Referrals,
 }
 
 impl Data {
@@ -314,6 +317,7 @@ impl Data {
             rng_seed: [0; 32],
             wallet_config: Timestamped::default(),
             referred_by,
+            referrals: Referrals::default(),
         }
     }
 

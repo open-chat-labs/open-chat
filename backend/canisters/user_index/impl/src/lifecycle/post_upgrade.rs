@@ -32,8 +32,8 @@ fn post_upgrade(args: Args) {
 
 async fn sync_referred_users() {
     mutate_state(|state| {
-        for referral in state.data.users.all_referrals() {
-            state.push_event_to_local_user_index(referral.referred, Event::ReferredBy(referral))
+        for (user_id, referral) in state.data.users.all_referrals() {
+            state.push_event_to_local_user_index(user_id, Event::ReferredBy(referral))
         }
     });
 }

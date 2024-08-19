@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
     EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -183,6 +183,7 @@ pub enum UserCanisterEvent {
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
     StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
+    SetReferralStatus(Box<ReferralStatus>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

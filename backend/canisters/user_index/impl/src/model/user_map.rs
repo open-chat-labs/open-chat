@@ -3,12 +3,15 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
-use local_user_index_canister::ReferredBy;
+use local_user_index_canister::Referrals;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{BotConfig, CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
+use types::{
+    BotConfig, CyclesTopUp, Milliseconds, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId,
+    UserType,
+};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -321,14 +324,45 @@ impl UserMap {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
     }
 
-    pub fn all_referrals(&self) -> Vec<ReferredBy> {
+    pub fn all_referrals(&self) -> HashMap<UserId, Referrals> {
+        fn referral_status(user_map: &UserMap, user_id: &UserId) -> Option<ReferralStatus> {
+            let user = user_map.get_by_user_id(user_id)?;
+
+            if user.diamond_membership_details.is_lifetime_diamond_member() {
+                return Some(ReferralStatus::LifetimeDiamond);
+            }
+
+            if user.unique_person_proof.is_some() {
+                return Some(ReferralStatus::UniquePerson);
+            }
+
+            if user.diamond_membership_details.has_ever_been_diamond_member() {
+                return Some(ReferralStatus::Diamond);
+            }
+
+            Some(ReferralStatus::Registered)
+        }
+
+        let referred_by_map: HashMap<UserId, UserId> = self
+            .user_referrals
+            .iter()
+            .flat_map(|(referrer, referred_list)| referred_list.iter().map(|referred| (*referrer, *referred)))
+            .collect();
+
         self.user_referrals
             .iter()
-            .flat_map(|(referrer, referred_list)| {
-                referred_list.iter().map(|referred| ReferredBy {
-                    referred_by: *referrer,
-                    referred: *referred,
-                })
+            .map(|(user_id, users)| {
+                (
+                    *user_id,
+                    Referrals {
+                        user_id: *user_id,
+                        referred_by: referred_by_map.get(user_id).copied(),
+                        referrals: users
+                            .iter()
+                            .filter_map(|referred| referral_status(self, referred).map(|status| (*referred, status)))
+                            .collect(),
+                    },
+                )
             })
             .collect()
     }

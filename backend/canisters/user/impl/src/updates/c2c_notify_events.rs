@@ -2,10 +2,10 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
-use user_canister::Event;
+use user_canister::{Event, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -41,7 +41,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_storage_ugraded_bot_message(&ev, state);
         }
         Event::ReferredUserRegistered(ev) => {
-            openchat_bot::send_referred_user_joined_message(&ev, state);
+            state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered);
+            openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
         }
         Event::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, state);
@@ -101,12 +102,28 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                     state,
                 );
             }
+
+            if let Some(referred_by) = state.data.referred_by {
+                let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                    ReferralStatus::LifetimeDiamond
+                } else {
+                    ReferralStatus::Diamond
+                };
+                state.push_user_canister_event(referred_by.into(), UserCanisterEvent::SetReferralStatus(Box::new(status)))
+            }
         }
         Event::NotifyUniquePersonProof(proof) => {
             if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
                 state.data.notify_user_index_of_chit(now);
             }
             state.data.unique_person_proof = Some(*proof);
+
+            if let Some(referred_by) = state.data.referred_by {
+                state.push_user_canister_event(
+                    referred_by.into(),
+                    UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
+                )
+            }
         }
     }
 }

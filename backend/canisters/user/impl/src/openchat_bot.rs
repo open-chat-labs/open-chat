@@ -3,7 +3,7 @@ use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIM
 use chat_events::{MessageContentInternal, TextContentInternal};
 use ic_ledger_types::Tokens;
 use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId, UserType};
-use user_canister::{C2CReplyContext, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
+use user_canister::{C2CReplyContext, PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
@@ -80,20 +80,10 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &
     send_text_message(text, Vec::new(), false, state);
 }
 
-pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, state: &mut RuntimeState) {
-    let user_id = event.user_id;
-
+pub(crate) fn send_referred_user_joined_message(user_id: UserId, username: String, state: &mut RuntimeState) {
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
-    send_text_message(
-        text,
-        vec![User {
-            user_id,
-            username: event.username.clone(),
-        }],
-        false,
-        state,
-    );
+    send_text_message(text, vec![User { user_id, username }], false, state);
 }
 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut RuntimeState) {

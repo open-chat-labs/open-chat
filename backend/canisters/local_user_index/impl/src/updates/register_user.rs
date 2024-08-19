@@ -26,7 +26,7 @@ async fn register_user(args: Args) -> Response {
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
@@ -53,7 +53,7 @@ async fn register_user(args: Args) -> Response {
                     user_id,
                     args.username,
                     wasm_version,
-                    referral_code,
+                    referred_by,
                     is_from_identity_canister,
                     state,
                 )
@@ -75,7 +75,7 @@ struct PrepareOk {
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     init_canister_args: InitUserCanisterArgs,
 }
@@ -152,10 +152,10 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+
     let referred_by = referral_code
-        .as_ref()
-        .and_then(|rc| if let ReferralCode::User(user_id) = rc { Some(user_id) } else { None })
-        .copied();
+        .and_then(|c| c.user())
+        .filter(|user_id| state.data.local_users.contains(user_id));
 
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
@@ -180,7 +180,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     })
@@ -191,11 +191,12 @@ fn commit(
     user_id: UserId,
     username: String,
     wasm_version: BuildVersion,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
+
     state.data.local_users.add(user_id, principal, wasm_version, now);
     state.data.global_users.add(principal, user_id, UserType::User);
 
@@ -203,20 +204,15 @@ fn commit(
         principal,
         user_id,
         username: username.clone(),
-        referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        referred_by,
         is_from_identity_canister,
     })));
 
-    match referral_code {
-        Some(ReferralCode::User(referred_by)) => {
-            if state.data.local_users.get(&referred_by).is_some() {
-                state.push_event_to_user(
-                    referred_by,
-                    UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-                );
-            }
-        }
-        Some(ReferralCode::BtcMiami(_)) | None => {}
+    if let Some(referred_by) = referred_by {
+        state.push_event_to_user(
+            referred_by,
+            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+        );
     }
 }
 
