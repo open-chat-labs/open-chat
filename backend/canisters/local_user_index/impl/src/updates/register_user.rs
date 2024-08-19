@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
@@ -5,6 +7,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
+use local_user_index_canister::Referrals;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
@@ -214,6 +217,15 @@ fn commit(
             UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
         );
     }
+
+    state.data.referrals.insert(
+        user_id,
+        Referrals {
+            user_id,
+            referred_by,
+            referrals: HashMap::new(),
+        },
+    );
 }
 
 fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
