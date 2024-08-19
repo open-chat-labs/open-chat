@@ -12,6 +12,7 @@ pub struct Args {
     pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
     pub logo: Option<String>,
+    pub fee: Option<u128>,
 }
 
 impl Args {
@@ -24,6 +25,7 @@ impl Args {
             how_to_buy_url: None,
             transaction_url_format: None,
             logo: None,
+            fee: None,
         }
     }
 
@@ -34,6 +36,7 @@ impl Args {
             || self.how_to_buy_url.is_some()
             || self.transaction_url_format.is_some()
             || self.logo.is_some()
+            || self.fee.is_some()
     }
 }
 
