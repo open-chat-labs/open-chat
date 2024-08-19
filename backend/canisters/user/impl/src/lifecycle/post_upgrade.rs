@@ -34,23 +34,24 @@ fn post_upgrade(args: Args) {
 
     // TODO: Remove this after the next release
     mutate_state(|state| {
-        state.data.referred_by = args.referred_by;
-        state.data.referrals = Referrals::new(args.referrals);
-
         let now = state.env.now();
+
+        state.data.referred_by = args.referred_by;
+        state.data.referrals = Referrals::new(args.referrals, now);
+
         let prev_chit_events = state.data.chit_events.len();
 
-        for status in state
+        for referral in state
             .data
             .referrals
-            .referrals()
-            .values()
-            .filter(|s| !matches!(s, ReferralStatus::Registered))
+            .list()
+            .into_iter()
+            .filter(|r| !matches!(r.status, ReferralStatus::Registered))
         {
             state.data.chit_events.push(ChitEarned {
-                amount: status.chit_reward() as i32,
+                amount: referral.status.chit_reward() as i32,
                 timestamp: now,
-                reason: ChitEarnedReason::Referral(*status),
+                reason: ChitEarnedReason::Referral(referral.status),
             })
         }
 

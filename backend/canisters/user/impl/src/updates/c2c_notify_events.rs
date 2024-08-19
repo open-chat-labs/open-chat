@@ -41,7 +41,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_storage_ugraded_bot_message(&ev, state);
         }
         Event::ReferredUserRegistered(ev) => {
-            state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered);
+            state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
             openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
         }
         Event::UserSuspended(ev) => {

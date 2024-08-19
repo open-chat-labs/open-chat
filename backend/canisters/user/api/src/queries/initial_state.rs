@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, Chat, ChatId, ChitEarned, DirectChatSummary, Empty, GroupChatSummary, TimestampMillis, UserId};
 
-use crate::WalletConfig;
+use crate::{Referral, WalletConfig};
 
 pub type Args = Empty;
 
@@ -32,7 +32,7 @@ pub struct SuccessResult {
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: bool,
     pub wallet_config: WalletConfig,
-    pub referred_by: Option<UserId>,
+    pub referrals: Vec<Referral>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

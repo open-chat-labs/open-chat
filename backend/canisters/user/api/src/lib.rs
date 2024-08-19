@@ -320,3 +320,9 @@ impl Default for WalletConfig {
         WalletConfig::Auto(AutoWallet { min_cents_visible: 100 })
     }
 }
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Referral {
+    pub user_id: UserId,
+    pub status: ReferralStatus,
+}

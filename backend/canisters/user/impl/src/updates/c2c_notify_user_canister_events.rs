@@ -114,7 +114,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             );
         }
         UserCanisterEvent::SetReferralStatus(status) => {
-            let chit_reward = state.data.referrals.set_status(caller_user_id, *status);
+            let chit_reward = state.data.referrals.set_status(caller_user_id, *status, now);
             let mut rewarded = false;
 
             if chit_reward > 0 {
