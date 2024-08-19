@@ -4,4 +4,4 @@ import type { DiamondMembershipStatusFull } from "./DiamondMembershipStatusFull"
 import type { SuspensionDetails } from "./SuspensionDetails";
 import type { UserId } from "./UserId";
 
-export type CurrentUserSummary = { user_id: UserId, username: string, display_name: string | null, avatar_id: bigint | null, is_bot: boolean, is_platform_moderator: boolean, is_platform_operator: boolean, suspension_details: SuspensionDetails | null, is_suspected_bot: boolean, diamond_membership_details: DiamondMembershipDetails | null, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: number, is_unique_person: boolean, };
+export type CurrentUserSummary = { user_id: UserId, username: string, display_name?: string, avatar_id?: bigint, is_bot: boolean, is_platform_moderator: boolean, is_platform_operator: boolean, suspension_details?: SuspensionDetails, is_suspected_bot: boolean, diamond_membership_details?: DiamondMembershipDetails, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: number, is_unique_person: boolean, };

@@ -6,6 +6,7 @@ use types::UserId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, reported_messages)]
 pub struct Args {
+    #[ts(optional)]
     pub user_id: Option<UserId>,
 }
 

@@ -14,7 +14,9 @@ pub struct CommunityCanisterCommunitySummary {
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    #[ts(optional)]
     pub avatar_id: Option<u128>,
+    #[ts(optional)]
     pub banner_id: Option<u128>,
     pub is_public: bool,
     pub member_count: u32,
