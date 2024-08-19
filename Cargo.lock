@@ -3042,6 +3042,7 @@ dependencies = [
  "ic-cdk 0.14.0",
  "ic-cdk-timers",
  "ic-stable-structures 0.6.4",
+ "json",
  "local_group_index_canister",
  "local_group_index_canister_c2c_client",
  "msgpack",

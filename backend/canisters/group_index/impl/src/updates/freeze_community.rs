@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_community, unfreeze_community};
-use ic_cdk::update;
 use types::{CanisterId, CommunityId, FrozenGroupInfo};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, json = true)]
 #[trace]
 async fn freeze_community(args: freeze_community::Args) -> freeze_community::Response {
     use group_index_canister::freeze_community::Response::*;
@@ -72,7 +72,7 @@ async fn freeze_community(args: freeze_community::Args) -> freeze_community::Res
     }
 }
 
-#[update]
+#[update(candid = true, json = true)]
 #[trace]
 async fn unfreeze_community(args: unfreeze_community::Args) -> unfreeze_community::Response {
     use group_index_canister::unfreeze_community::Response::*;

@@ -53,10 +53,7 @@ export abstract class CandidService {
             return CandidService.processJsonResponse(response.reply.arg, mapper, responseValidator);
         } else {
             throw new Error(
-                `query rejected. ${{
-                    code: response.reject_code,
-                    message: response.reject_message,
-                }}`,
+                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`,
             );
         }
     }

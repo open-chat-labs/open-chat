@@ -1,11 +1,11 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use group_index_canister::search::{Response::*, *};
-use ic_cdk::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query]
+#[query(candid = true, json = true)]
 fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }
