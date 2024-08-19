@@ -323,7 +323,7 @@ impl Default for WalletConfig {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Referral {
     pub user_id: UserId,
     pub status: ReferralStatus,
@@ -332,5 +332,5 @@ pub struct Referral {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Referrals {
     pub referred_by: Option<UserId>,
-    pub referrals: HashMap<UserId, ReferralStatus>,
+    pub referrals: Vec<Referral>,
 }

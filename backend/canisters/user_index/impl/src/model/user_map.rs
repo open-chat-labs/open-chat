@@ -11,7 +11,7 @@ use types::{
     BotConfig, CyclesTopUp, Milliseconds, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId,
     UserType,
 };
-use user_canister::Referrals;
+use user_canister::{Referral, Referrals};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -358,7 +358,12 @@ impl UserMap {
                         referred_by: referred_by_map.get(user_id).copied(),
                         referrals: users
                             .iter()
-                            .filter_map(|referred| referral_status(self, referred).map(|status| (*referred, status)))
+                            .filter_map(|referred| {
+                                referral_status(self, referred).map(|status| Referral {
+                                    user_id: *user_id,
+                                    status,
+                                })
+                            })
                             .collect(),
                     },
                 )

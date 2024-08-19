@@ -137,13 +137,13 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 state.data.referred_by = ev.referred_by;
             }
 
-            for (user_id, status) in ev.referrals {
-                let chit_reward = state.data.referrals.set_status(user_id, status, now);
+            for referral in ev.referrals {
+                let chit_reward = state.data.referrals.set_status(referral.user_id, referral.status, now);
                 if chit_reward > 0 {
                     state.data.chit_events.push(ChitEarned {
                         amount: chit_reward as i32,
                         timestamp: now,
-                        reason: ChitEarnedReason::Referral(status),
+                        reason: ChitEarnedReason::Referral(referral.status),
                     });
                 }
             }
