@@ -193,8 +193,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 state.data.canister_pool.push(canister_id);
             }
         }
-        Event::Referrals(ev) => {
-            state.data.referrals.insert(ev.user_id, ev);
+        Event::SyncReferrals(user_id, referrals) => {
+            if state.data.local_users.contains(&user_id) {
+                state.push_event_to_user(user_id, UserEvent::ReferralSync(Box::new(referrals)))
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
 use types::{ReferralStatus, TimestampMillis, Timestamped, UserId};
 use user_canister::Referral;
 
@@ -9,33 +9,23 @@ pub struct Referrals {
 }
 
 impl Referrals {
-    pub fn new(referrals: HashMap<UserId, ReferralStatus>, now: TimestampMillis) -> Referrals {
-        Referrals {
-            users: referrals
-                .into_iter()
-                .map(|(user_id, status)| (user_id, Timestamped::new(status, now)))
-                .collect(),
-        }
-    }
-
-    pub fn register(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        self.users
-            .insert(user_id, Timestamped::new(ReferralStatus::Registered, now))
-            .is_none()
-    }
+    // pub fn register(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+    //     self.users
+    //         .insert(user_id, Timestamped::new(ReferralStatus::Registered, now))
+    //         .is_none()
+    // }
 
     pub fn set_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> u32 {
-        match self.users.entry(user_id) {
-            Entry::Occupied(mut e) => {
-                let current_status = e.get();
-                let chit_reward = status.chit_reward().saturating_sub(current_status.chit_reward());
+        let current_status = self.users.get(&user_id);
+        let current_chit_reward = current_status.map(|s| s.chit_reward()).unwrap_or_default();
+        let chit_reward_diff = status.chit_reward().saturating_sub(current_chit_reward);
 
-                e.insert(Timestamped::new(status, now));
-
-                chit_reward
-            }
-            Entry::Vacant(_) => 0,
+        // TODO: Once the referral sync has happened this needs to be changed so that nothing happens if the current status is empty.
+        if (current_status.is_none() && matches!(status, ReferralStatus::Registered)) || chit_reward_diff > 0 {
+            self.users.insert(user_id, Timestamped::new(status, now));
         }
+
+        chit_reward_diff
     }
 
     pub fn list(&self) -> Vec<Referral> {

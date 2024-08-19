@@ -5,7 +5,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
-use local_user_index_canister::{GlobalUser, Referrals};
+use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -291,8 +291,6 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-    #[serde(default)]
-    pub referrals: HashMap<UserId, Referrals>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -361,7 +359,6 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
-            referrals: HashMap::new(),
         }
     }
 }

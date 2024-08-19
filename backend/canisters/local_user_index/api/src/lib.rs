@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralStatus,
-    ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
 };
 
 mod lifecycle;
@@ -16,6 +14,7 @@ mod updates;
 pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
+use user_canister::Referrals;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
@@ -39,7 +38,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
-    Referrals(Referrals),
+    SyncReferrals(UserId, Referrals),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -158,13 +157,6 @@ pub struct ReferralCodeAdded {
 pub struct DeleteUser {
     pub user_id: UserId,
     pub triggered_by_user: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Referrals {
-    pub user_id: UserId,
-    pub referred_by: Option<UserId>,
-    pub referrals: HashMap<UserId, ReferralStatus>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
