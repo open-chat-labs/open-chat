@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Sync all referrers and referrals with local user indexes ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+- Sync referrers and referrals with users ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
 
 ## [[2.0.1293](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1293-user_index)] - 2024-08-16
 
