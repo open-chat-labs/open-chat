@@ -6,7 +6,9 @@ use types::{UserId, UserSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, user)]
 pub struct Args {
+    #[ts(optional)]
     pub user_id: Option<UserId>,
+    #[ts(optional)]
     pub username: Option<String>,
 }
 

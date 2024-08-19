@@ -134,7 +134,7 @@ export const userIndexSuspendUserResponseSchema = z.union([
 
 export const userIndexSuspendUserArgsSchema = z.object({
     user_id: userIdSchema,
-    duration: z.union([z.coerce.bigint(), z.undefined()]),
+    duration: z.coerce.bigint().optional(),
     reason: z.string(),
 });
 
@@ -179,15 +179,15 @@ export const userIndexSuspectedBotsSuccessResultSchema = z.object({
 });
 
 export const userIndexSuspectedBotsArgsSchema = z.object({
-    after: z.union([userIdSchema, z.undefined()]),
+    after: userIdSchema.optional(),
     count: z.number(),
 });
 
 export const userSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    display_name: z.union([z.string(), z.undefined()]),
-    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
+    display_name: z.string().optional(),
+    avatar_id: z.coerce.bigint().optional(),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_member: z.boolean(),
@@ -199,8 +199,8 @@ export const userSummarySchema = z.object({
 });
 
 export const userIndexUserArgsSchema = z.object({
-    user_id: z.union([userIdSchema, z.undefined()]),
-    username: z.union([z.string(), z.undefined()]),
+    user_id: userIdSchema.optional(),
+    username: z.string().optional(),
 });
 
 export const userIndexReferralMetricsReferralMetricsSchema = z.object({
@@ -314,7 +314,7 @@ export const userIndexSetUsernameResponseSchema = z.union([
 ]);
 
 export const userIndexSetDisplayNameArgsSchema = z.object({
-    display_name: z.union([z.string(), z.undefined()]),
+    display_name: z.string().optional(),
 });
 
 export const userIndexSetDisplayNameResponseSchema = z.union([
@@ -349,7 +349,7 @@ export const userIndexReportedMessagesSuccessResultSchema = z.object({
 });
 
 export const userIndexReportedMessagesArgsSchema = z.object({
-    user_id: z.union([userIdSchema, z.undefined()]),
+    user_id: userIdSchema.optional(),
 });
 
 export const userIndexUserRegistrationCanisterResponseSchema = z.union([
@@ -375,26 +375,26 @@ export const diamondMembershipStatusFullSchema = z.union([
 
 export const userSummaryStableSchema = z.object({
     username: z.string(),
-    display_name: z.union([z.string(), z.undefined()]),
-    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
+    display_name: z.string().optional(),
+    avatar_id: z.coerce.bigint().optional(),
     is_bot: z.boolean(),
     suspended: z.boolean(),
     diamond_membership_status: diamondMembershipStatusSchema,
     is_unique_person: z.boolean(),
-    bot_config: z.union([botConfigSchema, z.undefined()]),
+    bot_config: botConfigSchema.optional(),
 });
 
 export const currentUserSummarySchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
-    display_name: z.union([z.string(), z.undefined()]),
-    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
+    display_name: z.string().optional(),
+    avatar_id: z.coerce.bigint().optional(),
     is_bot: z.boolean(),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),
-    suspension_details: z.union([suspensionDetailsSchema, z.undefined()]),
+    suspension_details: suspensionDetailsSchema.optional(),
     is_suspected_bot: z.boolean(),
-    diamond_membership_details: z.union([diamondMembershipDetailsSchema, z.undefined()]),
+    diamond_membership_details: diamondMembershipDetailsSchema.optional(),
     diamond_membership_status: diamondMembershipStatusFullSchema,
     moderation_flags_enabled: z.number(),
     is_unique_person: z.boolean(),
@@ -405,8 +405,8 @@ export const userIndexUsersChitResponseSchema = z.object({
 });
 
 export const userIndexUpdateDiamondMembershipSubscriptionArgsSchema = z.object({
-    pay_in_chat: z.union([z.boolean(), z.undefined()]),
-    subscription: z.union([diamondMembershipSubscriptionSchema, z.undefined()]),
+    pay_in_chat: z.boolean().optional(),
+    subscription: diamondMembershipSubscriptionSchema.optional(),
 });
 
 export const userIndexPlatformOperatorsResponseSchema = z.object({
@@ -434,18 +434,18 @@ export const userIndexReferralMetricsResponseSchema = z.object({
 
 export const userSummaryV2Schema = z.object({
     user_id: userIdSchema,
-    stable: z.union([userSummaryStableSchema, z.undefined()]),
-    volatile: z.union([userSummaryVolatileSchema, z.undefined()]),
+    stable: userSummaryStableSchema.optional(),
+    volatile: userSummaryVolatileSchema.optional(),
 });
 
 export const userIndexUsersArgsSchema = z.object({
     user_groups: z.array(userIndexUsersUserGroupSchema),
-    users_suspended_since: z.union([z.coerce.bigint(), z.undefined()]),
+    users_suspended_since: z.coerce.bigint().optional(),
 });
 
 export const userIndexUsersResultSchema = z.object({
     users: z.array(userSummaryV2Schema),
-    current_user: z.union([currentUserSummarySchema, z.undefined()]),
+    current_user: currentUserSummarySchema.optional(),
     deleted: z.array(userIdSchema),
     timestamp: z.coerce.bigint(),
 });
@@ -471,8 +471,8 @@ export const userIndexCurrentUserSuccessResultSchema = z.object({
     user_id: userIdSchema,
     username: z.string(),
     date_created: z.coerce.bigint(),
-    display_name: z.union([z.string(), z.undefined()]),
-    avatar_id: z.union([z.coerce.bigint(), z.undefined()]),
+    display_name: z.string().optional(),
+    avatar_id: z.coerce.bigint().optional(),
     canister_upgrade_status: canisterUpgradeStatusSchema,
     wasm_version: buildVersionSchema,
     icp_account: z.tuple([
@@ -512,9 +512,9 @@ export const userIndexCurrentUserSuccessResultSchema = z.object({
     referrals: z.array(userIdSchema),
     is_platform_moderator: z.boolean(),
     is_platform_operator: z.boolean(),
-    suspension_details: z.union([suspensionDetailsSchema, z.undefined()]),
+    suspension_details: suspensionDetailsSchema.optional(),
     is_suspected_bot: z.boolean(),
-    diamond_membership_details: z.union([diamondMembershipDetailsSchema, z.undefined()]),
+    diamond_membership_details: diamondMembershipDetailsSchema.optional(),
     diamond_membership_status: diamondMembershipStatusFullSchema,
     moderation_flags_enabled: z.number(),
     is_unique_person: z.boolean(),

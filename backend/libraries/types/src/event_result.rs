@@ -8,5 +8,6 @@ use ts_rs::TS;
 pub struct PushEventResult {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
+    #[ts(optional)]
     pub expires_at: Option<TimestampMillis>,
 }

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add OC dev team controller to 2 uninstalled canisters to recover funds ([#6247](https://github.com/open-chat-labs/open-chat/pull/6247))
 - Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
 
 ## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13

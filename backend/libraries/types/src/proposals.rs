@@ -95,6 +95,7 @@ pub struct NnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
+    #[ts(optional)]
     pub payload_text_rendering: Option<String>,
     pub last_updated: TimestampMillis,
 }
@@ -130,6 +131,7 @@ pub struct SnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
+    #[ts(optional)]
     pub payload_text_rendering: Option<String>,
     pub minimum_yes_proportion_of_total: u32,
     pub minimum_yes_proportion_of_exercised: u32,
@@ -158,6 +160,7 @@ impl SnsProposal {
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
+    #[ts(optional)]
     pub my_vote: Option<bool>,
 }
 

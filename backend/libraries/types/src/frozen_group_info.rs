@@ -9,5 +9,6 @@ pub type FrozenCommunityInfo = FrozenGroupInfo;
 pub struct FrozenGroupInfo {
     pub timestamp: TimestampMillis,
     pub frozen_by: UserId,
+    #[ts(optional)]
     pub reason: Option<String>,
 }
