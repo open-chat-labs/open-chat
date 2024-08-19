@@ -193,7 +193,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 state.data.canister_pool.push(canister_id);
             }
         }
-        Event::ReferredBy(ev) => {
+        Event::Referrals(ev) => {
             state.data.referrals.insert(ev.user_id, ev);
         }
     }

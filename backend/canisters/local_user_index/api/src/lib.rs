@@ -39,7 +39,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
-    ReferredBy(Referrals),
+    Referrals(Referrals),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
