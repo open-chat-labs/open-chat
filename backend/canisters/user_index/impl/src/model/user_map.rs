@@ -324,7 +324,7 @@ impl UserMap {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
     }
 
-    pub fn all_referrals(&self) -> HashMap<UserId, Referrals> {
+    pub fn all_referrals(&self) -> Vec<Referrals> {
         fn referral_status(user_map: &UserMap, user_id: &UserId) -> Option<ReferralStatus> {
             let user = user_map.get_by_user_id(user_id)?;
 
@@ -351,18 +351,13 @@ impl UserMap {
 
         self.user_referrals
             .iter()
-            .map(|(user_id, users)| {
-                (
-                    *user_id,
-                    Referrals {
-                        user_id: *user_id,
-                        referred_by: referred_by_map.get(user_id).copied(),
-                        referrals: users
-                            .iter()
-                            .filter_map(|referred| referral_status(self, referred).map(|status| (*referred, status)))
-                            .collect(),
-                    },
-                )
+            .map(|(user_id, users)| Referrals {
+                user_id: *user_id,
+                referred_by: referred_by_map.get(user_id).copied(),
+                referrals: users
+                    .iter()
+                    .filter_map(|referred| referral_status(self, referred).map(|status| (*referred, status)))
+                    .collect(),
             })
             .collect()
     }
