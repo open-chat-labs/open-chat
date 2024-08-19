@@ -887,6 +887,7 @@ type InitialStateResponse = variant {
         next_daily_claim : TimestampMillis;
         is_unique_person : bool;
         wallet_config: WalletConfig;
+        referred_by : opt UserId;
     };
 };
 

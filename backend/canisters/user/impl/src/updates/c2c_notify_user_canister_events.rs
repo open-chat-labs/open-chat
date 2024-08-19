@@ -115,16 +115,19 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::SetReferralStatus(status) => {
             let chit_reward = state.data.referrals.set_status(caller_user_id, *status);
+            let mut rewarded = false;
 
             if chit_reward > 0 {
                 state.data.chit_events.push(ChitEarned {
                     amount: chit_reward as i32,
                     timestamp: now,
                     reason: ChitEarnedReason::Referral(*status),
-                })
+                });
+
+                rewarded = true;
             }
 
-            if let Some(achievement) = match state.data.referrals.total() {
+            if let Some(achievement) = match state.data.referrals.total_verified() {
                 1 => Some(Achievement::Referred1stUser),
                 3 => Some(Achievement::Referred3rdUser),
                 10 => Some(Achievement::Referred10thUser),
@@ -132,7 +135,11 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 50 => Some(Achievement::Referred50thUser),
                 _ => None,
             } {
-                state.data.award_achievement(achievement, now);
+                rewarded |= state.data.award_achievement(achievement, now);
+            }
+
+            if rewarded {
+                state.data.notify_user_index_of_chit(now);
             }
         }
     }

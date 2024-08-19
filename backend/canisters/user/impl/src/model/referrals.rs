@@ -35,7 +35,7 @@ impl Referrals {
         self.users.clone()
     }
 
-    pub fn total(&self) -> usize {
+    pub fn total_verified(&self) -> usize {
         self.users
             .values()
             .filter(|s| !matches!(**s, ReferralStatus::Registered))

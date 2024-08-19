@@ -32,6 +32,7 @@ pub struct SuccessResult {
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: bool,
     pub wallet_config: WalletConfig,
+    pub referred_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
