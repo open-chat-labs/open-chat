@@ -91,7 +91,7 @@ export class GroupIndexClient extends CandidService {
             count: 30,
             exclusions: exclusions.map(principalStringToBytes),
         };
-        return this.executeMsgpackUpdate(
+        return this.executeMsgpackQuery(
             "recommended_groups",
             args,
             recommendedGroupsResponse,
