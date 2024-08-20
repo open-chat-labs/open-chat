@@ -8,7 +8,7 @@ import {
     SessionExpiryError,
 } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
-import { pack, unpack } from "msgpackr";
+import { type Options, Packr } from "msgpackr";
 import { identity } from "../utils/mapping";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
@@ -19,6 +19,8 @@ const RETRY_DELAY = 100;
 function debug(msg: string): void {
     console.log(msg);
 }
+
+const Packer = new Packr({ useRecords: false, skipValues: [undefined] } as unknown as Options);
 
 export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
@@ -37,7 +39,7 @@ export abstract class CandidService {
         args: Static<In>,
         mapper: (from: Static<Resp>) => Out,
         requestValidator: In,
-        responseValidator: Resp
+        responseValidator: Resp,
     ): Promise<Out> {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
@@ -48,17 +50,17 @@ export abstract class CandidService {
                     arg: payload,
                 }),
             identity,
-            args
+            args,
         );
         if (response.status === "replied") {
             return CandidService.processMsgpackResponse(
                 response.reply.arg,
                 mapper,
-                responseValidator
+                responseValidator,
             );
         } else {
             throw new Error(
-                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`
+                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`,
             );
         }
     }
@@ -68,7 +70,7 @@ export abstract class CandidService {
         args: Static<In>,
         mapper: (from: Static<Resp>) => Out,
         requestValidator: In,
-        responseValidator: Resp
+        responseValidator: Resp,
     ): Promise<Out> {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
@@ -85,7 +87,7 @@ export abstract class CandidService {
                 this.agent,
                 canisterId,
                 requestId,
-                polling.defaultStrategy()
+                polling.defaultStrategy(),
             );
             return CandidService.processMsgpackResponse(reply, mapper, responseValidator);
         } catch (err) {
@@ -97,7 +99,7 @@ export abstract class CandidService {
     protected handleResponse<From, To>(
         service: Promise<From>,
         mapper: (from: From) => To,
-        args?: unknown
+        args?: unknown,
     ): Promise<To> {
         return service.then(mapper).catch((err) => {
             console.log(err, args);
@@ -109,7 +111,7 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
-        retries = 0
+        retries = 0,
     ): Promise<To> {
         return serviceCall()
             .then(mapper)
@@ -117,7 +119,7 @@ export abstract class CandidService {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
                 const debugInfo = `error: ${JSON.stringify(
                     responseErr,
-                    Object.getOwnPropertyNames(responseErr)
+                    Object.getOwnPropertyNames(responseErr),
                 )}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof ResponseTooLargeError) &&
@@ -130,11 +132,11 @@ export abstract class CandidService {
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
                         debug(
-                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
                         );
                     } else {
                         debug(
-                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
                         );
                     }
 
@@ -147,7 +149,7 @@ export abstract class CandidService {
                     });
                 } else {
                     debug(
-                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`
+                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`,
                     );
                     throw responseErr;
                 }
@@ -164,24 +166,25 @@ export abstract class CandidService {
 
     private static prepareMsgpackArgs<T extends TSchema>(
         value: Static<T>,
-        validator: T
+        validator: T,
     ): ArrayBuffer {
         const validated = CandidService.validate(value, validator);
-        return pack(validated);
+        return Packer.pack(validated);
     }
 
     private static processMsgpackResponse<Resp extends TSchema, Out>(
         responseBytes: ArrayBuffer,
         mapper: (from: Resp) => Out,
-        validator: Resp
+        validator: Resp,
     ): Out {
-        const response = unpack(new Uint8Array(responseBytes));
-        return mapper(CandidService.validate(response, validator));
+        const response = Packer.unpack(new Uint8Array(responseBytes));
+        const validated = CandidService.validate(response, validator);
+        return mapper(validated);
     }
 
     constructor(
         protected identity: Identity,
         protected agent: HttpAgent,
-        protected canisterId: string
+        protected canisterId: string,
     ) {}
 }
