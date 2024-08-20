@@ -22,8 +22,6 @@
 
     const dispatch = createEventDispatcher();
 
-    export let busy = false;
-
     let today = new Date();
     let showDate = new Date();
     let dates: Date[][] = [];

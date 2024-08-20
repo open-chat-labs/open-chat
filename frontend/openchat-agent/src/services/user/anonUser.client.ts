@@ -119,6 +119,7 @@ export class AnonUserClient {
             nextDailyClaim: 0n,
             chitBalance: 0,
             totalChitEarned: 0,
+            referrals: [],
         });
     }
 

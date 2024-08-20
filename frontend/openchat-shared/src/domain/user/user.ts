@@ -496,3 +496,10 @@ export type DiamondMembershipFees = {
 };
 
 export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound;
+
+export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
+
+export type Referral = {
+    userId: string;
+    status: ReferralStatus;
+};

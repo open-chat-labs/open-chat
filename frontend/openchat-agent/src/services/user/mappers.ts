@@ -68,6 +68,8 @@ import type {
     ApiChitEarnedReason,
     ApiAchievement,
     ApiClaimDailyChitResponse,
+    ApiReferralStatus,
+    ApiReferral,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -137,6 +139,8 @@ import type {
     ChitEarnedReason,
     Achievement,
     ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -200,10 +204,29 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
     if ("Achievement" in candid) {
         return { kind: "achievement_unlocked", type: achievementType(candid.Achievement) };
     }
+    if ("Referral" in candid) {
+        return { kind: "referral", type: referralStatus(candid.Referral) };
+    }
     if ("MemeContestWinner" in candid) {
         return { kind: "meme_contest_winner" };
     }
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
+}
+
+export function referralStatus(candid: ApiReferralStatus): ReferralStatus {
+    if ("Registered" in candid) {
+        return "registered";
+    }
+    if ("Diamond" in candid) {
+        return "diamond";
+    }
+    if ("UniquePerson" in candid) {
+        return "unique_person";
+    }
+    if ("LifetimeDiamond" in candid) {
+        return "lifetime_diamond";
+    }
+    throw new UnsupportedValueError("Unexpected ApiReferralStatus encountered", candid);
 }
 
 export function achievementType(candid: ApiAchievement): Achievement {
@@ -407,6 +430,21 @@ export function achievementType(candid: ApiAchievement): Achievement {
     }
     if ("SetAvatar" in candid) {
         return "set_avatar";
+    }
+    if ("Referred1stUser" in candid) {
+        return "referred_1st_user";
+    }
+    if ("Referred3rdUser" in candid) {
+        return "referred_3rd_user";
+    }
+    if ("Referred10thUser" in candid) {
+        return "referred_10th_user";
+    }
+    if ("Referred20thUser" in candid) {
+        return "referred_20th_user";
+    }
+    if ("Referred50thUser" in candid) {
+        return "referred_50th_user";
     }
     throw new UnsupportedValueError("Unexpected ApiAchievement received", candid);
 }
@@ -892,9 +930,17 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function referral(candid: ApiReferral): Referral {
+    return {
+        userId: candid.user_id.toString(),
+        status: referralStatus(candid.status),
+    };
 }
 
 function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {

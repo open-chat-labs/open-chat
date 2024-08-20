@@ -1,6 +1,6 @@
 import type DRange from "drange";
 import type { DataContent } from "../data/data";
-import type { UserSummary } from "../user/user";
+import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
 import type {
@@ -1144,6 +1144,7 @@ export type InitialStateResponse = {
     nextDailyClaim: bigint;
     chitBalance: number;
     totalChitEarned: number;
+    referrals: Referral[];
 };
 
 export type PinNumberSettings = {
