@@ -150,6 +150,7 @@ members = [
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
     "backend/libraries/ts_export",
+    "backend/libraries/ts_export_macros",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -198,7 +199,7 @@ ic-cdk-timers = "0.8.0"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-ledger-types = "0.11.0"
-ic_principal = { version = "0.1.1", features = ["ts-rs"] }
+ic_principal = "0.1.1"
 ic-stable-structures = "0.6.4"
 ic-transport-types = "0.35.0"
 ic-utils = "0.35.0"
@@ -257,4 +258,3 @@ debug = false
 
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "c99e5e54e7eb3e04d964f9c45aca0334e3aa2363" }
-ic_principal = { git = "https://github.com/hpeebles/candid", rev = "e404498843bdc83df29745956e64f3d2e1f425bc" }

@@ -727,7 +727,7 @@ impl P2PSwapContent {
 pub struct CustomContent {
     pub kind: String,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
+    #[ts(as = "Vec::<u8>")]
     pub data: Vec<u8>,
 }
 
@@ -741,7 +741,6 @@ pub struct DeletedBy {
 #[ts_export]
 #[derive(CandidType, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
-    #[ts(as = "String")]
     pub canister_id: CanisterId,
     pub blob_id: u128,
 }

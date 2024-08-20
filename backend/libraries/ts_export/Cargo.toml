@@ -5,10 +5,8 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-proc-macro = true
-
 [dependencies]
-proc-macro2 = { workspace = true }
-quote = { workspace = true }
-syn = { workspace = true }
+ic_principal = { workspace = true }
+serde = { workspace = true }
+ts-rs = { workspace = true }
+ts_export_macros = { path = "../ts_export_macros" }

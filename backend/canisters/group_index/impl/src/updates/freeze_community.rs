@@ -6,7 +6,7 @@ use group_index_canister::{freeze_community, unfreeze_community};
 use types::{CanisterId, CommunityId, FrozenGroupInfo};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, json = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn freeze_community(args: freeze_community::Args) -> freeze_community::Response {
     use group_index_canister::freeze_community::Response::*;
@@ -72,7 +72,7 @@ async fn freeze_community(args: freeze_community::Args) -> freeze_community::Res
     }
 }
 
-#[update(candid = true, json = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn unfreeze_community(args: unfreeze_community::Args) -> unfreeze_community::Response {
     use group_index_canister::unfreeze_community::Response::*;

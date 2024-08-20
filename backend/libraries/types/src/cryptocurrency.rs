@@ -398,14 +398,14 @@ pub mod nns {
     #[ts(rename = "CryptoAccountNNS")]
     pub enum CryptoAccount {
         Mint,
-        Account(#[ts(as = "String")] AccountIdentifier),
+        Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
     }
 
     #[ts_export]
     #[derive(CandidType, Clone, Debug)]
     pub enum UserOrAccount {
         User(UserId),
-        Account(#[ts(as = "String")] AccountIdentifier),
+        Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
     }
 
     #[ts_export]
@@ -501,7 +501,6 @@ pub mod icrc1 {
     #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
-        #[ts(as = "String")]
         pub ledger: CanisterId,
         pub token: Cryptocurrency,
         pub amount: u128,

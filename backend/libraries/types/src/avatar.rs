@@ -8,7 +8,7 @@ pub struct Document {
     pub id: u128,
     pub mime_type: String,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
+    #[ts(as = "Vec::<u8>")]
     pub data: Vec<u8>,
 }
 

@@ -7,7 +7,6 @@ use ts_export::ts_export;
 
 #[ts_export]
 #[derive(CandidType, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[ts(as = "String")]
 pub struct UserId(CanisterId);
 
 impl UserId {

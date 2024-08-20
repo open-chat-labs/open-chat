@@ -1,10 +1,10 @@
 import * as z from "zod";
-import { emptyChatMetrics } from "../../utils/chat";
+import {emptyChatMetrics} from "../../utils/chat";
 import type {
     ApiPublicGroupSummary,
     ApiPublicSummaryResponse,
 } from "../../services/group/candid/idl";
-import { identity, mapOptional, optional } from "../../utils/mapping";
+import {bytesToHexString, identity, mapOptional, optional} from "../../utils/mapping";
 import {
     apiGroupSubtype,
     accessGate,
@@ -18,7 +18,7 @@ import {
     type PublicGroupSummaryResponse,
     CommonResponses,
 } from "openchat-shared";
-import type { publicGroupSummarySchema } from "../../zod";
+import type {publicGroupSummarySchema} from "../../zod";
 
 export function publicGroupSummary(
     candid: ApiPublicGroupSummary,
@@ -26,7 +26,7 @@ export function publicGroupSummary(
 ): GroupChatSummary {
     return {
         kind: "group_chat",
-        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
+        id: {kind: "group_chat", groupId: candid.chat_id.toString()},
         latestEventIndex: candid.latest_event_index,
         latestMessageIndex: optional(candid.latest_message_index, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
@@ -66,7 +66,7 @@ export function publicGroupSummary(
         frozen: candid.frozen.length > 0,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gate: optional(candid.gate, accessGate) ?? {kind: "no_gate"},
         level: "group",
         membership: nullMembership(),
         localUserIndex: candid.local_user_index_canister_id.toString(),
@@ -81,7 +81,7 @@ export function publicGroupSummaryJson(
 ): GroupChatSummary {
     return {
         kind: "group_chat",
-        id: { kind: "group_chat", groupId: json.chat_id },
+        id: {kind: "group_chat", groupId: bytesToHexString(json.chat_id)},
         latestEventIndex: json.latest_event_index,
         latestMessageIndex: json.latest_message_index,
         latestMessage: undefined, // mapOptional(json.latest_message, messageEvent),
@@ -95,7 +95,7 @@ export function publicGroupSummaryJson(
         memberCount: json.participant_count,
         blobReference: mapOptional(json.avatar_id, (blobId) => ({
             blobId,
-            canisterId: json.chat_id,
+            canisterId: bytesToHexString(json.chat_id),
         })),
         permissions: {
             changeRoles: "none",
@@ -121,10 +121,10 @@ export function publicGroupSummaryJson(
         frozen: json.frozen !== undefined,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: mapOptional(json.gate, accessGateJson) ?? { kind: "no_gate" },
+        gate: mapOptional(json.gate, accessGateJson) ?? {kind: "no_gate"},
         level: "group",
         membership: nullMembership(),
-        localUserIndex: json.local_user_index_canister_id,
+        localUserIndex: bytesToHexString(json.local_user_index_canister_id),
         isInvited,
         messagesVisibleToNonMembers: json.messages_visible_to_non_members,
     };

@@ -1,5 +1,4 @@
-import * as z from "zod";
-import { mapOptional } from "../../utils/mapping";
+import { bytesToHexString, mapOptional } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
@@ -20,40 +19,38 @@ import { UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummaryJson } from "../common/publicSummaryMapper";
 import { accessGateJson, groupSubtypeJson } from "../common/chatMappers";
 import type {
-    communityMatchSchema,
-    groupIndexActiveGroupsResponseSchema,
-    groupIndexAddHotGroupExclusionResponseSchema,
-    groupIndexDeleteFrozenGroupResponseSchema,
-    groupIndexExploreCommunitiesResponseSchema,
-    groupIndexExploreGroupsResponseSchema,
-    groupIndexFreezeGroupResponseSchema,
-    groupIndexLookupChannelByGroupIdResponseSchema,
-    groupIndexRecommendedGroupsResponseSchema,
-    groupIndexRemoveHotGroupExclusionResponseSchema,
-    groupIndexSetCommunityModerationFlagsResponseSchema,
-    groupIndexSetCommunityUpgradeConcurrencyResponseSchema,
-    groupIndexUnfreezeGroupResponseSchema,
-    groupMatchSchema,
-} from "../../zod";
+    CommunityMatch as TCommunityMatch,
+    groupIndexActiveGroupsResponse,
+    groupIndexAddHotGroupExclusionResponse,
+    groupIndexDeleteFrozenGroupResponse,
+    groupIndexExploreCommunitiesResponse,
+    groupIndexExploreGroupsResponse,
+    groupIndexFreezeGroupResponse,
+    groupIndexLookupChannelByGroupIdResponse,
+    groupIndexRecommendedGroupsResponse,
+    groupIndexRemoveHotGroupExclusionResponse,
+    groupIndexSetCommunityModerationFlagsResponse,
+    groupIndexSetCommunityUpgradeConcurrencyResponse,
+    groupIndexUnfreezeGroupResponse,
+    GroupMatch as TGroupMatch,
+} from "../../typebox";
 
-export function activeGroupsResponse(
-    json: z.infer<typeof groupIndexActiveGroupsResponseSchema>,
-): ActiveGroupsResponse {
+export function activeGroupsResponse(json: groupIndexActiveGroupsResponse): ActiveGroupsResponse {
     return {
         timestamp: json.Success.timestamp,
-        activeGroups: json.Success.active_groups,
-        activeCommunities: json.Success.active_communities,
+        activeGroups: json.Success.active_groups.map(bytesToHexString),
+        activeCommunities: json.Success.active_communities.map(bytesToHexString),
         deletedCommunities: json.Success.deleted_communities.map((d) => ({
-            id: d.id,
+            id: bytesToHexString(d.id),
             timestamp: d.timestamp,
-            deletedBy: d.deleted_by,
+            deletedBy: bytesToHexString(d.deleted_by),
             name: d.name,
             public: d.public,
         })),
         deletedGroups: json.Success.deleted_groups.map((d) => ({
-            id: d.id,
+            id: bytesToHexString(d.id),
             timestamp: d.timestamp,
-            deletedBy: d.deleted_by,
+            deletedBy: bytesToHexString(d.deleted_by),
             name: d.name,
             public: d.public,
         })),
@@ -61,7 +58,7 @@ export function activeGroupsResponse(
 }
 
 export function recommendedGroupsResponse(
-    json: z.infer<typeof groupIndexRecommendedGroupsResponseSchema>,
+    json: groupIndexRecommendedGroupsResponse
 ): GroupChatSummary[] {
     if ("Success" in json) {
         // TODO - we are hard-coding is_invited to false here which is something we have to live with for the moment
@@ -71,12 +68,12 @@ export function recommendedGroupsResponse(
 }
 
 export function lookupChannelResponse(
-    json: z.infer<typeof groupIndexLookupChannelByGroupIdResponseSchema>,
+    json: groupIndexLookupChannelByGroupIdResponse
 ): ChannelIdentifier | undefined {
     if (json !== "NotFound" && "Success" in json) {
         return {
             kind: "channel",
-            communityId: json.Success.community_id,
+            communityId: bytesToHexString(json.Success.community_id),
             channelId: json.Success.channel_id.toString(),
         };
     }
@@ -85,7 +82,7 @@ export function lookupChannelResponse(
 }
 
 export function exploreCommunitiesResponse(
-    json: z.infer<typeof groupIndexExploreCommunitiesResponseSchema>,
+    json: groupIndexExploreCommunitiesResponse
 ): ExploreCommunitiesResponse {
     if (
         json === "InvalidTerm" ||
@@ -104,13 +101,11 @@ export function exploreCommunitiesResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreCommunitiesResponse type received",
-        json,
+        json
     );
 }
 
-export function exploreGroupsResponse(
-    json: z.infer<typeof groupIndexExploreGroupsResponseSchema>,
-): GroupSearchResponse {
+export function exploreGroupsResponse(json: groupIndexExploreGroupsResponse): GroupSearchResponse {
     if (json === "InvalidTerm" || "TermTooShort" in json || "TermTooLong" in json) {
         return { kind: "term_invalid" };
     }
@@ -123,13 +118,11 @@ export function exploreGroupsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreGroupsResponse type received",
-        json,
+        json
     );
 }
 
-export function freezeGroupResponse(
-    json: z.infer<typeof groupIndexFreezeGroupResponseSchema>,
-): FreezeGroupResponse {
+export function freezeGroupResponse(json: groupIndexFreezeGroupResponse): FreezeGroupResponse {
     if (json === "ChatAlreadyFrozen") {
         return "chat_already_frozen";
     }
@@ -143,7 +136,7 @@ export function freezeGroupResponse(
         return {
             event: {
                 kind: "chat_frozen",
-                frozenBy: json.Success.event.frozen_by,
+                frozenBy: bytesToHexString(json.Success.event.frozen_by),
                 reason: json.Success.event.reason,
             },
             timestamp: json.Success.timestamp,
@@ -158,7 +151,7 @@ export function freezeGroupResponse(
 }
 
 export function unfreezeGroupResponse(
-    json: z.infer<typeof groupIndexUnfreezeGroupResponseSchema>,
+    json: groupIndexUnfreezeGroupResponse
 ): UnfreezeGroupResponse {
     if (json === "ChatNotFrozen") {
         return "chat_not_frozen";
@@ -173,7 +166,7 @@ export function unfreezeGroupResponse(
         return {
             event: {
                 kind: "chat_unfrozen",
-                unfrozenBy: json.Success.event.unfrozen_by,
+                unfrozenBy: bytesToHexString(json.Success.event.unfrozen_by),
             },
             timestamp: json.Success.timestamp,
             index: json.Success.index,
@@ -187,7 +180,7 @@ export function unfreezeGroupResponse(
 }
 
 export function deleteFrozenGroupResponse(
-    json: z.infer<typeof groupIndexDeleteFrozenGroupResponseSchema>,
+    json: groupIndexDeleteFrozenGroupResponse
 ): DeleteFrozenGroupResponse {
     if (json === "Success") {
         return "success";
@@ -208,7 +201,7 @@ export function deleteFrozenGroupResponse(
 }
 
 export function addHotGroupExclusionResponse(
-    json: z.infer<typeof groupIndexAddHotGroupExclusionResponseSchema>,
+    json: groupIndexAddHotGroupExclusionResponse
 ): AddHotGroupExclusionResponse {
     if (json === "Success") {
         return "success";
@@ -227,12 +220,12 @@ export function addHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddHotGroupExclusionResponse type received",
-        json,
+        json
     );
 }
 
 export function removeHotGroupExclusionResponse(
-    json: z.infer<typeof groupIndexRemoveHotGroupExclusionResponseSchema>,
+    json: groupIndexRemoveHotGroupExclusionResponse
 ): RemoveHotGroupExclusionResponse {
     if (json === "Success") {
         return "success";
@@ -251,12 +244,12 @@ export function removeHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveHotGroupExclusionResponse type received",
-        json,
+        json
     );
 }
 
 export function setUpgradeConcurrencyResponse(
-    json: z.infer<typeof groupIndexSetCommunityUpgradeConcurrencyResponseSchema>,
+    json: groupIndexSetCommunityUpgradeConcurrencyResponse
 ): SetGroupUpgradeConcurrencyResponse {
     if (json === "Success") {
         return "success";
@@ -269,12 +262,12 @@ export function setUpgradeConcurrencyResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
-        json,
+        json
     );
 }
 
 export function setCommunityModerationFlagsResponse(
-    json: z.infer<typeof groupIndexSetCommunityModerationFlagsResponseSchema>,
+    json: groupIndexSetCommunityModerationFlagsResponse
 ): SetCommunityModerationFlagsResponse {
     if (json === "Success" || json === "Unchanged") {
         return "success";
@@ -293,38 +286,38 @@ export function setCommunityModerationFlagsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
-        json,
+        json
     );
 }
 
-function groupMatch(json: z.infer<typeof groupMatchSchema>): GroupMatch {
+function groupMatch(json: TGroupMatch): GroupMatch {
     return {
-        chatId: { kind: "group_chat", groupId: json.id },
+        chatId: { kind: "group_chat", groupId: bytesToHexString(json.id) },
         name: json.name,
         description: json.description,
         subtype: mapOptional(json.subtype, groupSubtypeJson),
         blobReference: mapOptional(json.avatar_id, (blobId) => ({
             blobId,
-            canisterId: json.id,
+            canisterId: bytesToHexString(json.id),
         })),
     };
 }
 
-function communityMatch(json: z.infer<typeof communityMatchSchema>): CommunityMatch {
+function communityMatch(json: TCommunityMatch): CommunityMatch {
     return {
-        id: { kind: "community", communityId: json.id },
+        id: { kind: "community", communityId: bytesToHexString(json.id) },
         name: json.name,
         description: json.description,
         avatar: {
             blobReference: mapOptional(json.avatar_id, (blobId) => ({
                 blobId,
-                canisterId: json.id,
+                canisterId: bytesToHexString(json.id),
             })),
         },
         banner: {
             blobReference: mapOptional(json.banner_id, (blobId) => ({
                 blobId,
-                canisterId: json.id,
+                canisterId: bytesToHexString(json.id),
             })),
         },
         memberCount: json.member_count,

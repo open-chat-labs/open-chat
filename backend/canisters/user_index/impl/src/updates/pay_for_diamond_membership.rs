@@ -19,7 +19,7 @@ use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
-#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
+#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
     let Some(user_id) = read_state(|state| {

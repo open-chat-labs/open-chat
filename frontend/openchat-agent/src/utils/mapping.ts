@@ -11,7 +11,7 @@ export function mapOptional<A, B>(input: A | undefined, mapper: (a: A) => B): B 
 
 export function optionUpdate<A, B>(
     candid: ApiOptionUpdate<A>,
-    mapper: (a: A) => B,
+    mapper: (a: A) => B
 ): OptionUpdate<B> {
     if ("NoChange" in candid) return undefined;
     if ("SetToNone" in candid) return "set_to_none";
@@ -21,7 +21,7 @@ export function optionUpdate<A, B>(
 
 export function apiOptionUpdate<A, B>(
     mapper: (a: A) => B,
-    domain: OptionUpdate<A>,
+    domain: OptionUpdate<A>
 ): ApiOptionUpdate<B> {
     if (domain === undefined) return { NoChange: null };
     if (domain === "set_to_none") return { SetToNone: null };
@@ -52,7 +52,7 @@ export function consolidateBytes(bytes: Uint8Array | number[]): Uint8Array {
 export function bytesToHexString(bytes: Uint8Array | number[]): string {
     return consolidateBytes(bytes).reduce(
         (str, byte) => str + byte.toString(16).padStart(2, "0"),
-        "",
+        ""
     );
 }
 

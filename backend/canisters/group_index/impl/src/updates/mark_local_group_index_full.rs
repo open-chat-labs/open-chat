@@ -5,7 +5,7 @@ use group_index_canister::mark_local_group_index_full::{Response::*, *};
 use tracing::info;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, json = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn mark_local_group_index_full(args: Args) -> Response {
     let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));

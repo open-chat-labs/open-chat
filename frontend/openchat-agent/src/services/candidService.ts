@@ -1,4 +1,4 @@
-import { Actor, HttpAgent, type Identity, polling } from "@dfinity/agent";
+import { Actor, HttpAgent, type Identity, polling, UpdateCallRejectedError } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import {
@@ -8,9 +8,10 @@ import {
     SessionExpiryError,
 } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
-import { ZodType } from "zod";
+import { pack, unpack } from "msgpackr";
 import { identity } from "../utils/mapping";
-import { UpdateCallRejectedError } from "@dfinity/agent/lib/esm/actor";
+import type { Static, TSchema } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -31,45 +32,49 @@ export abstract class CandidService {
         return this.identity.getPrincipal();
     }
 
-    protected async executeJsonQuery<In, Resp, Out>(
+    protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
         methodName: string,
-        args: In,
-        mapper: (from: Resp) => Out,
-        requestValidator: ZodType<In>,
-        responseValidator: ZodType<Resp>,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out,
+        requestValidator: In,
+        responseValidator: Resp
     ): Promise<Out> {
-        const payload = CandidService.prepareJsonArgs(args, requestValidator);
+        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
         const response = await this.handleQueryResponse(
             () =>
                 this.agent.query(this.canisterId, {
-                    methodName: methodName + "_json",
+                    methodName: methodName + "_msgpack",
                     arg: payload,
                 }),
             identity,
-            args,
+            args
         );
         if (response.status === "replied") {
-            return CandidService.processJsonResponse(response.reply.arg, mapper, responseValidator);
+            return CandidService.processMsgpackResponse(
+                response.reply.arg,
+                mapper,
+                responseValidator
+            );
         } else {
             throw new Error(
-                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`,
+                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`
             );
         }
     }
 
-    protected async executeJsonUpdate<In, Resp, Out>(
+    protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
         methodName: string,
-        args: In,
-        mapper: (from: Resp) => Out,
-        requestValidator: ZodType<In>,
-        responseValidator: ZodType<Resp>,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out,
+        requestValidator: In,
+        responseValidator: Resp
     ): Promise<Out> {
-        const payload = CandidService.prepareJsonArgs(args, requestValidator);
+        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
         try {
             const { requestId, response } = await this.agent.call(this.canisterId, {
-                methodName: methodName + "_json",
+                methodName: methodName + "_msgpack",
                 arg: payload,
             });
             const canisterId = Principal.fromText(this.canisterId);
@@ -80,9 +85,9 @@ export abstract class CandidService {
                 this.agent,
                 canisterId,
                 requestId,
-                polling.defaultStrategy(),
+                polling.defaultStrategy()
             );
-            return CandidService.processJsonResponse(reply, mapper, responseValidator);
+            return CandidService.processMsgpackResponse(reply, mapper, responseValidator);
         } catch (err) {
             console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);
@@ -92,7 +97,7 @@ export abstract class CandidService {
     protected handleResponse<From, To>(
         service: Promise<From>,
         mapper: (from: From) => To,
-        args?: unknown,
+        args?: unknown
     ): Promise<To> {
         return service.then(mapper).catch((err) => {
             console.log(err, args);
@@ -104,7 +109,7 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
-        retries = 0,
+        retries = 0
     ): Promise<To> {
         return serviceCall()
             .then(mapper)
@@ -112,7 +117,7 @@ export abstract class CandidService {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
                 const debugInfo = `error: ${JSON.stringify(
                     responseErr,
-                    Object.getOwnPropertyNames(responseErr),
+                    Object.getOwnPropertyNames(responseErr)
                 )}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof ResponseTooLargeError) &&
@@ -125,11 +130,11 @@ export abstract class CandidService {
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
                         debug(
-                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
+                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
                         );
                     } else {
                         debug(
-                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
+                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
                         );
                     }
 
@@ -142,39 +147,41 @@ export abstract class CandidService {
                     });
                 } else {
                     debug(
-                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`,
+                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`
                     );
                     throw responseErr;
                 }
             });
     }
 
-    private static validate<T>(value: unknown, validator: ZodType<T>): T {
-        const validationResult = validator.safeParse(value);
-        if (validationResult.success) {
-            return validationResult.data;
-        } else {
-            throw new Error("Validation failed: " + validationResult.error.toString());
+    private static validate<T extends TSchema>(value: unknown, validator: T): T {
+        try {
+            return Value.Parse(validator, value);
+        } catch (err) {
+            throw new Error("Validation failed: " + JSON.stringify(err));
         }
     }
 
-    private static prepareJsonArgs<T>(value: T, validator: ZodType<T>): ArrayBuffer {
+    private static prepareMsgpackArgs<T extends TSchema>(
+        value: Static<T>,
+        validator: T
+    ): ArrayBuffer {
         const validated = CandidService.validate(value, validator);
-        return new TextEncoder().encode(JSON.stringify(validated));
+        return pack(validated);
     }
 
-    private static processJsonResponse<Resp, Out>(
+    private static processMsgpackResponse<Resp extends TSchema, Out>(
         responseBytes: ArrayBuffer,
         mapper: (from: Resp) => Out,
-        validator: ZodType<Resp>,
+        validator: Resp
     ): Out {
-        const responseJson = new TextDecoder().decode(responseBytes);
-        return mapper(CandidService.validate(JSON.parse(responseJson), validator));
+        const response = unpack(new Uint8Array(responseBytes));
+        return mapper(CandidService.validate(response, validator));
     }
 
     constructor(
         protected identity: Identity,
         protected agent: HttpAgent,
-        protected canisterId: string,
+        protected canisterId: string
     ) {}
 }

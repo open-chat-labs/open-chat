@@ -68,6 +68,7 @@ pub struct MessageEditedEventPayload {
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Default)]
+#[ts(as = "TipsTS")]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
 impl Deref for Tips {
@@ -97,6 +98,9 @@ impl Tips {
         }
     }
 }
+
+#[ts_export]
+pub struct TipsTS(Vec<(Vec<u8>, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
 #[serde(untagged)]
