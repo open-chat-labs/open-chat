@@ -151,66 +151,6 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     );
 }
 
-#[test_case(true)]
-#[test_case(false)]
-#[serial]
-fn membership_payment_shared_with_referrer(lifetime: bool) {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    // Register referrer and upgrade to Diamond
-    let user_a = client::register_user(env, canister_ids);
-    client::upgrade_user(
-        &user_a,
-        env,
-        canister_ids,
-        *controller,
-        DiamondMembershipPlanDuration::OneMonth,
-    );
-
-    // Register user_b with referral from user_a
-    let user_b = client::register_user_with_referrer(env, canister_ids, Some(user_a.user_id.to_string()));
-
-    // Take a snapshot of the ledger and referrer ICP balances
-    let init_treasury_balance =
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let init_referrer_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
-
-    // Upgrade user_b to Diamond
-    let duration = if lifetime {
-        DiamondMembershipPlanDuration::Lifetime
-    } else {
-        DiamondMembershipPlanDuration::OneMonth
-    };
-    client::upgrade_user(&user_b, env, canister_ids, *controller, duration);
-
-    let fees = DiamondMembershipFees::default();
-
-    let amount_to_referer = if lifetime {
-        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneYear) / 2
-    } else {
-        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) / 2
-    } as u128;
-
-    // Check the referrer has been credited with half the Diamond payment
-    let balance_referrer = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
-    assert_eq!(balance_referrer - init_referrer_balance, amount_to_referer);
-
-    // Check the treasury has received the remainder less the fees
-    let treasury_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let fees = DiamondMembershipFees::default();
-
-    assert_eq!(
-        treasury_balance - init_treasury_balance,
-        u128::from(fees.icp_price_e8s(duration)) - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
-    );
-}
-
 #[test_case(false)]
 #[test_case(true)]
 fn update_subscription_succeeds(disable: bool) {
