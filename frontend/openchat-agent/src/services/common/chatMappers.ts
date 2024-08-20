@@ -1,5 +1,4 @@
 import { Principal } from "@dfinity/principal";
-import * as z from "zod";
 import {
     bigintToBytes,
     bytesToBigint,
@@ -280,7 +279,6 @@ import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
-import type { cryptocurrencySchema } from "../../zod";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -970,16 +968,6 @@ export function token(candid: ApiCryptocurrency): string {
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function tokenJson(json: z.infer<typeof cryptocurrencySchema>): string {
-    if (json === "InternetComputer") return ICP_SYMBOL;
-    if (json === "SNS1") return SNS1_SYMBOL;
-    if (json === "CKBTC") return CKBTC_SYMBOL;
-    if (json === "CHAT") return CHAT_SYMBOL;
-    if (json === "KINIC") return KINIC_SYMBOL;
-    if ("Other" in json) return json.Other;
-    throw new UnsupportedValueError("Unexpected Cryptocurrency type received", json);
-}
-
 export function apiToken(token: string): ApiCryptocurrency {
     switch (token) {
         case ICP_SYMBOL:
@@ -992,23 +980,6 @@ export function apiToken(token: string): ApiCryptocurrency {
             return { CHAT: null };
         case KINIC_SYMBOL:
             return { KINIC: null };
-        default:
-            return { Other: token };
-    }
-}
-
-export function apiJsonToken(token: string): z.infer<typeof cryptocurrencySchema> {
-    switch (token) {
-        case ICP_SYMBOL:
-            return "InternetComputer";
-        case SNS1_SYMBOL:
-            return "SNS1";
-        case CKBTC_SYMBOL:
-            return "CKBTC";
-        case CHAT_SYMBOL:
-            return "CHAT";
-        case KINIC_SYMBOL:
-            return "KINIC";
         default:
             return { Other: token };
     }

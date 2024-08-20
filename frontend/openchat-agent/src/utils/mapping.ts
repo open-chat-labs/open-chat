@@ -5,13 +5,9 @@ export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undef
     return candid[0] !== undefined ? mapper(candid[0]) : undefined;
 }
 
-export function mapOptional<A, B>(input: A | undefined, mapper: (a: A) => B): B | undefined {
-    return input !== undefined ? mapper(input) : undefined;
-}
-
 export function optionUpdate<A, B>(
     candid: ApiOptionUpdate<A>,
-    mapper: (a: A) => B,
+    mapper: (a: A) => B
 ): OptionUpdate<B> {
     if ("NoChange" in candid) return undefined;
     if ("SetToNone" in candid) return "set_to_none";
@@ -21,7 +17,7 @@ export function optionUpdate<A, B>(
 
 export function apiOptionUpdate<A, B>(
     mapper: (a: A) => B,
-    domain: OptionUpdate<A>,
+    domain: OptionUpdate<A>
 ): ApiOptionUpdate<B> {
     if (domain === undefined) return { NoChange: null };
     if (domain === "set_to_none") return { SetToNone: null };
@@ -45,15 +41,14 @@ export function hexStringToBytes(hex: string): Uint8Array {
 }
 
 export function consolidateBytes(bytes: Uint8Array | number[]): Uint8Array {
-    return Array.isArray(bytes) ? new Uint8Array(bytes) : bytes;
+    return Array.isArray(bytes)
+        ? new Uint8Array(bytes)
+        : bytes;
 }
 
 // Convert a byte array to a hex string
 export function bytesToHexString(bytes: Uint8Array | number[]): string {
-    return consolidateBytes(bytes).reduce(
-        (str, byte) => str + byte.toString(16).padStart(2, "0"),
-        "",
-    );
+    return consolidateBytes(bytes).reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }
 
 export function bigintToBytes(value: bigint): Uint8Array {
