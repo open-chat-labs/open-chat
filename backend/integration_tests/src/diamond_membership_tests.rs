@@ -8,8 +8,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{
-    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
-    DiamondMembershipSubscription,
+    Achievement, ChitEarnedReason, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
+    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
@@ -148,6 +148,93 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     assert_eq!(
         new_balance,
         1_000_000_000 - (2 * fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128)
+    );
+}
+
+// TODO: Enable this test after next release
+//#[test]
+#[allow(dead_code)]
+fn referrer_awarded_chit_when_referred_gets_diamond() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    // Register referrer and upgrade to Diamond
+    let user_a = client::register_user(env, canister_ids);
+    client::upgrade_user(
+        &user_a,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+    );
+
+    // Register user_b with referral from user_a
+    let user_b = client::register_user_with_referrer(env, canister_ids, Some(user_a.user_id.to_string()));
+
+    // Upgrade user_b to Diamond
+    client::upgrade_user(
+        &user_b,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+    );
+
+    tick_many(env, 3);
+
+    // Check user_a has received expected CHIT reward, achievement and referral
+    //
+    let user_state = client::user::happy_path::initial_state(env, &user_a);
+
+    assert!(user_state
+        .achievements
+        .iter()
+        .any(|ev| if let ChitEarnedReason::Achievement(a) = &ev.reason {
+            matches!(a, Achievement::Referred1stUser)
+        } else {
+            false
+        }));
+
+    assert_eq!(user_state.referrals.len(), 1);
+    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_state.referrals[0].status, ReferralStatus::Diamond));
+
+    assert_eq!(
+        user_state.chit_balance as u32,
+        Achievement::UpgradedToDiamond.chit_reward()
+            + Achievement::Referred1stUser.chit_reward()
+            + ReferralStatus::Diamond.chit_reward()
+    );
+
+    // Upgrade user_b to Lifetime Diamond
+    client::upgrade_user(
+        &user_b,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::Lifetime,
+    );
+
+    tick_many(env, 3);
+
+    // Check user_a has received expected CHIT reward and referral status has been updated
+    //
+    let user_state = client::user::happy_path::initial_state(env, &user_a);
+
+    assert_eq!(user_state.referrals.len(), 1);
+    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
+
+    assert_eq!(
+        user_state.chit_balance as u32,
+        Achievement::UpgradedToDiamond.chit_reward()
+            + Achievement::Referred1stUser.chit_reward()
+            + ReferralStatus::LifetimeDiamond.chit_reward()
     );
 }
 
