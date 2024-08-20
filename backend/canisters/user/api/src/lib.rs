@@ -19,6 +19,9 @@ pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
 
+// Thursday, 22 August 2024 10:00:00 GMT+01:00
+pub const USERS_VERSION_2_0_1299_FINISHED_TS: TimestampMillis = 1724317200000;
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),

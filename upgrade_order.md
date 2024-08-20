@@ -1,1 +1,1 @@
-local_user_index -> users -> users (+SetReferralStatus) -> user_index
+local_user_index -> users -> user_index

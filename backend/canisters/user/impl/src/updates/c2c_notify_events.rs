@@ -8,7 +8,7 @@ use types::{
 };
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
-use user_canister::Event;
+use user_canister::{Event, UserCanisterEvent, USERS_VERSION_2_0_1299_FINISHED_TS};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -44,8 +44,6 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_storage_ugraded_bot_message(&ev, state);
         }
         Event::ReferredUserRegistered(ev) => {
-            // TODO: switch this over once the referral sync has happened
-            //state.data.referrals.register(ev.user_id, now);
             state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
             openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
         }
@@ -108,14 +106,16 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 );
             }
 
-            // if let Some(referred_by) = state.data.referred_by {
-            //     let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
-            //         ReferralStatus::LifetimeDiamond
-            //     } else {
-            //         ReferralStatus::Diamond
-            //     };
-            //     state.push_user_canister_event(referred_by.into(), UserCanisterEvent::SetReferralStatus(Box::new(status)))
-            // }
+            if now >= USERS_VERSION_2_0_1299_FINISHED_TS {
+                if let Some(referred_by) = state.data.referred_by {
+                    let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                        ReferralStatus::LifetimeDiamond
+                    } else {
+                        ReferralStatus::Diamond
+                    };
+                    state.push_user_canister_event(referred_by.into(), UserCanisterEvent::SetReferralStatus(Box::new(status)))
+                }
+            }
         }
         Event::NotifyUniquePersonProof(proof) => {
             if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
@@ -123,12 +123,14 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             }
             state.data.unique_person_proof = Some(*proof);
 
-            // if let Some(referred_by) = state.data.referred_by {
-            //     state.push_user_canister_event(
-            //         referred_by.into(),
-            //         UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
-            //     )
-            // }
+            if now >= USERS_VERSION_2_0_1299_FINISHED_TS {
+                if let Some(referred_by) = state.data.referred_by {
+                    state.push_user_canister_event(
+                        referred_by.into(),
+                        UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
+                    )
+                }
+            }
         }
         Event::ReferralSync(ev) => {
             let prev_chit_events = state.data.chit_events.len();

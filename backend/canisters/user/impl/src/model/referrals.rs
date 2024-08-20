@@ -9,12 +9,6 @@ pub struct Referrals {
 }
 
 impl Referrals {
-    // pub fn register(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-    //     self.users
-    //         .insert(user_id, Timestamped::new(ReferralStatus::Registered, now))
-    //         .is_none()
-    // }
-
     pub fn set_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> u32 {
         let current_status = self.users.get(&user_id);
         let current_chit_reward = current_status.map(|s| s.chit_reward()).unwrap_or_default();
