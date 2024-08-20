@@ -1,10 +1,10 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use ts_export::ts_export;
 
 // This is needed when we would otherwise use an Option<Option<T>> in which case it would not be
 // possible to tell which layer is None when represented as JSON
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default, Eq, PartialEq)]
 pub enum OptionUpdate<T> {
     #[default]
     NoChange,

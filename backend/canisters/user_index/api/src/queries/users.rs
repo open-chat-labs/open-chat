@@ -1,23 +1,22 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_gen::ts_export;
+use ts_export::ts_export;
 use types::{CurrentUserSummary, TimestampMillis, UserId, UserSummaryV2};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, users)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub user_groups: Vec<UserGroup>,
     pub users_suspended_since: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, users)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(Result),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, users)]
+#[derive(CandidType, Debug)]
 pub struct Result {
     pub users: Vec<UserSummaryV2>,
     pub current_user: Option<CurrentUserSummary>,
@@ -25,8 +24,8 @@ pub struct Result {
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, users)]
+#[derive(CandidType, Debug)]
 pub struct UserGroup {
     pub users: Vec<UserId>,
     pub updated_since: TimestampMillis,

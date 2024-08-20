@@ -1,10 +1,10 @@
 use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, UserId};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use serde::Serialize;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum P2PSwapStatus {
     Open,
     Cancelled(P2PSwapCancelled),
@@ -31,26 +31,29 @@ pub struct ReserveP2PSwapSuccess {
     pub created_by: UserId,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapCancelled {
     pub token0_txn_out: Option<u64>,
 }
 
 pub type P2PSwapExpired = P2PSwapCancelled;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapReserved {
     pub reserved_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapAccepted {
     pub accepted_by: UserId,
     pub token1_txn_in: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapCompleted {
     pub accepted_by: UserId,
     pub token1_txn_in: u64,
@@ -58,12 +61,14 @@ pub struct P2PSwapCompleted {
     pub token1_txn_out: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct AcceptSwapSuccess {
     pub token1_txn_in: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub enum SwapStatusError {
     Reserved(SwapStatusErrorReserved),
     Accepted(SwapStatusErrorAccepted),
@@ -72,18 +77,21 @@ pub enum SwapStatusError {
     Cancelled(SwapStatusErrorCancelled),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SwapStatusErrorReserved {
     pub reserved_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SwapStatusErrorAccepted {
     pub accepted_by: UserId,
     pub token1_txn_in: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SwapStatusErrorCompleted {
     pub accepted_by: UserId,
     pub token1_txn_in: u64,
@@ -91,19 +99,20 @@ pub struct SwapStatusErrorCompleted {
     pub token1_txn_out: u64,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SwapStatusErrorExpired {
     pub token0_txn_out: Option<u64>,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SwapStatusErrorCancelled {
     pub token0_txn_out: Option<u64>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum P2PSwapLocation {
     Message(swap_location::Message),
 }
@@ -131,7 +140,8 @@ pub struct P2PSwapCompletedEventPayload {
 pub mod swap_location {
     use super::*;
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     pub struct Message {
         pub chat: Chat,
         pub thread_root_message_index: Option<MessageIndex>,

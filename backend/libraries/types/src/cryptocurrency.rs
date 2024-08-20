@@ -2,13 +2,12 @@ use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
-use serde::{Deserialize, Serialize};
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use ts_export::ts_export;
 
 const ICP_FEE: u128 = 10_000;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
     SNS1,
@@ -66,28 +65,32 @@ impl Cryptocurrency {
 
 pub type TransactionHash = [u8; 32];
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum CryptoTransaction {
     Pending(PendingCryptoTransaction),
     Completed(CompletedCryptoTransaction),
     Failed(FailedCryptoTransaction),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
     ICRC2(icrc2::PendingCryptoTransaction),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum CompletedCryptoTransaction {
     NNS(nns::CompletedCryptoTransaction),
     ICRC1(icrc1::CompletedCryptoTransaction),
     ICRC2(icrc2::CompletedCryptoTransaction),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum FailedCryptoTransaction {
     NNS(nns::FailedCryptoTransaction),
     ICRC1(icrc1::FailedCryptoTransaction),
@@ -344,7 +347,8 @@ pub mod nns {
     use super::*;
     use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo};
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Tokens {
         e8s: u64,
     }
@@ -373,8 +377,8 @@ pub mod nns {
         }
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "AccountNNS")]
     pub struct Account {
         pub owner: Principal,
@@ -382,27 +386,30 @@ pub mod nns {
         pub subaccount: Option<Subaccount>,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     pub struct CryptoAmount {
         pub token: Cryptocurrency,
         pub amount: Tokens,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "CryptoAccountNNS")]
     pub enum CryptoAccount {
         Mint,
         Account(#[ts(as = "String")] AccountIdentifier),
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     pub enum UserOrAccount {
         User(UserId),
         Account(#[ts(as = "String")] AccountIdentifier),
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "PendingCryptoTransactionNNS")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
@@ -415,7 +422,8 @@ pub mod nns {
         pub created: TimestampNanos,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionNNS")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
@@ -432,7 +440,8 @@ pub mod nns {
         pub block_index: BlockIndex,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionNNS")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
@@ -454,8 +463,8 @@ pub mod icrc1 {
     use super::*;
     use icrc_ledger_types::icrc1::transfer::Memo;
 
-    #[ts_optional]
-    #[derive(Serialize, CandidType, Deserialize, Clone, Debug, Copy, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug, Copy)]
     #[ts(rename = "AccountICRC1")]
     pub struct Account {
         pub owner: Principal,
@@ -480,15 +489,16 @@ pub mod icrc1 {
         }
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "CryptoAccountICRC1")]
     pub enum CryptoAccount {
         Mint,
         Account(Account),
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
         #[ts(as = "String")]
@@ -502,8 +512,8 @@ pub mod icrc1 {
         pub created: TimestampNanos,
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionICRC1")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
@@ -518,8 +528,8 @@ pub mod icrc1 {
         pub block_index: u64,
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionICRC1")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
@@ -558,8 +568,8 @@ pub mod icrc2 {
     use icrc1::Account;
     use icrc_ledger_types::icrc1::transfer::Memo;
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "PendingCryptoTransactionICRC2")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
@@ -573,8 +583,8 @@ pub mod icrc2 {
         pub created: TimestampNanos,
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "CompletedCryptoTransactionICRC2")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
@@ -590,8 +600,8 @@ pub mod icrc2 {
         pub block_index: u64,
     }
 
-    #[ts_optional]
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+    #[ts_export]
+    #[derive(CandidType, Clone, Debug)]
     #[ts(rename = "FailedCryptoTransactionICRC2")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,

@@ -2993,8 +2993,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "ts-rs",
- "ts_gen",
- "ts_optional",
+ "ts_export",
  "types",
 ]
 
@@ -8663,16 +8662,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ts_gen"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.65",
-]
-
-[[package]]
-name = "ts_optional"
+name = "ts_export"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -8713,7 +8703,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "ts-rs",
- "ts_optional",
+ "ts_export",
 ]
 
 [[package]]
@@ -8918,8 +8908,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "ts-rs",
- "ts_gen",
- "ts_optional",
+ "ts_export",
  "types",
 ]
 

@@ -1,6 +1,6 @@
 use candid_gen::generate_candid_method;
 use std::env;
-use ts_gen::generate_ts_method;
+use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {

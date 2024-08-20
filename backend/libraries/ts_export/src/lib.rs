@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, parse_quote, Ident, Item, Token};
+use syn::{parse_macro_input, parse_quote, Attribute, Ident, Item, Token, Type};
 
 struct MethodAttribute {
     canister_name: String,
@@ -17,35 +17,40 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         .map(|i| i.to_string())
         .collect();
 
-    assert_eq!(attr_inputs.len(), 2);
+    let (export_to, prefix) = if !attr_inputs.is_empty() {
+        assert_eq!(attr_inputs.len(), 2);
 
-    let canister_name = attr_inputs.first().unwrap();
-    let method_name = attr_inputs.last().unwrap();
+        let canister_name = attr_inputs.first().unwrap();
+        let method_name = attr_inputs.last().unwrap();
 
-    let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
+        let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
+        let prefix = format!("{}{}", convert_case(canister_name, false), convert_case(method_name, true));
+
+        (export_to, Some(prefix))
+    } else {
+        ("shared".to_string(), None)
+    };
 
     match &mut item {
         Item::Struct(s) => {
-            let type_name = s.ident.to_string();
-            let rename = format!(
-                "{}_{}_{type_name}",
-                convert_case(canister_name, true),
-                convert_case(method_name, true)
-            );
-            s.attrs.insert(0, parse_quote!( #[ts_optional::ts_optional] ));
-            s.attrs.push(parse_quote!( #[derive(ts_rs::TS)] ));
-            s.attrs.push(parse_quote!( #[ts(export_to = #export_to, rename = #rename)] ));
+            insert_attributes(&mut s.attrs, &s.ident, export_to, prefix);
+
+            for field in s.fields.iter_mut() {
+                if let Type::Path(type_path) = &mut field.ty {
+                    if type_path.qself.is_none()
+                        && type_path.path.leading_colon.is_none()
+                        && type_path.path.segments.len() == 1
+                        && type_path.path.segments[0].ident == "Option"
+                    {
+                        field.attrs.push(parse_quote!( #[ts(optional)] ));
+                        field
+                            .attrs
+                            .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
+                    }
+                }
+            }
         }
-        Item::Enum(e) => {
-            let type_name = e.ident.to_string();
-            let rename = format!(
-                "{}_{}_{type_name}",
-                convert_case(canister_name, true),
-                convert_case(method_name, true)
-            );
-            e.attrs.push(parse_quote!( #[derive(ts_rs::TS)] ));
-            e.attrs.push(parse_quote!( #[ts(export_to = #export_to, rename = #rename)] ));
-        }
+        Item::Enum(e) => insert_attributes(&mut e.attrs, &e.ident, export_to, prefix),
         _ => unimplemented!(),
     }
 
@@ -72,6 +77,21 @@ pub fn generate_ts_method(input: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(tokens)
+}
+
+fn insert_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export_to: String, prefix: Option<String>) {
+    let mut to_prepend: Vec<Attribute> = vec![
+        parse_quote!( #[derive(serde::Serialize, serde::Deserialize, ts_rs::TS)] ),
+        parse_quote!( #[ts(export_to = #export_to)] ),
+    ];
+    if let Some(p) = prefix {
+        let type_name = ident.to_string();
+        let rename = format!("{p}{type_name}");
+        to_prepend.push(parse_quote!( #[ts(rename = #rename)] ));
+    }
+    for attr in to_prepend.into_iter().rev() {
+        attrs.insert(0, attr);
+    }
 }
 
 fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {

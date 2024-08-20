@@ -1,10 +1,10 @@
 use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum Proposal {
     NNS(NnsProposal),
     SNS(SnsProposal),
@@ -83,8 +83,8 @@ impl Proposal {
     }
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct NnsProposal {
     pub id: ProposalId,
     pub topic: i32,
@@ -119,8 +119,8 @@ impl NnsProposal {
     }
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct SnsProposal {
     pub id: ProposalId,
     pub action: u64,
@@ -157,8 +157,8 @@ impl SnsProposal {
     }
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
@@ -193,7 +193,8 @@ impl From<ProposalUpdate> for ProposalStatusUpdate {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default, Eq, PartialEq)]
 pub struct Tally {
     pub yes: u64,
     pub no: u64,
@@ -201,7 +202,8 @@ pub struct Tally {
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ProposalDecisionStatus {
     Unspecified = 0,
@@ -228,7 +230,8 @@ impl TryFrom<i32> for ProposalDecisionStatus {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ProposalRewardStatus {
     Unspecified = 0,

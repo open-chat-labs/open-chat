@@ -3,12 +3,10 @@ use crate::{
     GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall,
 };
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct CommunityCanisterChannelSummary {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -39,8 +37,8 @@ pub struct CommunityCanisterChannelSummary {
     pub external_url: Option<String>,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct CommunityCanisterChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -68,8 +66,8 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub external_url: OptionUpdate<String>,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct ChannelLatestMessageIndex {
     pub channel_id: ChannelId,
     pub latest_message_index: Option<MessageIndex>,

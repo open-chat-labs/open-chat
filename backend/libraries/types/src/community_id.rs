@@ -1,10 +1,10 @@
 use crate::{CanisterId, UserId};
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[ts(as = "String", export)]
 pub struct CommunityId(CanisterId);
 

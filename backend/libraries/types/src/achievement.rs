@@ -1,9 +1,9 @@
 use crate::{Message, MessageIndex};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Achievement {
     JoinedGroup,
     JoinedCommunity,

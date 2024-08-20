@@ -1,13 +1,11 @@
 use crate::{EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use ts_export::ts_export;
 
 pub const MAX_RETURNED_MENTIONS: usize = 50;
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct HydratedMention {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
@@ -16,8 +14,8 @@ pub struct HydratedMention {
     pub mentioned_by: UserId,
 }
 
-#[ts_optional]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct Mention {
     pub timestamp: TimestampMillis,
     pub thread_root_message_index: Option<MessageIndex>,

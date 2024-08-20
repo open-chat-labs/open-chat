@@ -1,17 +1,18 @@
 use crate::{BuildVersion, CanisterId, Hash};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
     pub filter: Option<UpgradesFilter>,
     pub use_for_new_canisters: Option<bool>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, TS)]
+#[ts_export]
+#[derive(CandidType, Clone)]
 pub struct ChunkedCanisterWasm {
     pub wasm: CanisterWasm,
     pub chunks: Vec<Hash>,
@@ -28,7 +29,8 @@ impl From<CanisterWasm> for ChunkedCanisterWasm {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, TS)]
+#[ts_export]
+#[derive(CandidType, Clone)]
 pub struct CanisterWasm {
     pub version: BuildVersion,
     #[serde(with = "serde_bytes")]
@@ -54,7 +56,8 @@ impl Debug for CanisterWasm {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
     pub include: Vec<CanisterId>,
     pub exclude: Vec<CanisterId>,

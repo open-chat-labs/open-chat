@@ -2,8 +2,7 @@ use crate::{is_default, EventIndex, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use ts_optional::ts_optional;
-use ts_rs::TS;
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EventWrapper<T> {
@@ -48,8 +47,8 @@ impl<T> From<EventWrapperInternal<T>> for EventWrapper<T> {
 
 macro_rules! event_wrapper {
     ($name:ident, $event_type:ty) => {
-        #[ts_optional]
-        #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+        #[ts_export]
+        #[derive(CandidType, Clone, Debug)]
         pub struct $name {
             pub index: EventIndex,
             pub timestamp: TimestampMillis,
