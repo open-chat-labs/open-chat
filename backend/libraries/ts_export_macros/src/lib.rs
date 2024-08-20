@@ -24,7 +24,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         let method_name = attr_inputs.last().unwrap();
 
         let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
-        let prefix = format!("{}{}", convert_case(canister_name, false), convert_case(method_name, true));
+        let prefix = format!("{}{}", convert_case(canister_name, true), convert_case(method_name, true));
 
         (export_to, Some(prefix))
     } else {

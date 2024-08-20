@@ -31,36 +31,36 @@ import {
     exploreGroupsResponse,
 } from "./mappers";
 import {
-    groupIndexActiveGroupsArgs,
-    groupIndexActiveGroupsResponse,
-    groupIndexAddHotGroupExclusionArgs,
-    groupIndexAddHotGroupExclusionResponse,
-    groupIndexDeleteFrozenGroupArgs,
-    groupIndexDeleteFrozenGroupResponse,
-    groupIndexExploreCommunitiesArgs,
-    groupIndexExploreCommunitiesResponse,
-    groupIndexExploreGroupsArgs,
-    groupIndexExploreGroupsResponse,
-    groupIndexFreezeGroupArgs,
-    groupIndexFreezeGroupResponse,
-    groupIndexLookupChannelByGroupIdArgs,
-    groupIndexLookupChannelByGroupIdResponse,
-    groupIndexMarkLocalGroupIndexFullArgs,
-    groupIndexMarkLocalGroupIndexFullResponse,
-    groupIndexRecommendedGroupsArgs,
-    groupIndexRecommendedGroupsResponse,
-    groupIndexRemoveHotGroupExclusionArgs,
-    groupIndexRemoveHotGroupExclusionResponse,
-    groupIndexSetCommunityModerationFlagsArgs,
-    groupIndexSetCommunityModerationFlagsResponse,
-    groupIndexSetCommunityUpgradeConcurrencyArgs,
-    groupIndexSetCommunityUpgradeConcurrencyResponse,
-    groupIndexSetGroupUpgradeConcurrencyArgs,
-    groupIndexSetGroupUpgradeConcurrencyResponse,
-    groupIndexUnfreezeGroupArgs,
-    groupIndexUnfreezeGroupResponse,
+    GroupIndexActiveGroupsArgs,
+    GroupIndexActiveGroupsResponse,
+    GroupIndexAddHotGroupExclusionArgs,
+    GroupIndexAddHotGroupExclusionResponse,
+    GroupIndexDeleteFrozenGroupArgs,
+    GroupIndexDeleteFrozenGroupResponse,
+    GroupIndexExploreCommunitiesArgs,
+    GroupIndexExploreCommunitiesResponse,
+    GroupIndexExploreGroupsArgs,
+    GroupIndexExploreGroupsResponse,
+    GroupIndexFreezeGroupArgs,
+    GroupIndexFreezeGroupResponse,
+    GroupIndexLookupChannelByGroupIdArgs,
+    GroupIndexLookupChannelByGroupIdResponse,
+    GroupIndexMarkLocalGroupIndexFullArgs,
+    GroupIndexMarkLocalGroupIndexFullResponse,
+    GroupIndexRecommendedGroupsArgs,
+    GroupIndexRecommendedGroupsResponse,
+    GroupIndexRemoveHotGroupExclusionArgs,
+    GroupIndexRemoveHotGroupExclusionResponse,
+    GroupIndexSetCommunityModerationFlagsArgs,
+    GroupIndexSetCommunityModerationFlagsResponse,
+    GroupIndexSetCommunityUpgradeConcurrencyArgs,
+    GroupIndexSetCommunityUpgradeConcurrencyResponse,
+    GroupIndexSetGroupUpgradeConcurrencyArgs,
+    GroupIndexSetGroupUpgradeConcurrencyResponse,
+    GroupIndexUnfreezeGroupArgs,
+    GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
-import { hexStringToBytes } from "../../utils/mapping";
+import { principalStringToBytes } from "../../utils/mapping";
 
 export class GroupIndexClient extends CandidService {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -70,33 +70,33 @@ export class GroupIndexClient extends CandidService {
     activeGroups(
         communityIds: CommunityIdentifier[],
         groupIds: GroupChatIdentifier[],
-        activeSince: bigint
+        activeSince: bigint,
     ): Promise<ActiveGroupsResponse> {
         const args = {
-            group_ids: groupIds.map((c) => hexStringToBytes(c.groupId)),
-            community_ids: communityIds.map((c) => hexStringToBytes(c.communityId)),
+            group_ids: groupIds.map((c) => principalStringToBytes(c.groupId)),
+            community_ids: communityIds.map((c) => principalStringToBytes(c.communityId)),
             active_since: activeSince,
         };
         return this.executeMsgpackQuery(
             "active_groups",
             args,
             activeGroupsResponse,
-            groupIndexActiveGroupsArgs,
-            groupIndexActiveGroupsResponse
+            GroupIndexActiveGroupsArgs,
+            GroupIndexActiveGroupsResponse,
         );
     }
 
     recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         const args = {
             count: 30,
-            exclusions: exclusions.map(hexStringToBytes),
+            exclusions: exclusions.map(principalStringToBytes),
         };
         return this.executeMsgpackUpdate(
             "recommended_groups",
             args,
             recommendedGroupsResponse,
-            groupIndexRecommendedGroupsArgs,
-            groupIndexRecommendedGroupsResponse
+            GroupIndexRecommendedGroupsArgs,
+            GroupIndexRecommendedGroupsResponse,
         );
     }
 
@@ -110,8 +110,8 @@ export class GroupIndexClient extends CandidService {
             "explore_groups",
             args,
             exploreGroupsResponse,
-            groupIndexExploreGroupsArgs,
-            groupIndexExploreGroupsResponse
+            GroupIndexExploreGroupsArgs,
+            GroupIndexExploreGroupsResponse,
         );
     }
 
@@ -119,11 +119,11 @@ export class GroupIndexClient extends CandidService {
         return this.executeMsgpackQuery(
             "lookup_channel_by_group_id",
             {
-                group_id: hexStringToBytes(id.groupId),
+                group_id: principalStringToBytes(id.groupId),
             },
             lookupChannelResponse,
-            groupIndexLookupChannelByGroupIdArgs,
-            groupIndexLookupChannelByGroupIdResponse
+            GroupIndexLookupChannelByGroupIdArgs,
+            GroupIndexLookupChannelByGroupIdResponse,
         );
     }
 
@@ -132,7 +132,7 @@ export class GroupIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number,
         flags: number,
-        languages: string[]
+        languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
         const args = {
             languages,
@@ -145,8 +145,8 @@ export class GroupIndexClient extends CandidService {
             "explore_communities",
             args,
             exploreCommunitiesResponse,
-            groupIndexExploreCommunitiesArgs,
-            groupIndexExploreCommunitiesResponse
+            GroupIndexExploreCommunitiesArgs,
+            GroupIndexExploreCommunitiesResponse,
         );
     }
 
@@ -154,68 +154,68 @@ export class GroupIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "freeze_group",
             {
-                chat_id: hexStringToBytes(chatId),
+                chat_id: principalStringToBytes(chatId),
                 reason: reason,
             },
             freezeGroupResponse,
-            groupIndexFreezeGroupArgs,
-            groupIndexFreezeGroupResponse
+            GroupIndexFreezeGroupArgs,
+            GroupIndexFreezeGroupResponse,
         );
     }
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this.executeMsgpackUpdate(
             "unfreeze_group",
-            { chat_id: hexStringToBytes(chatId) },
+            { chat_id: principalStringToBytes(chatId) },
             unfreezeGroupResponse,
-            groupIndexUnfreezeGroupArgs,
-            groupIndexUnfreezeGroupResponse
+            GroupIndexUnfreezeGroupArgs,
+            GroupIndexUnfreezeGroupResponse,
         );
     }
 
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
         return this.executeMsgpackUpdate(
             "delete_frozen_group",
-            { chat_id: hexStringToBytes(chatId) },
+            { chat_id: principalStringToBytes(chatId) },
             deleteFrozenGroupResponse,
-            groupIndexDeleteFrozenGroupArgs,
-            groupIndexDeleteFrozenGroupResponse
+            GroupIndexDeleteFrozenGroupArgs,
+            GroupIndexDeleteFrozenGroupResponse,
         );
     }
 
     addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
         return this.executeMsgpackUpdate(
             "add_hot_group_exclusion",
-            { chat_id: hexStringToBytes(chatId) },
+            { chat_id: principalStringToBytes(chatId) },
             addHotGroupExclusionResponse,
-            groupIndexAddHotGroupExclusionArgs,
-            groupIndexAddHotGroupExclusionResponse
+            GroupIndexAddHotGroupExclusionArgs,
+            GroupIndexAddHotGroupExclusionResponse,
         );
     }
 
     removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
         return this.executeMsgpackUpdate(
             "remove_hot_group_exclusion",
-            { chat_id: hexStringToBytes(chatId) },
+            { chat_id: principalStringToBytes(chatId) },
             removeHotGroupExclusionResponse,
-            groupIndexRemoveHotGroupExclusionArgs,
-            groupIndexRemoveHotGroupExclusionResponse
+            GroupIndexRemoveHotGroupExclusionArgs,
+            GroupIndexRemoveHotGroupExclusionResponse,
         );
     }
 
     setCommunityModerationFlags(
         communityId: string,
-        flags: number
+        flags: number,
     ): Promise<SetCommunityModerationFlagsResponse> {
         return this.executeMsgpackUpdate(
             "set_community_moderation_flags",
             {
-                community_id: hexStringToBytes(communityId),
+                community_id: principalStringToBytes(communityId),
                 flags,
             },
             setCommunityModerationFlagsResponse,
-            groupIndexSetCommunityModerationFlagsArgs,
-            groupIndexSetCommunityModerationFlagsResponse
+            GroupIndexSetCommunityModerationFlagsArgs,
+            GroupIndexSetCommunityModerationFlagsResponse,
         );
     }
 
@@ -224,8 +224,8 @@ export class GroupIndexClient extends CandidService {
             "set_group_upgrade_concurrency",
             { value },
             setUpgradeConcurrencyResponse,
-            groupIndexSetGroupUpgradeConcurrencyArgs,
-            groupIndexSetGroupUpgradeConcurrencyResponse
+            GroupIndexSetGroupUpgradeConcurrencyArgs,
+            GroupIndexSetGroupUpgradeConcurrencyResponse,
         );
     }
 
@@ -234,8 +234,8 @@ export class GroupIndexClient extends CandidService {
             "set_community_upgrade_concurrency",
             { value },
             setUpgradeConcurrencyResponse,
-            groupIndexSetCommunityUpgradeConcurrencyArgs,
-            groupIndexSetCommunityUpgradeConcurrencyResponse
+            GroupIndexSetCommunityUpgradeConcurrencyArgs,
+            GroupIndexSetCommunityUpgradeConcurrencyResponse,
         );
     }
 
@@ -243,12 +243,12 @@ export class GroupIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "mark_local_group_index_full",
             {
-                canister_id: hexStringToBytes(canisterId),
+                canister_id: principalStringToBytes(canisterId),
                 full,
             },
             (resp) => resp === "Success",
-            groupIndexMarkLocalGroupIndexFullArgs,
-            groupIndexMarkLocalGroupIndexFullResponse
+            GroupIndexMarkLocalGroupIndexFullArgs,
+            GroupIndexMarkLocalGroupIndexFullResponse,
         );
     }
 }

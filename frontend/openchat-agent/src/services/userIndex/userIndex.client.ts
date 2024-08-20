@@ -61,40 +61,40 @@ import {
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
-import { bytesToHexString, hexStringToBytes, mapOptional } from "../../utils/mapping";
+import { mapOptional, principalBytesToString, principalStringToBytes } from "../../utils/mapping";
 import {
     Empty,
-    userIndexCheckUsernameArgs,
-    userIndexCheckUsernameResponse,
-    userIndexChitLeaderboardResponse,
-    userIndexCurrentUserResponse,
-    userIndexDiamondMembershipFeesResponse,
-    userIndexPayForDiamondMembershipArgs,
-    userIndexPayForDiamondMembershipResponse,
-    userIndexPlatformModeratorsGroupResponse,
-    userIndexReportedMessagesArgs,
-    userIndexReportedMessagesResponse,
-    userIndexSearchArgs,
-    userIndexSearchResponse,
-    userIndexSetDiamondMembershipFeesArgs,
-    userIndexSetDiamondMembershipFeesResponse,
-    userIndexSetDisplayNameArgs,
-    userIndexSetDisplayNameResponse,
-    userIndexSetModerationFlagsArgs,
-    userIndexSetModerationFlagsResponse,
-    userIndexSetUsernameArgs,
-    userIndexSetUsernameResponse,
-    userIndexSetUserUpgradeConcurrencyArgs,
-    userIndexSetUserUpgradeConcurrencyResponse,
-    userIndexSubmitProofOfUniquePersonhoodArgs,
-    userIndexSubmitProofOfUniquePersonhoodResponse,
-    userIndexSuspendUserArgs,
-    userIndexSuspendUserResponse,
-    userIndexUnsuspendUserArgs,
-    userIndexUnsuspendUserResponse,
-    userIndexUserRegistrationCanisterResponse,
-    userIndexUsersArgs,
-    userIndexUsersResponse,
+    UserIndexCheckUsernameArgs,
+    UserIndexCheckUsernameResponse,
+    UserIndexChitLeaderboardResponse,
+    UserIndexCurrentUserResponse,
+    UserIndexDiamondMembershipFeesResponse,
+    UserIndexPayForDiamondMembershipArgs,
+    UserIndexPayForDiamondMembershipResponse,
+    UserIndexPlatformModeratorsGroupResponse,
+    UserIndexReportedMessagesArgs,
+    UserIndexReportedMessagesResponse,
+    UserIndexSearchArgs,
+    UserIndexSearchResponse,
+    UserIndexSetDiamondMembershipFeesArgs,
+    UserIndexSetDiamondMembershipFeesResponse,
+    UserIndexSetDisplayNameArgs,
+    UserIndexSetDisplayNameResponse,
+    UserIndexSetModerationFlagsArgs,
+    UserIndexSetModerationFlagsResponse,
+    UserIndexSetUsernameArgs,
+    UserIndexSetUsernameResponse,
+    UserIndexSetUserUpgradeConcurrencyArgs,
+    UserIndexSetUserUpgradeConcurrencyResponse,
+    UserIndexSubmitProofOfUniquePersonhoodArgs,
+    UserIndexSubmitProofOfUniquePersonhoodResponse,
+    UserIndexSuspendUserArgs,
+    UserIndexSuspendUserResponse,
+    UserIndexUnsuspendUserArgs,
+    UserIndexUnsuspendUserResponse,
+    UserIndexUserRegistrationCanisterResponse,
+    UserIndexUsersArgs,
+    UserIndexUsersResponse,
 } from "../../typebox";
 
 export class UserIndexClient extends CandidService {
@@ -120,7 +120,7 @@ export class UserIndexClient extends CandidService {
                         {},
                         currentUserResponse,
                         Empty,
-                        userIndexCurrentUserResponse
+                        UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
                         setCachedCurrentUser(principal, liveUser);
@@ -140,8 +140,8 @@ export class UserIndexClient extends CandidService {
                 moderation_flags_enabled: flags,
             },
             (_) => true,
-            userIndexSetModerationFlagsArgs,
-            userIndexSetModerationFlagsResponse
+            UserIndexSetModerationFlagsArgs,
+            UserIndexSetModerationFlagsResponse,
         );
     }
 
@@ -151,7 +151,7 @@ export class UserIndexClient extends CandidService {
             {},
             userRegistrationCanisterResponse,
             Empty,
-            userIndexUserRegistrationCanisterResponse
+            UserIndexUserRegistrationCanisterResponse,
         );
     }
 
@@ -164,15 +164,15 @@ export class UserIndexClient extends CandidService {
             "search",
             args,
             userSearchResponse,
-            userIndexSearchArgs,
-            userIndexSearchResponse
+            UserIndexSearchArgs,
+            UserIndexSearchResponse,
         );
     }
 
     async getUsers(
         chitState: ChitState,
         users: UsersArgs,
-        allowStale: boolean
+        allowStale: boolean,
     ): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
@@ -194,13 +194,13 @@ export class UserIndexClient extends CandidService {
             allUsers,
             requestedFromServer,
             apiResponse,
-            fromCache
+            fromCache,
         );
 
         // setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
-            console.error("Failed to save users to the cache", err)
+            console.error("Failed to save users to the cache", err),
         );
 
         if (mergedResponse.currentUser) {
@@ -209,7 +209,7 @@ export class UserIndexClient extends CandidService {
 
         if (mergedResponse.serverTimestamp !== undefined) {
             setSuspendedUsersSyncedUpTo(mergedResponse.serverTimestamp).catch((err) =>
-                console.error("Failed to set 'suspended users synced up to' in the cache", err)
+                console.error("Failed to set 'suspended users synced up to' in the cache", err),
             );
         }
 
@@ -218,7 +218,7 @@ export class UserIndexClient extends CandidService {
 
     private getUsersFromBackend(
         users: UsersArgs,
-        suspendedUsersSyncedUpTo: bigint | undefined
+        suspendedUsersSyncedUpTo: bigint | undefined,
     ): Promise<UsersApiResponse> {
         if (offline())
             return Promise.resolve({
@@ -231,7 +231,7 @@ export class UserIndexClient extends CandidService {
 
         const args = {
             user_groups: userGroups.map(({ users, updatedSince }) => ({
-                users: users.map(hexStringToBytes),
+                users: users.map(principalStringToBytes),
                 updated_since: updatedSince,
             })),
             users_suspended_since: suspendedUsersSyncedUpTo,
@@ -241,8 +241,8 @@ export class UserIndexClient extends CandidService {
             "users",
             args,
             usersApiResponse,
-            userIndexUsersArgs,
-            userIndexUsersResponse
+            UserIndexUsersArgs,
+            UserIndexUsersResponse,
         );
     }
 
@@ -250,7 +250,7 @@ export class UserIndexClient extends CandidService {
         users: string[],
         fromCache: UserSummary[],
         allowStale: boolean,
-        _cachedDeletedUserIds: Set<string>
+        _cachedDeletedUserIds: Set<string>,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
@@ -262,7 +262,7 @@ export class UserIndexClient extends CandidService {
         // Add the users not found in the cache and ask for all updates
         const notFoundInCache = users.filter(
             // (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
-            (u) => !fromCacheSet.has(u)
+            (u) => !fromCacheSet.has(u),
         );
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
@@ -292,11 +292,11 @@ export class UserIndexClient extends CandidService {
         allUsersRequested: string[],
         requestedFromServer: Set<string>,
         apiResponse: UsersApiResponse,
-        fromCache: UserSummary[]
+        fromCache: UserSummary[],
     ): UsersResponse {
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
         const apiResponseMap = new Map<string, UserSummaryUpdate>(
-            apiResponse.users.map((u) => [u.userId, u])
+            apiResponse.users.map((u) => [u.userId, u]),
         );
 
         const users: UserSummary[] = [];
@@ -310,7 +310,7 @@ export class UserIndexClient extends CandidService {
                 const merged = mergeUserSummaryWithUpdates(
                     cached,
                     fromServer,
-                    apiResponse.serverTimestamp
+                    apiResponse.serverTimestamp,
                 );
                 if (merged !== undefined) {
                     users.push(merged);
@@ -334,7 +334,7 @@ export class UserIndexClient extends CandidService {
                 // & nothing was in the cache - this would be odd but worth knowing if this is happening
                 console.debug(
                     "USERS: userId requested not in cache and not returned from server",
-                    userId
+                    userId,
                 );
             }
         }
@@ -369,8 +369,8 @@ export class UserIndexClient extends CandidService {
             "check_username",
             args,
             checkUsernameResponse,
-            userIndexCheckUsernameArgs,
-            userIndexCheckUsernameResponse
+            UserIndexCheckUsernameArgs,
+            UserIndexCheckUsernameResponse,
         );
     }
 
@@ -379,8 +379,8 @@ export class UserIndexClient extends CandidService {
             "set_username",
             { username },
             setUsernameResponse,
-            userIndexSetUsernameArgs,
-            userIndexSetUsernameResponse
+            UserIndexSetUsernameArgs,
+            UserIndexSetUsernameResponse,
         ).then((res) => {
             if (res === "success") {
                 setUsernameInCache(userId, username);
@@ -391,7 +391,7 @@ export class UserIndexClient extends CandidService {
 
     setDisplayName(
         userId: string,
-        displayName: string | undefined
+        displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
         return this.executeMsgpackUpdate(
             "set_display_name",
@@ -399,8 +399,8 @@ export class UserIndexClient extends CandidService {
                 display_name: displayName,
             },
             setDisplayNameResponse,
-            userIndexSetDisplayNameArgs,
-            userIndexSetDisplayNameResponse
+            UserIndexSetDisplayNameArgs,
+            UserIndexSetDisplayNameResponse,
         ).then((res) => {
             if (res === "success") {
                 setDisplayNameInCache(userId, displayName);
@@ -413,12 +413,12 @@ export class UserIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "suspend_user",
             {
-                user_id: hexStringToBytes(userId),
+                user_id: principalStringToBytes(userId),
                 reason,
             },
             suspendUserResponse,
-            userIndexSuspendUserArgs,
-            userIndexSuspendUserResponse
+            UserIndexSuspendUserArgs,
+            UserIndexSuspendUserResponse,
         );
     }
 
@@ -426,11 +426,11 @@ export class UserIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "unsuspend_user",
             {
-                user_id: hexStringToBytes(userId),
+                user_id: principalStringToBytes(userId),
             },
             unsuspendUserResponse,
-            userIndexUnsuspendUserArgs,
-            userIndexUnsuspendUserResponse
+            UserIndexUnsuspendUserArgs,
+            UserIndexUnsuspendUserResponse,
         );
     }
 
@@ -439,7 +439,7 @@ export class UserIndexClient extends CandidService {
         token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
-        expectedPriceE8s: bigint
+        expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
         return this.executeMsgpackUpdate(
             "pay_for_diamond_membership",
@@ -450,8 +450,8 @@ export class UserIndexClient extends CandidService {
                 expected_price_e8s: expectedPriceE8s,
             },
             (res) => payForDiamondMembershipResponse(duration, res),
-            userIndexPayForDiamondMembershipArgs,
-            userIndexPayForDiamondMembershipResponse
+            UserIndexPayForDiamondMembershipArgs,
+            UserIndexPayForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
                 const principal = this.identity.getPrincipal().toString();
@@ -467,8 +467,8 @@ export class UserIndexClient extends CandidService {
             "set_user_upgrade_concurrency",
             { value },
             () => "success",
-            userIndexSetUserUpgradeConcurrencyArgs,
-            userIndexSetUserUpgradeConcurrencyResponse
+            UserIndexSetUserUpgradeConcurrencyArgs,
+            UserIndexSetUserUpgradeConcurrencyResponse,
         );
     }
 
@@ -476,9 +476,9 @@ export class UserIndexClient extends CandidService {
         return this.executeMsgpackQuery(
             "platform_moderators_group",
             {},
-            (res) => bytesToHexString(res.Success),
+            (res) => principalBytesToString(res.Success),
             Empty,
-            userIndexPlatformModeratorsGroupResponse
+            UserIndexPlatformModeratorsGroupResponse,
         );
     }
 
@@ -488,7 +488,7 @@ export class UserIndexClient extends CandidService {
             {},
             diamondMembershipFeesResponse,
             Empty,
-            userIndexDiamondMembershipFeesResponse
+            UserIndexDiamondMembershipFeesResponse,
         );
     }
 
@@ -521,8 +521,8 @@ export class UserIndexClient extends CandidService {
             "set_diamond_membership_fees",
             args,
             (res) => res === "Success",
-            userIndexSetDiamondMembershipFeesArgs,
-            userIndexSetDiamondMembershipFeesResponse
+            UserIndexSetDiamondMembershipFeesArgs,
+            UserIndexSetDiamondMembershipFeesResponse,
         );
     }
 
@@ -530,11 +530,11 @@ export class UserIndexClient extends CandidService {
         return this.executeMsgpackQuery(
             "reported_messages",
             {
-                user_id: mapOptional(userId, hexStringToBytes),
+                user_id: mapOptional(userId, principalStringToBytes),
             },
             (res) => res.Success.json,
-            userIndexReportedMessagesArgs,
-            userIndexReportedMessagesResponse
+            UserIndexReportedMessagesArgs,
+            UserIndexReportedMessagesResponse,
         );
     }
 
@@ -544,24 +544,24 @@ export class UserIndexClient extends CandidService {
             {},
             chitLeaderboardResponse,
             Empty,
-            userIndexChitLeaderboardResponse
+            UserIndexChitLeaderboardResponse,
         );
     }
 
     submitProofOfUniquePersonhood(
         iiPrincipal: string,
-        credential: string
+        credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         const args = {
-            user_ii_principal: hexStringToBytes(iiPrincipal),
+            user_ii_principal: principalStringToBytes(iiPrincipal),
             credential_jwt: credential,
         };
         return this.executeMsgpackUpdate(
             "submit_proof_of_unique_personhood",
             args,
             submitProofOfUniquePersonhoodResponse,
-            userIndexSubmitProofOfUniquePersonhoodArgs,
-            userIndexSubmitProofOfUniquePersonhoodResponse
+            UserIndexSubmitProofOfUniquePersonhoodArgs,
+            UserIndexSubmitProofOfUniquePersonhoodResponse,
         );
     }
 }

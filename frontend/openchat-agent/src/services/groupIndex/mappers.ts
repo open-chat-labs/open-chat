@@ -1,4 +1,4 @@
-import { bytesToHexString, mapOptional } from "../../utils/mapping";
+import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
@@ -20,37 +20,37 @@ import { publicGroupSummaryJson } from "../common/publicSummaryMapper";
 import { accessGateJson, groupSubtypeJson } from "../common/chatMappers";
 import type {
     CommunityMatch as TCommunityMatch,
-    groupIndexActiveGroupsResponse,
-    groupIndexAddHotGroupExclusionResponse,
-    groupIndexDeleteFrozenGroupResponse,
-    groupIndexExploreCommunitiesResponse,
-    groupIndexExploreGroupsResponse,
-    groupIndexFreezeGroupResponse,
-    groupIndexLookupChannelByGroupIdResponse,
-    groupIndexRecommendedGroupsResponse,
-    groupIndexRemoveHotGroupExclusionResponse,
-    groupIndexSetCommunityModerationFlagsResponse,
-    groupIndexSetCommunityUpgradeConcurrencyResponse,
-    groupIndexUnfreezeGroupResponse,
+    GroupIndexActiveGroupsResponse,
+    GroupIndexAddHotGroupExclusionResponse,
+    GroupIndexDeleteFrozenGroupResponse,
+    GroupIndexExploreCommunitiesResponse,
+    GroupIndexExploreGroupsResponse,
+    GroupIndexFreezeGroupResponse,
+    GroupIndexLookupChannelByGroupIdResponse,
+    GroupIndexRecommendedGroupsResponse,
+    GroupIndexRemoveHotGroupExclusionResponse,
+    GroupIndexSetCommunityModerationFlagsResponse,
+    GroupIndexSetCommunityUpgradeConcurrencyResponse,
+    GroupIndexUnfreezeGroupResponse,
     GroupMatch as TGroupMatch,
 } from "../../typebox";
 
-export function activeGroupsResponse(json: groupIndexActiveGroupsResponse): ActiveGroupsResponse {
+export function activeGroupsResponse(json: GroupIndexActiveGroupsResponse): ActiveGroupsResponse {
     return {
         timestamp: json.Success.timestamp,
-        activeGroups: json.Success.active_groups.map(bytesToHexString),
-        activeCommunities: json.Success.active_communities.map(bytesToHexString),
+        activeGroups: json.Success.active_groups.map(principalBytesToString),
+        activeCommunities: json.Success.active_communities.map(principalBytesToString),
         deletedCommunities: json.Success.deleted_communities.map((d) => ({
-            id: bytesToHexString(d.id),
+            id: principalBytesToString(d.id),
             timestamp: d.timestamp,
-            deletedBy: bytesToHexString(d.deleted_by),
+            deletedBy: principalBytesToString(d.deleted_by),
             name: d.name,
             public: d.public,
         })),
         deletedGroups: json.Success.deleted_groups.map((d) => ({
-            id: bytesToHexString(d.id),
+            id: principalBytesToString(d.id),
             timestamp: d.timestamp,
-            deletedBy: bytesToHexString(d.deleted_by),
+            deletedBy: principalBytesToString(d.deleted_by),
             name: d.name,
             public: d.public,
         })),
@@ -58,7 +58,7 @@ export function activeGroupsResponse(json: groupIndexActiveGroupsResponse): Acti
 }
 
 export function recommendedGroupsResponse(
-    json: groupIndexRecommendedGroupsResponse
+    json: GroupIndexRecommendedGroupsResponse,
 ): GroupChatSummary[] {
     if ("Success" in json) {
         // TODO - we are hard-coding is_invited to false here which is something we have to live with for the moment
@@ -68,12 +68,12 @@ export function recommendedGroupsResponse(
 }
 
 export function lookupChannelResponse(
-    json: groupIndexLookupChannelByGroupIdResponse
+    json: GroupIndexLookupChannelByGroupIdResponse,
 ): ChannelIdentifier | undefined {
     if (json !== "NotFound" && "Success" in json) {
         return {
             kind: "channel",
-            communityId: bytesToHexString(json.Success.community_id),
+            communityId: principalBytesToString(json.Success.community_id),
             channelId: json.Success.channel_id.toString(),
         };
     }
@@ -82,7 +82,7 @@ export function lookupChannelResponse(
 }
 
 export function exploreCommunitiesResponse(
-    json: groupIndexExploreCommunitiesResponse
+    json: GroupIndexExploreCommunitiesResponse,
 ): ExploreCommunitiesResponse {
     if (
         json === "InvalidTerm" ||
@@ -101,11 +101,11 @@ export function exploreCommunitiesResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreCommunitiesResponse type received",
-        json
+        json,
     );
 }
 
-export function exploreGroupsResponse(json: groupIndexExploreGroupsResponse): GroupSearchResponse {
+export function exploreGroupsResponse(json: GroupIndexExploreGroupsResponse): GroupSearchResponse {
     if (json === "InvalidTerm" || "TermTooShort" in json || "TermTooLong" in json) {
         return { kind: "term_invalid" };
     }
@@ -118,11 +118,11 @@ export function exploreGroupsResponse(json: groupIndexExploreGroupsResponse): Gr
     }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreGroupsResponse type received",
-        json
+        json,
     );
 }
 
-export function freezeGroupResponse(json: groupIndexFreezeGroupResponse): FreezeGroupResponse {
+export function freezeGroupResponse(json: GroupIndexFreezeGroupResponse): FreezeGroupResponse {
     if (json === "ChatAlreadyFrozen") {
         return "chat_already_frozen";
     }
@@ -136,7 +136,7 @@ export function freezeGroupResponse(json: groupIndexFreezeGroupResponse): Freeze
         return {
             event: {
                 kind: "chat_frozen",
-                frozenBy: bytesToHexString(json.Success.event.frozen_by),
+                frozenBy: principalBytesToString(json.Success.event.frozen_by),
                 reason: json.Success.event.reason,
             },
             timestamp: json.Success.timestamp,
@@ -151,7 +151,7 @@ export function freezeGroupResponse(json: groupIndexFreezeGroupResponse): Freeze
 }
 
 export function unfreezeGroupResponse(
-    json: groupIndexUnfreezeGroupResponse
+    json: GroupIndexUnfreezeGroupResponse,
 ): UnfreezeGroupResponse {
     if (json === "ChatNotFrozen") {
         return "chat_not_frozen";
@@ -166,7 +166,7 @@ export function unfreezeGroupResponse(
         return {
             event: {
                 kind: "chat_unfrozen",
-                unfrozenBy: bytesToHexString(json.Success.event.unfrozen_by),
+                unfrozenBy: principalBytesToString(json.Success.event.unfrozen_by),
             },
             timestamp: json.Success.timestamp,
             index: json.Success.index,
@@ -180,7 +180,7 @@ export function unfreezeGroupResponse(
 }
 
 export function deleteFrozenGroupResponse(
-    json: groupIndexDeleteFrozenGroupResponse
+    json: GroupIndexDeleteFrozenGroupResponse,
 ): DeleteFrozenGroupResponse {
     if (json === "Success") {
         return "success";
@@ -201,7 +201,7 @@ export function deleteFrozenGroupResponse(
 }
 
 export function addHotGroupExclusionResponse(
-    json: groupIndexAddHotGroupExclusionResponse
+    json: GroupIndexAddHotGroupExclusionResponse,
 ): AddHotGroupExclusionResponse {
     if (json === "Success") {
         return "success";
@@ -220,12 +220,12 @@ export function addHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddHotGroupExclusionResponse type received",
-        json
+        json,
     );
 }
 
 export function removeHotGroupExclusionResponse(
-    json: groupIndexRemoveHotGroupExclusionResponse
+    json: GroupIndexRemoveHotGroupExclusionResponse,
 ): RemoveHotGroupExclusionResponse {
     if (json === "Success") {
         return "success";
@@ -244,12 +244,12 @@ export function removeHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveHotGroupExclusionResponse type received",
-        json
+        json,
     );
 }
 
 export function setUpgradeConcurrencyResponse(
-    json: groupIndexSetCommunityUpgradeConcurrencyResponse
+    json: GroupIndexSetCommunityUpgradeConcurrencyResponse,
 ): SetGroupUpgradeConcurrencyResponse {
     if (json === "Success") {
         return "success";
@@ -262,12 +262,12 @@ export function setUpgradeConcurrencyResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
-        json
+        json,
     );
 }
 
 export function setCommunityModerationFlagsResponse(
-    json: groupIndexSetCommunityModerationFlagsResponse
+    json: GroupIndexSetCommunityModerationFlagsResponse,
 ): SetCommunityModerationFlagsResponse {
     if (json === "Success" || json === "Unchanged") {
         return "success";
@@ -286,38 +286,38 @@ export function setCommunityModerationFlagsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
-        json
+        json,
     );
 }
 
 function groupMatch(json: TGroupMatch): GroupMatch {
     return {
-        chatId: { kind: "group_chat", groupId: bytesToHexString(json.id) },
+        chatId: { kind: "group_chat", groupId: principalBytesToString(json.id) },
         name: json.name,
         description: json.description,
         subtype: mapOptional(json.subtype, groupSubtypeJson),
         blobReference: mapOptional(json.avatar_id, (blobId) => ({
             blobId,
-            canisterId: bytesToHexString(json.id),
+            canisterId: principalBytesToString(json.id),
         })),
     };
 }
 
 function communityMatch(json: TCommunityMatch): CommunityMatch {
     return {
-        id: { kind: "community", communityId: bytesToHexString(json.id) },
+        id: { kind: "community", communityId: principalBytesToString(json.id) },
         name: json.name,
         description: json.description,
         avatar: {
             blobReference: mapOptional(json.avatar_id, (blobId) => ({
                 blobId,
-                canisterId: bytesToHexString(json.id),
+                canisterId: principalBytesToString(json.id),
             })),
         },
         banner: {
             blobReference: mapOptional(json.banner_id, (blobId) => ({
                 blobId,
-                canisterId: bytesToHexString(json.id),
+                canisterId: principalBytesToString(json.id),
             })),
         },
         memberCount: json.member_count,

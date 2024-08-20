@@ -4,4 +4,4 @@ import type { CommunityId } from "../../shared/CommunityId";
 import type { DeletedCommunityInfo } from "../../shared/DeletedCommunityInfo";
 import type { DeletedGroupInfo } from "../../shared/DeletedGroupInfo";
 
-export type groupIndexActiveGroupsSuccessResult = { timestamp: bigint, active_groups: Array<ChatId>, active_communities: Array<CommunityId>, deleted_groups: Array<DeletedGroupInfo>, deleted_communities: Array<DeletedCommunityInfo>, };
+export type GroupIndexActiveGroupsSuccessResult = { timestamp: bigint, active_groups: Array<ChatId>, active_communities: Array<CommunityId>, deleted_groups: Array<DeletedGroupInfo>, deleted_communities: Array<DeletedCommunityInfo>, };

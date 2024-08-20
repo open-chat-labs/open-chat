@@ -1,4 +1,3 @@
-use ic_principal::Principal;
 use serde::{Deserialize, Deserializer};
 use std::fmt::Display;
 use std::str::FromStr;
@@ -26,7 +25,5 @@ where
 }
 
 #[ts_export]
-#[ts(type = "")]
-pub struct ArrayBuffer {
-    buffer: 
-}
+#[ts(type = "Uint8Array")]
+pub struct PrincipalTS {}

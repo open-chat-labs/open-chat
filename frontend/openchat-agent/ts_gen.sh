@@ -20,7 +20,4 @@ for filename in $(find ./tsBindings -name '*.ts'); do
     done
 done
 
-npm run ts-to-zod $mergedFile $zodFile
-
-sed -i.bak 's/z.bigint()/z.coerce.bigint()/g' $zodFile
-rm ./src/zod.ts.bak
+npm run typebox

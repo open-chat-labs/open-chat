@@ -21,7 +21,12 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
-import { bytesToHexString, identity, mapOptional } from "../../utils/mapping";
+import {
+    bytesToHexString,
+    identity,
+    mapOptional,
+    principalBytesToString,
+} from "../../utils/mapping";
 import { tokenJson } from "../common/chatMappers";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
@@ -32,25 +37,25 @@ import type {
     DiamondMembershipSubscription as TDiamondMembershipSubscription,
     SuspensionAction as TSuspensionAction,
     SuspensionDetails as TSuspensionDetails,
-    userIndexCheckUsernameResponse,
-    userIndexChitLeaderboardChitUserBalance,
-    userIndexChitLeaderboardResponse,
-    userIndexCurrentUserResponse,
-    userIndexDiamondMembershipFeesResponse,
-    userIndexPayForDiamondMembershipResponse,
-    userIndexSearchResponse,
-    userIndexSetDisplayNameResponse,
-    userIndexSetUsernameResponse,
-    userIndexSubmitProofOfUniquePersonhoodResponse,
-    userIndexSuspendUserResponse,
-    userIndexUnsuspendUserResponse,
-    userIndexUserRegistrationCanisterResponse,
-    userIndexUsersResponse,
+    UserIndexCheckUsernameResponse,
+    UserIndexChitLeaderboardChitUserBalance,
+    UserIndexChitLeaderboardResponse,
+    UserIndexCurrentUserResponse,
+    UserIndexDiamondMembershipFeesResponse,
+    UserIndexPayForDiamondMembershipResponse,
+    UserIndexSearchResponse,
+    UserIndexSetDisplayNameResponse,
+    UserIndexSetUsernameResponse,
+    UserIndexSubmitProofOfUniquePersonhoodResponse,
+    UserIndexSuspendUserResponse,
+    UserIndexUnsuspendUserResponse,
+    UserIndexUserRegistrationCanisterResponse,
+    UserIndexUsersResponse,
     UserSummary as TUserSummary,
     UserSummaryV2 as TUserSummaryV2,
 } from "../../typebox";
 
-export function userSearchResponse(json: userIndexSearchResponse): UserSummary[] {
+export function userSearchResponse(json: UserIndexSearchResponse): UserSummary[] {
     if ("Success" in json) {
         const timestamp = json.Success.timestamp;
         return json.Success.users.map((u) => userSummary(u, timestamp));
@@ -58,15 +63,15 @@ export function userSearchResponse(json: userIndexSearchResponse): UserSummary[]
     throw new Error(`Unknown UserIndex.SearchResponse of ${json}`);
 }
 
-export function usersApiResponse(json: userIndexUsersResponse): UsersApiResponse {
+export function usersApiResponse(json: UserIndexUsersResponse): UsersApiResponse {
     if ("Success" in json) {
         const timestamp = json.Success.timestamp;
         return {
             serverTimestamp: timestamp,
             users: json.Success.users.map(userSummaryUpdate),
-            deletedUserIds: new Set(json.Success.deleted.map(bytesToHexString)),
+            deletedUserIds: new Set(json.Success.deleted.map(principalBytesToString)),
             currentUser: mapOptional(json.Success.current_user, (u) =>
-                currentUserSummary(u, timestamp)
+                currentUserSummary(u, timestamp),
             ),
         };
     }
@@ -75,14 +80,14 @@ export function usersApiResponse(json: userIndexUsersResponse): UsersApiResponse
 
 export function currentUserSummary(
     json: TCurrentUserSummary,
-    timestamp: bigint
+    timestamp: bigint,
 ): CurrentUserSummary {
     return {
         kind: "current_user_summary",
         username: json.username,
         isPlatformOperator: json.is_platform_operator,
         diamondStatus: diamondMembershipStatus(json.diamond_membership_status),
-        userId: bytesToHexString(json.user_id),
+        userId: principalBytesToString(json.user_id),
         isBot: json.is_bot,
         displayName: mapOptional(json.display_name, identity),
         moderationFlagsEnabled: json.moderation_flags_enabled,
@@ -93,7 +98,7 @@ export function currentUserSummary(
         updated: timestamp,
         blobReference: mapOptional(json.avatar_id, (id) => ({
             blobId: id,
-            canisterId: bytesToHexString(json.user_id),
+            canisterId: principalBytesToString(json.user_id),
         })),
         isUniquePerson: json.is_unique_person,
     };
@@ -101,7 +106,7 @@ export function currentUserSummary(
 
 export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
     return {
-        userId: bytesToHexString(json.user_id),
+        userId: principalBytesToString(json.user_id),
         stable: mapOptional(json.stable, (s) => ({
             username: s.username,
             diamondStatus: diamondStatus(s.diamond_membership_status),
@@ -109,7 +114,7 @@ export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
             displayName: mapOptional(s.display_name, identity),
             blobReference: mapOptional(s.avatar_id, (id) => ({
                 blobId: id,
-                canisterId: bytesToHexString(json.user_id),
+                canisterId: principalBytesToString(json.user_id),
             })),
             suspended: s.suspended,
             isUniquePerson: s.is_unique_person,
@@ -125,12 +130,12 @@ export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
 export function userSummary(json: TUserSummary, timestamp: bigint): UserSummary {
     return {
         kind: json.is_bot ? "bot" : "user",
-        userId: bytesToHexString(json.user_id),
+        userId: principalBytesToString(json.user_id),
         username: json.username,
         displayName: mapOptional(json.display_name, identity),
         blobReference: mapOptional(json.avatar_id, (id) => ({
             blobId: id,
-            canisterId: bytesToHexString(json.user_id),
+            canisterId: principalBytesToString(json.user_id),
         })),
         updated: timestamp,
         suspended: json.suspended,
@@ -156,15 +161,15 @@ export function diamondStatus(json: TDiamondMembershipStatus): DiamondMembership
 }
 
 export function userRegistrationCanisterResponse(
-    json: userIndexUserRegistrationCanisterResponse
+    json: UserIndexUserRegistrationCanisterResponse,
 ): string {
     if (json !== "NewRegistrationsClosed" && "Success" in json) {
-        return bytesToHexString(json.Success);
+        return principalBytesToString(json.Success);
     }
     throw new Error(`Unexpected UserRegistrationCanisterResponse type received: ${json}`);
 }
 
-export function currentUserResponse(json: userIndexCurrentUserResponse): CurrentUserResponse {
+export function currentUserResponse(json: UserIndexCurrentUserResponse): CurrentUserResponse {
     if (json === "UserNotFound") {
         return { kind: "unknown_user" };
     }
@@ -175,12 +180,12 @@ export function currentUserResponse(json: userIndexCurrentUserResponse): Current
         console.log("User: ", r);
         return {
             kind: "created_user",
-            userId: bytesToHexString(r.user_id),
+            userId: principalBytesToString(r.user_id),
             username: r.username,
             dateCreated: r.date_created,
             displayName: r.display_name ?? undefined,
             cryptoAccount: bytesToHexString(r.icp_account),
-            referrals: r.referrals.map(bytesToHexString),
+            referrals: r.referrals.map(principalBytesToString),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
             suspensionDetails: mapOptional(r.suspension_details, suspensionDetails),
@@ -211,7 +216,7 @@ function diamondMembershipStatus(json: TDiamondMembershipStatusFull): DiamondMem
     }
     throw new UnsupportedValueError(
         "Unexpected DiamondMembershipStatusFullJson type received",
-        json
+        json,
     );
 }
 
@@ -224,7 +229,7 @@ function diamondMembership(json: TDiamondMembershipDetails): DiamondMembershipDe
 }
 
 function diamondMembershipSubscription(
-    json: TDiamondMembershipSubscription
+    json: TDiamondMembershipSubscription,
 ): DiamondMembershipSubscription {
     if (json === "OneMonth") {
         return "one_month";
@@ -240,7 +245,7 @@ function diamondMembershipSubscription(
     }
     throw new UnsupportedValueError(
         "Unexpected DiamondMembershipSubscriptionJson type received",
-        json
+        json,
     );
 }
 
@@ -248,7 +253,7 @@ function suspensionDetails(json: TSuspensionDetails): SuspensionDetails {
     return {
         reason: json.reason,
         action: suspensionAction(json.action),
-        suspendedBy: bytesToHexString(json.suspended_by),
+        suspendedBy: principalBytesToString(json.suspended_by),
     };
 }
 
@@ -268,7 +273,7 @@ function suspensionAction(json: TSuspensionAction): SuspensionAction {
     throw new Error(`Unexpected SuspensionAction type received: ${json}`);
 }
 
-export function checkUsernameResponse(json: userIndexCheckUsernameResponse): CheckUsernameResponse {
+export function checkUsernameResponse(json: UserIndexCheckUsernameResponse): CheckUsernameResponse {
     if (json === "Success") {
         return "success";
     }
@@ -287,7 +292,7 @@ export function checkUsernameResponse(json: userIndexCheckUsernameResponse): Che
     throw new UnsupportedValueError("Unexpected CheckUsernameResponse type received", json);
 }
 
-export function setUsernameResponse(json: userIndexSetUsernameResponse): SetUsernameResponse {
+export function setUsernameResponse(json: UserIndexSetUsernameResponse): SetUsernameResponse {
     if (json === "Success") {
         return "success";
     }
@@ -310,7 +315,7 @@ export function setUsernameResponse(json: userIndexSetUsernameResponse): SetUser
 }
 
 export function setDisplayNameResponse(
-    json: userIndexSetDisplayNameResponse
+    json: UserIndexSetDisplayNameResponse,
 ): SetDisplayNameResponse {
     if (json === "Success") {
         return "success";
@@ -333,7 +338,7 @@ export function setDisplayNameResponse(
     throw new UnsupportedValueError("Unexpected SetDisplayNameResponse type received", json);
 }
 
-export function suspendUserResponse(json: userIndexSuspendUserResponse): SuspendUserResponse {
+export function suspendUserResponse(json: UserIndexSuspendUserResponse): SuspendUserResponse {
     if (json === "Success") {
         return "success";
     }
@@ -349,7 +354,7 @@ export function suspendUserResponse(json: userIndexSuspendUserResponse): Suspend
     throw new UnsupportedValueError("Unexpected SuspendUserResponse type received", json);
 }
 
-export function unsuspendUserResponse(json: userIndexUnsuspendUserResponse): UnsuspendUserResponse {
+export function unsuspendUserResponse(json: UserIndexUnsuspendUserResponse): UnsuspendUserResponse {
     if (json === "Success") {
         return "success";
     }
@@ -367,7 +372,7 @@ export function unsuspendUserResponse(json: userIndexUnsuspendUserResponse): Uns
 
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
-    json: userIndexPayForDiamondMembershipResponse
+    json: UserIndexPayForDiamondMembershipResponse,
 ): PayForDiamondMembershipResponse {
     if (json === "PaymentAlreadyInProgress") {
         return { kind: "payment_already_in_progress" };
@@ -405,12 +410,12 @@ export function payForDiamondMembershipResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        json
+        json,
     );
 }
 
 export function apiJsonDiamondDuration(
-    domain: DiamondMembershipDuration
+    domain: DiamondMembershipDuration,
 ): TDiamondMembershipPlanDuration {
     if (domain === "one_month") {
         return "OneMonth";
@@ -428,7 +433,7 @@ export function apiJsonDiamondDuration(
 }
 
 export function diamondMembershipFeesResponse(
-    json: userIndexDiamondMembershipFeesResponse
+    json: UserIndexDiamondMembershipFeesResponse,
 ): DiamondMembershipFees[] {
     if ("Success" in json) {
         return json.Success.map((f) => ({
@@ -442,23 +447,23 @@ export function diamondMembershipFeesResponse(
     throw new UnsupportedValueError("Unexpected DiamondMembershipFeesResponse type received", json);
 }
 
-export function chitLeaderboardResponse(json: userIndexChitLeaderboardResponse): ChitUserBalance[] {
+export function chitLeaderboardResponse(json: UserIndexChitLeaderboardResponse): ChitUserBalance[] {
     if ("Success" in json) {
         return json.Success.map(chitUserBalance);
     }
     throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", json);
 }
 
-function chitUserBalance(json: userIndexChitLeaderboardChitUserBalance): ChitUserBalance {
+function chitUserBalance(json: UserIndexChitLeaderboardChitUserBalance): ChitUserBalance {
     return {
-        userId: bytesToHexString(json.user_id),
+        userId: principalBytesToString(json.user_id),
         balance: json.balance,
         username: json.username,
     };
 }
 
 export function submitProofOfUniquePersonhoodResponse(
-    json: userIndexSubmitProofOfUniquePersonhoodResponse
+    json: UserIndexSubmitProofOfUniquePersonhoodResponse,
 ): SubmitProofOfUniquePersonhoodResponse {
     if (json === "Success") {
         return CommonResponses.success();
@@ -471,6 +476,6 @@ export function submitProofOfUniquePersonhoodResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
-        json
+        json,
     );
 }

@@ -8665,7 +8665,6 @@ dependencies = [
 name = "ts_export"
 version = "0.1.0"
 dependencies = [
- "ic_principal",
  "serde",
  "ts-rs",
  "ts_export_macros",

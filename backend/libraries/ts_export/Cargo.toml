@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ic_principal = { workspace = true }
 serde = { workspace = true }
 ts-rs = { workspace = true }
 ts_export_macros = { path = "../ts_export_macros" }

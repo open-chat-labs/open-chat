@@ -2,4 +2,4 @@
 import type { Cryptocurrency } from "../../shared/Cryptocurrency";
 import type { DiamondMembershipPlanDuration } from "../../shared/DiamondMembershipPlanDuration";
 
-export type userIndexPayForDiamondMembershipArgs = { duration: DiamondMembershipPlanDuration, token: Cryptocurrency, expected_price_e8s: bigint, recurring: boolean, };
+export type UserIndexPayForDiamondMembershipArgs = { duration: DiamondMembershipPlanDuration, token: Cryptocurrency, expected_price_e8s: bigint, recurring: boolean, };
