@@ -887,6 +887,7 @@ type InitialStateResponse = variant {
         next_daily_claim : TimestampMillis;
         is_unique_person : bool;
         wallet_config: WalletConfig;
+        referrals : vec Referral;
     };
 };
 
@@ -950,6 +951,7 @@ type UpdatesResponse = variant {
         next_daily_claim : TimestampMillis;
         is_unique_person : opt bool;
         wallet_config: opt WalletConfig;
+        referrals : vec Referral;
     };
     SuccessNoUpdates;
 };
@@ -1210,6 +1212,11 @@ type ManualWallet = record {
 
 type ConfigureWalletResponse = variant {
     Success;
+};
+
+type Referral = record {
+    user_id : UserId;
+    status : ReferralStatus;
 };
 
 service : {

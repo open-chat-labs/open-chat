@@ -1,4 +1,4 @@
-use crate::{Achievement, TimestampMillis};
+use crate::{Achievement, ReferralStatus, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -14,6 +14,7 @@ pub struct ChitEarned {
 pub enum ChitEarnedReason {
     DailyClaim,
     Achievement(Achievement),
+    Referral(ReferralStatus),
     MemeContestWinner,
 }
 

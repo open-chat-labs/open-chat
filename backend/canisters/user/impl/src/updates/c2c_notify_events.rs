@@ -2,10 +2,13 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
+use types::{
+    Achievement, ChitEarned, ChitEarnedReason, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus,
+    Timestamped,
+};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
-use user_canister::Event;
+use user_canister::{Event, UserCanisterEvent, USERS_VERSION_2_0_1299_FINISHED_TS};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -41,7 +44,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_storage_ugraded_bot_message(&ev, state);
         }
         Event::ReferredUserRegistered(ev) => {
-            openchat_bot::send_referred_user_joined_message(&ev, state);
+            state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
+            openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
         }
         Event::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, state);
@@ -101,12 +105,72 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                     state,
                 );
             }
+
+            if now >= USERS_VERSION_2_0_1299_FINISHED_TS {
+                if let Some(referred_by) = state.data.referred_by {
+                    let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                        ReferralStatus::LifetimeDiamond
+                    } else {
+                        ReferralStatus::Diamond
+                    };
+                    state.push_user_canister_event(referred_by.into(), UserCanisterEvent::SetReferralStatus(Box::new(status)))
+                }
+            }
         }
         Event::NotifyUniquePersonProof(proof) => {
             if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
                 state.data.notify_user_index_of_chit(now);
             }
             state.data.unique_person_proof = Some(*proof);
+
+            if now >= USERS_VERSION_2_0_1299_FINISHED_TS {
+                if let Some(referred_by) = state.data.referred_by {
+                    state.push_user_canister_event(
+                        referred_by.into(),
+                        UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
+                    )
+                }
+            }
+        }
+        Event::ReferralSync(ev) => {
+            let prev_chit_events = state.data.chit_events.len();
+
+            if state.data.referred_by.is_none() && ev.referred_by.is_some() {
+                state.data.referred_by = ev.referred_by;
+            }
+
+            for referral in ev.referrals {
+                let chit_reward = state.data.referrals.set_status(referral.user_id, referral.status, now);
+                if chit_reward > 0 {
+                    state.data.chit_events.push(ChitEarned {
+                        amount: chit_reward as i32,
+                        timestamp: now,
+                        reason: ChitEarnedReason::Referral(referral.status),
+                    });
+                }
+            }
+
+            let total_verified = state.data.referrals.total_verified();
+
+            if total_verified > 0 {
+                state.data.award_achievement(Achievement::Referred1stUser, now);
+            }
+            if total_verified >= 3 {
+                state.data.award_achievement(Achievement::Referred3rdUser, now);
+            }
+            if total_verified >= 10 {
+                state.data.award_achievement(Achievement::Referred10thUser, now);
+            }
+            if total_verified >= 20 {
+                state.data.award_achievement(Achievement::Referred20thUser, now);
+            }
+            if total_verified >= 50 {
+                state.data.award_achievement(Achievement::Referred50thUser, now);
+            }
+
+            if state.data.chit_events.len() > prev_chit_events {
+                state.data.notify_user_index_of_chit(now);
+            }
         }
     }
 }
