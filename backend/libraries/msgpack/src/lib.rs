@@ -2,7 +2,13 @@ use rmp_serde::{decode, encode};
 use serde::{Deserialize, Serialize};
 
 pub fn serialize<T: Serialize>(value: T) -> Result<Vec<u8>, encode::Error> {
-    rmp_serde::to_vec_named(&value)
+    let mut bytes = Vec::new();
+    let mut ser = rmp_serde::Serializer::new(&mut bytes)
+        .with_struct_map()
+        .with_large_ints_as_strings();
+
+    value.serialize(&mut ser)?;
+    Ok(bytes)
 }
 
 pub fn deserialize<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> Result<T, decode::Error> {

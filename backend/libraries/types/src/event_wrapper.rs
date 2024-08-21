@@ -9,6 +9,7 @@ pub struct EventWrapper<T> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
     pub correlation_id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<TimestampMillis>,
     pub event: T,
 }
