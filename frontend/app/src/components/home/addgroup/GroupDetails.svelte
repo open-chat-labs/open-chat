@@ -9,7 +9,7 @@
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 3;
-    const MAX_LENGTH = 25;
+    const MAX_LENGTH = 40;
     const MAX_URL_LENGTH = 500;
     const MAX_DESC_LENGTH = 1024;
 
