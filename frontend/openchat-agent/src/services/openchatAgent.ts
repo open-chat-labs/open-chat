@@ -1629,7 +1629,7 @@ export class OpenChatAgent extends EventTarget {
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
-        let referrals: Referral[];
+        let referrals: Referral[] = [];
         let walletConfig: WalletConfig;
 
         let latestActiveGroupsCheck = BigInt(0);
