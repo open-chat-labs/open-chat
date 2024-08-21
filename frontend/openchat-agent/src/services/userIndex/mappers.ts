@@ -176,7 +176,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             dateCreated: r.date_created,
             displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
-            referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),

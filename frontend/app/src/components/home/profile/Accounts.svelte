@@ -3,6 +3,7 @@
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -18,7 +19,7 @@
     import SwapCrypto from "./SwapCrypto.svelte";
     import SendCrypto from "./SendCrypto.svelte";
     import ReceiveCrypto from "./ReceiveCrypto.svelte";
-    import MultiToggle from "../../MultiToggle.svelte";
+    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
     import { sum } from "../../../utils/math";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -26,51 +27,38 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let showZeroBalance = false;
-    export let zeroCount = 0;
+    export let conversionOptions: Option[];
+    export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
+    let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
-    let conversionOptions = [
-        { id: "none", label: $_("cryptoAccount.tokens") },
-        { id: "usd", label: "USD" },
-        { id: "icp", label: "ICP" },
-        { id: "btc", label: "BTC" },
-        { id: "eth", label: "ETH" },
-    ];
-    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
     let swappableTokensPromise = client.swappableTokens();
 
-    $: accountsSorted = client.cryptoTokensSorted;
+    $: accountsSorted = client.walletTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
             .filter((ns) => !ns.isNns)
             .map((ns) => ns.ledgerCanisterId),
     );
     $: total =
-        selectedConversion === "none" ? "" : calculateTotal($cryptoLookup, selectedConversion);
-
-    $: {
-        zeroCount = $accountsSorted.filter((a) => a.zero).length;
-    }
+        selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion);
 
     function calculateTotal(
-        lookup: Record<string, EnhancedTokenDetails>,
+        accounts: EnhancedTokenDetails[],
         conversion: "usd" | "icp" | "btc" | "eth",
     ): string {
         switch (conversion) {
             case "usd":
-                return sum(Object.values(lookup).map((c) => c.dollarBalance ?? 0)).toFixed(2);
+                return sum(accounts.map((c) => c.dollarBalance ?? 0)).toFixed(2);
             case "icp":
-                return sum(Object.values(lookup).map((c) => c.icpBalance ?? 0)).toFixed(3);
+                return sum(accounts.map((c) => c.icpBalance ?? 0)).toFixed(3);
             case "btc":
-                return sum(Object.values(lookup).map((c) => c.btcBalance ?? 0)).toFixed(6);
+                return sum(accounts.map((c) => c.btcBalance ?? 0)).toFixed(6);
             case "eth":
-                return sum(Object.values(lookup).map((c) => c.ethBalance ?? 0)).toFixed(6);
+                return sum(accounts.map((c) => c.ethBalance ?? 0)).toFixed(6);
         }
     }
 
@@ -83,26 +71,26 @@
     }
 
     function hideManageModal() {
-        manageMode = "none";
+        actionMode = "none";
     }
 
     function showReceive(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "receive";
+        actionMode = "receive";
     }
 
     function showSend(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "send";
+        actionMode = "send";
     }
 
     function showSwap(ledger: string) {
         selectedLedger = ledger;
         client.swapRestricted().then((restricted) => {
             if (restricted) {
-                manageMode = "restricted";
+                actionMode = "restricted";
             } else {
-                manageMode = "swap";
+                actionMode = "swap";
             }
         });
     }
@@ -110,26 +98,30 @@
     function showTransactions(token: { ledger: string; urlFormat: string }) {
         selectedLedger = token.ledger;
         transactionsFormat = token.urlFormat;
-        manageMode = "transactions";
+        actionMode = "transactions";
+    }
+
+    function removeFromWallet(ledger: string) {
+        client.removeTokenFromWallet(ledger);
     }
 </script>
 
-{#if manageMode !== "none" && selectedLedger !== undefined}
+{#if actionMode !== "none" && selectedLedger !== undefined}
     <Overlay
-        dismissible={manageMode === "receive" || manageMode === "transactions"}
+        dismissible={actionMode === "receive" || actionMode === "transactions"}
         on:close={hideManageModal}>
-        {#if manageMode === "receive"}
+        {#if actionMode === "receive"}
             <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "send"}
+        {:else if actionMode === "send"}
             <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "swap"}
+        {:else if actionMode === "swap"}
             <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "transactions"}
+        {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}
                 on:close={hideManageModal}
                 urlFormat={transactionsFormat} />
-        {:else if manageMode === "restricted"}
+        {:else if actionMode === "restricted"}
             <RestrictedFeature on:close={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
@@ -143,7 +135,7 @@
         </th>
     </tr>
     {#each $accountsSorted as token}
-        <tr class:hidden={token.zero && !showZeroBalance}>
+        <tr>
             <td width="99%">
                 <div class="token">
                     <img
@@ -226,6 +218,16 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
+                                <MenuItem on:click={() => removeFromWallet(token.ledger)}>
+                                    <HeartRemoveOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.remove")} />
+                                    </div>
+                                </MenuItem>
                             </Menu>
                         </span>
                     </MenuIcon>
@@ -266,10 +268,6 @@
 
     table {
         width: 100%;
-
-        tr.hidden {
-            display: none;
-        }
 
         th {
             @include font(book, normal, fs-70);

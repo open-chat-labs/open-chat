@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
-## [[2.0.1273](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1273-group)] - 2024-07-31
+## [[2.0.1295](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1295-group)] - 2024-08-16
 
 ### Changed
 

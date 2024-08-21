@@ -76,6 +76,7 @@ import type {
     ChitEventsRequest,
     ChitEventsResponse,
     ClaimDailyChitResponse,
+    WalletConfig,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -116,6 +117,7 @@ import {
     apiExchangeArgs,
     chitEventsResponse,
     claimDailyChitResponse,
+    apiWalletConfig,
 } from "./mappers";
 import {
     type Database,
@@ -1428,5 +1430,14 @@ export class UserClient extends CandidService {
             }
             return res;
         });
+    }
+
+    configureWallet(walletConfig: WalletConfig): Promise<void> {
+        return this.handleResponse(
+            this.userService.configure_wallet({
+                config: apiWalletConfig(walletConfig),
+            }),
+            toVoid,
+        );
     }
 }

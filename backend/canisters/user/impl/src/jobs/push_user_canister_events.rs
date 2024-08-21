@@ -65,14 +65,10 @@ async fn push_events(canister_id: CanisterId, events: Vec<UserCanisterEvent>) {
     if let Err((code, msg)) = user_canister_c2c_client::c2c_notify_user_canister_events(canister_id, &args).await {
         if should_retry_failed_c2c_call(code, &msg) {
             mutate_state(|state| {
-                // TODO remove this after next upgrade, it is just needed because at least 1 user
-                // is stuck in an endless loop retrying sending an event to themselves
-                if canister_id != state.env.canister_id() {
-                    state
-                        .data
-                        .user_canister_events_queue
-                        .requeue_failed_events(canister_id, events);
-                }
+                state
+                    .data
+                    .user_canister_events_queue
+                    .requeue_failed_events(canister_id, events);
             });
         }
     }

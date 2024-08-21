@@ -34,14 +34,6 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
   });
-  const ChitBalancesArgs = IDL.Record({
-    'month' : IDL.Nat8,
-    'year' : IDL.Nat16,
-    'users' : IDL.Vec(UserId),
-  });
-  const ChitBalancesResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'balances' : IDL.Vec(IDL.Int32) }),
-  });
   const EmptyArgs = IDL.Record({});
   const ChitUserBalance = IDL.Record({
     'username' : IDL.Text,
@@ -168,30 +160,6 @@ export const idlFactory = ({ IDL }) => {
   const PublicKeyResponse = IDL.Variant({
     'NotInitialised' : IDL.Null,
     'Success' : IDL.Text,
-  });
-  const ReferralLeaderboardArgs = IDL.Record({
-    'count' : IDL.Nat32,
-    'filter' : IDL.Opt(
-      IDL.Variant({
-        'CurrentMonth' : IDL.Null,
-        'Month' : IDL.Record({ 'month' : IDL.Nat8, 'year' : IDL.Nat32 }),
-      })
-    ),
-  });
-  const ReferralStats = IDL.Record({
-    'username' : IDL.Text,
-    'total_users' : IDL.Nat32,
-    'user_id' : UserId,
-    'diamond_members' : IDL.Nat32,
-    'total_rewards_e8s' : IDL.Nat64,
-  });
-  const ReferralLeaderboardResponse = IDL.Variant({
-    'AllTime' : IDL.Vec(ReferralStats),
-    'Month' : IDL.Record({
-      'month' : IDL.Nat8,
-      'year' : IDL.Nat32,
-      'results' : IDL.Vec(ReferralStats),
-    }),
   });
   const ReferralMetricsResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -401,6 +369,15 @@ export const idlFactory = ({ IDL }) => {
       'current_user' : IDL.Opt(CurrentUserSummary),
     }),
   });
+  const UsersChitArgs = IDL.Record({
+    'month' : IDL.Nat8,
+    'year' : IDL.Nat16,
+    'users' : IDL.Vec(UserId),
+  });
+  const Chit = IDL.Record({ 'streak' : IDL.Nat16, 'balance' : IDL.Int32 });
+  const UsersChitResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'chit' : IDL.Vec(Chit) }),
+  });
   return IDL.Service({
     'add_platform_moderator' : IDL.Func(
         [AddPlatformModeratorArgs],
@@ -425,11 +402,6 @@ export const idlFactory = ({ IDL }) => {
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
-        ['query'],
-      ),
-    'chit_balances' : IDL.Func(
-        [ChitBalancesArgs],
-        [ChitBalancesResponse],
         ['query'],
       ),
     'chit_leaderboard' : IDL.Func(
@@ -469,11 +441,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'public_key' : IDL.Func([EmptyArgs], [PublicKeyResponse], ['query']),
-    'referral_leaderboard' : IDL.Func(
-        [ReferralLeaderboardArgs],
-        [ReferralLeaderboardResponse],
-        ['query'],
-      ),
     'referral_metrics' : IDL.Func(
         [EmptyArgs],
         [ReferralMetricsResponse],
@@ -544,6 +511,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
+    'users_chit' : IDL.Func([UsersChitArgs], [UsersChitResponse], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

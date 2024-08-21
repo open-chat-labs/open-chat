@@ -96,7 +96,6 @@
                     displayName: undefined,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,
-                    referrals: [],
                     isPlatformModerator: false,
                     isPlatformOperator: false,
                     suspensionDetails: undefined,
