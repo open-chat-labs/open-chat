@@ -27,7 +27,6 @@
         "received_direct_message",
         "upgraded_to_diamond",
         "set_display_name",
-        "upgrade_to_gold_diamond",
         "sent_text",
         "reacted_to_message",
         "sent_file",
@@ -48,6 +47,19 @@
         "forwarded_message",
         "proved_unique_personhood",
         "received_crypto",
+        "received_reaction",
+        "had_message_tipped",
+        "voted_on_poll",
+        "sent_reminder",
+        "set_community_display_name",
+        "joined_call",
+        "accepted_swap_offer",
+        "referred_1st_user",
+        "referred_3rd_user",
+        "referred_10th_user",
+        "referred_20th_user",
+        "referred_50th_user",
+        "upgrade_to_gold_diamond"
     ]);
 
     let selectedTab: "todo" | "done" = "todo";

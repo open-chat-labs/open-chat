@@ -208,6 +208,7 @@ import type {
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
     TopUpNeuronResponse,
+    Referral,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1627,6 +1628,7 @@ export class OpenChatAgent extends EventTarget {
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
+        let referrals: Referral[];
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1672,6 +1674,7 @@ export class OpenChatAgent extends EventTarget {
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
             };
+            referrals = userResponse.referrals;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1699,6 +1702,7 @@ export class OpenChatAgent extends EventTarget {
             achievements = current.achievements;
             newAchievements = [];
             chitState = current.chitState;
+            referrals = current.referrals;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1745,6 +1749,12 @@ export class OpenChatAgent extends EventTarget {
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                     totalChitEarned: userResponse.totalChitEarned,
                 };
+                referrals = referrals
+                    .filter(
+                        (prev) =>
+                            !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                    )
+                    .concat(userResponse.referrals);
                 anyUpdates = true;
             }
         }
@@ -1900,6 +1910,7 @@ export class OpenChatAgent extends EventTarget {
             achievementsLastSeen,
             achievements,
             chitState,
+            referrals,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);

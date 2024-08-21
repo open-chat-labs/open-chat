@@ -34,6 +34,13 @@
                                             `learnToEarn.${event.reason.type}`,
                                         )} />: {event.amount.toLocaleString()}
                                 </p>
+                            {:else if event.reason.kind === "referral"}
+                                <p>
+                                    🤝 <Translatable
+                                        resourceKey={i18nKey(
+                                            `chitReferralRewardReason.${event.reason.type}`,
+                                        )} />: {event.amount.toLocaleString()}
+                                </p>
                             {:else if event.reason.kind === "meme_contest_winner"}
                                 <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
                             {/if}
