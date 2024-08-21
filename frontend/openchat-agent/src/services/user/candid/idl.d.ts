@@ -166,6 +166,7 @@ import {
     ClaimDailyChitResponse,
     ReferralStatus,
     Referral,
+    WalletConfig,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -334,6 +335,7 @@ export {
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ReferralStatus as ApiReferralStatus,
     Referral as ApiReferral,
+    WalletConfig as ApiWalletConfig
 };
 
 export const idlFactory: IDL.InterfaceFactory;

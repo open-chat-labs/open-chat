@@ -17,6 +17,7 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
+    export let pattern: string = "";
 
     const dispatch = createEventDispatcher();
 
@@ -71,6 +72,7 @@
         on:keydown={keyDown}
         on:blur
         bind:this={inp}
+        {pattern}
         {value}
         class={`textbox ${fontSize} ${align}`} />
 

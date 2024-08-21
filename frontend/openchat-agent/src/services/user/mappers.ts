@@ -70,6 +70,7 @@ import type {
     ApiClaimDailyChitResponse,
     ApiReferralStatus,
     ApiReferral,
+    ApiWalletConfig,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -141,6 +142,7 @@ import type {
     ClaimDailyChitResponse,
     ReferralStatus,
     Referral,
+    WalletConfig,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -931,6 +933,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
+            walletConfig: walletConfig(result.wallet_config),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -941,6 +944,34 @@ function referral(candid: ApiReferral): Referral {
         userId: candid.user_id.toString(),
         status: referralStatus(candid.status),
     };
+}
+
+export function apiWalletConfig(domain: WalletConfig): ApiWalletConfig {
+    switch (domain.kind) {
+        case "auto_wallet": {
+            return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
+        }
+        case "manual_wallet": {
+            return { Manual: { tokens: [...domain.tokens].map((t) => Principal.fromText(t)) } };
+        }
+    }
+    throw new UnsupportedValueError("Unexpected WalletConfig value received", domain);
+}
+
+function walletConfig(candid: ApiWalletConfig): WalletConfig {
+    if ("Auto" in candid) {
+        return {
+            kind: "auto_wallet",
+            minDollarValue: candid.Auto.min_cents_visible / 100,
+        };
+    }
+    if ("Manual" in candid) {
+        return {
+            kind: "manual_wallet",
+            tokens: new Set<string>(candid.Manual.tokens.map((p) => p.toString())),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiWalletConfig value received", candid);
 }
 
 function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
@@ -1053,6 +1084,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
+			walletConfig: optional(result.wallet_config, walletConfig),
         };
     }
 

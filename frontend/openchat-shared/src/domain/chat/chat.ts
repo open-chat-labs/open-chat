@@ -33,6 +33,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { Achievement, ChitEarned } from "../chit";
+import type { WalletConfig } from "../crypto";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -980,6 +981,7 @@ export type ChatStateFull = {
     achievementsLastSeen: bigint;
     chitState: ChitState;
     referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type ChitState = {
@@ -1146,6 +1148,7 @@ export type InitialStateResponse = {
     chitBalance: number;
     totalChitEarned: number;
     referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type PinNumberSettings = {
@@ -1189,6 +1192,7 @@ export type UpdatesSuccessResponse = {
     nextDailyClaim: bigint;
     totalChitEarned: number;
     referrals: Referral[];
+    walletConfig: WalletConfig | undefined;
 };
 
 export type DirectChatsUpdates = {

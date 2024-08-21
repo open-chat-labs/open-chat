@@ -151,6 +151,8 @@ import {
     exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
+    walletConfigStore,
+    walletTokensSorted,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
@@ -420,6 +422,7 @@ import type {
     PayForDiamondMembershipResponse,
     LinkIdentitiesResponse,
     AddMembersToChannelResponse,
+    WalletConfig,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5559,6 +5562,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
                 chatsResponse.state.referrals,
+                chatsResponse.state.walletConfig,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -6218,8 +6222,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async refreshBalancesInSeries() {
+        const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            await this.refreshAccountBalance(t.ledger);
+            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.ledger))) {
+                await this.refreshAccountBalance(t.ledger);
+            }
         }
     }
 
@@ -7452,9 +7459,48 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    removeTokenFromWallet(ledger: string) {
+        const config = this._liveState.walletConfig;
+        if (config.kind === "manual_wallet") {
+            if (config.tokens.delete(ledger)) {
+                return this.setWalletConfig(config);
+            }
+        }
+    }
+
+    setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
+        if (a.size !== b.size) return false;
+        for (const item of a) {
+            if (!b.has(item)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
+        if (a.kind !== b.kind) return true;
+        if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
+            return a.minDollarValue !== b.minDollarValue;
+        if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
+            return !this.setsAreEqual(a.tokens, b.tokens);
+        return false;
+    }
+
+    setWalletConfig(config: WalletConfig): Promise<boolean> {
+        walletConfigStore.set(config);
+        return this.sendRequest({
+            kind: "configureWallet",
+            config,
+        })
+            .then(() => true)
+            .catch(() => false);
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
+    walletConfigStore = walletConfigStore;
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;
@@ -7481,6 +7527,7 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     cryptoTokensSorted = cryptoTokensSorted;
+    walletTokensSorted = walletTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     exchangeRatesLookupStore = exchangeRatesLookupStore;

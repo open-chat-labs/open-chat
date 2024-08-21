@@ -168,6 +168,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     },
     109: clearChatsStore,
     110: clearChatsStore,
+    111: clearChatsStore,
 };
 
 async function migrate(
