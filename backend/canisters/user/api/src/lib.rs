@@ -332,7 +332,7 @@ pub struct Referral {
     pub status: ReferralStatus,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Referrals {
     pub referred_by: Option<UserId>,
     pub referrals: Vec<Referral>,

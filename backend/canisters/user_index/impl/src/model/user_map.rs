@@ -4,6 +4,7 @@ use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::Entry;
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
@@ -343,32 +344,45 @@ impl UserMap {
             Some(ReferralStatus::Registered)
         }
 
-        let referred_by_map: HashMap<UserId, UserId> = self
-            .user_referrals
-            .iter()
-            .flat_map(|(referrer, referred_list)| referred_list.iter().map(|referred| (*referrer, *referred)))
-            .collect();
+        let mut referrals_map: HashMap<UserId, Referrals> = HashMap::new();
 
-        self.user_referrals
-            .iter()
-            .map(|(user_id, users)| {
-                (
-                    *user_id,
+        for u in self.users.values() {
+            if u.referred_by.is_some() {
+                referrals_map.insert(
+                    u.user_id,
                     Referrals {
-                        referred_by: referred_by_map.get(user_id).copied(),
-                        referrals: users
-                            .iter()
-                            .filter_map(|referred| {
-                                referral_status(self, referred).map(|status| Referral {
-                                    user_id: *user_id,
-                                    status,
-                                })
-                            })
-                            .collect(),
+                        referred_by: u.referred_by,
+                        referrals: Vec::new(),
                     },
-                )
-            })
-            .collect()
+                );
+            }
+        }
+
+        for (user_id, users) in self.user_referrals.iter() {
+            let referrals: Vec<_> = users
+                .iter()
+                .filter_map(|referred| {
+                    referral_status(self, referred).map(|status| Referral {
+                        user_id: *referred,
+                        status,
+                    })
+                })
+                .collect();
+
+            match referrals_map.entry(*user_id) {
+                Entry::Occupied(mut e) => {
+                    e.get_mut().referrals = referrals;
+                }
+                Entry::Vacant(e) => {
+                    e.insert(Referrals {
+                        referred_by: None,
+                        referrals,
+                    });
+                }
+            };
+        }
+
+        referrals_map
     }
 
     pub fn mark_suspected_bot(&mut self, principal: &Principal) {
@@ -643,5 +657,64 @@ mod tests {
         updated.username = "ABC".to_string();
 
         assert!(matches!(user_map.update(updated, 2, false), UpdateUserResult::Success));
+    }
+
+    #[test]
+    fn all_referrals_expected() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+
+        let username1 = "1".to_string();
+        let username2 = "2".to_string();
+        let username3 = "3".to_string();
+
+        let user_id1: UserId = Principal::from_slice(&[3, 1]).into();
+        let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
+        let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
+
+        user_map.register(principal1, user_id1, username1.clone(), 1, None, UserType::User, None);
+        user_map.register(
+            principal2,
+            user_id2,
+            username2.clone(),
+            2,
+            Some(user_id1),
+            UserType::User,
+            None,
+        );
+        user_map.register(
+            principal3,
+            user_id3,
+            username3.clone(),
+            3,
+            Some(user_id2),
+            UserType::User,
+            None,
+        );
+
+        // u1 -> u2 -> u3
+        user_map.user_referrals.insert(user_id1, vec![user_id2]);
+        user_map.user_referrals.insert(user_id2, vec![user_id3]);
+
+        let referrals = user_map.all_referrals();
+
+        assert_eq!(referrals.len(), 3);
+
+        let u1_referrals = referrals.get(&user_id1).unwrap();
+        let u2_referrals = referrals.get(&user_id2).unwrap();
+        let u3_referrals = referrals.get(&user_id3).unwrap();
+
+        assert!(u1_referrals.referred_by.is_none());
+        assert_eq!(u2_referrals.referred_by, Some(user_id1));
+        assert_eq!(u3_referrals.referred_by, Some(user_id2));
+
+        assert_eq!(u1_referrals.referrals.len(), 1);
+        assert_eq!(u2_referrals.referrals.len(), 1);
+        assert_eq!(u3_referrals.referrals.len(), 0);
+
+        assert_eq!(u1_referrals.referrals[0].user_id, user_id2);
+        assert_eq!(u2_referrals.referrals[0].user_id, user_id3);
     }
 }
