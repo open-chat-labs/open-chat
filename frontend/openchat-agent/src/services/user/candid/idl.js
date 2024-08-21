@@ -156,6 +156,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Achievement = IDL.Variant({
     'AppointedGroupModerator' : IDL.Null,
+    'Referred20thUser' : IDL.Null,
     'DirectChats5' : IDL.Null,
     'ChangedTheme' : IDL.Null,
     'ChosenAsGroupModerator' : IDL.Null,
@@ -185,6 +186,7 @@ export const idlFactory = ({ IDL }) => {
     'SentReminder' : IDL.Null,
     'EditedMessage' : IDL.Null,
     'ReactedToMessage' : IDL.Null,
+    'Referred3rdUser' : IDL.Null,
     'UpgradedToDiamond' : IDL.Null,
     'ReceivedDirectMessage' : IDL.Null,
     'AcceptedP2PSwapOffer' : IDL.Null,
@@ -199,6 +201,7 @@ export const idlFactory = ({ IDL }) => {
     'OwnGroupWithOneThousandDiamondMembers' : IDL.Null,
     'SentP2PSwapOffer' : IDL.Null,
     'QuoteReplied' : IDL.Null,
+    'Referred50thUser' : IDL.Null,
     'OwnGroupWithOneDiamondMember' : IDL.Null,
     'SentCrypto' : IDL.Null,
     'ProvedUniquePersonhood' : IDL.Null,
@@ -206,7 +209,9 @@ export const idlFactory = ({ IDL }) => {
     'Streak3' : IDL.Null,
     'Streak7' : IDL.Null,
     'UpgradedToGoldDiamond' : IDL.Null,
+    'Referred1stUser' : IDL.Null,
     'ReceivedCrypto' : IDL.Null,
+    'Referred10thUser' : IDL.Null,
     'TranslationAccepted' : IDL.Null,
     'RepliedInThread' : IDL.Null,
     'DirectChats10' : IDL.Null,
@@ -223,10 +228,17 @@ export const idlFactory = ({ IDL }) => {
     'SetAvatar' : IDL.Null,
     'SentVideo' : IDL.Null,
   });
+  const ReferralStatus = IDL.Variant({
+    'Diamond' : IDL.Null,
+    'UniquePerson' : IDL.Null,
+    'LifetimeDiamond' : IDL.Null,
+    'Registered' : IDL.Null,
+  });
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : Achievement,
     'MemeContestWinner' : IDL.Null,
+    'Referral' : ReferralStatus,
   });
   const ChitEarned = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -1184,6 +1196,10 @@ export const idlFactory = ({ IDL }) => {
   const CommunitiesInitial = IDL.Record({
     'summaries' : IDL.Vec(UserCanisterCommunitySummary),
   });
+  const Referral = IDL.Record({
+    'status' : ReferralStatus,
+    'user_id' : UserId,
+  });
   const FavouriteChatsInitial = IDL.Record({
     'chats' : IDL.Vec(Chat),
     'pinned' : IDL.Vec(Chat),
@@ -1341,6 +1357,7 @@ export const idlFactory = ({ IDL }) => {
       'wallet_config' : WalletConfig,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
+      'referrals' : IDL.Vec(Referral),
       'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
       'achievements' : IDL.Vec(ChitEarned),
@@ -1996,6 +2013,7 @@ export const idlFactory = ({ IDL }) => {
       'wallet_config' : IDL.Opt(WalletConfig),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
+      'referrals' : IDL.Vec(Referral),
       'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,

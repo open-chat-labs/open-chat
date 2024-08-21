@@ -10,6 +10,7 @@ pub mod group_chats;
 pub mod hot_group_exclusions;
 pub mod p2p_swaps;
 pub mod pin_number;
+pub mod referrals;
 pub mod streak;
 pub mod token_swaps;
 pub mod unread_message_index_map;

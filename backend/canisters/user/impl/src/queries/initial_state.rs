@@ -56,5 +56,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         is_unique_person: state.data.unique_person_proof.is_some(),
         wallet_config: state.data.wallet_config.value.clone(),
+        referrals: state.data.referrals.list(),
     })
 }

@@ -33,6 +33,7 @@ export interface Account {
 }
 export type AccountIdentifier = Uint8Array | number[];
 export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'Referred20thUser' : null } |
   { 'DirectChats5' : null } |
   { 'ChangedTheme' : null } |
   { 'ChosenAsGroupModerator' : null } |
@@ -62,6 +63,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
   { 'ReactedToMessage' : null } |
+  { 'Referred3rdUser' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
   { 'AcceptedP2PSwapOffer' : null } |
@@ -76,6 +78,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
+  { 'Referred50thUser' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
   { 'ProvedUniquePersonhood' : null } |
@@ -83,7 +86,9 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'Referred1stUser' : null } |
   { 'ReceivedCrypto' : null } |
+  { 'Referred10thUser' : null } |
   { 'TranslationAccepted' : null } |
   { 'RepliedInThread' : null } |
   { 'DirectChats10' : null } |
@@ -315,7 +320,8 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
-  { 'MemeContestWinner' : null };
+  { 'MemeContestWinner' : null } |
+  { 'Referral' : ReferralStatus };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -1592,6 +1598,10 @@ export interface PushEventResult {
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
+export type ReferralStatus = { 'Diamond' : null } |
+  { 'UniquePerson' : null } |
+  { 'LifetimeDiamond' : null } |
+  { 'Registered' : null };
 export interface RegisterUserArgs {
   'username' : string,
   'public_key' : Uint8Array | number[],

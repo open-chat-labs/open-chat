@@ -26,6 +26,7 @@ export interface Account {
 }
 export type AccountIdentifier = Uint8Array | number[];
 export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'Referred20thUser' : null } |
   { 'DirectChats5' : null } |
   { 'ChangedTheme' : null } |
   { 'ChosenAsGroupModerator' : null } |
@@ -55,6 +56,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
   { 'ReactedToMessage' : null } |
+  { 'Referred3rdUser' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
   { 'AcceptedP2PSwapOffer' : null } |
@@ -69,6 +71,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
+  { 'Referred50thUser' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
   { 'ProvedUniquePersonhood' : null } |
@@ -76,7 +79,9 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'Referred1stUser' : null } |
   { 'ReceivedCrypto' : null } |
+  { 'Referred10thUser' : null } |
   { 'TranslationAccepted' : null } |
   { 'RepliedInThread' : null } |
   { 'DirectChats10' : null } |
@@ -298,7 +303,8 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
-  { 'MemeContestWinner' : null };
+  { 'MemeContestWinner' : null } |
+  { 'Referral' : ReferralStatus };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
 export interface ChitUserBalance {
   'username' : string,
@@ -1546,21 +1552,6 @@ export interface PushEventResult {
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
-export interface ReferralLeaderboardArgs {
-  'count' : number,
-  'filter' : [] | [
-    { 'CurrentMonth' : null } |
-      { 'Month' : { 'month' : number, 'year' : number } }
-  ],
-}
-export type ReferralLeaderboardResponse = { 'AllTime' : Array<ReferralStats> } |
-  {
-    'Month' : {
-      'month' : number,
-      'year' : number,
-      'results' : Array<ReferralStats>,
-    }
-  };
 export type ReferralMetricsResponse = {
     'Success' : {
       'users_who_referred' : number,
@@ -1580,6 +1571,10 @@ export interface ReferralStats {
   'diamond_members' : number,
   'total_rewards_e8s' : bigint,
 }
+export type ReferralStatus = { 'Diamond' : null } |
+  { 'UniquePerson' : null } |
+  { 'LifetimeDiamond' : null } |
+  { 'Registered' : null };
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -1986,10 +1981,6 @@ export interface _SERVICE {
     PlatformOperatorsResponse
   >,
   'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
-  'referral_leaderboard' : ActorMethod<
-    [ReferralLeaderboardArgs],
-    ReferralLeaderboardResponse
-  >,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],

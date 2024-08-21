@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
     EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -18,6 +18,9 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+
+// Thursday, 22 August 2024 10:00:00 GMT+01:00
+pub const USERS_VERSION_2_0_1299_FINISHED_TS: TimestampMillis = 1724317200000;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
@@ -98,6 +101,8 @@ pub enum Event {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
+    // TODO: Remove once referrals have been synced
+    ReferralSync(Box<Referrals>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -183,6 +188,7 @@ pub enum UserCanisterEvent {
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
     StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
+    SetReferralStatus(Box<ReferralStatus>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -318,4 +324,16 @@ impl Default for WalletConfig {
     fn default() -> Self {
         WalletConfig::Auto(AutoWallet { min_cents_visible: 100 })
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Referral {
+    pub user_id: UserId,
+    pub status: ReferralStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Referrals {
+    pub referred_by: Option<UserId>,
+    pub referrals: Vec<Referral>,
 }

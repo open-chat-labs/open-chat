@@ -14,7 +14,7 @@ use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, UserId, ICP};
+use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
@@ -97,7 +97,6 @@ fn process_charge(
     manual_payment: bool,
     state: &mut RuntimeState,
 ) -> Response {
-    let share_with = referrer_to_share_payment(user_id, state);
     let recurring = args.recurring && !args.duration.is_lifetime();
     let now = state.env.now();
 
@@ -163,26 +162,9 @@ fn process_charge(
 
         let transaction_fee = args.token.fee().unwrap() as u64;
 
-        let mut amount_to_treasury = args.expected_price_e8s - (2 * transaction_fee);
+        let amount_to_treasury = args.expected_price_e8s - (2 * transaction_fee);
 
         let now_nanos = state.env.now_nanos();
-
-        if let Some(share_with) = share_with {
-            let fees = &state.data.diamond_membership_fees;
-
-            let amount_to_referrer = amount_to_referer(&args.token, args.duration, fees);
-            amount_to_treasury = amount_to_treasury.saturating_sub(amount_to_referrer + transaction_fee);
-
-            let referral_payment = PendingPayment {
-                amount: amount_to_referrer,
-                currency: args.token.clone(),
-                timestamp: now_nanos,
-                recipient_account: share_with.into(),
-                memo: state.env.rng().gen(),
-                reason: PendingPaymentReason::ReferralReward,
-            };
-            state.queue_payment(referral_payment);
-        }
 
         let (recipient_account, reason) = if let Some(neuron_account) = matches!(
             (&args.token, args.duration),
@@ -243,44 +225,6 @@ fn process_charge(
     } else {
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");
         UserNotFound
-    }
-}
-
-fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<UserId> {
-    if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-        let now = state.env.now();
-        let diamond_membership = &user.diamond_membership_details;
-        if let Some(referred_by) = user.referred_by {
-            if let Some(referrer) = state.data.users.get_by_user_id(&referred_by) {
-                if referrer.diamond_membership_details.is_active(now) {
-                    let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
-                    let year_from_joined = user.date_created + one_year;
-                    let threshold =
-                        if diamond_membership.is_active(now) { diamond_membership.expires_at().unwrap() } else { now };
-                    if threshold < year_from_joined {
-                        return Some(referred_by);
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDuration, fees: &DiamondMembershipFees) -> u64 {
-    // The referral reward is only for membership payments for the first year, so if a user pays for
-    // lifetime Diamond membership, the referer is rewarded as if they had paid for 1 year.
-    let reward_based_on_duration = if matches!(duration, DiamondMembershipPlanDuration::Lifetime) {
-        DiamondMembershipPlanDuration::OneYear
-    } else {
-        duration
-    };
-
-    if matches!(token, Cryptocurrency::CHAT) {
-        fees.chat_price_e8s(reward_based_on_duration) / 2
-    } else {
-        fees.icp_price_e8s(reward_based_on_duration) / 2
     }
 }
 

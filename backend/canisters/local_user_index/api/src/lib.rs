@@ -14,6 +14,7 @@ mod updates;
 pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
+use user_canister::Referrals;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
@@ -37,6 +38,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
+    SyncReferrals(UserId, Referrals),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -161,30 +161,6 @@ export const idlFactory = ({ IDL }) => {
     'NotInitialised' : IDL.Null,
     'Success' : IDL.Text,
   });
-  const ReferralLeaderboardArgs = IDL.Record({
-    'count' : IDL.Nat32,
-    'filter' : IDL.Opt(
-      IDL.Variant({
-        'CurrentMonth' : IDL.Null,
-        'Month' : IDL.Record({ 'month' : IDL.Nat8, 'year' : IDL.Nat32 }),
-      })
-    ),
-  });
-  const ReferralStats = IDL.Record({
-    'username' : IDL.Text,
-    'total_users' : IDL.Nat32,
-    'user_id' : UserId,
-    'diamond_members' : IDL.Nat32,
-    'total_rewards_e8s' : IDL.Nat64,
-  });
-  const ReferralLeaderboardResponse = IDL.Variant({
-    'AllTime' : IDL.Vec(ReferralStats),
-    'Month' : IDL.Record({
-      'month' : IDL.Nat8,
-      'year' : IDL.Nat32,
-      'results' : IDL.Vec(ReferralStats),
-    }),
-  });
   const ReferralMetricsResponse = IDL.Variant({
     'Success' : IDL.Record({
       'users_who_referred' : IDL.Nat32,
@@ -465,11 +441,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'public_key' : IDL.Func([EmptyArgs], [PublicKeyResponse], ['query']),
-    'referral_leaderboard' : IDL.Func(
-        [ReferralLeaderboardArgs],
-        [ReferralLeaderboardResponse],
-        ['query'],
-      ),
     'referral_metrics' : IDL.Func(
         [EmptyArgs],
         [ReferralMetricsResponse],
