@@ -16,7 +16,6 @@
     import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
-    let busy = false;
     let events: ChitEarned[] = [];
 
     $: chitState = client.chitStateStore;
@@ -64,7 +63,6 @@
             to = localToUtc(to);
         }
 
-        busy = true;
         client
             .chitEvents({
                 kind: "getChitEvents",
@@ -82,8 +80,7 @@
                 } else {
                     events = resp.events;
                 }
-            })
-            .finally(() => (busy = false));
+            });
     }
 </script>
 
@@ -102,7 +99,7 @@
             balance={$chitState.chitBalance}
             totalEarned={$chitState.totalChitEarned} />
     </div>
-    <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} {busy} let:day>
+    <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} let:day>
         <div class="month-title" slot="month-title">
             <div class="month">{$monthTitle}</div>
             <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>

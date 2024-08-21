@@ -9,18 +9,20 @@
     import { toastStore } from "../../../stores/toast";
     import { AvatarSize } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
-    import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import Badges from "./Badges.svelte";
+    import LinkButton from "../../LinkButton.svelte";
 
     const client = getContext<OpenChat>("client");
 
     $: user = client.user;
     $: userStore = client.userStore;
     $: link = `${window.location.origin}/?ref=${$user.userId}`;
+    $: globalState = client.globalStateStore;
+    $: referrals = $globalState.referrals;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -67,25 +69,24 @@
             </Link>
         </div>
     {/if}
-    {#if $user.referrals.length > 0}
+    {#if referrals.length > 0}
         <div class="referrals-section">
             <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
             <div class="referrals">
-                {#each $user.referrals as userId}
-                    {@const u = $userStore.get(userId)}
-                    <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
+                {#each referrals as referral}
+                    {@const u = $userStore.get(referral.userId)}
+                    <div class="referral" on:click={(ev) => showUserProfile(ev, referral.userId)}>
                         <div>
                             <Avatar
                                 url={client.userAvatarUrl(u)}
-                                {userId}
+                                userId={referral.userId}
                                 size={AvatarSize.Default} />
                         </div>
-                        <LinkButton underline="hover">
+                        <LinkButton underline="hover" on:click={(ev) => showUserProfile(ev, referral.userId)}>
                             {client.displayName(u)}
                             <Badges
-                                uniquePerson={u?.isUniquePerson}
-                                diamondStatus={u?.diamondStatus}
-                                streak={client.getStreak(u?.userId)} />
+                                uniquePerson={referral.status === "unique_person"}
+                                diamondStatus={referral.status === "diamond" ? "active" : referral.status === "lifetime_diamond" ? "lifetime" : "inactive"} />
                         </LinkButton>
                     </div>
                 {/each}

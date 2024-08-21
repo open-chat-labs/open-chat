@@ -1,3 +1,5 @@
+import type { ReferralStatus } from "./user";
+
 export type ClaimDailyChitResponse =
     | { kind: "already_claimed"; nextDailyChitClaim: bigint }
     | {
@@ -90,6 +92,11 @@ export const achievements = [
     "owned_group_with_10_diamond_members",
     "owned_group_with_100_diamond_members",
     "owned_group_with_1000_diamond_members",
+    "referred_1st_user",
+    "referred_3rd_user",
+    "referred_10th_user",
+    "referred_20th_user",
+    "referred_50th_user",
 ] as const;
 type AchievementType = typeof achievements;
 export type Achievement = AchievementType[number];
@@ -99,7 +106,12 @@ export type AchievementUnlocked = {
     type: Achievement;
 };
 
-export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked;
+export type ReferralType = {
+    kind: "referral";
+    type: ReferralStatus;
+};
+
+export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked | ReferralType;
 
 export type ChitEarned = {
     amount: number;
