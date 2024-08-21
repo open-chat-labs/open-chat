@@ -258,3 +258,4 @@ debug = false
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "c99e5e54e7eb3e04d964f9c45aca0334e3aa2363" }
 ic_principal = { git = "https://github.com/hpeebles/candid", rev = "e404498843bdc83df29745956e64f3d2e1f425bc" }
+rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
