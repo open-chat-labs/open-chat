@@ -3,6 +3,7 @@ use canister_tracing_macros::trace;
 use chat_events::SetVideoCallPresenceResult;
 use community_canister::set_video_call_presence::{Response::*, *};
 use ic_cdk::update;
+use types::Achievement;
 
 #[update]
 #[trace]
@@ -37,6 +38,14 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
                 now,
             ) {
                 SetVideoCallPresenceResult::Success => {
+                    if args.new_achievement {
+                        state.data.achievements.notify_user(
+                            user_id,
+                            vec![Achievement::JoinedCall],
+                            &mut state.data.fire_and_forget_handler,
+                        );
+                    }
+
                     handle_activity_notification(state);
                     Success
                 }

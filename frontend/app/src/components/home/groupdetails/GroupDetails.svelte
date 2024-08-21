@@ -39,12 +39,14 @@
     $: canInvite =
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
     $: avatarSrc = client.groupAvatarUrl(chat);
-
+    $: selectedCommunity = client.selectedCommunity;
     $: currentChatRules = client.currentChatRules;
     $: currentCommunityRules = client.currentCommunityRules;
     $: combinedRulesText = canSend
         ? client.combineRulesText($currentChatRules, $currentCommunityRules)
         : "";
+    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
+    $: externalContent = externalUrl !== undefined;
 
     function editGroup() {
         if (canEdit) {
@@ -101,6 +103,14 @@
                     <Markdown text={description(chat)} />
                 </fieldset>
             {/if}
+            {#if externalUrl !== undefined && externalUrl.length > 0}
+                <fieldset>
+                    <legend>
+                        <Legend label={i18nKey("externalContent.label")} />
+                    </legend>
+                    <Markdown text={externalUrl} />
+                </fieldset>
+            {/if}
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupVisibilityOpen.toggle}
@@ -134,7 +144,7 @@
                             )} />
                     </p>
                 {/if}
-                {#if !chat.public}
+                {#if !chat.public && !externalContent}
                     {#if chat.historyVisible}
                         <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                     {:else}
@@ -142,7 +152,16 @@
                     {/if}
                 {/if}
             </div>
-            <DisappearingMessagesSummary ttl={chat.eventsTTL} />
+            {#if chat.messagesVisibleToNonMembers}
+                <div class="info">
+                    <p>
+                        <Translatable resourceKey={i18nKey("access.messagesVisibleToNonMembers")} />
+                    </p>
+                </div>
+            {/if}
+            {#if !externalContent}
+                <DisappearingMessagesSummary ttl={chat.eventsTTL} />
+            {/if}
             <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
@@ -165,14 +184,21 @@
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={i18nKey("permissions.permissions")}>
-            <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
+            <GroupPermissionsViewer
+                embeddedContent={externalContent}
+                bind:permissions={chat.permissions}
+                isPublic={chat.public}
+                isCommunityPublic={$selectedCommunity?.public ?? true}
+                isChannel={chat.id.kind === "channel"} />
         </CollapsibleCard>
-        <CollapsibleCard
-            on:toggle={groupStatsOpen.toggle}
-            open={$groupStatsOpen}
-            headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
-            <Stats showReported={false} stats={chat.metrics} />
-        </CollapsibleCard>
+        {#if !externalContent}
+            <CollapsibleCard
+                on:toggle={groupStatsOpen.toggle}
+                open={$groupStatsOpen}
+                headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
+                <Stats showReported={false} stats={chat.metrics} />
+            </CollapsibleCard>
+        {/if}
         {#if client.canDeleteGroup(chat.id)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}

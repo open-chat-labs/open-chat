@@ -1,17 +1,14 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
-use types::{Empty, Milliseconds};
+use types::Timestamped;
 use user_canister::post_upgrade::Args;
-use utils::time::DAY_IN_MS;
-
-const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
+use user_canister::WalletConfig;
 
 #[post_upgrade]
 #[trace]
@@ -28,28 +25,8 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    read_state(|state| {
-        if state.data.direct_chats.len() <= 1
-            && state.data.group_chats.len() == 0
-            && state.data.communities.len() == 0
-            && state.data.diamond_membership_expires_at.is_none()
-            && state.data.unique_person_proof.is_none()
-        {
-            let now = state.env.now();
-            if state.data.user_created + SIX_MONTHS < now && state.data.chit_events.last_updated() + SIX_MONTHS < now {
-                ic_cdk_timers::set_timer(Duration::ZERO, mark_user_canister_empty);
-            }
-        }
+    // TODO: Remove this after the next release
+    mutate_state(|state| {
+        state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
     });
-}
-
-fn mark_user_canister_empty() {
-    read_state(|state| {
-        let user_index_canister_id = state.data.user_index_canister_id;
-        state.data.fire_and_forget_handler.send(
-            user_index_canister_id,
-            "c2c_mark_user_canister_empty_msgpack",
-            msgpack::serialize_then_unwrap(Empty {}),
-        );
-    })
 }

@@ -97,6 +97,10 @@ impl GroupChats {
         self.group_chats.len()
     }
 
+    pub fn removed_len(&self) -> usize {
+        self.removed.len()
+    }
+
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
         if !self.pinned.value.contains(&chat_id) {
             self.pinned.timestamp = now;

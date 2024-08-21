@@ -6,6 +6,7 @@ use types::{MessageId, VideoCallPresence};
 pub struct Args {
     pub message_id: MessageId,
     pub presence: VideoCallPresence,
+    pub new_achievement: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

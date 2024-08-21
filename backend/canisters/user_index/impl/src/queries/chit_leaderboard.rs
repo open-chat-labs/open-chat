@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use user_index_canister::chit_leaderboard::{Response::*, *};
 
-#[query]
+#[query(candid = true, json = true)]
 fn chit_leaderboard(_args: Args) -> Response {
     read_state(chit_leaderboard_impl)
 }

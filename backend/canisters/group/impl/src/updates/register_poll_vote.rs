@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
 use group_canister::register_poll_vote::{Response::*, *};
 use ic_cdk::update;
+use types::Achievement;
 
 #[update]
 #[trace]
@@ -41,6 +42,14 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         match result {
             RegisterPollVoteResult::Success(votes) => {
+                if args.new_achievement {
+                    state.data.achievements.notify_user(
+                        user_id,
+                        vec![Achievement::VotedOnPoll],
+                        &mut state.data.fire_and_forget_handler,
+                    );
+                }
+
                 handle_activity_notification(state);
                 Success(votes)
             }

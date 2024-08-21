@@ -20,17 +20,9 @@ pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEven
 }
 
 impl<M: EventsMap> ChatEventsList<M> {
-    pub(crate) fn set_block_level_markdown(&mut self, cutoff: TimestampMillis) {
-        for event_index in self.message_event_indexes.iter().rev().copied() {
-            if let Some(event) = self.events_map.get_mut(event_index) {
-                if event.timestamp < cutoff {
-                    return;
-                }
-                if let ChatEventInternal::Message(m) = &mut event.event {
-                    m.block_level_markdown = true;
-                }
-            }
-        }
+    // TODO remove this
+    pub fn iter_events_mut(&mut self) -> impl Iterator<Item = &mut EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.values_mut()
     }
 
     pub(crate) fn push_event(
@@ -450,6 +442,7 @@ pub trait Reader {
             ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
             ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
             ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
+            ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u.clone()),
             ChatEventInternal::Empty => ChatEvent::Empty,
         };
 

@@ -12,6 +12,7 @@ export const chitPopup = createLsBoolStore(configKeys.chitPopup, true);
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);
+export const utcMode = createLsBoolStore(configKeys.utcMode, false);
 export const videoCameraOn = createLsBoolStore(configKeys.videoCameraOn, true);
 export const videoMicOn = createLsBoolStore(configKeys.videoMicOn, true);
 export const videoSpeakerView = createLsBoolStore(configKeys.videoSpeakerView, false);

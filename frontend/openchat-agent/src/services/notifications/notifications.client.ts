@@ -1,26 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type NotificationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
 
 export class NotificationsClient extends CandidService {
     private service: NotificationsService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<NotificationsService>(
-            idlFactory,
-            config.notificationsCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): NotificationsClient {
-        return new NotificationsClient(identity, config);
+        this.service = this.createServiceClient<NotificationsService>(idlFactory);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
@@ -28,7 +19,7 @@ export class NotificationsClient extends CandidService {
             this.service.subscription_exists({
                 p256dh_key,
             }),
-            subscriptionExistsResponse
+            subscriptionExistsResponse,
         );
     }
 
@@ -50,7 +41,7 @@ export class NotificationsClient extends CandidService {
             this.service.remove_subscription({
                 p256dh_key: subscription.keys!["p256dh"],
             }),
-            toVoid
+            toVoid,
         );
     }
 }

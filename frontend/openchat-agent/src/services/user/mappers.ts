@@ -393,6 +393,12 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("Streak7" in candid) {
         return "streak_7";
     }
+    if ("Streak100" in candid) {
+        return "streak_100";
+    }
+    if ("Streak365" in candid) {
+        return "streak_365";
+    }
     if ("UpgradedToGoldDiamond" in candid) {
         return "upgrade_to_gold_diamond";
     }
@@ -1147,6 +1153,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, isInvited: boolean): Grou
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 

@@ -1,7 +1,8 @@
+use crate::nns::Tokens;
 use candid::{CandidType, Principal};
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use ts_rs::TS;
 
 mod access_tokens;
 mod achievement;
@@ -57,7 +58,7 @@ mod proof_of_uniqueness;
 mod proposals;
 mod range_set;
 mod reactions;
-mod referral_codes;
+mod referrals;
 mod registration_fee;
 mod relayed_args;
 mod source_group;
@@ -128,7 +129,7 @@ pub use proof_of_uniqueness::*;
 pub use proposals::*;
 pub use range_set::*;
 pub use reactions::*;
-pub use referral_codes::*;
+pub use referrals::*;
 pub use registration_fee::*;
 pub use relayed_args::*;
 pub use source_group::*;
@@ -159,7 +160,7 @@ pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
 pub struct Empty {}
 
 pub trait PushIfNotContains<T> {

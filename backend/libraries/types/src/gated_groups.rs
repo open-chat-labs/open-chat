@@ -3,10 +3,11 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
@@ -51,7 +52,7 @@ impl AccessGate {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
@@ -60,39 +61,41 @@ pub struct VerifiedCredentialGate {
     pub credential_arguments: HashMap<String, VerifiedCredentialArgumentValue>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub enum VerifiedCredentialArgumentValue {
     String(String),
     Int(i32),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
+    #[ts(optional)]
     pub min_stake_e8s: Option<u64>,
+    #[ts(optional)]
     pub min_dissolve_delay: Option<Milliseconds>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct PaymentGate {
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub fee: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct TokenBalanceGate {
     pub ledger_canister_id: CanisterId,
     pub min_balance: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
 pub struct CompositeGate {
     pub inner: Vec<AccessGate>,
     pub and: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
     NotLifetimeDiamondMember,
@@ -100,13 +103,13 @@ pub enum GateCheckFailedReason {
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
-    PaymentFailed(TransferFromError),
+    PaymentFailed(#[ts(as = "TransferFromErrorJS")] TransferFromError),
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
     Locked,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
@@ -123,4 +126,19 @@ impl VerifiedCredentialGateArgs {
         }
         credential_jwts
     }
+}
+
+#[derive(TS)]
+pub enum TransferFromErrorJS {
+    BadFee { expected_fee: u128 },
+    BadBurn { min_burn_amount: u128 },
+    // The [from] account does not hold enough funds for the transfer.
+    InsufficientFunds { balance: u128 },
+    // The caller exceeded its allowance.
+    InsufficientAllowance { allowance: u128 },
+    TooOld,
+    CreatedInFuture { ledger_time: u64 },
+    Duplicate { duplicate_of: u128 },
+    TemporarilyUnavailable,
+    GenericError { error_code: u128, message: String },
 }

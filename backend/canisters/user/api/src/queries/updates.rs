@@ -1,4 +1,4 @@
-use crate::initial_state::PinNumberSettings;
+use crate::{initial_state::PinNumberSettings, Referral, WalletConfig};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
@@ -38,6 +38,8 @@ pub struct SuccessResult {
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: Option<bool>,
+    pub wallet_config: Option<WalletConfig>,
+    pub referrals: Vec<Referral>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

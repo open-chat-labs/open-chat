@@ -153,9 +153,12 @@ export function makeRtcConnections(
     if (userIds.length === 0) return;
 
     userIds
-        .map((u) => lookup[u])
-        .filter((user) => user.kind === "user")
-        .map((user) => user.userId)
+        .reduce((ids, id) => {
+            if (lookup.get(id)?.kind === "user") {
+                ids.push(id);
+            }
+            return ids;
+        }, [] as string[])
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
@@ -234,7 +237,7 @@ export function getMembersString(
         return `${memberIds.length} members`;
     }
     const sorted = memberIds
-        .map((id) => userLookup[id] ?? nullUser(unknownUser))
+        .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
 
@@ -392,7 +395,7 @@ export function mergeLocalSummaryUpdates(
                                 updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
-                } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
+                } else if (current.kind === updated.kind) {
                     merged.set(chatId, {
                         ...current,
                         latestMessage,
@@ -539,6 +542,7 @@ function mergePermissions(
         changeRoles: updated.changeRoles ?? current.changeRoles,
         updateGroup: updated.updateGroup ?? current.updateGroup,
         inviteUsers: updated.inviteUsers ?? current.inviteUsers,
+        addMembers: updated.addMembers ?? current.addMembers,
         removeMembers: updated.removeMembers ?? current.removeMembers,
         deleteMessages: updated.deleteMessages ?? current.deleteMessages,
         pinMessages: updated.pinMessages ?? current.pinMessages,
@@ -879,7 +883,7 @@ export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
 ): MultiUserChat {
-    return {
+    const chat = {
         kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
@@ -909,6 +913,12 @@ export function groupChatFromCandidate(
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
+
+    if (chat.kind === "channel") {
+        chat.externalUrl = candidate.externalUrl;
+    }
+
+    return chat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -1095,6 +1105,14 @@ export function canInviteUsers(chat: ChatSummary): boolean {
         chat.kind !== "direct_chat" &&
         !chat.frozen &&
         isPermitted(chat.membership.role, chat.permissions.inviteUsers)
+    );
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    return (
+        chat.kind === "channel" &&
+        !chat.frozen &&
+        isPermitted(chat.membership.role, chat.permissions.addMembers)
     );
 }
 
@@ -1792,7 +1810,7 @@ export function buildCryptoTransferText(
 
         return userId === myUserId
             ? formatter("you")
-            : `${lookup[userId]?.username ?? formatter("unknown")}`;
+            : `${lookup.get(userId)?.username ?? formatter("unknown")}`;
     }
 
     const tokenDetails = cryptoLookup[content.transfer.ledger];
@@ -1853,7 +1871,7 @@ export function getTypingString(
         return formatter("membersAreTyping", { values: { number: typers.size } });
     } else {
         const userIds = [...typers];
-        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        const username = users.get(userIds[0])?.username ?? formatter("unknown");
         return formatter("memberIsTyping", { values: { username } });
     }
 }
@@ -1899,6 +1917,9 @@ export function diffGroupPermissions(
     }
     if (original.inviteUsers !== updated.inviteUsers) {
         diff.inviteUsers = updated.inviteUsers;
+    }
+    if (original.addMembers !== updated.addMembers) {
+        diff.addMembers = updated.addMembers;
     }
     if (original.removeMembers !== updated.removeMembers) {
         diff.removeMembers = updated.removeMembers;

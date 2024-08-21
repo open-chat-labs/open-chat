@@ -11,8 +11,6 @@ import type {
     DiamondMembershipDuration,
     DiamondMembershipFees,
     PayForDiamondMembershipResponse,
-    ReferralLeaderboardResponse,
-    ReferralStats,
     SetDisplayNameResponse,
     DiamondMembershipSubscription,
     DiamondMembershipStatus,
@@ -35,8 +33,6 @@ import type {
     ApiDiamondMembershipStatusFull,
     ApiDiamondMembershipSubscription,
     ApiPayForDiamondMembershipResponse,
-    ApiReferralLeaderboardResponse,
-    ApiReferralStats,
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
     ApiSetUsernameResponse,
@@ -68,6 +64,7 @@ export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
         return {
             serverTimestamp: timestamp,
             users: candid.Success.users.map(userSummaryUpdate),
+            deletedUserIds: new Set(candid.Success.deleted.map((d) => d.toString())),
             currentUser: optional(candid.Success.current_user, (u) =>
                 currentUserSummary(u, timestamp),
             ),
@@ -364,36 +361,6 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
         return "user_not_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
-}
-
-export function referralStat(candid: ApiReferralStats): ReferralStats {
-    return {
-        username: candid.username,
-        totalUsers: candid.total_users,
-        userId: candid.user_id.toString(),
-        diamondMembers: candid.diamond_members,
-        totalRewardsE8s: candid.total_rewards_e8s,
-    };
-}
-
-export function referralLeaderboardResponse(
-    candid: ApiReferralLeaderboardResponse,
-): ReferralLeaderboardResponse {
-    if ("AllTime" in candid) {
-        return { kind: "all_time", stats: candid.AllTime.map(referralStat) };
-    }
-    if ("Month" in candid) {
-        return {
-            kind: "monthly",
-            stats: candid.Month.results.map(referralStat),
-            year: candid.Month.year,
-            month: candid.Month.month,
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiReferralLeaderboardResponse type received",
-        candid,
-    );
 }
 
 export function payForDiamondMembershipResponse(

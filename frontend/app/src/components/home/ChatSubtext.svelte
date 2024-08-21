@@ -16,8 +16,8 @@
 
     $: userStore = client.userStore;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
-    $: isBot = $userStore[userId]?.kind === "bot";
-    $: isSuspended = $userStore[userId]?.suspended ?? false;
+    $: isBot = $userStore.get(userId)?.kind === "bot";
+    $: isSuspended = $userStore.get(userId)?.suspended ?? false;
     $: subtext = isSuspended ? $_("accountSuspended") : "";
     $: checkLastOnline = !isSuspended && !isBot && chat.kind === "direct_chat";
 

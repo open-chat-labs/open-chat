@@ -130,6 +130,7 @@ export function groupChatSummary(
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
         localUserIndex: candid.local_user_index_canister_id.toString(),
         videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 
@@ -184,6 +185,7 @@ export function groupChatSummaryUpdates(
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
+        messagesVisibleToNonMembers: optional(candid.messages_visible_to_non_members, identity),
     };
 }
 
@@ -207,6 +209,7 @@ export function apiOptionalGroupPermissions(
         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
+        add_members: apiOptional(apiPermissionRole, permissions.addMembers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),

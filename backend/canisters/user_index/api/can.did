@@ -101,6 +101,7 @@ type UsersResponse = variant {
     Success : record {
         users : vec UserSummaryV2;
         current_user : opt CurrentUserSummary;
+        deleted : vec UserId;
         timestamp : TimestampMillis;
     };
 };
@@ -117,15 +118,15 @@ type SearchResponse = variant {
     };
 };
 
-type ChitBalancesArgs = record {
+type UsersChitArgs = record {
     users : vec UserId;
     year : nat16;
     month : nat8;
 };
 
-type ChitBalancesResponse = variant {
+type UsersChitResponse = variant {
     Success : record {
-        balances : vec int32;
+        chit : vec Chit;
     };
 };
 
@@ -312,23 +313,6 @@ type ReferralMetricsResponse = variant {
     };
 };
 
-type ReferralLeaderboardArgs = record {
-    filter : opt variant {
-        Month : record { year : nat32; month : nat8 };
-        CurrentMonth;
-    };
-    count : nat32;
-};
-
-type ReferralLeaderboardResponse = variant {
-    AllTime : vec ReferralStats;
-    Month : record {
-        year : nat32;
-        month : nat8;
-        results : vec ReferralStats;
-    };
-};
-
 type ReferralStats = record {
     user_id : UserId;
     username : text;
@@ -417,8 +401,8 @@ service : {
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;
 
-    // Gets the CHIT balances for multiple users for a chosen month
-    chit_balances : (ChitBalancesArgs) -> (ChitBalancesResponse) query;
+    // Gets the CHIT balances and streaks for multiple users for a chosen month
+    users_chit : (UsersChitArgs) -> (UsersChitResponse) query;
 
     // Retrieves the current fees to pay for Diamond membership
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
@@ -430,7 +414,6 @@ service : {
     submit_proof_of_unique_personhood : (SubmitProofOfUniquePersonhoodArgs) -> (SubmitProofOfUniquePersonhoodResponse);
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
-    referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators

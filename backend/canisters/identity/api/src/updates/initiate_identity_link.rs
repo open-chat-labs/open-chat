@@ -12,6 +12,7 @@ pub struct Args {
 pub enum Response {
     Success,
     AlreadyRegistered,
+    AlreadyLinkedToPrincipal,
     TargetUserNotFound,
     PublicKeyInvalid(String),
 }

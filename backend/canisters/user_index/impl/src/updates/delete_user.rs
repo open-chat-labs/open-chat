@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::{DeleteUser, Event};
 use user_index_canister::delete_user::{Response::*, *};
 
-#[update]
+#[update(candid = true, json = true)]
 #[trace]
 fn delete_user(args: Args) -> Response {
     mutate_state(|state| delete_user_impl(args, state))

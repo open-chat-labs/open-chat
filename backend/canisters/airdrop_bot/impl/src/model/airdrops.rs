@@ -1,7 +1,8 @@
+use airdrop_bot_canister::{AirdropAlgorithm, AirdropConfig, V1Algorithm, V2Algorithm};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChannelId, CommunityId, TimestampMillis, UserId};
+use types::{Chit, TimestampMillis, UserId};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -14,17 +15,6 @@ pub struct Airdrops {
 pub struct Airdrop {
     pub config: AirdropConfig,
     pub outcome: AirdropOutcome,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct AirdropConfig {
-    pub community_id: CommunityId,
-    pub channel_id: ChannelId,
-    pub start: TimestampMillis,
-    pub main_chat_fund: u128,
-    pub main_chit_band: u32,
-    pub lottery_prizes: Vec<u128>,
-    pub lottery_chit_band: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -100,86 +90,15 @@ impl Airdrops {
         self.next.take()
     }
 
-    pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, i32)>, rng: &mut R) -> Option<&Airdrop> {
+    pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<&Airdrop> {
         let config = self.next.take()?;
 
-        let mut total_shares: u32 = 0;
-        let mut user_shares: Vec<(UserId, u32, u32)> = Vec::new();
-        let mut ticket_holders: Vec<UserId> = Vec::new();
+        let outcome = match &config.algorithm {
+            AirdropAlgorithm::V1(c) => Airdrops::execute_v1(c.clone(), users, rng),
+            AirdropAlgorithm::V2(c) => Airdrops::execute_v2(c.clone(), users, rng),
+        }?;
 
-        for (user_id, chit) in users {
-            let chit = chit as u32;
-            let shares = chit / config.main_chit_band;
-            let tickets = chit / config.lottery_chit_band;
-
-            total_shares += shares;
-
-            user_shares.push((user_id, chit, shares));
-
-            for _n in 0..tickets {
-                ticket_holders.push(user_id);
-            }
-        }
-
-        if total_shares == 0 {
-            return None;
-        }
-
-        let fund = config.main_chat_fund;
-        let prizes = config.lottery_prizes.len();
-        let mut share = fund / total_shares as u128;
-        share -= share % 1_000_000;
-
-        let participants = user_shares
-            .into_iter()
-            .map(|(u, chit, shares)| {
-                (
-                    u,
-                    Participant {
-                        chit,
-                        shares,
-                        prize: if shares > 0 {
-                            Some(Prize {
-                                chat_won: shares as u128 * share,
-                                block_index: None,
-                            })
-                        } else {
-                            None
-                        },
-                    },
-                )
-            })
-            .collect();
-
-        let mut lottery_winners = Vec::new();
-
-        for i in 0..prizes {
-            if ticket_holders.is_empty() {
-                break;
-            }
-
-            let winning_ticket = (rng.next_u32() % ticket_holders.len() as u32) as usize;
-
-            let winner = ticket_holders.remove(winning_ticket);
-
-            lottery_winners.push((
-                winner,
-                Prize {
-                    chat_won: config.lottery_prizes[i],
-                    block_index: None,
-                },
-            ));
-        }
-
-        let airdrop = Airdrop {
-            config,
-            outcome: AirdropOutcome {
-                participants,
-                lottery_winners,
-            },
-        };
-
-        self.past.push(airdrop);
+        self.past.push(Airdrop { config, outcome });
 
         Some(self.past.last().as_ref().unwrap())
     }
@@ -242,6 +161,122 @@ impl Airdrops {
     pub fn next(&self) -> Option<&AirdropConfig> {
         self.next.as_ref()
     }
+
+    fn execute_v1<R: RngCore>(config: V1Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
+        let participants = Airdrops::execute_main(config.main_chat_fund, config.main_chit_band, &users);
+
+        if participants.is_empty() {
+            return None;
+        }
+
+        let mut tickets: Vec<UserId> = Vec::new();
+
+        for (user_id, chit) in users {
+            let num_tickets = chit.balance as u32 / config.lottery_chit_band;
+
+            for _n in 0..num_tickets {
+                tickets.push(user_id);
+            }
+        }
+
+        let lottery_winners = Airdrops::execute_lottery(tickets, config.lottery_prizes, rng);
+
+        Some(AirdropOutcome {
+            participants,
+            lottery_winners,
+        })
+    }
+
+    fn execute_v2<R: RngCore>(config: V2Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
+        let participants = Airdrops::execute_main(config.main_chat_fund, config.main_chit_band, &users);
+
+        if participants.is_empty() {
+            return None;
+        }
+
+        let tickets: Vec<UserId> = users
+            .iter()
+            .filter(|(_, chit)| chit.balance as u32 >= config.lottery_min_chit || chit.streak >= config.lottery_min_streak)
+            .map(|(user_id, _)| *user_id)
+            .collect();
+
+        let lottery_winners = Airdrops::execute_lottery(tickets, config.lottery_prizes, rng);
+
+        Some(AirdropOutcome {
+            participants,
+            lottery_winners,
+        })
+    }
+
+    fn execute_main(chat_fund: u128, chit_band: u32, users: &Vec<(UserId, Chit)>) -> HashMap<UserId, Participant> {
+        let mut total_shares: u32 = 0;
+        let mut user_shares: Vec<(UserId, u32, u32)> = Vec::new();
+
+        for (user_id, chit) in users {
+            let chit = chit.balance as u32;
+            let shares = chit / chit_band;
+
+            total_shares += shares;
+
+            user_shares.push((*user_id, chit, shares));
+        }
+
+        if total_shares == 0 {
+            return HashMap::default();
+        }
+
+        let fund = chat_fund;
+        let mut share = fund / total_shares as u128;
+        share -= share % 1_000_000;
+
+        user_shares
+            .into_iter()
+            .map(|(u, chit, shares)| {
+                (
+                    u,
+                    Participant {
+                        chit,
+                        shares,
+                        prize: if shares > 0 {
+                            Some(Prize {
+                                chat_won: shares as u128 * share,
+                                block_index: None,
+                            })
+                        } else {
+                            None
+                        },
+                    },
+                )
+            })
+            .collect()
+    }
+
+    fn execute_lottery<R: RngCore>(mut tickets: Vec<UserId>, prizes: Vec<u128>, rng: &mut R) -> Vec<(UserId, Prize)> {
+        let mut lottery_winners = Vec::new();
+
+        for prize in prizes {
+            if tickets.is_empty() {
+                break;
+            }
+
+            let winning_ticket = (rng.next_u32() % tickets.len() as u32) as usize;
+
+            let winner = tickets.remove(winning_ticket);
+
+            // Ensure the same user can't win multiple times
+            tickets.retain(|u| *u != winner);
+
+            lottery_winners.push((
+                winner,
+                Prize {
+                    chat_won: prize,
+                    block_index: None,
+                },
+            ));
+        }
+
+        lottery_winners
+    }
 }
 
 #[cfg(test)]
@@ -252,7 +287,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn execute_airdrop_expected() {
+    fn execute_v1_airdrop_expected() {
         let mut env = TestEnv::default();
         let mut airdrops = setup(env.now);
         let users = generate_random_users();
@@ -281,10 +316,12 @@ mod tests {
                 community_id: random_principal().into(),
                 channel_id: 1,
                 start: now + 1_000,
-                main_chat_fund: 80_000,
-                main_chit_band: 10_000,
-                lottery_prizes: vec![12_000, 5_000, 3_000],
-                lottery_chit_band: 50_000,
+                algorithm: AirdropAlgorithm::V1(V1Algorithm {
+                    main_chat_fund: 80_000,
+                    main_chit_band: 10_000,
+                    lottery_prizes: vec![12_000, 5_000, 3_000],
+                    lottery_chit_band: 50_000,
+                }),
             },
             now,
         );
@@ -292,9 +329,17 @@ mod tests {
         airdrops
     }
 
-    fn generate_random_users() -> Vec<(UserId, i32)> {
+    fn generate_random_users() -> Vec<(UserId, Chit)> {
         (0..1000)
-            .map(|_| (random_principal().into(), (rand::thread_rng().next_u32() % 110_000) as i32))
+            .map(|_| {
+                (
+                    random_principal().into(),
+                    Chit {
+                        balance: (rand::thread_rng().next_u32() % 110_000) as i32,
+                        streak: 0,
+                    },
+                )
+            })
             .collect()
     }
 }

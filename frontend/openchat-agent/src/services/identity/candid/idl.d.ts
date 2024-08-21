@@ -8,6 +8,7 @@ import {
     InitiateIdentityLinkResponse,
     PrepareDelegationResponse,
     SignedDelegation,
+    AuthPrincipalsResponse,
     _SERVICE,
 } from "./types";
 export {
@@ -19,6 +20,7 @@ export {
     InitiateIdentityLinkResponse as ApiInitiateIdentityLinkResponse,
     PrepareDelegationResponse as ApiPrepareDelegationResponse,
     SignedDelegation as ApiSignedDelegation,
+    AuthPrincipalsResponse as ApiAuthPrincipalsResponse,
     _SERVICE as IdentityService,
 };
 

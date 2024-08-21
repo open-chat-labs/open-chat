@@ -42,26 +42,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn mark_video_call_ended_if_message_deleted(&mut self, now: TimestampMillis) {
-        if let Some(message_index) = self.video_call_in_progress.value.as_ref().map(|v| v.message_index) {
-            let is_deleted = self
-                .main_events_reader()
-                .message_internal(message_index.into())
-                .map_or(true, |m| m.deleted_by.is_some());
-
-            if is_deleted {
-                self.video_call_in_progress = Timestamped::new(None, now);
-            }
-        }
-    }
-
-    pub fn set_block_level_markdown(&mut self, cutoff: TimestampMillis) {
-        self.main.set_block_level_markdown(cutoff);
-        for thread in self.threads.values_mut() {
-            thread.set_block_level_markdown(cutoff);
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -613,6 +593,8 @@ impl ChatEvents {
                 return AddRemoveReactionResult::NoChange;
             }
 
+            let sender = message.sender;
+
             if let Some(client) = event_store_client {
                 let payload = ReactionAddedEventPayload {
                     message_type: message.content.message_type(),
@@ -641,7 +623,7 @@ impl ChatEvents {
             self.last_updated_timestamps
                 .mark_updated(args.thread_root_message_index, event_index, args.now);
 
-            AddRemoveReactionResult::Success
+            AddRemoveReactionResult::Success(sender)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -668,6 +650,8 @@ impl ChatEvents {
                 message.reactions.retain(|(_, u)| !u.is_empty());
             }
 
+            let sender = message.sender;
+
             self.last_updated_timestamps
                 .mark_updated(args.thread_root_message_index, event_index, args.now);
 
@@ -679,7 +663,7 @@ impl ChatEvents {
                 args.now,
             );
 
-            AddRemoveReactionResult::Success
+            AddRemoveReactionResult::Success(sender)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -1965,7 +1949,7 @@ pub struct AddRemoveReactionArgs {
 }
 
 pub enum AddRemoveReactionResult {
-    Success,
+    Success(UserId),
     NoChange,
     MessageNotFound,
 }

@@ -8,14 +8,11 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type {
-        GIFObject,
-        PagedGIFObject,
-        GiphySearchResponse,
-        GiphyContent,
-    } from "openchat-client";
+    import type { GiphyContent, TenorSearchResponse, TenorObject } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+
+    type KeyedTenorObject = TenorObject & { key: string };
 
     const dispatch = createEventDispatcher();
 
@@ -24,29 +21,29 @@
     let refreshing = false;
     let message = "";
     let searchTerm = "";
-    let gifs: PagedGIFObject[] = [];
+    let gifs: KeyedTenorObject[] = [];
     let gifCache: Record<
         string,
-        PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+        KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
     > = {};
     let timer: number | undefined;
     let modalWidth = 0;
     let pageSize = 25;
-    let pageNum = -1;
-    let selectedGif: PagedGIFObject | undefined;
+    let selectedGif: KeyedTenorObject | undefined;
     let containerElement: HTMLDivElement;
     const gutter = 5;
     let imgWidth = 0;
+    let pos = "";
 
     $: selectedImage =
         selectedGif === undefined
             ? undefined
             : $mobileWidth
-              ? { ...selectedGif.images.downsized_large }
-              : { ...selectedGif.images.original };
+              ? { ...selectedGif.media_formats.tinygif }
+              : { ...selectedGif.media_formats.mediumgif };
 
-    const TRENDING_API_URL = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}`;
-    const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}&q=`;
+    const TRENDING_API_URL = `https://tenor.googleapis.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${process.env.TENOR_APIKEY}&limit=${pageSize}`;
+    const SEARCH_API_URL = `https://tenor.googleapis.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${process.env.TENOR_APIKEY}&limit=${pageSize}&q=`;
 
     $: {
         let containerWidth = containerElement?.clientWidth ?? 0;
@@ -59,7 +56,7 @@
     function sumOfHeightsForColumn(
         cache: Record<
             string,
-            PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
         >,
         row: number,
         col: number,
@@ -78,15 +75,15 @@
         numCols: number,
         cache: Record<
             string,
-            PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
         >,
-        gif: PagedGIFObject,
+        gif: KeyedTenorObject,
         i: number,
-    ): Record<string, PagedGIFObject & { top: number; left: number; calculatedHeight: number }> {
+    ): Record<string, KeyedTenorObject & { top: number; left: number; calculatedHeight: number }> {
         const col = i % numCols;
         const row = Math.floor(i / numCols);
-        const scale = gif.images.fixed_width.width / imgWidth;
-        const calcHeight = gif.images.fixed_width.height / scale;
+        const scale = gif.media_formats.tinygif.dims[0] / imgWidth;
+        const calcHeight = gif.media_formats.tinygif.dims[1] / scale;
         const key = `${row}_${col}`;
 
         cache[key] = {
@@ -109,33 +106,31 @@
         }
         timer = window.setTimeout(() => {
             if (searchTerm.length > 2) {
-                pageNum = -1;
                 reset(searchTerm);
             }
         }, 500);
     }
 
-    function addPagingInfo(index: number, pageNum: number, gif: GIFObject): PagedGIFObject {
+    function addKey(index: number, pos: string, gif: TenorObject): KeyedTenorObject {
         return {
-            groupKey: pageNum,
-            key: index + pageNum * pageSize,
+            key: `${index}_${pos}`,
             ...gif,
         };
     }
 
     function getMoreGifs() {
         refreshing = true;
-        const offset = pageSize * pageNum;
         const url =
             searchTerm === ""
-                ? `${TRENDING_API_URL}&offset=${offset}`
-                : `${SEARCH_API_URL}${searchTerm}&offset=${offset}`;
+                ? `${TRENDING_API_URL}&pos=${pos}`
+                : `${SEARCH_API_URL}${searchTerm}&pos=${pos}`;
         return fetch(url)
             .then((res) => res.json())
-            .then((res: GiphySearchResponse) => {
-                return res.data;
+            .then((res: TenorSearchResponse) => {
+                pos = `${res.next}`;
+                return res.results;
             })
-            .then((res) => res.map((gif, i) => addPagingInfo(i, pageNum, gif)))
+            .then((res) => res.map((result, i) => addKey(i, pos, result)))
             .finally(() => (refreshing = false));
     }
 
@@ -144,6 +139,7 @@
         searchTerm = search;
         selectedGif = undefined;
         gifs = [];
+        pos = "";
         nextPage();
     }
 
@@ -153,15 +149,15 @@
                 kind: "giphy_content",
                 title: selectedGif.title,
                 desktop: {
-                    height: Number(selectedGif.images.original.height),
-                    width: Number(selectedGif.images.original.width),
-                    url: selectedGif.images.original.mp4,
+                    height: Number(selectedGif.media_formats.mp4.dims[1]),
+                    width: Number(selectedGif.media_formats.mp4.dims[0]),
+                    url: selectedGif.media_formats.mp4.url,
                     mimeType: "video/mp4",
                 },
                 mobile: {
-                    height: Number(selectedGif.images.downsized.height),
-                    width: Number(selectedGif.images.downsized.width),
-                    url: selectedGif.images.downsized.url,
+                    height: Number(selectedGif.media_formats.tinygif.dims[1]),
+                    width: Number(selectedGif.media_formats.tinygif.dims[0]),
+                    url: selectedGif.media_formats.tinygif.url,
                     mimeType: "image/gif",
                 },
                 caption: message === "" ? undefined : message,
@@ -171,7 +167,7 @@
         }
     }
 
-    function selectGif(gif: PagedGIFObject) {
+    function selectGif(gif: KeyedTenorObject) {
         selectedGif = gif;
     }
 
@@ -181,7 +177,6 @@
 
     async function nextPage() {
         if (refreshing) return;
-        pageNum = pageNum + 1;
         const nextPage = await getMoreGifs();
         gifs = [...gifs, ...nextPage];
     }
@@ -223,7 +218,7 @@
                 {#if selectedImage !== undefined}
                     <div class="selected">
                         <img
-                            class:landscape={selectedImage.width > selectedImage.height}
+                            class:landscape={selectedImage.dims[0] > selectedImage.dims[1]}
                             src={selectedImage.url}
                             alt={selectedGif?.title} />
                     </div>
@@ -233,19 +228,17 @@
                             <img
                                 class="thumb"
                                 on:click={() => selectGif(item)}
-                                src={item.images.fixed_width.url}
+                                src={item.media_formats.tinygif.url}
                                 style={`width: ${imgWidth}px; top: ${item.top}px; left: ${item.left}px`}
                                 alt={item.title} />
                         {/each}
                     </div>
                 {/if}
-
                 {#if selectedGif === undefined}
                     <div class="powered-by">
-                        <img src="/assets/giphy_small.gif" alt="Powered by Giphy" />
+                        <img src="/assets/powered_by_tenor.svg" alt="Powered by Tenor" />
                     </div>
                 {/if}
-
                 <div class="message">
                     <Input
                         maxlength={100}
@@ -297,6 +290,14 @@
     .powered-by {
         text-align: center;
         background-color: black;
+        padding: $sp3 0;
+
+        img {
+            max-width: 300px;
+            @include mobile() {
+                max-width: 200px;
+            }
+        }
     }
 
     .header {

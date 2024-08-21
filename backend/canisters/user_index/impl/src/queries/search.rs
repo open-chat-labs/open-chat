@@ -1,12 +1,12 @@
 use crate::model::user::User;
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use core::cmp::Ordering;
-use ic_cdk::query;
 use user_index_canister::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
-#[query]
+#[query(candid = true, json = true)]
 fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }

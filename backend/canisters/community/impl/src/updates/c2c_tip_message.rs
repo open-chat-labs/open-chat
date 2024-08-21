@@ -6,7 +6,7 @@ use chat_events::{Reader, TipMessageArgs};
 use community_canister::c2c_tip_message::{Response::*, *};
 use group_chat_core::TipMessageResult;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{ChannelMessageTipped, EventIndex, Notification};
+use types::{Achievement, ChannelMessageTipped, EventIndex, Notification};
 
 #[update(msgpack = true)]
 #[trace]
@@ -69,6 +69,13 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         });
                         state.push_notification(vec![args.recipient], notification);
                     }
+
+                    state.data.achievements.notify_user(
+                        args.recipient,
+                        vec![Achievement::HadMessageTipped],
+                        &mut state.data.fire_and_forget_handler,
+                    );
+
                     handle_activity_notification(state);
                     Success
                 }

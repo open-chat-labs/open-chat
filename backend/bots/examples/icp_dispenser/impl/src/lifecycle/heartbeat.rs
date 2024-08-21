@@ -45,8 +45,8 @@ mod process_pending_actions {
                             nns::CompletedCryptoTransaction {
                                 ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
                                 token: Cryptocurrency::InternetComputer,
-                                amount: transfer_args.amount,
-                                fee: transfer_args.fee,
+                                amount: transfer_args.amount.into(),
+                                fee: transfer_args.fee.into(),
                                 from: nns::CryptoAccount::Account(default_ledger_account(this_canister_id)),
                                 to: nns::CryptoAccount::Account(transfer_args.to),
                                 memo: transfer_args.memo,

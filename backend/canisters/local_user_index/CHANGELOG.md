@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add OC dev team controller to 2 uninstalled canisters to recover funds ([#6247](https://github.com/open-chat-labs/open-chat/pull/6247))
+- Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13
+
+### Added
+
+- Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
+
+## [[2.0.1281](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1281-local_user_index)] - 2024-08-02
+
+### Changed
+
+- Remove canister which holds some tokens from the canister pool ([#6188](https://github.com/open-chat-labs/open-chat/pull/6188))
+
+## [[2.0.1278](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1278-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Store unique person proof if submitted to LocalUserIndex ([#6174](https://github.com/open-chat-labs/open-chat/pull/6174))
+
+## [[2.0.1277](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1277-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Fix submitting unique person proof via LocalUserIndex ([#6168](https://github.com/open-chat-labs/open-chat/pull/6168))
+- Use correct principal when verifying credentials ([#6170](https://github.com/open-chat-labs/open-chat/pull/6170))
+- Fix incorrect canister Id being used in place of Internet Identity canister Id ([#6171](https://github.com/open-chat-labs/open-chat/pull/6171))
+
+## [[2.0.1274](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1274-local_user_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
 ## [[2.0.1268](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1268-local_user_index)] - 2024-07-30
 
 ### Changed

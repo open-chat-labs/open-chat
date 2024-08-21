@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { v1 as uuidv1 } from "uuid";
 import { sha3_256 } from "js-sha3";
@@ -19,17 +19,19 @@ import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 
 export class DataClient extends EventTarget {
-    static create(identity: Identity, config: AgentConfig): DataClient {
-        const storageIndexClient = StorageIndexClient.create(identity, config);
-        return new DataClient(identity, config, storageIndexClient);
-    }
+    private storageIndexClient: StorageIndexClient;
 
-    private constructor(
+    constructor(
         private identity: Identity,
+        private agent: HttpAgent,
         private config: AgentConfig,
-        private storageIndexClient: StorageIndexClient
     ) {
         super();
+        this.storageIndexClient = new StorageIndexClient(
+            identity,
+            agent,
+            config.openStorageIndexCanister,
+        );
     }
 
     static newBlobId(): bigint {
@@ -54,7 +56,7 @@ export class DataClient extends EventTarget {
 
     async uploadData(
         content: MessageContent,
-        accessorCanisterIds: string[]
+        accessorCanisterIds: string[],
     ): Promise<StoredMediaContent | undefined> {
         let byteLimit: number | undefined = undefined;
         let bytesUsed: number | undefined = undefined;
@@ -71,7 +73,7 @@ export class DataClient extends EventTarget {
                 const response = await this.uploadFile(
                     content.mimeType,
                     accessorIds,
-                    content.blobData
+                    content.blobData,
                 );
 
                 const ref = this.extractBlobReference(response);
@@ -83,7 +85,7 @@ export class DataClient extends EventTarget {
                         this.config.blobUrlPattern,
                         ref.canisterId,
                         ref.blobId,
-                        "blobs"
+                        "blobs",
                     ),
                 };
                 byteLimit = Number(response.projectedAllowance.byteLimit);
@@ -113,7 +115,7 @@ export class DataClient extends EventTarget {
                                 this.config.blobUrlPattern,
                                 videoRef.canisterId,
                                 videoRef.blobId,
-                                "blobs"
+                                "blobs",
                             ),
                         },
                         imageData: {
@@ -123,7 +125,7 @@ export class DataClient extends EventTarget {
                                 this.config.blobUrlPattern,
                                 imageRef.canisterId,
                                 imageRef.blobId,
-                                "blobs"
+                                "blobs",
                             ),
                         },
                     };
@@ -131,7 +133,7 @@ export class DataClient extends EventTarget {
                     bytesUsed = Number(
                         video.projectedAllowance.bytesUsedAfterOperation +
                             image.projectedAllowance.bytesUsedAfterOperation -
-                            image.projectedAllowance.bytesUsed
+                            image.projectedAllowance.bytesUsed,
                     );
                 });
             }
@@ -142,7 +144,7 @@ export class DataClient extends EventTarget {
                 new StorageUpdated({
                     byteLimit,
                     bytesUsed,
-                })
+                }),
             );
         }
 
@@ -151,7 +153,7 @@ export class DataClient extends EventTarget {
 
     async forwardData(
         content: MessageContent,
-        accessorCanisterIds: string[]
+        accessorCanisterIds: string[],
     ): Promise<StoredMediaContent | undefined> {
         let byteLimit: number | undefined = undefined;
         let bytesUsed: number | undefined = undefined;
@@ -169,7 +171,7 @@ export class DataClient extends EventTarget {
                 const response = await this.forwardFile(
                     content.blobReference.canisterId,
                     content.blobReference.blobId,
-                    accessorIds
+                    accessorIds,
                 );
                 if (response.kind === "success") {
                     byteLimit = Number(response.projectedAllowance.byteLimit);
@@ -184,7 +186,7 @@ export class DataClient extends EventTarget {
                             this.config.blobUrlPattern,
                             content.blobReference.canisterId,
                             content.blobReference.blobId,
-                            "blobs"
+                            "blobs",
                         ),
                     };
                 } else {
@@ -208,12 +210,12 @@ export class DataClient extends EventTarget {
                     this.forwardFile(
                         videoCanisterId,
                         content.videoData.blobReference.blobId,
-                        accessorIds
+                        accessorIds,
                     ),
                     this.forwardFile(
                         imageCanisterId,
                         content.imageData.blobReference.blobId,
-                        accessorIds
+                        accessorIds,
                     ),
                 ]).then(([video, image]) => {
                     if (video.kind === "success" && image.kind === "success") {
@@ -221,7 +223,7 @@ export class DataClient extends EventTarget {
                         bytesUsed = Number(
                             video.projectedAllowance.bytesUsedAfterOperation +
                                 image.projectedAllowance.bytesUsedAfterOperation -
-                                image.projectedAllowance.bytesUsed
+                                image.projectedAllowance.bytesUsed,
                         );
                         updatedContent = {
                             ...content,
@@ -235,7 +237,7 @@ export class DataClient extends EventTarget {
                                     this.config.blobUrlPattern,
                                     videoCanisterId,
                                     video.newFileId,
-                                    "blobs"
+                                    "blobs",
                                 ),
                             },
                             imageData: {
@@ -248,7 +250,7 @@ export class DataClient extends EventTarget {
                                     this.config.blobUrlPattern,
                                     imageCanisterId,
                                     image.newFileId,
-                                    "blobs"
+                                    "blobs",
                                 ),
                             },
                         };
@@ -272,7 +274,7 @@ export class DataClient extends EventTarget {
                 new StorageUpdated({
                     byteLimit,
                     bytesUsed,
-                })
+                }),
             );
         }
 
@@ -295,7 +297,7 @@ export class DataClient extends EventTarget {
         accessors: Array<Principal>,
         bytes: ArrayBuffer,
         expiryTimestampMillis?: bigint,
-        onProgress?: (percentComplete: number) => void
+        onProgress?: (percentComplete: number) => void,
     ): Promise<UploadFileResponse> {
         const hash = new Uint8Array(hashBytes(bytes));
         const fileSize = bytes.byteLength;
@@ -303,7 +305,7 @@ export class DataClient extends EventTarget {
         const allocatedBucketResponse = await this.storageIndexClient.allocatedBucket(
             hash,
             BigInt(fileSize),
-            random128()
+            random128(),
         );
 
         if (allocatedBucketResponse.kind !== "success") {
@@ -316,11 +318,7 @@ export class DataClient extends EventTarget {
         const chunkSize = allocatedBucketResponse.chunkSize;
         const chunkCount = Math.ceil(fileSize / chunkSize);
         const chunkIndexes = [...Array(chunkCount).keys()];
-        const bucketClient = StorageBucketClient.create(
-            this.identity,
-            this.config,
-            bucketCanisterId
-        );
+        const bucketClient = new StorageBucketClient(this.identity, this.agent, bucketCanisterId);
 
         let chunksCompleted = 0;
 
@@ -342,7 +340,7 @@ export class DataClient extends EventTarget {
                         chunkSize,
                         chunkIndex,
                         chunkBytes,
-                        expiryTimestampMillis
+                        expiryTimestampMillis,
                     );
 
                     if (chunkResponse === "success") {
@@ -370,13 +368,9 @@ export class DataClient extends EventTarget {
     private async forwardFile(
         bucketCanisterId: string,
         fileId: bigint,
-        accessors: Array<Principal>
+        accessors: Array<Principal>,
     ): Promise<ForwardFileResponse> {
-        const bucketClient = StorageBucketClient.create(
-            this.identity,
-            this.config,
-            bucketCanisterId
-        );
+        const bucketClient = new StorageBucketClient(this.identity, this.agent, bucketCanisterId);
 
         const fileInfoResponse = await bucketClient.fileInfo(fileId);
         if (fileInfoResponse.kind === "file_not_found") {
@@ -385,7 +379,7 @@ export class DataClient extends EventTarget {
 
         const canForwardResponse = await this.storageIndexClient.canForward(
             fileInfoResponse.fileHash,
-            fileInfoResponse.fileSize
+            fileInfoResponse.fileSize,
         );
         switch (canForwardResponse.kind) {
             case "user_not_found":

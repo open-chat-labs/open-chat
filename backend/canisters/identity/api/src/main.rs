@@ -1,6 +1,7 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
+    generate_candid_method!(identity, auth_principals, query);
     generate_candid_method!(identity, check_auth_principal, query);
     generate_candid_method!(identity, get_delegation, query);
 

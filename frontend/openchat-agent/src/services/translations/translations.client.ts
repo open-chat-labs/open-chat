@@ -1,7 +1,6 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type TranslationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { AgentConfig } from "../../config";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -24,14 +23,10 @@ import {
 export class TranslationsClient extends CandidService {
     private translationService: TranslationsService;
 
-    constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.translationService = this.createServiceClient<TranslationsService>(
-            idlFactory,
-            config.translationsCanister,
-            config,
-        );
+        this.translationService = this.createServiceClient<TranslationsService>(idlFactory);
     }
 
     propose(locale: string, key: string, value: string): Promise<ProposeResponse> {

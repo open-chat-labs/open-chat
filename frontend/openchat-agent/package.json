@@ -13,7 +13,8 @@
         "test": "jest --detectOpenHandles --runInBand",
         "test:watch": "jest --watch --detectOpenHandles --runInBand",
         "lint": "eslint ./src --fix",
-        "codegen": "sh ./codegen.sh"
+        "codegen": "sh ./codegen.sh",
+        "ts-to-zod": "ts-to-zod"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
@@ -27,7 +28,8 @@
         "js-sha3": "^0.8.0",
         "md5": "^2.3.0",
         "uuid": "^9.0.0",
-        "openchat-shared": "*"
+        "openchat-shared": "*",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@babel/core": "^7.22.10",

@@ -95,7 +95,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
-    'now_public' : IDL.Bool,
+    'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const CallParticipant = IDL.Record({
     'user_id' : UserId,
@@ -583,6 +584,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -686,6 +691,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -821,6 +827,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : IDL.Opt(IDL.Text),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -829,6 +836,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'messages_visible_to_non_members' : IDL.Bool,
     'membership' : IDL.Opt(GroupMembership),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -942,6 +950,7 @@ export const idlFactory = ({ IDL }) => {
     'unfollowed_threads' : IDL.Vec(MessageIndex),
     'avatar_id' : DocumentIdUpdate,
     'rules_accepted' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'membership' : IDL.Opt(GroupMembershipUpdates),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
@@ -956,6 +965,11 @@ export const idlFactory = ({ IDL }) => {
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
   const CommunityCanisterChannelSummaryUpdates = IDL.Record({
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
@@ -965,6 +979,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : GroupSubtypeUpdate,
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'external_url' : TextUpdate,
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'latest_message_index' : IDL.Opt(MessageIndex),
@@ -972,6 +987,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
     'avatar_id' : DocumentIdUpdate,
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'membership' : IDL.Opt(GroupMembershipUpdates),
     'latest_event_index' : IDL.Opt(EventIndex),
     'updated_events' : IDL.Vec(
@@ -980,11 +996,6 @@ export const idlFactory = ({ IDL }) => {
     'member_count' : IDL.Opt(IDL.Nat32),
     'events_ttl_last_updated' : IDL.Opt(TimestampMillis),
     'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const TextUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : IDL.Text,
   });
   const CommunityMembershipUpdates = IDL.Record({
     'role' : IDL.Opt(CommunityRole),
@@ -1033,6 +1044,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
+    'messages_visible_to_non_members' : IDL.Bool,
     'membership' : IDL.Opt(GroupMembership),
     'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),

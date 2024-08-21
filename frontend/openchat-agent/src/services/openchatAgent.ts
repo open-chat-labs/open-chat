@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import type { Identity } from "@dfinity/agent";
+import { HttpAgent, type Identity } from "@dfinity/agent";
 import {
     type Database,
     getCachedChats,
@@ -30,7 +30,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
 import { DexesAgent } from "./dexes";
-import { chunk, distinctBy, toRecord } from "../utils/list";
+import { chunk, distinctBy } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
@@ -143,8 +143,6 @@ import type {
     UpdateMarketMakerConfigResponse,
     ProposalVoteDetails,
     SetMessageReminderResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
     AccessGate,
@@ -244,8 +242,10 @@ import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberSettings } from "openchat-shared";
 import type { ClaimDailyChitResponse } from "openchat-shared";
 import type { ChitUserBalance } from "openchat-shared";
+import { createHttpAgentSync } from "../utils/httpAgent";
 
 export class OpenChatAgent extends EventTarget {
+    private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
@@ -254,6 +254,7 @@ export class OpenChatAgent extends EventTarget {
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
+    private _dataClient: DataClient;
     private _localUserIndexClients: Record<string, LocalUserIndexClient>;
     private _ledgerClients: Record<string, LedgerClient>;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
@@ -276,25 +277,68 @@ export class OpenChatAgent extends EventTarget {
     ) {
         super();
         this._logger = config.logger;
+        this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
-        this._onlineClient = OnlineClient.create(identity, config);
-        this._userIndexClient = new UserIndexClient(identity, config);
-        this._groupIndexClient = GroupIndexClient.create(identity, config);
-        this._notificationClient = NotificationsClient.create(identity, config);
-        this._proposalsBotClient = ProposalsBotClient.create(identity, config);
-        this._marketMakerClient = MarketMakerClient.create(identity, config);
-        this._registryClient = RegistryClient.create(identity, config);
-        this._icpcoinsClient = ICPCoinsClient.create(identity, config);
-        this.translationsClient = new TranslationsClient(identity, config);
-        this._signInWithEmailClient = SignInWithEmailClient.create(identity, config);
-        this._signInWithEthereumClient = SignInWithEthereumClient.create(identity, config);
-        this._signInWithSolanaClient = SignInWithSolanaClient.create(identity, config);
+        this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
+        this._userIndexClient = new UserIndexClient(
+            identity,
+            this._agent,
+            config.userIndexCanister,
+        );
+        this._groupIndexClient = new GroupIndexClient(
+            identity,
+            this._agent,
+            config.groupIndexCanister,
+        );
+        this._notificationClient = new NotificationsClient(
+            identity,
+            this._agent,
+            config.notificationsCanister,
+        );
+        this._proposalsBotClient = new ProposalsBotClient(
+            identity,
+            this._agent,
+            config.proposalBotCanister,
+        );
+        this._marketMakerClient = new MarketMakerClient(
+            identity,
+            this._agent,
+            config.marketMakerCanister,
+        );
+        this._registryClient = new RegistryClient(
+            identity,
+            this._agent,
+            config.registryCanister,
+            config.blobUrlPattern,
+        );
+        this._dataClient = new DataClient(identity, this._agent, config);
+        this._icpcoinsClient = new ICPCoinsClient(identity, this._agent);
+        this.translationsClient = new TranslationsClient(
+            identity,
+            this._agent,
+            config.translationsCanister,
+        );
+        this._signInWithEmailClient = new SignInWithEmailClient(
+            identity,
+            this._agent,
+            config.signInWithEmailCanister,
+        );
+        this._signInWithEthereumClient = new SignInWithEthereumClient(
+            identity,
+            this._agent,
+            config.signInWithEthereumCanister,
+        );
+        this._signInWithSolanaClient = new SignInWithSolanaClient(
+            identity,
+            this._agent,
+            config.signInWithSolanaCanister,
+        );
         this._localUserIndexClients = {};
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
-        this._dexesAgent = new DexesAgent(config);
+        this._dexesAgent = new DexesAgent(this._agent);
         this._groupInvite = config.groupInvite;
     }
 
@@ -304,11 +348,7 @@ export class OpenChatAgent extends EventTarget {
 
     getAllCachedUsers(): Promise<UserLookup> {
         return measure("getAllUsers", () => getAllUsers()).then((users) => {
-            const lookup = toRecord(
-                users.map((user) => this.rehydrateUserSummary(user)),
-                (u) => u.userId,
-            );
-            return lookup;
+            return new Map(users.map((user) => [user.userId, this.rehydrateUserSummary(user)]));
         });
     }
 
@@ -328,7 +368,13 @@ export class OpenChatAgent extends EventTarget {
         if (userId === ANON_USER_ID) {
             this._userClient = AnonUserClient.create();
         } else {
-            this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
+            this._userClient = new UserClient(
+                userId,
+                this.identity,
+                this._agent,
+                this.config,
+                this.db,
+            );
         }
         return this;
     }
@@ -336,10 +382,11 @@ export class OpenChatAgent extends EventTarget {
     communityClient(communityId: string): CommunityClient {
         if (!this._communityClients[communityId]) {
             const inviteCode = this.getProvidedCommunityInviteCode(communityId);
-            this._communityClients[communityId] = CommunityClient.create(
-                communityId,
+            this._communityClients[communityId] = new CommunityClient(
                 this.identity,
+                this._agent,
                 this.config,
+                communityId,
                 this.db,
                 inviteCode,
             );
@@ -353,10 +400,11 @@ export class OpenChatAgent extends EventTarget {
                 kind: "group_chat",
                 groupId: chatId,
             });
-            this._groupClients[chatId] = GroupClient.create(
-                { kind: "group_chat", groupId: chatId },
+            this._groupClients[chatId] = new GroupClient(
                 this.identity,
+                this._agent,
                 this.config,
+                { kind: "group_chat", groupId: chatId },
                 this.db,
                 inviteCode,
             );
@@ -373,16 +421,16 @@ export class OpenChatAgent extends EventTarget {
 
     getLedgerClient(ledger: string): LedgerClient {
         if (!this._ledgerClients[ledger]) {
-            this._ledgerClients[ledger] = LedgerClient.create(this.identity, this.config, ledger);
+            this._ledgerClients[ledger] = new LedgerClient(this.identity, this._agent, ledger);
         }
         return this._ledgerClients[ledger];
     }
 
     getLedgerIndexClient(ledgerIndex: string): LedgerIndexClient {
         if (!this._ledgerIndexClients[ledgerIndex]) {
-            this._ledgerIndexClients[ledgerIndex] = LedgerIndexClient.create(
+            this._ledgerIndexClients[ledgerIndex] = new LedgerIndexClient(
                 this.identity,
-                this.config,
+                this._agent,
                 ledgerIndex,
             );
         }
@@ -391,9 +439,9 @@ export class OpenChatAgent extends EventTarget {
 
     private getLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
         if (!this._localUserIndexClients[canisterId]) {
-            this._localUserIndexClients[canisterId] = LocalUserIndexClient.create(
+            this._localUserIndexClients[canisterId] = new LocalUserIndexClient(
                 this.identity,
-                this.config,
+                this._agent,
                 canisterId,
                 this.db,
             );
@@ -674,6 +722,8 @@ export class OpenChatAgent extends EventTarget {
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -688,6 +738,7 @@ export class OpenChatAgent extends EventTarget {
                     eventsTimeToLive,
                     gate,
                     isPublic,
+                    messagesVisibleToNonMembers,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).updateChannel(
@@ -700,13 +751,14 @@ export class OpenChatAgent extends EventTarget {
                     eventsTimeToLive,
                     gate,
                     isPublic,
+                    messagesVisibleToNonMembers,
+                    externalUrl,
                 );
         }
     }
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
-        _localUserIndex: string,
         userIds: string[],
         callerUsername: string,
     ): Promise<InviteUsersResponse> {
@@ -726,7 +778,6 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
-        _localUserIndex: string,
         userIds: string[],
         callerUsername: string,
     ): Promise<InviteUsersResponse> {
@@ -2082,7 +2133,6 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
-        _localUserIndex: string,
         credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
@@ -2115,7 +2165,6 @@ export class OpenChatAgent extends EventTarget {
 
     async joinCommunity(
         id: CommunityIdentifier,
-        _localUserIndex: string,
         credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
@@ -2342,19 +2391,24 @@ export class OpenChatAgent extends EventTarget {
     }
 
     toggleMuteNotifications(
-        chatId: ChatIdentifier,
+        id: ChatIdentifier | CommunityIdentifier,
         muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        switch (chatId.kind) {
+        switch (id.kind) {
             case "group_chat":
-                return this.getGroupClient(chatId.groupId).toggleMuteNotifications(muted);
+                return this.getGroupClient(id.groupId).toggleMuteNotifications(muted);
             case "direct_chat":
-                return this.userClient.toggleMuteNotifications(chatId.userId, muted);
+                return this.userClient.toggleMuteNotifications(id.userId, muted);
             case "channel":
-                return this.communityClient(chatId.communityId).toggleMuteChannelNotifications(
-                    chatId,
+                return this.communityClient(id.communityId).toggleMuteChannelNotifications(
+                    id,
+                    muted,
+                );
+            case "community":
+                return this.communityClient(id.communityId).toggleMuteChannelNotifications(
+                    undefined,
                     muted,
                 );
         }
@@ -2406,14 +2460,14 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("");
 
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db)
+            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
             : this.userClient;
         return userClient.getBio();
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
         const userClient = userId
-            ? UserClient.create(userId, this.identity, this.config, this.db)
+            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
             : this.userClient;
         return userClient.getPublicProfile();
     }
@@ -2435,7 +2489,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
-        return DataClient.create(this.identity, this.config).storageStatus();
+        return this._dataClient.storageStatus();
     }
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
@@ -2514,7 +2568,8 @@ export class OpenChatAgent extends EventTarget {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -2525,6 +2580,7 @@ export class OpenChatAgent extends EventTarget {
                     answerIdx,
                     voteType,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
             case "channel":
                 return this.communityClient(chatId.communityId).registerPollVote(
@@ -2533,6 +2589,7 @@ export class OpenChatAgent extends EventTarget {
                     answerIdx,
                     voteType,
                     threadRootMessageIndex,
+                    newAchievement,
                 );
         }
     }
@@ -2648,15 +2705,15 @@ export class OpenChatAgent extends EventTarget {
         isNns: boolean,
     ): Promise<ProposalVoteDetails> {
         if (isNns) {
-            return NnsGovernanceClient.create(
+            return new NnsGovernanceClient(
                 this.identity,
-                this.config,
+                this._agent,
                 governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         } else {
-            return SnsGovernanceClient.create(
+            return new SnsGovernanceClient(
                 this.identity,
-                this.config,
+                this._agent,
                 governanceCanisterId,
             ).getProposalVoteDetails(proposalId);
         }
@@ -2665,9 +2722,9 @@ export class OpenChatAgent extends EventTarget {
     listNervousSystemFunctions(
         snsGovernanceCanisterId: string,
     ): Promise<ListNervousSystemFunctionsResponse> {
-        return SnsGovernanceClient.create(
+        return new SnsGovernanceClient(
             this.identity,
-            this.config,
+            this._agent,
             snsGovernanceCanisterId,
         ).listNervousSystemFunctions();
     }
@@ -2969,10 +3026,6 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.cancelMessageReminder(reminderId);
     }
 
-    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this._userIndexClient.getReferralLeaderboard(req);
-    }
-
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -3076,10 +3129,11 @@ export class OpenChatAgent extends EventTarget {
     setMemberDisplayName(
         communityId: string,
         display_name: string | undefined,
+        newAchievement: boolean,
     ): Promise<SetMemberDisplayNameResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this.communityClient(communityId).setMemberDisplayName(display_name);
+        return this.communityClient(communityId).setMemberDisplayName(display_name, newAchievement);
     }
 
     deleteUserGroups(
@@ -3308,6 +3362,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
@@ -3315,12 +3370,14 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 pin,
+                newAchievement,
             );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).acceptP2PSwap(
                 threadRootMessageIndex,
                 messageId,
                 pin,
+                newAchievement,
             );
         } else {
             return this.userClient.acceptP2PSwap(
@@ -3373,14 +3430,19 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        newAchievement: boolean,
+    ): Promise<JoinVideoCallResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).joinVideoCall(
                 chatId.channelId,
                 messageId,
+                newAchievement,
             );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId);
+            return this.getGroupClient(chatId.groupId).joinVideoCall(messageId, newAchievement);
         } else {
             return this.userClient.joinVideoCall(chatId.userId, messageId);
         }
@@ -3390,6 +3452,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         switch (chatId.kind) {
             case "channel":
@@ -3397,11 +3460,13 @@ export class OpenChatAgent extends EventTarget {
                     chatId.channelId,
                     messageId,
                     presence,
+                    newAchievement,
                 );
             case "group_chat":
                 return this.getGroupClient(chatId.groupId).setVideoCallPresence(
                     messageId,
                     presence,
+                    newAchievement,
                 );
         }
     }
@@ -3419,7 +3484,7 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndex !== undefined) {
             return localUserIndex;
         }
-        return UserClient.create(userId, this.identity, this.config, this.db)
+        return new UserClient(userId, this.identity, this._agent, this.config, this.db)
             .localUserIndex()
             .then((localUserIndex) => {
                 return cacheLocalUserIndexForUser(userId, localUserIndex);
@@ -3427,7 +3492,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
-        return CkbtcMinterClient.create(this.identity, this.config).updateBalance(userId);
+        return new CkbtcMinterClient(this.identity, this._agent).updateBalance(userId);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

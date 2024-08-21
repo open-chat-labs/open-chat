@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Sync referrers and referrals with users ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+## [[2.0.1293](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1293-user_index)] - 2024-08-16
+
+### Changed
+
+- Replace `chit_balances` with `users_chit` which includes streak ([#6238](https://github.com/open-chat-labs/open-chat/pull/6238))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+### Removed
+
+- Remove user referral leaderboard ([#6245](https://github.com/open-chat-labs/open-chat/pull/6245))
+
+## [[2.0.1291](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1291-user_index)] - 2024-08-14
+
+### Added
+
+- Add `bot_config` to bot users ([#6220](https://github.com/open-chat-labs/open-chat/pull/6220))
+- Expose JSON versions of UserIndex APIs + generate Typescript bindings ([#6225](https://github.com/open-chat-labs/open-chat/pull/6225))
+
+### Removed
+
+- Remove deprecated `is_bot` field from user records ([#6219](https://github.com/open-chat-labs/open-chat/pull/6219))
+
+### Fixed
+
+- Fix `is_deleted` check to only return true if userId hasn't been reused ([#6235](https://github.com/open-chat-labs/open-chat/pull/6235))
+
+## [[2.0.1284](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1284-user_index)] - 2024-08-06
+
+### Added
+
+- Transfer airdrop funds to the AirdropBot ([#6199](https://github.com/open-chat-labs/open-chat/pull/6199))
+
+## [[2.0.1280](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1280-user_index)] - 2024-08-02
+
+### Added
+
+- Remove deleted users from OnlineUsers canister ([#6179](https://github.com/open-chat-labs/open-chat/pull/6179))
+
+### Changed
+
+- Add logging to find deleted account with OGY tokens ([#6177](https://github.com/open-chat-labs/open-chat/pull/6177))
+- Return deleted users in `users` response ([#6182](https://github.com/open-chat-labs/open-chat/pull/6182))
+- Use total CHIT earned for the leaderboard ([#6185](https://github.com/open-chat-labs/open-chat/pull/6185))
+
+## [[2.0.1279](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1279-user_index)] - 2024-08-01
+
+### Fixed
+
+- Push recent uniqueness proofs to LocalUserIndexes ([#6175](https://github.com/open-chat-labs/open-chat/pull/6175))
+
 ## [[2.0.1269](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1269-user_index)] - 2024-07-30
 
 ### Fixed

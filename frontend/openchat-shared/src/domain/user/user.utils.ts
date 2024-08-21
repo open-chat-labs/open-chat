@@ -11,7 +11,7 @@ export function userStatus(lastOnline: number | undefined, now: number): UserSta
 export function missingUserIds(userLookup: UserLookup, userIds: Iterable<string>): string[] {
     const missing: string[] = [];
     for (const userId of userIds) {
-        if (userLookup[userId] === undefined) {
+        if (!userLookup.has(userId)) {
             missing.push(userId);
         }
     }
@@ -26,9 +26,12 @@ export function extractUserIdsFromMentions(text: string): string[] {
 
 export function userOrUserGroupName(u: UserOrUserGroup): string {
     switch (u.kind) {
-        case "user_group": return u.name;
-        case "everyone": return u.kind;
-        default: return u.username;
+        case "user_group":
+            return u.name;
+        case "everyone":
+            return u.kind;
+        default:
+            return u.username;
     }
 }
 
@@ -36,7 +39,8 @@ export function userOrUserGroupId(u: UserOrUserGroup): string | undefined {
     switch (u.kind) {
         case "user":
         case "bot":
-            return u.userId;                
-        default: return undefined;
+            return u.userId;
+        default:
+            return undefined;
     }
 }

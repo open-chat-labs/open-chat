@@ -1,16 +1,19 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_gen::ts_export;
 use types::{Cryptocurrency, Empty};
 
 pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, diamond_membership_fees)]
 pub enum Response {
     Success(Vec<DiamondMembershipFees>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, diamond_membership_fees)]
 pub struct DiamondMembershipFees {
     pub token: Cryptocurrency,
     pub one_month: u64,

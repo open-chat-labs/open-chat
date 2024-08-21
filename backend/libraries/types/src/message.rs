@@ -2,16 +2,19 @@ use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageInde
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
+    #[ts(optional)]
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
+    #[ts(optional)]
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
@@ -19,13 +22,14 @@ pub struct Message {
     pub block_level_markdown: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct ReplyContext {
+    #[ts(optional)]
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
 }
@@ -62,7 +66,7 @@ pub struct MessageEditedEventPayload {
     pub new_length: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
 impl Deref for Tips {

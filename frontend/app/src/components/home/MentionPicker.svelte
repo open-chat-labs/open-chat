@@ -87,7 +87,7 @@
             (a: UserOrUserGroup, b: UserOrUserGroup) => {
                 const order = { everyone: 1, user_group: 2, user: 3, bot: 4 };
                 return order[a.kind] - order[b.kind];
-            }
+            },
         );
     });
 
@@ -154,7 +154,7 @@
                             </div>
                         {:else}
                             <Avatar
-                                url={client.userAvatarUrl($userStore[item.userId])}
+                                url={client.userAvatarUrl($userStore.get(item.userId))}
                                 userId={item.userId}
                                 size={AvatarSize.Small} />
                         {/if}

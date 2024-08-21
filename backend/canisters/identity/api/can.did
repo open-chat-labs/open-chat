@@ -2,6 +2,14 @@ type Nanoseconds = nat64;
 type PublicKey = blob;
 type TimestampNanoseconds = nat64;
 
+type AuthPrincipalsResponse = variant {
+    Success : vec record {
+        "principal" : principal;
+        originating_canister : principal;
+    };
+    NotFound;
+};
+
 type CheckAuthPrincipalResponse = variant {
     Success;
     NotFound;
@@ -75,6 +83,7 @@ type InitiateIdentityLinkArgs = record {
 
 type InitiateIdentityLinkResponse = variant {
     Success;
+    AlreadyLinkedToPrincipal;
     AlreadyRegistered;
     TargetUserNotFound;
     PublicKeyInvalid : text;
@@ -96,6 +105,7 @@ type PrepareDelegationSuccess = record {
 };
 
 service : {
+    auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);

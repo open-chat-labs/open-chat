@@ -72,7 +72,7 @@
             <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
             <div class="referrals">
                 {#each $user.referrals as userId}
-                    {@const u = $userStore[userId]}
+                    {@const u = $userStore.get(userId)}
                     <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
                         <div>
                             <Avatar

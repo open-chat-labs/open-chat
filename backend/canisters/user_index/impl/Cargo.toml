@@ -37,7 +37,10 @@ icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../../identity/api" }
 identity_canister_c2c_client = { path = "../../identity/c2c_client" }
 itertools = { workspace = true }
+json = { path = "../../../libraries/json" }
 jwt = { path = "../../../libraries/jwt" }
+local_group_index_canister = { path = "../../local_group_index/api" }
+local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
@@ -47,6 +50,8 @@ modclub_canister_c2c_client = { path = "../../../external_canisters/modclub/c2c_
 msgpack = { path = "../../../libraries/msgpack" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
+online_users_canister = { path = "../../online_users/api" }
+online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 pulldown-cmark = { workspace = true }
 rand = { workspace = true }

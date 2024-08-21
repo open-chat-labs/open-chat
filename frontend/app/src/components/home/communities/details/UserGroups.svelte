@@ -53,7 +53,7 @@
     ): Record<string, UserSummary> {
         return [...members.values()].reduce(
             (map, m) => {
-                const user = allUsers[m.userId];
+                const user = allUsers.get(m.userId);
                 if (user !== undefined) {
                     map[user.userId] = {
                         ...user,

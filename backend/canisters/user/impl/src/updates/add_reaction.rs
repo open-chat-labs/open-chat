@@ -39,7 +39,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             },
             Some(&mut state.data.event_store_client),
         ) {
-            AddRemoveReactionResult::Success => {
+            AddRemoveReactionResult::Success(_) => {
                 let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
                 state.push_user_canister_event(

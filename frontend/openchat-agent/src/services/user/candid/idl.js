@@ -174,6 +174,8 @@ export const idlFactory = ({ IDL }) => {
     'StartedCall' : IDL.Null,
     'ChosenAsGroupOwner' : IDL.Null,
     'TippedMessage' : IDL.Null,
+    'Streak100' : IDL.Null,
+    'Streak365' : IDL.Null,
     'SentGiphy' : IDL.Null,
     'SetCommunityAccessGate' : IDL.Null,
     'Streak14' : IDL.Null,
@@ -408,6 +410,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : Rules,
     'avatar' : IDL.Opt(Document),
@@ -977,7 +980,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
-    'now_public' : IDL.Bool,
+    'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,
@@ -1029,6 +1033,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -1089,6 +1097,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -1267,6 +1276,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
+    'messages_visible_to_non_members' : IDL.Bool,
     'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),

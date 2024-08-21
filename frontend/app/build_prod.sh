@@ -1,4 +1,5 @@
 export BUILD_ENV=production
+export INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
 export INTERNET_IDENTITY_URL=https://identity.ic0.app
 export NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChat
 export DFX_NETWORK=ic

@@ -1,32 +1,21 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { RegistryUpdatesResponse } from "openchat-shared";
 import { idlFactory, type RegistryService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { updatesResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
 export class RegistryClient extends CandidService {
     private readonly service: RegistryService;
     private readonly blobUrlPattern: string;
-    private readonly canisterId: string;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string, blobUrlPattern: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<RegistryService>(
-            idlFactory,
-            config.registryCanister,
-            config,
-        );
-        this.blobUrlPattern = config.blobUrlPattern;
-        this.canisterId = config.registryCanister;
-    }
-
-    static create(identity: Identity, config: AgentConfig): RegistryClient {
-        return new RegistryClient(identity, config);
+        this.service = this.createServiceClient<RegistryService>(idlFactory);
+        this.blobUrlPattern = blobUrlPattern;
     }
 
     updates(since?: bigint): Promise<RegistryUpdatesResponse> {

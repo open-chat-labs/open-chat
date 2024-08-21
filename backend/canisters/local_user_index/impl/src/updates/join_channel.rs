@@ -7,11 +7,8 @@ use local_user_index_canister::join_channel::{Response::*, *};
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn join_channel(args: Args) -> Response {
-    let user_details = mutate_state(|state| {
-        state.get_calling_user_and_process_credentials(
-            args.verified_credential_args.as_ref().map(|c| c.credential_jwts.as_slice()),
-        )
-    });
+    let user_details =
+        mutate_state(|state| state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref()));
 
     let c2c_args = community_canister::c2c_join_channel::Args {
         user_id: user_details.user_id,

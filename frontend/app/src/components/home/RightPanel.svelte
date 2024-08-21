@@ -58,7 +58,7 @@
     $: selectedCommunity = client.selectedCommunity;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
-    $: user = $userStore[$currentUser.userId] ?? client.nullUser("unknown");
+    $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = !$fullWidth;
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
@@ -68,6 +68,10 @@
         const canInvite =
             $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
         return client.searchUsersForInvite(term, 20, level, false, canInvite);
+    }
+
+    function searchMembers(term: string): Promise<[UserSummary[], UserSummary[]]> {
+        return client.searchCommunityMembersToAdd(term, 20);
     }
 
     function onChangeGroupRole(
@@ -379,6 +383,7 @@
             userLookup={searchUsers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            isCommunityPublic={$selectedCommunity?.public ?? true}
             on:inviteUsers={inviteCommunityUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
     {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
@@ -401,8 +406,10 @@
             container={$multiUserChat}
             {level}
             userLookup={searchUsers}
+            memberLookup={searchMembers}
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            isCommunityPublic={$selectedCommunity?.public ?? true}
             on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined}

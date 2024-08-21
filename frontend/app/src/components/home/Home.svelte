@@ -152,7 +152,7 @@
         | { kind: "select_chat" }
         | { kind: "suspended" }
         | { kind: "no_access" }
-        | { kind: "new_group"; candidate: CandidateGroupChat }
+        | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
         | { kind: "gate_check_failed"; gates: AccessGateWithLevel[] }
         | { kind: "hall_of_fame" }
@@ -970,11 +970,11 @@
         modal = { kind: "wallet" };
     }
 
-    function newChannel() {
-        newGroup("channel");
+    function newChannel(ev: CustomEvent<boolean>) {
+        newGroup("channel", ev.detail);
     }
 
-    function newGroup(level: Level = "group") {
+    function newGroup(level: Level = "group", embeddedContent: boolean = false) {
         if (level === "channel" && $chatListScope.kind !== "community") {
             return;
         }
@@ -985,6 +985,7 @@
 
         modal = {
             kind: "new_group",
+            embeddedContent,
             candidate: {
                 id,
                 kind: "candidate_group_chat",
@@ -1001,6 +1002,7 @@
                     updateGroup: "admin",
                     pinMessages: "admin",
                     inviteUsers: "admin",
+                    addMembers: "admin",
                     mentionAllMembers: "member",
                     reactToMessages: "member",
                     startVideoCall: "member",
@@ -1017,6 +1019,7 @@
                     ...nullMembership(),
                     role: "owner",
                 },
+                messagesVisibleToNonMembers: false,
             },
         };
     }
@@ -1027,6 +1030,7 @@
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
+            embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
             candidate: {
                 id: chat.id,
                 kind: "candidate_group_chat",
@@ -1046,6 +1050,8 @@
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
+                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
+                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
             },
         };
     }
@@ -1272,7 +1278,11 @@
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
-            <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
+            <NewGroup
+                embeddedContent={modal.embeddedContent}
+                candidateGroup={modal.candidate}
+                on:upgrade={upgrade}
+                on:close={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}

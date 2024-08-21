@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { DiamondMembershipStatus, UserSummary } from "openchat-shared";
+import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
 
-const CACHE_VERSION = 9;
+const CACHE_VERSION = 10;
 
 let db: UserDatabase | undefined;
 
@@ -16,6 +16,11 @@ export interface UserSchema extends DBSchema {
     suspendedUsersSyncedUpTo: {
         key: "value";
         value: bigint;
+    };
+
+    deletedUserIds: {
+        key: string;
+        value: string;
     };
 }
 
@@ -35,8 +40,12 @@ function openUserCache(): UserDatabase {
             if (db.objectStoreNames.contains("suspendedUsersSyncedUpTo")) {
                 db.deleteObjectStore("suspendedUsersSyncedUpTo");
             }
+            if (db.objectStoreNames.contains("deletedUserIds")) {
+                db.deleteObjectStore("deletedUserIds");
+            }
             db.createObjectStore("users");
             db.createObjectStore("suspendedUsersSyncedUpTo");
+            db.createObjectStore("deletedUserIds");
         },
     });
 }
@@ -53,12 +62,46 @@ export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> 
 }
 
 export async function getAllUsers(): Promise<UserSummary[]> {
-    return (await lazyOpenUserCache()).getAll("users");
+    const users = await (await lazyOpenUserCache()).getAll("users");
+    const deleted = await getDeletedUserIdsList();
+    const userIds = new Set(users.map((u) => u.userId));
+
+    // only consider records from the deleted list that do not exist in the real users list
+    // this is necessary because a userId can be resurrected by being re-used
+    const reallyDeleted = deleted.filter((u) => !userIds.has(u));
+    return [...users, ...reallyDeleted.map(deletedUser)];
+}
+
+async function getDeletedUserIdsList(): Promise<string[]> {
+    return (await lazyOpenUserCache()).getAll("deletedUserIds");
+}
+
+export async function getCachedDeletedUserIds(): Promise<Set<string>> {
+    return getDeletedUserIdsList().then((list) => new Set(list));
 }
 
 export async function setCachedUsers(users: UserSummary[]): Promise<void> {
     if (users.length === 0) return;
     writeCachedUsersToDatabase(lazyOpenUserCache(), users);
+}
+
+export async function setCachedDeletedUserIds(deletedUserIds: Set<string>): Promise<void> {
+    if (deletedUserIds.size === 0) return;
+    const db = await lazyOpenUserCache();
+    const tx = (await db).transaction(["deletedUserIds", "users"], "readwrite", {
+        durability: "relaxed",
+    });
+    const deletedStore = tx.objectStore("deletedUserIds");
+    const userStore = tx.objectStore("users");
+
+    // insert all the deletedIds into the deletedUserIds store
+    const inserts = [...deletedUserIds].map((userId) => deletedStore.put(userId, userId));
+
+    // delete all the deletedIds from the main userStore
+    const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
+
+    Promise.all([...inserts, ...deletes]);
+    await tx.done;
 }
 
 export async function writeCachedUsersToDatabase(

@@ -2,6 +2,7 @@ use crate::{is_default, EventIndex, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_rs::TS;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EventWrapper<T> {
@@ -43,3 +44,22 @@ impl<T> From<EventWrapperInternal<T>> for EventWrapper<T> {
         }
     }
 }
+
+macro_rules! event_wrapper {
+    ($name:ident, $event_type:ty) => {
+        #[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+        pub struct $name {
+            pub index: EventIndex,
+            pub timestamp: TimestampMillis,
+            pub correlation_id: u64,
+            #[ts(optional)]
+            pub expires_at: Option<TimestampMillis>,
+            pub event: $event_type,
+        }
+    };
+}
+
+event_wrapper!(EventWrapperChatEvent, crate::ChatEvent);
+event_wrapper!(EventWrapperGroupFrozen, crate::GroupFrozen);
+event_wrapper!(EventWrapperGroupUnfrozen, crate::GroupUnfrozen);
+event_wrapper!(EventWrapperMessage, crate::Message);

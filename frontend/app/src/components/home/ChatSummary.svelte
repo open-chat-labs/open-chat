@@ -63,6 +63,7 @@
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
     $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
+    $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -77,11 +78,11 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore[chatSummary.them.userId];
+                const them = $userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -94,7 +95,7 @@
                     eventsTTL: undefined,
                     video,
                     private: false,
-                    uniquePerson: them.isUniquePerson,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
             default:
                 return {
@@ -489,7 +490,7 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
-                                {#if notificationsSupported}
+                                {#if notificationsSupported && !externalContent}
                                     {#if muted}
                                         <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                             <BellIcon
@@ -514,17 +515,19 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                <MenuItem
-                                    disabled={unreadMessages === 0}
-                                    on:click={() => client.markAllRead(chatSummary)}>
-                                    <CheckboxMultipleMarked
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable resourceKey={i18nKey("markAllRead")} />
-                                    </div>
-                                </MenuItem>
+                                {#if !externalContent}
+                                    <MenuItem
+                                        disabled={unreadMessages === 0}
+                                        on:click={() => client.markAllRead(chatSummary)}>
+                                        <CheckboxMultipleMarked
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("markAllRead")} />
+                                        </div>
+                                    </MenuItem>
+                                {/if}
                                 {#if chatSummary.membership.archived}
                                     <MenuItem on:click={selectChat}>
                                         <ArchiveOffIcon

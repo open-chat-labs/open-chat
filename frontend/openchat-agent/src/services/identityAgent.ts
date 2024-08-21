@@ -1,20 +1,31 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import { HttpAgent, type Identity, type SignIdentity } from "@dfinity/agent";
 import { DelegationIdentity } from "@dfinity/identity";
 import type {
     ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
+import { createHttpAgent } from "../utils/httpAgent";
 
 export class IdentityAgent {
     private _identityClient: IdentityClient;
 
-    constructor(identity: Identity, identityCanister: string, icUrl: string) {
-        this._identityClient = IdentityClient.create(identity, identityCanister, icUrl);
+    private constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
+        this._identityClient = new IdentityClient(identity, agent, identityCanister);
+    }
+
+    static async create(
+        identity: Identity,
+        identityCanister: string,
+        icUrl: string,
+    ): Promise<IdentityAgent> {
+        const agent = await createHttpAgent(identity, icUrl);
+        return new IdentityAgent(identity, agent, identityCanister);
     }
 
     checkOpenChatIdentityExists(): Promise<boolean> {
@@ -71,6 +82,10 @@ export class IdentityAgent {
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
         return this._identityClient.approveIdentityLink(linkInitiatedBy);
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals();
     }
 
     private async getDelegation(

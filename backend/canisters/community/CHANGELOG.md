@@ -5,6 +5,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+## [[2.0.1287](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1287-community)] - 2024-08-13
+
+### Added
+
+- Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
+
+## [[2.0.1286](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1286-community)] - 2024-08-12
+
+### Added
+
+- Support updating add members permission ([#6194](https://github.com/open-chat-labs/open-chat/pull/6194))
+
+### Changed
+
+- Members of private communities can be added to channels skipping gate checks ([#6159](https://github.com/open-chat-labs/open-chat/pull/6159))
+
 ## [[2.0.1272](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1272-community)] - 2024-07-31
 
 ### Changed

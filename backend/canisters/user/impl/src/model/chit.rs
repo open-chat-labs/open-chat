@@ -84,6 +84,10 @@ impl ChitEarnedEvents {
         self.events.last().map(|e| e.timestamp).unwrap_or_default()
     }
 
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
     fn range(&self, range: Range<TimestampMillis>) -> &[ChitEarned] {
         let start = self.events.partition_point(|e| e.timestamp < range.start);
         let end = self.events.partition_point(|e| e.timestamp <= range.end);

@@ -353,8 +353,14 @@ export const idlFactory = ({ IDL }) => {
     ),
     'users_suspended_since' : IDL.Opt(TimestampMillis),
   });
+  const BotConfig = IDL.Record({
+    'can_be_added_to_groups' : IDL.Bool,
+    'is_oc_controlled' : IDL.Bool,
+    'supports_direct_messages' : IDL.Bool,
+  });
   const UserSummaryStable = IDL.Record({
     'username' : IDL.Text,
+    'bot_config' : IDL.Opt(BotConfig),
     'diamond_membership_status' : DiamondMembershipStatus,
     'is_unique_person' : IDL.Bool,
     'is_bot' : IDL.Bool,
@@ -389,6 +395,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UsersResponse = IDL.Variant({
     'Success' : IDL.Record({
+      'deleted' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummaryV2),
       'current_user' : IDL.Opt(CurrentUserSummary),

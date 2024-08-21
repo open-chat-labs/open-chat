@@ -41,14 +41,20 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .as_ref()
         .is_some_and(|p| p.timestamp > updates_since);
 
+    let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
+
+    let referrals = state.data.referrals.updated_since(updates_since);
+
     let has_any_updates = username.is_some()
         || display_name.has_update()
         || avatar_id.has_update()
         || blocked_users.is_some()
         || avatar_id.has_update()
         || suspended.is_some()
+        || wallet_config.is_some()
         || pin_number_updated
         || is_unique_person_updated
+        || !referrals.is_empty()
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -166,5 +172,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         streak_ends,
         next_daily_claim,
         is_unique_person,
+        wallet_config,
+        referrals,
     })
 }

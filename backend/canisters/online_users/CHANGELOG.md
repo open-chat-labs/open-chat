@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1283](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1283-online_users)] - 2024-08-02
+
+### Added
+
+- Added `c2c_remove_user` to be called by the UserIndex ([#6179](https://github.com/open-chat-labs/open-chat/pull/6179))
+
+### Changed
+
+- Clear the principal to userId map to ensure latest values are used ([#6184](https://github.com/open-chat-labs/open-chat/pull/6184))
+
 ## [[2.0.1149](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1149-online_users)] - 2024-04-23
 
 ### Changed

@@ -10,12 +10,10 @@ use user_index_canister::Event as UserIndexEvent;
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn join_group(args: Args) -> Response {
-    let user_details = mutate_state(|state| {
-        state.get_calling_user_and_process_credentials(
-            args.verified_credential_args.as_ref().map(|c| c.credential_jwts.as_slice()),
-        )
-    });
+    let user_details =
+        mutate_state(|state| state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref()));
 
+    #[allow(deprecated)]
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,

@@ -45,6 +45,7 @@
     export let canReplyInThread: boolean;
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
+    export let privateChatPreview: boolean;
 
     $: user = client.user;
     $: isProposalGroup = client.isProposalGroup;
@@ -143,11 +144,6 @@
         $selectedCommunity !== undefined &&
         $selectedCommunity.membership.role === "none" &&
         (!$selectedCommunity.public || $selectedCommunity.gate.kind !== "no_gate");
-
-    $: privateChatPreview =
-        (chat.kind === "group_chat" || chat.kind === "channel") &&
-        chat.membership.role === "none" &&
-        (!chat.public || chat.gate.kind !== "no_gate");
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
@@ -299,7 +295,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>
@@ -379,7 +375,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>

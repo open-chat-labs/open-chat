@@ -5,15 +5,18 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct CommunityCanisterCommunitySummary {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
+    #[ts(optional)]
     pub avatar_id: Option<u128>,
+    #[ts(optional)]
     pub banner_id: Option<u128>,
     pub is_public: bool,
     pub member_count: u32,
@@ -29,7 +32,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub metrics: ChatMetrics,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
@@ -37,7 +40,7 @@ pub struct CommunityMembership {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct CommunityCanisterCommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub last_updated: TimestampMillis,
@@ -61,7 +64,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub metrics: Option<ChatMetrics>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,

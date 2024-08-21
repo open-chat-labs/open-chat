@@ -30,6 +30,7 @@ pub struct UserRegistered {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
+    // TODO: Deprecated
     pub referred_by: Option<UserId>,
     #[serde(default)]
     pub is_from_identity_canister: bool,

@@ -1,7 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -26,7 +25,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -185,6 +184,9 @@ impl RuntimeState {
 
             self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
             jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
         }
     }
 
@@ -196,7 +198,7 @@ impl RuntimeState {
                 username: user.username.clone(),
                 date_created: user.date_created,
                 date_updated: user.date_updated,
-                is_bot: user.is_bot,
+                is_bot: user.user_type.is_bot(),
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
                 chit_balance: user
@@ -255,6 +257,8 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -284,6 +288,7 @@ struct Data {
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub airdrop_bot_canister_id: CanisterId,
+    pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -305,7 +310,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -320,6 +324,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    pub remove_from_online_users_queue: VecDeque<Principal>,
 }
 
 impl Data {
@@ -333,6 +338,7 @@ impl Data {
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         airdrop_bot_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -356,6 +362,7 @@ impl Data {
             identity_canister_id,
             proposals_bot_canister_id,
             airdrop_bot_canister_id,
+            online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -379,7 +386,6 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -393,6 +399,7 @@ impl Data {
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
         };
 
         // Register the ProposalsBot
@@ -403,6 +410,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         // Register the AirdropBot
@@ -413,6 +421,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         data
@@ -480,6 +489,7 @@ impl Default for Data {
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
             airdrop_bot_canister_id: Principal::anonymous(),
+            online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
@@ -501,7 +511,6 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -515,6 +524,7 @@ impl Default for Data {
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
         }
     }
 }
@@ -619,6 +629,8 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
+    pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,

@@ -41,6 +41,7 @@ export function publicGroupSummary(
             updateGroup: "none",
             pinMessages: "none",
             inviteUsers: "none",
+            addMembers: "none",
             reactToMessages: "none",
             mentionAllMembers: "none",
             startVideoCall: "none",
@@ -62,6 +63,7 @@ export function publicGroupSummary(
         membership: nullMembership(),
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 

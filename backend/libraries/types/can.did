@@ -241,6 +241,7 @@ type ChatEvent = variant {
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
+    ExternalUrlUpdated : ExternalUrlUpdated;
 };
 
 type ChatEventWrapper = record {
@@ -419,7 +420,7 @@ type CommunityCanisterChannelSummary = record {
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
     is_invited : opt bool;
-    
+    external_url : opt text;
 };
 
 type GroupMembership = record {
@@ -484,6 +485,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     gate : AccessGateUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    external_url : TextUpdate;
 };
 
 type GroupMembershipUpdates = record {
@@ -1273,12 +1275,12 @@ type User = record {
 
 type GroupPermissions = record {
     change_roles : PermissionRole;
-    add_members : PermissionRole;
     remove_members : PermissionRole;
     delete_messages : PermissionRole;
     update_group : PermissionRole;
     pin_messages : PermissionRole;
     invite_users : PermissionRole;
+    add_members : PermissionRole;
     react_to_messages : PermissionRole;
     mention_all_members : PermissionRole;
     start_video_call : PermissionRole;
@@ -1314,6 +1316,7 @@ type OptionalGroupPermissions = record {
     update_group : opt PermissionRole;
     pin_messages : opt PermissionRole;
     invite_users : opt PermissionRole;
+    add_members : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
     start_video_call : opt PermissionRole;
@@ -1549,6 +1552,11 @@ type AccessGateUpdate = variant {
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+};
+
+type ExternalUrlUpdated = record {
+    updated_by : UserId;
+    new_url : opt text;
 };
 
 type VerifiedCredentialGate = record {
@@ -1868,6 +1876,7 @@ type ChitEarned = record {
 type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : Achievement;
+    Referral : ReferralStatus;
     MemeContestWinner;
 };
 
@@ -1885,6 +1894,7 @@ type UserSummaryStable = record {
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
     is_unique_person : bool;
+    bot_config : opt BotConfig;
 };
 
 type UserSummaryVolatile = record {
@@ -1907,6 +1917,12 @@ type CurrentUserSummary = record {
     diamond_membership_status : DiamondMembershipStatusFull;
     moderation_flags_enabled : nat32;
     is_unique_person : bool;
+};
+
+type BotConfig = record {
+    is_oc_controlled : bool;
+    supports_direct_messages : bool;
+    can_be_added_to_groups : bool;
 };
 
 type SuspensionDetails = record {
@@ -1934,6 +1950,8 @@ type Achievement = variant {
     Streak7;
     Streak14;
     Streak30;
+    Streak100;
+    Streak365;
     SentPoll;
     VotedOnPoll;
     SentText;
@@ -1986,4 +2004,21 @@ type Achievement = variant {
     DirectChats5;
     DirectChats10;
     DirectChats20;
+    Referred1stUser;
+    Referred3rdUser;
+    Referred10thUser;
+    Referred20thUser;
+    Referred50thUser;
+};
+
+type Chit = record {
+    balance : int32;
+    streak : nat16;
+};
+
+type ReferralStatus = variant {
+    Diamond;
+    UniquePerson;
+    LifetimeDiamond;
+    Registered;
 };

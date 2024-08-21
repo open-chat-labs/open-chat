@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type CommunityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { apiOptionUpdate, identity } from "../../utils/mapping";
@@ -182,26 +182,17 @@ import {
 export class CommunityClient extends CandidService {
     private service: CommunityService;
 
-    private constructor(
-        private communityId: string,
+    constructor(
         identity: Identity,
+        agent: HttpAgent,
         private config: AgentConfig,
+        private communityId: string,
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity);
+        super(identity, agent, communityId);
 
-        this.service = this.createServiceClient<CommunityService>(idlFactory, communityId, config);
-    }
-
-    static create(
-        communityId: string,
-        identity: Identity,
-        config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined,
-    ): CommunityClient {
-        return new CommunityClient(communityId, identity, config, db, inviteCode);
+        this.service = this.createServiceClient<CommunityService>(idlFactory);
     }
 
     claimPrize(channelId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
@@ -296,6 +287,7 @@ export class CommunityClient extends CandidService {
                 subtype: [],
                 events_ttl: apiOptional(identity, channel.eventsTTL),
                 description: channel.description,
+                external_url: apiOptional(identity, channel.externalUrl),
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional(
                     (data) => {
@@ -310,6 +302,10 @@ export class CommunityClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
+                messages_visible_to_non_members: apiOptional(
+                    identity,
+                    channel.messagesVisibleToNonMembers,
+                ),
             }),
             (resp) => createGroupResponse(resp, channel.id),
         );
@@ -378,7 +374,7 @@ export class CommunityClient extends CandidService {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.config)
+        return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [chatId.communityId])
             .then((content) => {
                 return this.handleResponse(
@@ -978,7 +974,7 @@ export class CommunityClient extends CandidService {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
 
-        const dataClient = DataClient.create(this.identity, this.config);
+        const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [chatId.communityId])
             : dataClient.uploadData(event.event.content, [chatId.communityId]);
@@ -1032,7 +1028,8 @@ export class CommunityClient extends CandidService {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.service.register_poll_vote({
@@ -1041,6 +1038,7 @@ export class CommunityClient extends CandidService {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                new_achievement: newAchievement,
             }),
             registerPollVoteResponse,
         );
@@ -1111,12 +1109,12 @@ export class CommunityClient extends CandidService {
     }
 
     toggleMuteChannelNotifications(
-        chatId: ChannelIdentifier,
+        chatId: ChannelIdentifier | undefined,
         mute: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
-                channel_id: [BigInt(chatId.channelId)],
+                channel_id: chatId ? [BigInt(chatId.channelId)] : [],
                 mute,
             }),
             muteNotificationsResponse,
@@ -1198,12 +1196,16 @@ export class CommunityClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
+        externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(chatId.channelId),
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
+                external_url:
+                    externalUrl === undefined ? { NoChange: null } : { SetToSome: externalUrl },
                 permissions_v2: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
@@ -1224,6 +1226,7 @@ export class CommunityClient extends CandidService {
                                   data: avatar,
                               },
                           },
+                messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,
         );
@@ -1306,10 +1309,14 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    setMemberDisplayName(displayName: string | undefined): Promise<SetMemberDisplayNameResponse> {
+    setMemberDisplayName(
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<SetMemberDisplayNameResponse> {
         return this.handleResponse(
             this.service.set_member_display_name({
                 display_name: apiOptional(identity, displayName),
+                new_achievement: newAchievement,
             }),
             setMemberDisplayNameResponse,
         );
@@ -1361,6 +1368,7 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.service.accept_p2p_swap({
@@ -1368,6 +1376,7 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 pin: apiOptional(identity, pin),
+                new_achievement: newAchievement,
             }),
             acceptP2PSwapResponse,
         );
@@ -1388,11 +1397,16 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    joinVideoCall(channelId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(
+        channelId: string,
+        messageId: bigint,
+        newAchievement: boolean,
+    ): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.service.join_video_call({
                 message_id: messageId,
                 channel_id: BigInt(channelId),
+                new_achievement: newAchievement,
             }),
             joinVideoCallResponse,
         );
@@ -1402,12 +1416,14 @@ export class CommunityClient extends CandidService {
         channelId: string,
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.service.set_video_call_presence({
                 channel_id: BigInt(channelId),
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
+                new_achievement: newAchievement,
             }),
             setVideoCallPresence,
         );

@@ -1,4 +1,5 @@
 export BUILD_ENV=prod_test
+export INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
 export INTERNET_IDENTITY_URL=https://identity.ic0.app
 export NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChatTest
 export VIDEO_BRIDGE_URL=https://d37cwaycp9g5li.cloudfront.net

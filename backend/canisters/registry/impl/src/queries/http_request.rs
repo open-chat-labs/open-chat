@@ -2,7 +2,6 @@ use crate::{read_state, RuntimeState};
 use dataurl::DataUrl;
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
-use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use std::str::FromStr;
 use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, TimestampMillis};
@@ -49,7 +48,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                         "public, max-age=100000000, immutable".to_string(),
                     ),
                 ],
-                body: ByteBuf::from(url.get_data()),
+                body: url.get_data().to_vec(),
                 streaming_strategy: None,
             }
         } else {
@@ -78,7 +77,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 HeaderField("content-type".to_string(), "application/json".to_string()),
                 HeaderField("content-length".to_string(), body.len().to_string()),
             ],
-            body: ByteBuf::from(body),
+            body,
             streaming_strategy: None,
         }
     }

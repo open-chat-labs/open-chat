@@ -8,7 +8,7 @@
         "ROLLBAR_ACCESS_TOKEN",
         "TRANSLATE_API_KEY",
         "PUBLIC_TRANSLATE_API_KEY",
-        "GIPHY_APIKEY",
+        "TENOR_APIKEY",
         "CORS_APIKEY"
     ],
     "pipeline": {
@@ -46,6 +46,10 @@
         "build:ci": {
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
+        },
+
+        "verify": {
+            "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
         },
 
         "test:prod": {

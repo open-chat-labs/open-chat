@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Prevent memory leak from build up of timer jobs ([#6190](https://github.com/open-chat-labs/open-chat/pull/6190))
+
+## [[2.0.1282](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1282-neuron_controller)] - 2024-08-02
+
 ### Changed
 
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
