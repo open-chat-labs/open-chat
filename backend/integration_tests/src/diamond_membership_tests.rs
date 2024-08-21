@@ -4,14 +4,13 @@ use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use jwt::{verify_jwt, Claims};
 use serial_test::serial;
-use std::ops::{Add, Deref};
-use std::time::{Duration, SystemTime};
+use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
 use types::{
     Achievement, ChitEarnedReason, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
     DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
-use user_canister::USERS_VERSION_2_0_1299_FINISHED_TS;
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
@@ -162,8 +161,6 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         controller,
         ..
     } = wrapper.env();
-
-    env.set_time(SystemTime::UNIX_EPOCH.add(Duration::from_millis(USERS_VERSION_2_0_1299_FINISHED_TS)));
 
     // Register referrer and upgrade to Diamond
     let user_a = client::register_user(env, canister_ids);

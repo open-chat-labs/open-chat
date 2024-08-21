@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1300](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1300-user)] - 2024-08-20
+
 ### Added
 
 - Set/store user's wallet configuration ([#6242](https://github.com/open-chat-labs/open-chat/pull/6242))
