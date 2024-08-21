@@ -325,7 +325,6 @@ struct Data {
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(default)]
     achievements: Achievements,
 }
 
