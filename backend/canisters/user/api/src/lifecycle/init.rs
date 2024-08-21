@@ -13,10 +13,8 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
-    // TODO: Changed to MessageContentInitial but means local_user_index needs to be deployed and immediately afterwards the user canisters
     pub openchat_bot_messages: Vec<MessageContentInitial>,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default)]
     pub referred_by: Option<UserId>,
     pub test_mode: bool,
 }
