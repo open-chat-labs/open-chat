@@ -1,9 +1,15 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Support deserializing u128 and i128 values from
+  strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
 ## [[2.0.1294](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1294-airdrop_bot)] - 2024-08-16
 
@@ -23,4 +29,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Ensure users can't win multiple lottery prizes in a single draw ([#6187](https://github.com/open-chat-labs/open-chat/pull/6187))
+- Ensure users can't win multiple lottery prizes in a single
+  draw ([#6187](https://github.com/open-chat-labs/open-chat/pull/6187))
