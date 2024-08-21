@@ -1705,7 +1705,7 @@ export class OpenChatAgent extends EventTarget {
             achievements = current.achievements;
             newAchievements = [];
             chitState = current.chitState;
-            referrals = current.referrals;
+            referrals = current.referrals ?? [];
             walletConfig = current.walletConfig;
 
             if (userResponse.kind === "success") {
