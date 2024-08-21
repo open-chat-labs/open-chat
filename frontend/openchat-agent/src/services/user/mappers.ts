@@ -1033,24 +1033,26 @@ export function manageFavouritesResponse(
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        const result = candid.Success;
         return {
             kind: "success",
-            timestamp: candid.Success.timestamp,
-            blockedUsers: optional(candid.Success.blocked_users, (b) => b.map((u) => u.toString())),
-            communities: communitiesUpdates(candid.Success.communities),
-            favouriteChats: favouriteChatsUpdates(candid.Success.favourite_chats),
-            groupChats: groupChatsUpdates(candid.Success.group_chats),
-            avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            directChats: directChatsUpdates(candid.Success.direct_chats),
-            suspended: optional(candid.Success.suspended, identity),
-            pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
-            achievementsLastSeen: optional(candid.Success.achievements_last_seen, identity),
-            achievements: candid.Success.achievements.map(chitEarned),
-            streakEnds: candid.Success.streak_ends,
-            streak: candid.Success.streak,
-            nextDailyClaim: candid.Success.next_daily_claim,
-            chitBalance: candid.Success.chit_balance,
-            totalChitEarned: candid.Success.total_chit_earned,
+            timestamp: result.timestamp,
+            blockedUsers: optional(result.blocked_users, (b) => b.map((u) => u.toString())),
+            communities: communitiesUpdates(result.communities),
+            favouriteChats: favouriteChatsUpdates(result.favourite_chats),
+            groupChats: groupChatsUpdates(result.group_chats),
+            avatarId: optionUpdate(result.avatar_id, identity),
+            directChats: directChatsUpdates(result.direct_chats),
+            suspended: optional(result.suspended, identity),
+            pinNumberSettings: optionUpdate(result.pin_number_settings, pinNumberSettings),
+            achievementsLastSeen: optional(result.achievements_last_seen, identity),
+            achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
         };
     }
 

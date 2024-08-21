@@ -5499,8 +5499,9 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const userIds = this.userIdsFromChatSummaries(chats);
-            if (initialLoad) {
-                for (const userId of this._liveState.user.referrals) {
+            if (chatsResponse.state.referrals !== undefined) {
+                console.log("referrals", chatsResponse.state.referrals);
+                for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
                     userIds.add(userId);
                 }
             }
@@ -5558,6 +5559,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
+                chatsResponse.state.referrals,
             );
 
             const selectedChatId = this._liveState.selectedChatId;

@@ -979,6 +979,7 @@ export type ChatStateFull = {
     achievements: Set<Achievement>;
     achievementsLastSeen: bigint;
     chitState: ChitState;
+    referrals: Referral[];
 };
 
 export type ChitState = {
@@ -1187,6 +1188,7 @@ export type UpdatesSuccessResponse = {
     streak: number;
     nextDailyClaim: bigint;
     totalChitEarned: number;
+    referrals: Referral[];
 };
 
 export type DirectChatsUpdates = {
