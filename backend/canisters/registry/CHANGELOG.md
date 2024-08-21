@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1298](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1298-registry)] - 2024-08-19
+
 ### Changed
 
 - Mark tokens as incompatible with ICRC1 if they have a non-zero burn fee ([#6143](https://github.com/open-chat-labs/open-chat/pull/6143))
