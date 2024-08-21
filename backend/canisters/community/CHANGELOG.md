@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1296](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1296-community)] - 2024-08-16
+
 ### Changed
 
 - Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
