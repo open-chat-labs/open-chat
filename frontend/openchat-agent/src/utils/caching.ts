@@ -167,6 +167,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         await clearChatsStore(principal, tx);
     },
     109: clearChatsStore,
+    110: clearChatsStore,
     111: clearChatsStore,
 };
 

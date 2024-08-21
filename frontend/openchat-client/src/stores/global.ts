@@ -12,6 +12,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    Referral,
     WalletConfig,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
@@ -31,6 +32,7 @@ export type GlobalState = {
     favourites: ObjectSet<ChatIdentifier>;
     pinnedChats: PinnedByScope;
     achievements: Set<Achievement>;
+    referrals: Referral[];
 };
 
 export const chitStateStore = immutableStore<ChitState>({
@@ -57,6 +59,7 @@ export const globalStateStore = immutableStore<GlobalState>({
         none: [],
     },
     achievements: new Set(),
+    referrals: [],
 });
 
 export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
@@ -338,6 +341,7 @@ export function setGlobalState(
     pinnedChats: PinnedByScope,
     achievements: Set<Achievement>,
     chitState: ChitState,
+    referrals: Referral[],
     walletConfig: WalletConfig,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
@@ -349,6 +353,7 @@ export function setGlobalState(
         favourites: ObjectSet.fromList(favourites),
         pinnedChats,
         achievements,
+        referrals,
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };

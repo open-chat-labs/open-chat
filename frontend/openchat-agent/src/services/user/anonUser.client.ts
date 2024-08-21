@@ -120,6 +120,7 @@ export class AnonUserClient {
             nextDailyClaim: 0n,
             chitBalance: 0,
             totalChitEarned: 0,
+            referrals: [],
             walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
         });
     }

@@ -208,6 +208,7 @@ import type {
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
     TopUpNeuronResponse,
+    Referral,
     WalletConfig,
 } from "openchat-shared";
 import {
@@ -1628,6 +1629,7 @@ export class OpenChatAgent extends EventTarget {
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
+        let referrals: Referral[];
         let walletConfig: WalletConfig;
 
         let latestActiveGroupsCheck = BigInt(0);
@@ -1674,6 +1676,7 @@ export class OpenChatAgent extends EventTarget {
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
             };
+            referrals = userResponse.referrals;
             walletConfig = userResponse.walletConfig;
             anyUpdates = true;
         } else {
@@ -1702,6 +1705,7 @@ export class OpenChatAgent extends EventTarget {
             achievements = current.achievements;
             newAchievements = [];
             chitState = current.chitState;
+            referrals = current.referrals;
             walletConfig = current.walletConfig;
 
             if (userResponse.kind === "success") {
@@ -1749,6 +1753,12 @@ export class OpenChatAgent extends EventTarget {
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                     totalChitEarned: userResponse.totalChitEarned,
                 };
+                referrals = referrals
+                    .filter(
+                        (prev) =>
+                            !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                    )
+                    .concat(userResponse.referrals);
                 walletConfig = userResponse.walletConfig ?? current.walletConfig;
                 anyUpdates = true;
             }
@@ -1905,6 +1915,7 @@ export class OpenChatAgent extends EventTarget {
             achievementsLastSeen,
             achievements,
             chitState,
+            referrals,
             walletConfig,
         };
 

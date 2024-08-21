@@ -164,6 +164,8 @@ import {
     ChitEarnedReason,
     Achievement,
     ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
     WalletConfig,
 } from "./types";
 export {
@@ -331,6 +333,8 @@ export {
     ChitEarnedReason as ApiChitEarnedReason,
     Achievement as ApiAchievement,
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
+    ReferralStatus as ApiReferralStatus,
+    Referral as ApiReferral,
     WalletConfig as ApiWalletConfig
 };
 
