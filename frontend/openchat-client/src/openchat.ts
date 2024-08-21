@@ -5500,7 +5500,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
             const userIds = this.userIdsFromChatSummaries(chats);
             if (chatsResponse.state.referrals !== undefined) {
-                console.log("referrals", chatsResponse.state.referrals);
                 for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
                     userIds.add(userId);
                 }
