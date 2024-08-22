@@ -8,7 +8,7 @@ import type { CommunityIdentifier } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
 export class SafeMap<K, V> {
-    protected constructor(
+    constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
         protected _map: Map<string, V> = new Map<string, V>(),

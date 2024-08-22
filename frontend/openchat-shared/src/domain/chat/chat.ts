@@ -650,6 +650,11 @@ export type LocalPollVote = {
     userId: string;
 };
 
+export type LocalGlobalUpdates = {
+    walletConfig?: WalletConfig;
+    lastUpdated: number;
+};
+
 export type LocalChatSummaryUpdates = {
     added?: ChatSummary;
     updated?:
