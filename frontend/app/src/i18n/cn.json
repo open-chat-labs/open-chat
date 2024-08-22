@@ -1538,7 +1538,7 @@
     "userJoined": "{username} 加入了 {level}",
     "username": "用户名",
     "usernameRules": "仅支持字母，数字和下划线",
-    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。",
+    "userReferralMessage": "与亲朋好友分享此 OpenChat 链接。您推荐的每位用户继续验证其独特身份或成为钻石会员，您都将获得 CHIT 奖励。如果您推荐的用户继续成为钻石会员，您将获得 5,000 CHIT，如果他们证明其独特身份，则为 10,000 CHIT，如果他们成为终身钻石会员，则为 15,000 CHIT。如果他们随后进行更高价值的“验证”，您将获得 CHIT 差额。",
     "users": "用户",
     "userSearchFailed": "搜索用户失败",
     "version": "版本",

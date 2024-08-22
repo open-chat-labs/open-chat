@@ -1538,7 +1538,7 @@
     "userJoined": "{username} đã tham gia {level}",
     "username": "Tên đăng nhập",
     "usernameRules": "Chỉ bao gồm chữ cái và gạch dưới",
-    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên.",
+    "userReferralMessage": "Chia sẻ liên kết này đến OpenChat với bạn bè và gia đình. Bạn sẽ kiếm được phần thưởng CHIT cho mỗi người dùng mà bạn giới thiệu, người tiếp tục xác minh nhân cách độc đáo của họ hoặc trở thành thành viên Diamond. Nếu người dùng mà bạn giới thiệu tiếp tục nhận được tư cách thành viên Diamond, bạn sẽ kiếm được 5.000 CHIT, nếu họ chứng minh được nhân cách độc đáo, thì đó là 10.000 CHIT và nếu họ nhận được Diamond trọn đời, thì đó là 15.000 CHIT. Nếu sau đó họ thực hiện \"xác minh\" có giá trị cao hơn, bạn sẽ được thưởng phần chênh lệch trong CHIT.",
     "users": "Người dùng",
     "userSearchFailed": "Đã xảy ra lỗi khi tìm kiếm người dùng",
     "version": "phiên bản",
