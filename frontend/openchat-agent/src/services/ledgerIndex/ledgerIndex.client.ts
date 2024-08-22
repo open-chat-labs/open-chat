@@ -17,17 +17,13 @@ export class LedgerIndexClient extends CandidService {
     }
 
     getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {
-        // return new Promise((resolve) => {
-        //     console.log("returning fake transactions");
-        //     setTimeout(() => resolve(fake), 3000);
-        // });
-
-        return this.handleResponse(
-            this.service.get_account_transactions({
-                max_results: 100n,
-                start: apiOptional(identity, fromId),
-                account: { owner: Principal.fromText(principal), subaccount: [] },
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.get_account_transactions({
+                    max_results: 100n,
+                    start: apiOptional(identity, fromId),
+                    account: { owner: Principal.fromText(principal), subaccount: [] },
+                }),
             accountTransactions,
         );
     }
