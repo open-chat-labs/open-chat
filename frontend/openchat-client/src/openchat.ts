@@ -151,7 +151,7 @@ import {
     exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
-    serverWalletConfigStore,
+    walletConfigStore,
     walletTokensSorted,
 } from "./stores/crypto";
 import {
@@ -7505,7 +7505,7 @@ export class OpenChat extends OpenChatAgentWorker {
     /**
      * Reactive state provided in the form of svelte stores
      */
-    walletConfigStore = serverWalletConfigStore;
+    walletConfigStore = walletConfigStore;
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;
