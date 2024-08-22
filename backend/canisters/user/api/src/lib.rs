@@ -307,19 +307,19 @@ pub enum WalletConfig {
     Manual(ManualWallet),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AutoWallet {
-    min_cents_visible: u32,
+    pub min_cents_visible: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ManualWallet {
-    tokens: Vec<CanisterId>,
+    pub tokens: Vec<CanisterId>,
 }
 
 impl Default for WalletConfig {
     fn default() -> Self {
-        WalletConfig::Auto(AutoWallet { min_cents_visible: 100 })
+        WalletConfig::Auto(AutoWallet::default())
     }
 }
 
