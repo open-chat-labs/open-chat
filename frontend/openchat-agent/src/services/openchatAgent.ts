@@ -1868,7 +1868,9 @@ export class OpenChatAgent extends EventTarget {
                         break;
                     }
                     case "error": {
-                        anyErrors = true;
+                        if (!result.error.includes("DestinationInvalid")) {
+                            anyErrors = true;
+                        }
                         break;
                     }
                 }
