@@ -1538,7 +1538,7 @@
     "userJoined": "{username} a rejoint le {level}",
     "username": "Nom d'utilisateur",
     "usernameRules": "caractères alphanumériques et traits de soulignement uniquement",
-    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année.",
+    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Vous gagnez des récompenses CHIT pour chaque utilisateur que vous parrainez qui continue à vérifier sa personnalité unique ou devient membre Diamond. Si un utilisateur que vous parrainez devient membre Diamond, vous gagnerez 5 000 CHIT, s'il prouve sa personnalité unique, ce sera 10 000 CHIT et s'il obtient le statut Diamond à vie, ce sera 15 000 CHIT. S'il effectue ensuite une « vérification » de valeur supérieure, vous recevrez la différence en CHIT.",
     "users": "Utilisateurs",
     "userSearchFailed": "Une erreur s'est produite lors de la recherche d'utilisateurs",
     "version": "version",

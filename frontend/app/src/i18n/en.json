@@ -1538,7 +1538,7 @@
     "userJoined": "{username} joined the {level}",
     "username": "Username",
     "usernameRules": "alphanumerics & underscores only",
-    "userReferralMessage": "Share this link to OpenChat with friends and family. As long as you are a Diamond member yourself, for each person who registers with your link and goes on to become a Diamond member, you will receive half of the membership payments they make during their first year.",
+    "userReferralMessage": "Share this link to OpenChat with friends and family. You earn CHIT rewards for each user you refer who goes on to verify their unique personhood or becomes a Diamond member. If a user you refer goes on to get Diamond membership you will earn 5,000 CHIT, if they prove unique personhood, it is 10,000 CHIT and if they get lifetime Diamond, it is 15,000 CHIT. If they subsequently do a higher value \"verification\" you will be awarded the difference in CHIT.",
     "users": "Users",
     "userSearchFailed": "There was an error searching for users",
     "version": "Version",

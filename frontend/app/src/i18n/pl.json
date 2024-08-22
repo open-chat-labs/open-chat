@@ -1538,7 +1538,7 @@
     "userJoined": "{username} dołączył do {level}",
     "username": "Nazwa użytkownika",
     "usernameRules": "tylko znaki alfanumeryczne i podkreślenia",
-    "userReferralMessage": "Udostępnij ten link do OpenChat znajomym i rodzinie. Jeśli sam jesteś członkiem Diamentowym, za każdą osobę, która zarejestruje się za pomocą Twojego linku i stanie się członkiem Diamentowym, otrzymasz połowę opłat członkowskich wnoszonych przez tę osobę w ciągu pierwszego roku.",
+    "userReferralMessage": "Udostępnij ten link do OpenChat znajomym i rodzinie. Zyskujesz nagrody CHIT za każdego poleconego użytkownika, który zweryfikuje swoją unikalną osobowość lub zostanie członkiem Diamond. Jeśli polecony przez Ciebie użytkownik uzyska członkostwo Diamond, otrzymasz 5000 CHIT, jeśli udowodni swoją unikalną osobowość, otrzymasz 10 000 CHIT, a jeśli uzyska dożywotni poziom Diamond, otrzymasz 15 000 CHIT. Jeśli następnie przeprowadzi „weryfikację” o wyższej wartości, otrzymasz różnicę w CHIT.",
     "users": "Użytkownicy",
     "userSearchFailed": "Wystąpił błąd podczas wyszukiwania użytkowników",
     "version": "Wersja",
