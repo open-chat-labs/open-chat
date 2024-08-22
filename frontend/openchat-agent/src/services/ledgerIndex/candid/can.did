@@ -82,7 +82,7 @@ type InitArgs = record {
 };
 
 service : (InitArgs) -> {
-  get_account_transactions : (GetAccountTransactionsArgs) -> (GetTransactionsResult);
+  get_account_transactions : (GetAccountTransactionsArgs) -> (GetTransactionsResult) query;
   ledger_id : () -> (principal) query;
   list_subaccounts : (ListSubaccountsArgs) -> (vec SubAccount) query;
 }

@@ -4748,12 +4748,16 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.sendRequest({
-            kind: "registerProposalVote",
-            chatId,
-            messageIndex,
-            adopt,
-        }).catch(() => "internal_error");
+        return this.sendRequest(
+            {
+                kind: "registerProposalVote",
+                chatId,
+                messageIndex,
+                adopt,
+            },
+            false,
+            2 * DEFAULT_WORKER_TIMEOUT,
+        ).catch(() => "internal_error");
     }
 
     getProposalVoteDetails(

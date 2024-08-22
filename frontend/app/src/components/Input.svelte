@@ -17,7 +17,7 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
-    export let pattern: string = "";
+    export let pattern: string | undefined = undefined;
 
     const dispatch = createEventDispatcher();
 
