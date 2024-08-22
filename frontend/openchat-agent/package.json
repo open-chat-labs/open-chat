@@ -14,7 +14,7 @@
     "test:watch": "jest --watch --detectOpenHandles --runInBand",
     "lint": "eslint ./src --fix",
     "codegen": "sh ./codegen.sh",
-    "typebox": "ts2typebox --input ./tsBindingsMerged.d.ts --output ./src/typebox.ts"
+    "typebox": "ts2typebox --input ./../../tsBindings/types.d.ts --output ./src/typebox.ts"
   },
   "author": "julian.jelfs@gmail.com",
   "dependencies": {

@@ -20,13 +20,46 @@ pub enum AccessGate {
     Locked,
 }
 
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+pub enum AccessGateNonComposite {
+    DiamondMember,
+    LifetimeDiamondMember,
+    UniquePerson,
+    VerifiedCredential(VerifiedCredentialGate),
+    SnsNeuron(SnsNeuronGate),
+    Payment(PaymentGate),
+    TokenBalance(TokenBalanceGate),
+    Locked,
+}
+
+pub enum AccessGateType {
+    Composite(CompositeGate),
+    NonComposite(AccessGateNonComposite),
+}
+
+impl From<AccessGate> for AccessGateType {
+    fn from(value: AccessGate) -> Self {
+        match value {
+            AccessGate::Composite(gate) => AccessGateType::Composite(gate),
+            AccessGate::DiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::DiamondMember),
+            AccessGate::LifetimeDiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
+            AccessGate::UniquePerson => AccessGateType::NonComposite(AccessGateNonComposite::UniquePerson),
+            AccessGate::VerifiedCredential(gate) => {
+                AccessGateType::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
+            }
+            AccessGate::SnsNeuron(gate) => AccessGateType::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
+            AccessGate::Payment(gate) => AccessGateType::NonComposite(AccessGateNonComposite::Payment(gate)),
+            AccessGate::TokenBalance(gate) => AccessGateType::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
+            AccessGate::Locked => AccessGateType::NonComposite(AccessGateNonComposite::Locked),
+        }
+    }
+}
+
 impl AccessGate {
     pub fn validate(&self) -> bool {
         if let AccessGate::Composite(g) = self {
             if g.inner.is_empty() || g.inner.len() > 10 {
-                return false;
-            }
-            if g.inner.iter().any(|i| matches!(i, AccessGate::Composite(_))) {
                 return false;
             }
         }
@@ -95,7 +128,7 @@ pub struct TokenBalanceGate {
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct CompositeGate {
-    pub inner: Vec<AccessGate>,
+    pub inner: Vec<AccessGateNonComposite>,
     pub and: bool,
 }
 

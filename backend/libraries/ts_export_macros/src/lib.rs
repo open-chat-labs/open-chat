@@ -69,8 +69,8 @@ pub fn generate_ts_method(input: TokenStream) -> TokenStream {
     let method_name = format_ident!("{}", attribute.method_name);
 
     let tokens = quote! {
-        <#canister_module::#method_name::Args as ::ts_rs::TS>::export_all_to("frontend/openchat-agent/tsBindings").unwrap();
-        <#canister_module::#method_name::Response as ::ts_rs::TS>::export_all_to("frontend/openchat-agent/tsBindings").unwrap();
+        <#canister_module::#method_name::Args as ::ts_rs::TS>::export_all_to("tsBindings").unwrap();
+        <#canister_module::#method_name::Response as ::ts_rs::TS>::export_all_to("tsBindings").unwrap();
     };
 
     TokenStream::from(tokens)

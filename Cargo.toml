@@ -162,6 +162,7 @@ members = [
     "backend/tools/canister_upgrader",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
+    "backend/tools/ts_exporter",
 ]
 resolver = "2"
 
