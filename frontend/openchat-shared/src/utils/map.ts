@@ -8,7 +8,7 @@ import type { CommunityIdentifier } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
 export class SafeMap<K, V> {
-    constructor(
+    protected constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
         protected _map: Map<string, V> = new Map<string, V>(),
@@ -90,6 +90,17 @@ export class SafeMap<K, V> {
 
     toMap(): Map<string, V> {
         return this._map;
+    }
+}
+
+// This is a bit weird
+export class GlobalMap<V> extends SafeMap<"global", V> {
+    constructor(_map: Map<"global", V> = new Map<"global", V>()) {
+        super(
+            (_: "global") => "global",
+            (_: string) => "global",
+            _map,
+        );
     }
 }
 
