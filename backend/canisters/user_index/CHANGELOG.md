@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1302](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1302-user_index)] - 2024-08-22
+
 ### Changed
 
 - Sync referrers and referrals with users ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
