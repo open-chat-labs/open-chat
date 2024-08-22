@@ -76,7 +76,7 @@ export const idlFactory = ({ IDL }) => {
     'get_account_transactions' : IDL.Func(
         [GetAccountTransactionsArgs],
         [GetTransactionsResult],
-        [],
+        ['query'],
       ),
     'ledger_id' : IDL.Func([], [IDL.Principal], ['query']),
     'list_subaccounts' : IDL.Func(
