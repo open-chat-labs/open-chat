@@ -554,6 +554,7 @@ import {
 import { storeEmailSignInSession } from "openchat-shared";
 import { getEmailSignInSession } from "openchat-shared";
 import { removeEmailSignInSession } from "openchat-shared";
+import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -7492,7 +7493,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setWalletConfig(config: WalletConfig): Promise<boolean> {
-        walletConfigStore.set(config);
+        localGlobalUpdates.updateWallet(config);
         return this.sendRequest({
             kind: "configureWallet",
             config,
