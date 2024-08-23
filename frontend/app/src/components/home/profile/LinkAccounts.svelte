@@ -21,7 +21,11 @@
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import SignInOption from "./SignInOption.svelte";
-    import { EmailPollerError, EmailSigninHandler } from "../../../utils/signin";
+    import {
+        EmailPollerError,
+        EmailPollerSuccess,
+        EmailSigninHandler,
+    } from "../../../utils/signin";
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -46,7 +50,7 @@
     type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
     let error: string | undefined;
-    let emailSigninHandler = new EmailSigninHandler(client, "account_linking");
+    let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let step: "explain" | "linking" = "explain";
     let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
@@ -73,6 +77,10 @@
     function emailEvent(ev: Event): void {
         if (ev instanceof EmailPollerError) {
             error = "identity.failure.pollingError";
+        }
+
+        if (ev instanceof EmailPollerSuccess) {
+            authComplete(AuthProvider.EMAIL, ev);
         }
     }
 
@@ -203,8 +211,8 @@
             });
     }
 
-    function walletConnected(
-        provider: AuthProvider.ETH | AuthProvider.SOL,
+    function authComplete(
+        provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
     ) {
         if (substep.kind !== "approver") return;
@@ -301,7 +309,7 @@
                     {:then { default: SigninWithEth }}
                         <SigninWithEth
                             assumeIdentity={false}
-                            on:connected={(ev) => walletConnected(AuthProvider.ETH, ev)} />
+                            on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
                     {/await}
                 </div>
             {:else if approverStep === "choose_sol_wallet"}
@@ -311,7 +319,7 @@
                     {:then { default: SigninWithSol }}
                         <SigninWithSol
                             assumeIdentity={false}
-                            on:connected={(ev) => walletConnected(AuthProvider.SOL, ev)} />
+                            on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
                     {/await}
                 </div>
             {:else if approverStep === "signing_in_with_email"}

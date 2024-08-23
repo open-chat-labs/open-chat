@@ -25,7 +25,7 @@
     let verificationCode: string | undefined = undefined;
     let emailInvalid = false;
 
-    let emailSigninHandler = new EmailSigninHandler(client, "registration");
+    let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
     $: restrictTo = new Set($querystring.getAll("auth"));
     $: anonUser = client.anonUser;
