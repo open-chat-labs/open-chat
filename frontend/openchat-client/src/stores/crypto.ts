@@ -9,6 +9,7 @@ import {
     type WalletConfig,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -86,7 +87,17 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
-export const walletConfigStore = writable<WalletConfig>({ kind: "auto_wallet", minDollarValue: 1 });
+export const serverWalletConfigStore = writable<WalletConfig>({
+    kind: "auto_wallet",
+    minDollarValue: 0,
+});
+
+export const walletConfigStore = derived(
+    [serverWalletConfigStore, localGlobalUpdates],
+    ([$serverWalletConfig, $localGlobalUpdates]) => {
+        return $localGlobalUpdates.get("global")?.walletConfig ?? $serverWalletConfig;
+    },
+);
 
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)
