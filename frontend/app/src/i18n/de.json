@@ -153,6 +153,8 @@
     "chooseReaction": "Wähle ein Symbol",
     "chooseTransfer": "Sie können für bis zu 1 GB Speicherplatz per ICP-Überweisung bezahlen.",
     "chooseUpgrade": "Sie können 100 MB kostenlosen Speicherplatz beanspruchen, indem Sie einen SMS-Bestätigungscode erhalten, oder Sie können für bis zu 1 GB Speicherplatz mit einem ICP Transfer bezahlen.",
+    "clearDataCache": "Zwischengespeicherte Daten löschen",
+    "clearDataCacheInfo": "Unter bestimmten Umständen können die Daten, die wir auf Ihrem Gerät zwischenspeichern, beschädigt werden und Probleme verursachen. Als letzten Ausweg bitten wir Sie möglicherweise, diese zwischengespeicherten Daten zu löschen. Bitte melden Sie uns weiterhin alle Probleme, auch wenn sie durch das Löschen der zwischengespeicherten Daten behoben werden.",
     "close": "Schlie­ßen",
     "collapse": "Schliessen",
     "communities": {

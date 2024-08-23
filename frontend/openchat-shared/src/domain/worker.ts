@@ -393,7 +393,12 @@ export type WorkerRequest =
     | SubmitProofOfUniquePersonhood
     | LinkIdentities
     | GetAuthenticationPrincipals
-    | ConfigureWallet;
+    | ConfigureWallet
+    | ClearCachedData;
+
+type ClearCachedData = {
+    kind: "clearCachedData";
+};
 
 type ConfigureWallet = {
     kind: "configureWallet";
@@ -2119,5 +2124,7 @@ export type WorkerResult<T> = T extends Init
     : T extends GetAuthenticationPrincipals
     ? AuthenticationPrincipalsResponse
     : T extends ConfigureWallet
+    ? void
+    : T extends ClearCachedData
     ? void
     : never;

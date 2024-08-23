@@ -1813,6 +1813,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.configureWallet(payload.config));
                 break;
 
+            case "clearCachedData":
+                executeThenReply(payload, correlationId, agent.clearCachedData());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

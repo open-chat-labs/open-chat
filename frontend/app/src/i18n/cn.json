@@ -153,6 +153,8 @@
     "chooseReaction": "选择表情",
     "chooseTransfer": "您可以通过 ICP 传输支付最多 1GB 的存储空间。",
     "chooseUpgrade": "您可以通过接收短信验证码申请 100MB 的免费存储空间，也可以通过 ICP 转账支付最高 1GB 的存储空间。",
+    "clearDataCache": "清除缓存数据",
+    "clearDataCacheInfo": "在某些情况下，我们在您设备上缓存的数据可能会损坏并导致问题。作为最后的手段，我们可能会要求您清除缓存数据。即使通过清除缓存数据可以解决问题，也请继续报告任何问题。",
     "close": "关闭",
     "collapse": "隐藏",
     "communities": {

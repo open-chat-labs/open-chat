@@ -153,6 +153,8 @@
     "chooseReaction": "Chọn một phản ứng",
     "chooseTransfer": "Bạn có thể thanh toán cho tối đa 1GB dung lượng bắng ICP.",
     "chooseUpgrade": "Bạn có thể yêu cầu 100MB dung lượng miễn phí bằng cách nhận mã xác minh SMS hoặc bạn có thể thanh toán cho tối đa 1GB dung lượng bằng ICP.",
+    "clearDataCache": "Xóa dữ liệu được lưu trong bộ nhớ đệm",
+    "clearDataCacheInfo": "Trong một số trường hợp, dữ liệu mà chúng tôi lưu trữ trên thiết bị của bạn có thể bị hỏng và gây ra sự cố. Như một biện pháp cuối cùng, chúng tôi có thể yêu cầu bạn xóa dữ liệu được lưu trữ đó. Vui lòng tiếp tục báo cáo bất kỳ sự cố nào ngay cả khi chúng đã được giải quyết bằng cách xóa dữ liệu được lưu trữ.",
     "close": "Đóng",
     "collapse": "Sụp đổ",
     "communities": {

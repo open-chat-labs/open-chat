@@ -153,6 +153,8 @@
     "chooseReaction": "Choisissez une réaction",
     "chooseTransfer": "Vous pouvez payer jusqu'à 1 Go de stockage via un transfert ICP.",
     "chooseUpgrade": "Vous pouvez réclamer 100 Mo de stockage gratuit en recevant un code de vérification par SMS, ou vous pouvez payer jusqu'à 1 Go de stockage via un transfert ICP.",
+    "clearDataCache": "Effacer les données mises en cache",
+    "clearDataCacheInfo": "Dans certaines circonstances, les données que nous mettons en cache sur votre appareil peuvent être corrompues et causer des problèmes. En dernier recours, nous pouvons vous demander d'effacer ces données mises en cache. Veuillez continuer à signaler tout problème même s'il est résolu en effaçant les données mises en cache.",
     "close": "Fermer",
     "collapse": "Effondrement",
     "communities": {

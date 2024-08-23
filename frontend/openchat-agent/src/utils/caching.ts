@@ -1,4 +1,5 @@
 import {
+    deleteDB,
     openDB,
     type DBSchema,
     type IDBPCursorWithValue,
@@ -1323,4 +1324,17 @@ export async function cacheLocalUserIndexForUser(
     if (db === undefined) return localUserIndex;
     (await db).put("localUserIndex", localUserIndex, userId);
     return localUserIndex;
+}
+
+export async function clearCache(principal: string): Promise<void> {
+    const name = `openchat_db_${principal}`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.error("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
 }

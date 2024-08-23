@@ -153,6 +153,8 @@
     "chooseReaction": "Wybierz reakcję",
     "chooseTransfer": "Za pomocą przelewu ICP możesz zapłacić za maksymalnie 1 GB przestrzeni dyskowej.",
     "chooseUpgrade": "Możesz ubiegać się o 100 MB bezpłatnej przestrzeni dyskowej, otrzymując kod weryfikacyjny SMS-em lub możesz zapłacić za maksymalnie 1 GB przestrzeni dyskowej przelewem ICP.",
+    "clearDataCache": "Wyczyść dane z pamięci podręcznej",
+    "clearDataCacheInfo": "W pewnych okolicznościach dane, które buforujemy na Twoim urządzeniu, mogą zostać uszkodzone i powodować problemy. W ostateczności możemy poprosić Cię o wyczyszczenie tych buforowanych danych. Prosimy o dalsze zgłaszanie wszelkich problemów, nawet jeśli zostaną rozwiązane przez wyczyszczenie buforowanych danych.",
     "close": "Zamknąć",
     "collapse": "Zawalić się",
     "communities": {
