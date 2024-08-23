@@ -576,9 +576,17 @@
                         </div>
                     </div>
                 {/if}
-                <div>
+                <div class="para">
                     <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
                     <div>{version}</div>
+                </div>
+                <div class="para">
+                    <p class="para smallprint">
+                        <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
+                    </p>
+                    <Button on:click={() => client.clearCachedData()}>
+                        <Translatable resourceKey={i18nKey("clearDataCache")} />
+                    </Button>
                 </div>
             </CollapsibleCard>
         </div>
@@ -636,6 +644,11 @@
 
     .para {
         margin-bottom: $sp4;
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
     }
 
     .user-form {

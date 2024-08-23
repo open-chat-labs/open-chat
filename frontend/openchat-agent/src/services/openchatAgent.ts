@@ -12,9 +12,10 @@ import {
     recordFailedMessage,
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
+    clearCache,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
-import { getAllUsers } from "../utils/userCache";
+import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -3601,5 +3602,9 @@ export class OpenChatAgent extends EventTarget {
 
     configureWallet(config: WalletConfig): Promise<void> {
         return this.userClient.configureWallet(config);
+    }
+
+    async clearCachedData(): Promise<void> {
+        await Promise.all([clearCache(this.principal.toString()), clearUserCache()]);
     }
 }

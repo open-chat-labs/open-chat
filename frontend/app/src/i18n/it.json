@@ -153,6 +153,8 @@
     "chooseReaction": "Scegli una reazione",
     "chooseTransfer": "Puoi pagare fino a 1 GB di spazio di archiviazione tramite un trasferimento ICP.",
     "chooseUpgrade": "Puoi richiedere 100 MB di spazio di archiviazione gratuito ricevendo un codice di verifica SMS oppure puoi pagare fino a 1 GB di spazio di archiviazione tramite un trasferimento ICP.",
+    "clearDataCache": "Cancella i dati memorizzati nella cache",
+    "clearDataCacheInfo": "In alcune circostanze, i dati che memorizziamo nella cache sul tuo dispositivo possono corrompersi e causare problemi. Come ultima risorsa, potremmo chiederti di cancellare i dati memorizzati nella cache. Continua a segnalare eventuali problemi, anche se risolti cancellando i dati memorizzati nella cache.",
     "close": "Chiudi",
     "collapse": "Crollo",
     "communities": {

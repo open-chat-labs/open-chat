@@ -641,6 +641,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._authPrincipal;
     }
 
+    clearCachedData() {
+        this.sendRequest({
+            kind: "clearCachedData",
+        }).then((_) => window.location.reload());
+    }
+
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
         if (
             this._liveState.selectedChatId === undefined ||

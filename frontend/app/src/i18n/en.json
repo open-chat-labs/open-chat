@@ -153,6 +153,8 @@
     "chooseReaction": "Choose a reaction",
     "chooseTransfer": "You can pay for up to 1GB of storage via an ICP transfer.",
     "chooseUpgrade": "You can claim 100MB of free storage by receiving an SMS verification code, or you can pay for up to 1GB of storage via an ICP transfer.",
+    "clearDataCache": "Clear cached data",
+    "clearDataCacheInfo": "Under some circumstances, the data that we cache on your device can become corrupted and cause problems. As a last resort we may ask you to clear that cached data. Please do continue to report any problems even if they are resolved by clearing cached data.",
     "close": "Close",
     "collapse": "Collapse",
     "communities": {
