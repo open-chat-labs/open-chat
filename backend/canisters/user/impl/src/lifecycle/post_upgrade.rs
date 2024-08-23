@@ -10,7 +10,7 @@ use tracing::info;
 use types::{Achievement, Timestamped};
 use user_canister::post_upgrade::Args;
 use user_canister::WalletConfig;
-use utils::time::{MonthKey, DAY_IN_MS};
+use utils::time::MonthKey;
 
 #[post_upgrade]
 #[trace]
@@ -27,16 +27,20 @@ fn post_upgrade(args: Args) {
 
     // TODO: Delete this after next release
     mutate_state(|state| {
-        if let WalletConfig::Auto(config) = &state.data.wallet_config.value {
-            if config.min_cents_visible == 100 {
-                state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
+        // 2024-08-22 09:00 UTC
+        if state.data.wallet_config.timestamp < 1724317200000 {
+            if let WalletConfig::Auto(config) = &state.data.wallet_config.value {
+                if config.min_cents_visible == 100 {
+                    state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
+                }
             }
         }
 
-        if !state.data.is_lifetime_diamond_member() && state.data.achievements.remove(&Achievement::UpgradedToGoldDiamond) {
-            if state.data.chit_events.remove_achievement(Achievement::UpgradedToGoldDiamond) {
-                ic_cdk_timers::set_timer(Duration::ZERO, || notify_user_index_of_july_chit());
-            }
+        if !state.data.is_lifetime_diamond_member()
+            && state.data.achievements.remove(&Achievement::UpgradedToGoldDiamond)
+            && state.data.chit_events.remove_achievement(Achievement::UpgradedToGoldDiamond)
+        {
+            ic_cdk_timers::set_timer(Duration::ZERO, notify_user_index_of_july_chit);
         }
     });
 
