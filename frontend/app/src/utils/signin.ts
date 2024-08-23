@@ -1,4 +1,4 @@
-import { ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 import {
     Poller,
     type GenerateMagicLinkResponse,
@@ -15,6 +15,16 @@ export class EmailPollerError extends Event {
     }
 }
 
+export class EmailPollerSuccess extends CustomEvent<{
+    kind: "success";
+    key: ECDSAKeyIdentity;
+    delegation: DelegationChain;
+}> {
+    constructor(key: ECDSAKeyIdentity, delegation: DelegationChain) {
+        super("email_signin_event", { detail: { kind: "success", key, delegation } });
+    }
+}
+
 /**
  * This will take care of generating the magic link and polling for the link being clicked.
  * It will also act as boolean svelte store to indicate whether we are current polling or not.
@@ -27,6 +37,7 @@ export class EmailSigninHandler extends EventTarget {
     constructor(
         private client: OpenChat,
         private trackingCategory: TrackingCategory,
+        private assumeIdentity: boolean,
     ) {
         super();
     }
@@ -91,12 +102,21 @@ export class EmailSigninHandler extends EventTarget {
             async () => {
                 if (this.poller !== undefined) {
                     this.client
-                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration, true)
+                        .getSignInWithEmailDelegation(
+                            email,
+                            userKey,
+                            sessionKey,
+                            expiration,
+                            this.assumeIdentity,
+                        )
                         .then((response) => {
                             if (response.kind === "success") {
                                 this.client.gaTrack(
                                     "received_email_signin_delegation",
                                     this.trackingCategory,
+                                );
+                                this.dispatchEvent(
+                                    new EmailPollerSuccess(response.key, response.delegation),
                                 );
                                 this.stopPolling();
                             } else if (response.kind === "error") {
