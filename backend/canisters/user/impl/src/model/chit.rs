@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
-use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
+use types::{Achievement, ChitEarned, ChitEarnedReason, TimestampMillis};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -80,6 +80,27 @@ impl ChitEarnedEvents {
 
     pub fn len(&self) -> usize {
         self.events.len()
+    }
+
+    pub fn remove_achievement(&mut self, achievement: Achievement) -> bool {
+        if let Some(index) = self
+            .events
+            .iter()
+            .enumerate()
+            .find(|(_, e)| if let ChitEarnedReason::Achievement(a) = &e.reason { *a == achievement } else { false })
+            .map(|(i, _)| i)
+        {
+            self.events.remove(index);
+            let to_subtract = achievement.chit_reward() as i32;
+            if self.total_chit_earned > to_subtract {
+                self.total_chit_earned -= to_subtract;
+            } else {
+                self.total_chit_earned = 0;
+            }
+            true
+        } else {
+            false
+        }
     }
 
     fn range(&self, range: Range<TimestampMillis>) -> &[ChitEarned] {
