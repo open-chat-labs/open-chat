@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 - Change default WalletConfig to zero balance ([#6269](https://github.com/open-chat-labs/open-chat/pull/6269))
 
+### Fixed
+
+- Remove lifetime diamond achievement where it was rewarded incorrectly ([#6280](https://github.com/open-chat-labs/open-chat/pull/6280))
+
 ## [[2.0.1300](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1300-user)] - 2024-08-20
 
 ### Added
