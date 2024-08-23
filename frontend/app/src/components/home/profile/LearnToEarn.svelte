@@ -19,6 +19,8 @@
         "streak_7",
         "streak_14",
         "streak_30",
+        "streak_100",
+        "streak_365",
         "set_bio",
         "set_avatar",
         "joined_group",
