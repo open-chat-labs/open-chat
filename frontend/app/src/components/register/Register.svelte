@@ -7,7 +7,7 @@
     import UsernameInput from "../UsernameInput.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import { type CreatedUser, type OpenChat } from "openchat-client";
+    import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -18,6 +18,8 @@
     import { iconSize } from "../../stores/iconSize";
     import TermsContent from "../landingpages/TermsContent.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import FindUser from "../FindUser.svelte";
+    import UserPill from "../UserPill.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -38,6 +40,7 @@
     let usernameValid = false;
     let checkingUsername: boolean;
     let badCode = false;
+    let referringUser: UserSummary | undefined = undefined;
 
     function clearCodeAndRegister() {
         client.clearReferralCode();
@@ -63,7 +66,7 @@
 
     function registerUser(username: string): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username).then((resp) => {
+        client.registerUser(username, referringUser?.userId).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
@@ -117,8 +120,19 @@
     $: {
         setLocale(selectedLocale);
     }
-
     $: busy = $state.kind === "spinning";
+
+    function deleteUser() {
+        referringUser = undefined;
+    }
+
+    function selectUser(ev: CustomEvent<UserSummary>) {
+        referringUser = ev.detail;
+    }
+
+    function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {
+        return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
+    }
 </script>
 
 {#if showGuidelines}
@@ -173,15 +187,32 @@
             </div>
         {:else}
             <form class="username-wrapper" on:submit|preventDefault={register}>
-                <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
-                <UsernameInput
-                    {client}
-                    disabled={busy}
-                    originalUsername={$usernameStore ?? ""}
-                    bind:username
-                    bind:usernameValid
-                    bind:checking={checkingUsername}
-                    bind:error={$error} />
+                <div class="form-element">
+                    <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
+                    <UsernameInput
+                        {client}
+                        disabled={busy}
+                        originalUsername={$usernameStore ?? ""}
+                        bind:username
+                        bind:usernameValid
+                        bind:checking={checkingUsername}
+                        bind:error={$error} />
+                </div>
+
+                <div class="form-element">
+                    <Legend label={i18nKey("register.findReferrer")} />
+                    <FindUser
+                        placeholderKey={"register.searchForReferrer"}
+                        {userLookup}
+                        enabled
+                        mode={"add"}
+                        on:selectUser={selectUser} />
+                    {#if referringUser !== undefined}
+                        <div class="referred-by">
+                            <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                        </div>
+                    {/if}
+                </div>
             </form>
 
             {#if $error}
@@ -345,5 +376,9 @@
                 text-decoration: underline;
             }
         }
+    }
+
+    .referred-by {
+        margin-top: $sp3;
     }
 </style>

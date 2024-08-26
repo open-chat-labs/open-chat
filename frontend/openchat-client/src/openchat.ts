@@ -4510,11 +4510,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return captured;
     }
 
-    registerUser(username: string): Promise<RegisterUserResponse> {
+    registerUser(username: string, referralCode?: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             username,
-            referralCode: this._referralCode,
+            referralCode: referralCode ?? this._referralCode,
         })
             .then((res) => {
                 console.log("register user response: ", res);
