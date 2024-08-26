@@ -98,8 +98,6 @@ pub enum Event {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
-    // TODO: Remove once referrals have been synced
-    ReferralSync(Box<Referrals>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

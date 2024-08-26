@@ -2,10 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{
-    Achievement, ChitEarned, ChitEarnedReason, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus,
-    Timestamped,
-};
+use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::{Event, UserCanisterEvent};
@@ -126,46 +123,6 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                     referred_by.into(),
                     UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
                 )
-            }
-        }
-        Event::ReferralSync(ev) => {
-            let prev_chit_events = state.data.chit_events.len();
-
-            if state.data.referred_by.is_none() && ev.referred_by.is_some() {
-                state.data.referred_by = ev.referred_by;
-            }
-
-            for referral in ev.referrals {
-                let chit_reward = state.data.referrals.set_status(referral.user_id, referral.status, now);
-                if chit_reward > 0 {
-                    state.data.chit_events.push(ChitEarned {
-                        amount: chit_reward as i32,
-                        timestamp: now,
-                        reason: ChitEarnedReason::Referral(referral.status),
-                    });
-                }
-            }
-
-            let total_verified = state.data.referrals.total_verified();
-
-            if total_verified > 0 {
-                state.data.award_achievement(Achievement::Referred1stUser, now);
-            }
-            if total_verified >= 3 {
-                state.data.award_achievement(Achievement::Referred3rdUser, now);
-            }
-            if total_verified >= 10 {
-                state.data.award_achievement(Achievement::Referred10thUser, now);
-            }
-            if total_verified >= 20 {
-                state.data.award_achievement(Achievement::Referred20thUser, now);
-            }
-            if total_verified >= 50 {
-                state.data.award_achievement(Achievement::Referred50thUser, now);
-            }
-
-            if state.data.chit_events.len() > prev_chit_events {
-                state.data.notify_user_index_of_chit(now);
             }
         }
     }
