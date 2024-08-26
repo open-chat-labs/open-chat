@@ -7,7 +7,6 @@ use ic_cdk::post_upgrade;
 use proposals_bot_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -26,12 +25,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| {
-        state
-            .data
-            .finished_proposals_to_process
-            .push_back((CanisterId::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap(), 905));
-
-        crate::jobs::start(state);
-    });
+    mutate_state(|state| state.data.nervous_systems.clear_active_proposals_with_no_message_index());
 }

@@ -6,8 +6,9 @@ use ic_cdk_timers::TimerId;
 use sns_governance_canister::types::{get_proposal_response, ProposalId};
 use std::cell::Cell;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::{CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
 
 thread_local! {
@@ -109,7 +110,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         mark_proposal_pushed(
             governance_canister_id,
             proposal,
-            is_success(response).then_some(message_id),
+            is_success(response, group_id.into()).then_some(message_id),
             None,
         );
     }
@@ -150,7 +151,7 @@ async fn push_channel_proposal(
         mark_proposal_pushed(
             governance_canister_id,
             proposal,
-            is_success(response).then_some(message_id),
+            is_success(response, community_id.into()).then_some(message_id),
             None,
         );
     }
@@ -180,11 +181,14 @@ fn mark_proposal_pushed(
     });
 }
 
-fn is_success<T>(response: CallResult<T>) -> bool {
+fn is_success<T: Debug>(response: CallResult<T>, canister_id: CanisterId) -> bool {
     match response {
         // If the messageId has already been used, treat that as success
         Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => true,
         Err(_) => false,
-        _ => true,
+        _ => {
+            error!(?response, %canister_id, "Failed to push proposal");
+            false
+        }
     }
 }
