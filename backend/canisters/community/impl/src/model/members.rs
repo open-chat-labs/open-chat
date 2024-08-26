@@ -23,6 +23,15 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    pub fn set_proposals_bot_user_type(&mut self, proposals_bot_user_id: UserId) -> bool {
+        if let Some(p) = self.members.get_mut(&proposals_bot_user_id) {
+            p.user_type = UserType::OcControlledBot;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -38,7 +47,6 @@ impl CommunityMembers {
             channels: public_channels.into_iter().collect(),
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
-            is_bot: creator_user_type.is_bot(),
             user_type: creator_user_type,
             display_name: Timestamped::default(),
         };
@@ -68,7 +76,6 @@ impl CommunityMembers {
                         channels: HashSet::new(),
                         channels_removed: Vec::new(),
                         rules_accepted: None,
-                        is_bot: user_type.is_bot(),
                         user_type,
                         display_name: Timestamped::default(),
                     };
@@ -346,7 +353,6 @@ pub struct CommunityMemberInternal {
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
-    pub is_bot: bool,
     #[serde(default)]
     pub user_type: UserType,
     display_name: Timestamped<Option<String>>,
