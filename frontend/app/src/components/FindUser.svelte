@@ -17,6 +17,7 @@
     export let enabled = true;
     export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
     export let placeholderKey: string = "searchForUsername";
+    export let compact = false;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -104,7 +105,7 @@
             <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
         {/if}
         {#each users as user (user.userId)}
-            <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
+            <MatchingUser {compact} {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
         {/each}
     {/if}
 </div>

@@ -205,6 +205,7 @@
                         placeholderKey={"register.searchForReferrer"}
                         {userLookup}
                         enabled
+                        compact
                         mode={"add"}
                         on:selectUser={selectUser} />
                     {#if referringUser !== undefined}
@@ -359,10 +360,6 @@
 
     .username-wrapper {
         margin-bottom: $sp6;
-        width: 80%;
-        @include mobile() {
-            width: 100%;
-        }
     }
 
     .smallprint {
