@@ -23,15 +23,6 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn set_proposals_bot_user_type(&mut self, proposals_bot_user_id: UserId) -> bool {
-        if let Some(p) = self.members.get_mut(&proposals_bot_user_id) {
-            p.user_type = UserType::OcControlledBot;
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
