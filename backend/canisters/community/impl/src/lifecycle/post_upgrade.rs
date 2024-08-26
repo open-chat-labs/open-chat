@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -9,6 +9,7 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
+use types::UserType;
 
 #[post_upgrade]
 #[trace]
@@ -36,5 +37,21 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+    });
+
+    mutate_state(|state| {
+        if state
+            .data
+            .members
+            .set_proposals_bot_user_type(state.data.proposals_bot_user_id)
+        {
+            info!("ProposalsBot marked as OC controlled bot in community");
+            for channel in state.data.channels.iter_mut() {
+                if let Some(p) = channel.chat.members.get_mut(&state.data.proposals_bot_user_id) {
+                    p.user_type = UserType::OcControlledBot;
+                    info!(channel_id = channel.id, "ProposalsBot marked as OC controlled bot in channel");
+                }
+            }
+        }
     });
 }
