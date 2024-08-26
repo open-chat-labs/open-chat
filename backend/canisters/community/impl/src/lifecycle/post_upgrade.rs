@@ -45,10 +45,11 @@ fn post_upgrade(args: Args) {
             .members
             .set_proposals_bot_user_type(state.data.proposals_bot_user_id)
         {
-            info!("ProposalsBot marked as OC controlled bot");
+            info!("ProposalsBot marked as OC controlled bot in community");
             for channel in state.data.channels.iter_mut() {
                 if let Some(p) = channel.chat.members.get_mut(&state.data.proposals_bot_user_id) {
                     p.user_type = UserType::OcControlledBot;
+                    info!(channel_id = channel.id, "ProposalsBot marked as OC controlled bot in channel");
                 }
             }
         }
