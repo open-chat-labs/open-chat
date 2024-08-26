@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+
 ## [[2.0.1309](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1309-local_group_index)] - 2024-08-26
 
 ### Changed
