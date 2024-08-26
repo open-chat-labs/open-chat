@@ -16,6 +16,13 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
+    // TODO Remove this
+    pub fn clear_active_proposals_with_no_message_index(&mut self) {
+        for ns in self.nervous_systems.values_mut() {
+            ns.active_proposals.retain(|id, _| ns.proposal_messages.contains_key(id));
+        }
+    }
+
     pub fn add(&mut self, nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) {
         self.nervous_systems.insert(
             nervous_system.governance_canister_id,
