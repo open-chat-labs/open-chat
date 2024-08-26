@@ -337,10 +337,6 @@ impl Data {
         self.diamond_membership_expires_at.map_or(false, |ts| now < ts)
     }
 
-    pub fn is_lifetime_diamond_member(&self) -> bool {
-        self.is_diamond_member(500 * 365 * DAY_IN_MS)
-    }
-
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
