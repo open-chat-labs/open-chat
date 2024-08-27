@@ -66,7 +66,7 @@
 
     function registerUser(username: string): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username, referringUser?.userId).then((resp) => {
+        client.registerUser(username).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
@@ -124,10 +124,12 @@
 
     function deleteUser() {
         referringUser = undefined;
+        client.clearReferralCode();
     }
 
     function selectUser(ev: CustomEvent<UserSummary>) {
         referringUser = ev.detail;
+        client.setReferralCode(ev.detail.userId);
     }
 
     function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {

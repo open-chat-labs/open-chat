@@ -4497,6 +4497,11 @@ export class OpenChat extends OpenChatAgentWorker {
         this._referralCode = undefined;
     }
 
+    setReferralCode(code: string) {
+        localStorage.setItem("openchat_referredby", code);
+        this._referralCode = code;
+    }
+
     captureReferralCode(): boolean {
         const qs = new URLSearchParams(window.location.search);
         const code = qs.get("ref") ?? undefined;
@@ -4516,11 +4521,11 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.getUser(this._referralCode);
     }
 
-    registerUser(username: string, referralCode?: string): Promise<RegisterUserResponse> {
+    registerUser(username: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             username,
-            referralCode: referralCode ?? this._referralCode,
+            referralCode: this._referralCode,
         })
             .then((res) => {
                 console.log("register user response: ", res);
