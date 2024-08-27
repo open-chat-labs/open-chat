@@ -25,7 +25,9 @@ const FRAME_ANCESTORS = [
     "https://zkpoker.app", // ZKP
     "https://panoramablock.com", // Panorama Block Live
     "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendy zone test
-    "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io" // konecta pre-register
+    "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io", // konecta pre-register
+    "https://pre.konecta.one", //konecta pre-register
+    "https://konecta.one" //konecta website/webapp
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
