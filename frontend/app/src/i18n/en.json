@@ -1151,6 +1151,7 @@
         "preparingUser": "Preparing user ...",
         "proceed": "Proceed",
         "referralCodeInvalid": "Sorry the referral code you provided is invalid or has expired",
+        "referredBy": "Referred by",
         "registerAs": "To register as a user",
         "registerUser": "Register user",
         "registrationComplete": "Registration complete ...",

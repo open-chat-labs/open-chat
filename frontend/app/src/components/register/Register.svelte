@@ -5,7 +5,7 @@
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
     import Button from "../Button.svelte";
@@ -133,6 +133,10 @@
     function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
     }
+
+    onMount(async () => {
+        referringUser = await client.getReferringUser();
+    });
 </script>
 
 {#if showGuidelines}
@@ -200,18 +204,18 @@
                 </div>
 
                 <div class="form-element">
-                    <Legend label={i18nKey("register.findReferrer")} />
-                    <FindUser
-                        placeholderKey={"register.searchForReferrer"}
-                        {userLookup}
-                        enabled
-                        compact
-                        mode={"add"}
-                        on:selectUser={selectUser} />
                     {#if referringUser !== undefined}
-                        <div class="referred-by">
-                            <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
-                        </div>
+                        <Legend label={i18nKey("register.referredBy")} />
+                        <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                    {:else}
+                        <Legend label={i18nKey("register.findReferrer")} />
+                        <FindUser
+                            placeholderKey={"register.searchForReferrer"}
+                            {userLookup}
+                            enabled
+                            compact
+                            mode={"add"}
+                            on:selectUser={selectUser} />
                     {/if}
                 </div>
             </form>
@@ -285,6 +289,11 @@
             @include font(light, normal, fs-90);
         }
     }
+    :global(.username-wrapper .results) {
+        max-height: 250px;
+        @include nice-scrollbar();
+    }
+
     .header,
     .body {
         color: var(--txt);
@@ -373,9 +382,5 @@
                 text-decoration: underline;
             }
         }
-    }
-
-    .referred-by {
-        margin-top: $sp3;
     }
 </style>
