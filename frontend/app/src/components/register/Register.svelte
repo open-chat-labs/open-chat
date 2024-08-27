@@ -5,9 +5,9 @@
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import { type CreatedUser, type OpenChat } from "openchat-client";
+    import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -18,6 +18,8 @@
     import { iconSize } from "../../stores/iconSize";
     import TermsContent from "../landingpages/TermsContent.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import FindUser from "../FindUser.svelte";
+    import UserPill from "../UserPill.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -38,6 +40,7 @@
     let usernameValid = false;
     let checkingUsername: boolean;
     let badCode = false;
+    let referringUser: UserSummary | undefined = undefined;
 
     function clearCodeAndRegister() {
         client.clearReferralCode();
@@ -117,8 +120,25 @@
     $: {
         setLocale(selectedLocale);
     }
-
     $: busy = $state.kind === "spinning";
+
+    function deleteUser() {
+        referringUser = undefined;
+        client.clearReferralCode();
+    }
+
+    function selectUser(ev: CustomEvent<UserSummary>) {
+        referringUser = ev.detail;
+        client.setReferralCode(ev.detail.userId);
+    }
+
+    function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {
+        return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
+    }
+
+    onMount(async () => {
+        referringUser = await client.getReferringUser();
+    });
 </script>
 
 {#if showGuidelines}
@@ -173,15 +193,33 @@
             </div>
         {:else}
             <form class="username-wrapper" on:submit|preventDefault={register}>
-                <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
-                <UsernameInput
-                    {client}
-                    disabled={busy}
-                    originalUsername={$usernameStore ?? ""}
-                    bind:username
-                    bind:usernameValid
-                    bind:checking={checkingUsername}
-                    bind:error={$error} />
+                <div class="form-element">
+                    <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
+                    <UsernameInput
+                        {client}
+                        disabled={busy}
+                        originalUsername={$usernameStore ?? ""}
+                        bind:username
+                        bind:usernameValid
+                        bind:checking={checkingUsername}
+                        bind:error={$error} />
+                </div>
+
+                <div class="form-element">
+                    {#if referringUser !== undefined}
+                        <Legend label={i18nKey("register.referredBy")} />
+                        <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                    {:else}
+                        <Legend label={i18nKey("register.findReferrer")} />
+                        <FindUser
+                            placeholderKey={"register.searchForReferrer"}
+                            {userLookup}
+                            enabled
+                            compact
+                            mode={"add"}
+                            on:selectUser={selectUser} />
+                    {/if}
+                </div>
             </form>
 
             {#if $error}
@@ -253,6 +291,11 @@
             @include font(light, normal, fs-90);
         }
     }
+    :global(.username-wrapper .results) {
+        max-height: 250px;
+        @include nice-scrollbar();
+    }
+
     .header,
     .body {
         color: var(--txt);
@@ -328,10 +371,6 @@
 
     .username-wrapper {
         margin-bottom: $sp6;
-        width: 80%;
-        @include mobile() {
-            width: 100%;
-        }
     }
 
     .smallprint {

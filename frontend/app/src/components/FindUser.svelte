@@ -16,6 +16,8 @@
     export let mode: "add" | "edit";
     export let enabled = true;
     export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+    export let placeholderKey: string = "searchForUsername";
+    export let compact = false;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -79,8 +81,8 @@
         disabled={!enabled}
         type="text"
         on:input={onInput}
-        use:translatable={{ key: i18nKey("searchForUsername") }}
-        placeholder={$_("searchForUsername")} />
+        use:translatable={{ key: i18nKey(placeholderKey) }}
+        placeholder={$_(placeholderKey)} />
     {#if searching}
         <span class="loading" />
     {:else if searchTerm !== ""}
@@ -103,7 +105,7 @@
             <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
         {/if}
         {#each users as user (user.userId)}
-            <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
+            <MatchingUser {compact} {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
         {/each}
     {/if}
 </div>

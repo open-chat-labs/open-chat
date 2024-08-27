@@ -13,6 +13,7 @@
     export let searchTerm: string;
     export let user: UserSummary;
     export let hovering = false;
+    export let compact = false;
 
     const dispatch = createEventDispatcher();
 
@@ -25,6 +26,7 @@
 
 <div
     class="user"
+    class:compact
     on:click={() => onSelect(user)}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}>
@@ -69,6 +71,11 @@
 
         @include mobile() {
             padding: $sp3 toRem(10);
+        }
+
+        &.compact {
+            margin: 0;
+            padding: $sp3;
         }
 
         @media (hover: hover) {
