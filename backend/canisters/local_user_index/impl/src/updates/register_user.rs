@@ -155,7 +155,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
 
     let referred_by = referral_code
         .and_then(|c| c.user())
-        .filter(|user_id| state.data.local_users.contains(user_id));
+        .filter(|user_id| state.data.global_users.exists(user_id));
 
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
