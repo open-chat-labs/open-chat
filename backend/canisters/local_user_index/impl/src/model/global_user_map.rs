@@ -59,7 +59,7 @@ impl GlobalUserMap {
             .map(|principal| self.hydrate_user(*user_id, *principal))
     }
 
-    pub fn exists(&self, user_id: &UserId) -> bool {
+    pub fn contains(&self, user_id: &UserId) -> bool {
         self.user_id_to_principal.contains_key(user_id)
     }
 
