@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
     import type { ResourceKey } from "openchat-client";
@@ -25,7 +24,7 @@
 
     onMount(() => {
         if (autofocus) {
-            window.setTimeout(() => inp.focus(), 0);
+            tick().then(() => inp.focus());
         }
     });
 
