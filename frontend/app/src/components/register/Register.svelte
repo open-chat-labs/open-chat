@@ -217,6 +217,7 @@
                             enabled
                             compact
                             mode={"add"}
+                            autofocus={false}
                             on:selectUser={selectUser} />
                     {/if}
                 </div>
