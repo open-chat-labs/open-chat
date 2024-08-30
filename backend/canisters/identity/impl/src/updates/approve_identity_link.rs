@@ -57,8 +57,7 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
         ) {
             Success
         } else {
-            // This shouldn't happen
-            panic!("Failed to link identities");
+            PrincipalAlreadyLinkedToAnotherOcUser
         }
     } else {
         LinkRequestNotFound

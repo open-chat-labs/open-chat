@@ -15,6 +15,7 @@ pub enum Response {
     Success,
     CallerNotRecognised,
     LinkRequestNotFound,
+    PrincipalAlreadyLinkedToAnotherOcUser,
     MalformedSignature(String),
     InvalidSignature,
     DelegationTooOld,

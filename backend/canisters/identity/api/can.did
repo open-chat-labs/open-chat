@@ -52,6 +52,7 @@ type ApproveIdentityLinkResponse = variant {
     Success;
     CallerNotRecognised;
     LinkRequestNotFound;
+    PrincipalAlreadyLinkedToAnotherOcUser;
     MalformedSignature : text;
     InvalidSignature;
     DelegationTooOld;

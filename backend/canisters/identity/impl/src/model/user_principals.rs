@@ -80,7 +80,7 @@ impl UserPrincipals {
             );
             true
         } else {
-            false
+            unreachable!()
         }
     }
 
