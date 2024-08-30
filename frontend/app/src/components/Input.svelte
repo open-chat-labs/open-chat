@@ -25,7 +25,7 @@
 
     onMount(() => {
         if (autofocus) {
-            window.setTimeout(() => inp.focus(), 100);
+            window.setTimeout(() => inp.focus(), 0);
         }
     });
 
