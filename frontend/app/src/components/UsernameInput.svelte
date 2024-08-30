@@ -15,6 +15,7 @@
     export let error: string | undefined = undefined;
     export let checking = false;
     export let disabled = false;
+    export let autofocus = false;
 
     let timer: number | undefined = undefined;
     let currentPromise: Promise<unknown> | undefined;
@@ -78,6 +79,7 @@
     value={originalUsername}
     {disabled}
     {invalid}
+    {autofocus}
     minlength={MIN_EXTANT_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
     countdown

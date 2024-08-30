@@ -199,6 +199,7 @@
                         {client}
                         disabled={busy}
                         originalUsername={$usernameStore ?? ""}
+                        autofocus={true}
                         bind:username
                         bind:usernameValid
                         bind:checking={checkingUsername}
