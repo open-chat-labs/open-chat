@@ -42,16 +42,17 @@
 
     function verify() {
         if (iiPrincipal === undefined) return;
+        const iiPrincipalLocal = iiPrincipal;
 
         verifying = true;
         failed = false;
         client
-            .verifyAccessGate(uniquePersonCredentialGate, iiPrincipal)
+            .verifyAccessGate(uniquePersonCredentialGate, iiPrincipalLocal)
             .then((credential) => {
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    return client.submitProofOfUniquePersonhood(credential, iiPrincipal).then((resp) => {
+                    return client.submitProofOfUniquePersonhood(credential, iiPrincipalLocal).then((resp) => {
                         if (resp.kind !== "success") {
                             failed = true;
                         } else {
