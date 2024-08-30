@@ -51,7 +51,7 @@
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    return client.submitProofOfUniquePersonhood(credential).then((resp) => {
+                    return client.submitProofOfUniquePersonhood(credential, iiPrincipal).then((resp) => {
                         if (resp.kind !== "success") {
                             failed = true;
                         } else {

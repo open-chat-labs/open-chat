@@ -6956,10 +6956,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
     submitProofOfUniquePersonhood(
         credential: string,
+        iiPrincipal: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         return this.sendRequest({
             kind: "submitProofOfUniquePersonhood",
-            iiPrincipal: this.AuthPrincipal,
+            iiPrincipal,
             credential,
         })
             .then((resp) => {
