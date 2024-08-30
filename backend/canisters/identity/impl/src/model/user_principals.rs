@@ -62,17 +62,23 @@ impl UserPrincipals {
         new_principal: Principal,
         originating_canister: CanisterId,
         user_principal_index: u32,
-    ) {
-        if let Vacant(e) = self.auth_principals.entry(new_principal) {
-            if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
-                if !user_principal.auth_principals.contains(&new_principal) {
-                    user_principal.auth_principals.push(new_principal);
-                }
-                e.insert(AuthPrincipalInternal {
+    ) -> bool {
+        if self.user_id_by_auth_principal(new_principal).is_some() {
+            false
+        } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
+            if !user_principal.auth_principals.contains(&new_principal) {
+                user_principal.auth_principals.push(new_principal);
+            }
+            self.auth_principals.insert(
+                new_principal,
+                AuthPrincipalInternal {
                     originating_canister,
                     user_principal_index,
-                });
-            }
+                },
+            );
+            true
+        } else {
+            false
         }
     }
 
@@ -122,6 +128,13 @@ impl UserPrincipals {
                 auth_principals: u.auth_principals.clone(),
                 user_id: u.user_id,
             })
+    }
+
+    fn user_id_by_auth_principal(&self, principal: Principal) -> Option<UserId> {
+        self.auth_principals
+            .get(&principal)
+            .and_then(|p| self.user_principals.get(p.user_principal_index as usize))
+            .and_then(|u| u.user_id)
     }
 }
 
