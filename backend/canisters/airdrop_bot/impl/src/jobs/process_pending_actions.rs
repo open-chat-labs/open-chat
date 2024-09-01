@@ -64,7 +64,11 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
         Err(err) => {
             error!("Failed to get local_user_index {err:?}");
             mutate_state(|state| {
-                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+                state.enqueue_pending_action(
+                    Action::JoinChannel(community_id, channel_id),
+                    Some(Duration::from_secs(60)),
+                    false,
+                )
             });
             return;
         }
@@ -87,7 +91,11 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
         Ok(local_user_index_canister::join_channel::Response::InternalError(err)) => {
             error!("Failed to join_channel {err:?}");
             mutate_state(|state| {
-                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+                state.enqueue_pending_action(
+                    Action::JoinChannel(community_id, channel_id),
+                    Some(Duration::from_secs(60)),
+                    false,
+                )
             });
             return;
         }
@@ -98,7 +106,11 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
         Err(err) => {
             error!("Failed to join_channel {err:?}");
             mutate_state(|state| {
-                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), Some(Duration::from_secs(60)))
+                state.enqueue_pending_action(
+                    Action::JoinChannel(community_id, channel_id),
+                    Some(Duration::from_secs(60)),
+                    false,
+                )
             });
             return;
         }
@@ -179,7 +191,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to transfer CHAT, retrying");
-            mutate_state(|state| state.enqueue_pending_action(Action::Transfer(Box::new(action)), None))
+            mutate_state(|state| state.enqueue_pending_action(Action::Transfer(Box::new(action)), None, true))
         }
     }
 }
@@ -224,7 +236,7 @@ async fn handle_main_message_action(action: AirdropMessage) {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send DM");
-            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None, true));
         }
     }
 }
@@ -286,7 +298,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send lottery message");
-            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None));
+            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None, true));
         }
     }
 }

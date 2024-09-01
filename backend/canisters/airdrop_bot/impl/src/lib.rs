@@ -39,8 +39,12 @@ impl RuntimeState {
         self.data.admins.contains(&caller)
     }
 
-    pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>) {
-        self.data.pending_actions_queue.push_back(action);
+    pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>, push_front: bool) {
+        if push_front {
+            self.data.pending_actions_queue.push_front(action);
+        } else {
+            self.data.pending_actions_queue.push_back(action);
+        }
         jobs::process_pending_actions::start_job_if_required(self, after);
     }
 
