@@ -298,8 +298,8 @@ impl RuntimeState {
                     stats.more_than_5k_chit += 1;
                 }
 
-                if user.total_chit_earned() >= 20000 {
-                    stats.more_than_20k_chit += 1;
+                if user.total_chit_earned() >= 25000 {
+                    stats.more_than_25k_chit += 1;
                 }
 
                 if user.unique_person_proof.is_some() {
@@ -633,7 +633,7 @@ pub struct CohortStats {
     pub diamond: u32,
     pub lifetime_diamond: u32,
     pub more_than_5k_chit: u32,
-    pub more_than_20k_chit: u32,
+    pub more_than_25k_chit: u32,
     pub proved_uniqueness: u32,
     pub qualify_for_airdrop: u32,
 }
