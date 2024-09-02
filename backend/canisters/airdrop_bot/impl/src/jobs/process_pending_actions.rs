@@ -1,3 +1,4 @@
+use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::model::pending_actions_queue::{Action, AirdropMessage, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
 use crate::{mutate_state, read_state, RuntimeState, USERNAME};
 use ic_cdk_timers::TimerId;
@@ -14,11 +15,11 @@ use types::{
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use utils::time::{MonthKey, MONTHS};
 
-use super::execute_airdrop::start_airdrop_timer;
-
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
+
+const BATCH_SIZE: usize = 10;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
@@ -34,10 +35,28 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration
 fn run() {
     TIMER_ID.set(None);
 
-    if let Some(action) = mutate_state(|state| state.data.pending_actions_queue.pop()) {
-        ic_cdk::spawn(process_action(action));
+    let batch = mutate_state(next_batch);
+    if !batch.is_empty() {
+        ic_cdk::spawn(process_batch(batch));
         read_state(|state| start_job_if_required(state, None));
     }
+}
+
+fn next_batch(state: &mut RuntimeState) -> Vec<Action> {
+    let mut actions = Vec::new();
+    while let Some(next) = state.data.pending_actions_queue.pop() {
+        actions.push(next);
+        if actions.len() == BATCH_SIZE {
+            break;
+        }
+    }
+
+    actions
+}
+
+async fn process_batch(batch: Vec<Action>) {
+    let futures: Vec<_> = batch.into_iter().map(process_action).collect();
+    futures::future::join_all(futures).await;
 }
 
 async fn process_action(action: Action) {
@@ -124,7 +143,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
 async fn handle_transfer_action(action: AirdropTransfer) {
     let amount = action.amount.into();
 
-    info!(?amount, "CHAT Transfer");
+    trace!(?amount, "CHAT Transfer");
 
     let (this_canister_id, ledger_canister_id, now_nanos) = read_state(|state| {
         (
@@ -197,7 +216,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
 }
 
 async fn handle_main_message_action(action: AirdropMessage) {
-    info!("Send DM");
+    trace!("Send DM");
 
     let AirdropType::Main(MainAidrop { chit, shares }) = action.airdrop_type else {
         return;

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+- Add metrics about recently joined users ([#6305](https://github.com/open-chat-labs/open-chat/pull/6305))
 
 ## [[2.0.1302](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1302-user_index)] - 2024-08-22
 
