@@ -1084,11 +1084,12 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
-export function canStartVideoCalls(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat") {
-        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
+export function canStartVideoCalls(chat: ChatSummary, userLookup: UserLookup): boolean {
+    if (chat.kind === "direct_chat") {
+        const user = userLookup.get(chat.them.userId);
+        return user !== undefined && user.kind === "user";
     } else {
-        return true;
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     }
 }
 
