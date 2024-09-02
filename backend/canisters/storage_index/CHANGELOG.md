@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
 - Ensure StorageIndex is only controller before installing StorageBucket ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Top up buckets that are detected to be out of cycles ([#6311](https://github.com/open-chat-labs/open-chat/pull/6311))
 
 ## [[2.0.1175](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1175-storage_index)] - 2024-05-16
 
