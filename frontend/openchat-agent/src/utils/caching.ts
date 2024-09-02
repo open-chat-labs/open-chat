@@ -50,7 +50,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 111;
+const CACHE_VERSION = 112;
 const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
@@ -124,31 +124,53 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: string;
     };
+
+    community_referrals: {
+        key: string;
+        value: {
+            userId: string;
+            timestamp: number;
+        };
+    };
 }
 
 type MigrationFunction<T> = (
+    db: IDBPDatabase<T>,
     principal: Principal,
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
 async function clearChatsStore(
-    _: Principal,
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chats").clear();
 }
 
 async function clearEventsStore(
-    _: Principal,
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chat_events").clear();
+}
+
+async function createCommunityReferralsStore(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    if (!db.objectStoreNames.contains("community_referrals")) {
+        db.createObjectStore("community_referrals");
+    }
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     105: clearChatsStore,
     106: clearChatsStore,
     107: async (
+        _db: IDBPDatabase<ChatSchema>,
         principal: Principal,
         tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
     ) => {
@@ -161,18 +183,21 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         }
     },
     108: async (
+        db: IDBPDatabase<ChatSchema>,
         principal: Principal,
         tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
     ) => {
-        await clearEventsStore(principal, tx);
-        await clearChatsStore(principal, tx);
+        await clearEventsStore(db, principal, tx);
+        await clearChatsStore(db, principal, tx);
     },
     109: clearChatsStore,
     110: clearChatsStore,
     111: clearChatsStore,
+    112: createCommunityReferralsStore,
 };
 
 async function migrate(
+    db: IDBPDatabase<ChatSchema>,
     principal: Principal,
     from: number,
     to: number,
@@ -181,7 +206,7 @@ async function migrate(
     for (let version = from + 1; version <= to; version++) {
         if (migrations[version]) {
             console.debug(`DB: applying migration for version ${version}`);
-            await migrations[version](principal, transaction);
+            await migrations[version](db, principal, transaction);
         }
     }
 }
@@ -220,6 +245,9 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     if (db.objectStoreNames.contains("localUserIndex")) {
         db.deleteObjectStore("localUserIndex");
     }
+    if (db.objectStoreNames.contains("community_referrals")) {
+        db.deleteObjectStore("community_referrals");
+    }
     const chatEvents = db.createObjectStore("chat_events");
     chatEvents.createIndex("messageIdx", "messageKey");
     chatEvents.createIndex("expiresAt", "expiresAt");
@@ -233,6 +261,7 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("cachePrimer");
     db.createObjectStore("currentUser");
     db.createObjectStore("localUserIndex");
+    db.createObjectStore("community_referrals");
 }
 
 function padMessageIndex(i: number): string {
@@ -269,7 +298,7 @@ export function openCache(principal: Principal): Database {
                 nuke(db);
             } else {
                 console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
-                migrate(principal, previousVersion, newVersion, transaction).then(() => {
+                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
                     console.debug(
                         `DB: migration from ${previousVersion} to ${newVersion} complete`,
                     );
@@ -1337,4 +1366,20 @@ export async function clearCache(principal: string): Promise<void> {
     } catch (err) {
         console.error("Unable to delete db: ", name, err);
     }
+}
+
+export async function setCommunityReferral(
+    db: Database,
+    communityId: string,
+    userId: string,
+    timestamp: number,
+): Promise<void> {
+    await (await db).put("community_referrals", { userId, timestamp }, communityId);
+}
+
+export async function getCommunityReferral(
+    db: Database,
+    communityId: string,
+): Promise<{ userId: string; timestamp: number } | undefined> {
+    return (await db).get("community_referrals", communityId);
 }
