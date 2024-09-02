@@ -1757,7 +1757,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, (chat) => canStartVideoCalls(chat));
+        return this.chatPredicate(chatId, (chat) =>
+            canStartVideoCalls(chat, this._liveState.userStore),
+        );
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
