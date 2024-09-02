@@ -90,7 +90,7 @@
     }
 
     function deleteAnswer(answer: string) {
-        poll.pollAnswers.delete(answer);
+        poll.pollAnswers.delete(answer.toUpperCase());
         poll.pollAnswers = new Map(poll.pollAnswers);
     }
 
