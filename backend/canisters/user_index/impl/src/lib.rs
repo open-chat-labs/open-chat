@@ -214,6 +214,8 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        const MONTH_IN_MS: Milliseconds = ((4 * 365) + 1) * 24 * 60 * 60 * 1000 / (4 * 12);
+
         let now = self.env.now();
 
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -272,7 +274,47 @@ impl RuntimeState {
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            joined_0_1_months_ago: self.build_stats_for_cohort(now - MONTH_IN_MS, now),
+            joined_1_2_months_ago: self.build_stats_for_cohort(now - (2 * MONTH_IN_MS), now - MONTH_IN_MS),
         }
+    }
+
+    fn build_stats_for_cohort(&self, registered_from: TimestampMillis, registered_to: TimestampMillis) -> CohortStats {
+        let mut stats = CohortStats::default();
+
+        for user in self.data.users.iter() {
+            if user.date_created >= registered_from && user.date_created < registered_to {
+                stats.total += 1;
+
+                if user.diamond_membership_details.has_ever_been_diamond_member() {
+                    stats.diamond += 1;
+                }
+
+                if user.diamond_membership_details.is_lifetime_diamond_member() {
+                    stats.lifetime_diamond += 1;
+                }
+
+                if user.total_chit_earned() >= 5000 {
+                    stats.more_than_5k_chit += 1;
+                }
+
+                if user.total_chit_earned() >= 25000 {
+                    stats.more_than_25k_chit += 1;
+                }
+
+                if user.unique_person_proof.is_some() {
+                    stats.proved_uniqueness += 1;
+                }
+
+                if (user.unique_person_proof.is_some() && user.diamond_membership_details.has_ever_been_diamond_member())
+                    || user.diamond_membership_details.is_lifetime_diamond_member()
+                {
+                    stats.qualify_for_airdrop += 1;
+                }
+            }
+        }
+
+        stats
     }
 }
 
@@ -566,6 +608,8 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
+    pub joined_0_1_months_ago: CohortStats,
+    pub joined_1_2_months_ago: CohortStats,
 }
 
 #[derive(Serialize, Debug)]
@@ -581,6 +625,17 @@ pub struct UserMetrics {
     pub chit_updated: TimestampMillis,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct CohortStats {
+    pub total: u32,
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub more_than_5k_chit: u32,
+    pub more_than_25k_chit: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
