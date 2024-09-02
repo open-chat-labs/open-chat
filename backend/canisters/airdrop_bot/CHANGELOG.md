@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Speed up airdrop distribution by running in parallel ([#6300](https://github.com/open-chat-labs/open-chat/pull/6300))
+- Push failed airdrop distribution actions back to the front of the queue ([#6301](https://github.com/open-chat-labs/open-chat/pull/6301))
 
 ## [[2.0.1294](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1294-airdrop_bot)] - 2024-08-16
 
