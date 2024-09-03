@@ -11,6 +11,8 @@ pub struct Args {
     pub principal: Principal,
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
     pub is_platform_moderator: bool,
     pub is_bot: bool,
     #[serde(default)]

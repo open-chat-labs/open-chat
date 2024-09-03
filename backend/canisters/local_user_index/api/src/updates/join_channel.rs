@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReason,
+    ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReason, UserId,
     VerifiedCredentialGateArgs,
 };
 
@@ -10,6 +10,7 @@ pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
+    pub referred_by: Option<UserId>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
 }
 

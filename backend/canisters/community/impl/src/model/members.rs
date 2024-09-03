@@ -40,6 +40,7 @@ impl CommunityMembers {
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type: creator_user_type,
             display_name: Timestamped::default(),
+            referred_by: None,
         };
 
         CommunityMembers {
@@ -53,7 +54,14 @@ impl CommunityMembers {
         }
     }
 
-    pub fn add(&mut self, user_id: UserId, principal: Principal, user_type: UserType, now: TimestampMillis) -> AddResult {
+    pub fn add(
+        &mut self,
+        user_id: UserId,
+        principal: Principal,
+        user_type: UserType,
+        referred_by: Option<UserId>,
+        now: TimestampMillis,
+    ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
@@ -69,6 +77,7 @@ impl CommunityMembers {
                         rules_accepted: None,
                         user_type,
                         display_name: Timestamped::default(),
+                        referred_by,
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -333,6 +342,17 @@ impl CommunityMembers {
             self.display_names_last_updated = now;
         }
     }
+
+    pub fn referrals(&self, caller: Principal) -> Vec<UserId> {
+        if let Some(referred_by) = self.principal_to_user_id_map.get(&caller) {
+            self.members
+                .iter()
+                .filter_map(|(_, m)| if m.referred_by == Some(*referred_by) { Some(m.user_id) } else { None })
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -347,6 +367,8 @@ pub struct CommunityMemberInternal {
     #[serde(default)]
     pub user_type: UserType,
     display_name: Timestamped<Option<String>>,
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
 }
 
 impl CommunityMemberInternal {
@@ -424,6 +446,7 @@ impl From<CommunityMemberInternal> for CommunityMember {
             date_added: p.date_added,
             role: p.role,
             display_name: p.display_name.value,
+            referred_by: p.referred_by,
         }
     }
 }
@@ -435,6 +458,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             date_added: p.date_added,
             role: p.role,
             display_name: p.display_name.value.clone(),
+            referred_by: p.referred_by,
         }
     }
 }

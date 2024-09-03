@@ -10,6 +10,8 @@ pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
     pub invite_code: Option<u64>,
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
     pub is_platform_moderator: bool,
     pub is_bot: bool,
     #[serde(default)]

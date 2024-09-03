@@ -26,5 +26,6 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         invited_users: data.invited_users.users(),
         chat_rules: data.rules.clone().into(),
         user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
+        referrals: data.members.referrals(caller),
     })
 }

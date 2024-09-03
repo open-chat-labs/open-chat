@@ -52,40 +52,59 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .map(|u| u.into())
             .collect(),
         user_groups_deleted: data.members.user_groups_deleted_since(args.updates_since),
+        referrals_added: vec![],
+        referrals_removed: vec![],
     };
 
     let mut user_updates_handler = UserUpdatesHandler {
         data,
         users_updated: HashSet::new(),
+        referrals_updated: HashSet::new(),
     };
+
+    // TODO: Improve this by maintaining `member_list_last_updated: TimestampMillis` in CommunityMembers
+    let mut my_user_id: Option<UserId> = None;
+    let mut my_referrals: HashSet<UserId> = HashSet::new();
+
+    if state.data.events.latest_event_timestamp() > args.updates_since {
+        let caller = state.env.caller();
+        if let Some(member) = state.data.members.get(caller) {
+            my_user_id = Some(member.user_id);
+            my_referrals = state.data.members.referrals(caller).into_iter().collect();
+        }
+    }
 
     // Iterate through the new events starting from most recent
     for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
         match &event_wrapper.event {
-            CommunityEventInternal::MembersRemoved(p) => {
-                for user_id in p.user_ids.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, true);
+            CommunityEventInternal::MembersRemoved(e) => {
+                for user_id in e.user_ids.iter() {
+                    let referral = my_referrals.contains(user_id);
+                    user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
-            CommunityEventInternal::MemberJoined(p) => {
-                user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
+            CommunityEventInternal::MemberJoined(e) => {
+                let referral = e.invited_by.map_or(false, |referrer| Some(referrer) == my_user_id);
+                user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
-            CommunityEventInternal::MemberLeft(p) => {
-                user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
+            CommunityEventInternal::MemberLeft(e) => {
+                let referral = my_referrals.contains(&e.user_id);
+                user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
-            CommunityEventInternal::RoleChanged(rc) => {
-                for user_id in rc.user_ids.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+            CommunityEventInternal::RoleChanged(e) => {
+                for user_id in e.user_ids.iter() {
+                    user_updates_handler.mark_member_updated(&mut result, *user_id, false, false);
                 }
             }
-            CommunityEventInternal::UsersBlocked(ub) => {
-                for user_id in ub.user_ids.iter() {
+            CommunityEventInternal::UsersBlocked(e) => {
+                for user_id in e.user_ids.iter() {
+                    let referral = my_referrals.contains(user_id);
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, true);
+                    user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
-            CommunityEventInternal::UsersUnblocked(ub) => {
-                for user_id in ub.user_ids.iter() {
+            CommunityEventInternal::UsersUnblocked(e) => {
+                for user_id in e.user_ids.iter() {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
                 }
             }
@@ -94,9 +113,9 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                     result.chat_rules = Some(data.rules.clone().into());
                 }
             }
-            CommunityEventInternal::GroupImported(g) => {
-                for user_id in g.members_added.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+            CommunityEventInternal::GroupImported(e) => {
+                for user_id in e.members_added.iter() {
+                    user_updates_handler.mark_member_updated(&mut result, *user_id, false, false);
                 }
             }
             _ => {}
@@ -105,7 +124,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     for member in data.members.iter() {
         if member.display_name().timestamp > args.updates_since {
-            user_updates_handler.mark_member_updated(&mut result, member.user_id, false);
+            user_updates_handler.mark_member_updated(&mut result, member.user_id, false, false);
         }
     }
 
@@ -115,15 +134,24 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 struct UserUpdatesHandler<'a> {
     data: &'a Data,
     users_updated: HashSet<UserId>,
+    referrals_updated: HashSet<UserId>,
 }
 
 impl<'a> UserUpdatesHandler<'a> {
-    pub fn mark_member_updated(&mut self, result: &mut SuccessResult, user_id: UserId, removed: bool) {
+    pub fn mark_member_updated(&mut self, result: &mut SuccessResult, user_id: UserId, referral: bool, removed: bool) {
         if self.users_updated.insert(user_id) {
             if removed {
                 result.members_removed.push(user_id);
             } else if let Some(member) = self.data.members.get_by_user_id(&user_id) {
                 result.members_added_or_updated.push(member.into());
+            }
+        }
+
+        if referral && self.referrals_updated.insert(user_id) {
+            if removed {
+                result.referrals_removed.push(user_id);
+            } else {
+                result.referrals_added.push(user_id);
             }
         }
     }
