@@ -291,7 +291,7 @@ impl RuntimeState {
                     stats.diamond += 1;
                 }
 
-                if user.diamond_membership_details.is_lifetime_diamond_member() {
+                if user.diamond_membership_details.is_active(registered_to) {
                     stats.lifetime_diamond += 1;
                 }
 
@@ -307,7 +307,7 @@ impl RuntimeState {
                     stats.proved_uniqueness += 1;
                 }
 
-                if (user.unique_person_proof.is_some() && user.diamond_membership_details.has_ever_been_diamond_member())
+                if (user.unique_person_proof.is_some() && user.diamond_membership_details.is_active(registered_to))
                     || user.diamond_membership_details.is_lifetime_diamond_member()
                 {
                     stats.qualify_for_airdrop += 1;
