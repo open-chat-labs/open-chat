@@ -41,6 +41,23 @@ impl DiamondMembershipDetailsInternal {
         self.expires_at.map_or(false, |ts| now < ts)
     }
 
+    pub fn was_active(&self, timestamp: TimestampMillis) -> bool {
+        for p in self.payments.iter() {
+            if timestamp < p.timestamp {
+                return false;
+            }
+
+            if timestamp >= p.timestamp
+                && (timestamp < (p.timestamp + p.duration.as_millis())
+                    || matches!(p.duration, DiamondMembershipPlanDuration::Lifetime))
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn status(&self, now: TimestampMillis) -> DiamondMembershipStatus {
         match self.expires_at {
             Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatus::Lifetime,

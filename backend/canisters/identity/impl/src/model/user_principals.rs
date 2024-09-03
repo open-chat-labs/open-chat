@@ -1,6 +1,5 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 
@@ -62,17 +61,26 @@ impl UserPrincipals {
         new_principal: Principal,
         originating_canister: CanisterId,
         user_principal_index: u32,
-    ) {
-        if let Vacant(e) = self.auth_principals.entry(new_principal) {
-            if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
-                if !user_principal.auth_principals.contains(&new_principal) {
-                    user_principal.auth_principals.push(new_principal);
-                }
-                e.insert(AuthPrincipalInternal {
+    ) -> bool {
+        if self
+            .get_by_auth_principal(&new_principal)
+            .map_or(false, |u| u.user_id.is_some())
+        {
+            false
+        } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
+            if !user_principal.auth_principals.contains(&new_principal) {
+                user_principal.auth_principals.push(new_principal);
+            }
+            self.auth_principals.insert(
+                new_principal,
+                AuthPrincipalInternal {
                     originating_canister,
                     user_principal_index,
-                });
-            }
+                },
+            );
+            true
+        } else {
+            unreachable!()
         }
     }
 

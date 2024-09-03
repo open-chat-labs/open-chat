@@ -8,7 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1310](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1310-local_user_index)] - 2024-08-29
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Fix referrals sometimes not being recorded ([#6290](https://github.com/open-chat-labs/open-chat/pull/6290))
+
+## [[2.0.1299](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1299-local_user_index)] - 2024-08-20
+
+### Changed
+
 - Add OC dev team controller to 2 uninstalled canisters to recover funds ([#6247](https://github.com/open-chat-labs/open-chat/pull/6247))
+- Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
 
 ## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13
 

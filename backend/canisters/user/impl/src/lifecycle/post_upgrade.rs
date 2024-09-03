@@ -3,12 +3,11 @@ use crate::memory::get_upgrades_memory;
 use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
+use chat_events::OPENCHAT_BOT_USER_ID;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
-use types::Timestamped;
 use user_canister::post_upgrade::Args;
-use user_canister::WalletConfig;
 
 #[post_upgrade]
 #[trace]
@@ -16,7 +15,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
@@ -25,8 +24,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    // TODO: Remove this after the next release
-    mutate_state(|state| {
-        state.data.wallet_config = Timestamped::new(WalletConfig::default(), state.env.now());
-    });
+    mutate_state(|state| state.data.unblock_user(&OPENCHAT_BOT_USER_ID, state.env.now()));
 }

@@ -60,7 +60,6 @@ rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 sonic_client = { path = "../../../libraries/sonic_client" }

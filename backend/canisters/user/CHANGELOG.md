@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+### Fixed
+
+- Unblock OpenChat bot if it was blocked previously whilst there was a bug ([#6302](https://github.com/open-chat-labs/open-chat/pull/6302))
+
+## [[2.0.1305](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1305-user)] - 2024-08-23
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Change default WalletConfig to zero balance ([#6269](https://github.com/open-chat-labs/open-chat/pull/6269))
+
+### Fixed
+
+- Remove lifetime diamond achievement where it was rewarded incorrectly ([#6280](https://github.com/open-chat-labs/open-chat/pull/6280))
+
+## [[2.0.1300](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1300-user)] - 2024-08-20
+
 ### Added
 
 - Set/store user's wallet configuration ([#6242](https://github.com/open-chat-labs/open-chat/pull/6242))
@@ -16,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure user has never joined a group or community before marking empty ([#6186](https://github.com/open-chat-labs/open-chat/pull/6186))
 - Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
 - Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Reward verified user referrals in CHIT ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
 
 ### Removed
 

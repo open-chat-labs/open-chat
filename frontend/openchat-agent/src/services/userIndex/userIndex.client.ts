@@ -1,5 +1,7 @@
 import { groupBy } from "../../utils/list";
 import type { HttpAgent, Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { idlFactory, type UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
     CurrentUserResponse,
@@ -30,20 +32,20 @@ import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
     setUsernameResponse,
+    currentUserResponse,
     usersApiResponse,
+    userSearchResponse,
     suspendUserResponse,
     unsuspendUserResponse,
+    apiDiamondDuration,
     payForDiamondMembershipResponse,
+    userRegistrationCanisterResponse,
     setDisplayNameResponse,
     diamondMembershipFeesResponse,
     chitLeaderboardResponse,
     submitProofOfUniquePersonhoodResponse,
-    currentUserResponse,
-    userRegistrationCanisterResponse,
-    userSearchResponse,
-    apiJsonDiamondDuration,
 } from "./mappers";
-import { apiJsonToken } from "../common/chatMappers";
+import { apiOptional, apiToken } from "../common/chatMappers";
 import {
     getCachedUsers,
     getCachedDeletedUserIds,
@@ -55,6 +57,7 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
+import { identity } from "../../utils/mapping";
 import {
     getCachedCurrentUser,
     mergeCachedCurrentUser,
@@ -98,8 +101,12 @@ import {
 } from "../../typebox";
 
 export class UserIndexClient extends CandidService {
+    private userIndexService: UserIndexService;
+
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId);
+
+        this.userIndexService = this.createServiceClient<UserIndexService>(idlFactory);
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
@@ -138,7 +145,7 @@ export class UserIndexClient extends CandidService {
             "set_moderation_flags",
             {
                 moderation_flags_enabled: flags,
-            },
+            }),
             (_) => true,
             UserIndexSetModerationFlagsArgs,
             UserIndexSetModerationFlagsResponse,
@@ -234,7 +241,7 @@ export class UserIndexClient extends CandidService {
                 users: users.map(principalStringToBytes),
                 updated_since: updatedSince,
             })),
-            users_suspended_since: suspendedUsersSyncedUpTo,
+            users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
         };
 
         return this.executeMsgpackQuery(
@@ -415,7 +422,7 @@ export class UserIndexClient extends CandidService {
             {
                 user_id: principalStringToBytes(userId),
                 reason,
-            },
+            }),
             suspendUserResponse,
             UserIndexSuspendUserArgs,
             UserIndexSuspendUserResponse,
@@ -448,7 +455,7 @@ export class UserIndexClient extends CandidService {
                 duration: apiJsonDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
-            },
+            }),
             (res) => payForDiamondMembershipResponse(duration, res),
             UserIndexPayForDiamondMembershipArgs,
             UserIndexPayForDiamondMembershipResponse,

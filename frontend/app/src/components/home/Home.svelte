@@ -1256,7 +1256,6 @@
 {:else if modal.kind !== "none"}
     <Overlay
         dismissible={modal.kind !== "select_chat" &&
-            modal.kind !== "wallet" &&
             modal.kind !== "not_found" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}

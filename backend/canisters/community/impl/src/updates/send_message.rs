@@ -160,7 +160,7 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
                 member.accept_rules(version, state.env.now());
             }
             if state.data.rules.enabled
-                && !member.is_bot
+                && !member.user_type.is_bot()
                 && member
                     .rules_accepted
                     .as_ref()

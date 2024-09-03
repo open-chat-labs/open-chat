@@ -49,6 +49,11 @@ pub enum Achievement {
     JoinedCall,
     AcceptedP2PSwapOffer,
     SetCommunityDisplayName,
+    Referred1stUser,
+    Referred3rdUser,
+    Referred10thUser,
+    Referred20thUser,
+    Referred50thUser,
 
     PinnedMessage,
     SwappedFromWallet,
@@ -147,6 +152,11 @@ impl Achievement {
             Achievement::DirectChats5 => 2000,
             Achievement::DirectChats10 => 4000,
             Achievement::DirectChats20 => 10000,
+            Achievement::Referred1stUser => 5000,
+            Achievement::Referred3rdUser => 10000,
+            Achievement::Referred10thUser => 20000,
+            Achievement::Referred20thUser => 30000,
+            Achievement::Referred50thUser => 50000,
         }
     }
 

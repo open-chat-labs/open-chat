@@ -151,6 +151,8 @@ import {
     exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
+    walletConfigStore,
+    walletTokensSorted,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
@@ -420,6 +422,7 @@ import type {
     PayForDiamondMembershipResponse,
     LinkIdentitiesResponse,
     AddMembersToChannelResponse,
+    WalletConfig,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -551,6 +554,7 @@ import {
 import { storeEmailSignInSession } from "openchat-shared";
 import { getEmailSignInSession } from "openchat-shared";
 import { removeEmailSignInSession } from "openchat-shared";
+import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -635,6 +639,12 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("Trying to access the _authPrincipal before it has been set up");
         }
         return this._authPrincipal;
+    }
+
+    clearCachedData() {
+        this.sendRequest({
+            kind: "clearCachedData",
+        }).then((_) => window.location.reload());
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -1747,7 +1757,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     canStartVideoCalls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, (chat) => canStartVideoCalls(chat));
+        return this.chatPredicate(chatId, (chat) =>
+            canStartVideoCalls(chat, this._liveState.userStore),
+        );
     }
 
     isChatPrivate(chat: ChatSummary): boolean {
@@ -4487,6 +4499,11 @@ export class OpenChat extends OpenChatAgentWorker {
         this._referralCode = undefined;
     }
 
+    setReferralCode(code: string) {
+        localStorage.setItem("openchat_referredby", code);
+        this._referralCode = code;
+    }
+
     captureReferralCode(): boolean {
         const qs = new URLSearchParams(window.location.search);
         const code = qs.get("ref") ?? undefined;
@@ -4498,6 +4515,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         this._referralCode = localStorage.getItem("openchat_referredby") ?? undefined;
         return captured;
+    }
+
+    getReferringUser(): Promise<UserSummary | undefined> {
+        return this._referralCode === undefined
+            ? Promise.resolve(undefined)
+            : this.getUser(this._referralCode);
     }
 
     registerUser(username: string): Promise<RegisterUserResponse> {
@@ -4745,12 +4768,16 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.sendRequest({
-            kind: "registerProposalVote",
-            chatId,
-            messageIndex,
-            adopt,
-        }).catch(() => "internal_error");
+        return this.sendRequest(
+            {
+                kind: "registerProposalVote",
+                chatId,
+                messageIndex,
+                adopt,
+            },
+            false,
+            2 * DEFAULT_WORKER_TIMEOUT,
+        ).catch(() => "internal_error");
     }
 
     getProposalVoteDetails(
@@ -5499,8 +5526,8 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const userIds = this.userIdsFromChatSummaries(chats);
-            if (initialLoad) {
-                for (const userId of this._liveState.user.referrals) {
+            if (chatsResponse.state.referrals !== undefined) {
+                for (const userId of chatsResponse.state.referrals.map((r) => r.userId)) {
                     userIds.add(userId);
                 }
             }
@@ -5558,6 +5585,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
+                chatsResponse.state.referrals,
+                chatsResponse.state.walletConfig,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -6217,8 +6246,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async refreshBalancesInSeries() {
+        const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            await this.refreshAccountBalance(t.ledger);
+            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.ledger))) {
+                await this.refreshAccountBalance(t.ledger);
+            }
         }
     }
 
@@ -6926,10 +6958,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
     submitProofOfUniquePersonhood(
         credential: string,
+        iiPrincipal: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         return this.sendRequest({
             kind: "submitProofOfUniquePersonhood",
-            iiPrincipal: this.AuthPrincipal,
+            iiPrincipal,
             credential,
         })
             .then((resp) => {
@@ -7451,9 +7484,48 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    removeTokenFromWallet(ledger: string) {
+        const config = this._liveState.walletConfig;
+        if (config.kind === "manual_wallet") {
+            if (config.tokens.delete(ledger)) {
+                return this.setWalletConfig(config);
+            }
+        }
+    }
+
+    setsAreEqual<T>(a: Set<T>, b: Set<T>): boolean {
+        if (a.size !== b.size) return false;
+        for (const item of a) {
+            if (!b.has(item)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    walletConfigChanged(a: WalletConfig, b: WalletConfig): boolean {
+        if (a.kind !== b.kind) return true;
+        if (a.kind === "auto_wallet" && b.kind === "auto_wallet")
+            return a.minDollarValue !== b.minDollarValue;
+        if (a.kind === "manual_wallet" && b.kind === "manual_wallet")
+            return !this.setsAreEqual(a.tokens, b.tokens);
+        return false;
+    }
+
+    setWalletConfig(config: WalletConfig): Promise<boolean> {
+        localGlobalUpdates.updateWallet(config);
+        return this.sendRequest({
+            kind: "configureWallet",
+            config,
+        })
+            .then(() => true)
+            .catch(() => false);
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
+    walletConfigStore = walletConfigStore;
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;
@@ -7480,6 +7552,7 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     cryptoTokensSorted = cryptoTokensSorted;
+    walletTokensSorted = walletTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     exchangeRatesLookupStore = exchangeRatesLookupStore;

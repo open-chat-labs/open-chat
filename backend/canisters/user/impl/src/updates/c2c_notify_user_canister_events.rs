@@ -12,8 +12,8 @@ use chat_events::{
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
-    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, UserType,
-    VideoCallPresence,
+    Achievement, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification,
+    UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
@@ -112,6 +112,35 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 args.max_duration.unwrap_or(HOUR_IN_MS),
                 state,
             );
+        }
+        UserCanisterEvent::SetReferralStatus(status) => {
+            let chit_reward = state.data.referrals.set_status(caller_user_id, *status, now);
+            let mut rewarded = false;
+
+            if chit_reward > 0 {
+                state.data.chit_events.push(ChitEarned {
+                    amount: chit_reward as i32,
+                    timestamp: now,
+                    reason: ChitEarnedReason::Referral(*status),
+                });
+
+                rewarded = true;
+            }
+
+            if let Some(achievement) = match state.data.referrals.total_verified() {
+                1 => Some(Achievement::Referred1stUser),
+                3 => Some(Achievement::Referred3rdUser),
+                10 => Some(Achievement::Referred10thUser),
+                20 => Some(Achievement::Referred20thUser),
+                50 => Some(Achievement::Referred50thUser),
+                _ => None,
+            } {
+                rewarded |= state.data.award_achievement(achievement, now);
+            }
+
+            if rewarded {
+                state.data.notify_user_index_of_chit(now);
+            }
         }
     }
 }

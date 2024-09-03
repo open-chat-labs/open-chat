@@ -1,18 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
-use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
+use types::{Achievement, ChitEarned, ChitEarnedReason, TimestampMillis};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "ChitEarnedEventsPrevious")]
 pub struct ChitEarnedEvents {
     events: Vec<ChitEarned>,
     total_chit_earned: i32,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChitEarnedEventsPrevious {
-    events: Vec<ChitEarned>,
 }
 
 impl ChitEarnedEvents {
@@ -59,13 +53,7 @@ impl ChitEarnedEvents {
     }
 
     pub fn balance_for_month(&self, month: MonthKey) -> i32 {
-        let mut timestamp_range = month.timestamp_range();
-
-        // TODO remove this once the July airdrop is complete
-        if month.year() == 2024 && month.month() == 7 {
-            timestamp_range.start = 0;
-        }
-
+        let timestamp_range = month.timestamp_range();
         let range = self.range(timestamp_range);
         range.iter().map(|e| e.amount).sum()
     }
@@ -84,22 +72,36 @@ impl ChitEarnedEvents {
         self.events.last().map(|e| e.timestamp).unwrap_or_default()
     }
 
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
+    pub fn remove_achievement(&mut self, achievement: Achievement) -> bool {
+        if let Some(index) = self
+            .events
+            .iter()
+            .enumerate()
+            .find(|(_, e)| if let ChitEarnedReason::Achievement(a) = &e.reason { *a == achievement } else { false })
+            .map(|(i, _)| i)
+        {
+            self.events.remove(index);
+            let to_subtract = achievement.chit_reward() as i32;
+            if self.total_chit_earned > to_subtract {
+                self.total_chit_earned -= to_subtract;
+            } else {
+                self.total_chit_earned = 0;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     fn range(&self, range: Range<TimestampMillis>) -> &[ChitEarned] {
         let start = self.events.partition_point(|e| e.timestamp < range.start);
         let end = self.events.partition_point(|e| e.timestamp <= range.end);
 
         &self.events[start..end]
-    }
-}
-
-impl From<ChitEarnedEventsPrevious> for ChitEarnedEvents {
-    fn from(value: ChitEarnedEventsPrevious) -> Self {
-        let total_chit_earned = value.events.iter().map(|e| e.amount).sum();
-
-        ChitEarnedEvents {
-            events: value.events,
-            total_chit_earned,
-        }
     }
 }
 

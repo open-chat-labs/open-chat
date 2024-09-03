@@ -59,6 +59,10 @@ impl GlobalUserMap {
             .map(|principal| self.hydrate_user(*user_id, *principal))
     }
 
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.user_id_to_principal.contains_key(user_id)
+    }
+
     pub fn diamond_membership_expiry_date(&self, user_id: &UserId) -> Option<TimestampMillis> {
         self.diamond_membership_expiry_dates.get(user_id).copied()
     }

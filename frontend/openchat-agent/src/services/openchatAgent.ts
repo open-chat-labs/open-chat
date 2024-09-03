@@ -12,9 +12,10 @@ import {
     recordFailedMessage,
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
+    clearCache,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
-import { getAllUsers } from "../utils/userCache";
+import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -208,6 +209,8 @@ import type {
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
     TopUpNeuronResponse,
+    Referral,
+    WalletConfig,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1627,6 +1630,8 @@ export class OpenChatAgent extends EventTarget {
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
+        let referrals: Referral[];
+        let walletConfig: WalletConfig;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1672,6 +1677,8 @@ export class OpenChatAgent extends EventTarget {
                 nextDailyChitClaim: userResponse.nextDailyClaim,
                 totalChitEarned: userResponse.totalChitEarned,
             };
+            referrals = userResponse.referrals;
+            walletConfig = userResponse.walletConfig;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1699,6 +1706,8 @@ export class OpenChatAgent extends EventTarget {
             achievements = current.achievements;
             newAchievements = [];
             chitState = current.chitState;
+            referrals = current.referrals;
+            walletConfig = current.walletConfig;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1745,6 +1754,13 @@ export class OpenChatAgent extends EventTarget {
                     nextDailyChitClaim: userResponse.nextDailyClaim,
                     totalChitEarned: userResponse.totalChitEarned,
                 };
+                referrals = referrals
+                    .filter(
+                        (prev) =>
+                            !userResponse.referrals.find((latest) => latest.userId === prev.userId),
+                    )
+                    .concat(userResponse.referrals);
+                walletConfig = userResponse.walletConfig ?? current.walletConfig;
                 anyUpdates = true;
             }
         }
@@ -1853,7 +1869,9 @@ export class OpenChatAgent extends EventTarget {
                         break;
                     }
                     case "error": {
-                        anyErrors = true;
+                        if (!result.error.includes("DestinationInvalid")) {
+                            anyErrors = true;
+                        }
                         break;
                     }
                 }
@@ -1900,6 +1918,8 @@ export class OpenChatAgent extends EventTarget {
             achievementsLastSeen,
             achievements,
             chitState,
+            referrals,
+            walletConfig,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -3578,5 +3598,13 @@ export class OpenChatAgent extends EventTarget {
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         return this._userIndexClient.submitProofOfUniquePersonhood(iiPrincipal, credential);
+    }
+
+    configureWallet(config: WalletConfig): Promise<void> {
+        return this.userClient.configureWallet(config);
+    }
+
+    async clearCachedData(): Promise<void> {
+        await Promise.all([clearCache(this.principal.toString()), clearUserCache()]);
     }
 }

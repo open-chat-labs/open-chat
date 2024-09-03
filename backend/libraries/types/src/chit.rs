@@ -1,4 +1,4 @@
-use crate::{Achievement, TimestampMillis};
+use crate::{Achievement, ReferralStatus, TimestampMillis};
 use candid::CandidType;
 use ts_export::ts_export;
 
@@ -15,6 +15,7 @@ pub struct ChitEarned {
 pub enum ChitEarnedReason {
     DailyClaim,
     Achievement(Achievement),
+    Referral(ReferralStatus),
     MemeContestWinner,
 }
 

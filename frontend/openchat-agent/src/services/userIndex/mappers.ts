@@ -60,7 +60,7 @@ export function userSearchResponse(json: UserIndexSearchResponse): UserSummary[]
         const timestamp = json.Success.timestamp;
         return json.Success.users.map((u) => userSummary(u, timestamp));
     }
-    throw new Error(`Unknown UserIndex.SearchResponse of ${json}`);
+    throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
 }
 
 export function usersApiResponse(json: UserIndexUsersResponse): UsersApiResponse {
@@ -75,7 +75,7 @@ export function usersApiResponse(json: UserIndexUsersResponse): UsersApiResponse
             ),
         };
     }
-    throw new Error(`Unknown UserIndex.UsersResponse of ${json}`);
+    throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
 }
 
 export function currentUserSummary(
@@ -96,11 +96,11 @@ export function currentUserSummary(
         isPlatformModerator: json.is_platform_moderator,
         diamondDetails: mapOptional(json.diamond_membership_details, diamondMembership),
         updated: timestamp,
-        blobReference: mapOptional(json.avatar_id, (id) => ({
+        blobReference: optional(candid.avatar_id, (id) => ({
             blobId: id,
             canisterId: principalBytesToString(json.user_id),
         })),
-        isUniquePerson: json.is_unique_person,
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -111,15 +111,15 @@ export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
             username: s.username,
             diamondStatus: diamondStatus(s.diamond_membership_status),
             isBot: s.is_bot,
-            displayName: mapOptional(s.display_name, identity),
-            blobReference: mapOptional(s.avatar_id, (id) => ({
+            displayName: optional(s.display_name, identity),
+            blobReference: optional(s.avatar_id, (id) => ({
                 blobId: id,
                 canisterId: principalBytesToString(json.user_id),
             })),
             suspended: s.suspended,
             isUniquePerson: s.is_unique_person,
         })),
-        volatile: mapOptional(json.volatile, (v) => ({
+        volatile: optional(candid.volatile, (v) => ({
             chitBalance: v.chit_balance,
             streak: v.streak,
             totalChitEarned: v.total_chit_earned,
@@ -138,12 +138,12 @@ export function userSummary(json: TUserSummary, timestamp: bigint): UserSummary 
             canisterId: principalBytesToString(json.user_id),
         })),
         updated: timestamp,
-        suspended: json.suspended,
-        diamondStatus: diamondStatus(json.diamond_membership_status),
-        chitBalance: json.chit_balance,
-        totalChitEarned: json.total_chit_earned,
-        streak: json.streak,
-        isUniquePerson: json.is_unique_person,
+        suspended: candid.suspended,
+        diamondStatus: diamondStatus(candid.diamond_membership_status),
+        chitBalance: candid.chit_balance,
+        totalChitEarned: candid.total_chit_earned,
+        streak: candid.streak,
+        isUniquePerson: candid.is_unique_person,
     };
 }
 
@@ -151,13 +151,13 @@ export function diamondStatus(json: TDiamondMembershipStatus): DiamondMembership
     if (json === "Inactive") {
         return "inactive";
     }
-    if (json === "Active") {
+    if ("Active" in candid) {
         return "active";
     }
-    if (json === "Lifetime") {
+    if ("Lifetime" in candid) {
         return "lifetime";
     }
-    throw new UnsupportedValueError("Unexpected DiamondMembershipStatus type received", json);
+    throw new UnsupportedValueError("Unexpected ApiDiamondMembershipStatus type received", candid);
 }
 
 export function userRegistrationCanisterResponse(
@@ -166,7 +166,7 @@ export function userRegistrationCanisterResponse(
     if (json !== "NewRegistrationsClosed" && "Success" in json) {
         return principalBytesToString(json.Success);
     }
-    throw new Error(`Unexpected UserRegistrationCanisterResponse type received: ${json}`);
+    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`);
 }
 
 export function currentUserResponse(json: UserIndexCurrentUserResponse): CurrentUserResponse {
@@ -183,69 +183,73 @@ export function currentUserResponse(json: UserIndexCurrentUserResponse): Current
             userId: principalBytesToString(r.user_id),
             username: r.username,
             dateCreated: r.date_created,
-            displayName: r.display_name ?? undefined,
+            displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
             referrals: r.referrals.map(principalBytesToString),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
-            suspensionDetails: mapOptional(r.suspension_details, suspensionDetails),
+            suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
-            isUniquePerson: json.Success.is_unique_person,
+            isUniquePerson: candid.Success.is_unique_person,
         };
     }
 
-    throw new Error(`Unexpected CurrentUserResponse type received: ${json}`);
+    if ("UserNotFound" in candid) {
+        return { kind: "unknown_user" };
+    }
+
+    throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
 }
 
 function diamondMembershipStatus(json: TDiamondMembershipStatusFull): DiamondMembershipStatus {
     if (json === "Inactive") {
         return { kind: "inactive" };
     }
-    if (json === "Lifetime") {
+    if ("Lifetime" in candid) {
         return { kind: "lifetime" };
     }
-    if ("Active" in json) {
+    if ("Active" in candid) {
         return {
             kind: "active",
-            ...diamondMembership(json.Active),
+            ...diamondMembership(candid.Active),
         };
     }
     throw new UnsupportedValueError(
-        "Unexpected DiamondMembershipStatusFullJson type received",
-        json,
+        "Unexpected ApiDiamondMembershipStatusFull type received",
+        candid,
     );
 }
 
 function diamondMembership(json: TDiamondMembershipDetails): DiamondMembershipDetails {
     return {
-        expiresAt: json.expires_at,
-        subscription: diamondMembershipSubscription(json.subscription),
-        payInChat: json.pay_in_chat,
+        expiresAt: candid.expires_at,
+        subscription: diamondMembershipSubscription(candid.subscription),
+        payInChat: candid.pay_in_chat,
     };
 }
 
 function diamondMembershipSubscription(
     json: TDiamondMembershipSubscription,
 ): DiamondMembershipSubscription {
-    if (json === "OneMonth") {
+    if ("OneMonth" in candid) {
         return "one_month";
     }
-    if (json === "ThreeMonths") {
+    if ("ThreeMonths" in candid) {
         return "three_months";
     }
-    if (json === "OneYear") {
+    if ("OneYear" in candid) {
         return "one_year";
     }
-    if (json === "Disabled") {
+    if ("Disabled" in candid) {
         return "disabled";
     }
     throw new UnsupportedValueError(
-        "Unexpected DiamondMembershipSubscriptionJson type received",
-        json,
+        "Unexpected ApiDiamondMembershipSubscription type received",
+        candid,
     );
 }
 
@@ -261,57 +265,57 @@ function suspensionAction(json: TSuspensionAction): SuspensionAction {
     if ("Unsuspend" in json) {
         return {
             kind: "unsuspend_action",
-            timestamp: json.Unsuspend,
+            timestamp: candid.Unsuspend,
         };
-    } else if ("Delete" in json) {
+    } else if ("Delete" in candid) {
         return {
             kind: "delete_action",
-            timestamp: json.Delete,
+            timestamp: candid.Delete,
         };
     }
 
-    throw new Error(`Unexpected SuspensionAction type received: ${json}`);
+    throw new Error(`Unexpected ApiSuspensionAction type received: ${candid}`);
 }
 
 export function checkUsernameResponse(json: UserIndexCheckUsernameResponse): CheckUsernameResponse {
     if (json === "Success") {
         return "success";
     }
-    if (json === "UsernameTaken") {
+    if ("UsernameTaken" in candid) {
         return "username_taken";
     }
-    if (json === "UsernameInvalid") {
-        return "username_invalid";
-    }
-    if ("UsernameTooShort" in json) {
+    if ("UsernameTooShort" in candid) {
         return "username_too_short";
     }
-    if ("UsernameTooLong" in json) {
+    if ("UsernameTooLong" in candid) {
         return "username_too_long";
     }
-    throw new UnsupportedValueError("Unexpected CheckUsernameResponse type received", json);
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    throw new UnsupportedValueError("Unexpected ApiCheckUsernameResponse type received", candid);
 }
 
 export function setUsernameResponse(json: UserIndexSetUsernameResponse): SetUsernameResponse {
     if (json === "Success") {
         return "success";
     }
-    if (json === "UsernameTaken") {
+    if ("UsernameTaken" in candid) {
         return "username_taken";
     }
-    if (json === "UserNotFound") {
+    if ("UserNotFound" in candid) {
         return "user_not_found";
     }
-    if (json === "UsernameInvalid") {
-        return "username_invalid";
-    }
-    if ("UsernameTooShort" in json) {
+    if ("UsernameTooShort" in candid) {
         return "username_too_short";
     }
-    if ("UsernameTooLong" in json) {
+    if ("UsernameTooLong" in candid) {
         return "username_too_long";
     }
-    throw new UnsupportedValueError("Unexpected SetUsernameResponse type received", json);
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
 }
 
 export function setDisplayNameResponse(
@@ -320,114 +324,117 @@ export function setDisplayNameResponse(
     if (json === "Success") {
         return "success";
     }
-    if (json === "UserNotFound") {
+    if ("UserNotFound" in candid) {
         return "user_not_found";
     }
-    if (json === "DisplayNameInvalid") {
-        return "display_name_invalid";
-    }
-    if (json === "Unauthorized") {
-        return "unauthorized";
-    }
-    if ("DisplayNameTooShort" in json) {
+    if ("DisplayNameTooShort" in candid) {
         return "display_name_too_short";
     }
-    if ("DisplayNameTooLong" in json) {
+    if ("DisplayNameTooLong" in candid) {
         return "display_name_too_long";
     }
-    throw new UnsupportedValueError("Unexpected SetDisplayNameResponse type received", json);
+    if ("DisplayNameInvalid" in candid) {
+        return "display_name_invalid";
+    }
+    if ("Unauthorized" in candid) {
+        return "unauthorized";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetDisplayNameResponse type received", candid);
 }
 
 export function suspendUserResponse(json: UserIndexSuspendUserResponse): SuspendUserResponse {
     if (json === "Success") {
         return "success";
     }
-    if (json === "UserAlreadySuspended") {
-        return "user_already_suspended";
-    }
-    if (json === "UserNotFound") {
-        return "user_not_found";
-    }
-    if ("InternalError" in json) {
+    if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected SuspendUserResponse type received", json);
+    if ("UserAlreadySuspended" in candid) {
+        return "user_already_suspended";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
 }
 
 export function unsuspendUserResponse(json: UserIndexUnsuspendUserResponse): UnsuspendUserResponse {
     if (json === "Success") {
         return "success";
     }
-    if (json === "UserNotFound") {
-        return "user_not_found";
-    }
-    if (json === "UserNotSuspended") {
-        return "user_not_suspended";
-    }
-    if ("InternalError" in json) {
+    if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected UnsuspendUserResponse type received", json);
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    if ("UserNotSuspended" in candid) {
+        return "user_not_suspended";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
 }
 
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
     json: UserIndexPayForDiamondMembershipResponse,
 ): PayForDiamondMembershipResponse {
-    if (json === "PaymentAlreadyInProgress") {
+    if ("PaymentAlreadyInProgress" in candid) {
         return { kind: "payment_already_in_progress" };
     }
-    if (json === "CurrencyNotSupported") {
+    if ("CurrencyNotSupported" in candid) {
         return { kind: "currency_not_supported" };
     }
-    if (json === "UserNotFound") {
-        return { kind: "user_not_found" };
-    }
-    if (json === "PriceMismatch") {
-        return { kind: "price_mismatch" };
-    }
-    if (json === "AlreadyLifetimeDiamondMember") {
-        return { kind: "already_lifetime_diamond_member" };
-    }
-    if ("Success" in json) {
+    if ("Success" in candid) {
         return {
             kind: "success",
-            proof: json.Success.proof_jwt,
+            proof: candid.Success.proof_jwt,
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }
-                    : { kind: "active", ...diamondMembership(json.Success) },
+                    : { kind: "active", ...diamondMembership(candid.Success) },
         };
     }
-    if ("TransferFailed" in json) {
+    if ("PriceMismatch" in candid) {
+        return { kind: "price_mismatch" };
+    }
+    if ("TransferFailed" in candid) {
         return { kind: "transfer_failed" };
     }
-    if ("InternalError" in json) {
+    if ("InternalError" in candid) {
         return { kind: "internal_error" };
     }
-    if ("InsufficientFunds" in json) {
+    if ("CannotExtend" in candid) {
+        return { kind: "cannot_extend" };
+    }
+    if ("UserNotFound" in candid) {
+        return { kind: "user_not_found" };
+    }
+    if ("InsufficientFunds" in candid) {
         return { kind: "insufficient_funds" };
+    }
+    if ("AlreadyLifetimeDiamondMember" in candid) {
+        return { kind: "already_lifetime_diamond_member" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        json,
+        candid,
     );
 }
 
-export function apiJsonDiamondDuration(
+export function apiDiamondDuration(
     domain: DiamondMembershipDuration,
 ): TDiamondMembershipPlanDuration {
     if (domain === "one_month") {
-        return "OneMonth";
+        return { OneMonth: null };
     }
     if (domain === "three_months") {
-        return "ThreeMonths";
+        return { ThreeMonths: null };
     }
     if (domain === "one_year") {
-        return "OneYear";
+        return { OneYear: null };
     }
     if (domain === "lifetime") {
-        return "Lifetime";
+        return { Lifetime: null };
     }
     throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
 }
@@ -435,23 +442,26 @@ export function apiJsonDiamondDuration(
 export function diamondMembershipFeesResponse(
     json: UserIndexDiamondMembershipFeesResponse,
 ): DiamondMembershipFees[] {
-    if ("Success" in json) {
-        return json.Success.map((f) => ({
-            token: tokenJson(f.token) as "CHAT" | "ICP",
+    if ("Success" in candid) {
+        return candid.Success.map((f) => ({
+            token: token(f.token) as "CHAT" | "ICP",
             oneMonth: f.one_month,
             threeMonths: f.three_months,
             oneYear: f.one_year,
             lifetime: f.lifetime,
         }));
     }
-    throw new UnsupportedValueError("Unexpected DiamondMembershipFeesResponse type received", json);
+    throw new UnsupportedValueError(
+        "Unexpected ApiDiamondMembershipFeesResponse type received",
+        candid,
+    );
 }
 
 export function chitLeaderboardResponse(json: UserIndexChitLeaderboardResponse): ChitUserBalance[] {
     if ("Success" in json) {
         return json.Success.map(chitUserBalance);
     }
-    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", json);
+    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", candid);
 }
 
 function chitUserBalance(json: UserIndexChitLeaderboardChitUserBalance): ChitUserBalance {
@@ -465,17 +475,17 @@ function chitUserBalance(json: UserIndexChitLeaderboardChitUserBalance): ChitUse
 export function submitProofOfUniquePersonhoodResponse(
     json: UserIndexSubmitProofOfUniquePersonhoodResponse,
 ): SubmitProofOfUniquePersonhoodResponse {
-    if (json === "Success") {
+    if ("Success" in candid) {
         return CommonResponses.success();
     }
-    if (json === "UserNotFound") {
-        return CommonResponses.userNotFound();
-    }
-    if ("Invalid" in json) {
+    if ("Invalid" in candid) {
         return CommonResponses.invalid();
     }
+    if ("UserNotFound" in candid) {
+        return CommonResponses.userNotFound();
+    }
     throw new UnsupportedValueError(
-        "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
-        json,
+        "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
+        candid,
     );
 }

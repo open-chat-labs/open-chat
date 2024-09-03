@@ -98,7 +98,11 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         permissions_v2: args.permissions_v2,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
-        created_by_user_type: UserType::User,
+        created_by_user_type: if args.created_by_user_id == state.data.proposals_bot_user_id {
+            UserType::OcControlledBot
+        } else {
+            UserType::User
+        },
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,

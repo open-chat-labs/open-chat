@@ -20,11 +20,6 @@ pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEven
 }
 
 impl<M: EventsMap> ChatEventsList<M> {
-    // TODO remove this
-    pub fn iter_events_mut(&mut self) -> impl Iterator<Item = &mut EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values_mut()
-    }
-
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,

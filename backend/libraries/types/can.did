@@ -1876,6 +1876,7 @@ type ChitEarned = record {
 type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : Achievement;
+    Referral : ReferralStatus;
     MemeContestWinner;
 };
 
@@ -2003,9 +2004,21 @@ type Achievement = variant {
     DirectChats5;
     DirectChats10;
     DirectChats20;
+    Referred1stUser;
+    Referred3rdUser;
+    Referred10thUser;
+    Referred20thUser;
+    Referred50thUser;
 };
 
 type Chit = record {
     balance : int32;
     streak : nat16;
+};
+
+type ReferralStatus = variant {
+    Diamond;
+    UniquePerson;
+    LifetimeDiamond;
+    Registered;
 };

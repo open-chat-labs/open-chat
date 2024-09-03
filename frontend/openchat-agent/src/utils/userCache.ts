@@ -1,4 +1,4 @@
-import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
 
 const CACHE_VERSION = 10;
@@ -188,4 +188,17 @@ export async function setChitInfoInCache(
         await store.put(user, userId);
     }
     await tx.done;
+}
+
+export async function clearCache(): Promise<void> {
+    const name = `openchat_users`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.error("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
 }

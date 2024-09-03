@@ -7,7 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Expose JSON versions of GroupIndex APIs ([#6254](https://github.com/open-chat-labs/open-chat/pull/6254))
+- Expose MessagePack versions of GroupIndex APIs ([#6254](https://github.com/open-chat-labs/open-chat/pull/6254))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1318](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1318-group_index)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
 ## [[2.0.1270](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1270-group_index)] - 2024-07-31
 

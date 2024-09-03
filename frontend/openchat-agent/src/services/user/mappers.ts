@@ -68,6 +68,9 @@ import type {
     ApiChitEarnedReason,
     ApiAchievement,
     ApiClaimDailyChitResponse,
+    ApiReferralStatus,
+    ApiReferral,
+    ApiWalletConfig,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -137,6 +140,9 @@ import type {
     ChitEarnedReason,
     Achievement,
     ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
+    WalletConfig,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -200,10 +206,29 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
     if ("Achievement" in candid) {
         return { kind: "achievement_unlocked", type: achievementType(candid.Achievement) };
     }
+    if ("Referral" in candid) {
+        return { kind: "referral", type: referralStatus(candid.Referral) };
+    }
     if ("MemeContestWinner" in candid) {
         return { kind: "meme_contest_winner" };
     }
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
+}
+
+export function referralStatus(candid: ApiReferralStatus): ReferralStatus {
+    if ("Registered" in candid) {
+        return "registered";
+    }
+    if ("Diamond" in candid) {
+        return "diamond";
+    }
+    if ("UniquePerson" in candid) {
+        return "unique_person";
+    }
+    if ("LifetimeDiamond" in candid) {
+        return "lifetime_diamond";
+    }
+    throw new UnsupportedValueError("Unexpected ApiReferralStatus encountered", candid);
 }
 
 export function achievementType(candid: ApiAchievement): Achievement {
@@ -407,6 +432,21 @@ export function achievementType(candid: ApiAchievement): Achievement {
     }
     if ("SetAvatar" in candid) {
         return "set_avatar";
+    }
+    if ("Referred1stUser" in candid) {
+        return "referred_1st_user";
+    }
+    if ("Referred3rdUser" in candid) {
+        return "referred_3rd_user";
+    }
+    if ("Referred10thUser" in candid) {
+        return "referred_10th_user";
+    }
+    if ("Referred20thUser" in candid) {
+        return "referred_20th_user";
+    }
+    if ("Referred50thUser" in candid) {
+        return "referred_50th_user";
     }
     throw new UnsupportedValueError("Unexpected ApiAchievement received", candid);
 }
@@ -892,9 +932,46 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+            walletConfig: walletConfig(result.wallet_config),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function referral(candid: ApiReferral): Referral {
+    return {
+        userId: candid.user_id.toString(),
+        status: referralStatus(candid.status),
+    };
+}
+
+export function apiWalletConfig(domain: WalletConfig): ApiWalletConfig {
+    switch (domain.kind) {
+        case "auto_wallet": {
+            return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
+        }
+        case "manual_wallet": {
+            return { Manual: { tokens: [...domain.tokens].map((t) => Principal.fromText(t)) } };
+        }
+    }
+    throw new UnsupportedValueError("Unexpected WalletConfig value received", domain);
+}
+
+function walletConfig(candid: ApiWalletConfig): WalletConfig {
+    if ("Auto" in candid) {
+        return {
+            kind: "auto_wallet",
+            minDollarValue: candid.Auto.min_cents_visible / 100,
+        };
+    }
+    if ("Manual" in candid) {
+        return {
+            kind: "manual_wallet",
+            tokens: new Set<string>(candid.Manual.tokens.map((p) => p.toString())),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiWalletConfig value received", candid);
 }
 
 function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
@@ -987,24 +1064,27 @@ export function manageFavouritesResponse(
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        const result = candid.Success;
         return {
             kind: "success",
-            timestamp: candid.Success.timestamp,
-            blockedUsers: optional(candid.Success.blocked_users, (b) => b.map((u) => u.toString())),
-            communities: communitiesUpdates(candid.Success.communities),
-            favouriteChats: favouriteChatsUpdates(candid.Success.favourite_chats),
-            groupChats: groupChatsUpdates(candid.Success.group_chats),
-            avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            directChats: directChatsUpdates(candid.Success.direct_chats),
-            suspended: optional(candid.Success.suspended, identity),
-            pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
-            achievementsLastSeen: optional(candid.Success.achievements_last_seen, identity),
-            achievements: candid.Success.achievements.map(chitEarned),
-            streakEnds: candid.Success.streak_ends,
-            streak: candid.Success.streak,
-            nextDailyClaim: candid.Success.next_daily_claim,
-            chitBalance: candid.Success.chit_balance,
-            totalChitEarned: candid.Success.total_chit_earned,
+            timestamp: result.timestamp,
+            blockedUsers: optional(result.blocked_users, (b) => b.map((u) => u.toString())),
+            communities: communitiesUpdates(result.communities),
+            favouriteChats: favouriteChatsUpdates(result.favourite_chats),
+            groupChats: groupChatsUpdates(result.group_chats),
+            avatarId: optionUpdate(result.avatar_id, identity),
+            directChats: directChatsUpdates(result.direct_chats),
+            suspended: optional(result.suspended, identity),
+            pinNumberSettings: optionUpdate(result.pin_number_settings, pinNumberSettings),
+            achievementsLastSeen: optional(result.achievements_last_seen, identity),
+            achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+			walletConfig: optional(result.wallet_config, walletConfig),
         };
     }
 

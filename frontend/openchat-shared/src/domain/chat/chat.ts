@@ -1,6 +1,6 @@
 import type DRange from "drange";
 import type { DataContent } from "../data/data";
-import type { UserSummary } from "../user/user";
+import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
 import type {
@@ -33,6 +33,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { Achievement, ChitEarned } from "../chit";
+import type { WalletConfig } from "../crypto";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -649,6 +650,11 @@ export type LocalPollVote = {
     userId: string;
 };
 
+export type LocalGlobalUpdates = {
+    walletConfig?: WalletConfig;
+    lastUpdated: number;
+};
+
 export type LocalChatSummaryUpdates = {
     added?: ChatSummary;
     updated?:
@@ -979,6 +985,8 @@ export type ChatStateFull = {
     achievements: Set<Achievement>;
     achievementsLastSeen: bigint;
     chitState: ChitState;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type ChitState = {
@@ -1144,6 +1152,8 @@ export type InitialStateResponse = {
     nextDailyClaim: bigint;
     chitBalance: number;
     totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type PinNumberSettings = {
@@ -1186,6 +1196,8 @@ export type UpdatesSuccessResponse = {
     streak: number;
     nextDailyClaim: bigint;
     totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig | undefined;
 };
 
 export type DirectChatsUpdates = {

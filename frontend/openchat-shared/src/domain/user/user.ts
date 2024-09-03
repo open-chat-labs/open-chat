@@ -261,7 +261,6 @@ export type CreatedUser = CurrentUserCommon & {
     kind: "created_user";
     dateCreated: bigint;
     cryptoAccount: string;
-    referrals: string[];
 };
 
 export function anonymousUser(): CreatedUser {
@@ -272,7 +271,6 @@ export function anonymousUser(): CreatedUser {
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
-        referrals: [],
         isPlatformModerator: false,
         isPlatformOperator: false,
         suspensionDetails: undefined,
@@ -496,3 +494,10 @@ export type DiamondMembershipFees = {
 };
 
 export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound;
+
+export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
+
+export type Referral = {
+    userId: string;
+    status: ReferralStatus;
+};

@@ -1,4 +1,5 @@
 import {
+    deleteDB,
     openDB,
     type DBSchema,
     type IDBPCursorWithValue,
@@ -49,7 +50,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 109;
+const CACHE_VERSION = 111;
 const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
@@ -167,6 +168,8 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         await clearChatsStore(principal, tx);
     },
     109: clearChatsStore,
+    110: clearChatsStore,
+    111: clearChatsStore,
 };
 
 async function migrate(
@@ -1321,4 +1324,17 @@ export async function cacheLocalUserIndexForUser(
     if (db === undefined) return localUserIndex;
     (await db).put("localUserIndex", localUserIndex, userId);
     return localUserIndex;
+}
+
+export async function clearCache(principal: string): Promise<void> {
+    const name = `openchat_db_${principal}`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.error("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
 }

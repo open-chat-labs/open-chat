@@ -7,8 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1308](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1308-community)] - 2024-08-26
+
+### Fixed
+
+- Mark ProposalsBot as an OC controlled bot ([#6285](https://github.com/open-chat-labs/open-chat/pull/6285))
+
+## [[2.0.1296](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1296-community)] - 2024-08-16
+
+### Changed
+
 - Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
 - Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
 ## [[2.0.1287](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1287-community)] - 2024-08-13
 

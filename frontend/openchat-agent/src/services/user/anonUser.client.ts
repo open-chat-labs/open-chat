@@ -7,6 +7,7 @@ import type {
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     VideoCallPresence,
+    WalletConfig,
 } from "openchat-shared";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
@@ -119,6 +120,8 @@ export class AnonUserClient {
             nextDailyClaim: 0n,
             chitBalance: 0,
             totalChitEarned: 0,
+            referrals: [],
+            walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
         });
     }
 
@@ -469,6 +472,10 @@ export class AnonUserClient {
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    configureWallet(_walletConfig: WalletConfig): Promise<void> {
         throw new AnonymousOperationError();
     }
 }

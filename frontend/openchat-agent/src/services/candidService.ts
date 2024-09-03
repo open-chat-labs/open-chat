@@ -1,12 +1,7 @@
 import { Actor, HttpAgent, type Identity, polling, UpdateCallRejectedError } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
-import {
-    AuthError,
-    DestinationInvalidError,
-    ResponseTooLargeError,
-    SessionExpiryError,
-} from "openchat-shared";
+import type { Principal } from "@dfinity/principal";
+import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { type Options, Packr } from "msgpackr";
 import { identity } from "../utils/mapping";

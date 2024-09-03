@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1311](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1311-identity)] - 2024-08-30
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Allow linking existing identities which have not registered as OC users ([#6292](https://github.com/open-chat-labs/open-chat/pull/6292))
+
 ## [[2.0.1289](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1289-identity)] - 2024-08-13
 
 ### Added

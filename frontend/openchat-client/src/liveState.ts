@@ -19,6 +19,7 @@ import type {
     CreatedUser,
     DiamondMembershipStatus,
     ChitState,
+    WalletConfig,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -72,6 +73,7 @@ import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import { locale } from "svelte-i18n";
 import type { PinNumberResolver } from "openchat-shared";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
+import { walletConfigStore } from "./stores/crypto";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -128,6 +130,7 @@ export class LiveState {
     pinNumberRequired!: boolean;
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
+    walletConfig!: WalletConfig;
 
     constructor() {
         chitStateStore.subscribe((state) => (this.chitState = state));
@@ -184,5 +187,6 @@ export class LiveState {
         locale.subscribe((data) => (this.locale = data ?? "en"));
         pinNumberRequiredStore.subscribe((data) => (this.pinNumberRequired = data));
         capturePinNumberStore.subscribe((data) => (this.capturePinNumber = data));
+        walletConfigStore.subscribe((data) => (this.walletConfig = data));
     }
 }
