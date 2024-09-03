@@ -277,8 +277,8 @@ impl RuntimeState {
         }
     }
 
-    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> CohortStats {
-        let mut stats = CohortStats::default();
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
 
         for user in self.data.users.iter() {
             let diamond = user.diamond_membership_details.was_active(airdrop_from)
@@ -597,8 +597,8 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
-    pub july_airdrop_period: CohortStats,
-    pub august_airdrop_period: CohortStats,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
 }
 
 #[derive(Serialize, Debug)]
@@ -617,7 +617,7 @@ pub struct UserMetrics {
 }
 
 #[derive(Serialize, Debug, Default)]
-pub struct CohortStats {
+pub struct AirdropStats {
     pub diamond: u32,
     pub lifetime_diamond: u32,
     pub proved_uniqueness: u32,
