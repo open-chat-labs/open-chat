@@ -33,13 +33,6 @@ pub struct UserMap {
 }
 
 impl UserMap {
-    // TODO remove this
-    pub fn set_user_type(&mut self, user_id: &UserId, user_type: UserType) {
-        if let Some(u) = self.users.get_mut(user_id) {
-            u.user_type = user_type;
-        }
-    }
-
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
     }
