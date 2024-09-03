@@ -277,41 +277,29 @@ impl RuntimeState {
         }
     }
 
-    fn build_stats_for_cohort(&self, registered_from: TimestampMillis, registered_to: TimestampMillis) -> CohortStats {
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> CohortStats {
         let mut stats = CohortStats::default();
 
         for user in self.data.users.iter() {
-            if user.date_created >= registered_from && user.date_created < registered_to {
-                stats.total += 1;
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
 
-                let diamond = user.diamond_membership_details.is_active(registered_from)
-                    || user.diamond_membership_details.is_active(registered_to);
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
 
-                if diamond {
-                    stats.diamond += 1;
-                }
+            if diamond {
+                stats.diamond += 1;
+            }
 
-                if user.diamond_membership_details.is_active(registered_to) {
-                    stats.lifetime_diamond += 1;
-                }
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
 
-                if user.total_chit_earned() >= 5000 {
-                    stats.more_than_5k_chit += 1;
-                }
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
 
-                if user.total_chit_earned() >= 25000 {
-                    stats.more_than_25k_chit += 1;
-                }
-
-                if user.unique_person_proof.is_some() {
-                    stats.proved_uniqueness += 1;
-                }
-
-                if (user.unique_person_proof.is_some() && diamond)
-                    || user.diamond_membership_details.is_lifetime_diamond_member()
-                {
-                    stats.qualify_for_airdrop += 1;
-                }
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
             }
         }
 
@@ -630,11 +618,8 @@ pub struct UserMetrics {
 
 #[derive(Serialize, Debug, Default)]
 pub struct CohortStats {
-    pub total: u32,
     pub diamond: u32,
     pub lifetime_diamond: u32,
-    pub more_than_5k_chit: u32,
-    pub more_than_25k_chit: u32,
     pub proved_uniqueness: u32,
     pub qualify_for_airdrop: u32,
 }
