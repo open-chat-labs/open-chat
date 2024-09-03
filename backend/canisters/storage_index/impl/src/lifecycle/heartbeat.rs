@@ -94,7 +94,7 @@ mod ensure_sufficient_active_buckets {
 mod sync_buckets {
     use super::*;
     use crate::updates::c2c_notify_low_balance::top_up_cycles;
-    use ic_cdk::api::call::RejectionCode;
+    use utils::cycles::is_out_of_cycles_error;
 
     pub fn run() {
         for (canister_id, args) in mutate_state(next_batch) {
@@ -112,9 +112,9 @@ mod sync_buckets {
                 mutate_state(|state| handle_success(canister_id, result, state));
             }
             Err((code, msg)) => {
-                if code == RejectionCode::SysTransient && msg.starts_with("IC0207:") {
+                if is_out_of_cycles_error(code, &msg) {
                     // Canister is out of cycles
-                    top_up_cycles(Some(canister_id.into())).await;
+                    top_up_cycles(Some(canister_id)).await;
                 }
                 mutate_state(|state| handle_error(canister_id, args, state));
             }
