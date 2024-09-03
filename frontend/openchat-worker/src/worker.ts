@@ -7,6 +7,7 @@ import {
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
 import { IdentityAgent, OpenChatAgent } from "openchat-agent";
+import { setCommunityReferral } from "openchat-agent/lib/utils/caching";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -496,7 +497,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.credentialArgs),
+                    agent.joinGroup(payload.chatId, payload.credentialArgs, payload.referredBy),
                 );
                 break;
 
@@ -504,7 +505,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.credentialArgs),
+                    agent.joinCommunity(payload.id, payload.credentialArgs, payload.referredBy),
                 );
                 break;
 
@@ -1815,6 +1816,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "clearCachedData":
                 executeThenReply(payload, correlationId, agent.clearCachedData());
+                break;
+
+            case "setCommunityReferral":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    setCommunityReferral(
+                        payload.communityId.communityId,
+                        payload.referredBy,
+                        Date.now(),
+                    ),
+                );
                 break;
 
             default:

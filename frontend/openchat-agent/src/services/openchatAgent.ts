@@ -13,6 +13,8 @@ import {
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
     clearCache,
+    getCommunityReferral,
+    deleteCommunityReferral,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -464,6 +466,10 @@ export class OpenChatAgent extends EventTarget {
         return this._communityInvite.id.communityId === communityId
             ? this._communityInvite.code
             : undefined;
+    }
+
+    private getCommunityReferral(communityId: string): Promise<string | undefined> {
+        return getCommunityReferral(communityId, Date.now());
     }
 
     editMessage(
@@ -2174,11 +2180,15 @@ export class OpenChatAgent extends EventTarget {
                 ).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
-                return localUserIndexClient.joinChannel(
-                    chatId,
-                    communityInviteCode,
-                    credentialArgs,
-                );
+                const referredBy = await this.getCommunityReferral(chatId.communityId);
+                return localUserIndexClient
+                    .joinChannel(chatId, communityInviteCode, credentialArgs, referredBy)
+                    .then((resp) => {
+                        if (resp.kind === "success" || resp.kind === "success_joined_community") {
+                            deleteCommunityReferral(chatId.communityId);
+                        }
+                        return resp;
+                    });
             }
         }
     }
@@ -2191,11 +2201,15 @@ export class OpenChatAgent extends EventTarget {
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
-        return this.getLocalUserIndexClient(localUserIndex).joinCommunity(
-            id.communityId,
-            inviteCode,
-            credentialArgs,
-        );
+        const referredBy = await this.getCommunityReferral(id.communityId);
+        return this.getLocalUserIndexClient(localUserIndex)
+            .joinCommunity(id.communityId, inviteCode, credentialArgs, referredBy)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    deleteCommunityReferral(id.communityId);
+                }
+                return resp;
+            });
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {

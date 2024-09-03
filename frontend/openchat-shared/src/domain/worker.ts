@@ -394,7 +394,14 @@ export type WorkerRequest =
     | LinkIdentities
     | GetAuthenticationPrincipals
     | ConfigureWallet
-    | ClearCachedData;
+    | ClearCachedData
+    | SetCommunityReferral;
+
+type SetCommunityReferral = {
+    kind: "setCommunityReferral";
+    communityId: CommunityIdentifier;
+    referredBy: string;
+};
 
 type ClearCachedData = {
     kind: "clearCachedData";
@@ -925,12 +932,14 @@ type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
+    referredBy?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
+    referredBy?: string;
 };
 
 type LeaveGroup = {
@@ -2126,5 +2135,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ConfigureWallet
     ? void
     : T extends ClearCachedData
+    ? void
+    : T extends SetCommunityReferral
     ? void
     : never;

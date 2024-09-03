@@ -230,7 +230,9 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        referredBy?: string,
     ): Promise<JoinCommunityResponse> {
+        console.log("referredBy", referredBy);
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
@@ -261,7 +263,9 @@ export class LocalUserIndexClient extends CandidService {
         id: ChannelIdentifier,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        referredBy?: string,
     ): Promise<JoinGroupResponse> {
+        console.log("referredBy", referredBy);
         return this.handleResponse(
             this.localUserIndexService.join_channel({
                 community_id: Principal.fromText(id.communityId),

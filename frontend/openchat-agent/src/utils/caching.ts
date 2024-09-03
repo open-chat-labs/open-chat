@@ -1369,17 +1369,31 @@ export async function clearCache(principal: string): Promise<void> {
 }
 
 export async function setCommunityReferral(
-    db: Database,
     communityId: string,
     userId: string,
     timestamp: number,
 ): Promise<void> {
+    if (db === undefined) return;
     await (await db).put("community_referrals", { userId, timestamp }, communityId);
 }
 
+export async function deleteCommunityReferral(communityId: string): Promise<void> {
+    if (db === undefined) return;
+    (await db).delete("community_referrals", communityId);
+}
+
 export async function getCommunityReferral(
-    db: Database,
     communityId: string,
-): Promise<{ userId: string; timestamp: number } | undefined> {
-    return (await db).get("community_referrals", communityId);
+    timestamp: number,
+): Promise<string | undefined> {
+    if (db === undefined) return;
+    const referral = await (await db).get("community_referrals", communityId);
+    if (referral) {
+        const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
+        if (timestamp - referral.timestamp > oneWeekInMs) {
+            return undefined;
+        }
+        return referral.userId;
+    }
+    return undefined;
 }

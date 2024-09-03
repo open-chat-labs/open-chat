@@ -4502,9 +4502,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this._referralCode = code;
     }
 
-    captureReferralCode(): boolean {
+    private extractReferralCodeFromPath(): string | undefined {
         const qs = new URLSearchParams(window.location.search);
-        const code = qs.get("ref") ?? undefined;
+        return qs.get("ref") ?? undefined;
+    }
+
+    captureReferralCode(): boolean {
+        const code = this.extractReferralCodeFromPath();
         let captured = false;
         if (code) {
             gaTrack("captured_referral_code", "registration");
@@ -4864,6 +4868,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "communityInvite",
             value,
+        });
+    }
+
+    setCommunityReferral(communityId: CommunityIdentifier, referredBy: string): Promise<void> {
+        return this.sendRequest({
+            kind: "setCommunityReferral",
+            communityId,
+            referredBy,
         });
     }
 
@@ -6900,6 +6912,11 @@ export class OpenChat extends OpenChatAgentWorker {
             // if we don't have the community it means we're not a member and we need to look it up
             if (inviteCode) {
                 await this.setCommunityInvite({ id, code: inviteCode });
+            }
+
+            const referredBy = this.extractReferralCodeFromPath() ?? this._referralCode;
+            if (referredBy) {
+                await this.setCommunityReferral(id, referredBy);
             }
 
             const resp = await this.sendRequest({
