@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1320](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1320-notifications_index)] - 2024-09-02
+
 ### Changed
 
 - Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
