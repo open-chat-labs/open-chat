@@ -22,5 +22,5 @@ fn pre_upgrade() {
     let mut memory = get_upgrades_memory();
     let writer = get_writer(&mut memory);
 
-    serializer::serialize(stable_state, writer).unwrap();
+    msgpack::serialize(stable_state, writer).unwrap();
 }
