@@ -6,6 +6,7 @@
         OpenChat,
         routeForChatIdentifier,
         type MultiUserChat,
+        routeForMessageContext,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -87,6 +88,12 @@
     });
 
     function selectThread() {
+        // we want to preserve the right history so we will insert a history entry to represent the URL for the message context
+        const url = routeForMessageContext($chatListScope.kind, {
+            chatId: thread.chatId,
+            threadRootMessageIndex: thread.rootMessage.event.messageIndex,
+        });
+        window.history.pushState(null, "", url);
         page(
             `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
