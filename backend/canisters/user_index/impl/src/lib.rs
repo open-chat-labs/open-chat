@@ -276,6 +276,7 @@ impl RuntimeState {
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
             joined_0_1_months_ago: self.build_stats_for_cohort(now - MONTH_IN_MS, now),
             joined_1_2_months_ago: self.build_stats_for_cohort(now - (2 * MONTH_IN_MS), now - MONTH_IN_MS),
+            all_time: self.build_stats_for_cohort(0, now),
         }
     }
 
@@ -610,6 +611,7 @@ pub struct Metrics {
     pub unique_person_proofs_submitted: u32,
     pub joined_0_1_months_ago: CohortStats,
     pub joined_1_2_months_ago: CohortStats,
+    pub all_time: CohortStats,
 }
 
 #[derive(Serialize, Debug)]
