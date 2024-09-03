@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
@@ -8,7 +8,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::UserType;
 
 #[post_upgrade]
 #[trace]
@@ -31,10 +30,4 @@ fn post_upgrade(args: Args) {
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
     });
-
-    mutate_state(|state| {
-        if let Some(p) = state.data.chat.members.get_mut(&state.data.proposals_bot_user_id) {
-            p.user_type = UserType::OcControlledBot;
-        }
-    })
 }
