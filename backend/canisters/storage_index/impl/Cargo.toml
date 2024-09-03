@@ -25,7 +25,6 @@ ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_canister = { path = "../../storage_bucket/api" }
 storage_bucket_canister_c2c_client = { path = "../../storage_bucket/c2c_client" }
