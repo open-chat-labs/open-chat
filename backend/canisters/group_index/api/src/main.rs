@@ -23,9 +23,7 @@ fn main() {
     generate_candid_method!(group_index, unfreeze_community, update);
     generate_candid_method!(group_index, unfreeze_group, update);
 
-    let directory = env::current_dir()
-        .unwrap()
-        .join("tsBindings/groupIndex");
+    let directory = env::current_dir().unwrap().join("tsBindings/groupIndex");
     if directory.exists() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
