@@ -62,15 +62,14 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         referrals_updated: HashSet::new(),
     };
 
-    // TODO: Improve this by maintaining `member_list_last_updated: TimestampMillis` in CommunityMembers
     let mut my_user_id: Option<UserId> = None;
-    let mut my_referrals: HashSet<UserId> = HashSet::new();
+    let mut my_referrals: Option<&HashSet<UserId>> = None;
 
-    if state.data.events.latest_event_timestamp() > args.updates_since {
+    if state.data.members.member_list_last_updated() > args.updates_since {
         let caller = state.env.caller();
         if let Some(member) = state.data.members.get(caller) {
             my_user_id = Some(member.user_id);
-            my_referrals = state.data.members.referrals(caller).into_iter().collect();
+            my_referrals = Some(&member.referrals);
         }
     }
 
@@ -79,7 +78,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         match &event_wrapper.event {
             CommunityEventInternal::MembersRemoved(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_referrals.contains(user_id);
+                    let referral = my_referrals.map_or(false, |rs| rs.contains(user_id));
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
@@ -88,7 +87,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
             CommunityEventInternal::MemberLeft(e) => {
-                let referral = my_referrals.contains(&e.user_id);
+                let referral = my_referrals.map_or(false, |rs| rs.contains(&e.user_id));
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
             CommunityEventInternal::RoleChanged(e) => {
@@ -98,7 +97,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_referrals.contains(user_id);
+                    let referral = my_referrals.map_or(false, |rs| rs.contains(user_id));
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }

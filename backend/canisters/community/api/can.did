@@ -178,6 +178,7 @@ type SelectedInitialSuccess = record {
     invited_users : vec UserId;
     chat_rules : VersionedRules;
     user_groups : vec UserGroupDetails;
+    referrals : vec UserId;
 };
 
 type SelectedUpdatesArgs = record {
@@ -208,6 +209,8 @@ type SelectedUpdatesSuccess = record {
     chat_rules : opt VersionedRules;
     user_groups : vec UserGroupDetails;
     user_groups_deleted : vec nat32;
+    referrals_added : vec UserId;
+    referrals_removed : vec UserId;
 };
 
 type UserGroupDetails = record {
