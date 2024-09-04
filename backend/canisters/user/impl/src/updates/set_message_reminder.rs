@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
-use ic_cdk::update;
 use rand::RngCore;
 use types::{Achievement, FieldTooLongResult};
 use user_canister::set_message_reminder_v2::{Response::*, *};
@@ -11,7 +11,7 @@ use user_canister::C2CReplyContext;
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn set_message_reminder_v2(args: Args) -> Response {
     run_regular_jobs();

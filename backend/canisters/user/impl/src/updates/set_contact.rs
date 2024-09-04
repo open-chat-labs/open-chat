@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::model::contacts::SetContactResponse;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use user_canister::set_contact::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn set_contact(args: Args) -> Response {
     run_regular_jobs();

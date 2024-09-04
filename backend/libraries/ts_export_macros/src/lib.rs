@@ -18,13 +18,8 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         .collect();
 
     let (export_to, prefix) = if !attr_inputs.is_empty() {
-        assert_eq!(attr_inputs.len(), 2);
-
-        let canister_name = attr_inputs.first().unwrap();
-        let method_name = attr_inputs.last().unwrap();
-
-        let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
-        let prefix = format!("{}{}", convert_case(canister_name, true), convert_case(method_name, true));
+        let export_to: String = attr_inputs.iter().map(|s| format!("{}/", convert_case(s, false))).collect();
+        let prefix: String = attr_inputs.iter().map(|s| convert_case(s, true)).collect();
 
         (export_to, Some(prefix))
     } else {

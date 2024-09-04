@@ -1,15 +1,15 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::SetVideoCallPresenceResult;
-use ic_cdk::update;
 use types::{Achievement, EventIndex, UserId, VideoCallPresence};
 use user_canister::{
     join_video_call::{Response::*, *},
     JoinVideoCall, UserCanisterEvent,
 };
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
     run_regular_jobs();

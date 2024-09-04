@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::UserId;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, delete_direct_chat)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub block_user: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, delete_direct_chat)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     ChatNotFound,

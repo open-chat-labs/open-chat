@@ -4,8 +4,8 @@ use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use sonic_client::SonicClient;
@@ -15,7 +15,7 @@ use user_canister::swap_tokens::{Response::*, *};
 use utils::consts::MEMO_SWAP;
 use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn swap_tokens(args: Args) -> Response {
     run_regular_jobs();

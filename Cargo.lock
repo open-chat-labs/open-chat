@@ -5720,6 +5720,8 @@ dependencies = [
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -8139,6 +8141,8 @@ dependencies = [
  "proposals_bot_canister",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
