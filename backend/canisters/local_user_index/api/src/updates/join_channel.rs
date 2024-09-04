@@ -10,7 +10,6 @@ pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
     pub invite_code: Option<u64>,
-    #[serde(default)]
     pub referred_by: Option<UserId>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
 }
