@@ -99,6 +99,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
             community_id,
             channel_id,
             invite_code: None,
+            referred_by: None,
             verified_credential_args: None,
         },
     )
