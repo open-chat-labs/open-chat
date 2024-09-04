@@ -34,6 +34,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
+    import ChannelMembers from "./ChannelMembers.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -412,13 +413,25 @@
             isCommunityPublic={$selectedCommunity?.public ?? true}
             on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined}
+    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             collection={$multiUserChat}
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
+            on:close={popRightPanelHistory}
+            on:blockUser={onBlockGroupUser}
+            on:unblockUser={onUnblockGroupUser}
+            on:chatWith
+            on:showInviteUsers={showInviteGroupUsers}
+            on:removeMember={onRemoveGroupMember}
+            on:changeRole={onChangeGroupRole} />
+    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+        <ChannelMembers
+            channel={$multiUserChat}
+            community={$selectedCommunity}
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
