@@ -1,6 +1,5 @@
 use crate::{CanisterId, Milliseconds};
-use candid::{CandidType, Principal};
-use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
+use candid::{CandidType, Nat, Principal};
 use std::collections::HashMap;
 use ts_export::ts_export;
 
@@ -141,7 +140,7 @@ pub enum GateCheckFailedReason {
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
-    PaymentFailed(#[ts(as = "TransferFromErrorJS")] TransferFromError),
+    PaymentFailed(TransferFromError),
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
     Locked,
@@ -168,16 +167,38 @@ impl VerifiedCredentialGateArgs {
 }
 
 #[ts_export]
-pub enum TransferFromErrorJS {
-    BadFee { expected_fee: u128 },
-    BadBurn { min_burn_amount: u128 },
+#[derive(CandidType, Clone, Debug)]
+pub enum TransferFromError {
+    BadFee {
+        #[ts(as = "u128")]
+        expected_fee: Nat,
+    },
+    BadBurn {
+        #[ts(as = "u128")]
+        min_burn_amount: Nat,
+    },
     // The [from] account does not hold enough funds for the transfer.
-    InsufficientFunds { balance: u128 },
+    InsufficientFunds {
+        #[ts(as = "u128")]
+        balance: Nat,
+    },
     // The caller exceeded its allowance.
-    InsufficientAllowance { allowance: u128 },
+    InsufficientAllowance {
+        #[ts(as = "u128")]
+        allowance: Nat,
+    },
     TooOld,
-    CreatedInFuture { ledger_time: u64 },
-    Duplicate { duplicate_of: u128 },
+    CreatedInFuture {
+        ledger_time: u64,
+    },
+    Duplicate {
+        #[ts(as = "u128")]
+        duplicate_of: Nat,
+    },
     TemporarilyUnavailable,
-    GenericError { error_code: u128, message: String },
+    GenericError {
+        #[ts(as = "u128")]
+        error_code: Nat,
+        message: String,
+    },
 }

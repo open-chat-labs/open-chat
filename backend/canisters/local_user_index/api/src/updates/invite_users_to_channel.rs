@@ -1,8 +1,9 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, CommunityId, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_channel)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -10,7 +11,8 @@ pub struct Args {
     pub caller_username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_channel)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
@@ -25,12 +27,14 @@ pub enum Response {
     InternalError(String),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_channel)]
+#[derive(CandidType, Debug)]
 pub struct PartialSuccessResult {
     pub failed_users: Vec<UserId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_channel)]
+#[derive(CandidType, Debug)]
 pub struct FailedResult {
     pub failed_users: Vec<UserId>,
 }

@@ -2,7 +2,7 @@ use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageInde
 use candid::CandidType;
 use serde::Serialize;
 use std::ops::{Deref, DerefMut};
-use ts_export::ts_export;
+use ts_export::{ts_export, PrincipalTS};
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug)]
@@ -100,7 +100,7 @@ impl Tips {
 }
 
 #[ts_export]
-pub struct TipsTS(Vec<(Vec<u8>, Vec<(UserId, u128)>)>);
+pub struct TipsTS(Vec<(PrincipalTS, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
 #[serde(untagged)]

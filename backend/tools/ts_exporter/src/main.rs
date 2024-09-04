@@ -1,3 +1,5 @@
+use regex_lite::{Regex, RegexBuilder};
+use std::cell::LazyCell;
 use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::io::Write;
@@ -18,7 +20,7 @@ fn main() {
     let input_files = recurse_files(&ts_bindings_dir, ".ts");
     let all_exports: Vec<_> = input_files.into_iter().flat_map(extract_exports).collect();
 
-    let mut types_available: HashSet<_> = ["string", "number", "boolean", "bigint", "Uint8Array"]
+    let mut types_available: HashSet<_> = ["string", "number", "boolean", "bigint", "never", "null", "Uint8Array"]
         .into_iter()
         .map(|s| s.to_string())
         .collect();
@@ -35,7 +37,8 @@ fn main() {
             next.iterations += 1;
             remaining.push_back(next);
         } else {
-            panic!("Loop detected: {next:?}");
+            remaining.make_contiguous().sort_unstable_by(|l, r| l.name.cmp(&r.name));
+            panic!("Loop detected: {next:?}. Remaining: {remaining:?}");
         }
     }
 
@@ -93,22 +96,7 @@ impl FromStr for ParsedExport {
         let (left, right) = s[EXPORT_PREFIX.len()..].split_once('=').unwrap();
 
         let name = left.trim().to_string();
-        let cleaned = right
-            .replace(' ', "")
-            .replace("{[key:number]:", "")
-            .replace("{[key:string]:", "");
-
-        let mut dependencies = Vec::new();
-        for segment in cleaned.split(':').skip(1).map(|s| s.trim()) {
-            let end = segment.find(&[';', ',', '}']).unwrap_or(segment.len());
-
-            let mut dependency = segment[..end].to_string();
-            dependency = dependency.replace("Array<", "").replace(['>', '['], "");
-
-            if !dependencies.contains(&dependency) {
-                dependencies.push(dependency);
-            }
-        }
+        let dependencies = Vec::from_iter(extract_dependencies(right.trim().to_string()));
 
         Ok(ParsedExport {
             line,
@@ -117,4 +105,20 @@ impl FromStr for ParsedExport {
             iterations: 0,
         })
     }
+}
+
+const PATTERNS_TO_REMOVE: [&str; 2] = ["Array<", "Record<"];
+const KEY_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r"\w+\??:").build().unwrap());
+const LITERAL_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r#"\"\w+\""#).build().unwrap());
+const WORD_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r"\w+").build().unwrap());
+
+fn extract_dependencies(mut value: String) -> HashSet<String> {
+    for pattern in PATTERNS_TO_REMOVE {
+        value = value.replace(pattern, "");
+    }
+
+    value = KEY_REGEX.replace_all(&value, "").to_string();
+    value = LITERAL_REGEX.replace_all(&value, "").to_string();
+
+    WORD_REGEX.find_iter(&value).map(|m| m.as_str().to_string()).collect()
 }

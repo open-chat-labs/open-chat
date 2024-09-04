@@ -46,12 +46,16 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    #[ts(as = "crate::OptionUpdateU128")]
     pub avatar_id: OptionUpdate<u128>,
+    #[ts(as = "crate::OptionUpdateU128")]
     pub banner_id: OptionUpdate<u128>,
     pub is_public: Option<bool>,
     pub member_count: Option<u32>,
     pub permissions: Option<CommunityPermissions>,
+    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
+    #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
     pub primary_language: Option<String>,
     pub latest_event_index: Option<EventIndex>,
@@ -69,5 +73,6 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,
+    #[ts(as = "crate::OptionUpdateString")]
     pub display_name: OptionUpdate<String>,
 }

@@ -36,7 +36,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
             insert_container_attributes(&mut s.attrs, &s.ident, export_to, prefix);
 
             for field in s.fields.iter_mut() {
-                insert_field_attributes(field);
+                insert_field_attributes(field, false);
             }
         }
         Item::Enum(e) => {
@@ -44,7 +44,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             for variant in e.variants.iter_mut() {
                 for field in variant.fields.iter_mut() {
-                    insert_field_attributes(field);
+                    insert_field_attributes(field, true);
                 }
             }
         }
@@ -91,10 +91,11 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
     }
 }
 
-fn insert_field_attributes(field: &mut Field) {
+fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
     match &field.ty {
         Type::Path(type_path) => {
-            if type_path.qself.is_none()
+            if !is_tuple
+                && type_path.qself.is_none()
                 && type_path.path.leading_colon.is_none()
                 && type_path.path.segments.len() == 1
                 && type_path.path.segments[0].ident == "Option"
@@ -102,7 +103,7 @@ fn insert_field_attributes(field: &mut Field) {
                 field.attrs.push(parse_quote ! ( #[ts(optional)] ));
                 field
                     .attrs
-                    .push(parse_quote ! ( # [serde(skip_serializing_if = "Option::is_none")] ));
+                    .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
             } else if type_path.qself.is_none()
                 && type_path.path.leading_colon.is_none()
                 && type_path.path.segments.len() == 1

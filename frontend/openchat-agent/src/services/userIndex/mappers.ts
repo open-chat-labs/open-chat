@@ -27,7 +27,7 @@ import {
     mapOptional,
     principalBytesToString,
 } from "../../utils/mapping";
-import { tokenJson } from "../common/chatMappers";
+import { token } from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -55,71 +55,71 @@ import type {
     UserSummaryV2 as TUserSummaryV2,
 } from "../../typebox";
 
-export function userSearchResponse(json: UserIndexSearchResponse): UserSummary[] {
-    if ("Success" in json) {
-        const timestamp = json.Success.timestamp;
-        return json.Success.users.map((u) => userSummary(u, timestamp));
+export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
+    if ("Success" in value) {
+        const timestamp = value.Success.timestamp;
+        return value.Success.users.map((u) => userSummary(u, timestamp));
     }
-    throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
+    throw new Error(`Unknown UserIndex.SearchResponse of ${value}`);
 }
 
-export function usersApiResponse(json: UserIndexUsersResponse): UsersApiResponse {
-    if ("Success" in json) {
-        const timestamp = json.Success.timestamp;
+export function usersApiResponse(value: UserIndexUsersResponse): UsersApiResponse {
+    if ("Success" in value) {
+        const timestamp = value.Success.timestamp;
         return {
             serverTimestamp: timestamp,
-            users: json.Success.users.map(userSummaryUpdate),
-            deletedUserIds: new Set(json.Success.deleted.map(principalBytesToString)),
-            currentUser: mapOptional(json.Success.current_user, (u) =>
+            users: value.Success.users.map(userSummaryUpdate),
+            deletedUserIds: new Set(value.Success.deleted.map(principalBytesToString)),
+            currentUser: mapOptional(value.Success.current_user, (u) =>
                 currentUserSummary(u, timestamp),
             ),
         };
     }
-    throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
+    throw new Error(`Unknown UserIndex.UsersResponse of ${value}`);
 }
 
 export function currentUserSummary(
-    json: TCurrentUserSummary,
+    value: TCurrentUserSummary,
     timestamp: bigint,
 ): CurrentUserSummary {
     return {
         kind: "current_user_summary",
-        username: json.username,
-        isPlatformOperator: json.is_platform_operator,
-        diamondStatus: diamondMembershipStatus(json.diamond_membership_status),
-        userId: principalBytesToString(json.user_id),
-        isBot: json.is_bot,
-        displayName: mapOptional(json.display_name, identity),
-        moderationFlagsEnabled: json.moderation_flags_enabled,
-        isSuspectedBot: json.is_suspected_bot,
-        suspensionDetails: mapOptional(json.suspension_details, suspensionDetails),
-        isPlatformModerator: json.is_platform_moderator,
-        diamondDetails: mapOptional(json.diamond_membership_details, diamondMembership),
+        username: value.username,
+        isPlatformOperator: value.is_platform_operator,
+        diamondStatus: diamondMembershipStatus(value.diamond_membership_status),
+        userId: principalBytesToString(value.user_id),
+        isBot: value.is_bot,
+        displayName: mapOptional(value.display_name, identity),
+        moderationFlagsEnabled: value.moderation_flags_enabled,
+        isSuspectedBot: value.is_suspected_bot,
+        suspensionDetails: mapOptional(value.suspension_details, suspensionDetails),
+        isPlatformModerator: value.is_platform_moderator,
+        diamondDetails: mapOptional(value.diamond_membership_details, diamondMembership),
         updated: timestamp,
-        blobReference: optional(candid.avatar_id, (id) => ({
+        blobReference: mapOptional(value.avatar_id, (id) => ({
             blobId: id,
-            canisterId: principalBytesToString(json.user_id),
+            canisterId: principalBytesToString(value.user_id),
         })),
-        isUniquePerson: candid.is_unique_person,
+        isUniquePerson: value.is_unique_person,
     };
 }
 
-export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
+export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
     return {
-        userId: principalBytesToString(json.user_id),
-        stable: mapOptional(json.stable, (s) => ({
+        userId: principalBytesToString(value.user_id),
+        stable: mapOptional(value.stable, (s) => ({
             username: s.username,
             diamondStatus: diamondStatus(s.diamond_membership_status),
             isBot: s.is_bot,
-            displayName: optional(s.display_name, identity),
-            blobReference: optional(s.avatar_id, (id) => ({
+            displayName: mapOptional(s.display_name, identity),
+            blobReference: mapOptional(s.avatar_id, (id) => ({
                 blobId: id,
-                canisterId: principalBytesToString(json.user_id),
+                canisterId: principalBytesToString(value.user_id),
             })),
             suspended: s.suspended,
             isUniquePerson: s.is_unique_person,
         })),
-        volatile: optional(candid.volatile, (v) => ({
+        volatile: mapOptional(value.volatile, (v) => ({
             chitBalance: v.chit_balance,
             streak: v.streak,
             totalChitEarned: v.total_chit_earned,
@@ -127,55 +127,55 @@ export function userSummaryUpdate(json: TUserSummaryV2): UserSummaryUpdate {
     };
 }
 
-export function userSummary(json: TUserSummary, timestamp: bigint): UserSummary {
+export function userSummary(value: TUserSummary, timestamp: bigint): UserSummary {
     return {
-        kind: json.is_bot ? "bot" : "user",
-        userId: principalBytesToString(json.user_id),
-        username: json.username,
-        displayName: mapOptional(json.display_name, identity),
-        blobReference: mapOptional(json.avatar_id, (id) => ({
+        kind: value.is_bot ? "bot" : "user",
+        userId: principalBytesToString(value.user_id),
+        username: value.username,
+        displayName: mapOptional(value.display_name, identity),
+        blobReference: mapOptional(value.avatar_id, (id) => ({
             blobId: id,
-            canisterId: principalBytesToString(json.user_id),
+            canisterId: principalBytesToString(value.user_id),
         })),
         updated: timestamp,
-        suspended: candid.suspended,
-        diamondStatus: diamondStatus(candid.diamond_membership_status),
-        chitBalance: candid.chit_balance,
-        totalChitEarned: candid.total_chit_earned,
-        streak: candid.streak,
-        isUniquePerson: candid.is_unique_person,
+        suspended: value.suspended,
+        diamondStatus: diamondStatus(value.diamond_membership_status),
+        chitBalance: value.chit_balance,
+        totalChitEarned: value.total_chit_earned,
+        streak: value.streak,
+        isUniquePerson: value.is_unique_person,
     };
 }
 
-export function diamondStatus(json: TDiamondMembershipStatus): DiamondMembershipStatus["kind"] {
-    if (json === "Inactive") {
+export function diamondStatus(value: TDiamondMembershipStatus): DiamondMembershipStatus["kind"] {
+    if (value === "Inactive") {
         return "inactive";
     }
-    if ("Active" in candid) {
+    if (value === "Active") {
         return "active";
     }
-    if ("Lifetime" in candid) {
+    if (value === "Lifetime") {
         return "lifetime";
     }
-    throw new UnsupportedValueError("Unexpected ApiDiamondMembershipStatus type received", candid);
+    throw new UnsupportedValueError("Unexpected DiamondMembershipStatus type received", value);
 }
 
 export function userRegistrationCanisterResponse(
-    json: UserIndexUserRegistrationCanisterResponse,
+    value: UserIndexUserRegistrationCanisterResponse,
 ): string {
-    if (json !== "NewRegistrationsClosed" && "Success" in json) {
-        return principalBytesToString(json.Success);
+    if (value !== "NewRegistrationsClosed" && "Success" in value) {
+        return principalBytesToString(value.Success);
     }
-    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`);
+    throw new Error(`Unexpected UserRegistrationCanisterResponse type received: ${value}`);
 }
 
-export function currentUserResponse(json: UserIndexCurrentUserResponse): CurrentUserResponse {
-    if (json === "UserNotFound") {
+export function currentUserResponse(value: UserIndexCurrentUserResponse): CurrentUserResponse {
+    if (value === "UserNotFound") {
         return { kind: "unknown_user" };
     }
 
-    if ("Success" in json) {
-        const r = json.Success;
+    if ("Success" in value) {
+        const r = value.Success;
 
         console.log("User: ", r);
         return {
@@ -183,267 +183,263 @@ export function currentUserResponse(json: UserIndexCurrentUserResponse): Current
             userId: principalBytesToString(r.user_id),
             username: r.username,
             dateCreated: r.date_created,
-            displayName: optional(r.display_name, identity),
+            displayName: r.display_name ?? undefined,
             cryptoAccount: bytesToHexString(r.icp_account),
-            referrals: r.referrals.map(principalBytesToString),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
-            suspensionDetails: optional(r.suspension_details, suspensionDetails),
+            suspensionDetails: mapOptional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
-            isUniquePerson: candid.Success.is_unique_person,
+            isUniquePerson: value.Success.is_unique_person,
         };
     }
 
-    if ("UserNotFound" in candid) {
-        return { kind: "unknown_user" };
-    }
-
-    throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
+    throw new Error(`Unexpected CurrentUserResponse type received: ${value}`);
 }
 
-function diamondMembershipStatus(json: TDiamondMembershipStatusFull): DiamondMembershipStatus {
-    if (json === "Inactive") {
+function diamondMembershipStatus(value: TDiamondMembershipStatusFull): DiamondMembershipStatus {
+    if (value === "Inactive") {
         return { kind: "inactive" };
     }
-    if ("Lifetime" in candid) {
+    if (value === "Lifetime") {
         return { kind: "lifetime" };
     }
-    if ("Active" in candid) {
+    if ("Active" in value) {
         return {
             kind: "active",
-            ...diamondMembership(candid.Active),
+            ...diamondMembership(value.Active),
         };
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiDiamondMembershipStatusFull type received",
-        candid,
+        "Unexpected DiamondMembershipStatusFullJson type received",
+        value,
     );
 }
 
-function diamondMembership(json: TDiamondMembershipDetails): DiamondMembershipDetails {
+function diamondMembership(value: TDiamondMembershipDetails): DiamondMembershipDetails {
     return {
-        expiresAt: candid.expires_at,
-        subscription: diamondMembershipSubscription(candid.subscription),
-        payInChat: candid.pay_in_chat,
+        expiresAt: value.expires_at,
+        subscription: diamondMembershipSubscription(value.subscription),
+        payInChat: value.pay_in_chat,
     };
 }
 
 function diamondMembershipSubscription(
-    json: TDiamondMembershipSubscription,
+    value: TDiamondMembershipSubscription,
 ): DiamondMembershipSubscription {
-    if ("OneMonth" in candid) {
+    if (value === "OneMonth") {
         return "one_month";
     }
-    if ("ThreeMonths" in candid) {
+    if (value === "ThreeMonths") {
         return "three_months";
     }
-    if ("OneYear" in candid) {
+    if (value === "OneYear") {
         return "one_year";
     }
-    if ("Disabled" in candid) {
+    if (value === "Disabled") {
         return "disabled";
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiDiamondMembershipSubscription type received",
-        candid,
+        "Unexpected DiamondMembershipSubscriptionJson type received",
+        value,
     );
 }
 
-function suspensionDetails(json: TSuspensionDetails): SuspensionDetails {
+function suspensionDetails(value: TSuspensionDetails): SuspensionDetails {
     return {
-        reason: json.reason,
-        action: suspensionAction(json.action),
-        suspendedBy: principalBytesToString(json.suspended_by),
+        reason: value.reason,
+        action: suspensionAction(value.action),
+        suspendedBy: principalBytesToString(value.suspended_by),
     };
 }
 
-function suspensionAction(json: TSuspensionAction): SuspensionAction {
-    if ("Unsuspend" in json) {
+function suspensionAction(value: TSuspensionAction): SuspensionAction {
+    if ("Unsuspend" in value) {
         return {
             kind: "unsuspend_action",
-            timestamp: candid.Unsuspend,
+            timestamp: value.Unsuspend,
         };
-    } else if ("Delete" in candid) {
+    } else if ("Delete" in value) {
         return {
             kind: "delete_action",
-            timestamp: candid.Delete,
+            timestamp: value.Delete,
         };
     }
 
-    throw new Error(`Unexpected ApiSuspensionAction type received: ${candid}`);
+    throw new Error(`Unexpected SuspensionAction type received: ${value}`);
 }
 
-export function checkUsernameResponse(json: UserIndexCheckUsernameResponse): CheckUsernameResponse {
-    if (json === "Success") {
+export function checkUsernameResponse(
+    value: UserIndexCheckUsernameResponse,
+): CheckUsernameResponse {
+    if (value === "Success") {
         return "success";
     }
-    if ("UsernameTaken" in candid) {
+    if (value === "UsernameTaken") {
         return "username_taken";
     }
-    if ("UsernameTooShort" in candid) {
-        return "username_too_short";
-    }
-    if ("UsernameTooLong" in candid) {
-        return "username_too_long";
-    }
-    if ("UsernameInvalid" in candid) {
+    if (value === "UsernameInvalid") {
         return "username_invalid";
     }
-    throw new UnsupportedValueError("Unexpected ApiCheckUsernameResponse type received", candid);
+    if ("UsernameTooShort" in value) {
+        return "username_too_short";
+    }
+    if ("UsernameTooLong" in value) {
+        return "username_too_long";
+    }
+    throw new UnsupportedValueError("Unexpected CheckUsernameResponse type received", value);
 }
 
-export function setUsernameResponse(json: UserIndexSetUsernameResponse): SetUsernameResponse {
-    if (json === "Success") {
+export function setUsernameResponse(value: UserIndexSetUsernameResponse): SetUsernameResponse {
+    if (value === "Success") {
         return "success";
     }
-    if ("UsernameTaken" in candid) {
+    if (value === "UsernameTaken") {
         return "username_taken";
     }
-    if ("UserNotFound" in candid) {
+    if (value === "UserNotFound") {
         return "user_not_found";
     }
-    if ("UsernameTooShort" in candid) {
-        return "username_too_short";
-    }
-    if ("UsernameTooLong" in candid) {
-        return "username_too_long";
-    }
-    if ("UsernameInvalid" in candid) {
+    if (value === "UsernameInvalid") {
         return "username_invalid";
     }
-    throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
+    if ("UsernameTooShort" in value) {
+        return "username_too_short";
+    }
+    if ("UsernameTooLong" in value) {
+        return "username_too_long";
+    }
+    throw new UnsupportedValueError("Unexpected SetUsernameResponse type received", value);
 }
 
 export function setDisplayNameResponse(
-    json: UserIndexSetDisplayNameResponse,
+    value: UserIndexSetDisplayNameResponse,
 ): SetDisplayNameResponse {
-    if (json === "Success") {
+    if (value === "Success") {
         return "success";
     }
-    if ("UserNotFound" in candid) {
+    if (value === "UserNotFound") {
         return "user_not_found";
     }
-    if ("DisplayNameTooShort" in candid) {
-        return "display_name_too_short";
-    }
-    if ("DisplayNameTooLong" in candid) {
-        return "display_name_too_long";
-    }
-    if ("DisplayNameInvalid" in candid) {
+    if (value === "DisplayNameInvalid") {
         return "display_name_invalid";
     }
-    if ("Unauthorized" in candid) {
+    if (value === "Unauthorized") {
         return "unauthorized";
     }
-    throw new UnsupportedValueError("Unexpected ApiSetDisplayNameResponse type received", candid);
+    if ("DisplayNameTooShort" in value) {
+        return "display_name_too_short";
+    }
+    if ("DisplayNameTooLong" in value) {
+        return "display_name_too_long";
+    }
+    throw new UnsupportedValueError("Unexpected SetDisplayNameResponse type received", value);
 }
 
-export function suspendUserResponse(json: UserIndexSuspendUserResponse): SuspendUserResponse {
-    if (json === "Success") {
+export function suspendUserResponse(value: UserIndexSuspendUserResponse): SuspendUserResponse {
+    if (value === "Success") {
         return "success";
     }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("UserAlreadySuspended" in candid) {
+    if (value === "UserAlreadySuspended") {
         return "user_already_suspended";
     }
-    if ("UserNotFound" in candid) {
+    if (value === "UserNotFound") {
         return "user_not_found";
     }
-    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
-}
-
-export function unsuspendUserResponse(json: UserIndexUnsuspendUserResponse): UnsuspendUserResponse {
-    if (json === "Success") {
-        return "success";
-    }
-    if ("InternalError" in candid) {
+    if ("InternalError" in value) {
         return "internal_error";
     }
-    if ("UserNotFound" in candid) {
+    throw new UnsupportedValueError("Unexpected SuspendUserResponse type received", value);
+}
+
+export function unsuspendUserResponse(
+    value: UserIndexUnsuspendUserResponse,
+): UnsuspendUserResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "UserNotFound") {
         return "user_not_found";
     }
-    if ("UserNotSuspended" in candid) {
+    if (value === "UserNotSuspended") {
         return "user_not_suspended";
     }
-    throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
+    if ("InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected UnsuspendUserResponse type received", value);
 }
 
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
-    json: UserIndexPayForDiamondMembershipResponse,
+    value: UserIndexPayForDiamondMembershipResponse,
 ): PayForDiamondMembershipResponse {
-    if ("PaymentAlreadyInProgress" in candid) {
+    if (value === "PaymentAlreadyInProgress") {
         return { kind: "payment_already_in_progress" };
     }
-    if ("CurrencyNotSupported" in candid) {
+    if (value === "CurrencyNotSupported") {
         return { kind: "currency_not_supported" };
     }
-    if ("Success" in candid) {
+    if (value === "UserNotFound") {
+        return { kind: "user_not_found" };
+    }
+    if (value === "PriceMismatch") {
+        return { kind: "price_mismatch" };
+    }
+    if (value === "AlreadyLifetimeDiamondMember") {
+        return { kind: "already_lifetime_diamond_member" };
+    }
+    if ("Success" in value) {
         return {
             kind: "success",
-            proof: candid.Success.proof_jwt,
+            proof: value.Success.proof_jwt,
             status:
                 duration === "lifetime"
                     ? { kind: "lifetime" }
-                    : { kind: "active", ...diamondMembership(candid.Success) },
+                    : { kind: "active", ...diamondMembership(value.Success) },
         };
     }
-    if ("PriceMismatch" in candid) {
-        return { kind: "price_mismatch" };
-    }
-    if ("TransferFailed" in candid) {
+    if ("TransferFailed" in value) {
         return { kind: "transfer_failed" };
     }
-    if ("InternalError" in candid) {
+    if ("InternalError" in value) {
         return { kind: "internal_error" };
     }
-    if ("CannotExtend" in candid) {
-        return { kind: "cannot_extend" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "user_not_found" };
-    }
-    if ("InsufficientFunds" in candid) {
+    if ("InsufficientFunds" in value) {
         return { kind: "insufficient_funds" };
-    }
-    if ("AlreadyLifetimeDiamondMember" in candid) {
-        return { kind: "already_lifetime_diamond_member" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        candid,
+        value,
     );
 }
 
-export function apiDiamondDuration(
+export function apiJsonDiamondDuration(
     domain: DiamondMembershipDuration,
 ): TDiamondMembershipPlanDuration {
     if (domain === "one_month") {
-        return { OneMonth: null };
+        return "OneMonth";
     }
     if (domain === "three_months") {
-        return { ThreeMonths: null };
+        return "ThreeMonths";
     }
     if (domain === "one_year") {
-        return { OneYear: null };
+        return "OneYear";
     }
     if (domain === "lifetime") {
-        return { Lifetime: null };
+        return "Lifetime";
     }
     throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
 }
 
 export function diamondMembershipFeesResponse(
-    json: UserIndexDiamondMembershipFeesResponse,
+    value: UserIndexDiamondMembershipFeesResponse,
 ): DiamondMembershipFees[] {
-    if ("Success" in candid) {
-        return candid.Success.map((f) => ({
+    if ("Success" in value) {
+        return value.Success.map((f) => ({
             token: token(f.token) as "CHAT" | "ICP",
             oneMonth: f.one_month,
             threeMonths: f.three_months,
@@ -452,40 +448,42 @@ export function diamondMembershipFeesResponse(
         }));
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiDiamondMembershipFeesResponse type received",
-        candid,
+        "Unexpected DiamondMembershipFeesResponse type received",
+        value,
     );
 }
 
-export function chitLeaderboardResponse(json: UserIndexChitLeaderboardResponse): ChitUserBalance[] {
-    if ("Success" in json) {
-        return json.Success.map(chitUserBalance);
+export function chitLeaderboardResponse(
+    value: UserIndexChitLeaderboardResponse,
+): ChitUserBalance[] {
+    if ("Success" in value) {
+        return value.Success.map(chitUserBalance);
     }
-    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", value);
 }
 
-function chitUserBalance(json: UserIndexChitLeaderboardChitUserBalance): ChitUserBalance {
+function chitUserBalance(value: UserIndexChitLeaderboardChitUserBalance): ChitUserBalance {
     return {
-        userId: principalBytesToString(json.user_id),
-        balance: json.balance,
-        username: json.username,
+        userId: principalBytesToString(value.user_id),
+        balance: value.balance,
+        username: value.username,
     };
 }
 
 export function submitProofOfUniquePersonhoodResponse(
-    json: UserIndexSubmitProofOfUniquePersonhoodResponse,
+    value: UserIndexSubmitProofOfUniquePersonhoodResponse,
 ): SubmitProofOfUniquePersonhoodResponse {
-    if ("Success" in candid) {
+    if (value === "Success") {
         return CommonResponses.success();
     }
-    if ("Invalid" in candid) {
-        return CommonResponses.invalid();
-    }
-    if ("UserNotFound" in candid) {
+    if (value === "UserNotFound") {
         return CommonResponses.userNotFound();
     }
+    if ("Invalid" in value) {
+        return CommonResponses.invalid();
+    }
     throw new UnsupportedValueError(
-        "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
-        candid,
+        "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
+        value,
     );
 }

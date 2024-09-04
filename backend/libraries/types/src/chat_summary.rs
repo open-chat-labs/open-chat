@@ -93,8 +93,10 @@ pub struct DirectChatSummaryUpdates {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
+    #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
@@ -251,7 +253,9 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    #[ts(as = "crate::OptionUpdateGroupSubtype")]
     pub subtype: OptionUpdate<GroupSubtype>,
+    #[ts(as = "crate::OptionUpdateU128")]
     pub avatar_id: OptionUpdate<u128>,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
@@ -270,13 +274,17 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub unfollowed_threads: Vec<MessageIndex>,
     pub notifications_muted: Option<bool>,
+    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
     pub membership: Option<GroupMembershipUpdates>,
+    #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 

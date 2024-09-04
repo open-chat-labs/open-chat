@@ -5,9 +5,7 @@ import {
     bytesToHexString,
     hexStringToBytes,
     identity,
-    mapOptional,
     optional,
-    principalBytesToString,
 } from "../../utils/mapping";
 import type {
     ApiChatEvent,
@@ -281,11 +279,6 @@ import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
-import {
-    AccessGate as TAccessGate,
-    Cryptocurrency as TCryptocurrency,
-    GroupSubtype as TGroupSubtype,
-} from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -975,16 +968,6 @@ export function token(candid: ApiCryptocurrency): string {
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function tokenJson(json: TCryptocurrency): string {
-    if (json === "InternetComputer") return ICP_SYMBOL;
-    if (json === "SNS1") return SNS1_SYMBOL;
-    if (json === "CKBTC") return CKBTC_SYMBOL;
-    if (json === "CHAT") return CHAT_SYMBOL;
-    if (json === "KINIC") return KINIC_SYMBOL;
-    if ("Other" in json) return json.Other;
-    throw new UnsupportedValueError("Unexpected Cryptocurrency type received", json);
-}
-
 export function apiToken(token: string): ApiCryptocurrency {
     switch (token) {
         case ICP_SYMBOL:
@@ -997,23 +980,6 @@ export function apiToken(token: string): ApiCryptocurrency {
             return { CHAT: null };
         case KINIC_SYMBOL:
             return { KINIC: null };
-        default:
-            return { Other: token };
-    }
-}
-
-export function apiJsonToken(token: string): TCryptocurrency {
-    switch (token) {
-        case ICP_SYMBOL:
-            return "InternetComputer";
-        case SNS1_SYMBOL:
-            return "SNS1";
-        case CKBTC_SYMBOL:
-            return "CKBTC";
-        case CHAT_SYMBOL:
-            return "CHAT";
-        case KINIC_SYMBOL:
-            return "KINIC";
         default:
             return { Other: token };
     }
@@ -1780,22 +1746,6 @@ export function credentialArguments(
     );
 }
 
-export function credentialArgumentsJson(
-    candid: [string, { String: string } | { Int: number }][],
-): Record<string, string | number> {
-    return toRecord2(
-        candid,
-        ([k, _]) => k,
-        ([_, v]) => {
-            if ("String" in v) {
-                return v.String;
-            } else {
-                return v.Int;
-            }
-        },
-    );
-}
-
 function apiCredentialArguments(
     domain?: Record<string, string | number>,
 ): [string, { String: string } | { Int: number }][] {
@@ -1881,79 +1831,6 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     }
 
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
-}
-
-export function accessGateJson(json: TAccessGate): AccessGate {
-    if (json === "DiamondMember") {
-        return {
-            kind: "diamond_gate",
-        };
-    }
-    if (json === "LifetimeDiamondMember") {
-        return {
-            kind: "lifetime_diamond_gate",
-        };
-    }
-    if (json === "UniquePerson") {
-        return {
-            kind: "unique_person_gate",
-        };
-    }
-    if (json === "Locked") {
-        return {
-            kind: "locked_gate",
-        };
-    }
-    if ("Composite" in json) {
-        return {
-            kind: "composite_gate",
-            operator: json.Composite.and ? "and" : "or",
-            gates: json.Composite.inner.map(accessGateJson) as LeafGate[],
-        };
-    }
-    if ("SnsNeuron" in json) {
-        return {
-            kind: "neuron_gate",
-            minDissolveDelay: mapOptional(json.SnsNeuron.min_dissolve_delay, Number),
-            minStakeE8s: mapOptional(json.SnsNeuron.min_stake_e8s, Number),
-            governanceCanister: principalBytesToString(json.SnsNeuron.governance_canister_id),
-        };
-    }
-    if ("VerifiedCredential" in json) {
-        const credentialArgs = Object.entries(json.VerifiedCredential.credential_arguments);
-        return {
-            kind: "credential_gate",
-            credential: {
-                issuerCanisterId: principalBytesToString(
-                    json.VerifiedCredential.issuer_canister_id,
-                ),
-                issuerOrigin: json.VerifiedCredential.issuer_origin,
-                credentialType: json.VerifiedCredential.credential_type,
-                credentialName: json.VerifiedCredential.credential_name,
-                credentialArguments:
-                    credentialArgs.length === 0
-                        ? undefined
-                        : credentialArgumentsJson(credentialArgs),
-            },
-        };
-    }
-    if ("Payment" in json) {
-        return {
-            kind: "payment_gate",
-            ledgerCanister: principalBytesToString(json.Payment.ledger_canister_id),
-            amount: json.Payment.amount,
-            fee: json.Payment.fee,
-        };
-    }
-    if ("TokenBalance" in json) {
-        return {
-            kind: "token_balance_gate",
-            ledgerCanister: principalBytesToString(json.TokenBalance.ledger_canister_id),
-            minBalance: json.TokenBalance.min_balance,
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiGroupGate type received", json);
 }
 
 function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
@@ -2342,16 +2219,6 @@ export function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
         kind: "governance_proposals",
         isNns: subtype.GovernanceProposals.is_nns,
         governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
-    };
-}
-
-export function groupSubtypeJson(subtype: TGroupSubtype): GroupSubtype {
-    return {
-        kind: "governance_proposals",
-        isNns: subtype.GovernanceProposals.is_nns,
-        governanceCanisterId: principalBytesToString(
-            subtype.GovernanceProposals.governance_canister_id,
-        ),
     };
 }
 

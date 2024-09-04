@@ -44,7 +44,9 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
+    #[ts(as = "crate::OptionUpdateGroupSubtype")]
     pub subtype: OptionUpdate<GroupSubtype>,
+    #[ts(as = "crate::OptionUpdateU128")]
     pub avatar_id: OptionUpdate<u128>,
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
@@ -58,11 +60,15 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<GroupMembershipUpdates>,
+    #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    #[ts(as = "crate::OptionUpdateString")]
     pub external_url: OptionUpdate<String>,
 }
 

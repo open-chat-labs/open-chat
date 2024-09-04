@@ -74,6 +74,7 @@ pub struct OptionalGroupPermissions {
     pub mention_all_members: Option<GroupPermissionRole>,
     pub start_video_call: Option<GroupPermissionRole>,
     pub message_permissions: Option<OptionalMessagePermissions>,
+    #[ts(as = "crate::OptionUpdateOptionalMessagePermissions")]
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
 
@@ -81,17 +82,28 @@ pub struct OptionalGroupPermissions {
 #[derive(CandidType, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub text: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub image: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub audio: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub file: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub poll: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub crypto: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub giphy: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub prize: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
     #[serde(default)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video_call: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
