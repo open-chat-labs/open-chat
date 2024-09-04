@@ -199,6 +199,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         user_id,
                         principal,
                         members_to_add_to_community.get(&user_id).copied().unwrap_or_default(),
+                        None,
                         now,
                     ) {
                         AddResult::Success(_) => {
