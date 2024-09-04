@@ -1537,9 +1537,20 @@ type AccessGate = variant {
     Payment : PaymentGate;
     TokenBalance : TokenBalanceGate;
     Composite : record {
-        inner : vec AccessGate;
+        inner : vec AccessGateNonComposite;
         and : bool;
     };
+    Locked;
+};
+
+type AccessGateNonComposite = variant {
+    DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
+    VerifiedCredential : VerifiedCredentialGate;
+    SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
     Locked;
 };
 
