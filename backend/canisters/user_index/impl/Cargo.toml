@@ -58,7 +58,6 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha2 = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_index_canister = { path = "../../storage_index/api" }

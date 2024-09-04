@@ -272,7 +272,38 @@ impl RuntimeState {
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
+            august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
         }
+    }
+
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
+
+        for user in self.data.users.iter() {
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
+
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
+
+            if diamond {
+                stats.diamond += 1;
+            }
+
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
+
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
+
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
+            }
+        }
+
+        stats
     }
 }
 
@@ -566,6 +597,8 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
 }
 
 #[derive(Serialize, Debug)]
@@ -581,6 +614,14 @@ pub struct UserMetrics {
     pub chit_updated: TimestampMillis,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct AirdropStats {
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]

@@ -42,7 +42,6 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
 satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
 sha256 = { path = "../../../libraries/sha256" }

@@ -44,6 +44,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 user_id: caller.into(),
                 principal: caller,
                 invite_code: None,
+                referred_by: None,
                 is_platform_moderator: false,
                 is_bot: true,
                 user_type: UserType::OcControlledBot,

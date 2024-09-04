@@ -9,7 +9,11 @@ use utils::cycles::can_spend_cycles;
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_notify_low_balance(_args: Args) -> Response {
-    let prepare_ok = match read_state(prepare) {
+    top_up_cycles(None).await
+}
+
+pub(crate) async fn top_up_cycles(bucket: Option<CanisterId>) -> Response {
+    let prepare_ok = match read_state(|state| prepare(state, bucket)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -28,8 +32,8 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
+fn prepare(state: &RuntimeState, bucket: Option<CanisterId>) -> Result<PrepareResult, Response> {
+    let bucket = bucket.unwrap_or_else(|| state.env.caller());
     let top_up_amount = BUCKET_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
         date: state.env.now(),
@@ -38,10 +42,10 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
         Err(Response::NotEnoughCyclesRemaining)
-    } else if state.data.buckets.get(&caller).is_some() {
-        Ok(PrepareResult { bucket: caller, top_up })
+    } else if state.data.buckets.get(&bucket).is_some() {
+        Ok(PrepareResult { bucket, top_up })
     } else {
-        panic!("Caller not recognised. {caller}");
+        panic!("Bucket not recognised. {bucket}");
     }
 }
 

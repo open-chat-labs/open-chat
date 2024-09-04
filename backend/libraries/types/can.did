@@ -1772,6 +1772,7 @@ type CommunityMember = record {
     date_added : TimestampMillis;
     role : CommunityRole;
     display_name : opt text;
+    referred_by : opt UserId;
 };
 
 type PermissionRoleUpdate = variant {

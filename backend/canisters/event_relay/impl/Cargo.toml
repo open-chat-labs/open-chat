@@ -24,9 +24,9 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha256 = { path = "../../../libraries/sha256" }
 sns_archive_canister_c2c_client = { path = "../../../external_canisters/sns_archive/c2c_client" }
 sns_ledger_canister_c2c_client = { path = "../../../external_canisters/sns_ledger/c2c_client" }

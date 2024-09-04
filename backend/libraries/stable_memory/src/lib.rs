@@ -16,7 +16,7 @@ pub fn get_writer<M: Memory>(memory: &mut M) -> impl Write + '_ {
 }
 
 fn buffer_size<M: Memory>(memory: &M) -> usize {
-    let memory_size = memory.size() * WASM_PAGE_SIZE_IN_BYTES as u64;
+    let memory_size = memory.size() * WASM_PAGE_SIZE_IN_BYTES;
 
     match usize::try_from(memory_size) {
         Ok(size) => min(size / 4, MAX_READER_WRITER_BUFFER_SIZE),

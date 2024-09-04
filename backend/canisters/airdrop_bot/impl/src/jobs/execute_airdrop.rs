@@ -141,16 +141,16 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
     };
 
-    let particpants = zip(users, chit).collect();
+    let participants = zip(users, chit).collect();
 
     // Execute the airdrop
-    mutate_state(|state| execute_airdrop(particpants, state));
+    mutate_state(|state| execute_airdrop(participants, state));
 }
 
-fn execute_airdrop(particpants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
+fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
     let rng = state.env.rng();
 
-    if let Some(airdrop) = state.data.airdrops.execute(particpants, rng) {
+    if let Some(airdrop) = state.data.airdrops.execute(participants, rng) {
         // Add the CHAT transfer actions to the queue. When each transfer has succeeded
         // the corresponding message action will be added to the queue.
 
@@ -159,8 +159,8 @@ fn execute_airdrop(particpants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
 
         let mut lottery_winners = airdrop.outcome.lottery_winners.clone();
 
-        for (user_id, particpant) in airdrop.outcome.participants.iter() {
-            if state.data.pending_actions_queue.len() % 50 == 0 {
+        for (user_id, participant) in airdrop.outcome.participants.iter() {
+            if state.data.pending_actions_queue.len() % 500 == 0 {
                 if let Some((user_id, prize)) = lottery_winners.pop() {
                     state
                         .data
@@ -175,7 +175,7 @@ fn execute_airdrop(particpants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
                 }
             }
 
-            if let Some(prize) = &particpant.prize {
+            if let Some(prize) = &participant.prize {
                 state
                     .data
                     .pending_actions_queue
@@ -183,8 +183,8 @@ fn execute_airdrop(particpants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
                         recipient: *user_id,
                         amount: prize.chat_won,
                         airdrop_type: AirdropType::Main(MainAidrop {
-                            chit: particpant.chit,
-                            shares: particpant.shares,
+                            chit: participant.chit,
+                            shares: participant.shares,
                         }),
                     })))
             }
