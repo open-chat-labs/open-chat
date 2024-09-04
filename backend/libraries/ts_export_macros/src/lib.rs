@@ -92,27 +92,24 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
 }
 
 fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
-    match &field.ty {
-        Type::Path(type_path) => {
-            if !is_tuple
-                && type_path.qself.is_none()
-                && type_path.path.leading_colon.is_none()
-                && type_path.path.segments.len() == 1
-                && type_path.path.segments[0].ident == "Option"
-            {
-                field.attrs.push(parse_quote ! ( #[ts(optional)] ));
-                field
-                    .attrs
-                    .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
-            } else if type_path.qself.is_none()
-                && type_path.path.leading_colon.is_none()
-                && type_path.path.segments.len() == 1
-                && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
-            {
-                field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
-            }
+    if let Type::Path(type_path) = &field.ty {
+        if !is_tuple
+            && type_path.qself.is_none()
+            && type_path.path.leading_colon.is_none()
+            && type_path.path.segments.len() == 1
+            && type_path.path.segments[0].ident == "Option"
+        {
+            field.attrs.push(parse_quote ! ( #[ts(optional)] ));
+            field
+                .attrs
+                .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
+        } else if type_path.qself.is_none()
+            && type_path.path.leading_colon.is_none()
+            && type_path.path.segments.len() == 1
+            && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
+        {
+            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
         }
-        _ => {}
     }
 }
 
