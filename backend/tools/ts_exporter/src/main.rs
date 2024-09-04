@@ -20,10 +20,19 @@ fn main() {
     let input_files = recurse_files(&ts_bindings_dir, ".ts");
     let all_exports: Vec<_> = input_files.into_iter().flat_map(extract_exports).collect();
 
-    let mut types_available: HashSet<_> = ["string", "number", "boolean", "bigint", "never", "null", "Uint8Array"]
-        .into_iter()
-        .map(|s| s.to_string())
-        .collect();
+    let mut types_available: HashSet<_> = [
+        "bigint",
+        "boolean",
+        "never",
+        "null",
+        "number",
+        "string",
+        "undefined",
+        "Uint8Array",
+    ]
+    .into_iter()
+    .map(|s| s.to_string())
+    .collect();
 
     let mut output = Vec::new();
     let mut remaining = VecDeque::from(all_exports);
