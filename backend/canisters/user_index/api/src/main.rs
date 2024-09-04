@@ -1,6 +1,6 @@
 use candid_gen::generate_candid_method;
 use std::env;
-use ts_gen::generate_ts_method;
+use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
@@ -41,7 +41,7 @@ fn main() {
 
     let directory = env::current_dir()
         .unwrap()
-        .join("frontend/openchat-agent/tsBindings/userIndex");
+        .join("tsBindings/userIndex");
     if directory.exists() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
