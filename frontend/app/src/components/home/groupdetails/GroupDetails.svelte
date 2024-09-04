@@ -24,7 +24,6 @@
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import ReferredUsersList from "../profile/ReferredUsersList.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -41,7 +40,6 @@
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
     $: avatarSrc = client.groupAvatarUrl(chat);
     $: selectedCommunity = client.selectedCommunity;
-    $: currentCommunityReferrals = client.currentCommunityReferrals;
     $: currentChatRules = client.currentChatRules;
     $: currentCommunityRules = client.currentCommunityRules;
     $: combinedRulesText = canSend
@@ -180,9 +178,6 @@
                 open={$groupInviteUsersOpen}
                 headerText={i18nKey("invite.inviteWithLink", undefined, chat.level, true)}>
                 <InviteUsersWithLink container={chat} />
-                {#if chat.level === "channel"}
-                    <ReferredUsersList referrals={$currentCommunityReferrals} />
-                {/if}
             </CollapsibleCard>
         {/if}
         <CollapsibleCard
