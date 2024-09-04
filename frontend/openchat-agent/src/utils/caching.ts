@@ -124,14 +124,6 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: string;
     };
-
-    community_referrals: {
-        key: string;
-        value: {
-            userId: string;
-            timestamp: number;
-        };
-    };
 }
 
 type MigrationFunction<T> = (
@@ -156,14 +148,12 @@ async function clearEventsStore(
     await tx.objectStore("chat_events").clear();
 }
 
-async function createCommunityReferralsStore(
-    db: IDBPDatabase<ChatSchema>,
+async function clearCommunityDetails(
+    _db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
-    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    if (!db.objectStoreNames.contains("community_referrals")) {
-        db.createObjectStore("community_referrals");
-    }
+    await tx.objectStore("community_details").clear();
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
@@ -193,7 +183,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     109: clearChatsStore,
     110: clearChatsStore,
     111: clearChatsStore,
-    112: createCommunityReferralsStore,
+    112: clearCommunityDetails,
 };
 
 async function migrate(
@@ -245,9 +235,6 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     if (db.objectStoreNames.contains("localUserIndex")) {
         db.deleteObjectStore("localUserIndex");
     }
-    if (db.objectStoreNames.contains("community_referrals")) {
-        db.deleteObjectStore("community_referrals");
-    }
     const chatEvents = db.createObjectStore("chat_events");
     chatEvents.createIndex("messageIdx", "messageKey");
     chatEvents.createIndex("expiresAt", "expiresAt");
@@ -261,7 +248,6 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("cachePrimer");
     db.createObjectStore("currentUser");
     db.createObjectStore("localUserIndex");
-    db.createObjectStore("community_referrals");
 }
 
 function padMessageIndex(i: number): string {
@@ -1366,34 +1352,4 @@ export async function clearCache(principal: string): Promise<void> {
     } catch (err) {
         console.error("Unable to delete db: ", name, err);
     }
-}
-
-export async function setCommunityReferral(
-    communityId: string,
-    userId: string,
-    timestamp: number,
-): Promise<void> {
-    if (db === undefined) return;
-    await (await db).put("community_referrals", { userId, timestamp }, communityId);
-}
-
-export async function deleteCommunityReferral(communityId: string): Promise<void> {
-    if (db === undefined) return;
-    (await db).delete("community_referrals", communityId);
-}
-
-export async function getCommunityReferral(
-    communityId: string,
-    timestamp: number,
-): Promise<string | undefined> {
-    if (db === undefined) return;
-    const referral = await (await db).get("community_referrals", communityId);
-    if (referral) {
-        const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
-        if (timestamp - referral.timestamp > oneWeekInMs) {
-            return undefined;
-        }
-        return referral.userId;
-    }
-    return undefined;
 }

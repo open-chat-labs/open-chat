@@ -89,6 +89,13 @@ export function mergeCommunityDetails(
                 removed: updates.blockedUsersRemoved,
             }),
         ),
+        referrals: new Set<string>(
+            mergeThings(identity, identity, [...previous.referrals], {
+                added: [...updates.referralsAdded],
+                updated: [],
+                removed: updates.referralsRemoved,
+            }),
+        ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         rules: updates.rules ?? previous.rules,
         userGroups: mergeUserGroups(

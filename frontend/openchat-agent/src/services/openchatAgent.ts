@@ -13,8 +13,6 @@ import {
     cacheLocalUserIndexForUser,
     getLocalUserIndexForUser,
     clearCache,
-    getCommunityReferral,
-    deleteCommunityReferral,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -248,6 +246,11 @@ import type { PinNumberSettings } from "openchat-shared";
 import type { ClaimDailyChitResponse } from "openchat-shared";
 import type { ChitUserBalance } from "openchat-shared";
 import { createHttpAgentSync } from "../utils/httpAgent";
+import {
+    deleteCommunityReferral,
+    clearCache as clearReferralCache,
+    getCommunityReferral,
+} from "../utils/referralCache";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -3619,6 +3622,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async clearCachedData(): Promise<void> {
-        await Promise.all([clearCache(this.principal.toString()), clearUserCache()]);
+        await Promise.all([
+            clearCache(this.principal.toString()),
+            clearUserCache(),
+            clearReferralCache(),
+        ]);
     }
 }

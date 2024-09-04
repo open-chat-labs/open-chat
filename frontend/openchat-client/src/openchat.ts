@@ -492,6 +492,7 @@ import {
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
+    currentCommunityReferrals,
     currentCommunityRules,
     currentCommunityUserGroups,
     nextCommunityIndex,
@@ -2346,6 +2347,7 @@ export class OpenChat extends OpenChatAgentWorker {
         ]).forEach((m) => allUserIds.add(m.userId));
         communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
         communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
+        communityStateStore.getProp(id, "referrals").forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3035,6 +3037,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
+            communityStateStore.setProp(community.id, "referrals", resp.referrals);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -7625,6 +7628,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityMembers = currentCommunityMembers;
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityReferrals = currentCommunityReferrals;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;

@@ -6,8 +6,7 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent } from "openchat-agent";
-import { setCommunityReferral } from "openchat-agent/lib/utils/caching";
+import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -497,7 +496,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.credentialArgs, payload.referredBy),
+                    agent.joinGroup(payload.chatId, payload.credentialArgs),
                 );
                 break;
 
@@ -505,7 +504,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.credentialArgs, payload.referredBy),
+                    agent.joinCommunity(payload.id, payload.credentialArgs),
                 );
                 break;
 
