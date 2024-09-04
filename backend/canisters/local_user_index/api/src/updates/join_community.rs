@@ -6,6 +6,7 @@ use types::{CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReaso
 pub struct Args {
     pub community_id: CommunityId,
     pub invite_code: Option<u64>,
+    #[serde(default)]
     pub referred_by: Option<UserId>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
 }
