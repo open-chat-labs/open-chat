@@ -1171,12 +1171,12 @@ type ChitEventsResponse = variant {
     };
 };
 
-type GetCachedBtcAddressResponse = variant {
+type CachedBtcAddressResponse = variant {
     Success : text;
     NotFound;
 };
 
-type GetBtcAddressResponse = variant {
+type BtcAddressResponse = variant {
     Success : text;
     InternalError : text;
 };
@@ -1286,7 +1286,7 @@ service : {
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     chit_events : (ChitEventsArgs) -> (ChitEventsResponse) query;
 
-    get_cached_btc_address : (EmptyArgs) -> (GetCachedBtcAddressResponse) query;
-    get_btc_address : (EmptyArgs) -> (GetBtcAddressResponse);
+    // cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
+    // btc_address : (EmptyArgs) -> (BtcAddressResponse);
     retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };
