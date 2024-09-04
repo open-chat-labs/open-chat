@@ -16,6 +16,7 @@ export const idlFactory = ({ IDL }) => {
   const ApproveIdentityLinkResponse = IDL.Variant({
     'LinkRequestNotFound' : IDL.Null,
     'InvalidSignature' : IDL.Null,
+    'PrincipalAlreadyLinkedToAnotherOcUser' : IDL.Null,
     'Success' : IDL.Null,
     'MalformedSignature' : IDL.Text,
     'DelegationTooOld' : IDL.Null,

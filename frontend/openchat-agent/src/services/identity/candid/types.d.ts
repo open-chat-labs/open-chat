@@ -9,6 +9,7 @@ export interface ApproveIdentityLinkArgs {
 }
 export type ApproveIdentityLinkResponse = { 'LinkRequestNotFound' : null } |
   { 'InvalidSignature' : null } |
+  { 'PrincipalAlreadyLinkedToAnotherOcUser' : null } |
   { 'Success' : null } |
   { 'MalformedSignature' : string } |
   { 'DelegationTooOld' : null } |

@@ -434,6 +434,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -1143,6 +1144,7 @@ export interface JoinChannelArgs {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'invite_code' : [] | [bigint],
+  'referred_by' : [] | [UserId],
   'verified_credential_args' : [] | [VerifiedCredentialGateArgs],
 }
 export type JoinChannelResponse = { 'NotInvited' : null } |
@@ -1161,6 +1163,7 @@ export type JoinChannelResponse = { 'NotInvited' : null } |
 export interface JoinCommunityArgs {
   'community_id' : CommunityId,
   'invite_code' : [] | [bigint],
+  'referred_by' : [] | [UserId],
   'verified_credential_args' : [] | [VerifiedCredentialGateArgs],
 }
 export type JoinCommunityResponse = { 'NotInvited' : null } |
