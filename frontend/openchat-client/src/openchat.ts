@@ -423,6 +423,7 @@ import type {
     LinkIdentitiesResponse,
     AddMembersToChannelResponse,
     WalletConfig,
+    AirdropChannelDetails,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -590,6 +591,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
 
+    currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
     user = currentUser;
     anonUser = anonUser;
     suspendedUser = suspendedUser;
@@ -6194,6 +6196,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }).catch(() => ({ kind: "failure" }));
     }
 
+    isMemberOfAirdropChannel(): boolean {
+        if (this.currentAirdropChannel === undefined) return false;
+        const airdropChannel = this._liveState.allChats.get(this.currentAirdropChannel.id);
+        return (airdropChannel?.membership.role ?? "none") !== "none";
+    }
+
     private async updateRegistry(): Promise<void> {
         return new Promise((resolve) => {
             this.sendStreamRequest({
@@ -6201,6 +6209,7 @@ export class OpenChat extends OpenChatAgentWorker {
             })
                 .subscribe(([registry, updated], final) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                        this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
                         nervousSystemLookup.set(

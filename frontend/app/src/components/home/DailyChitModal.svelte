@@ -1,10 +1,10 @@
 <script lang="ts">
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
-    import type { OpenChat } from "openchat-client";
+    import { type AirdropChannelDetails, type OpenChat } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -18,6 +18,8 @@
     import { iconSize } from "../../stores/iconSize";
     import LearnToEarn from "./profile/LearnToEarn.svelte";
     import ChitBalance from "./profile/ChitBalance.svelte";
+    import AlertBox from "../AlertBox.svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -26,12 +28,21 @@
     let claimed = false;
     let additional: number | undefined = undefined;
     let learnToEarn = false;
+    let airdropChannel: AirdropChannelDetails | undefined = undefined;
+    let isMemberOfAirdropChannel = false;
 
     $: chitState = client.chitStateStore;
     $: available = $chitState.nextDailyChitClaim < $now500;
     $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
     $: percent = calculatePercentage(streak);
     $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
+
+    onMount(() => {
+        isMemberOfAirdropChannel = client.isMemberOfAirdropChannel();
+        if (!isMemberOfAirdropChannel) {
+            airdropChannel = client.currentAirdropChannel;
+        }
+    });
 
     function calculatePercentage(streak: number): number {
         const percent = (streak / 30) * 100;
@@ -165,6 +176,19 @@
                 </div>
             </div>
         </div>
+
+        {#if airdropChannel !== undefined}
+            <AlertBox>
+                <Markdown
+                    text={$_("airdropWarning", {
+                        values: {
+                            url: airdropChannel.url,
+                            channelName: airdropChannel.channelName,
+                            communityName: airdropChannel.communityName,
+                        },
+                    })}></Markdown>
+            </AlertBox>
+        {/if}
     </div>
     <div slot="footer">
         {#if claimed}
@@ -213,6 +237,7 @@
     .progress-wrapper {
         width: 100%;
         padding: 0 $sp4;
+        margin-bottom: $sp3;
     }
 
     .progress {

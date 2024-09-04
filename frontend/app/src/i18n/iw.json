@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} הוסיף את {changed} ל-{level}",
     "admin": "אדמין",
     "advanced": "מִתקַדֵם",
+    "airdropWarning": "כדי להעפיל ל-Airdrop הבא, עליך להיות חבר בערוץ **{channelName}** בקהילת **{communityName}**. [לחץ כאן כדי להצטרף.]({url})",
     "alsoCanisterId": "גם מזהה המיכל שלך",
     "andNMore": ", ועוד {n}",
     "appearance": "מראה חיצוני",

@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} đã thêm {changed} vào {level}",
     "admin": "Quản trị viên",
     "advanced": "Nâng cao",
+    "airdropWarning": "Để đủ điều kiện tham gia Airdrop tiếp theo, bạn phải là thành viên của kênh **{channelName}** trong cộng đồng **{communityName}**. [Nhấp vào đây để tham gia.]({url})",
     "alsoCanisterId": "cũng là id hộp của bạn",
     "andNMore": "và {n} khác",
     "appearance": "Ngoại quan",

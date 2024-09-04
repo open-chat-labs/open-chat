@@ -14,6 +14,10 @@ export function updatesResponse(
     registryCanisterId: string,
 ): RegistryUpdatesResponse {
     if ("Success" in candid) {
+        const communityId = "dmalx-m4aaa-aaaaa-qaanq-cai";
+        const channelId = "215653704564903423849947814818344282856";
+        const channelName = "September airdrop";
+        const communityName = "CHIT for CHAT";
         return {
             kind: "success",
             lastUpdated: candid.Success.last_updated,
@@ -24,6 +28,17 @@ export function updatesResponse(
             nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
             messageFiltersAdded: candid.Success.message_filters_added,
             messageFiltersRemoved: Array.from(candid.Success.message_filters_removed),
+            currentAirdropChannel: {
+                //TODO - fill this in
+                id: {
+                    kind: "channel",
+                    communityId,
+                    channelId,
+                },
+                channelName,
+                communityName,
+                url: `/community/${communityId}/channel/${channelId}`,
+            },
         };
     }
     if ("SuccessNoUpdates" in candid) {

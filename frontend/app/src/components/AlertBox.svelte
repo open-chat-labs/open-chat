@@ -32,6 +32,7 @@
 
         .alert-txt {
             flex: auto;
+            text-align: start;
         }
     }
 </style>
