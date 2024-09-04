@@ -15,6 +15,7 @@ async fn join_channel(args: Args) -> Response {
         principal: user_details.principal,
         channel_id: args.channel_id,
         invite_code: args.invite_code,
+        referred_by: args.referred_by,
         is_platform_moderator: user_details.is_platform_moderator,
         is_bot: user_details.is_bot,
         user_type: user_details.user_type,

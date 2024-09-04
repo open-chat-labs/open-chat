@@ -28,6 +28,8 @@ pub struct SuccessResult {
     pub chat_rules: Option<VersionedRules>,
     pub user_groups: Vec<UserGroupDetails>,
     pub user_groups_deleted: Vec<u32>,
+    pub referrals_added: Vec<UserId>,
+    pub referrals_removed: Vec<UserId>,
 }
 
 impl SuccessResult {

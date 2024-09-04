@@ -186,6 +186,7 @@ pub mod happy_path {
             &local_user_index_canister::join_community::Args {
                 community_id,
                 invite_code: None,
+                referred_by: None,
                 verified_credential_args: None,
             },
         );
@@ -211,6 +212,7 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 invite_code: None,
+                referred_by: None,
                 verified_credential_args: None,
             },
         );
