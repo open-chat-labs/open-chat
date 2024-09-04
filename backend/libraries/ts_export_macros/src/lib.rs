@@ -18,7 +18,11 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         .collect();
 
     let (export_to, prefix) = if !attr_inputs.is_empty() {
-        let export_to: String = attr_inputs.iter().map(|s| format!("{}/", convert_case(s, false))).collect();
+        let export_to: String = attr_inputs.iter().fold(String::new(), |mut result, next| {
+            write!(&mut result, "{}/", convert_case(next, false)).unwrap();
+            result
+        });
+
         let prefix: String = attr_inputs.iter().map(|s| convert_case(s, true)).collect();
 
         (export_to, Some(prefix))
