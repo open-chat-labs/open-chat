@@ -67,7 +67,7 @@ impl CommunityMembers {
         user_id: UserId,
         principal: Principal,
         user_type: UserType,
-        referred_by: Option<UserId>,
+        mut referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
@@ -75,6 +75,10 @@ impl CommunityMembers {
         } else {
             match self.members.entry(user_id) {
                 Vacant(e) => {
+                    if referred_by == Some(user_id) {
+                        referred_by = None;
+                    }
+
                     let member = CommunityMemberInternal {
                         user_id,
                         date_added: now,
