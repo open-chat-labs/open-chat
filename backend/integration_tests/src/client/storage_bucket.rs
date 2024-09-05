@@ -15,7 +15,6 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use serde_bytes::ByteBuf;
     use types::{CanisterId, FileId, TimestampMillis};
     use utils::hasher::hash_bytes;
 
