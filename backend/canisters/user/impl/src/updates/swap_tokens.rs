@@ -15,7 +15,7 @@ use user_canister::swap_tokens::{Response::*, *};
 use utils::consts::MEMO_SWAP;
 use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn swap_tokens(args: Args) -> Response {
     run_regular_jobs();

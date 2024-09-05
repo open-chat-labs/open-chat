@@ -9,7 +9,7 @@ use user_canister::set_pin_number::{Response::*, *};
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 fn set_pin_number(args: Args) -> Response {
     run_regular_jobs();
