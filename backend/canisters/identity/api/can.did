@@ -6,6 +6,7 @@ type AuthPrincipalsResponse = variant {
     Success : vec record {
         "principal" : principal;
         originating_canister : principal;
+        is_ii_principal : bool;
     };
     NotFound;
 };
@@ -61,6 +62,7 @@ type ApproveIdentityLinkResponse = variant {
 type CreateIdentityArgs = record {
     public_key : PublicKey;
     session_key : PublicKey;
+    is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
     challenge_attempt : opt record {
         key : nat32;
@@ -79,6 +81,7 @@ type CreateIdentityResponse = variant {
 
 type InitiateIdentityLinkArgs = record {
     public_key : blob;
+    is_ii_principal : opt bool;
     link_to_principal : principal;
 };
 

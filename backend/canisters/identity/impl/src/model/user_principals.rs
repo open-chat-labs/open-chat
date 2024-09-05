@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, UserId};
+use types::{is_default, CanisterId, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -34,10 +34,19 @@ struct AuthPrincipalInternal {
     originating_canister: CanisterId,
     #[serde(rename = "u")]
     user_principal_index: u32,
+    #[serde(rename = "i", default, skip_serializing_if = "is_default")]
+    is_ii_principal: bool,
 }
 
 impl UserPrincipals {
-    pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal, originating_canister: CanisterId) {
+    pub fn push(
+        &mut self,
+        index: u32,
+        principal: Principal,
+        auth_principal: Principal,
+        originating_canister: CanisterId,
+        is_ii_principal: bool,
+    ) {
         assert_eq!(index, self.next_index());
         assert!(!self.auth_principals.contains_key(&auth_principal));
 
@@ -51,6 +60,7 @@ impl UserPrincipals {
             AuthPrincipalInternal {
                 originating_canister,
                 user_principal_index: index,
+                is_ii_principal,
             },
         );
         *self.originating_canisters.entry(originating_canister).or_default() += 1;
@@ -60,6 +70,7 @@ impl UserPrincipals {
         &mut self,
         new_principal: Principal,
         originating_canister: CanisterId,
+        is_ii_principal: bool,
         user_principal_index: u32,
     ) -> bool {
         if self
@@ -76,6 +87,7 @@ impl UserPrincipals {
                 AuthPrincipalInternal {
                     originating_canister,
                     user_principal_index,
+                    is_ii_principal,
                 },
             );
             true
@@ -121,6 +133,12 @@ impl UserPrincipals {
         }
     }
 
+    pub fn set_ii_principal(&mut self, principal: &Principal) {
+        if let Some(a) = self.auth_principals.get_mut(principal) {
+            a.is_ii_principal = true;
+        }
+    }
+
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
         self.user_principals
             .get(usize::try_from(user_principal_index).unwrap())
@@ -136,6 +154,7 @@ impl UserPrincipals {
 pub struct AuthPrincipal {
     pub originating_canister: CanisterId,
     pub user_principal_index: u32,
+    pub is_ii_principal: bool,
 }
 
 impl From<&AuthPrincipalInternal> for AuthPrincipal {
@@ -143,6 +162,7 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
         AuthPrincipal {
             originating_canister: value.originating_canister,
             user_principal_index: value.user_principal_index,
+            is_ii_principal: value.is_ii_principal,
         }
     }
 }
