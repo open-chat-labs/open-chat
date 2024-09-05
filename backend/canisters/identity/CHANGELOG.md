@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Set `is_ii_principal` field to true where that is known to be the case ([#6326](https://github.com/open-chat-labs/open-chat/pull/6326))
+
+## [[2.0.1330](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1330-identity)] - 2024-09-05
+
+### Changed
+
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Flag which authentication principals are II principals ([#6321](https://github.com/open-chat-labs/open-chat/pull/6321))
 
