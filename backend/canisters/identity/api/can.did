@@ -95,6 +95,7 @@ type InitiateIdentityLinkResponse = variant {
 
 type PrepareDelegationArgs = record {
     session_key : PublicKey;
+    is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
 };
 
