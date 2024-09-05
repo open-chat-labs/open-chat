@@ -49,7 +49,7 @@ fn main() {
     generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);
     generate_candid_method!(user, report_message, update);
-    generate_candid_method!(user, retrieve_btc, update);
+    // generate_candid_method!(user, retrieve_btc, update);
     generate_candid_method!(user, save_crypto_account, update);
     generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);

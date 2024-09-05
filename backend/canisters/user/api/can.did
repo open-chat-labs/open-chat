@@ -1288,5 +1288,5 @@ service : {
 
     // cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
     // btc_address : (EmptyArgs) -> (BtcAddressResponse);
-    retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
+    // retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };
