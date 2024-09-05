@@ -3,9 +3,9 @@ use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
-use ic_cdk::update;
 use serde::Serialize;
 use types::{
     icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
@@ -15,7 +15,7 @@ use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();

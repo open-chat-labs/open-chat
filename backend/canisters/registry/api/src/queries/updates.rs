@@ -1,20 +1,23 @@
 use crate::{MessageFilterSummary, NervousSystemSummary, TokenDetails};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::TimestampMillis;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(registry, updates)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub since: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(registry, updates)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(registry, updates)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub token_details: Option<Vec<TokenDetails>>,

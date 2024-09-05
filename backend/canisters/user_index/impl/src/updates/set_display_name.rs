@@ -7,7 +7,7 @@ use local_user_index_canister::{DisplayNameChanged, Event};
 use user_index_canister::set_display_name::{Response::*, *};
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
-#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
+#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 fn set_display_name(args: Args) -> Response {
     mutate_state(|state| set_display_name_impl(args, state))

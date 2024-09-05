@@ -1,10 +1,10 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Ord, PartialOrd, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub struct BuildVersion {
     pub major: u32,
     pub minor: u32,

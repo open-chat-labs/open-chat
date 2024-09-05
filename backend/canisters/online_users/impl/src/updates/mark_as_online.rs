@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk::update;
 use online_users_canister::mark_as_online::{Response::*, *};
 use types::{CanisterId, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn mark_as_online(_args: Args) -> Response {
     let user_id = match read_state(try_get_user_id_locally) {

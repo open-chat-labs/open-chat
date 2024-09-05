@@ -1,8 +1,8 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
@@ -17,7 +17,7 @@ use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 pub const USER_LIMIT: usize = 200_000;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid
