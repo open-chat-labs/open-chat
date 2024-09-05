@@ -6,7 +6,7 @@
  * have a look there! :]
  */
 
-import { Type, Static } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 
 export type ProposalsBotCommonExecuteGenericNervousSystemFunction = Static<
     typeof ProposalsBotCommonExecuteGenericNervousSystemFunction
