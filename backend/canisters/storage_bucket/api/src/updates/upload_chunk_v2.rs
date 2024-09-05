@@ -1,23 +1,27 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
+use ts_export::ts_export;
 use types::{AccessorId, FileId, Hash, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[ts_export(storage_bucket, upload_chunk)]
+#[derive(CandidType)]
 pub struct Args {
     pub file_id: FileId,
     pub hash: Hash,
     pub mime_type: String,
+    #[ts(as = "Vec<ts_export::PrincipalTS>")]
     pub accessors: Vec<AccessorId>,
     pub chunk_index: u32,
     pub chunk_size: u32,
     pub total_size: u64,
-    pub bytes: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    #[ts(as = "Vec<u8>")]
+    pub bytes: Vec<u8>,
     pub expiry: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, upload_chunk)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     AllowanceExceeded,

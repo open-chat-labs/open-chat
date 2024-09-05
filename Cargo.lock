@@ -7260,6 +7260,8 @@ dependencies = [
  "candid_gen",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -7321,6 +7323,8 @@ dependencies = [
  "human_readable",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 

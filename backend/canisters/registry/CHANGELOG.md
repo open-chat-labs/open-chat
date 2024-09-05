@@ -6,10 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose MessagePack versions of Registry canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
 ### Changed
 
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
-- Expose MessagePack versions of Registry canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
 
 ## [[2.0.1323](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1323-registry)] - 2024-09-03
 
