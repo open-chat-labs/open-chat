@@ -96,6 +96,7 @@ export type ApproveIdentityLinkResponse =
     | "caller_not_recognised"
     | "link_request_not_found"
     | "already_linked_to_principal"
+    | "already_linked_to_another_oc_account"
     | "invalid_signature"
     | "delegation_too_old";
 

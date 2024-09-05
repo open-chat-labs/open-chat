@@ -190,6 +190,9 @@ export function approveIdentityLinkResponse(
     if ("DelegationTooOld" in candid) {
         return "delegation_too_old";
     }
+    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
+        return "already_linked_to_another_oc_account";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiApproveIdentityLinkResponse type received",
         candid,
