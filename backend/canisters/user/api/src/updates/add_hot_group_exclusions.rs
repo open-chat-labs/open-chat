@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChatId, Milliseconds};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, add_hot_group_exclusions)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub groups: Vec<ChatId>,
     pub duration: Option<Milliseconds>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, add_hot_group_exclusions)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
 }

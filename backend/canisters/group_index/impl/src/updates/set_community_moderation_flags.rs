@@ -1,12 +1,12 @@
 use crate::{model::moderation_flags::ModerationFlags, mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::set_community_moderation_flags::{Response::*, *};
-use ic_cdk::update;
 use types::CanisterId;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn set_community_moderation_flags(args: Args) -> Response {
     let PrepareResult {

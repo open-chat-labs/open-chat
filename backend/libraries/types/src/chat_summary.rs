@@ -4,13 +4,13 @@ use crate::{
     MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use ts_rs::TS;
+use ts_export::ts_export;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub last_updated: TimestampMillis,
@@ -19,18 +19,14 @@ pub struct DirectChatSummary {
     pub latest_event_index: EventIndex,
     pub latest_message_index: MessageIndex,
     pub date_created: TimestampMillis,
-    #[ts(optional)]
     pub read_by_me_up_to: Option<MessageIndex>,
-    #[ts(optional)]
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub archived: bool,
-    #[ts(optional)]
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[ts(optional)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -40,29 +36,26 @@ impl DirectChatSummary {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[ts(optional)]
     pub subtype: Option<GroupSubtype>,
-    #[ts(optional)]
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
     pub messages_visible_to_non_members: bool,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
-    #[ts(as = "Option<crate::EventWrapperMessage>", optional)]
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    #[ts(optional)]
     pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
-    #[ts(optional)]
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
     pub participant_count: u32,
@@ -74,104 +67,85 @@ pub struct GroupChatSummary {
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: bool,
-    #[ts(optional)]
     pub frozen: Option<FrozenGroupInfo>,
-    #[ts(optional)]
     pub date_last_pinned: Option<TimestampMillis>,
-    #[ts(optional)]
     pub date_read_pinned: Option<TimestampMillis>,
-    #[ts(optional)]
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[ts(optional)]
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[ts(optional)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
-    #[ts(as = "Option<crate::EventWrapperMessage>", optional)]
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
-    #[ts(optional)]
     pub latest_event_index: Option<EventIndex>,
-    #[ts(optional)]
     pub latest_message_index: Option<MessageIndex>,
-    #[ts(optional)]
     pub read_by_me_up_to: Option<MessageIndex>,
-    #[ts(optional)]
     pub read_by_them_up_to: Option<MessageIndex>,
-    #[ts(optional)]
     pub notifications_muted: Option<bool>,
     pub updated_events: Vec<(EventIndex, TimestampMillis)>,
-    #[ts(optional)]
     pub metrics: Option<ChatMetrics>,
-    #[ts(optional)]
     pub my_metrics: Option<ChatMetrics>,
-    #[ts(optional)]
     pub archived: Option<bool>,
+    #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[ts(optional)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
 // which is causing unnecessarily coupling. We should use separate types for these use cases.
 // For instance we only need to return history_visible_to_new_joiners and is_public from group::public_summary
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct PublicGroupSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[ts(optional)]
     pub subtype: Option<GroupSubtype>,
     pub history_visible_to_new_joiners: bool,
     pub messages_visible_to_non_members: bool,
-    #[ts(optional)]
     pub avatar_id: Option<u128>,
-    #[ts(as = "Option<crate::EventWrapperMessage>", optional)]
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    #[ts(optional)]
     pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub wasm_version: BuildVersion,
     pub is_public: bool,
-    #[ts(optional)]
     pub frozen: Option<FrozenGroupInfo>,
-    #[ts(optional)]
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[ts(optional)]
     pub gate: Option<AccessGate>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
-    #[ts(optional)]
     pub subtype: Option<GroupSubtype>,
-    #[ts(optional)]
     pub avatar_id: Option<u128>,
     pub is_public: bool,
     pub history_visible_to_new_joiners: bool,
     pub messages_visible_to_non_members: bool,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
-    #[ts(as = "Option<crate::EventWrapperMessage>", optional)]
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    #[ts(optional)]
     pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub participant_count: u32,
@@ -183,19 +157,13 @@ pub struct GroupCanisterGroupChatSummary {
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    #[ts(optional)]
     pub frozen: Option<FrozenGroupInfo>,
-    #[ts(optional)]
     pub date_last_pinned: Option<TimestampMillis>,
-    #[ts(optional)]
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[ts(optional)]
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[ts(optional)]
     pub membership: Option<GroupMembership>,
-    #[ts(optional)]
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -278,59 +246,50 @@ impl GroupCanisterGroupChatSummary {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
-    #[ts(optional)]
     pub name: Option<String>,
-    #[ts(optional)]
     pub description: Option<String>,
+    #[ts(as = "crate::OptionUpdateGroupSubtype")]
     pub subtype: OptionUpdate<GroupSubtype>,
+    #[ts(as = "crate::OptionUpdateU128")]
     pub avatar_id: OptionUpdate<u128>,
-    #[ts(as = "Option<crate::EventWrapperMessage>", optional)]
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
-    #[ts(optional)]
     pub latest_event_index: Option<EventIndex>,
-    #[ts(optional)]
     pub latest_message_index: Option<MessageIndex>,
-    #[ts(optional)]
     pub participant_count: Option<u32>,
-    #[ts(optional)]
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
-    #[ts(optional)]
     pub wasm_version: Option<BuildVersion>,
-    #[ts(optional)]
     pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
-    #[ts(optional)]
     pub metrics: Option<ChatMetrics>,
-    #[ts(optional)]
     pub my_metrics: Option<ChatMetrics>,
-    #[ts(optional)]
     pub is_public: Option<bool>,
-    #[ts(optional)]
     pub messages_visible_to_non_members: Option<bool>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub unfollowed_threads: Vec<MessageIndex>,
-    #[ts(optional)]
     pub notifications_muted: Option<bool>,
+    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
-    #[ts(optional)]
     pub date_last_pinned: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[ts(optional)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
+    #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
-    #[ts(optional)]
     pub rules_accepted: Option<bool>,
-    #[ts(optional)]
     pub membership: Option<GroupMembershipUpdates>,
+    #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupMembership {
     pub joined: TimestampMillis,
     pub role: GroupRole,
@@ -341,22 +300,20 @@ pub struct GroupMembership {
     pub rules_accepted: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupMembershipUpdates {
-    #[ts(optional)]
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
-    #[ts(optional)]
     pub notifications_muted: Option<bool>,
-    #[ts(optional)]
     pub my_metrics: Option<ChatMetrics>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub unfollowed_threads: Vec<MessageIndex>,
-    #[ts(optional)]
     pub rules_accepted: Option<bool>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, TS)]
+#[ts_export]
+#[derive(CandidType, Debug, Default)]
 pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,
@@ -365,11 +322,9 @@ pub struct SelectedGroupUpdates {
     pub members_removed: Vec<UserId>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
-    #[ts(optional)]
     pub invited_users: Option<Vec<UserId>>,
     pub pinned_messages_added: Vec<MessageIndex>,
     pub pinned_messages_removed: Vec<MessageIndex>,
-    #[ts(optional)]
     pub chat_rules: Option<VersionedRules>,
 }
 
@@ -386,7 +341,8 @@ impl SelectedGroupUpdates {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, TS)]
+#[ts_export]
+#[derive(CandidType, Debug, Default, Clone)]
 pub struct ChatMetrics {
     pub text_messages: u64,
     pub image_messages: u64,
@@ -414,19 +370,18 @@ pub struct ChatMetrics {
     pub last_active: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
-    #[ts(optional)]
     pub latest_event: Option<EventIndex>,
-    #[ts(optional)]
     pub latest_message: Option<MessageIndex>,
-    #[ts(optional)]
     pub read_up_to: Option<MessageIndex>,
     pub last_updated: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupCanisterThreadDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
@@ -446,44 +401,51 @@ impl From<&GroupCanisterThreadDetails> for ThreadSyncDetails {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum GroupSubtype {
     GovernanceProposals(GovernanceProposalsSubtype),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GovernanceProposalsSubtype {
     pub is_nns: bool,
     pub governance_canister_id: CanisterId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default)]
 pub struct Rules {
     pub text: String,
     pub enabled: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
     pub enabled: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default)]
 pub struct UpdatedRules {
     pub text: String,
     pub enabled: bool,
     pub new_version: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct VideoCall {
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Copy, Default, Eq, PartialEq)]
 pub enum VideoCallType {
     Broadcast,
     #[default]

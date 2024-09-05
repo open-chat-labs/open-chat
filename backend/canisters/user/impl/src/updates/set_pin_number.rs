@@ -1,15 +1,15 @@
 use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use types::{FieldTooLongResult, FieldTooShortResult};
 use user_canister::set_pin_number::{Response::*, *};
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 fn set_pin_number(args: Args) -> Response {
     run_regular_jobs();

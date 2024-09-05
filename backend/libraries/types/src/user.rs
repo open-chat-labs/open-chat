@@ -3,10 +3,10 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, TS)]
-#[ts(as = "String", export)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(CanisterId);
 
 impl UserId {
@@ -48,7 +48,8 @@ impl Display for UserId {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[ts_export]
+#[derive(CandidType, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,
     pub username: String,

@@ -18,8 +18,10 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
@@ -27,7 +29,8 @@ pub enum EventsResponse {
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -37,7 +40,8 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -46,7 +50,8 @@ pub struct GroupChatSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
@@ -56,7 +61,8 @@ pub struct CommunitySummary {
     pub pinned: Vec<ChannelId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummaryUpdates>,
@@ -65,7 +71,8 @@ pub struct CommunitySummaryUpdates {
     pub pinned: Option<Vec<ChannelId>>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct ChannelSummary {
     pub channel_id: ChannelId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -74,7 +81,8 @@ pub struct ChannelSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct ChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -212,13 +220,15 @@ pub enum C2CReplyContext {
     OtherChat(Chat, Option<MessageIndex>, EventIndex),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct EditMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -226,7 +236,8 @@ pub struct EditMessageArgs {
     pub block_level_markdown: Option<bool>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct ToggleReactionArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -237,7 +248,8 @@ pub struct ToggleReactionArgs {
     pub user_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct TipMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -250,7 +262,8 @@ pub struct TipMessageArgs {
     pub user_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct MarkMessagesReadArgs {
     pub read_up_to: MessageIndex,
 }
@@ -285,7 +298,8 @@ pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
         .collect()
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Debug)]
 pub enum ChatInList {
     Direct(ChatId),
     Group(ChatId),
@@ -293,25 +307,30 @@ pub enum ChatInList {
     Community(CommunityId, ChannelId),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct NamedAccount {
     pub name: String,
     pub account: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub enum WalletConfig {
     Auto(AutoWallet),
     Manual(ManualWallet),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug, Default)]
 pub struct AutoWallet {
     pub min_cents_visible: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug, Default)]
 pub struct ManualWallet {
+    #[ts(as = "Vec<ts_export::PrincipalTS>")]
     pub tokens: Vec<CanisterId>,
 }
 
@@ -321,7 +340,8 @@ impl Default for WalletConfig {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user)]
+#[derive(CandidType, Clone, Debug)]
 pub struct Referral {
     pub user_id: UserId,
     pub status: ReferralStatus,
