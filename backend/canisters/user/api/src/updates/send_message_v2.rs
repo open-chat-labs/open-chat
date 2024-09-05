@@ -5,7 +5,7 @@ use types::{
     Milliseconds, ReplyContext, TimestampMillis, UserId,
 };
 
-#[ts_export(user, send_message_v2)]
+#[ts_export(user, send_message)]
 #[derive(CandidType, Debug)]
 pub struct Args {
     pub recipient: UserId,
@@ -21,7 +21,7 @@ pub struct Args {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[ts_export(user, send_message_v2)]
+#[ts_export(user, send_message)]
 #[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -44,7 +44,7 @@ pub enum Response {
     InternalError(String),
 }
 
-#[ts_export(user, send_message_v2)]
+#[ts_export(user, send_message)]
 #[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub chat_id: ChatId,
@@ -54,7 +54,7 @@ pub struct SuccessResult {
     pub expires_at: Option<TimestampMillis>,
 }
 
-#[ts_export(user, send_message_v2)]
+#[ts_export(user, send_message)]
 #[derive(CandidType, Debug)]
 pub struct TransferSuccessV2Result {
     pub chat_id: ChatId,

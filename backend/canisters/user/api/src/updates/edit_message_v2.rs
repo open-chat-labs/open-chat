@@ -2,7 +2,7 @@ use candid::CandidType;
 use ts_export::ts_export;
 use types::{MessageContentInitial, MessageId, MessageIndex, UserId};
 
-#[ts_export(user, edit_message_v2)]
+#[ts_export(user, edit_message)]
 #[derive(CandidType, Debug)]
 pub struct Args {
     pub user_id: UserId,
@@ -13,7 +13,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[ts_export(user, edit_message_v2)]
+#[ts_export(user, edit_message)]
 #[derive(CandidType, Debug)]
 pub enum Response {
     Success,

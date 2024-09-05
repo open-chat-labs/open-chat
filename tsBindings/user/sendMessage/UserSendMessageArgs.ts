@@ -5,4 +5,4 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { ReplyContext } from "../../shared/ReplyContext";
 import type { UserId } from "../../shared/UserId";
 
-export type UserSendMessageV2Args = { recipient: UserId, thread_root_message_index?: MessageIndex, message_id: MessageId, content: MessageContentInitial, replies_to?: ReplyContext, forwarding: boolean, block_level_markdown: boolean, message_filter_failed?: bigint, pin?: string, correlation_id: bigint, };
+export type UserSendMessageArgs = { recipient: UserId, thread_root_message_index?: MessageIndex, message_id: MessageId, content: MessageContentInitial, replies_to?: ReplyContext, forwarding: boolean, block_level_markdown: boolean, message_filter_failed?: bigint, pin?: string, correlation_id: bigint, };

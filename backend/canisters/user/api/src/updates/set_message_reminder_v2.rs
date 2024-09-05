@@ -2,7 +2,7 @@ use candid::CandidType;
 use ts_export::ts_export;
 use types::{Chat, EventIndex, FieldTooLongResult, MessageIndex, TimestampMillis};
 
-#[ts_export(user, set_message_reminder_v2)]
+#[ts_export(user, set_message_reminder)]
 #[derive(CandidType, Debug)]
 pub struct Args {
     pub chat: Chat,
@@ -12,7 +12,7 @@ pub struct Args {
     pub remind_at: TimestampMillis,
 }
 
-#[ts_export(user, set_message_reminder_v2)]
+#[ts_export(user, set_message_reminder)]
 #[derive(CandidType, Debug)]
 pub enum Response {
     Success(u64),
