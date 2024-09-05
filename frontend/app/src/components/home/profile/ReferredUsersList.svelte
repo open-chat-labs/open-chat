@@ -5,9 +5,10 @@
     import Avatar from "../../Avatar.svelte";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
     import Badges from "./Badges.svelte";
     import LinkButton from "../../LinkButton.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import { referredUsersOpen } from "../../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -26,8 +27,10 @@
 </script>
 
 {#if referrals.size > 0}
-    <div class="referrals-section">
-        <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
+    <CollapsibleCard
+        on:toggle={referredUsersOpen.toggle}
+        open={$referredUsersOpen}
+        headerText={i18nKey("invite.referredUsers")}>
         <div class="referrals">
             {#each referrals as referral}
                 {@const u = $userStore.get(referral)}
@@ -47,26 +50,20 @@
                 </div>
             {/each}
         </div>
-    </div>
+    </CollapsibleCard>
 {/if}
 
 <style lang="scss">
-    .referrals-section {
-        margin-top: $sp3;
+    .referrals {
+        display: flex;
+        flex-direction: column;
+        gap: $sp3;
+    }
 
-        .referrals {
-            display: flex;
-            flex-direction: column;
-            gap: $sp3;
-            margin-top: $sp4;
-            width: fit-content;
-
-            .referral {
-                cursor: pointer;
-                align-items: center;
-                display: flex;
-                gap: $sp3;
-            }
-        }
+    .referral {
+        cursor: pointer;
+        align-items: center;
+        display: flex;
+        gap: $sp3;
     }
 </style>

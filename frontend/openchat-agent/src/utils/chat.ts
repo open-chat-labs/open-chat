@@ -74,7 +74,6 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
-    console.log("updates: ", updates, previous);
     return {
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {

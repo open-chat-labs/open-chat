@@ -4876,12 +4876,15 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    setCommunityReferral(communityId: CommunityIdentifier, referredBy: string): Promise<void> {
-        return this.sendRequest({
-            kind: "setCommunityReferral",
-            communityId,
-            referredBy,
-        });
+    setCommunityReferral(communityId: CommunityIdentifier, referredBy: string) {
+        // make sure that we can't refer ourselves
+        if (this._liveState.user.userId !== referredBy) {
+            return this.sendRequest({
+                kind: "setCommunityReferral",
+                communityId,
+                referredBy,
+            });
+        }
     }
 
     searchChat(

@@ -10,15 +10,11 @@
     import { canShare, shareLink } from "../../../utils/share";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import ReferredUsersList from "./ReferredUsersList.svelte";
 
     const client = getContext<OpenChat>("client");
 
     $: user = client.user;
     $: link = `${window.location.origin}/?ref=${$user.userId}`;
-    $: globalState = client.globalStateStore;
-    $: referrals = $globalState.referrals;
-    $: referredUserIds = new Set(referrals.map((r) => r.userId));
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -56,7 +52,6 @@
             </Link>
         </div>
     {/if}
-    <ReferredUsersList referrals={referredUserIds} />
 </div>
 
 <style lang="scss">

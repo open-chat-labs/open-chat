@@ -89,9 +89,9 @@
             open={$communityInviteUsersOpen}
             headerText={i18nKey("invite.inviteWithLink", undefined, community.level, true)}>
             <InviteUsersWithLink container={community} />
-            <ReferredUsersList {referrals} />
         </CollapsibleCard>
     {/if}
+    <ReferredUsersList {referrals} />
     <CollapsibleCard
         on:toggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
