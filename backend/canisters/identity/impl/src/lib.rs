@@ -51,7 +51,12 @@ impl RuntimeState {
         CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
     }
 
-    pub fn push_new_user(&mut self, auth_principal: Principal, originating_canister: CanisterId) -> [u8; 32] {
+    pub fn push_new_user(
+        &mut self,
+        auth_principal: Principal,
+        originating_canister: CanisterId,
+        is_ii_principal: bool,
+    ) -> [u8; 32] {
         let index = self.data.user_principals.next_index();
         let seed = self.data.calculate_seed(index);
         let public_key = self.der_encode_canister_sig_key(seed);
@@ -59,7 +64,7 @@ impl RuntimeState {
 
         self.data
             .user_principals
-            .push(index, principal, auth_principal, originating_canister);
+            .push(index, principal, auth_principal, originating_canister, is_ii_principal);
 
         seed
     }
