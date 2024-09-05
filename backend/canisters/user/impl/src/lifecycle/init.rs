@@ -3,6 +3,7 @@ use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use tracing::info;
+use types::UserId;
 use user_canister::init::Args;
 use utils::env::Environment;
 
@@ -13,6 +14,9 @@ fn init(args: Args) {
 
     let env = init_env([0; 32]);
     let now = env.now();
+    let user_id: UserId = env.canister_id().into();
+
+    let referred_by = args.referred_by.filter(|ref_uid| *ref_uid != user_id);
 
     let data = Data::new(
         args.owner,
@@ -25,7 +29,7 @@ fn init(args: Args) {
         args.video_call_operators,
         args.username,
         args.test_mode,
-        args.referred_by,
+        referred_by,
         now,
     );
 
