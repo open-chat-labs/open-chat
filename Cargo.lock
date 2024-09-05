@@ -5029,6 +5029,8 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "serde",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -5213,6 +5215,8 @@ dependencies = [
  "candid",
  "candid_gen",
  "serde",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -5244,6 +5248,7 @@ name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -5720,6 +5725,8 @@ dependencies = [
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -6127,6 +6134,8 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "serde",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -7254,6 +7263,8 @@ dependencies = [
  "candid_gen",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -7315,6 +7326,8 @@ dependencies = [
  "human_readable",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -8139,6 +8152,8 @@ dependencies = [
  "proposals_bot_canister",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 

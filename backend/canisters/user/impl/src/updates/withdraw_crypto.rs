@@ -2,12 +2,12 @@ use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use user_canister::withdraw_crypto_v2::{Response::*, *};
 use utils::consts::MEMO_SEND;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn withdraw_crypto_v2(args: Args) -> Response {
     run_regular_jobs();

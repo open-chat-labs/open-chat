@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
-use ic_cdk::update;
 use user_canister::leave_group::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();

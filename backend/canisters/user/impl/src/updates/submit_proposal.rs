@@ -1,13 +1,13 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use ledger_utils::icrc1::process_transaction;
 use types::icrc1::PendingCryptoTransaction;
 use types::{CanisterId, UserId};
 use user_canister::submit_proposal::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn submit_proposal(args: Args) -> Response {
     run_regular_jobs();

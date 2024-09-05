@@ -18,13 +18,12 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         .collect();
 
     let (export_to, prefix) = if !attr_inputs.is_empty() {
-        assert_eq!(attr_inputs.len(), 2);
+        let export_to: String = attr_inputs.iter().fold(String::new(), |mut result, next| {
+            write!(&mut result, "{}/", convert_case(next, false)).unwrap();
+            result
+        });
 
-        let canister_name = attr_inputs.first().unwrap();
-        let method_name = attr_inputs.last().unwrap();
-
-        let export_to = format!("{}/{}/", convert_case(canister_name, false), convert_case(method_name, false));
-        let prefix = format!("{}{}", convert_case(canister_name, true), convert_case(method_name, true));
+        let prefix: String = attr_inputs.iter().map(|s| convert_case(s, true)).collect();
 
         (export_to, Some(prefix))
     } else {
@@ -92,27 +91,24 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
 }
 
 fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
-    match &field.ty {
-        Type::Path(type_path) => {
-            if !is_tuple
-                && type_path.qself.is_none()
-                && type_path.path.leading_colon.is_none()
-                && type_path.path.segments.len() == 1
-                && type_path.path.segments[0].ident == "Option"
-            {
-                field.attrs.push(parse_quote ! ( #[ts(optional)] ));
-                field
-                    .attrs
-                    .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
-            } else if type_path.qself.is_none()
-                && type_path.path.leading_colon.is_none()
-                && type_path.path.segments.len() == 1
-                && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
-            {
-                field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
-            }
+    if let Type::Path(type_path) = &field.ty {
+        if !is_tuple
+            && type_path.qself.is_none()
+            && type_path.path.leading_colon.is_none()
+            && type_path.path.segments.len() == 1
+            && type_path.path.segments[0].ident == "Option"
+        {
+            field.attrs.push(parse_quote ! ( #[ts(optional)] ));
+            field
+                .attrs
+                .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
+        } else if type_path.qself.is_none()
+            && type_path.path.leading_colon.is_none()
+            && type_path.path.segments.len() == 1
+            && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
+        {
+            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
         }
-        _ => {}
     }
 }
 

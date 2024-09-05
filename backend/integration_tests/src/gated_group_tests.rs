@@ -3,7 +3,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
+use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
 #[test_case(true, false; "diamond_member")]
 #[test_case(false, false; "not_diamond_member")]
@@ -194,8 +194,8 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             events_ttl: None,
             gate: Some(AccessGate::Composite(CompositeGate {
                 inner: vec![
-                    AccessGate::DiamondMember,
-                    AccessGate::TokenBalance(TokenBalanceGate {
+                    AccessGateNonComposite::DiamondMember,
+                    AccessGateNonComposite::TokenBalance(TokenBalanceGate {
                         ledger_canister_id: canister_ids.chat_ledger,
                         min_balance,
                     }),

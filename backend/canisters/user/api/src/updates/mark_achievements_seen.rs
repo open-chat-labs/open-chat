@@ -1,13 +1,15 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::TimestampMillis;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_achievements_seen)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub last_seen: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_achievements_seen)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
 }

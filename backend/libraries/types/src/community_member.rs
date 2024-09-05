@@ -11,4 +11,5 @@ pub struct CommunityMember {
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
     pub display_name: Option<String>,
+    pub referred_by: Option<UserId>,
 }

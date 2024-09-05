@@ -48,7 +48,8 @@ impl Display for UserId {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[ts_export]
+#[derive(CandidType, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,
     pub username: String,

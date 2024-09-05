@@ -1,5 +1,6 @@
+use crate::icrc2::TransferFromError;
 use crate::{CanisterId, Milliseconds};
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Principal};
 use std::collections::HashMap;
 use ts_export::ts_export;
 
@@ -164,41 +165,4 @@ impl VerifiedCredentialGateArgs {
         }
         credential_jwts
     }
-}
-
-#[ts_export]
-#[derive(CandidType, Clone, Debug)]
-pub enum TransferFromError {
-    BadFee {
-        #[ts(as = "u128")]
-        expected_fee: Nat,
-    },
-    BadBurn {
-        #[ts(as = "u128")]
-        min_burn_amount: Nat,
-    },
-    // The [from] account does not hold enough funds for the transfer.
-    InsufficientFunds {
-        #[ts(as = "u128")]
-        balance: Nat,
-    },
-    // The caller exceeded its allowance.
-    InsufficientAllowance {
-        #[ts(as = "u128")]
-        allowance: Nat,
-    },
-    TooOld,
-    CreatedInFuture {
-        ledger_time: u64,
-    },
-    Duplicate {
-        #[ts(as = "u128")]
-        duplicate_of: Nat,
-    },
-    TemporarilyUnavailable,
-    GenericError {
-        #[ts(as = "u128")]
-        error_code: Nat,
-        message: String,
-    },
 }

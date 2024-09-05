@@ -221,7 +221,7 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
         ProposalToSubmitAction::UpgradeSnsControlledCanister(u) => {
             Action::UpgradeSnsControlledCanister(UpgradeSnsControlledCanister {
                 canister_id: Some(u.canister_id),
-                new_canister_wasm: u.new_canister_wasm.into_vec(),
+                new_canister_wasm: u.new_canister_wasm,
                 mode: Some(u.mode.into()),
                 canister_upgrade_arg: None,
             })
@@ -229,7 +229,7 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
         ProposalToSubmitAction::ExecuteGenericNervousSystemFunction(e) => {
             Action::ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction {
                 function_id: e.function_id,
-                payload: e.payload.into_vec(),
+                payload: e.payload,
             })
         }
     }

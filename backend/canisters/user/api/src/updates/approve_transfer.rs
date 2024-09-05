@@ -1,9 +1,9 @@
 use candid::CandidType;
-use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveError};
-use serde::{Deserialize, Serialize};
-use types::{CanisterId, Milliseconds};
+use ts_export::ts_export;
+use types::{icrc1::Account, icrc2::ApproveError, CanisterId, Milliseconds};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, approve_transfer)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub spender: Account,
     pub ledger_canister_id: CanisterId,
@@ -12,7 +12,8 @@ pub struct Args {
     pub pin: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, approve_transfer)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     ApproveError(ApproveError),

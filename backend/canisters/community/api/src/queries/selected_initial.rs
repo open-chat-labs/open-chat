@@ -23,4 +23,5 @@ pub struct SuccessResult {
     pub invited_users: Vec<UserId>,
     pub chat_rules: VersionedRules,
     pub user_groups: Vec<UserGroupDetails>,
+    pub referrals: Vec<UserId>,
 }

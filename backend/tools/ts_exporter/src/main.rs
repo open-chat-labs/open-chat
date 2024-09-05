@@ -1,10 +1,10 @@
 use regex_lite::{Regex, RegexBuilder};
-use std::cell::LazyCell;
 use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::sync::LazyLock;
 
 const EXPORT_PREFIX: &str = "export type ";
 
@@ -117,9 +117,9 @@ impl FromStr for ParsedExport {
 }
 
 const PATTERNS_TO_REMOVE: [&str; 2] = ["Array<", "Record<"];
-const KEY_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r"\w+\??:").build().unwrap());
-const LITERAL_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r#"\"\w+\""#).build().unwrap());
-const WORD_REGEX: LazyCell<Regex> = LazyCell::new(|| RegexBuilder::new(r"\w+").build().unwrap());
+static KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+\??:").build().unwrap());
+static LITERAL_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r#"\"\w+\""#).build().unwrap());
+static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+").build().unwrap());
 
 fn extract_dependencies(mut value: String) -> HashSet<String> {
     for pattern in PATTERNS_TO_REMOVE {

@@ -49,10 +49,13 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
         return DelegationTooOld;
     }
 
-    if let Some(originating_canister) = state.data.identity_link_requests.take(caller, args.link_initiated_by, now) {
+    if let Some((originating_canister, is_ii_principal)) =
+        state.data.identity_link_requests.take(caller, args.link_initiated_by, now)
+    {
         if state.data.user_principals.link_auth_principal_with_existing_user(
             args.link_initiated_by,
             originating_canister,
+            is_ii_principal,
             auth_principal.user_principal_index,
         ) {
             Success
