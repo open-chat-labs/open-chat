@@ -191,10 +191,14 @@ fn commit(
     user_id: UserId,
     username: String,
     wasm_version: BuildVersion,
-    referred_by: Option<UserId>,
+    mut referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
+    if referred_by == Some(user_id) {
+        referred_by = None;
+    }
+
     let now = state.env.now();
 
     state.data.local_users.add(user_id, principal, wasm_version, now);

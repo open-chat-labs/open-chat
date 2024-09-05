@@ -3,13 +3,13 @@ use candid_gen::generate_candid_method;
 #[allow(deprecated)]
 fn main() {
     generate_candid_method!(user, bio, query);
+    // generate_candid_method!(user, cached_btc_address, query);
     generate_candid_method!(user, chit_events, query);
     generate_candid_method!(user, contacts, query);
     generate_candid_method!(user, deleted_message, query);
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
     generate_candid_method!(user, events_window, query);
-    generate_candid_method!(user, get_cached_btc_address, query);
     generate_candid_method!(user, hot_group_exclusions, query);
     generate_candid_method!(user, initial_state, query);
     generate_candid_method!(user, local_user_index, query);
@@ -26,6 +26,7 @@ fn main() {
     generate_candid_method!(user, approve_transfer, update);
     generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
+    // generate_candid_method!(user, btc_address, update);
     generate_candid_method!(user, cancel_message_reminder, update);
     generate_candid_method!(user, cancel_p2p_swap, update);
     generate_candid_method!(user, claim_daily_chit, update);
@@ -38,7 +39,6 @@ fn main() {
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
     generate_candid_method!(user, end_video_call, update);
-    generate_candid_method!(user, get_btc_address, update);
     generate_candid_method!(user, join_video_call, update);
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
@@ -49,7 +49,7 @@ fn main() {
     generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);
     generate_candid_method!(user, report_message, update);
-    generate_candid_method!(user, retrieve_btc, update);
+    // generate_candid_method!(user, retrieve_btc, update);
     generate_candid_method!(user, save_crypto_account, update);
     generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);
