@@ -46,7 +46,7 @@ pub mod happy_path {
                     chunk_index: index as u32,
                     chunk_size,
                     total_size,
-                    bytes: ByteBuf::from(chunk),
+                    bytes: chunk.to_vec(),
                     expiry,
                 },
             );
