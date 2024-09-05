@@ -11,16 +11,11 @@ pub struct GlobalUserMap {
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
-    #[serde(default)]
     oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
 }
 
 impl GlobalUserMap {
-    pub fn iter_unique_person_proofs(&self) -> impl Iterator<Item = (&UserId, &UniquePersonProof)> {
-        self.unique_person_proofs.iter()
-    }
-
     pub fn add(&mut self, principal: Principal, user_id: UserId, user_type: UserType) {
         self.user_id_to_principal.insert(user_id, principal);
         self.principal_to_user_id.insert(principal, user_id);
