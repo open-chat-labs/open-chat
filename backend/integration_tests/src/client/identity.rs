@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use identity_canister::*;
 
 // Queries
+generate_query_call!(auth_principals);
 generate_query_call!(check_auth_principal);
 generate_query_call!(get_delegation);
 
@@ -13,6 +14,7 @@ generate_update_call!(prepare_delegation);
 
 pub mod happy_path {
     use candid::Principal;
+    use identity_canister::auth_principals::UserPrincipal;
     use identity_canister::SignedDelegation;
     use pocket_ic::PocketIc;
     use types::{CanisterId, TimestampMillis};
@@ -23,6 +25,7 @@ pub mod happy_path {
         identity_canister_id: CanisterId,
         public_key: Vec<u8>,
         session_key: Vec<u8>,
+        is_ii_principal: bool,
     ) -> identity_canister::create_identity::SuccessResult {
         let response = super::create_identity(
             env,
@@ -31,6 +34,7 @@ pub mod happy_path {
             &identity_canister::create_identity::Args {
                 public_key,
                 session_key,
+                is_ii_principal: Some(is_ii_principal),
                 max_time_to_live: None,
                 challenge_attempt: None,
             },
@@ -54,6 +58,7 @@ pub mod happy_path {
             identity_canister_id,
             &identity_canister::prepare_delegation::Args {
                 session_key,
+                is_ii_principal: None,
                 max_time_to_live: None,
             },
         );
@@ -89,6 +94,7 @@ pub mod happy_path {
         sender: Principal,
         identity_canister_id: CanisterId,
         public_key: Vec<u8>,
+        is_ii_principal: bool,
         link_to_principal: Principal,
     ) {
         let response = super::initiate_identity_link(
@@ -97,6 +103,7 @@ pub mod happy_path {
             identity_canister_id,
             &identity_canister::initiate_identity_link::Args {
                 public_key,
+                is_ii_principal: Some(is_ii_principal),
                 link_to_principal,
             },
         );
@@ -129,6 +136,20 @@ pub mod happy_path {
         match response {
             identity_canister::approve_identity_link::Response::Success => (),
             response => panic!("'approve_identity_link' error: {response:?}"),
+        }
+    }
+
+    pub fn auth_principals(env: &mut PocketIc, sender: Principal, identity_canister_id: CanisterId) -> Vec<UserPrincipal> {
+        let response = super::auth_principals(
+            env,
+            sender,
+            identity_canister_id,
+            &identity_canister::auth_principals::Args {},
+        );
+
+        match response {
+            identity_canister::auth_principals::Response::Success(auth_principals) => auth_principals,
+            response => panic!("'auth_principals' error: {response:?}"),
         }
     }
 }

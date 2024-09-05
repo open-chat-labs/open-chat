@@ -14,4 +14,5 @@ pub enum Response {
 pub struct UserPrincipal {
     pub principal: Principal,
     pub originating_canister: CanisterId,
+    pub is_ii_principal: bool,
 }
