@@ -5215,6 +5215,8 @@ dependencies = [
  "candid",
  "candid_gen",
  "serde",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -5246,6 +5248,7 @@ name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
