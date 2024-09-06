@@ -43,11 +43,12 @@ fn queue_oc_bot_messages_with_survey_link() {
             .data
             .users
             .iter()
-            .filter(|u| is_user_in_cohort(u, now - (2 * MONTH_IN_MS), now - MONTH_IN_MS))
+            .filter(|u| is_user_in_cohort(u, now - (2 * MONTH_IN_MS), now - MONTH_IN_MS, now))
         {
             if let Some(canister_id) = state.data.local_index_map.get_index_canister(&user.user_id) {
                 let event = build_oc_bot_message(user);
                 state.data.user_index_event_sync_queue.push(canister_id, event);
+                state.data.survey_messages_sent += 1;
             }
         }
 
@@ -55,7 +56,12 @@ fn queue_oc_bot_messages_with_survey_link() {
     });
 }
 
-fn is_user_in_cohort(user: &User, registered_from: TimestampMillis, registered_to: TimestampMillis) -> bool {
+fn is_user_in_cohort(
+    user: &User,
+    registered_from: TimestampMillis,
+    registered_to: TimestampMillis,
+    now: TimestampMillis,
+) -> bool {
     let test_users: HashSet<UserId> = [
         "rozjf-eqaaa-aaaar-amxpq-cai",
         "27eue-hyaaa-aaaaf-aaa4a-cai",
@@ -66,7 +72,9 @@ fn is_user_in_cohort(user: &User, registered_from: TimestampMillis, registered_t
     .collect();
 
     test_users.contains(&user.user_id)
-        || (user.total_chit_earned() >= 5000 && (user.date_created >= registered_from && user.date_created < registered_to))
+        || (user.total_chit_earned() >= 5000
+            && user.current_chit_balance(now) > 0
+            && (user.date_created >= registered_from && user.date_created < registered_to))
 }
 
 fn build_oc_bot_message(user: &User) -> LocalUserIndexEvent {
