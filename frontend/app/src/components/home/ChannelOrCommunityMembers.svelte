@@ -13,8 +13,7 @@
     export let closeIcon: "close" | "back";
     export let channel: ChannelSummary;
     export let community: CommunitySummary;
-
-    let selectedTab: "community" | "channel" = "channel";
+    export let selectedTab: "community" | "channel" = "channel";
 
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
@@ -79,10 +78,7 @@
     }
 </script>
 
-<ScopeToggle
-    bind:selectedTab
-    channelText={i18nKey("membersHeader", undefined, "channel")}
-    communityText={i18nKey("membersHeader", undefined, "community")}>
+<ScopeToggle bind:selectedTab>
     <MembersHeader
         slot="header"
         level={selectedTab}

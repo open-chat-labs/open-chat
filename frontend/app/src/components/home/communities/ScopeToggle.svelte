@@ -1,9 +1,7 @@
 <script lang="ts">
-    import type { ResourceKey } from "openchat-client";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let channelText: ResourceKey;
-    export let communityText: ResourceKey;
     export let selectedTab: "community" | "channel" = "channel";
 
     function selectTab(tab: "community" | "channel") {
@@ -20,7 +18,7 @@
         class:selected={selectedTab === "channel"}
         on:click={() => selectTab("channel")}
         class="button-tab">
-        <Translatable resourceKey={channelText} />
+        <Translatable resourceKey={i18nKey("level.channel")} />
     </div>
 
     <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -29,7 +27,7 @@
         class:selected={selectedTab === "community"}
         on:click={() => selectTab("community")}
         class="button-tab">
-        <Translatable resourceKey={communityText} />
+        <Translatable resourceKey={i18nKey("level.community")} />
     </div>
 </div>
 
