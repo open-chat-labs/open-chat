@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use crate::{
-    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message,
-    MessageIndex, Milliseconds, TimestampMillis, UserId,
+    is_empty_hashmap, AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
+    GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::Serialize;
@@ -157,9 +159,27 @@ pub struct MembersRemoved {
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug)]
+pub struct CommunityMembersRemoved {
+    pub user_ids: Vec<UserId>,
+    pub removed_by: UserId,
+    #[serde(default, skip_serializing_if = "is_empty_hashmap")]
+    pub referred_by: HashMap<UserId, UserId>,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct UsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
+pub struct CommunityUsersBlocked {
+    pub user_ids: Vec<UserId>,
+    pub blocked_by: UserId,
+    #[serde(default, skip_serializing_if = "is_empty_hashmap")]
+    pub referred_by: HashMap<UserId, UserId>,
 }
 
 #[ts_export]
@@ -180,6 +200,14 @@ pub struct MemberJoined {
 #[derive(CandidType, Clone, Debug)]
 pub struct MemberLeft {
     pub user_id: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
+pub struct CommunityMemberLeft {
+    pub user_id: UserId,
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
 }
 
 #[ts_export]
