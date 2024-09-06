@@ -28,8 +28,8 @@
         "js-sha3": "^0.8.0",
         "md5": "^2.3.0",
         "msgpackr": "^1.11.0",
-        "openchat-shared": "*,"
-        "uuid": "^9.0.0",
+        "openchat-shared": "*",
+        "uuid": "^9.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.22.10",
