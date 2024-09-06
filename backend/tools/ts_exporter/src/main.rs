@@ -116,7 +116,7 @@ impl FromStr for ParsedExport {
     }
 }
 
-const PATTERNS_TO_REMOVE: [&str; 2] = ["Array<", "Record<"];
+const PATTERNS_TO_REMOVE: [&str; 3] = [" ", "Array<", "Record<"];
 static KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+\??:").build().unwrap());
 static LITERAL_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r#"\"\w+\""#).build().unwrap());
 static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+").build().unwrap());
