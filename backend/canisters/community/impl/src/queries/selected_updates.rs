@@ -22,10 +22,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // Only call `ic0.caller()` if we have to in order to maximise query caching
     let caller = LazyCell::new(|| state.env.caller());
 
-    if !state.data.is_public || !state.data.is_invite_code_valid(args.invite_code) {
-        if !state.data.is_accessible(*caller, None) {
-            return PrivateCommunity;
-        }
+    if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) && !state.data.is_accessible(*caller, None) {
+        return PrivateCommunity;
     }
 
     let data = &state.data;
