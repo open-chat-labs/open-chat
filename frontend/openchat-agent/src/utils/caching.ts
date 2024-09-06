@@ -50,7 +50,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 111;
+const CACHE_VERSION = 112;
 const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
@@ -127,28 +127,40 @@ export interface ChatSchema extends DBSchema {
 }
 
 type MigrationFunction<T> = (
+    db: IDBPDatabase<T>,
     principal: Principal,
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
 async function clearChatsStore(
-    _: Principal,
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chats").clear();
 }
 
 async function clearEventsStore(
-    _: Principal,
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chat_events").clear();
+}
+
+async function clearCommunityDetails(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("community_details").clear();
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     105: clearChatsStore,
     106: clearChatsStore,
     107: async (
+        _db: IDBPDatabase<ChatSchema>,
         principal: Principal,
         tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
     ) => {
@@ -161,18 +173,21 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         }
     },
     108: async (
+        db: IDBPDatabase<ChatSchema>,
         principal: Principal,
         tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
     ) => {
-        await clearEventsStore(principal, tx);
-        await clearChatsStore(principal, tx);
+        await clearEventsStore(db, principal, tx);
+        await clearChatsStore(db, principal, tx);
     },
     109: clearChatsStore,
     110: clearChatsStore,
     111: clearChatsStore,
+    112: clearCommunityDetails,
 };
 
 async function migrate(
+    db: IDBPDatabase<ChatSchema>,
     principal: Principal,
     from: number,
     to: number,
@@ -181,7 +196,7 @@ async function migrate(
     for (let version = from + 1; version <= to; version++) {
         if (migrations[version]) {
             console.debug(`DB: applying migration for version ${version}`);
-            await migrations[version](principal, transaction);
+            await migrations[version](db, principal, transaction);
         }
     }
 }
@@ -269,7 +284,7 @@ export function openCache(principal: Principal): Database {
                 nuke(db);
             } else {
                 console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
-                migrate(principal, previousVersion, newVersion, transaction).then(() => {
+                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
                     console.debug(
                         `DB: migration from ${previousVersion} to ${newVersion} complete`,
                     );

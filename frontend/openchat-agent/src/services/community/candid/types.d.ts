@@ -552,6 +552,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -2033,6 +2034,7 @@ export interface SelectedInitialSuccess {
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'last_updated' : TimestampMillis,
+  'referrals' : Array<UserId>,
   'chat_rules' : VersionedRules,
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
@@ -2049,12 +2051,14 @@ export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
   'user_groups_deleted' : Uint32Array | number[],
+  'referrals_removed' : Array<UserId>,
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<CommunityMember>,
   'chat_rules' : [] | [VersionedRules],
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
+  'referrals_added' : Array<UserId>,
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |

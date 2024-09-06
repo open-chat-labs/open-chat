@@ -1589,6 +1589,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
+    'referred_by' : IDL.Opt(UserId),
     'user_id' : UserId,
     'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
@@ -1603,6 +1604,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'last_updated' : TimestampMillis,
+    'referrals' : IDL.Vec(UserId),
     'chat_rules' : VersionedRules,
     'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
@@ -1620,12 +1622,14 @@ export const idlFactory = ({ IDL }) => {
     'blocked_users_removed' : IDL.Vec(UserId),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'user_groups_deleted' : IDL.Vec(IDL.Nat32),
+    'referrals_removed' : IDL.Vec(UserId),
     'last_updated' : TimestampMillis,
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'chat_rules' : IDL.Opt(VersionedRules),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
+    'referrals_added' : IDL.Vec(UserId),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesResponse = IDL.Variant({
