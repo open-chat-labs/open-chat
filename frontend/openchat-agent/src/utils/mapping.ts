@@ -6,8 +6,8 @@ export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undef
     return candid[0] !== undefined ? mapper(candid[0]) : undefined;
 }
 
-export function mapOptional<A, B>(input: A | undefined | null, mapper: (a: A) => B): B | undefined {
-    return input != undefined ? mapper(input) : undefined;
+export function mapOptional<A, B>(input: A | null | undefined, mapper: (a: A) => B): B | undefined {
+    return input != null ? mapper(input) : undefined;
 }
 
 export function optionUpdate<A, B>(
