@@ -2,4 +2,4 @@
 import type { PrincipalTS } from "./PrincipalTS";
 import type { VerifiedCredentialArgumentValue } from "./VerifiedCredentialArgumentValue";
 
-export type VerifiedCredentialGate = { issuer_canister_id: PrincipalTS, issuer_origin: string, credential_type: string, credential_name: string, credential_arguments: { [key: string]: VerifiedCredentialArgumentValue }, };
+export type VerifiedCredentialGate = { issuer_canister_id: PrincipalTS, issuer_origin: string, credential_type: string, credential_name: string, credential_arguments: Record<string, VerifiedCredentialArgumentValue>, };
