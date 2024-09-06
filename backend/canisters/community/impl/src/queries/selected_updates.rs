@@ -72,20 +72,16 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         match &event_wrapper.event {
             CommunityEventInternal::MembersRemoved(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = e
-                        .referred_by
-                        .get(user_id)
-                        .map(|u| Some(*u) == *my_user_id)
-                        .unwrap_or_default();
+                    let referral = is_my_referral(e.referred_by.get(user_id).copied(), &my_user_id);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
             CommunityEventInternal::MemberJoined(e) => {
-                let referral = e.invited_by.map(|u| Some(u) == *my_user_id).unwrap_or_default();
+                let referral = is_my_referral(e.invited_by, &my_user_id);
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
             CommunityEventInternal::MemberLeft(e) => {
-                let referral = e.referred_by.map(|u| Some(u) == *my_user_id).unwrap_or_default();
+                let referral = is_my_referral(e.referred_by, &my_user_id);
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
             CommunityEventInternal::RoleChanged(e) => {
@@ -95,11 +91,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = e
-                        .referred_by
-                        .get(user_id)
-                        .map(|u| Some(*u) == *my_user_id)
-                        .unwrap_or_default();
+                    let referral = is_my_referral(e.referred_by.get(user_id).copied(), &my_user_id);
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
@@ -166,5 +158,16 @@ impl<'a> UserUpdatesHandler<'a> {
                 result.blocked_users_removed.push(user_id);
             }
         }
+    }
+}
+
+fn is_my_referral<F: FnOnce() -> Option<UserId>>(
+    referred_by: Option<UserId>,
+    my_user_id: &LazyCell<Option<UserId>, F>,
+) -> bool {
+    if let Some(user_id) = referred_by {
+        Some(user_id) == **my_user_id
+    } else {
+        false
     }
 }
