@@ -1,16 +1,18 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{Empty, TimestampMillis};
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, claim_daily_chit)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
     AlreadyClaimed(TimestampMillis),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, claim_daily_chit)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub chit_earned: u32,
     pub chit_balance: i32,

@@ -1,8 +1,8 @@
 use crate::read_state;
-use ic_cdk::query;
+use canister_api_macros::query;
 use user_canister::public_profile::{Response::*, *};
 
-#[query]
+#[query(candid = true)]
 fn public_profile(_args: Args) -> Response {
     read_state(|state| {
         Success(PublicProfile {

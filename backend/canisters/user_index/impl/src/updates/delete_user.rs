@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::{DeleteUser, Event};
 use user_index_canister::delete_user::{Response::*, *};
 
-#[update(candid = true, json = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn delete_user(args: Args) -> Response {
     mutate_state(|state| delete_user_impl(args, state))

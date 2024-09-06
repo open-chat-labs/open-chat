@@ -1,12 +1,12 @@
 use crate::guards::caller_is_openchat_user;
 use crate::read_state;
 use candid::Principal;
+use canister_api_macros::query;
 use ic_cdk::api::call::CallResult;
-use ic_cdk::query;
 use local_user_index_canister::chat_events::{Response::*, *};
 use types::UserId;
 
-#[query(composite = true, guard = "caller_is_openchat_user")]
+#[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 async fn chat_events(args: Args) -> Response {
     let (user, now) = read_state(|state| (state.calling_user(), state.env.now()));
 

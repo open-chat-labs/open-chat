@@ -1,15 +1,17 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_export::ts_export;
 use types::{FieldTooLongResult, FieldTooShortResult, Milliseconds};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, set_pin_number)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub current: Option<String>,
     pub new: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, set_pin_number)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     TooShort(FieldTooShortResult),

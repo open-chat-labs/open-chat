@@ -1,15 +1,17 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{MessageMatch, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, search_messages)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub search_term: String,
     pub max_results: u8,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, search_messages)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
     InvalidTerm,
@@ -18,7 +20,8 @@ pub enum Response {
     ChatNotFound,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, search_messages)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<MessageMatch>,
 }

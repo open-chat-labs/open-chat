@@ -1,20 +1,24 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_export::ts_export;
 use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, set_contact)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub contact: OptionalContact,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, set_contact)]
+#[derive(CandidType, Debug)]
 pub struct OptionalContact {
     pub user_id: UserId,
+    #[ts(as = "types::OptionUpdateString")]
     pub nickname: OptionUpdate<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, set_contact)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     NoChange,

@@ -1,19 +1,22 @@
 pub use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::TimestampMillis;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, token_swap_status)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub swap_id: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, token_swap_status)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(TokenSwapStatus),
     NotFound,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user, token_swap_status)]
+#[derive(CandidType, Clone, Debug)]
 pub struct TokenSwapStatus {
     pub started: TimestampMillis,
     pub deposit_account: SwapSubtask<()>,
