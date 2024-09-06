@@ -1,13 +1,13 @@
 use crate::updates::c2c_delete_group::delete_group;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::delete_frozen_group::{Response::*, *};
-use ic_cdk::update;
 use types::{CanisterId, ChatId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn delete_frozen_group(args: Args) -> Response {
     let PrepareResult {

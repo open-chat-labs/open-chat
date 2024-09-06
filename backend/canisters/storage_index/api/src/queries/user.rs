@@ -1,16 +1,18 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::Empty;
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_index, user)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(UserRecord),
     UserNotFound,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_index, user)]
+#[derive(CandidType, Debug)]
 pub struct UserRecord {
     pub byte_limit: u64,
     pub bytes_used: u64,

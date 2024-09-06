@@ -15,7 +15,6 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use serde_bytes::ByteBuf;
     use types::{CanisterId, FileId, TimestampMillis};
     use utils::hasher::hash_bytes;
 
@@ -46,7 +45,7 @@ pub mod happy_path {
                     chunk_index: index as u32,
                     chunk_size,
                     total_size,
-                    bytes: ByteBuf::from(chunk),
+                    bytes: chunk.to_vec(),
                     expiry,
                 },
             );

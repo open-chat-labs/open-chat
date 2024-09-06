@@ -1,10 +1,10 @@
 use crate::{CanisterId, ChannelId, ChatId, CommunityId};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, TS)]
+#[ts_export]
+#[derive(CandidType, Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Chat {
     Direct(ChatId),
     Group(ChatId),
@@ -29,7 +29,8 @@ impl Chat {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy, TS)]
+#[ts_export]
+#[derive(CandidType, Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum MultiUserChat {
     Group(ChatId),
     Channel(CommunityId, ChannelId),

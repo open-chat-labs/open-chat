@@ -5,9 +5,9 @@ use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, Not
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
-use ic_cdk::update;
 use rand::Rng;
 use types::{
     Achievement, BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError,
@@ -20,7 +20,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();

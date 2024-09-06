@@ -1,12 +1,12 @@
 use crate::guards::caller_is_owner;
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use chat_events::Reader;
-use ic_cdk::query;
 use types::{EventIndex, MessagesResponse};
 use user_canister::messages_by_message_index::{Response::*, *};
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
     read_state(|state| messages_by_message_index_impl(args, state))
 }

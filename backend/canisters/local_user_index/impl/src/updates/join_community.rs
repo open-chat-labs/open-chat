@@ -1,10 +1,10 @@
 use crate::guards::caller_is_openchat_user;
 use crate::mutate_state;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::join_community::{Response::*, *};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 async fn join_community(args: Args) -> Response {
     let user_details =

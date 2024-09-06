@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use search::Query;
 use types::EventIndex;
 use user_canister::search_messages::{Response::*, *};
@@ -8,7 +8,7 @@ use user_canister::search_messages::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true)]
 fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }

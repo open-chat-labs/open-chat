@@ -1,14 +1,14 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, TS)]
+#[ts_export]
+#[derive(CandidType, Clone)]
 pub struct Document {
     pub id: u128,
     pub mime_type: String,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
+    #[ts(as = "Vec::<u8>")]
     pub data: Vec<u8>,
 }
 
