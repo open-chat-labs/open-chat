@@ -1,7 +1,10 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::info;
 use types::{is_default, CanisterId, UserId};
+
+const NNS_INTERNET_IDENTITY_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 10, 1, 1]);
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -39,6 +42,22 @@ struct AuthPrincipalInternal {
 }
 
 impl UserPrincipals {
+    // TODO remove this
+    pub fn set_ii_principals(&mut self) {
+        let mut count = 0;
+        for auth_principal in self.auth_principals.values_mut() {
+            if auth_principal.originating_canister == NNS_INTERNET_IDENTITY_CANISTER_ID {
+                if let Some(user_principal) = self.user_principals.get(auth_principal.user_principal_index as usize) {
+                    if user_principal.auth_principals.len() > 1 {
+                        auth_principal.is_ii_principal = true;
+                        count += 1;
+                    }
+                }
+            }
+        }
+        info!(count, "Set II principals completed");
+    }
+
     pub fn push(
         &mut self,
         index: u32,
