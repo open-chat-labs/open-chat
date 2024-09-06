@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::Chat;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, archive_unarchive_chats)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub to_archive: Vec<Chat>,
     pub to_unarchive: Vec<Chat>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, archive_unarchive_chats)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
@@ -16,7 +18,8 @@ pub enum Response {
     UserSuspended,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, archive_unarchive_chats)]
+#[derive(CandidType, Debug)]
 pub struct PartialSuccessResult {
     pub chats_not_found: Vec<Chat>,
 }

@@ -1,15 +1,17 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CommunityId, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_community)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub community_id: CommunityId,
     pub user_ids: Vec<UserId>,
     pub caller_username: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_community)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     UserNotInCommunity,

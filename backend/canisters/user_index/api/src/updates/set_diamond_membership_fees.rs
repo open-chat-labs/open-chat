@@ -1,16 +1,15 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use ts_gen::ts_export;
+use ts_export::ts_export;
 use types::DiamondMembershipFees;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, set_diamond_membership_fees)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub fees: DiamondMembershipFees,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
 #[ts_export(user_index, set_diamond_membership_fees)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     Invalid,

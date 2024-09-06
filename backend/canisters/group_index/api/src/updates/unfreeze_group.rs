@@ -1,15 +1,17 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChatId, EventWrapper, GroupUnfrozen};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group_index, unfreeze_group)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group_index, unfreeze_group)]
+#[derive(CandidType, Debug)]
 pub enum Response {
-    Success(EventWrapper<GroupUnfrozen>),
+    Success(#[ts(as = "types::EventWrapperGroupUnfrozen")] EventWrapper<GroupUnfrozen>),
     ChatNotFrozen,
     ChatNotFound,
     NotAuthorized,

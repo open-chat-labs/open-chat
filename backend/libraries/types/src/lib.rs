@@ -2,7 +2,6 @@ use crate::nns::Tokens;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
-use ts_rs::TS;
 
 mod access_tokens;
 mod achievement;
@@ -53,6 +52,7 @@ mod notifications;
 mod option;
 mod p2p_swaps;
 mod phone_number;
+mod pin_number;
 mod polls;
 mod proof_of_uniqueness;
 mod proposals;
@@ -124,6 +124,7 @@ pub use notifications::*;
 pub use option::*;
 pub use p2p_swaps::*;
 pub use phone_number::*;
+pub use pin_number::*;
 pub use polls::*;
 pub use proof_of_uniqueness::*;
 pub use proposals::*;
@@ -138,6 +139,7 @@ pub use suspension::*;
 pub use thread_preview::*;
 pub use thread_summary::*;
 pub use timestamped::*;
+use ts_export::ts_export;
 pub use update_user_principal::*;
 pub use user::*;
 pub use user_groups::*;
@@ -160,7 +162,8 @@ pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Default)]
 pub struct Empty {}
 
 pub trait PushIfNotContains<T> {

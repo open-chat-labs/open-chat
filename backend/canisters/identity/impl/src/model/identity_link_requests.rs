@@ -14,6 +14,8 @@ pub struct IdentityLinkRequests {
 struct IdentityLinkRequest {
     link_to_principal: Principal,
     originating_canister: CanisterId,
+    #[serde(default)]
+    is_ii_principal: bool,
     created: TimestampMillis,
 }
 
@@ -22,6 +24,7 @@ impl IdentityLinkRequests {
         &mut self,
         caller: Principal,
         originating_canister: CanisterId,
+        is_ii_principal: bool,
         link_to_principal: Principal,
         now: TimestampMillis,
     ) {
@@ -32,20 +35,27 @@ impl IdentityLinkRequests {
             IdentityLinkRequest {
                 link_to_principal,
                 originating_canister,
+                is_ii_principal,
                 created: now,
             },
         );
     }
 
-    pub fn take(&mut self, caller: Principal, link_initiated_by: Principal, now: TimestampMillis) -> Option<CanisterId> {
+    pub fn take(
+        &mut self,
+        caller: Principal,
+        link_initiated_by: Principal,
+        now: TimestampMillis,
+    ) -> Option<(CanisterId, bool)> {
         self.prune_expired(now);
 
         if let Occupied(e) = self.map.entry(link_initiated_by) {
             let entry = e.get();
             if entry.link_to_principal == caller {
                 let originating_canister = entry.originating_canister;
+                let is_ii_principal = entry.is_ii_principal;
                 e.remove();
-                return Some(originating_canister);
+                return Some((originating_canister, is_ii_principal));
             }
         }
 

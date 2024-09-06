@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
-use ts_rs::TS;
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct MakeOrderRequest {
@@ -17,7 +17,8 @@ pub struct CancelOrderRequest {
     pub id: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct TokenInfo {
     pub token: Cryptocurrency,
     pub ledger: CanisterId,

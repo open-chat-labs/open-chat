@@ -31,10 +31,13 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         Err(error) => return PublicKeyInvalid(error),
     };
 
-    state
-        .data
-        .identity_link_requests
-        .push(caller, originating_canister, args.link_to_principal, state.env.now());
+    state.data.identity_link_requests.push(
+        caller,
+        originating_canister,
+        args.is_ii_principal.unwrap_or_default(),
+        args.link_to_principal,
+        state.env.now(),
+    );
 
     Success
 }

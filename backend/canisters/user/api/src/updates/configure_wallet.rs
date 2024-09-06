@@ -1,13 +1,15 @@
 use crate::WalletConfig;
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, configure_wallet)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub config: WalletConfig,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, configure_wallet)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
 }

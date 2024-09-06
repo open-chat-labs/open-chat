@@ -1,11 +1,12 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     ChatId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial, MessageId,
     MessageIndex, Milliseconds, TimestampMillis, User, Version,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, send_message_with_transfer_to_group)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub group_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -22,7 +23,8 @@ pub struct Args {
     pub pin: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, send_message_with_transfer_to_group)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
     TextTooLong(u32),
@@ -43,7 +45,8 @@ pub enum Response {
     TooManyFailedPinAttempts(Milliseconds),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, send_message_with_transfer_to_group)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,

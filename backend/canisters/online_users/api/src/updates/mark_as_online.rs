@@ -1,10 +1,11 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::Empty;
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(online_users, mark_as_online)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     UserNotFound,

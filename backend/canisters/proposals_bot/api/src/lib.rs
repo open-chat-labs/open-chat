@@ -1,10 +1,9 @@
 use candid::CandidType;
-use icrc_ledger_types::icrc1::account::Account;
-use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
-use types::CanisterId;
+use ts_export::ts_export;
+use types::{icrc1::Account, CanisterId};
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub struct ProposalToSubmit {
     pub title: String,
     pub summary: String,
@@ -12,7 +11,8 @@ pub struct ProposalToSubmit {
     pub action: ProposalToSubmitAction,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub enum ProposalToSubmitAction {
     Motion,
     TransferSnsTreasuryFunds(TransferSnsTreasuryFunds),
@@ -21,7 +21,8 @@ pub enum ProposalToSubmitAction {
     ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub struct TransferSnsTreasuryFunds {
     pub treasury: Treasury,
     pub amount: u128,
@@ -29,20 +30,25 @@ pub struct TransferSnsTreasuryFunds {
     pub memo: Option<u64>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub enum Treasury {
     ICP,
     SNS,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub struct UpgradeSnsControlledCanister {
     pub canister_id: CanisterId,
-    pub new_canister_wasm: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    #[ts(as = "Vec<u8>")]
+    pub new_canister_wasm: Vec<u8>,
     pub mode: CanisterInstallMode,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub enum CanisterInstallMode {
     Install = 1,
     Reinstall = 2,
@@ -59,10 +65,13 @@ impl From<CanisterInstallMode> for i32 {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(proposals_bot, common)]
+#[derive(CandidType, Clone, Debug)]
 pub struct ExecuteGenericNervousSystemFunction {
     pub function_id: u64,
-    pub payload: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    #[ts(as = "Vec<u8>")]
+    pub payload: Vec<u8>,
 }
 
 mod lifecycle;

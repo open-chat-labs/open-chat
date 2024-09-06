@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use notifications_index_canister::push_subscription::{Response::*, *};
 use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn push_subscription(args: Args) -> Response {
     let user_id = match read_state(lookup_user_locally) {
