@@ -14,8 +14,6 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
     display_names_last_updated: TimestampMillis,
-    #[serde(default)]
-    member_list_last_updated: TimestampMillis,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
@@ -25,10 +23,6 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn set_member_list_last_updated(&mut self, timestamp: TimestampMillis) {
-        self.member_list_last_updated = timestamp;
-    }
-
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -53,7 +47,6 @@ impl CommunityMembers {
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
             display_names_last_updated: now,
-            member_list_last_updated: now,
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
@@ -99,8 +92,6 @@ impl CommunityMembers {
                         referrer.referrals.insert(user_id);
                     }
 
-                    self.member_list_last_updated = now;
-
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInCommunity,
@@ -131,8 +122,6 @@ impl CommunityMembers {
                 if let Some(referrer) = member.referred_by.and_then(|uid| self.get_by_user_id_mut(&uid)) {
                     referrer.referrals.remove(&user_id);
                 }
-
-                self.member_list_last_updated = now;
 
                 return Some(member);
             }
@@ -259,10 +248,6 @@ impl CommunityMembers {
 
     pub fn display_names_last_updated(&self) -> TimestampMillis {
         self.display_names_last_updated
-    }
-
-    pub fn member_list_last_updated(&self) -> TimestampMillis {
-        self.member_list_last_updated
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {

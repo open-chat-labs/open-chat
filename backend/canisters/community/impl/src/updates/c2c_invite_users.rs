@@ -6,6 +6,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users::{Response::*, *};
+use itertools::Itertools;
 use types::UsersInvited;
 
 const MAX_INVITES: usize = 100;
@@ -39,6 +40,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
         let invited_users: Vec<_> = args
             .users
             .iter()
+            .unique_by(|(u, _)| u)
             .filter(|(user_id, principal)| {
                 state.data.members.get(*principal).is_none()
                     && !state.data.invited_users.contains(user_id)

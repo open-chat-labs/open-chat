@@ -1084,7 +1084,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
-			walletConfig: optional(result.wallet_config, walletConfig),
+            walletConfig: optional(result.wallet_config, walletConfig),
         };
     }
 

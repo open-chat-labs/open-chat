@@ -59,6 +59,7 @@
     import Human from "../../icons/Human.svelte";
     import VerifyHumanity from "./VerifyHumanity.svelte";
     import { uniquePersonGate } from "../../../utils/access";
+    import ReferredUsersList from "./ReferredUsersList.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -123,6 +124,9 @@
         !saving &&
         !readonly;
     $: canEditTranslations = !$locale?.startsWith("en");
+    $: globalState = client.globalStateStore;
+    $: referrals = $globalState.referrals;
+    $: referredUserIds = new Set(referrals.map((r) => r.userId));
 
     onMount(() => {
         if (!$anonUser) {
@@ -433,6 +437,7 @@
                     <ReferUsers />
                 </CollapsibleCard>
             </div>
+            <ReferredUsersList referrals={referredUserIds} />
             <div class="chats">
                 <CollapsibleCard
                     on:toggle={chatsSectionOpen.toggle}
