@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 fn archive_unarchive_chats(args: Args) -> Response {
     run_regular_jobs();

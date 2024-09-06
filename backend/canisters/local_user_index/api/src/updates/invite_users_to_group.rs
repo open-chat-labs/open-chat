@@ -1,8 +1,9 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChatId, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_group)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub group_id: ChatId,
     pub user_ids: Vec<UserId>,
@@ -10,7 +11,8 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, invite_users_to_group)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     GroupNotFound,

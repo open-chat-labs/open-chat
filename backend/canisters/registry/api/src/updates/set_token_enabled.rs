@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::CanisterId;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(registry, set_token_enabled)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub enabled: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(registry, set_token_enabled)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     NotAuthorized,

@@ -1,12 +1,12 @@
 use crate::read_state;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::set_group_upgrade_concurrency::{Response::*, *};
-use ic_cdk::update;
 use tracing::info;
 use types::CanisterId;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn set_group_upgrade_concurrency(args: Args) -> Response {
     let (caller, user_index_canister_id, local_group_index_canisters) = read_state(|state| {

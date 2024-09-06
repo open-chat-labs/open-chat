@@ -1,12 +1,14 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(notifications_index, remove_subscription)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub p256dh_key: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(notifications_index, remove_subscription)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
 }

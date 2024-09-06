@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use notifications_index_canister::subscription_exists::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn subscription_exists(args: Args) -> Response {
     read_state(|state| subscription_exists_impl(args, state))
 }

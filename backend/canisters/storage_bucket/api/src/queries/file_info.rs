@@ -1,19 +1,22 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{FileId, Hash};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, file_info)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub file_id: FileId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, file_info)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
     NotFound,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, file_info)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub is_owner: bool,
     pub file_size: u64,

@@ -11,3 +11,4 @@ candid_gen = { path = "../../../libraries/candid_gen" }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+types = { path = "../../../libraries/types" }

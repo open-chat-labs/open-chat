@@ -2,7 +2,6 @@ use crate::model::stable_blob_storage::StableBlobStorage;
 use crate::{calc_chunk_count, MAX_BLOB_SIZE_BYTES};
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
@@ -315,7 +314,7 @@ impl Files {
             .link_many(completed_file.owner, completed_file.accessors.iter().copied(), file_id);
 
         self.reference_counts.incr(completed_file.hash);
-        self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes.into_vec());
+        self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes);
 
         if let Some(expiry) = completed_file.expiry {
             self.expiration_queue.entry(expiry).or_default().push_back(file_id);
@@ -447,12 +446,13 @@ pub struct PendingFile {
     pub chunk_size: u32,
     pub total_size: u64,
     pub remaining_chunks: HashSet<u32>,
-    pub bytes: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub bytes: Vec<u8>,
     pub expiry: Option<TimestampMillis>,
 }
 
 impl PendingFile {
-    pub fn add_chunk(&mut self, chunk_index: u32, bytes: ByteBuf) -> AddChunkResult {
+    pub fn add_chunk(&mut self, chunk_index: u32, bytes: Vec<u8>) -> AddChunkResult {
         if self.remaining_chunks.remove(&chunk_index) {
             if let Some(expected_chunk_size) = self.expected_chunk_size(chunk_index) {
                 let actual_chunk_size = bytes.len() as u32;
@@ -510,7 +510,7 @@ pub struct PutChunkArgs {
     chunk_index: u32,
     chunk_size: u32,
     total_size: u64,
-    bytes: ByteBuf,
+    bytes: Vec<u8>,
     expiry: Option<TimestampMillis>,
     now: TimestampMillis,
 }
@@ -546,7 +546,7 @@ impl From<PutChunkArgs> for PendingFile {
             chunk_size: args.chunk_size,
             total_size: args.total_size,
             remaining_chunks: (0..chunk_count).collect(),
-            bytes: ByteBuf::from(vec![0; args.total_size as usize]),
+            bytes: vec![0; args.total_size as usize],
             expiry: args.expiry,
         };
         pending_file.add_chunk(args.chunk_index, args.bytes);

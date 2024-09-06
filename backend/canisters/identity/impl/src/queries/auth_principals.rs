@@ -19,6 +19,7 @@ fn auth_principals_impl(state: &RuntimeState) -> Response {
                     state.data.user_principals.get_auth_principal(&p).map(|a| UserPrincipal {
                         principal: p,
                         originating_canister: a.originating_canister,
+                        is_ii_principal: a.is_ii_principal,
                     })
                 })
                 .collect(),

@@ -1,13 +1,13 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::join_group::{Response::*, *};
 use types::{ChatId, MessageIndex, UserId};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 async fn join_group(args: Args) -> Response {
     let user_details =
