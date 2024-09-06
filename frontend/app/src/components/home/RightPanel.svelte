@@ -432,13 +432,18 @@
             channel={$multiUserChat}
             community={$selectedCommunity}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            on:showInviteCommunityUsers={showInviteCommunityUsers}
+            on:removeCommunityMember={onRemoveCommunityMember}
+            on:changeCommunityRole={onChangeCommunityRole}
+            on:blockCommunityUser={onBlockCommunityUser}
+            on:unblockCommunityUser={onUnblockCommnityUser}
+            on:blockGroupUser={onBlockGroupUser}
+            on:unblockGroupUser={onUnblockGroupUser}
+            on:removeGroupMember={onRemoveGroupMember}
+            on:showInviteGroupUsers={showInviteGroupUsers}
+            on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
-            on:blockUser={onBlockGroupUser}
-            on:unblockUser={onUnblockGroupUser}
-            on:chatWith
-            on:showInviteUsers={showInviteGroupUsers}
-            on:removeMember={onRemoveGroupMember}
-            on:changeRole={onChangeGroupRole} />
+            on:chatWith />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             on:chatWith

@@ -1,19 +1,20 @@
 <script lang="ts">
     import { OpenChat, type ChannelSummary, type CommunitySummary } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
+    import ScopeToggle from "./communities/ScopeToggle.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     // Whenever we look at the community members we will show the members list for both the community _and_ the channel
     export let closeIcon: "close" | "back";
     export let channel: ChannelSummary;
     export let community: CommunitySummary;
 
-    let selectedTab: "community" | "channel" = "community";
+    let selectedTab: "community" | "channel" = "channel";
 
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
@@ -26,52 +27,55 @@
             ? client.canInviteUsers(community.id)
             : client.canInviteUsers(channel.id);
 
-    function selectTab(tab: "community" | "channel") {
-        selectedTab = tab;
+    function showInviteCommunityUsers(ev: CustomEvent<unknown>) {
+        dispatch("showInviteCommunityUsers", ev.detail);
     }
 
-    function showInviteCommunityUsers(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onRemoveCommunityMember(ev: CustomEvent<unknown>): void {
+        dispatch("removeCommunityMember", ev.detail);
     }
 
-    function onRemoveCommunityMember(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onChangeCommunityRole(ev: CustomEvent<unknown>): void {
+        dispatch("changeCommunityRole", ev.detail);
     }
 
-    function onChangeCommunityRole(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onBlockCommunityUser(ev: CustomEvent<unknown>): void {
+        dispatch("blockCommunityUser", ev.detail);
     }
 
-    function onBlockCommunityUser(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onUnblockCommunityUser(ev: CustomEvent<unknown>): void {
+        dispatch("unblockCommunityUser", ev.detail);
     }
 
-    function onUnblockCommunityUser(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onBlockGroupUser(ev: CustomEvent<unknown>): void {
+        dispatch("blockGroupUser", ev.detail);
     }
 
-    function onBlockGroupUser(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onUnblockGroupUser(ev: CustomEvent<unknown>): void {
+        dispatch("unblockGroupUser", ev.detail);
     }
 
-    function onUnblockGroupUser(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onRemoveGroupMember(ev: CustomEvent<unknown>): void {
+        dispatch("removeGroupMember", ev.detail);
     }
 
-    function onRemoveGroupMember(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function showInviteGroupUsers(ev: CustomEvent<unknown>): void {
+        dispatch("showInviteGroupUsers", ev.detail);
     }
 
-    function showInviteGroupUsers(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
-    }
-
-    function onChangeGroupRole(_: CustomEvent<any>): void {
-        throw new Error("Function not implemented.");
+    function onChangeGroupRole(ev: CustomEvent<unknown>): void {
+        dispatch("changeGroupRole", ev.detail);
     }
 
     function showInviteUsers() {
-        throw new Error("Function not implemented.");
+        switch (selectedTab) {
+            case "community":
+                dispatch("showInviteCommunityUsers");
+                break;
+            case "channel":
+                dispatch("showInviteGroupUsers");
+                break;
+        }
     }
 </script>
 
@@ -83,28 +87,12 @@
     on:close={close}
     on:showInviteUsers={showInviteUsers} />
 
-<div class="button-tabs">
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div
-        class:selected={selectedTab === "community"}
-        on:click={() => selectTab("community")}
-        class="button-tab">
-        <Translatable resourceKey={i18nKey("membersHeader", undefined, "community")} />
-    </div>
-
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div
-        class:selected={selectedTab === "channel"}
-        on:click={() => selectTab("channel")}
-        class="button-tab">
-        <Translatable resourceKey={i18nKey("membersHeader", undefined, "channel")} />
-    </div>
-</div>
-
-{#if selectedTab === "community"}
+<ScopeToggle
+    bind:selectedTab
+    channelText={i18nKey("membersHeader", undefined, "channel")}
+    communityText={i18nKey("membersHeader", undefined, "community")}>
     <Members
+        slot="community"
         showHeader={false}
         {closeIcon}
         collection={community}
@@ -118,8 +106,9 @@
         on:showInviteUsers={showInviteCommunityUsers}
         on:removeMember={onRemoveCommunityMember}
         on:changeRole={onChangeCommunityRole} />
-{:else if selectedTab === "channel"}
+
     <Members
+        slot="channel"
         showHeader={false}
         {closeIcon}
         collection={channel}
@@ -133,37 +122,7 @@
         on:showInviteUsers={showInviteGroupUsers}
         on:removeMember={onRemoveGroupMember}
         on:changeRole={onChangeGroupRole} />
-{/if}
+</ScopeToggle>
 
 <style lang="scss">
-    .button-tabs {
-        margin-bottom: $sp4;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top: var(--bw) solid var(--bd);
-        border-bottom: var(--bw) solid var(--bd);
-
-        .button-tab {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex: 1;
-            height: toRem(50);
-            cursor: pointer;
-            transition:
-                background ease-in-out 200ms,
-                color ease-in-out 200ms;
-
-            &.selected {
-                background-color: var(--button-bg);
-                @media (hover: hover) {
-                    &:hover {
-                        background: var(--button-hv);
-                        color: var(--button-hv-txt);
-                    }
-                }
-            }
-        }
-    }
 </style>
