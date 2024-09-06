@@ -4,6 +4,7 @@ use crate::{
 };
 use community_canister::selected_updates_v2::{Response::*, *};
 use ic_cdk::query;
+use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::UserId;
 
@@ -18,10 +19,11 @@ fn selected_updates_v2(args: Args) -> Response {
 }
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    // Don't call `ic0.caller()` if the community is public or the invite_code is valid to maximise query caching
+    // Only call `ic0.caller()` if we have to in order to maximise query caching
+    let caller = LazyCell::new(|| state.env.caller());
+
     if !state.data.is_public || !state.data.is_invite_code_valid(args.invite_code) {
-        let caller = state.env.caller();
-        if !state.data.is_accessible(caller, None) {
+        if !state.data.is_accessible(*caller, None) {
             return PrivateCommunity;
         }
     }
@@ -65,30 +67,23 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         referrals_updated: HashSet::new(),
     };
 
-    let mut my_user_id: Option<UserId> = None;
-
-    if data.members.member_list_last_updated() > args.updates_since {
-        let caller = state.env.caller();
-        if let Some(member) = data.members.get(caller) {
-            my_user_id = Some(member.user_id);
-        }
-    }
+    let my_user_id = LazyCell::new(|| data.members.get(*caller).map(|m| m.user_id));
 
     // Iterate through the new events starting from most recent
     for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
         match &event_wrapper.event {
             CommunityEventInternal::MembersRemoved(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == my_user_id;
+                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == *my_user_id;
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
             CommunityEventInternal::MemberJoined(e) => {
-                let referral = e.invited_by.map_or(false, |referrer| Some(referrer) == my_user_id);
+                let referral = e.invited_by.map_or(false, |referrer| Some(referrer) == *my_user_id);
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
             CommunityEventInternal::MemberLeft(e) => {
-                let referral = my_user_id.is_some() && e.referred_by == my_user_id;
+                let referral = my_user_id.is_some() && e.referred_by == *my_user_id;
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
             CommunityEventInternal::RoleChanged(e) => {
@@ -98,7 +93,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == my_user_id;
+                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == *my_user_id;
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
