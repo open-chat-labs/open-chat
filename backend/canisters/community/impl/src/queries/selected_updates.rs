@@ -72,16 +72,20 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         match &event_wrapper.event {
             CommunityEventInternal::MembersRemoved(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == *my_user_id;
+                    let referral = e
+                        .referred_by
+                        .get(user_id)
+                        .map(|u| Some(*u) == *my_user_id)
+                        .unwrap_or_default();
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
             CommunityEventInternal::MemberJoined(e) => {
-                let referral = e.invited_by.map_or(false, |referrer| Some(referrer) == *my_user_id);
+                let referral = e.invited_by.map(|u| Some(u) == *my_user_id).unwrap_or_default();
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
             CommunityEventInternal::MemberLeft(e) => {
-                let referral = my_user_id.is_some() && e.referred_by == *my_user_id;
+                let referral = e.referred_by.map(|u| Some(u) == *my_user_id).unwrap_or_default();
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
             CommunityEventInternal::RoleChanged(e) => {
@@ -91,7 +95,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == *my_user_id;
+                    let referral = e
+                        .referred_by
+                        .get(user_id)
+                        .map(|u| Some(*u) == *my_user_id)
+                        .unwrap_or_default();
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
