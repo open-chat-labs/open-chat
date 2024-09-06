@@ -10,7 +10,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, CommunityRole, MembersRemoved, UserId, UsersBlocked};
+use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
 
 #[update]
@@ -124,14 +124,14 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
 
     // Push relevant event
     let event = if blocked {
-        let event = UsersBlocked {
+        let event = CommunityUsersBlocked {
             user_ids: vec![user_id],
             blocked_by: removed_by,
             referred_by,
         };
         CommunityEventInternal::UsersBlocked(Box::new(event))
     } else if removed {
-        let event = MembersRemoved {
+        let event = CommunityMembersRemoved {
             user_ids: vec![user_id],
             removed_by,
             referred_by,

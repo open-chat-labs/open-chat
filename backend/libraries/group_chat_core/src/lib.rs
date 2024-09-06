@@ -8,7 +8,7 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
     EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
@@ -1260,14 +1260,8 @@ impl GroupChatCore {
             CanLeaveResult::Yes => {
                 let removed = self.members.remove(user_id, now).unwrap();
 
-                self.events.push_main_event(
-                    ChatEventInternal::ParticipantLeft(Box::new(MemberLeft {
-                        user_id,
-                        referred_by: None,
-                    })),
-                    0,
-                    now,
-                );
+                self.events
+                    .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
 
                 Success(removed)
             }
@@ -1318,7 +1312,6 @@ impl GroupChatCore {
                     let event = UsersBlocked {
                         user_ids: vec![target_user_id],
                         blocked_by: user_id,
-                        referred_by: HashMap::new(),
                     };
 
                     ChatEventInternal::UsersBlocked(Box::new(event))
@@ -1326,7 +1319,6 @@ impl GroupChatCore {
                     let event = MembersRemoved {
                         user_ids: vec![target_user_id],
                         removed_by: user_id,
-                        referred_by: HashMap::new(),
                     };
                     ChatEventInternal::ParticipantsRemoved(Box::new(event))
                 };

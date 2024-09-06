@@ -155,6 +155,13 @@ pub struct MembersAdded {
 pub struct MembersRemoved {
     pub user_ids: Vec<UserId>,
     pub removed_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
+pub struct CommunityMembersRemoved {
+    pub user_ids: Vec<UserId>,
+    pub removed_by: UserId,
     #[serde(default, skip_serializing_if = "is_empty_hashmap")]
     pub referred_by: HashMap<UserId, UserId>,
 }
@@ -162,6 +169,13 @@ pub struct MembersRemoved {
 #[ts_export]
 #[derive(CandidType, Clone, Debug)]
 pub struct UsersBlocked {
+    pub user_ids: Vec<UserId>,
+    pub blocked_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
+pub struct CommunityUsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
     #[serde(default, skip_serializing_if = "is_empty_hashmap")]
@@ -185,6 +199,12 @@ pub struct MemberJoined {
 #[ts_export]
 #[derive(CandidType, Clone, Debug)]
 pub struct MemberLeft {
+    pub user_id: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
+pub struct CommunityMemberLeft {
     pub user_id: UserId,
     #[serde(default)]
     pub referred_by: Option<UserId>,
