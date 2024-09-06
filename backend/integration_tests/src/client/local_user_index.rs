@@ -178,6 +178,7 @@ pub mod happy_path {
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
+        referred_by: Option<UserId>,
     ) -> CommunityCanisterCommunitySummary {
         let response = super::join_community(
             env,
@@ -186,7 +187,7 @@ pub mod happy_path {
             &local_user_index_canister::join_community::Args {
                 community_id,
                 invite_code: None,
-                referred_by: None,
+                referred_by,
                 verified_credential_args: None,
             },
         );
@@ -240,7 +241,7 @@ pub mod happy_path {
         );
 
         for (_, principal) in users {
-            join_community(env, principal, local_user_index_canister_id, community_id);
+            join_community(env, principal, local_user_index_canister_id, community_id, None);
         }
 
         env.tick();

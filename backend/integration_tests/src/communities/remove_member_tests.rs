@@ -4,6 +4,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
 use types::{CommunityId, MessageContent};
@@ -138,6 +139,7 @@ fn remove_user_succeeds() {
 
     assert!(!response.blocked_users.contains(&user2.user_id));
     assert!(!response.members.iter().any(|member| member.user_id == user2.user_id));
+    assert!(!response.referrals.contains(&user2.user_id));
 
     tick_many(env, 3);
 
@@ -160,6 +162,58 @@ fn remove_user_succeeds() {
     }));
 }
 
+#[test]
+fn community_referral_added_and_removed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        community_name: _,
+    } = init_test_data(env, canister_ids, *controller, false);
+
+    // Check the referral has been added - method 1
+    let response1 = client::community::happy_path::selected_initial(env, &user1, community_id);
+    assert!(response1.referrals.contains(&user2.user_id));
+
+    // Check the referral has been added - method 2
+    let response2 = client::community::happy_path::selected_updates(env, &user1, community_id, 0).expect("Expected updates");
+    assert!(response2.referrals_added.contains(&user2.user_id));
+    assert!(response2.referrals_removed.is_empty());
+
+    env.advance_time(Duration::from_secs(1));
+
+    // Remove user2
+    let remove_member_response = client::community::remove_member(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::remove_member::Args { user_id: user2.user_id },
+    );
+
+    assert!(matches!(
+        remove_member_response,
+        community_canister::remove_member::Response::Success
+    ));
+
+    // Check the referral has been removed - method 1
+    let response3 = client::community::happy_path::selected_initial(env, &user1, community_id);
+    assert!(response3.referrals.is_empty());
+
+    // Check the referral has been removed - method 2
+    let response4 = client::community::happy_path::selected_updates(env, &user1, community_id, response1.timestamp)
+        .expect("Expected updates");
+    assert!(response4.referrals_added.is_empty());
+    assert!(response4.referrals_removed.contains(&user2.user_id));
+}
+
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_user(env, canister_ids);
@@ -179,7 +233,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         );
     }
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     TestData {
         user1,
