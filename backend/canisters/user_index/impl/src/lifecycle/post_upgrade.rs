@@ -74,7 +74,7 @@ fn build_oc_bot_message(user: &User) -> LocalUserIndexEvent {
 Your feedback will help us improve our service and better meet your needs.
 
 [Survey link (Google Forms)](https://docs.google.com/forms/d/e/1FAIpQLSe_o_gpIi-ln_7Q6Us25_7r98TSlR2D7f9FnzDPyXVwncsm7A/viewform?usp=pp_url&entry.913893165={})
-", user.user_id.to_string());
+", user.user_id);
 
     LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
         user_id: user.user_id,
