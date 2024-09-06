@@ -1,6 +1,3 @@
-use std::collections::HashSet;
-use std::time::Duration;
-
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::model::user::User;
@@ -11,6 +8,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessageV2};
 use stable_memory::get_reader;
+use std::collections::HashSet;
 use tracing::info;
 use types::{MessageContentInitial, Milliseconds, TextContent, TimestampMillis, UserId};
 use user_index_canister::post_upgrade::Args;
@@ -30,7 +28,8 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    ic_cdk_timers::set_timer(Duration::ZERO, queue_oc_bot_messages_with_survey_link);
+    // TODO: delete after release
+    queue_oc_bot_messages_with_survey_link();
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
@@ -52,7 +51,7 @@ fn queue_oc_bot_messages_with_survey_link() {
             }
         }
 
-        jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
+        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
     });
 }
 
