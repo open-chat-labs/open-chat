@@ -21,7 +21,7 @@ export function shouldThrottle(diamond: boolean): boolean {
 
 export function initialiseMostRecentSentMessageTimes(diamond: boolean) {
     const val = localStorage.getItem(localStorageKey);
-    if (!val) return [];
+    if (!val) return;
     const times = JSON.parse(val) as number[];
     const now = Date.now();
     const [withinLastMinute] = checkTimes(now, diamond, times);

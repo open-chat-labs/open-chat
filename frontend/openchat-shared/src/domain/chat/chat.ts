@@ -676,6 +676,7 @@ export type LocalChatSummaryUpdates = {
               gate?: AccessGate;
               notificationsMuted?: boolean;
               archived?: boolean;
+              rulesAccepted?: boolean;
               eventsTTL?: OptionUpdate<bigint>;
           };
     removedAtTimestamp?: bigint;
