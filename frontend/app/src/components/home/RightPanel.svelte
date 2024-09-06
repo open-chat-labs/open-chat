@@ -34,7 +34,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
-    import ChannelMembers from "./ChannelMembers.svelte";
+    import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -428,7 +428,7 @@
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole} />
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
-        <ChannelMembers
+        <ChannelOrCommunityMembers
             channel={$multiUserChat}
             community={$selectedCommunity}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
