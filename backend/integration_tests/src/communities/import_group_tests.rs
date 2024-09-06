@@ -248,7 +248,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let default_channels: Vec<_> = (1..5).map(|_| random_string()).collect();
 
     let community_id = client::user::happy_path::create_community(env, &user1, &community_name, true, default_channels.clone());
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     tick_many(env, 3);
 

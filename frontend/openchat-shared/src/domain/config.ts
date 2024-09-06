@@ -1,6 +1,9 @@
+import { AuthProvider } from "./auth";
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
+    authPrincipal: string;
+    authProvider: AuthProvider | undefined;
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;

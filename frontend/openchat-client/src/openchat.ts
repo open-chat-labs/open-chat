@@ -423,6 +423,7 @@ import type {
     LinkIdentitiesResponse,
     AddMembersToChannelResponse,
     WalletConfig,
+    AirdropChannelDetails,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -492,6 +493,7 @@ import {
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
+    currentCommunityReferrals,
     currentCommunityRules,
     currentCommunityUserGroups,
     nextCommunityIndex,
@@ -590,6 +592,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
 
+    currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
     user = currentUser;
     anonUser = anonUser;
     suspendedUser = suspendedUser;
@@ -631,7 +634,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this._authClient
             .then((c) => c.getIdentity())
-            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity, undefined));
     }
 
     public get AuthPrincipal(): string {
@@ -688,21 +691,22 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._identityState;
     }
 
-    private async loadedAuthenticationIdentity(id: Identity) {
+    private async loadedAuthenticationIdentity(
+        id: Identity,
+        authProvider: AuthProvider | undefined,
+    ) {
         currentUser.set(anonymousUser());
         chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
-        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
+        const authPrincipal = id.getPrincipal().toString();
+        this._authPrincipal = anon ? undefined : authPrincipal;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user" });
 
-        const connectToWorkerResponse = await this.connectToWorker();
+        const connectToWorkerResponse = await this.connectToWorker(authPrincipal, authProvider);
 
-        if (this._authPrincipal !== undefined) {
+        if (!anon) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (
-                    this._liveState.selectedAuthProvider !== AuthProvider.II &&
-                    this._liveState.selectedAuthProvider !== AuthProvider.EMAIL
-                ) {
+                if (authProvider !== AuthProvider.II && authProvider !== AuthProvider.EMAIL) {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }
@@ -713,7 +717,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 });
             }
 
-            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+            this._ocIdentity = await this._ocIdentityStorage.get(authPrincipal);
         } else {
             await this._ocIdentityStorage.remove();
         }
@@ -747,7 +751,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this._authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
-                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity(), authProvider),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -2346,6 +2350,7 @@ export class OpenChat extends OpenChatAgentWorker {
         ]).forEach((m) => allUserIds.add(m.userId));
         communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
         communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
+        communityStateStore.getProp(id, "referrals").forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3035,6 +3040,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
+            communityStateStore.setProp(community.id, "referrals", resp.referrals);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -4504,9 +4510,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this._referralCode = code;
     }
 
-    captureReferralCode(): boolean {
+    private extractReferralCodeFromPath(): string | undefined {
         const qs = new URLSearchParams(window.location.search);
-        const code = qs.get("ref") ?? undefined;
+        return qs.get("ref") ?? undefined;
+    }
+
+    captureReferralCode(): boolean {
+        const code = this.extractReferralCodeFromPath();
         let captured = false;
         if (code) {
             gaTrack("captured_referral_code", "registration");
@@ -4867,6 +4877,17 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "communityInvite",
             value,
         });
+    }
+
+    setCommunityReferral(communityId: CommunityIdentifier, referredBy: string) {
+        // make sure that we can't refer ourselves
+        if (this._liveState.user.userId !== referredBy) {
+            return this.sendRequest({
+                kind: "setCommunityReferral",
+                communityId,
+                referredBy,
+            });
+        }
     }
 
     searchChat(
@@ -6194,6 +6215,12 @@ export class OpenChat extends OpenChatAgentWorker {
         }).catch(() => ({ kind: "failure" }));
     }
 
+    isMemberOfAirdropChannel(): boolean {
+        if (this.currentAirdropChannel === undefined) return false;
+        const airdropChannel = this._liveState.allChats.get(this.currentAirdropChannel.id);
+        return (airdropChannel?.membership.role ?? "none") !== "none";
+    }
+
     private async updateRegistry(): Promise<void> {
         return new Promise((resolve) => {
             this.sendStreamRequest({
@@ -6201,6 +6228,7 @@ export class OpenChat extends OpenChatAgentWorker {
             })
                 .subscribe(([registry, updated], final) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                        this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
                         nervousSystemLookup.set(
@@ -6772,7 +6800,7 @@ export class OpenChat extends OpenChatAgentWorker {
             const delegation = identity.getDelegation();
             await storeIdentity(this._authClientStorage, sessionKey, delegation);
             if (connectToWorker) {
-                this.loadedAuthenticationIdentity(identity);
+                this.loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
             }
             return {
                 kind: "success",
@@ -6834,7 +6862,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 const delegation = identity.getDelegation();
                 await storeIdentity(this._authClientStorage, sessionKey, delegation);
                 if (connectWorker) {
-                    this.loadedAuthenticationIdentity(identity);
+                    this.loadedAuthenticationIdentity(
+                        identity,
+                        token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
+                    );
                 }
                 return {
                     kind: "success",
@@ -6902,6 +6933,11 @@ export class OpenChat extends OpenChatAgentWorker {
             // if we don't have the community it means we're not a member and we need to look it up
             if (inviteCode) {
                 await this.setCommunityInvite({ id, code: inviteCode });
+            }
+
+            const referredBy = this.extractReferralCodeFromPath() ?? this._referralCode;
+            if (referredBy) {
+                await this.setCommunityReferral(id, referredBy);
             }
 
             const resp = await this.sendRequest({
@@ -7472,6 +7508,7 @@ export class OpenChat extends OpenChatAgentWorker {
     linkIdentities(
         initiatorKey: ECDSAKeyIdentity,
         initiatorDelegation: DelegationChain,
+        initiatorIsIIPrincipal: boolean,
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
     ): Promise<LinkIdentitiesResponse> {
@@ -7479,6 +7516,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "linkIdentities",
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
+            initiatorIsIIPrincipal,
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
         });
@@ -7608,6 +7646,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityMembers = currentCommunityMembers;
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityReferrals = currentCommunityReferrals;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;

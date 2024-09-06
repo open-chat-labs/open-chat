@@ -166,6 +166,7 @@ export function authPrincipalsResponse(
         return candid.Success.map((p) => ({
             principal: p.principal.toString(),
             originatingCanister: p.originating_canister.toString(),
+            isIIPrincipal: p.is_ii_principal,
         }));
     }
 
@@ -184,11 +185,17 @@ export function approveIdentityLinkResponse(
     if ("LinkRequestNotFound" in candid) {
         return "link_request_not_found";
     }
+    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
+        return "principal_linked_to_another_oc_user";
+    }
     if ("MalformedSignature" in candid || "InvalidSignature" in candid) {
         return "invalid_signature";
     }
     if ("DelegationTooOld" in candid) {
         return "delegation_too_old";
+    }
+    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
+        return "principal_linked_to_another_oc_user";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiApproveIdentityLinkResponse type received",

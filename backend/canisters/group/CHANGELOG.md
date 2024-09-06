@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
 ## [[2.0.1327](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1327-group)] - 2024-09-03
 
 ### Changed

@@ -74,7 +74,6 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
-    console.log("updates: ", updates, previous);
     return {
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -87,6 +86,13 @@ export function mergeCommunityDetails(
                 added: [...updates.blockedUsersAdded],
                 updated: [],
                 removed: updates.blockedUsersRemoved,
+            }),
+        ),
+        referrals: new Set<string>(
+            mergeThings(identity, identity, [...previous.referrals], {
+                added: [...updates.referralsAdded],
+                updated: [],
+                removed: updates.referralsRemoved,
             }),
         ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,

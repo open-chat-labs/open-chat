@@ -89,6 +89,7 @@ export type CommunitySpecificState = {
     members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
+    referrals: Set<string>;
     rules?: VersionedRules;
 };
 
@@ -272,6 +273,7 @@ export type CommunityDetails = {
     rules: VersionedRules;
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
+    referrals: Set<string>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -284,6 +286,8 @@ export type CommunityDetailsUpdates = {
     lastUpdated: bigint;
     userGroups: UserGroupDetails[];
     userGroupsDeleted: Set<number>;
+    referralsRemoved: Set<string>;
+    referralsAdded: Set<string>;
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;

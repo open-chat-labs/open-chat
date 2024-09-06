@@ -6,7 +6,7 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent } from "openchat-agent";
+import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -24,6 +24,7 @@ import {
     type ChallengeAttempt,
     type CreateOpenChatIdentityError,
     type LinkIdentitiesResponse,
+    AuthProvider,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -50,6 +51,8 @@ let identityCanister: string = "";
 let icUrl: string = "";
 
 async function initialize(
+    expectedAuthPrincipal: string,
+    authProvider: AuthProvider | undefined,
     _identityCanister: string,
     _icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
@@ -58,7 +61,9 @@ async function initialize(
 
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
     const authPrincipal = authProviderIdentity.getPrincipal();
-    if (authPrincipal.isAnonymous()) {
+    authPrincipalString = authPrincipal.toString();
+
+    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
         return { kind: "auth_identity_not_found" };
     }
 
@@ -66,9 +71,9 @@ async function initialize(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
+        authProvider === undefined ? undefined : authProvider === AuthProvider.II,
     );
 
-    authPrincipalString = authPrincipal.toString();
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
         return { kind: "success", identity: ocIdentity };
@@ -216,7 +221,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                initialize(payload.identityCanister, payload.icUrl).then((resp) => {
+                initialize(
+                    init.authPrincipal,
+                    init.authProvider,
+                    init.identityCanister,
+                    init.icUrl,
+                ).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
                         "anon: init worker",
@@ -1792,6 +1802,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     linkIdentities(
                         payload.initiatorKey,
                         payload.initiatorDelegation,
+                        payload.initiatorIsIIPrincipal,
                         payload.approverKey,
                         payload.approverDelegation,
                     ),
@@ -1817,6 +1828,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.clearCachedData());
                 break;
 
+            case "setCommunityReferral":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    setCommunityReferral(
+                        payload.communityId.communityId,
+                        payload.referredBy,
+                        Date.now(),
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1829,6 +1852,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 async function linkIdentities(
     initiatorKey: CryptoKeyPair,
     initiatorDelegation: JsonnableDelegationChain,
+    initiatorIsIIPrincipal: boolean,
     approverKey: CryptoKeyPair,
     approverDelegation: JsonnableDelegationChain,
 ): Promise<LinkIdentitiesResponse> {
@@ -1837,14 +1861,24 @@ async function linkIdentities(
         DelegationChain.fromJSON(initiatorDelegation),
     );
     const initiator = initiatorIdentity.getPrincipal().toString();
-    const initiatorAgent = await IdentityAgent.create(initiatorIdentity, identityCanister, icUrl);
+    const initiatorAgent = await IdentityAgent.create(
+        initiatorIdentity,
+        identityCanister,
+        icUrl,
+        initiatorIsIIPrincipal,
+    );
 
     const approverIdentity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(approverKey),
         DelegationChain.fromJSON(approverDelegation),
     );
     const approver = approverIdentity.getPrincipal().toString();
-    const approverAgent = await IdentityAgent.create(approverIdentity, identityCanister, icUrl);
+    const approverAgent = await IdentityAgent.create(
+        approverIdentity,
+        identityCanister,
+        icUrl,
+        undefined,
+    );
 
     if (approver != authPrincipalString) {
         return "principal_mismatch";

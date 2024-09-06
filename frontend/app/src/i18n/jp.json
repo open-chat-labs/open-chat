@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} が {changed} を {level} に追加しました",
     "admin": "管理者",
     "advanced": "高度な情報",
+    "airdropWarning": "次のエアドロップの資格を得るには、**{channelName}** コミュニティの **{communityName}** チャンネルのメンバーである必要があります。[参加するにはここをクリックしてください。]({url})",
     "alsoCanisterId": "キャニスター ID",
     "andNMore": "、および{n} more",
     "appearance": "言語、テーマ",

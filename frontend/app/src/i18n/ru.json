@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} добавил {changed} в {level}",
     "admin": "Администратор",
     "advanced": "Передовой",
+    "airdropWarning": "Чтобы претендовать на следующий Airdrop, вы должны быть участником канала **{channelName}** в сообществе **{communityName}**. [Нажмите здесь, чтобы присоединиться.]({url})",
     "alsoCanisterId": "также ваш идентификатор канистры",
     "andNMore": "и еще {n}",
     "appearance": "Внешний вид",

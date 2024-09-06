@@ -236,7 +236,7 @@
         error = undefined;
         linking = true;
         client
-            .linkIdentities(initiator.key, initiator.delegation, approver.key, approver.delegation)
+            .linkIdentities(initiator.key, initiator.delegation, initiator.provider === AuthProvider.II, approver.key, approver.delegation)
             .then((resp) => {
                 if (resp === "success") {
                     dispatch("proceed");
@@ -245,6 +245,10 @@
                     dispatch("proceed");
                 } else if (resp === "already_registered") {
                     console.log("Identity already linked by someone else: ", resp);
+                    error = "identity.failure.alreadyLinked";
+                    substep = { kind: "initiator" };
+                } else if (resp === "principal_linked_to_another_oc_user") {
+                    console.log("Identity already linked to another OpenChat account: ", resp);
                     error = "identity.failure.alreadyLinked";
                     substep = { kind: "initiator" };
                 } else if (resp === "principal_mismatch") {
