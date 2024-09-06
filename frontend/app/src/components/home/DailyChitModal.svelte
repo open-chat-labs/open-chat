@@ -244,6 +244,10 @@
         position: relative;
         margin: $sp6 0 48px 0;
         width: 100%;
+
+        @include mobile() {
+            margin: $sp6 0 $sp6 0;
+        }
     }
 
     .info {
@@ -308,6 +312,10 @@
     .logo {
         width: 120px;
         position: relative;
+
+        @include mobile() {
+            width: 100px;
+        }
 
         &.available {
             cursor: pointer;
