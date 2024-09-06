@@ -513,6 +513,57 @@ impl Data {
     }
 }
 
+#[cfg(test)]
+impl Data {
+    fn test(creator_id: UserId, creator_principal: Principal, now: TimestampMillis) -> Data {
+        let name = "test".to_string();
+        let description = "test".to_string();
+
+        Data {
+            group_index_canister_id: Principal::anonymous(),
+            escrow_canister_id: Principal::anonymous(),
+            event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
+            test_mode: true,
+            timer_jobs: TimerJobs::default(),
+            internet_identity_canister_id: Principal::anonymous(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
+            video_call_operators: Vec::default(),
+            ic_root_key: Vec::new(),
+            is_public: true,
+            name: name.clone(),
+            description: description.clone(),
+            rules: AccessRulesInternal::default(),
+            avatar: None,
+            banner: None,
+            permissions: CommunityPermissions::default(),
+            gate: Timestamped::default(),
+            primary_language: "en-gb".to_string(),
+            user_index_canister_id: Principal::anonymous(),
+            local_user_index_canister_id: Principal::anonymous(),
+            local_group_index_canister_id: Principal::anonymous(),
+            notifications_canister_id: Principal::anonymous(),
+            proposals_bot_user_id: Principal::anonymous().into(),
+            members: CommunityMembers::new(creator_principal, creator_id, UserType::User, Vec::new(), now),
+            channels: Channels::default(),
+            events: CommunityEvents::new(name.clone(), description.clone(), creator_id, now),
+            invited_users: InvitedUsers::default(),
+            invite_code: None,
+            invite_code_enabled: false,
+            frozen: Timestamped::default(),
+            activity_notification_state: ActivityNotificationState::default(),
+            groups_being_imported: GroupsBeingImported::default(),
+            instruction_counts_log: init_instruction_counts_log(),
+            next_event_expiry: None,
+            cached_chat_metrics: Timestamped::default(),
+            total_payment_receipts: PaymentReceipts::default(),
+            achievements: Achievements::default(),
+            date_created: now,
+        }
+    }
+}
+
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }

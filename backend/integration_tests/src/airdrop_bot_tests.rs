@@ -42,7 +42,13 @@ fn airdrop_end_to_end(v2: bool) {
     env.tick();
 
     for user in users.iter() {
-        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+        client::local_user_index::happy_path::join_community(
+            env,
+            user.principal,
+            canister_ids.local_user_index,
+            community_id,
+            None,
+        );
     }
 
     tick_many(env, 10);
