@@ -33,15 +33,6 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(args.updates_since);
     }
 
-    let mut my_user_id: Option<UserId> = None;
-
-    if data.members.member_list_last_updated() > args.updates_since {
-        let caller = state.env.caller();
-        if let Some(member) = data.members.get(caller) {
-            my_user_id = Some(member.user_id);
-        }
-    }
-
     let invited_users = if data.invited_users.last_updated() > args.updates_since {
         Some(data.invited_users.users())
     } else {
@@ -73,6 +64,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         users_updated: HashSet::new(),
         referrals_updated: HashSet::new(),
     };
+
+    let mut my_user_id: Option<UserId> = None;
+
+    if data.members.member_list_last_updated() > args.updates_since {
+        let caller = state.env.caller();
+        if let Some(member) = data.members.get(caller) {
+            my_user_id = Some(member.user_id);
+        }
+    }
 
     // Iterate through the new events starting from most recent
     for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
