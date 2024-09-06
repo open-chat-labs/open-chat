@@ -39,11 +39,13 @@ export class IdentityClient extends CandidService {
 
     createIdentity(
         sessionKey: Uint8Array,
+        isIIPrincipal: boolean | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
             public_key: this.publicKey(),
             session_key: sessionKey,
+            is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
             challenge_attempt: apiOptional(identity, challengeAttempt),
         };
@@ -62,9 +64,13 @@ export class IdentityClient extends CandidService {
         );
     }
 
-    prepareDelegation(sessionKey: Uint8Array): Promise<PrepareDelegationResponse> {
+    prepareDelegation(
+        sessionKey: Uint8Array,
+        isIIPrincipal: boolean | undefined,
+    ): Promise<PrepareDelegationResponse> {
         const args = {
             session_key: sessionKey,
+            is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
         };
         return this.handleResponse(
@@ -90,11 +96,15 @@ export class IdentityClient extends CandidService {
         return this.handleResponse(this.service.generate_challenge({}), generateChallengeResponse);
     }
 
-    initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
+    initiateIdentityLink(
+        linkToPrincipal: string,
+        isIIPrincipal: boolean | undefined,
+    ): Promise<InitiateIdentityLinkResponse> {
         return this.handleResponse(
             this.service.initiate_identity_link({
                 link_to_principal: Principal.fromText(linkToPrincipal),
                 public_key: this.publicKey(),
+                is_ii_principal: apiOptional(identity, isIIPrincipal),
             }),
             initiateIdentityLinkResponse,
         );

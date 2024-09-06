@@ -236,7 +236,7 @@
         error = undefined;
         linking = true;
         client
-            .linkIdentities(initiator.key, initiator.delegation, approver.key, approver.delegation)
+            .linkIdentities(initiator.key, initiator.delegation, initiator.provider === AuthProvider.II, approver.key, approver.delegation)
             .then((resp) => {
                 if (resp === "success") {
                     dispatch("proceed");

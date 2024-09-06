@@ -1290,6 +1290,7 @@ type LinkIdentities = {
     kind: "linkIdentities";
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
+    initiatorIsIIPrincipal: boolean;
     approverKey: CryptoKeyPair;
     approverDelegation: JsonnableDelegationChain;
 };

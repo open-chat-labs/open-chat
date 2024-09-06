@@ -633,7 +633,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this._authClient
             .then((c) => c.getIdentity())
-            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity));
+            .then((authIdentity) => this.loadedAuthenticationIdentity(authIdentity, undefined));
     }
 
     public get AuthPrincipal(): string {
@@ -690,21 +690,22 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._identityState;
     }
 
-    private async loadedAuthenticationIdentity(id: Identity) {
+    private async loadedAuthenticationIdentity(
+        id: Identity,
+        authProvider: AuthProvider | undefined,
+    ) {
         currentUser.set(anonymousUser());
         chatsInitialised.set(false);
         const anon = id.getPrincipal().isAnonymous();
-        this._authPrincipal = anon ? undefined : id.getPrincipal().toString();
+        const authPrincipal = id.getPrincipal().toString();
+        this._authPrincipal = anon ? undefined : authPrincipal;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user" });
 
-        const connectToWorkerResponse = await this.connectToWorker();
+        const connectToWorkerResponse = await this.connectToWorker(authPrincipal, authProvider);
 
-        if (this._authPrincipal !== undefined) {
+        if (!anon) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (
-                    this._liveState.selectedAuthProvider !== AuthProvider.II &&
-                    this._liveState.selectedAuthProvider !== AuthProvider.EMAIL
-                ) {
+                if (authProvider !== AuthProvider.II && authProvider !== AuthProvider.EMAIL) {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }
@@ -715,7 +716,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 });
             }
 
-            this._ocIdentity = await this._ocIdentityStorage.get(this._authPrincipal);
+            this._ocIdentity = await this._ocIdentityStorage.get(authPrincipal);
         } else {
             await this._ocIdentityStorage.remove();
         }
@@ -749,7 +750,7 @@ export class OpenChat extends OpenChatAgentWorker {
         this._authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
-                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity()),
+                onSuccess: () => this.loadedAuthenticationIdentity(c.getIdentity(), authProvider),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -6781,7 +6782,7 @@ export class OpenChat extends OpenChatAgentWorker {
             const delegation = identity.getDelegation();
             await storeIdentity(this._authClientStorage, sessionKey, delegation);
             if (connectToWorker) {
-                this.loadedAuthenticationIdentity(identity);
+                this.loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
             }
             return {
                 kind: "success",
@@ -6843,7 +6844,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 const delegation = identity.getDelegation();
                 await storeIdentity(this._authClientStorage, sessionKey, delegation);
                 if (connectWorker) {
-                    this.loadedAuthenticationIdentity(identity);
+                    this.loadedAuthenticationIdentity(
+                        identity,
+                        token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
+                    );
                 }
                 return {
                     kind: "success",
@@ -7481,6 +7485,7 @@ export class OpenChat extends OpenChatAgentWorker {
     linkIdentities(
         initiatorKey: ECDSAKeyIdentity,
         initiatorDelegation: DelegationChain,
+        initiatorIsIIPrincipal: boolean,
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
     ): Promise<LinkIdentitiesResponse> {
@@ -7488,6 +7493,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "linkIdentities",
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
+            initiatorIsIIPrincipal,
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
         });
