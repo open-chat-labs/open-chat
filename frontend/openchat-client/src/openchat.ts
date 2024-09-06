@@ -5614,13 +5614,13 @@ export class OpenChat extends OpenChatAgentWorker {
                               canisterId: this._liveState.user.userId,
                               blobId: chatsResponse.state.avatarId,
                           };
-                const dataContent = {
+                const dataContent: DataContent = {
                     blobReference,
                     blobData: undefined,
                     blobUrl: undefined,
                 };
                 if (currentUser) {
-                    const user = {
+                    const user: UserSummary = {
                         ...currentUser,
                         ...dataContent,
                     };
