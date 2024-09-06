@@ -41,13 +41,16 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
 
     let user_id = member.user_id;
 
-    state.data.members.remove(&user_id, now);
+    let removed = state.data.members.remove(&user_id, now);
     state.data.channels.leave_all_channels(user_id, now);
 
-    state
-        .data
-        .events
-        .push_event(CommunityEventInternal::MemberLeft(Box::new(MemberLeft { user_id })), now);
+    state.data.events.push_event(
+        CommunityEventInternal::MemberLeft(Box::new(MemberLeft {
+            user_id,
+            referred_by: removed.and_then(|r| r.referred_by),
+        })),
+        now,
+    );
 
     handle_activity_notification(state);
 

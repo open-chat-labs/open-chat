@@ -128,6 +128,7 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                         CommunityEventInternal::UsersBlocked(Box::new(UsersBlocked {
                             user_ids: blocked_from_community,
                             blocked_by: OPENCHAT_BOT_USER_ID,
+                            referred_by: HashMap::new(),
                         })),
                         now,
                     );

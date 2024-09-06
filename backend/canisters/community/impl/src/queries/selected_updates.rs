@@ -1,11 +1,11 @@
 use crate::{
     model::{events::CommunityEventInternal, members::CommunityMembers},
-    read_state, Data, RuntimeState,
+    read_state, RuntimeState,
 };
 use community_canister::selected_updates_v2::{Response::*, *};
 use ic_cdk::query;
 use std::collections::HashSet;
-use types::{TimestampMillis, UserId};
+use types::UserId;
 
 #[query]
 fn selected_updates(args: Args) -> community_canister::selected_updates::Response {
@@ -34,33 +34,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let mut my_user_id: Option<UserId> = None;
-    let mut my_referrals: Option<&HashSet<UserId>> = None;
 
     if data.members.member_list_last_updated() > args.updates_since {
         let caller = state.env.caller();
         if let Some(member) = data.members.get(caller) {
             my_user_id = Some(member.user_id);
-            my_referrals = Some(&member.referrals);
         }
     }
 
-    Success(build_success_result(
-        last_updated,
-        args.updates_since,
-        my_user_id,
-        my_referrals,
-        &state.data,
-    ))
-}
-
-fn build_success_result(
-    last_updated: TimestampMillis,
-    updates_since: TimestampMillis,
-    my_user_id: Option<UserId>,
-    my_referrals: Option<&HashSet<UserId>>,
-    data: &Data,
-) -> SuccessResult {
-    let invited_users = if data.invited_users.last_updated() > updates_since {
+    let invited_users = if data.invited_users.last_updated() > args.updates_since {
         Some(data.invited_users.users())
     } else {
         None
@@ -78,10 +60,10 @@ fn build_success_result(
         user_groups: data
             .members
             .iter_user_groups()
-            .filter(|u| u.last_updated() > updates_since)
+            .filter(|u| u.last_updated() > args.updates_since)
             .map(|u| u.into())
             .collect(),
-        user_groups_deleted: data.members.user_groups_deleted_since(updates_since),
+        user_groups_deleted: data.members.user_groups_deleted_since(args.updates_since),
         referrals_added: vec![],
         referrals_removed: vec![],
     };
@@ -93,11 +75,11 @@ fn build_success_result(
     };
 
     // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > updates_since) {
+    for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
         match &event_wrapper.event {
             CommunityEventInternal::MembersRemoved(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_referrals.map_or(false, |rs| rs.contains(user_id));
+                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == my_user_id;
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
             }
@@ -106,7 +88,7 @@ fn build_success_result(
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
             }
             CommunityEventInternal::MemberLeft(e) => {
-                let referral = my_referrals.map_or(false, |rs| rs.contains(&e.user_id));
+                let referral = my_user_id.is_some() && e.referred_by == my_user_id;
                 user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
             }
             CommunityEventInternal::RoleChanged(e) => {
@@ -116,7 +98,7 @@ fn build_success_result(
             }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
-                    let referral = my_referrals.map_or(false, |rs| rs.contains(user_id));
+                    let referral = my_user_id.is_some() && e.referred_by.get(user_id).copied() == my_user_id;
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
                     user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
                 }
@@ -141,12 +123,12 @@ fn build_success_result(
     }
 
     for member in data.members.iter() {
-        if member.display_name().timestamp > updates_since {
+        if member.display_name().timestamp > args.updates_since {
             user_updates_handler.mark_member_updated(&mut result, member.user_id, false, false);
         }
     }
 
-    result
+    Success(result)
 }
 
 struct UserUpdatesHandler<'a> {
@@ -183,62 +165,5 @@ impl<'a> UserUpdatesHandler<'a> {
                 result.blocked_users_removed.push(user_id);
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::Data;
-    use candid::Principal;
-    use types::{MemberJoined, MembersRemoved, UserType};
-    use utils::env::test::TestEnv;
-
-    #[test]
-    fn selected_updates_returns_referrals_removed() {
-        // Setup initial community state
-        //
-        let env = TestEnv::default();
-        let creator_principal = Principal::from_slice(&[1]);
-        let creator_id: UserId = creator_principal.into();
-        let mut data = Data::test(creator_id, creator_principal, env.now);
-
-        // User joins community
-        //
-        let time_joined = env.now + 1000;
-        let user_principal = Principal::from_slice(&[2]);
-        let user_id: UserId = user_principal.into();
-
-        data.members
-            .add(user_id, user_principal, UserType::User, Some(creator_id), time_joined);
-
-        data.events.push_event(
-            CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
-                user_id: user_id,
-                invited_by: Some(creator_id),
-            })),
-            time_joined,
-        );
-
-        // Remove the user
-        //
-        let time_removed = time_joined + 1000;
-        data.members.remove(&user_id, time_removed);
-
-        data.events.push_event(
-            CommunityEventInternal::MembersRemoved(Box::new(MembersRemoved {
-                user_ids: vec![user_id],
-                removed_by: creator_id,
-            })),
-            time_removed,
-        );
-
-        // Get updates since user joined
-        //
-        let my_referrals = HashSet::from_iter(vec![user_id]);
-
-        let result = build_success_result(time_removed, time_joined, Some(creator_id), Some(&my_referrals), &data);
-
-        assert!(result.referrals_removed.contains(&user_id));
     }
 }
