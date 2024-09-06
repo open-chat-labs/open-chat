@@ -16,6 +16,7 @@ export const idlFactory = ({ IDL }) => {
   const ApproveIdentityLinkResponse = IDL.Variant({
     'LinkRequestNotFound' : IDL.Null,
     'InvalidSignature' : IDL.Null,
+    'PrincipalAlreadyLinkedToAnotherOcUser' : IDL.Null,
     'Success' : IDL.Null,
     'MalformedSignature' : IDL.Text,
     'DelegationTooOld' : IDL.Null,
@@ -27,6 +28,7 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({
         'principal' : IDL.Principal,
         'originating_canister' : IDL.Principal,
+        'is_ii_principal' : IDL.Bool,
       })
     ),
   });
@@ -39,6 +41,7 @@ export const idlFactory = ({ IDL }) => {
     'public_key' : PublicKey,
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
+    'is_ii_principal' : IDL.Opt(IDL.Bool),
     'challenge_attempt' : IDL.Opt(
       IDL.Record({ 'key' : IDL.Nat32, 'chars' : IDL.Text })
     ),
@@ -71,6 +74,7 @@ export const idlFactory = ({ IDL }) => {
   const InitiateIdentityLinkArgs = IDL.Record({
     'public_key' : IDL.Vec(IDL.Nat8),
     'link_to_principal' : IDL.Principal,
+    'is_ii_principal' : IDL.Opt(IDL.Bool),
   });
   const InitiateIdentityLinkResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
@@ -82,6 +86,7 @@ export const idlFactory = ({ IDL }) => {
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
+    'is_ii_principal' : IDL.Opt(IDL.Bool),
   });
   const PrepareDelegationResponse = IDL.Variant({
     'NotFound' : IDL.Null,

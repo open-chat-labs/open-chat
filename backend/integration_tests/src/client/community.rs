@@ -368,6 +368,29 @@ pub mod happy_path {
         }
     }
 
+    pub fn selected_updates(
+        env: &PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        updates_since: TimestampMillis,
+    ) -> Option<community_canister::selected_updates_v2::SuccessResult> {
+        let response = super::selected_updates_v2(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_updates_v2::Args {
+                invite_code: None,
+                updates_since,
+            },
+        );
+
+        match response {
+            community_canister::selected_updates_v2::Response::Success(result) => Some(result),
+            community_canister::selected_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_updates_v2' error: {response:?}"),
+        }
+    }
+
     pub fn channel_summary(
         env: &PocketIc,
         sender: &User,

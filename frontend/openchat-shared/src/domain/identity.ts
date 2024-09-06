@@ -96,6 +96,7 @@ export type ApproveIdentityLinkResponse =
     | "caller_not_recognised"
     | "link_request_not_found"
     | "already_linked_to_principal"
+    | "principal_linked_to_another_oc_user"
     | "invalid_signature"
     | "delegation_too_old";
 
@@ -107,6 +108,7 @@ export type LinkIdentitiesResponse =
 export type AuthenticationPrincipal = {
     principal: string;
     originatingCanister: string;
+    isIIPrincipal: boolean;
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];
