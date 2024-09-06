@@ -129,11 +129,7 @@ impl User {
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
             total_chit_earned: self.total_chit_earned(),
-            chit_balance: self
-                .chit_per_month
-                .get(&MonthKey::from_timestamp(now))
-                .copied()
-                .unwrap_or_default(),
+            chit_balance: self.current_chit_balance(now),
             streak: self.streak(now),
             is_unique_person: self.unique_person_proof.is_some(),
         }
@@ -187,6 +183,13 @@ impl User {
 
     pub fn total_chit_earned(&self) -> i32 {
         self.chit_per_month.values().copied().sum()
+    }
+
+    pub fn current_chit_balance(&self, now: TimestampMillis) -> i32 {
+        self.chit_per_month
+            .get(&MonthKey::from_timestamp(now))
+            .copied()
+            .unwrap_or_default()
     }
 }
 

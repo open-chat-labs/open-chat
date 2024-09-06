@@ -274,6 +274,7 @@ impl RuntimeState {
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
             july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
             august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
+            survey_messages_sent: self.data.survey_messages_sent,
         }
     }
 
@@ -356,6 +357,8 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
+    #[serde(default)]
+    pub survey_messages_sent: usize,
 }
 
 impl Data {
@@ -431,6 +434,7 @@ impl Data {
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
         };
 
         // Register the ProposalsBot
@@ -556,6 +560,7 @@ impl Default for Data {
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
         }
     }
 }
@@ -599,6 +604,7 @@ pub struct Metrics {
     pub unique_person_proofs_submitted: u32,
     pub july_airdrop_period: AirdropStats,
     pub august_airdrop_period: AirdropStats,
+    pub survey_messages_sent: usize,
 }
 
 #[derive(Serialize, Debug)]
