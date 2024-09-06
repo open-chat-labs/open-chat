@@ -3096,6 +3096,7 @@ export class OpenChatAgent extends EventTarget {
                                 ...(current?.messageFilters ?? []),
                                 ...updates.messageFiltersAdded,
                             ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                            currentAirdropChannel: updates.currentAirdropChannel,
                         };
                         setCachedRegistry(updated);
                         resolve([updated, true], true);

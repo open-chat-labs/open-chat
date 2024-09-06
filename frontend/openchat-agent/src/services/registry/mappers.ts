@@ -23,7 +23,12 @@ export function updatesResponse(
         };
     }
     if ("Success" in value) {
-        return {
+        const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
+        const channelId = "83973693511680025111877019856849080554";
+        const channelName = "September airdrop";
+        const communityName = "CHIT for CHAT";
+
+      return {
             kind: "success",
             lastUpdated: value.Success.last_updated,
             tokenDetails:
@@ -33,6 +38,17 @@ export function updatesResponse(
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
             messageFiltersAdded: value.Success.message_filters_added,
             messageFiltersRemoved: value.Success.message_filters_removed,
+            currentAirdropChannel: {
+                //TODO - fill this in
+                id: {
+                    kind: "channel",
+                    communityId,
+                    channelId,
+                },
+                channelName,
+                communityName,
+                url: `/community/${communityId}/channel/${channelId}`,
+            },
         };
     }
 

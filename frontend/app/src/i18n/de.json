@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} hat {changed} zu {level} hinzugefügt",
     "admin": "Administrator",
     "advanced": "Fortgeschritten",
+    "airdropWarning": "Um sich für den nächsten Airdrop zu qualifizieren, müssen Sie Mitglied des Kanals **{channelName}** in der Community **{communityName}** sein. [Klicken Sie hier, um beizutreten.]({url})",
     "alsoCanisterId": "auch ihre Canister-ID",
     "andNMore": ", und {n} mehr",
     "appearance": "Erscheinungsbild",

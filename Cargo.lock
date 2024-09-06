@@ -2792,6 +2792,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
+ "itertools 0.13.0",
  "lazy_static",
  "msgpack",
  "regex-lite",
