@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
 - Don't allow a user to refer themselves ([#6322](https://github.com/open-chat-labs/open-chat/pull/6322))
+- Improve query caching by avoiding calls to `ic0::caller()` where possible ([#6332](https://github.com/open-chat-labs/open-chat/pull/6332))
 
 ## [[2.0.1308](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1308-community)] - 2024-08-26
 
