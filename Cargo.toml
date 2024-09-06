@@ -243,7 +243,7 @@ tokio = "1.37.0"
 tracing = "0.1.40"
 tracing-attributes = "0.1.27"
 tracing-subscriber = "0.3.18"
-ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "7b402398a066b33f2bc27e1771fb2c2318f402c4", features = ["no-serde-warnings"] }
+ts-rs = { version = "9.0.1", features = ["no-serde-warnings"] }
 url = "2.5.2"
 web-push = { version = "0.10.1", default-features = false, features = [
     "hyper-client",
@@ -259,3 +259,4 @@ debug = false
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f20bca1b4210b37effcb3c5d82adbb05c6647cbd" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
+ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "7b402398a066b33f2bc27e1771fb2c2318f402c4" }
