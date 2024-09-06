@@ -79,18 +79,18 @@
     }
 </script>
 
-<MembersHeader
-    level={selectedTab}
-    title={i18nKey("Members")}
-    {closeIcon}
-    {canInvite}
-    on:close={close}
-    on:showInviteUsers={showInviteUsers} />
-
 <ScopeToggle
     bind:selectedTab
     channelText={i18nKey("membersHeader", undefined, "channel")}
     communityText={i18nKey("membersHeader", undefined, "community")}>
+    <MembersHeader
+        slot="header"
+        level={selectedTab}
+        title={i18nKey("Members")}
+        {closeIcon}
+        {canInvite}
+        on:close
+        on:showInviteUsers={showInviteUsers} />
     <Members
         slot="community"
         showHeader={false}
