@@ -92,7 +92,9 @@
     }
 
     function selectUser(ev: CustomEvent<UserSummary>) {
-        usersToAddOrInvite = [...usersToAddOrInvite, ev.detail];
+        if (!usersToAddOrInvite.find((u) => u.userId === ev.detail.userId)) {
+            usersToAddOrInvite = [...usersToAddOrInvite, ev.detail];
+        }
     }
 
     function selectTab(tab: Tab) {
