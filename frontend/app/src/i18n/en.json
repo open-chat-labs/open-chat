@@ -598,6 +598,7 @@
         "errorResettingLink": "Unable to reset link",
         "invite": "Invite",
         "inviteWithLink": "Share {level} via link",
+        "referredUsers": "Referred users",
         "reset": "reset",
         "resetLink": "Reset link",
         "shareMessage": "Anyone with this link can preview and join the {level}. As a Diamond member you can also earn [referral rewards](?faq=referral_rewards).",

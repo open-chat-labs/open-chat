@@ -6,7 +6,7 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent } from "openchat-agent";
+import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -1826,6 +1826,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "clearCachedData":
                 executeThenReply(payload, correlationId, agent.clearCachedData());
+                break;
+
+            case "setCommunityReferral":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    setCommunityReferral(
+                        payload.communityId.communityId,
+                        payload.referredBy,
+                        Date.now(),
+                    ),
+                );
                 break;
 
             default:

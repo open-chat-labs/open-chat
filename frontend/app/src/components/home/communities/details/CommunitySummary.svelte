@@ -9,6 +9,7 @@
 
     $: selectedCommunity = client.selectedCommunity;
     $: currentCommunityRules = client.currentCommunityRules;
+    $: currentCommunityReferrals = client.currentCommunityReferrals;
     $: rules = $currentCommunityRules ?? defaultChatRules("community");
 
     $: canDelete =
@@ -42,7 +43,8 @@
             {canInvite}
             {rules}
             metrics={$selectedCommunity.metrics}
-            community={$selectedCommunity} />
+            community={$selectedCommunity}
+            referrals={$currentCommunityReferrals} />
     </div>
 {/if}
 
