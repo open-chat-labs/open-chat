@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} додав {changed} до {level}",
     "admin": "адмін",
     "advanced": "Просунутий",
+    "airdropWarning": "Щоб отримати право на наступний Airdrop, ви повинні бути учасником каналу **{channelName}** у спільноті **{communityName}**. [Натисніть тут, щоб приєднатися.]({url})",
     "alsoCanisterId": "також ваш ідентифікатор каністри",
     "andNMore": "і ще {n}",
     "appearance": "Зовнішній вигляд",

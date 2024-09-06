@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} ने {changed} को {level} में जोड़ा",
     "admin": "व्यवस्थापक",
     "advanced": "विकसित",
+    "airdropWarning": "अगले एयरड्रॉप के लिए अर्हता प्राप्त करने के लिए, आपको **{channelName}** समुदाय में **{communityName}** चैनल का सदस्य होना चाहिए। [ज्वाइन करने के लिए यहां क्लिक करें।]({url})",
     "alsoCanisterId": "आपकी कैनिस्टर आईडी भी",
     "andNMore": ", और {n} और भी",
     "appearance": "उपस्थिति",
