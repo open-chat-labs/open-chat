@@ -112,18 +112,25 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
     }
 
+    let referred_by = state
+        .data
+        .invited_users
+        .get(&args.user_id)
+        .map(|i| i.invited_by)
+        .or(args.referred_by);
+
     match state
         .data
         .members
-        .add(args.user_id, args.principal, args.user_type, args.referred_by, now)
+        .add(args.user_id, args.principal, args.user_type, referred_by, now)
     {
         AddResult::Success(_) => {
-            let invitation = state.data.invited_users.remove(&args.user_id, now);
+            state.data.invited_users.remove(&args.user_id, now);
 
             state.data.events.push_event(
                 CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
                     user_id: args.user_id,
-                    invited_by: invitation.map(|i| i.invited_by).or(args.referred_by),
+                    invited_by: referred_by,
                 })),
                 now,
             );

@@ -100,6 +100,7 @@
     "addedBy": "{changedBy} a ajouté {changed} au {level}",
     "admin": "administrateur",
     "advanced": "Avancé",
+    "airdropWarning": "Pour pouvoir participer au prochain Airdrop, vous devez être membre du canal **{channelName}** de la communauté **{communityName}**. [Cliquez ici pour nous rejoindre.]({url})",
     "alsoCanisterId": "également votre identifiant de cartouche",
     "andNMore": ", et {n} de plus",
     "appearance": "Apparence",

@@ -537,6 +537,10 @@
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
             }
+
+            if (modal?.kind === "claim_daily_chit") {
+                modal = { kind: "none" };
+            }
         }
     }
 

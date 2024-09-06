@@ -49,8 +49,20 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
     let user2 = client::register_diamond_user(env, canister_ids, *controller);
     let user3 = client::register_user(env, canister_ids);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
+    client::local_user_index::happy_path::join_community(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     let create_channel_response = client::community::create_channel(
         env,

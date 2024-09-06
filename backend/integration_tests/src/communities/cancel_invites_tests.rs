@@ -155,7 +155,13 @@ fn cancel_invites_not_authorized() {
         vec![user2.user_id, user3.user_id],
     );
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     let response = client::community::cancel_invites(
         env,

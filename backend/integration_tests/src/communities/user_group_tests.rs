@@ -245,8 +245,20 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
+    client::local_user_index::happy_path::join_community(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     let summary = client::community::happy_path::summary(env, &user1, community_id);
 

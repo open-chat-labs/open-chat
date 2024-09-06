@@ -17,7 +17,11 @@ export type ApproveIdentityLinkResponse = { 'LinkRequestNotFound' : null } |
 export type AuthPrincipalsResponse = { 'NotFound' : null } |
   {
     'Success' : Array<
-      { 'principal' : Principal, 'originating_canister' : Principal }
+      {
+        'principal' : Principal,
+        'originating_canister' : Principal,
+        'is_ii_principal' : boolean,
+      }
     >
   };
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
@@ -26,6 +30,7 @@ export interface CreateIdentityArgs {
   'public_key' : PublicKey,
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
+  'is_ii_principal' : [] | [boolean],
   'challenge_attempt' : [] | [{ 'key' : number, 'chars' : string }],
 }
 export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
@@ -46,6 +51,7 @@ export type GetDelegationResponse = { 'NotFound' : null } |
 export interface InitiateIdentityLinkArgs {
   'public_key' : Uint8Array | number[],
   'link_to_principal' : Principal,
+  'is_ii_principal' : [] | [boolean],
 }
 export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
@@ -56,6 +62,7 @@ export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
+  'is_ii_principal' : [] | [boolean],
 }
 export type PrepareDelegationResponse = { 'NotFound' : null } |
   { 'Success' : PrepareDelegationSuccess };

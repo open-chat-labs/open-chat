@@ -25,7 +25,13 @@ fn join_public_community_succeeds() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     env.tick();
 
@@ -96,7 +102,13 @@ fn join_private_community_with_invitation_succeeds() {
         vec![user2.user_id],
     );
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     env.tick();
 
@@ -232,7 +244,13 @@ fn default_channels_marked_as_read_after_joining() {
         client::community::happy_path::send_text_message(env, &user1, community_id, default3, None, random_string(), None);
     }
 
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     tick_many(env, 3);
 
@@ -286,8 +304,13 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
         AccessGate::DiamondMember,
     );
 
-    let community_summary =
-        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+    let community_summary = client::local_user_index::happy_path::join_community(
+        env,
+        user.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     let channel_ids: HashSet<_> = community_summary.channels.iter().map(|c| c.channel_id).collect();
 
