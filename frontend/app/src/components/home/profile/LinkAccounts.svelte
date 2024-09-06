@@ -247,7 +247,7 @@
                     console.log("Identity already linked by someone else: ", resp);
                     error = "identity.failure.alreadyLinked";
                     substep = { kind: "initiator" };
-                } else if (resp === "already_linked_to_another_oc_account") {
+                } else if (resp === "principal_linked_to_another_oc_user") {
                     console.log("Identity already linked to another OpenChat account: ", resp);
                     error = "identity.failure.alreadyLinked";
                     substep = { kind: "initiator" };
