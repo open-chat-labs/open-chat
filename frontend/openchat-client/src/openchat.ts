@@ -493,6 +493,7 @@ import {
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
+    currentCommunityReferrals,
     currentCommunityRules,
     currentCommunityUserGroups,
     nextCommunityIndex,
@@ -2349,6 +2350,7 @@ export class OpenChat extends OpenChatAgentWorker {
         ]).forEach((m) => allUserIds.add(m.userId));
         communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
         communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
+        communityStateStore.getProp(id, "referrals").forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3038,6 +3040,7 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
+            communityStateStore.setProp(community.id, "referrals", resp.referrals);
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -4507,9 +4510,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this._referralCode = code;
     }
 
-    captureReferralCode(): boolean {
+    private extractReferralCodeFromPath(): string | undefined {
         const qs = new URLSearchParams(window.location.search);
-        const code = qs.get("ref") ?? undefined;
+        return qs.get("ref") ?? undefined;
+    }
+
+    captureReferralCode(): boolean {
+        const code = this.extractReferralCodeFromPath();
         let captured = false;
         if (code) {
             gaTrack("captured_referral_code", "registration");
@@ -4870,6 +4877,17 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "communityInvite",
             value,
         });
+    }
+
+    setCommunityReferral(communityId: CommunityIdentifier, referredBy: string) {
+        // make sure that we can't refer ourselves
+        if (this._liveState.user.userId !== referredBy) {
+            return this.sendRequest({
+                kind: "setCommunityReferral",
+                communityId,
+                referredBy,
+            });
+        }
     }
 
     searchChat(
@@ -5614,13 +5632,13 @@ export class OpenChat extends OpenChatAgentWorker {
                               canisterId: this._liveState.user.userId,
                               blobId: chatsResponse.state.avatarId,
                           };
-                const dataContent: DataContent = {
+                const dataContent = {
                     blobReference,
                     blobData: undefined,
                     blobUrl: undefined,
                 };
                 if (currentUser) {
-                    const user: UserSummary = {
+                    const user = {
                         ...currentUser,
                         ...dataContent,
                     };
@@ -6917,6 +6935,11 @@ export class OpenChat extends OpenChatAgentWorker {
                 await this.setCommunityInvite({ id, code: inviteCode });
             }
 
+            const referredBy = this.extractReferralCodeFromPath() ?? this._referralCode;
+            if (referredBy) {
+                await this.setCommunityReferral(id, referredBy);
+            }
+
             const resp = await this.sendRequest({
                 kind: "getCommunitySummary",
                 communityId: id.communityId,
@@ -7623,6 +7646,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityMembers = currentCommunityMembers;
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityReferrals = currentCommunityReferrals;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     currentCommunityUserGroups = currentCommunityUserGroups;
     communityStateStore = communityStateStore;

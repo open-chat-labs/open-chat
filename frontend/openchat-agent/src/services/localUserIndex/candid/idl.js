@@ -1135,6 +1135,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'referred_by' : IDL.Opt(UserId),
     'verified_credential_args' : IDL.Opt(VerifiedCredentialGateArgs),
   });
   const ICRC2_TransferFromError = IDL.Variant({
@@ -1181,6 +1182,7 @@ export const idlFactory = ({ IDL }) => {
   const JoinCommunityArgs = IDL.Record({
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
+    'referred_by' : IDL.Opt(UserId),
     'verified_credential_args' : IDL.Opt(VerifiedCredentialGateArgs),
   });
   const JoinCommunityResponse = IDL.Variant({
