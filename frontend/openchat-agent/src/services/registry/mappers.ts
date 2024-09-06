@@ -14,8 +14,8 @@ export function updatesResponse(
     registryCanisterId: string,
 ): RegistryUpdatesResponse {
     if ("Success" in candid) {
-        const communityId = "dmalx-m4aaa-aaaaa-qaanq-cai";
-        const channelId = "215653704564903423849947814818344282856";
+        const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
+        const channelId = "83973693511680025111877019856849080554";
         const channelName = "September airdrop";
         const communityName = "CHIT for CHAT";
         return {
