@@ -200,8 +200,6 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId,
         });
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
     }
 
