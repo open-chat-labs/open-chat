@@ -15,6 +15,7 @@ pub enum Response {
     NotFound,
     AlreadyAwarded,
     InsufficientBudget,
+    Expired,
     InternalError(String),
 }
 

@@ -36,6 +36,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<ExternalAchievementInter
         let caller = state.env.caller();
         if achievement.canister_id != caller {
             Err(InvalidCaller)
+        } else if achievement.expires >= state.env.now() {
+            Err(Expired)
         } else if achievement.remaining_chit_budget < achievement.chit_reward {
             Err(InsufficientBudget)
         } else {

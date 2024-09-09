@@ -406,6 +406,7 @@ type AwardExternalAchievementResponse = variant {
     NotFound;
     AlreadyAwarded;
     InsufficientBudget;
+    Expired;
     InternalError : text;
 };
 
