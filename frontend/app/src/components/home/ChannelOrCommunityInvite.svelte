@@ -34,24 +34,22 @@
         container={selectedTab === "channel" ? channel : community}
         isCommunityPublic={community.public} />
 
-    <div slot="channel">
-        <InviteUsersBody
-            on:inviteUsers={inviteChannelUsers}
-            {busy}
-            {userLookup}
-            {memberLookup}
-            level={selectedTab}
-            container={selectedTab === "channel" ? channel : community}
-            isCommunityPublic={community.public} />
-    </div>
-    <div slot="community">
-        <InviteUsersBody
-            on:inviteUsers={inviteCommunityUsers}
-            {busy}
-            {userLookup}
-            {memberLookup}
-            level={selectedTab}
-            container={selectedTab === "channel" ? channel : community}
-            isCommunityPublic={community.public} />
-    </div>
+    <InviteUsersBody
+        slot="channel"
+        on:inviteUsers={inviteChannelUsers}
+        {busy}
+        {userLookup}
+        {memberLookup}
+        level={selectedTab}
+        container={selectedTab === "channel" ? channel : community}
+        isCommunityPublic={community.public} />
+    <InviteUsersBody
+        slot="community"
+        on:inviteUsers={inviteCommunityUsers}
+        {busy}
+        {userLookup}
+        {memberLookup}
+        level={selectedTab}
+        container={selectedTab === "channel" ? channel : community}
+        isCommunityPublic={community.public} />
 </ScopeToggle>
