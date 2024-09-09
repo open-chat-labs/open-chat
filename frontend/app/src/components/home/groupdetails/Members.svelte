@@ -37,6 +37,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
+    export let showHeader = true;
 
     let userGroups: UserGroups | undefined;
 
@@ -174,12 +175,14 @@
     }
 </script>
 
-<MembersHeader
-    level={collection.level}
-    {closeIcon}
-    {canInvite}
-    on:close={close}
-    on:showInviteUsers={showInviteUsers} />
+{#if showHeader}
+    <MembersHeader
+        level={collection.level}
+        {closeIcon}
+        {canInvite}
+        on:close={close}
+        on:showInviteUsers={showInviteUsers} />
+{/if}
 
 {#if collection.level === "community"}
     <div class="tabs">
