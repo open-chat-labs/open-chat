@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Document, TimestampMillis};
+use types::{CanisterId, Document, TimestampMillis, UserId};
 use user_index_canister::ExternalAchievementInitial;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -18,6 +20,7 @@ pub struct ExternalAchievementInternal {
     pub initial_chit_budget: u32,
     pub remaining_chit_budget: u32,
     pub budget_exhausted: Option<TimestampMillis>,
+    pub awarded: HashSet<UserId>,
 }
 
 impl ExternalAchievements {
@@ -37,28 +40,61 @@ impl ExternalAchievements {
             initial_chit_budget: achievement.chit_budget,
             remaining_chit_budget: achievement.chit_budget,
             budget_exhausted: None,
+            awarded: HashSet::new(),
         });
 
         true
-    }
-
-    pub fn get(&self, name: &str) -> Option<&ExternalAchievementInternal> {
-        self.achievements.iter().find(|a| a.name == name)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &ExternalAchievementInternal> {
         self.achievements.iter()
     }
 
-    pub fn award(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if let Some(achievement) = self.achievements.iter_mut().find(|a| a.name == name) {
-            achievement.remaining_chit_budget = achievement.remaining_chit_budget.saturating_sub(achievement.chit_reward);
-            if achievement.remaining_chit_budget < achievement.chit_reward {
-                achievement.budget_exhausted = Some(now);
-            }
-            true
-        } else {
-            false
+    pub fn award(&mut self, user_id: UserId, name: &str, caller: CanisterId, now: TimestampMillis) -> AwardResult {
+        let Some(achievement) = self.achievements.iter_mut().find(|a| a.name == name) else {
+            return AwardResult::NotFound;
+        };
+
+        if achievement.canister_id != caller {
+            return AwardResult::InvalidCaller;
         }
+
+        if achievement.expires >= now {
+            return AwardResult::Expired;
+        }
+
+        if achievement.remaining_chit_budget < achievement.chit_reward {
+            return AwardResult::InsufficientBudget;
+        }
+
+        if !achievement.awarded.insert(user_id) {
+            return AwardResult::AlreadyAwarded;
+        }
+
+        achievement.remaining_chit_budget = achievement.remaining_chit_budget.saturating_sub(achievement.chit_reward);
+
+        if achievement.remaining_chit_budget < achievement.chit_reward {
+            achievement.budget_exhausted = Some(now);
+            achievement.awarded = HashSet::new();
+        }
+
+        AwardResult::Success(AwardSuccessResult {
+            chit_reward: achievement.chit_reward,
+            remaining_chit_budget: achievement.remaining_chit_budget,
+        })
     }
+}
+
+pub enum AwardResult {
+    Success(AwardSuccessResult),
+    NotFound,
+    AlreadyAwarded,
+    InsufficientBudget,
+    InvalidCaller,
+    Expired,
+}
+
+pub struct AwardSuccessResult {
+    pub chit_reward: u32,
+    pub remaining_chit_budget: u32,
 }

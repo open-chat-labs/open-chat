@@ -399,15 +399,13 @@ type AwardExternalAchievementArgs = record {
 
 type AwardExternalAchievementResponse = variant {
     Success : record {
-        chit_earned : nat32;
-        chit_balance: int32;
+        remaining_chit_budget : nat32;
     };
     InvalidCaller;
     NotFound;
     AlreadyAwarded;
     InsufficientBudget;
     Expired;
-    InternalError : text;
 };
 
 service : {

@@ -6,7 +6,6 @@ pub mod archive_unarchive_chats;
 pub mod block_user;
 // pub mod btc_address;
 pub mod c2c_accept_p2p_swap;
-pub mod c2c_award_external_achievement;
 pub mod c2c_charge_user_account;
 pub mod c2c_grant_super_admin;
 pub mod c2c_handle_bot_messages;

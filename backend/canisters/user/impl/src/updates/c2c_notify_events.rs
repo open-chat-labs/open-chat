@@ -125,5 +125,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                 )
             }
         }
+        Event::ExternalAchievementAwarded(ev) => {
+            state.data.award_external_achievement(ev.name, ev.chit_reward, now);
+        }
     }
 }

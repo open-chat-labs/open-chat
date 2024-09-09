@@ -37,6 +37,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
+    ExternalAchievementAwarded(ExternalAchievementAwarded),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -177,4 +178,11 @@ pub struct ChitEarned {
     pub amount: i32,
     pub timestamp: TimestampMillis,
     pub reason: ChitEarnedReason,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    pub user_id: UserId,
+    pub name: String,
+    pub chit_reward: u32,
 }

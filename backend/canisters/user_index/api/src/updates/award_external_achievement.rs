@@ -13,14 +13,12 @@ pub enum Response {
     Success(SuccessResult),
     InvalidCaller,
     NotFound,
-    AlreadyAwarded,
     InsufficientBudget,
     Expired,
-    InternalError(String),
+    AlreadyAwarded,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub chit_earned: u32,
-    pub chit_balance: i32,
+    pub remaining_chit_budget: u32,
 }
