@@ -71,7 +71,7 @@ impl ExternalAchievements {
             return AwardResult::AlreadyAwarded;
         }
 
-        achievement.remaining_chit_budget = achievement.remaining_chit_budget.saturating_sub(achievement.chit_reward);
+        achievement.remaining_chit_budget = achievement.remaining_chit_budget - achievement.chit_reward;
 
         if achievement.remaining_chit_budget < achievement.chit_reward {
             achievement.budget_exhausted = Some(now);
