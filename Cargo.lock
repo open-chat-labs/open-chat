@@ -7985,9 +7985,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "ts-rs"
 version = "9.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b44017f9f875786e543595076374b9ef7d13465a518dd93d6ccdbf5b432dde8c"
+source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
 dependencies = [
+ "lazy_static",
  "thiserror",
  "ts-rs-macros",
 ]
@@ -7995,8 +7995,7 @@ dependencies = [
 [[package]]
 name = "ts-rs-macros"
 version = "9.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c88cc88fd23b5a04528f3a8436024f20010a16ec18eb23c164b1242f65860130"
+source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
 dependencies = [
  "proc-macro2",
  "quote",

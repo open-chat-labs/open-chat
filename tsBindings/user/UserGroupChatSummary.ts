@@ -3,4 +3,4 @@ import type { ChatId } from "../shared/ChatId";
 import type { MessageIndex } from "../shared/MessageIndex";
 import type { PrincipalTS } from "../shared/PrincipalTS";
 
-export type UserGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: PrincipalTS, read_by_me_up_to?: MessageIndex, threads_read: { [key: MessageIndex]: MessageIndex }, archived: boolean, date_read_pinned?: bigint, };
+export type UserGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: PrincipalTS, read_by_me_up_to?: MessageIndex, threads_read: Record<MessageIndex, MessageIndex>, archived: boolean, date_read_pinned?: bigint, };
