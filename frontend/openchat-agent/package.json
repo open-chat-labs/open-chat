@@ -48,6 +48,7 @@
         "jest-environment-jsdom": "^29.6.2",
         "ts-jest": "^29.1.1",
         "ts2typebox": "^1.6.1",
+        "typescript": "^5.5.4",
         "wait-on": "^7.0.1"
     }
 }

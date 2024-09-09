@@ -23,6 +23,7 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
+        "typescript": "^5.5.4",
         "wait-on": "^7.0.1"
     }
 }
