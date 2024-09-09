@@ -1125,7 +1125,7 @@ service : {
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
-    register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
+    // register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
