@@ -195,7 +195,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_unpinned":
             return event.unpinnedBy;
         case "events_ttl_updated":
-            return event.updatedBy;
+        case "external_url_updated":
         case "gate_updated":
             return event.updatedBy;
         case "users_invited":
