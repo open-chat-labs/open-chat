@@ -3,6 +3,7 @@
     import Translatable from "../../Translatable.svelte";
 
     export let selectedTab: "community" | "channel" = "channel";
+    export let flush = false;
 
     function selectTab(tab: "community" | "channel") {
         selectedTab = tab;
@@ -11,7 +12,7 @@
 
 <slot name="header" />
 
-<div class="button-tabs">
+<div class="button-tabs" class:flush>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
@@ -45,6 +46,10 @@
         align-items: center;
         border-top: var(--bw) solid var(--bd);
         border-bottom: var(--bw) solid var(--bd);
+
+        &.flush {
+            margin-bottom: 0;
+        }
 
         .button-tab {
             display: flex;

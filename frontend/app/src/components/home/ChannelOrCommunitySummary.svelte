@@ -1,10 +1,17 @@
 <script lang="ts">
-    import { OpenChat, type ChannelSummary, type CommunitySummary } from "openchat-client";
+    import {
+        defaultChatRules,
+        OpenChat,
+        type ChannelSummary,
+        type CommunitySummary,
+    } from "openchat-client";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";
     import GroupDetailsHeader from "./groupdetails/GroupDetailsHeader.svelte";
     import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
+    import CommunityCard from "./communities/explore/CommunityCard.svelte";
+    import CommunityDetails from "./communities/details/CommunityDetails.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,6 +25,11 @@
     $: canEditCommunity = client.canEditCommunity(community.id);
     $: canEditChannel = client.canEditGroupDetails(channel.id);
     $: currentChatRules = client.currentChatRules;
+    $: currentCommunityRules = client.currentCommunityRules;
+    $: currentCommunityReferrals = client.currentCommunityReferrals;
+    $: rules = $currentCommunityRules ?? defaultChatRules("community");
+    $: canDeleteCommunity = client.canDeleteCommunity(community.id);
+    $: canInviteToCommunity = client.canInviteUsers(community.id);
 
     function editGroup() {
         if (canEditChannel) {
@@ -29,7 +41,7 @@
     }
 </script>
 
-<ScopeToggle bind:selectedTab>
+<ScopeToggle flush bind:selectedTab>
     <div slot="header">
         {#if selectedTab === "community"}
             <CommunityDetailsHeader
@@ -49,8 +61,34 @@
     <div slot="channel">
         <GroupDetailsBody chat={channel} {memberCount} />
     </div>
-    <div slot="community">Community details</div>
+    <div slot="community">
+        <div class="body">
+            <CommunityCard
+                id={community.id.communityId}
+                name={community.name}
+                description={community.description}
+                banner={community.banner}
+                avatar={community.avatar}
+                memberCount={community.memberCount}
+                gate={community.gate}
+                language={community.primaryLanguage}
+                flags={0}
+                channelCount={0}
+                header />
+            <CommunityDetails
+                on:deleteCommunity
+                canDelete={canDeleteCommunity}
+                canInvite={canInviteToCommunity}
+                {rules}
+                metrics={community.metrics}
+                {community}
+                referrals={$currentCommunityReferrals} />
+        </div>
+    </div>
 </ScopeToggle>
 
 <style lang="scss">
+    .body {
+        @include nice-scrollbar();
+    }
 </style>
