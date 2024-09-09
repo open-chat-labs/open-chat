@@ -1795,7 +1795,7 @@ export class OpenChatAgent extends EventTarget {
 
             latestActiveGroupsCheck = groupIndexResponse.timestamp;
 
-            // Also check for updates to recently joined groups and communities since it may take a few iterations
+            // Also check for updates for recently joined groups and communities since it may take a few iterations
             // before the GroupIndex knows that they are active
             const recentlyJoinedCutOff = BigInt(start - 10 * 60 * 1000);
 
