@@ -16,7 +16,6 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let closeIcon: "close" | "back";
     export let channel: ChannelSummary;
     export let community: CommunitySummary;
     export let selectedTab: "community" | "channel" = "channel";
@@ -62,33 +61,25 @@
         <GroupDetailsBody chat={channel} {memberCount} />
     </div>
     <div slot="community">
-        <div class="body">
-            <CommunityCard
-                id={community.id.communityId}
-                name={community.name}
-                description={community.description}
-                banner={community.banner}
-                avatar={community.avatar}
-                memberCount={community.memberCount}
-                gate={community.gate}
-                language={community.primaryLanguage}
-                flags={0}
-                channelCount={0}
-                header />
-            <CommunityDetails
-                on:deleteCommunity
-                canDelete={canDeleteCommunity}
-                canInvite={canInviteToCommunity}
-                {rules}
-                metrics={community.metrics}
-                {community}
-                referrals={$currentCommunityReferrals} />
-        </div>
+        <CommunityCard
+            id={community.id.communityId}
+            name={community.name}
+            description={community.description}
+            banner={community.banner}
+            avatar={community.avatar}
+            memberCount={community.memberCount}
+            gate={community.gate}
+            language={community.primaryLanguage}
+            flags={0}
+            channelCount={0}
+            header />
+        <CommunityDetails
+            on:deleteCommunity
+            canDelete={canDeleteCommunity}
+            canInvite={canInviteToCommunity}
+            {rules}
+            metrics={community.metrics}
+            {community}
+            referrals={$currentCommunityReferrals} />
     </div>
 </ScopeToggle>
-
-<style lang="scss">
-    .body {
-        @include nice-scrollbar();
-    }
-</style>

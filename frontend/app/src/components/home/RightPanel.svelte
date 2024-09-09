@@ -36,6 +36,7 @@
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
+    import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -370,7 +371,6 @@
                 channel={$multiUserChat}
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 selectedTab="channel"
                 on:showGroupMembers
                 on:editGroup
@@ -392,15 +392,28 @@
             chatId={lastState.chatId}
             messageId={lastState.messageId} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
-        <InviteUsers
-            {level}
-            container={$selectedCommunity}
-            userLookup={searchUsers}
-            busy={invitingUsers}
-            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            isCommunityPublic={$selectedCommunity?.public ?? true}
-            on:inviteUsers={inviteCommunityUsers}
-            on:cancelInviteUsers={popRightPanelHistory} />
+        {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+            <ChannelOrCommunityInvite
+                channel={$multiUserChat}
+                community={$selectedCommunity}
+                userLookup={searchUsers}
+                busy={invitingUsers}
+                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                selectedTab="community"
+                on:inviteCommunityUsers={inviteCommunityUsers}
+                on:inviteChannelUsers={inviteGroupUsers}
+                on:cancelInviteUsers={popRightPanelHistory} />
+        {:else}
+            <InviteUsers
+                {level}
+                container={$selectedCommunity}
+                userLookup={searchUsers}
+                busy={invitingUsers}
+                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                isCommunityPublic={$selectedCommunity?.public ?? true}
+                on:inviteUsers={inviteCommunityUsers}
+                on:cancelInviteUsers={popRightPanelHistory} />
+        {/if}
     {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunityMembers
@@ -437,16 +450,30 @@
                 on:changeRole={onChangeCommunityRole} />
         {/if}
     {:else if lastState.kind === "invite_group_users" && $multiUserChat !== undefined}
-        <InviteUsers
-            container={$multiUserChat}
-            {level}
-            userLookup={searchUsers}
-            memberLookup={searchMembers}
-            busy={invitingUsers}
-            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            isCommunityPublic={$selectedCommunity?.public ?? true}
-            on:inviteUsers={inviteGroupUsers}
-            on:cancelInviteUsers={popRightPanelHistory} />
+        {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+            <ChannelOrCommunityInvite
+                channel={$multiUserChat}
+                community={$selectedCommunity}
+                userLookup={searchUsers}
+                memberLookup={searchMembers}
+                busy={invitingUsers}
+                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                selectedTab="channel"
+                on:inviteCommunityUsers={inviteCommunityUsers}
+                on:inviteChannelUsers={inviteGroupUsers}
+                on:cancelInviteUsers={popRightPanelHistory} />
+        {:else}
+            <InviteUsers
+                container={$multiUserChat}
+                {level}
+                userLookup={searchUsers}
+                memberLookup={searchMembers}
+                busy={invitingUsers}
+                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                isCommunityPublic={$selectedCommunity?.public ?? true}
+                on:inviteUsers={inviteGroupUsers}
+                on:cancelInviteUsers={popRightPanelHistory} />
+        {/if}
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -511,7 +538,6 @@
                 channel={$multiUserChat}
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 selectedTab="community"
                 on:showGroupMembers
                 on:editGroup

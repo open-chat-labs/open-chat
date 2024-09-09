@@ -32,11 +32,13 @@
     </div>
 </div>
 
-{#if selectedTab === "community"}
-    <slot name="community" />
-{:else if selectedTab === "channel"}
-    <slot name="channel" />
-{/if}
+<div class="body">
+    {#if selectedTab === "community"}
+        <slot name="community" />
+    {:else if selectedTab === "channel"}
+        <slot name="channel" />
+    {/if}
+</div>
 
 <style lang="scss">
     .button-tabs {
@@ -72,5 +74,13 @@
                 }
             }
         }
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        flex: auto;
+        @include nice-scrollbar();
     }
 </style>
