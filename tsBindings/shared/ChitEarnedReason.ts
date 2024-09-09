@@ -2,4 +2,4 @@
 import type { Achievement } from "./Achievement";
 import type { ReferralStatus } from "../ReferralStatus";
 
-export type ChitEarnedReason = "DailyClaim" | { "Achievement": Achievement } | { "Referral": ReferralStatus } | "MemeContestWinner";
+export type ChitEarnedReason = "DailyClaim" | { "Achievement": Achievement } | { "ExternalAchievement": string } | { "Referral": ReferralStatus } | "MemeContestWinner";

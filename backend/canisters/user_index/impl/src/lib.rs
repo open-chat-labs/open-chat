@@ -11,6 +11,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
+use model::external_achievements::ExternalAchievements;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -359,6 +360,8 @@ struct Data {
     pub remove_from_online_users_queue: VecDeque<Principal>,
     #[serde(default)]
     pub survey_messages_sent: usize,
+    #[serde(default)]
+    pub external_achievements: ExternalAchievements,
 }
 
 impl Data {
@@ -435,6 +438,7 @@ impl Data {
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         };
 
         // Register the ProposalsBot
@@ -561,6 +565,7 @@ impl Default for Data {
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         }
     }
 }

@@ -254,6 +254,25 @@ type MarkSuspectedBotResponse = variant {
     Success;
 };
 
+type ExternalAchievementsArgs = record {
+    updates_since : TimestampMillis;
+};
+
+type ExternalAchievementsResponse = variant {
+    Success : record {
+        timestamp: TimestampMillis;
+        achievements_added : vec ExternalAchievement;
+        achievements_removed : vec ExternalAchievement;
+    };
+    SuccessNoUpdates;
+};
+
+type ExternalAchievement = record {
+    name : text;
+    logo_id : nat;
+    chit_reward : nat32;
+};
+
 type PayForDiamondMembershipArgs = record {
     duration : DiamondMembershipPlanDuration;
     token : Cryptocurrency;
@@ -373,6 +392,23 @@ type AddReferralCodesResponse = variant {
     Success;
 };
 
+type AwardExternalAchievementArgs = record {
+    user_id : UserId;
+    name : text;
+};
+
+type AwardExternalAchievementResponse = variant {
+    Success : record {
+        chit_earned : nat32;
+        chit_balance: int32;
+    };
+    InvalidCaller;
+    NotFound;
+    AlreadyAwarded;
+    InsufficientBudget;
+    InternalError : text;
+};
+
 service : {
     user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
     public_key : (EmptyArgs) -> (PublicKeyResponse) query;
@@ -410,6 +446,8 @@ service : {
     // Mark the caller as a suspected bot
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
+    external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
+
     pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
     submit_proof_of_unique_personhood : (SubmitProofOfUniquePersonhoodArgs) -> (SubmitProofOfUniquePersonhoodResponse);
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
@@ -440,4 +478,7 @@ service : {
 
     // Only callable by OC dev team dfx identity
     add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
+
+    // Only callable by whitelisted canisters
+    award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
 };

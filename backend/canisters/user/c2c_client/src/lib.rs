@@ -7,6 +7,7 @@ generate_c2c_call!(c2c_is_empty_and_dormant);
 
 // Updates
 generate_c2c_call!(c2c_accept_p2p_swap);
+generate_c2c_call!(c2c_award_external_achievement);
 generate_c2c_call!(c2c_charge_user_account);
 generate_c2c_call!(c2c_grant_super_admin);
 generate_candid_c2c_call!(c2c_handle_bot_messages);
