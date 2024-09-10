@@ -11,16 +11,11 @@ pub struct Referrals {
 impl Referrals {
     pub fn set_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> u32 {
         let current_status = self.users.get(&user_id).map(|cs| cs.value);
-        let register = matches!(status, ReferralStatus::Registered);
-
-        if (register && current_status.is_some()) || (!register && current_status.is_none()) {
-            return 0;
-        }
 
         let current_chit_reward = current_status.map(|s| s.chit_reward()).unwrap_or_default();
         let chit_reward_diff = status.chit_reward().saturating_sub(current_chit_reward);
 
-        if register || chit_reward_diff > 0 {
+        if chit_reward_diff > 0 || current_status.is_none() {
             self.users.insert(user_id, Timestamped::new(status, now));
         }
 
