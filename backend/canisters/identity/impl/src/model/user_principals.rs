@@ -185,3 +185,9 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
         }
     }
 }
+
+#[test]
+fn ii_canister_id() {
+    let ii_canister_id = CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
+    assert_eq!(ii_canister_id, NNS_INTERNET_IDENTITY_CANISTER_ID);
+}
