@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1339](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1339-local_user_index)] - 2024-09-10
+
 ### Fixed
 
 - Don't push events directly to users on other subnets ([#6355](https://github.com/open-chat-labs/open-chat/pull/6355))
