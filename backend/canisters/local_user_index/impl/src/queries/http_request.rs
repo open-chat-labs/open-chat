@@ -37,7 +37,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_remote_user_events(state: &RuntimeState) -> HttpResponse {
-        build_json_response(&state.data.events_for_remote_users)
+        build_json_response(&state.data.events_for_remote_users.iter().take(1000).collect::<Vec<_>>())
     }
 
     match extract_route(&request.url) {
