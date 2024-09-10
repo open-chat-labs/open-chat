@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use tracing::info;
 use types::{is_default, CanisterId, UserId};
 
-const NNS_INTERNET_IDENTITY_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 10, 1, 1]);
+const NNS_INTERNET_IDENTITY_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 7, 1, 1]);
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -184,4 +184,10 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
             is_ii_principal: value.is_ii_principal,
         }
     }
+}
+
+#[test]
+fn ii_canister_id() {
+    let ii_canister_id = CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
+    assert_eq!(ii_canister_id, NNS_INTERNET_IDENTITY_CANISTER_ID);
 }
