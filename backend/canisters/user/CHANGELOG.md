@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose MessagePack versions of a few User canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
 
 ### Changed
 
