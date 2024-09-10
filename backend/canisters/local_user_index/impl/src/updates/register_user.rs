@@ -209,10 +209,12 @@ fn commit(
     })));
 
     if let Some(referred_by) = referred_by {
-        state.push_event_to_user(
-            referred_by,
-            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-        );
+        if state.data.local_users.contains(&referred_by) {
+            state.push_event_to_user(
+                referred_by,
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            );
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
 use crate::{mutate_state, RuntimeState};
+use ic_cdk::api::call::RejectionCode::CanisterReject;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -72,6 +73,12 @@ async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
         if should_retry_failed_c2c_call(code, &msg) {
             mutate_state(|state| {
                 state.data.user_event_sync_queue.requeue_failed_events(canister_id, events);
+            });
+        } else if code == CanisterReject {
+            mutate_state(|state| {
+                for event in events {
+                    state.data.events_for_remote_users.push((canister_id.into(), event));
+                }
             });
         }
     }
