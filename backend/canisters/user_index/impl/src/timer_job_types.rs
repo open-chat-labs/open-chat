@@ -288,6 +288,7 @@ impl Job for JoinUserToGroup {
                             chat_id: group_id,
                             local_user_index_canister_id: s.local_user_index_canister_id,
                             latest_message_index: s.latest_message.map(|m| m.event.message_index),
+                            group_canister_timestamp: s.last_updated,
                         }),
                     )
                 }),
