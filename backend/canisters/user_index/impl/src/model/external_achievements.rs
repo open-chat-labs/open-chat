@@ -43,6 +43,8 @@ impl ExternalAchievements {
             awarded: HashSet::new(),
         });
 
+        // TODO: Create a timer to delete the awarded users HashSet once the achievement has expired
+
         true
     }
 
@@ -75,7 +77,6 @@ impl ExternalAchievements {
 
         if achievement.remaining_chit_budget < achievement.chit_reward {
             achievement.budget_exhausted = Some(now);
-            achievement.awarded = HashSet::new();
         }
 
         AwardResult::Success(AwardSuccessResult {

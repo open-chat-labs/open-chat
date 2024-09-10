@@ -1,5 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
+use itertools::max;
+use types::TimestampMillis;
 use user_index_canister::external_achievements::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
@@ -10,11 +12,20 @@ fn external_achievements(args: Args) -> Response {
 fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
     let mut achievements_added = Vec::new();
     let mut achievements_removed = Vec::new();
+    let mut latest_update: TimestampMillis = 0;
 
     for achievement in state.data.external_achievements.iter() {
         let add = achievement.registered > args.updates_since;
         let remove = achievement.expires > args.updates_since
             || achievement.budget_exhausted.map_or(false, |ts| ts > args.updates_since);
+
+        latest_update = max([
+            latest_update,
+            achievement.registered,
+            achievement.expires,
+            achievement.budget_exhausted.unwrap_or_default(),
+        ])
+        .unwrap();
 
         if add ^ remove {
             let a = ExternalAchievement {
@@ -35,7 +46,7 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
         SuccessNoUpdates
     } else {
         Success(SuccessResult {
-            timestamp: state.env.now(),
+            timestamp: latest_update,
             achievements_added,
             achievements_removed,
         })
