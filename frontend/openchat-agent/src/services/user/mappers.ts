@@ -11,17 +11,13 @@ import type {
     ApiMessageMatch,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
-    ApiGroupRole,
-    ApiMention,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiSendMessageWithTransferToGroupResponse,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
-    ApiThreadSyncDetails,
     ApiDirectChatSummary,
-    ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
     ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
@@ -34,7 +30,6 @@ import type {
     ApiSetMessageReminderResponse,
     ApiCreateCommunityResponse,
     ApiGroupChatsInitial,
-    ApiCachedGroupChatSummaries,
     ApiDirectChatsInitial,
     ApiCommunitiesInitial,
     ApiUserCanisterCommunitySummary,
@@ -84,16 +79,12 @@ import type {
     UndeleteMessageResponse,
     InitialStateResponse,
     UpdatesResponse,
-    MemberRole,
-    Mention,
-    GroupChatSummary,
     DirectChatSummary,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    ThreadSyncDetails,
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
@@ -107,7 +98,6 @@ import type {
     SetMessageReminderResponse,
     CreateCommunityResponse,
     GroupChatsInitial,
-    CachedGroupChatSummaries,
     DirectChatsInitial,
     CommunitiesInitial,
     UserCanisterCommunitySummary,
@@ -154,11 +144,8 @@ import {
     optionUpdate,
 } from "../../utils/mapping";
 import {
-    apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
-    accessGate,
-    groupPermissions,
     message,
     messageContent,
     apiOptional,
@@ -818,18 +805,10 @@ export async function getEventsResponse(
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
-    return {
-        summaries: candid.summaries.map((g) => groupChatSummary(g, false)),
-        timestamp: candid.timestamp,
-    };
-}
-
 function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: candid.summaries.map(userCanisterGroupSummary),
         pinned: candid.pinned.map((c) => ({ kind: "group_chat", groupId: c.toString() })),
-        cached: optional(candid.cached, cachedGroupChatSummaries),
     };
 }
 
@@ -1159,91 +1138,6 @@ function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
     return {
         eventIndex,
         timestamp,
-    };
-}
-
-function memberRole(candid: ApiGroupRole): MemberRole {
-    if ("Admin" in candid) {
-        return "admin";
-    }
-    if ("Moderator" in candid) {
-        return "moderator";
-    }
-    if ("Participant" in candid) {
-        return "member";
-    }
-    if ("Owner" in candid) {
-        return "owner";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
-}
-
-function mention(candid: ApiMention): Mention {
-    return {
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
-        mentionedBy: candid.mentioned_by.toString(),
-    };
-}
-
-function groupChatSummary(candid: ApiGroupChatSummary, isInvited: boolean): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, messageEvent);
-    return {
-        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
-        kind: "group_chat",
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        latestMessageIndex: optional(candid.latest_message_index, identity),
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.chat_id.toString(),
-        })),
-        memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions_v2),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        previewed: false,
-        frozen: candid.frozen.length > 0,
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: optional(candid.date_read_pinned, identity),
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
-        eventsTTL: optional(candid.events_ttl, identity),
-        eventsTtlLastUpdated: candid.events_ttl_last_updated,
-        membership: {
-            joined: candid.joined,
-            role: memberRole(candid.role),
-            mentions: candid.mentions
-                .filter((m) => m.thread_root_message_index.length === 0)
-                .map(mention),
-            latestThreads: candid.latest_threads.map(threadSyncDetails),
-            myMetrics: chatMetrics(candid.my_metrics),
-            notificationsMuted: candid.notifications_muted,
-            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-            archived: candid.archived,
-            rulesAccepted: candid.rules_accepted,
-        },
-        localUserIndex: candid.local_user_index_canister_id.toString(),
-        isInvited,
-        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
-    };
-}
-
-function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
-    return {
-        threadRootMessageIndex: candid.root_message_index,
-        lastUpdated: candid.last_updated,
-        readUpTo: optional(candid.read_up_to, identity),
-        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
-        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
     };
 }
 

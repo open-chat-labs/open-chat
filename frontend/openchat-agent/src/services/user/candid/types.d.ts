@@ -1070,7 +1070,6 @@ export interface GroupChatSummary {
 export interface GroupChatsInitial {
   'summaries' : Array<UserCanisterGroupChatSummary>,
   'pinned' : Array<ChatId>,
-  'cached' : [] | [CachedGroupChatSummaries],
 }
 export interface GroupChatsUpdates {
   'added' : Array<UserCanisterGroupChatSummary>,

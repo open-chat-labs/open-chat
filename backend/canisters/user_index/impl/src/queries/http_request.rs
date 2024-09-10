@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use candid::Principal;
-use http_request::{build_json_response, encode_logs, extract_route, Route};
+use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
 use ic_cdk::query;
 use std::collections::BTreeMap;
 use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
@@ -62,6 +62,19 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 let month_key = MonthKey::from_timestamp(now);
 
                 return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
+            }
+            "achievement_logo" => {
+                let logo_id = parts.get(1).and_then(|s| (*s).parse::<u128>().ok());
+                let document = logo_id.and_then(|id| {
+                    state
+                        .data
+                        .external_achievements
+                        .iter()
+                        .find(|a| a.logo.id == id)
+                        .map(|a| &a.logo)
+                });
+
+                return get_document(logo_id, document, "achievement_logo");
             }
             _ => (),
         }

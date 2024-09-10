@@ -243,6 +243,8 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
     #[serde(default)]
@@ -312,6 +314,7 @@ impl Data {
             chit_events: ChitEarnedEvents::default(),
             streak: Streak::default(),
             achievements: HashSet::new(),
+            external_achievements: HashSet::new(),
             achievements_last_seen: 0,
             unique_person_proof: None,
             rng_seed: [0; 32],
@@ -387,6 +390,22 @@ impl Data {
                 timestamp: now,
                 reason: ChitEarnedReason::Achievement(achievement),
             });
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
+        if self.external_achievements.insert(name.clone()) {
+            self.chit_events.push(ChitEarned {
+                amount: chit_reward as i32,
+                timestamp: now,
+                reason: ChitEarnedReason::ExternalAchievement(name),
+            });
+
+            self.notify_user_index_of_chit(now);
+
             true
         } else {
             false
