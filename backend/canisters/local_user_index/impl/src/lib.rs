@@ -291,6 +291,8 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    #[serde(default)]
+    pub events_for_remote_users: Vec<(UserId, UserEvent)>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -359,6 +361,7 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
+            events_for_remote_users: Vec::new(),
         }
     }
 }
