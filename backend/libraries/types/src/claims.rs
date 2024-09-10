@@ -29,4 +29,5 @@ pub struct StartVideoCallClaims {
     pub user_id: UserId,
     pub chat_id: StringChat,
     pub call_type: VideoCallType,
+    pub is_diamond: bool,
 }
