@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::model::community::Community;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -63,14 +62,12 @@ impl Communities {
     }
 
     pub fn remove(&mut self, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
-        let community = self.communities.remove(&community_id);
-        if community.is_some() {
-            self.removed.push(RemovedCommunity {
-                community_id,
-                timestamp: now,
-            });
-        }
-        community
+        self.removed.retain(|c| c.community_id != community_id);
+        self.removed.push(RemovedCommunity {
+            community_id,
+            timestamp: now,
+        });
+        self.communities.remove(&community_id)
     }
 
     pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = &Community> {

@@ -168,7 +168,7 @@ impl RuntimeState {
             })
             .collect();
 
-        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels);
+        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels, community.last_updated);
     }
 
     pub fn notify_user_joined_channel(
@@ -184,6 +184,7 @@ impl RuntimeState {
                 channel_id: channel.channel_id,
                 latest_message_index: channel.latest_message.as_ref().map(|m| m.event.message_index),
             }],
+            channel.last_updated,
         );
     }
 
@@ -192,6 +193,7 @@ impl RuntimeState {
         user_id: UserId,
         community_id: CommunityId,
         channels: Vec<ChannelLatestMessageIndex>,
+        community_canister_timestamp: TimestampMillis,
     ) {
         let local_user_index_canister_id = self.env.canister_id();
         if self.data.local_users.get(&user_id).is_some() {
@@ -201,6 +203,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 })),
             );
         } else {
@@ -210,6 +213,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 },
             )));
         }

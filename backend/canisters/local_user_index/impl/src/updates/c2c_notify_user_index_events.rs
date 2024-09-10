@@ -106,6 +106,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
+                    group_canister_timestamp: ev.group_canister_timestamp,
                 })),
             );
         }
@@ -116,6 +117,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
+                    community_canister_timestamp: ev.community_canister_timestamp,
                 })),
             );
         }

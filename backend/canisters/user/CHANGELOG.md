@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Unblock OpenChat bot if it was blocked previously whilst there was a bug ([#6302](https://github.com/open-chat-labs/open-chat/pull/6302))
 - Allow referral status updates to arrive in any order ([#6357](https://github.com/open-chat-labs/open-chat/pull/6357))
+- Check user hasn't already left community when processing joined event ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
 
 ## [[2.0.1305](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1305-user)] - 2024-08-23
 
