@@ -38,7 +38,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_remote_user_events(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
-        let skip = qs.get("skip").and_then(|v| usize::from_str(&v).ok()).unwrap_or_default();
+        let skip = qs.get("skip").and_then(|v| usize::from_str(v).ok()).unwrap_or_default();
 
         build_json_response(
             &state
