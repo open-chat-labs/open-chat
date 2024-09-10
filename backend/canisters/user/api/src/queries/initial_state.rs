@@ -51,7 +51,6 @@ pub struct DirectChatsInitial {
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
     pub pinned: Vec<ChatId>,
-    pub cached: Option<CachedGroupChatSummaries>,
 }
 
 #[ts_export(user, initial_state)]

@@ -106,6 +106,7 @@ pub enum Event {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
+    ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -351,4 +352,10 @@ pub struct Referral {
 pub struct Referrals {
     pub referred_by: Option<UserId>,
     pub referrals: Vec<Referral>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    pub name: String,
+    pub chit_reward: u32,
 }
