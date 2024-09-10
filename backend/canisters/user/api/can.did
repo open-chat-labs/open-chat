@@ -899,7 +899,6 @@ type DirectChatsInitial = record {
 type GroupChatsInitial = record {
     summaries : vec UserCanisterGroupChatSummary;
     pinned : vec ChatId;
-    cached : opt CachedGroupChatSummaries;
 };
 
 type CachedGroupChatSummaries = record {

@@ -63,7 +63,12 @@ impl ChitEarnedEvents {
             .iter()
             .rev()
             .take_while(|e| since.map_or(true, |ts| e.timestamp > ts))
-            .filter(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+            .filter(|e| {
+                matches!(
+                    e.reason,
+                    ChitEarnedReason::Achievement(_) | ChitEarnedReason::ExternalAchievement(_)
+                )
+            })
             .cloned()
             .collect()
     }

@@ -24,7 +24,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
     let group_chats = GroupChatsInitial {
         summaries: state.data.group_chats.iter().map(|g| g.to_summary()).collect(),
         pinned: state.data.group_chats.pinned().to_vec(),
-        cached: None,
     };
 
     let communities = CommunitiesInitial {
