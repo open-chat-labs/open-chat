@@ -1,54 +1,81 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::Reverse;
+use std::{cmp::Reverse, mem};
 use types::UserId;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ChitLeaderboard {
-    list: Vec<ChitUserBalance>,
+    all_time: Vec<ChitUserBalance>,
+    this_month: Vec<ChitUserBalance>,
+    last_month: Vec<ChitUserBalance>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ChitUserBalance {
-    pub user_id: UserId,
     pub balance: u32,
+    pub user_id: UserId,
 }
 
 const MAX_LEADERS: usize = 50;
 
 impl ChitLeaderboard {
-    pub fn update_position(&mut self, user_id: UserId, latest_balance: i32) {
-        if latest_balance <= 0 {
-            self.list.retain(|i| i.user_id != user_id);
+    pub fn reset_this_month(&mut self) {
+        self.last_month = mem::take(&mut self.this_month);
+    }
+
+    pub fn initialize(
+        &mut self,
+        all_time: Vec<ChitUserBalance>,
+        this_month: Vec<ChitUserBalance>,
+        last_month: Vec<ChitUserBalance>,
+    ) {
+        self.all_time = all_time;
+        self.this_month = this_month;
+        self.last_month = last_month;
+    }
+
+    pub fn update_position(&mut self, user_id: UserId, total_balance: i32, curr_balance: i32) {
+        ChitLeaderboard::update_leaderboard(&mut self.all_time, user_id, total_balance);
+        ChitLeaderboard::update_leaderboard(&mut self.this_month, user_id, curr_balance);
+    }
+
+    fn update_leaderboard(leaderboard: &mut Vec<ChitUserBalance>, user_id: UserId, chit: i32) {
+        if chit <= 0 {
+            leaderboard.retain(|i| i.user_id != user_id);
             return;
         }
 
-        let full = self.list.len() >= MAX_LEADERS;
-        let latest_balance = latest_balance as u32;
+        let full = leaderboard.len() >= MAX_LEADERS;
+        let chit = chit as u32;
 
-        if let Some(last) = self.list.last() {
-            if full && latest_balance <= last.balance {
+        if let Some(last) = leaderboard.last() {
+            if full && chit <= last.balance {
                 return;
             }
         }
 
-        if let Some(my) = self.list.iter_mut().find(|i| i.user_id == user_id) {
-            my.balance = latest_balance;
+        if let Some(my) = leaderboard.iter_mut().find(|i| i.user_id == user_id) {
+            my.balance = chit;
         } else {
             if full {
-                self.list.pop();
+                leaderboard.pop();
             }
 
-            self.list.push(ChitUserBalance {
-                user_id,
-                balance: latest_balance,
-            });
+            leaderboard.push(ChitUserBalance { user_id, balance: chit });
         }
 
-        self.list.sort_unstable_by_key(|i| Reverse(i.balance));
+        leaderboard.sort_unstable_by_key(|i| Reverse(i.balance));
     }
 
-    pub fn get(&self) -> Vec<ChitUserBalance> {
-        self.list.clone()
+    pub fn all_time(&self) -> &Vec<ChitUserBalance> {
+        &self.all_time
+    }
+
+    pub fn this_month(&self) -> &Vec<ChitUserBalance> {
+        &self.this_month
+    }
+
+    pub fn last_month(&self) -> &Vec<ChitUserBalance> {
+        &self.last_month
     }
 }
 
@@ -62,11 +89,11 @@ mod tests {
     #[test]
     fn leaderboard_in_expected_order() {
         let mut leaderboard = ChitLeaderboard::default();
-        leaderboard.update_position(rnd_user(), 100);
-        leaderboard.update_position(rnd_user(), 400);
-        leaderboard.update_position(rnd_user(), 200);
+        leaderboard.update_position(rnd_user(), 100, 10);
+        leaderboard.update_position(rnd_user(), 400, 10);
+        leaderboard.update_position(rnd_user(), 200, 10);
 
-        let leaders = leaderboard.get();
+        let leaders = leaderboard.all_time();
 
         assert_eq!(leaders.len(), 3);
         assert_eq!(leaders[0].balance, 400);
@@ -79,10 +106,10 @@ mod tests {
         let mut leaderboard = ChitLeaderboard::default();
 
         for _ in 0..(2 * MAX_LEADERS) {
-            leaderboard.update_position(rnd_user(), rnd_balance());
+            leaderboard.update_position(rnd_user(), rnd_balance(), 10);
         }
 
-        let leaders = leaderboard.get();
+        let leaders = leaderboard.all_time();
 
         assert_eq!(leaders.len(), MAX_LEADERS);
     }
@@ -92,10 +119,10 @@ mod tests {
         let mut leaderboard = ChitLeaderboard::default();
         let me = rnd_user();
 
-        leaderboard.update_position(me, 100);
-        leaderboard.update_position(me, 400);
+        leaderboard.update_position(me, 100, 10);
+        leaderboard.update_position(me, 400, 10);
 
-        let leaders = leaderboard.get();
+        let leaders = leaderboard.all_time();
 
         assert_eq!(leaders.len(), 1);
         assert_eq!(leaders[0].balance, 400);

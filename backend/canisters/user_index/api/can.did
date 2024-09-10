@@ -342,6 +342,11 @@ type ReferralStats = record {
 
 type ChitLeaderboardResponse = variant {
     Success : vec ChitUserBalance;
+    SuccessV2 : record {
+        all_time : vec ChitUserBalance;
+        this_month : vec ChitUserBalance;
+        last_month : vec ChitUserBalance;
+    };
 };
 
 type ChitUserBalance = record {

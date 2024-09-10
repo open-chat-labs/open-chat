@@ -353,6 +353,8 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
+    // TODO: Remove this attribute after release
+    #[serde(default, skip_deserializing)]
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
     #[serde(with = "serde_bytes")]
