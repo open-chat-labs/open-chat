@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1344](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1344-identity)] - 2024-09-10
+
 ### Fixed
 
 - Use the mainnet II canister Id rather than the one used in local testing ([#6363](https://github.com/open-chat-labs/open-chat/pull/6363))
