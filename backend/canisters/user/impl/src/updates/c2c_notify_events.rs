@@ -55,31 +55,49 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
         }
         Event::UserJoinedGroup(ev) => {
-            state
+            // Check that the user didn't already leave the group before this event arrived
+            if !state
                 .data
                 .group_chats
-                .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
-            state.data.hot_group_exclusions.remove(&ev.chat_id, now);
-            state.data.award_achievement_and_notify(Achievement::JoinedGroup, now);
+                .removed_since(ev.group_canister_timestamp)
+                .contains(&ev.chat_id)
+            {
+                state
+                    .data
+                    .group_chats
+                    .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
+
+                state.data.hot_group_exclusions.remove(&ev.chat_id, now);
+                state.data.award_achievement_and_notify(Achievement::JoinedGroup, now);
+            }
         }
         Event::UserJoinedCommunityOrChannel(ev) => {
-            let (community, _) = state
+            // Check that the user didn't already leave the community before this event arrived
+            if !state
                 .data
                 .communities
-                .join(ev.community_id, ev.local_user_index_canister_id, now);
-            community.mark_read(
-                ev.channels
-                    .into_iter()
-                    .map(|c| ChannelMessagesRead {
-                        channel_id: c.channel_id,
-                        read_up_to: c.latest_message_index,
-                        threads: Vec::new(),
-                        date_read_pinned: None,
-                    })
-                    .collect(),
-                now,
-            );
-            state.data.award_achievement_and_notify(Achievement::JoinedCommunity, now);
+                .removed_since(ev.community_canister_timestamp)
+                .contains(&ev.community_id)
+            {
+                let (community, _) = state
+                    .data
+                    .communities
+                    .join(ev.community_id, ev.local_user_index_canister_id, now);
+
+                community.mark_read(
+                    ev.channels
+                        .into_iter()
+                        .map(|c| ChannelMessagesRead {
+                            channel_id: c.channel_id,
+                            read_up_to: c.latest_message_index,
+                            threads: Vec::new(),
+                            date_read_pinned: None,
+                        })
+                        .collect(),
+                    now,
+                );
+                state.data.award_achievement_and_notify(Achievement::JoinedCommunity, now);
+            }
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
             let mut awarded = state.data.award_achievement(Achievement::UpgradedToDiamond, now);
