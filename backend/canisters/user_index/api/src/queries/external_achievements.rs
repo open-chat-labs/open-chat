@@ -18,7 +18,7 @@ pub enum Response {
 #[ts_export(user_index, external_achievements)]
 #[derive(CandidType, Debug)]
 pub struct SuccessResult {
-    pub timestamp: TimestampMillis,
+    pub last_updated: TimestampMillis,
     pub achievements_added: Vec<ExternalAchievement>,
     pub achievements_removed: Vec<ExternalAchievement>,
 }

@@ -46,7 +46,7 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
         SuccessNoUpdates
     } else {
         Success(SuccessResult {
-            timestamp: latest_update,
+            last_updated: latest_update,
             achievements_added,
             achievements_removed,
         })
