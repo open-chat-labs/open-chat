@@ -260,7 +260,7 @@ type ExternalAchievementsArgs = record {
 
 type ExternalAchievementsResponse = variant {
     Success : record {
-        timestamp: TimestampMillis;
+        last_updated: TimestampMillis;
         achievements_added : vec ExternalAchievement;
         achievements_removed : vec ExternalAchievement;
     };
