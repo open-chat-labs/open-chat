@@ -7,10 +7,7 @@ use local_user_index_canister::access_token::{Response::*, *};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
-use types::{
-    AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
-    VideoCallType,
-};
+use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
