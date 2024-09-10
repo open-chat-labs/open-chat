@@ -84,6 +84,24 @@ impl ExternalAchievements {
             remaining_chit_budget: achievement.remaining_chit_budget,
         })
     }
+
+    pub fn metrics(&self) -> Vec<ExternalAchievementMetrics> {
+        self.achievements
+            .iter()
+            .map(|a| ExternalAchievementMetrics {
+                name: a.name.clone(),
+                logo_id: a.logo.id,
+                canister_id: a.canister_id,
+                chit_reward: a.chit_reward,
+                registered: a.registered,
+                expires: a.expires,
+                initial_chit_budget: a.initial_chit_budget,
+                remaining_chit_budget: a.remaining_chit_budget,
+                budget_exhausted: a.budget_exhausted,
+                awarded: a.awarded.len(),
+            })
+            .collect()
+    }
 }
 
 pub enum AwardResult {
@@ -98,4 +116,18 @@ pub enum AwardResult {
 pub struct AwardSuccessResult {
     pub chit_reward: u32,
     pub remaining_chit_budget: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementMetrics {
+    pub name: String,
+    pub logo_id: u128,
+    pub canister_id: CanisterId,
+    pub chit_reward: u32,
+    pub registered: TimestampMillis,
+    pub expires: TimestampMillis,
+    pub initial_chit_budget: u32,
+    pub remaining_chit_budget: u32,
+    pub budget_exhausted: Option<TimestampMillis>,
+    pub awarded: usize,
 }
