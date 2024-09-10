@@ -1789,6 +1789,22 @@ export class OpenChatAgent extends EventTarget {
             groupIndexResponse.deletedCommunities.forEach((c) => groupsRemoved.add(c.id));
 
             latestActiveGroupsCheck = groupIndexResponse.timestamp;
+
+            // Also check for updates for recently joined groups and communities since it may take a few iterations
+            // before the GroupIndex knows that they are active
+            const recentlyJoinedCutOff = BigInt(start - 10 * 60 * 1000);
+
+            for (const group of currentGroups) {
+                if (group.membership.joined > recentlyJoinedCutOff) {
+                    groupsToCheckForUpdates.add(group.id.groupId);
+                }
+            }
+
+            for (const community of currentCommunities) {
+                if (community.membership.joined > recentlyJoinedCutOff) {
+                    groupsToCheckForUpdates.add(community.id.communityId);
+                }
+            }
         }
 
         const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
