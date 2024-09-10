@@ -45,6 +45,7 @@ async fn access_token(args: Args) -> Response {
                 user_id,
                 chat_id: args.chat.into(),
                 call_type: VideoCallType::Default,
+                is_diamond,
             };
             build_token(args.token_type, custom_claims, state)
         }
@@ -53,6 +54,7 @@ async fn access_token(args: Args) -> Response {
                 user_id,
                 chat_id: args.chat.into(),
                 call_type: vc.call_type,
+                is_diamond,
             };
             build_token(args.token_type, custom_claims, state)
         }
