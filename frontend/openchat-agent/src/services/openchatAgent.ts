@@ -1654,11 +1654,6 @@ export class OpenChatAgent extends EventTarget {
             groupsAdded = userResponse.groupChats.summaries;
             communitiesAdded = userResponse.communities.summaries;
 
-            if (userResponse.groupChats.cached !== undefined) {
-                currentGroups = userResponse.groupChats.cached.summaries;
-                latestActiveGroupsCheck = userResponse.groupChats.cached.timestamp;
-            }
-
             avatarId = userResponse.avatarId;
             blockedUsers = userResponse.blockedUsers;
             pinnedGroupChats = userResponse.groupChats.pinned;

@@ -1012,7 +1012,6 @@ export type CachedGroupChatSummaries = {
 export type GroupChatsInitial = {
     summaries: UserCanisterGroupChatSummary[];
     pinned: GroupChatIdentifier[];
-    cached?: CachedGroupChatSummaries;
 };
 
 export type DirectChatsInitial = {
