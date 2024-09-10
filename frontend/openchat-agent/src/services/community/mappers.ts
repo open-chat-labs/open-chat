@@ -358,7 +358,7 @@ export function summaryUpdatesResponse(
     if ("PrivateCommunity" in candid) {
         return CommonResponses.failure();
     }
-    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
+    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse received", candid);
 }
 
 export function communitySummaryUpdates(
