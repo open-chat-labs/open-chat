@@ -368,12 +368,9 @@ pub struct CommunityMemberInternal {
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(default)]
     pub user_type: UserType,
     display_name: Timestamped<Option<String>>,
-    #[serde(default)]
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub referrals: HashSet<UserId>,
 }
 

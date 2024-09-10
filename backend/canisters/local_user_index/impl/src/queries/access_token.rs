@@ -7,10 +7,7 @@ use local_user_index_canister::access_token::{Response::*, *};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
-use types::{
-    AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
-    VideoCallType,
-};
+use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
@@ -40,19 +37,12 @@ async fn access_token(args: Args) -> Response {
     }
 
     mutate_state(|state| match &args.token_type {
-        AccessTokenType::StartVideoCall => {
-            let custom_claims = StartVideoCallClaims {
-                user_id,
-                chat_id: args.chat.into(),
-                call_type: VideoCallType::Default,
-            };
-            build_token(args.token_type, custom_claims, state)
-        }
         AccessTokenType::StartVideoCallV2(vc) => {
             let custom_claims = StartVideoCallClaims {
                 user_id,
                 chat_id: args.chat.into(),
                 call_type: vc.call_type,
+                is_diamond,
             };
             build_token(args.token_type, custom_claims, state)
         }
