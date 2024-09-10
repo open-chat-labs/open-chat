@@ -16,7 +16,6 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
     }
 
     match args.access_type {
-        AccessTokenType::StartVideoCall
         | AccessTokenType::StartVideoCallV2(_)
         | AccessTokenType::JoinVideoCall
         | AccessTokenType::MarkVideoCallAsEnded => true,

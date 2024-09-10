@@ -40,15 +40,6 @@ async fn access_token(args: Args) -> Response {
     }
 
     mutate_state(|state| match &args.token_type {
-        AccessTokenType::StartVideoCall => {
-            let custom_claims = StartVideoCallClaims {
-                user_id,
-                chat_id: args.chat.into(),
-                call_type: VideoCallType::Default,
-                is_diamond,
-            };
-            build_token(args.token_type, custom_claims, state)
-        }
         AccessTokenType::StartVideoCallV2(vc) => {
             let custom_claims = StartVideoCallClaims {
                 user_id,
