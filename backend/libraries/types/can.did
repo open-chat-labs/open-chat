@@ -1888,6 +1888,7 @@ type ChitEarned = record {
 type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : Achievement;
+    ExternalAchievement : text;
     Referral : ReferralStatus;
     MemeContestWinner;
 };

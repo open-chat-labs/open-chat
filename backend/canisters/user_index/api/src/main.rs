@@ -8,6 +8,7 @@ fn main() {
     generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, diamond_membership_fees, query);
+    generate_candid_method!(user_index, external_achievements, query);
     generate_candid_method!(user_index, platform_moderators, query);
     generate_candid_method!(user_index, platform_moderators_group, query);
     generate_candid_method!(user_index, platform_operators, query);
@@ -25,6 +26,7 @@ fn main() {
     generate_candid_method!(user_index, add_platform_operator, update);
     generate_candid_method!(user_index, add_referral_codes, update);
     generate_candid_method!(user_index, assign_platform_moderators_group, update);
+    generate_candid_method!(user_index, award_external_achievement, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);

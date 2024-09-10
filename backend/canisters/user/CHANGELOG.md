@@ -9,11 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose MessagePack versions of a few User canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
 
 ### Changed
 
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Consolidate `events` functions to remove duplicate code ([#6343](https://github.com/open-chat-labs/open-chat/pull/6343))
+
+### Removed
+
+- Remove the unused cached group summaries field from `initial_state` ([#6349](https://github.com/open-chat-labs/open-chat/pull/6349))
 
 ### Fixed
 
