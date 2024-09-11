@@ -8,6 +8,15 @@ pub type Args = Empty;
 #[derive(CandidType, Debug)]
 pub enum Response {
     Success(Vec<ChitUserBalance>),
+    SuccessV2(SuccessResult),
+}
+
+#[ts_export(user_index, chit_leaderboard)]
+#[derive(CandidType, Clone, Debug)]
+pub struct SuccessResult {
+    pub all_time: Vec<ChitUserBalance>,
+    pub this_month: Vec<ChitUserBalance>,
+    pub last_month: Vec<ChitUserBalance>,
 }
 
 #[ts_export(user_index, chit_leaderboard)]

@@ -1,13 +1,16 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::model::chit_leaderboard::{ChitUserBalance, MAX_LEADERS};
+use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use std::collections::BinaryHeap;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
+use utils::time::MonthKey;
 
 #[post_upgrade]
 #[trace]
@@ -23,5 +26,60 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
+    // TODO: Remove after release
+    mutate_state(initialize_leaderboards);
+
     info!(version = %args.wasm_version, "Post-upgrade complete");
+}
+
+fn initialize_leaderboards(state: &mut RuntimeState) {
+    let now = state.env.now();
+    let this_month_key = MonthKey::from_timestamp(now);
+    let last_month_key = this_month_key.previous();
+
+    let mut all_time = BinaryHeap::new();
+    let mut this_month = BinaryHeap::new();
+    let mut last_month = BinaryHeap::new();
+
+    for user in state.data.users.iter() {
+        let total = user.total_chit_earned();
+
+        if total > 20_000 {
+            all_time.push(ChitUserBalance {
+                balance: total as u32,
+                user_id: user.user_id,
+            });
+
+            this_month.push(ChitUserBalance {
+                balance: user.current_chit_balance(now) as u32,
+                user_id: user.user_id,
+            });
+
+            last_month.push(ChitUserBalance {
+                balance: user.chit_per_month.get(&last_month_key).copied().unwrap_or_default() as u32,
+                user_id: user.user_id,
+            });
+        }
+    }
+
+    state.data.chit_leaderboard.initialize(
+        pop_n(&mut all_time, MAX_LEADERS),
+        pop_n(&mut this_month, MAX_LEADERS),
+        pop_n(&mut last_month, MAX_LEADERS),
+        now,
+    );
+}
+
+fn pop_n<T: Ord>(heap: &mut BinaryHeap<T>, n: usize) -> Vec<T> {
+    let mut result = Vec::new();
+
+    for _i in 0..n {
+        if let Some(v) = heap.pop() {
+            result.push(v);
+        } else {
+            break;
+        }
+    }
+
+    result
 }

@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+- Extend `chit_leaderboard` to return all_time|this_month|last_month ([#6364](https://github.com/open-chat-labs/open-chat/pull/6364))
 
 ### Fixed
 
