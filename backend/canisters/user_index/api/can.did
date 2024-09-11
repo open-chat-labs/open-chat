@@ -406,7 +406,7 @@ type AddReferralCodesResponse = variant {
 };
 
 type AwardExternalAchievementArgs = record {
-    award_id : nat;
+    achievement_id : nat;
     user_id : UserId;
 };
 
