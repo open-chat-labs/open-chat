@@ -17,7 +17,7 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
 
     for (id, achievement) in state.data.external_achievements.iter() {
         let add = achievement.registered > args.updates_since;
-        let remove = (achievement.expires > now && achievement.expires > args.updates_since)
+        let remove = (achievement.expires <= now && achievement.expires > args.updates_since)
             || achievement.budget_exhausted.map_or(false, |ts| ts > args.updates_since);
 
         latest_update = max([
