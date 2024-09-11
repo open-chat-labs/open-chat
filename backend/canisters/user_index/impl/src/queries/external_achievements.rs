@@ -13,10 +13,11 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
     let mut achievements_added = Vec::new();
     let mut achievements_removed = Vec::new();
     let mut latest_update: TimestampMillis = 0;
+    let now = state.env.now();
 
     for (id, achievement) in state.data.external_achievements.iter() {
         let add = achievement.registered > args.updates_since;
-        let remove = achievement.expires > args.updates_since
+        let remove = (achievement.expires > now && achievement.expires > args.updates_since)
             || achievement.budget_exhausted.map_or(false, |ts| ts > args.updates_since);
 
         latest_update = max([
