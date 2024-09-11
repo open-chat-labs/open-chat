@@ -158,7 +158,7 @@ fn assert_is_video_message<F: FnOnce(&VideoCallContent) -> bool>(event: ChatEven
             if predicate(v) {
                 return;
             } else {
-                panic!("Event is a video call but does not satify predicate. Content: {v:?}");
+                panic!("Event is a video call but does not satisfy predicate. Content: {v:?}");
             }
         }
     }
