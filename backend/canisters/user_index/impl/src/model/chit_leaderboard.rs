@@ -11,6 +11,13 @@ pub struct ChitLeaderboard {
     this_month_key: MonthKey,
 }
 
+// TODO: Delete this after release
+impl Default for ChitLeaderboard {
+    fn default() -> ChitLeaderboard {
+        ChitLeaderboard::new(0)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ChitUserBalance {
     pub balance: u32,
@@ -59,10 +66,10 @@ impl ChitLeaderboard {
         updated: TimestampMillis,
         now: TimestampMillis,
     ) {
-        let updated_mk = MonthKey::from_timestamp(updated);
-        let now_mk = MonthKey::from_timestamp(now);
+        self.reset_this_month(now);
 
-        // TODO: Prob not quite right atm - think about "now" too
+        let updated_mk = MonthKey::from_timestamp(updated);
+
         if updated_mk == self.this_month_key {
             ChitLeaderboard::update_leaderboard(&mut self.this_month, user_id, curr_balance);
         } else if updated_mk == self.this_month_key.previous() {
@@ -123,9 +130,9 @@ mod tests {
     #[test]
     fn leaderboard_in_expected_order() {
         let mut leaderboard = ChitLeaderboard::new(0);
-        leaderboard.update_position(rnd_user(), 100, 10);
-        leaderboard.update_position(rnd_user(), 400, 10);
-        leaderboard.update_position(rnd_user(), 200, 10);
+        leaderboard.update_position(rnd_user(), 100, 10, 1, 1);
+        leaderboard.update_position(rnd_user(), 400, 10, 1, 1);
+        leaderboard.update_position(rnd_user(), 200, 10, 1, 1);
 
         let leaders = leaderboard.all_time();
 
@@ -137,10 +144,10 @@ mod tests {
 
     #[test]
     fn max_leaders_not_exceeded() {
-        let mut leaderboard = ChitLeaderboard::default();
+        let mut leaderboard = ChitLeaderboard::new(0);
 
         for _ in 0..(2 * MAX_LEADERS) {
-            leaderboard.update_position(rnd_user(), rnd_balance(), 10);
+            leaderboard.update_position(rnd_user(), rnd_balance(), 10, 1, 1);
         }
 
         let leaders = leaderboard.all_time();
@@ -150,11 +157,11 @@ mod tests {
 
     #[test]
     fn update_same_user_handled_correctly() {
-        let mut leaderboard = ChitLeaderboard::default();
+        let mut leaderboard = ChitLeaderboard::new(0);
         let me = rnd_user();
 
-        leaderboard.update_position(me, 100, 10);
-        leaderboard.update_position(me, 400, 10);
+        leaderboard.update_position(me, 100, 10, 1, 1);
+        leaderboard.update_position(me, 400, 10, 1, 1);
 
         let leaders = leaderboard.all_time();
 
