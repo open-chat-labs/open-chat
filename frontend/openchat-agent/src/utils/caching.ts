@@ -51,7 +51,6 @@ import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
 const CACHE_VERSION = 112;
-const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -132,73 +131,25 @@ type MigrationFunction<T> = (
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
-async function clearChatsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chats").clear();
-}
+const migrations: Record<number, MigrationFunction<ChatSchema>> = {};
 
-async function clearEventsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chat_events").clear();
-}
-
-async function clearCommunityDetails(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("community_details").clear();
-}
-
-const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    105: clearChatsStore,
-    106: clearChatsStore,
-    107: async (
-        _db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-    ) => {
-        const key = principal.toString();
-        const store = tx.objectStore("chats");
-        const chatState = await store.get(key);
-        if (chatState) {
-            chatState.chitState.totalChitEarned = chatState.chitState.chitBalance;
-            await store.put(chatState, key);
-        }
-    },
-    108: async (
-        db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-    ) => {
-        await clearEventsStore(db, principal, tx);
-        await clearChatsStore(db, principal, tx);
-    },
-    109: clearChatsStore,
-    110: clearChatsStore,
-    111: clearChatsStore,
-    112: clearCommunityDetails,
-};
-
-async function migrate(
+async function tryToMigrateDb(
     db: IDBPDatabase<ChatSchema>,
     principal: Principal,
     from: number,
     to: number,
     transaction: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
+): Promise<boolean> {
     for (let version = from + 1; version <= to; version++) {
         if (migrations[version]) {
             console.debug(`DB: applying migration for version ${version}`);
             await migrations[version](db, principal, transaction);
+        } else {
+            return false;
         }
     }
+    console.debug(`DB: migration from ${from} to ${to} complete`);
+    return true;
 }
 
 function nuke(db: IDBPDatabase<ChatSchema>) {
@@ -276,20 +227,13 @@ export function createCacheKey(context: MessageContext, index: number): string {
 export function openCache(principal: Principal): Database {
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
         upgrade(db, previousVersion, newVersion, transaction) {
-            if (
-                previousVersion == null ||
-                previousVersion < FIRST_MIGRATION ||
-                newVersion == null
-            ) {
-                nuke(db);
-            } else {
-                console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
-                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
-                    console.debug(
-                        `DB: migration from ${previousVersion} to ${newVersion} complete`,
-                    );
+            tryToMigrateDb(db, principal, previousVersion, newVersion ?? -1, transaction)
+                .catch(() => false)
+                .then((success) => {
+                    if (!success) {
+                        nuke(db);
+                    }
                 });
-            }
         },
     });
 }
