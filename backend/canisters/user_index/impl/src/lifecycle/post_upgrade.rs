@@ -26,10 +26,10 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    info!(version = %args.wasm_version, "Post-upgrade complete");
-
     // TODO: Remove after release
     mutate_state(initialize_leaderboards);
+
+    info!(version = %args.wasm_version, "Post-upgrade complete");
 }
 
 fn initialize_leaderboards(state: &mut RuntimeState) {
