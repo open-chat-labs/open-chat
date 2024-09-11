@@ -25,6 +25,7 @@ pub enum Response {
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
+    id: u32,
     name: String,
     logo: String,
     url: String,
@@ -39,6 +40,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
+            id: self.id,
             name: self.name.clone(),
             logo: self.logo.clone(),
             url: self.url.clone(),
