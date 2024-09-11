@@ -1,7 +1,12 @@
 <script lang="ts">
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import { OpenChat, achievements, type Achievement } from "openchat-client";
+    import {
+        OpenChat,
+        achievements,
+        type Achievement,
+        type ExternalAchievement,
+    } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -64,7 +69,7 @@
         "upgrade_to_gold_diamond",
     ]);
 
-    let selectedTab: "todo" | "done" = "todo";
+    let selectedTab: "todo" | "done" | "external" = "todo";
 
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
@@ -72,18 +77,20 @@
         $globalState.achievements.has(a),
     );
     $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
+    $: externalAchievements = [] as ExternalAchievement[];
 
     function filter(achievement: Achievement): boolean {
         return enabled.has(achievement) || $globalState.achievements.has(achievement);
     }
 
-    function selectTab(tab: "todo" | "done") {
+    function selectTab(tab: "todo" | "done" | "external") {
         selectedTab = tab;
     }
 
     onMount(() => {
         client.getExternalAchievements().then((achievements) => {
             console.log("achievements", achievements);
+            externalAchievements = achievements;
         });
     });
 </script>
@@ -113,6 +120,17 @@
                     class="tab">
                     <Translatable resourceKey={i18nKey("learnToEarn.done")} />
                 </div>
+                {#if externalAchievements.length > 0}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div
+                        tabindex="0"
+                        role="button"
+                        on:click={() => selectTab("external")}
+                        class:selected={selectedTab === "external"}
+                        class="tab">
+                        <Translatable resourceKey={i18nKey("learnToEarn.external")} />
+                    </div>
+                {/if}
             </div>
             {#if selectedTab === "todo"}
                 <div class="list">
@@ -157,6 +175,18 @@
                             </div>
                         {/each}
                     {/if}
+                </div>
+            {/if}
+            {#if selectedTab === "external"}
+                <div class="list">
+                    {#each externalAchievements as achievement}
+                        <div class="achievement">
+                            <div class="external icon">
+                                <CheckCircleOutline size={$iconSize} color={"#ccc"} />
+                            </div>
+                            {achievement.name}
+                        </div>
+                    {/each}
                 </div>
             {/if}
         </div>
