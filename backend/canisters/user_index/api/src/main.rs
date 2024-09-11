@@ -29,6 +29,7 @@ fn main() {
     generate_candid_method!(user_index, award_external_achievement, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
+    generate_candid_method!(user_index, register_external_achievement, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);
     generate_candid_method!(user_index, remove_platform_operator, update);
     generate_candid_method!(user_index, set_diamond_membership_fees, update);

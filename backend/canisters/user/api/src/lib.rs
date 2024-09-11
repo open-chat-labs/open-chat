@@ -159,6 +159,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -166,6 +167,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

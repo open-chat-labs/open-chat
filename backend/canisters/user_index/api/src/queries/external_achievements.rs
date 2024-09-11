@@ -26,7 +26,8 @@ pub struct SuccessResult {
 #[ts_export(user_index, external_achievements)]
 #[derive(CandidType, Debug)]
 pub struct ExternalAchievement {
+    pub id: u32,
     pub name: String,
-    pub logo_id: u128,
+    pub url: String,
     pub chit_reward: u32,
 }

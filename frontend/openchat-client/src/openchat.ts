@@ -3536,19 +3536,24 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         const newAchievement = this.isNewSendMessageAchievement(messageContext, eventWrapper.event);
+        const isCryptoMessage = eventWrapper.event.content.kind === "crypto_content";
 
-        return this.sendRequest({
-            kind: "sendMessage",
-            chatType: chat.kind,
-            messageContext,
-            user: this._liveState.user,
-            mentioned,
-            event: eventWrapper,
-            acceptedRules,
-            messageFilterFailed,
-            pin,
-            newAchievement,
-        })
+        return this.sendRequest(
+            {
+                kind: "sendMessage",
+                chatType: chat.kind,
+                messageContext,
+                user: this._liveState.user,
+                mentioned,
+                event: eventWrapper,
+                acceptedRules,
+                messageFilterFailed,
+                pin,
+                newAchievement,
+            },
+            undefined,
+            isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
+        )
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);

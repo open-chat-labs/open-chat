@@ -748,7 +748,7 @@ pub struct NervousSystemParameters {
     /// The max number of proposals for which ballots are still stored, i.e.,
     /// unsettled proposals. If this number of proposals is reached, new proposals
     /// can only be added in exceptional cases (for few proposals it is defined
-    /// that they are allowed even if resoures are low to guarantee that the relevant
+    /// that they are allowed even if resources are low to guarantee that the relevant
     /// canisters can be upgraded).
     ///
     /// This number must be larger than zero and at most as large as the defined

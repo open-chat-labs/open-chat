@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1341](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1341-user_index)] - 2024-09-10
+
 ### Added
 
 - Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+### Fixed
+
+- Replay referral reward events in case any were missed ([#6362](https://github.com/open-chat-labs/open-chat/pull/6362))
 
 ## [[2.0.1336](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1336-user_index)] - 2024-09-07
 
