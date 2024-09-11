@@ -8303,6 +8303,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "community_canister_c2c_client",
+ "dataurl",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
