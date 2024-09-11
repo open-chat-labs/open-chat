@@ -169,6 +169,7 @@ type AddPlatformOperatorResponse = variant {
 };
 
 type RegisterExternalAchievementArgs = record {
+    id : nat;
     name : text;
     logo : text;
     url : text;
