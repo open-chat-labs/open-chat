@@ -1840,6 +1840,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getExternalAchievements":
+                executeThenReply(payload, correlationId, agent.getExternalAchievements());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

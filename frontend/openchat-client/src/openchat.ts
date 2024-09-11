@@ -6738,6 +6738,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return resp;
     }
 
+    getExternalAchievements() {
+        return this.sendRequest({ kind: "getExternalAchievements" }).catch((err) => {
+            console.error("getExternalAchievements error", err);
+            return [];
+        });
+    }
+
     markAchievementsSeen() {
         this.sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
             console.error("markAchievementsSeen", err);

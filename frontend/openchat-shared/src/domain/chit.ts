@@ -131,3 +131,21 @@ export type ChitEventsRequest = {
     max: number;
     ascending: boolean;
 };
+
+export type ExternalAchievementsResponse =
+    | ExternalAchievementsSuccess
+    | { kind: "success_no_updates" };
+
+export type ExternalAchievementsSuccess = {
+    kind: "success";
+    achievementsRemoved: ExternalAchievement[];
+    lastUpdated: bigint;
+    achievementsAdded: ExternalAchievement[];
+};
+
+export type ExternalAchievement = {
+    id: number;
+    url: string;
+    name: string;
+    chitReward: number;
+};

@@ -26,7 +26,17 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
-  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
+  {
+    'Composite' : { 'and' : boolean, 'inner' : Array<AccessGateNonComposite> }
+  } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
+export type AccessGateNonComposite = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -34,7 +44,6 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null } |
   { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
@@ -201,11 +210,15 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
+export type BtcAddressResponse = { 'Success' : string } |
+  { 'InternalError' : string };
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
   'patch' : number,
 }
+export type CachedBtcAddressResponse = { 'NotFound' : null } |
+  { 'Success' : string };
 export interface CachedGroupChatSummaries {
   'summaries' : Array<GroupChatSummary>,
   'timestamp' : TimestampMillis,
@@ -378,6 +391,7 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
+  { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
 export interface ChitEventsArgs {
@@ -932,10 +946,6 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
-export type GetBtcAddressResponse = { 'Success' : string } |
-  { 'InternalError' : string };
-export type GetCachedBtcAddressResponse = { 'NotFound' : null } |
-  { 'Success' : string };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -2641,11 +2651,6 @@ export interface _SERVICE {
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
-  'get_btc_address' : ActorMethod<[EmptyArgs], GetBtcAddressResponse>,
-  'get_cached_btc_address' : ActorMethod<
-    [EmptyArgs],
-    GetCachedBtcAddressResponse
-  >,
   'hot_group_exclusions' : ActorMethod<
     [HotGroupExclusionsArgs],
     HotGroupExclusionsResponse
@@ -2676,7 +2681,6 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
-  'retrieve_btc' : ActorMethod<[RetrieveBtcArgs], RetrieveBtcResponse>,
   'save_crypto_account' : ActorMethod<
     [NamedAccount],
     SaveCryptoAccountResponse

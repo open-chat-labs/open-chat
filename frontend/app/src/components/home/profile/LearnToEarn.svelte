@@ -8,7 +8,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
 
@@ -61,7 +61,7 @@
         "referred_10th_user",
         "referred_20th_user",
         "referred_50th_user",
-        "upgrade_to_gold_diamond"
+        "upgrade_to_gold_diamond",
     ]);
 
     let selectedTab: "todo" | "done" = "todo";
@@ -80,6 +80,12 @@
     function selectTab(tab: "todo" | "done") {
         selectedTab = tab;
     }
+
+    onMount(() => {
+        client.getExternalAchievements().then((achievements) => {
+            console.log("achievements", achievements);
+        });
+    });
 </script>
 
 <Overlay dismissible>

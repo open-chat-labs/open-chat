@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const MessageId = IDL.Nat;
@@ -237,6 +236,7 @@ export const idlFactory = ({ IDL }) => {
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : Achievement,
+    'ExternalAchievement' : IDL.Text,
     'MemeContestWinner' : IDL.Null,
     'Referral' : ReferralStatus,
   });
@@ -318,22 +318,30 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1162,14 +1170,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
-  const GetBtcAddressResponse = IDL.Variant({
-    'Success' : IDL.Text,
-    'InternalError' : IDL.Text,
-  });
-  const GetCachedBtcAddressResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Text,
-  });
   const HotGroupExclusionsArgs = IDL.Record({});
   const HotGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Vec(ChatId),
@@ -1445,16 +1445,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
-  const RetrieveBtcArgs = IDL.Record({
-    'address' : IDL.Text,
-    'amount' : IDL.Nat64,
-  });
-  const RetrieveBtcResponse = IDL.Variant({
-    'ApproveError' : IDL.Text,
-    'Success' : IDL.Nat64,
-    'RetrieveBtcError' : IDL.Text,
     'InternalError' : IDL.Text,
   });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
@@ -2049,12 +2039,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
-    'get_btc_address' : IDL.Func([EmptyArgs], [GetBtcAddressResponse], []),
-    'get_cached_btc_address' : IDL.Func(
-        [EmptyArgs],
-        [GetCachedBtcAddressResponse],
-        ['query'],
-      ),
     'hot_group_exclusions' : IDL.Func(
         [HotGroupExclusionsArgs],
         [HotGroupExclusionsResponse],
@@ -2114,7 +2098,6 @@ export const idlFactory = ({ IDL }) => {
         [ReportMessageResponse],
         [],
       ),
-    'retrieve_btc' : IDL.Func([RetrieveBtcArgs], [RetrieveBtcResponse], []),
     'save_crypto_account' : IDL.Func(
         [NamedAccount],
         [SaveCryptoAccountResponse],
