@@ -14,7 +14,7 @@ fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Resp
     let result = match state
         .data
         .external_achievements
-        .award(args.user_id, &args.name, state.env.caller(), state.env.now())
+        .award(args.award_id, args.user_id, state.env.caller(), state.env.now())
     {
         AwardResult::Success(r) => r,
         AwardResult::NotFound => return NotFound,
@@ -27,8 +27,9 @@ fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Resp
     state.push_event_to_local_user_index(
         args.user_id,
         Event::ExternalAchievementAwarded(ExternalAchievementAwarded {
+            id: args.award_id,
             user_id: args.user_id,
-            name: args.name.clone(),
+            name: result.name,
             chit_reward: result.chit_reward,
         }),
     );

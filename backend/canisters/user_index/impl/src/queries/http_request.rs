@@ -1,9 +1,10 @@
 use crate::{read_state, RuntimeState};
 use candid::Principal;
-use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
+use dataurl::DataUrl;
+use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use std::collections::BTreeMap;
-use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis, UserId};
 use utils::time::MonthKey;
 
 #[query]
@@ -64,17 +65,27 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
             }
             "achievement_logo" => {
-                let logo_id = parts.get(1).and_then(|s| (*s).parse::<u128>().ok());
-                let document = logo_id.and_then(|id| {
-                    state
-                        .data
-                        .external_achievements
-                        .iter()
-                        .find(|a| a.logo.id == id)
-                        .map(|a| &a.logo)
-                });
+                let id = parts.get(1).and_then(|s| (*s).parse::<u128>().ok());
+                let Some(logo) =
+                    id.and_then(|achievement_id| state.data.external_achievements.get(achievement_id).map(|a| a.logo.clone()))
+                else {
+                    return HttpResponse::not_found();
+                };
 
-                return get_document(logo_id, document, "achievement_logo");
+                let url = DataUrl::parse(&logo).unwrap();
+
+                return HttpResponse {
+                    status_code: 200,
+                    headers: vec![
+                        HeaderField("Content-Type".to_string(), url.get_media_type().to_string()),
+                        HeaderField(
+                            "Cache-Control".to_string(),
+                            "public, max-age=100000000, immutable".to_string(),
+                        ),
+                    ],
+                    body: url.get_data().to_vec(),
+                    streaming_strategy: None,
+                };
             }
             _ => (),
         }

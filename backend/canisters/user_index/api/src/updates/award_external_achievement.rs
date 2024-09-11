@@ -4,8 +4,8 @@ use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub award_id: u128,
     pub user_id: UserId,
-    pub name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
