@@ -82,6 +82,7 @@ pub struct ExternalAchievementInitial {
     pub id: u128,
     pub name: String,
     pub logo: String,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub expires: TimestampMillis,

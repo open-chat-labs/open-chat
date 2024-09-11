@@ -2,7 +2,6 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use rand::Rng;
 use user_index_canister::register_external_achievement::{Response::*, *};
 use user_index_canister::ExternalAchievementInitial;
 
@@ -13,13 +12,12 @@ fn register_external_achievement(args: Args) -> Response {
 }
 
 fn register_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let new_award_id: u128 = state.env.rng().gen();
-
     state.data.external_achievements.register(
         ExternalAchievementInitial {
-            id: new_award_id,
+            id: args.id,
             name: args.name,
             logo: args.logo,
+            url: args.url,
             canister_id: args.canister_id,
             chit_reward: args.chit_reward,
             expires: args.expires,

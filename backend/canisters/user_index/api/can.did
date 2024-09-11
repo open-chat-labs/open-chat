@@ -171,6 +171,7 @@ type AddPlatformOperatorResponse = variant {
 type RegisterExternalAchievementArgs = record {
     name : text;
     logo : text;
+    url : text;
     canister_id : CanisterId;
     chit_reward : nat32;
     expires : TimestampMillis;
@@ -283,6 +284,7 @@ type ExternalAchievementsResponse = variant {
 type ExternalAchievement = record {
     id : nat;
     name : text;
+    url : text;
     chit_reward : nat32;
 };
 

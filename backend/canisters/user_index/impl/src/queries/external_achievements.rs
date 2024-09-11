@@ -31,6 +31,7 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
             let a = ExternalAchievement {
                 id: *id,
                 name: achievement.name.clone(),
+                url: achievement.url.clone(),
                 chit_reward: achievement.chit_reward,
             };
 

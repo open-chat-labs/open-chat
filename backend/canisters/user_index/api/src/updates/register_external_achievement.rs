@@ -7,8 +7,10 @@ use types::{CanisterId, TimestampMillis};
 #[ts_export(user_index, pay_for_diamond_membership)]
 #[derive(CandidType, Debug)]
 pub struct Args {
+    pub id: u128,
     pub name: String,
     pub logo: String,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub expires: TimestampMillis,
@@ -25,6 +27,7 @@ pub enum Response {
 pub struct HumanReadableArgs {
     name: String,
     logo: String,
+    url: String,
     canister_id: HumanReadablePrincipal,
     chit_reward: u32,
     expires: TimestampMillis,
@@ -38,6 +41,7 @@ impl ToHumanReadable for Args {
         HumanReadableArgs {
             name: self.name.clone(),
             logo: self.logo.clone(),
+            url: self.url.clone(),
             canister_id: self.canister_id.into(),
             chit_reward: self.chit_reward,
             expires: self.expires,

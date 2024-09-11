@@ -28,5 +28,6 @@ pub struct SuccessResult {
 pub struct ExternalAchievement {
     pub id: u128,
     pub name: String,
+    pub url: String,
     pub chit_reward: u32,
 }

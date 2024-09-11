@@ -12,6 +12,7 @@ pub struct ExternalAchievements {
 pub struct ExternalAchievementInternal {
     pub name: String,
     pub logo: String,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub registered: TimestampMillis,
@@ -34,6 +35,7 @@ impl ExternalAchievements {
                 ExternalAchievementInternal {
                     name: achievement.name,
                     logo: achievement.logo,
+                    url: achievement.url,
                     canister_id: achievement.canister_id,
                     chit_reward: achievement.chit_reward,
                     registered: now,
@@ -98,6 +100,7 @@ impl ExternalAchievements {
                 id: *id,
                 name: a.name.clone(),
                 logo_len: a.logo.len(),
+                url: a.url.clone(),
                 canister_id: a.canister_id,
                 chit_reward: a.chit_reward,
                 registered: a.registered,
@@ -131,6 +134,7 @@ pub struct ExternalAchievementMetrics {
     pub id: u128,
     pub name: String,
     pub logo_len: usize,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub registered: TimestampMillis,
