@@ -26,7 +26,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     mutate_state(|state| {
-        state.data.chit_leaderboard.reset_this_month(state.env.now());
+        state.data.chit_leaderboard.switch_months(state.env.now());
         start_job_if_required(state);
     });
 }

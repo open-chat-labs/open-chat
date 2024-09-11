@@ -36,7 +36,7 @@ impl ChitLeaderboard {
         }
     }
 
-    pub fn reset_this_month(&mut self, now: TimestampMillis) {
+    pub fn switch_months(&mut self, now: TimestampMillis) {
         let mk = MonthKey::from_timestamp(now);
 
         if mk == self.this_month_key.previous() {
@@ -66,7 +66,7 @@ impl ChitLeaderboard {
         updated: TimestampMillis,
         now: TimestampMillis,
     ) {
-        self.reset_this_month(now);
+        self.switch_months(now);
 
         let updated_mk = MonthKey::from_timestamp(updated);
 
