@@ -1,8 +1,8 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Document, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, TimestampMillis, UniquePersonProof, User, UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -79,8 +79,10 @@ pub struct UserDeleted {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementInitial {
+    pub id: u32,
     pub name: String,
-    pub logo: Document,
+    pub logo: String,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub expires: TimestampMillis,

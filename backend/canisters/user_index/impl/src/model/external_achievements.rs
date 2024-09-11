@@ -1,18 +1,18 @@
-use std::collections::HashSet;
-
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Document, TimestampMillis, UserId};
+use std::collections::{HashMap, HashSet};
+use types::{CanisterId, TimestampMillis, UserId};
 use user_index_canister::ExternalAchievementInitial;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ExternalAchievements {
-    achievements: Vec<ExternalAchievementInternal>,
+    achievements: HashMap<u32, ExternalAchievementInternal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementInternal {
     pub name: String,
-    pub logo: Document,
+    pub logo: String,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub registered: TimestampMillis,
@@ -24,36 +24,39 @@ pub struct ExternalAchievementInternal {
 }
 
 impl ExternalAchievements {
-    #[allow(dead_code)]
     pub fn register(&mut self, achievement: ExternalAchievementInitial, now: TimestampMillis) -> bool {
-        if self.achievements.iter().any(|a| a.name == achievement.name) {
+        if self
+            .achievements
+            .iter()
+            .any(|(id, a)| a.name == achievement.name || *id == achievement.id)
+        {
             return false;
         }
 
-        self.achievements.push(ExternalAchievementInternal {
-            name: achievement.name,
-            logo: achievement.logo,
-            canister_id: achievement.canister_id,
-            chit_reward: achievement.chit_reward,
-            registered: now,
-            expires: achievement.expires,
-            initial_chit_budget: achievement.chit_budget,
-            remaining_chit_budget: achievement.chit_budget,
-            budget_exhausted: None,
-            awarded: HashSet::new(),
-        });
+        self.achievements.insert(
+            achievement.id,
+            ExternalAchievementInternal {
+                name: achievement.name,
+                logo: achievement.logo,
+                url: achievement.url,
+                canister_id: achievement.canister_id,
+                chit_reward: achievement.chit_reward,
+                registered: now,
+                expires: achievement.expires,
+                initial_chit_budget: achievement.chit_budget,
+                remaining_chit_budget: achievement.chit_budget,
+                budget_exhausted: None,
+                awarded: HashSet::new(),
+            },
+        );
 
         // TODO: Create a timer to delete the awarded users HashSet once the achievement has expired
 
         true
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &ExternalAchievementInternal> {
-        self.achievements.iter()
-    }
-
-    pub fn award(&mut self, user_id: UserId, name: &str, caller: CanisterId, now: TimestampMillis) -> AwardResult {
-        let Some(achievement) = self.achievements.iter_mut().find(|a| a.name == name) else {
+    pub fn award(&mut self, id: u32, user_id: UserId, caller: CanisterId, now: TimestampMillis) -> AwardResult {
+        let Some(achievement) = self.achievements.get_mut(&id) else {
             return AwardResult::NotFound;
         };
 
@@ -80,17 +83,28 @@ impl ExternalAchievements {
         }
 
         AwardResult::Success(AwardSuccessResult {
+            name: achievement.name.clone(),
             chit_reward: achievement.chit_reward,
             remaining_chit_budget: achievement.remaining_chit_budget,
         })
     }
 
+    pub fn get(&self, id: u32) -> Option<&ExternalAchievementInternal> {
+        self.achievements.get(&id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&u32, &ExternalAchievementInternal)> {
+        self.achievements.iter()
+    }
+
     pub fn metrics(&self) -> Vec<ExternalAchievementMetrics> {
         self.achievements
             .iter()
-            .map(|a| ExternalAchievementMetrics {
+            .map(|(id, a)| ExternalAchievementMetrics {
+                id: *id,
                 name: a.name.clone(),
-                logo_id: a.logo.id,
+                logo_len: a.logo.len(),
+                url: a.url.clone(),
                 canister_id: a.canister_id,
                 chit_reward: a.chit_reward,
                 registered: a.registered,
@@ -114,14 +128,17 @@ pub enum AwardResult {
 }
 
 pub struct AwardSuccessResult {
+    pub name: String,
     pub chit_reward: u32,
     pub remaining_chit_budget: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementMetrics {
+    pub id: u32,
     pub name: String,
-    pub logo_id: u128,
+    pub logo_len: usize,
+    pub url: String,
     pub canister_id: CanisterId,
     pub chit_reward: u32,
     pub registered: TimestampMillis,
