@@ -5,6 +5,7 @@ use user_index_canister::ExternalAchievementInitial;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ExternalAchievements {
+    #[serde(default, skip_deserializing)]
     achievements: HashMap<u32, ExternalAchievementInternal>,
 }
 
