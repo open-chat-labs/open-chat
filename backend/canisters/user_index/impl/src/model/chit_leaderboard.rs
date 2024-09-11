@@ -24,7 +24,7 @@ pub struct ChitUserBalance {
     pub user_id: UserId,
 }
 
-const MAX_LEADERS: usize = 50;
+pub const MAX_LEADERS: usize = 50;
 
 impl ChitLeaderboard {
     pub fn new(now: TimestampMillis) -> ChitLeaderboard {
@@ -39,7 +39,7 @@ impl ChitLeaderboard {
     pub fn switch_months(&mut self, now: TimestampMillis) {
         let mk = MonthKey::from_timestamp(now);
 
-        if mk == self.this_month_key.previous() {
+        if mk == self.this_month_key.next() {
             self.last_month = mem::take(&mut self.this_month);
             self.this_month_key = mk;
         }
@@ -107,15 +107,15 @@ impl ChitLeaderboard {
         leaderboard.sort_unstable_by_key(|i| Reverse(i.balance));
     }
 
-    pub fn all_time(&self) -> &Vec<ChitUserBalance> {
+    pub fn all_time(&self) -> &[ChitUserBalance] {
         &self.all_time
     }
 
-    pub fn this_month(&self) -> &Vec<ChitUserBalance> {
+    pub fn this_month(&self) -> &[ChitUserBalance] {
         &self.this_month
     }
 
-    pub fn last_month(&self) -> &Vec<ChitUserBalance> {
+    pub fn last_month(&self) -> &[ChitUserBalance] {
         &self.last_month
     }
 }

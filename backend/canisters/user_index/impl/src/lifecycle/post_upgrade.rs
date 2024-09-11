@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::model::chit_leaderboard::ChitUserBalance;
+use crate::model::chit_leaderboard::{ChitUserBalance, MAX_LEADERS};
 use crate::{mutate_state, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -44,7 +44,7 @@ fn initialize_leaderboards(state: &mut RuntimeState) {
     for user in state.data.users.iter() {
         let total = user.total_chit_earned();
 
-        if total > 50_000 {
+        if total > 20_000 {
             all_time.push(ChitUserBalance {
                 balance: total as u32,
                 user_id: user.user_id,
@@ -62,16 +62,18 @@ fn initialize_leaderboards(state: &mut RuntimeState) {
         }
     }
 
-    state
-        .data
-        .chit_leaderboard
-        .initialize(pop10(&mut all_time), pop10(&mut this_month), pop10(&mut last_month), now);
+    state.data.chit_leaderboard.initialize(
+        pop_n(&mut all_time, MAX_LEADERS),
+        pop_n(&mut this_month, MAX_LEADERS),
+        pop_n(&mut last_month, MAX_LEADERS),
+        now,
+    );
 }
 
-fn pop10<T: Ord>(heap: &mut BinaryHeap<T>) -> Vec<T> {
+fn pop_n<T: Ord>(heap: &mut BinaryHeap<T>, n: usize) -> Vec<T> {
     let mut result = Vec::new();
 
-    for _i in 0..10 {
+    for _i in 0..n {
         if let Some(v) = heap.pop() {
             result.push(v);
         } else {
