@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use utils::time::MonthKey;
 use std::{cmp::Reverse, mem};
 use types::{TimestampMillis, UserId};
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ChitLeaderboard {
@@ -29,8 +29,13 @@ impl ChitLeaderboard {
         }
     }
 
-    pub fn reset_this_month(&mut self) {
-        self.last_month = mem::take(&mut self.this_month);
+    pub fn reset_this_month(&mut self, now: TimestampMillis) {
+        let mk = MonthKey::from_timestamp(now);
+
+        if mk == self.this_month_key.previous() {
+            self.last_month = mem::take(&mut self.this_month);
+            self.this_month_key = mk;
+        }
     }
 
     pub fn initialize(
@@ -38,20 +43,33 @@ impl ChitLeaderboard {
         all_time: Vec<ChitUserBalance>,
         this_month: Vec<ChitUserBalance>,
         last_month: Vec<ChitUserBalance>,
-        this_month_key: MonthKey,
+        now: TimestampMillis,
     ) {
         self.all_time = all_time;
         self.this_month = this_month;
         self.last_month = last_month;
-        self.this_month_key = this_month_key;
+        self.this_month_key = MonthKey::from_timestamp(now);
     }
 
-    pub fn update_position(&mut self, user_id: UserId, total_balance: i32, curr_balance: i32, mk) {
+    pub fn update_position(
+        &mut self,
+        user_id: UserId,
+        total_balance: i32,
+        curr_balance: i32,
+        updated: TimestampMillis,
+        now: TimestampMillis,
+    ) {
+        let updated_mk = MonthKey::from_timestamp(updated);
+        let now_mk = MonthKey::from_timestamp(now);
 
-
+        // TODO: Prob not quite right atm - think about "now" too
+        if updated_mk == self.this_month_key {
+            ChitLeaderboard::update_leaderboard(&mut self.this_month, user_id, curr_balance);
+        } else if updated_mk == self.this_month_key.previous() {
+            ChitLeaderboard::update_leaderboard(&mut self.last_month, user_id, curr_balance);
+        }
 
         ChitLeaderboard::update_leaderboard(&mut self.all_time, user_id, total_balance);
-        ChitLeaderboard::update_leaderboard(&mut self.this_month, user_id, curr_balance);
     }
 
     fn update_leaderboard(leaderboard: &mut Vec<ChitUserBalance>, user_id: UserId, chit: i32) {

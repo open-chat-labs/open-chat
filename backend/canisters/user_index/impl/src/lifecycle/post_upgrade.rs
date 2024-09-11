@@ -65,7 +65,7 @@ fn initialize_leaderboards(state: &mut RuntimeState) {
     state
         .data
         .chit_leaderboard
-        .initialize(pop10(&mut all_time), pop10(&mut this_month), pop10(&mut last_month));
+        .initialize(pop10(&mut all_time), pop10(&mut this_month), pop10(&mut last_month), now);
 }
 
 fn pop10<T: Ord>(heap: &mut BinaryHeap<T>) -> Vec<T> {
