@@ -7,7 +7,7 @@ use types::{CanisterId, TimestampMillis};
 #[ts_export(user_index, pay_for_diamond_membership)]
 #[derive(CandidType, Debug)]
 pub struct Args {
-    pub id: u128,
+    pub id: u32,
     pub name: String,
     pub logo: String,
     pub url: String,

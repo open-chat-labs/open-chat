@@ -169,7 +169,7 @@ type AddPlatformOperatorResponse = variant {
 };
 
 type RegisterExternalAchievementArgs = record {
-    id : nat;
+    id : nat32;
     name : text;
     logo : text;
     url : text;
@@ -283,7 +283,7 @@ type ExternalAchievementsResponse = variant {
 };
 
 type ExternalAchievement = record {
-    id : nat;
+    id : nat32;
     name : text;
     url : text;
     chit_reward : nat32;
@@ -409,7 +409,7 @@ type AddReferralCodesResponse = variant {
 };
 
 type AwardExternalAchievementArgs = record {
-    achievement_id : nat;
+    achievement_id : nat32;
     user_id : UserId;
 };
 

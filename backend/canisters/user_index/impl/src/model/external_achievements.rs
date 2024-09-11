@@ -5,7 +5,7 @@ use user_index_canister::ExternalAchievementInitial;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ExternalAchievements {
-    achievements: HashMap<u128, ExternalAchievementInternal>,
+    achievements: HashMap<u32, ExternalAchievementInternal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -25,33 +25,37 @@ pub struct ExternalAchievementInternal {
 
 impl ExternalAchievements {
     pub fn register(&mut self, achievement: ExternalAchievementInitial, now: TimestampMillis) -> bool {
-        if self.achievements.values().any(|a| a.name == achievement.name) {
+        if self
+            .achievements
+            .iter()
+            .any(|(id, a)| a.name == achievement.name || *id == achievement.id)
+        {
             return false;
         }
 
-        self.achievements
-            .insert(
-                achievement.id,
-                ExternalAchievementInternal {
-                    name: achievement.name,
-                    logo: achievement.logo,
-                    url: achievement.url,
-                    canister_id: achievement.canister_id,
-                    chit_reward: achievement.chit_reward,
-                    registered: now,
-                    expires: achievement.expires,
-                    initial_chit_budget: achievement.chit_budget,
-                    remaining_chit_budget: achievement.chit_budget,
-                    budget_exhausted: None,
-                    awarded: HashSet::new(),
-                },
-            )
-            .is_none()
+        self.achievements.insert(
+            achievement.id,
+            ExternalAchievementInternal {
+                name: achievement.name,
+                logo: achievement.logo,
+                url: achievement.url,
+                canister_id: achievement.canister_id,
+                chit_reward: achievement.chit_reward,
+                registered: now,
+                expires: achievement.expires,
+                initial_chit_budget: achievement.chit_budget,
+                remaining_chit_budget: achievement.chit_budget,
+                budget_exhausted: None,
+                awarded: HashSet::new(),
+            },
+        );
 
         // TODO: Create a timer to delete the awarded users HashSet once the achievement has expired
+
+        true
     }
 
-    pub fn award(&mut self, id: u128, user_id: UserId, caller: CanisterId, now: TimestampMillis) -> AwardResult {
+    pub fn award(&mut self, id: u32, user_id: UserId, caller: CanisterId, now: TimestampMillis) -> AwardResult {
         let Some(achievement) = self.achievements.get_mut(&id) else {
             return AwardResult::NotFound;
         };
@@ -85,11 +89,11 @@ impl ExternalAchievements {
         })
     }
 
-    pub fn get(&self, id: u128) -> Option<&ExternalAchievementInternal> {
+    pub fn get(&self, id: u32) -> Option<&ExternalAchievementInternal> {
         self.achievements.get(&id)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&u128, &ExternalAchievementInternal)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&u32, &ExternalAchievementInternal)> {
         self.achievements.iter()
     }
 
@@ -131,7 +135,7 @@ pub struct AwardSuccessResult {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementMetrics {
-    pub id: u128,
+    pub id: u32,
     pub name: String,
     pub logo_len: usize,
     pub url: String,

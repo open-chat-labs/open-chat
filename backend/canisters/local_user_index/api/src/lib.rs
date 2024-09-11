@@ -185,7 +185,7 @@ pub struct ChitEarned {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementAwarded {
     #[serde(default)]
-    pub id: u128,
+    pub id: u32,
     pub user_id: UserId,
     pub name: String,
     pub chit_reward: u32,

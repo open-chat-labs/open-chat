@@ -65,7 +65,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
             }
             "achievement_logo" => {
-                let id = parts.get(1).and_then(|s| (*s).parse::<u128>().ok());
+                let id = parts.get(1).and_then(|s| (*s).parse::<u32>().ok());
                 let Some(logo) =
                     id.and_then(|achievement_id| state.data.external_achievements.get(achievement_id).map(|a| a.logo.clone()))
                 else {

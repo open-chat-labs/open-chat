@@ -79,7 +79,7 @@ pub struct UserDeleted {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementInitial {
-    pub id: u128,
+    pub id: u32,
     pub name: String,
     pub logo: String,
     pub url: String,
