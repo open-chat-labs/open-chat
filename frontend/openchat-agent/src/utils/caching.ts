@@ -133,7 +133,7 @@ type MigrationFunction<T> = (
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {};
 
-async function tryToMigrateDb(
+async function tryMigrateDb(
     db: IDBPDatabase<ChatSchema>,
     principal: Principal,
     from: number,
@@ -227,7 +227,7 @@ export function createCacheKey(context: MessageContext, index: number): string {
 export function openCache(principal: Principal): Database {
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
         upgrade(db, previousVersion, newVersion, transaction) {
-            tryToMigrateDb(db, principal, previousVersion, newVersion ?? -1, transaction)
+            tryMigrateDb(db, principal, previousVersion, newVersion ?? -1, transaction)
                 .catch(() => false)
                 .then((success) => {
                     if (!success) {
