@@ -359,6 +359,7 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
+    #[serde(default, skip_deserializing)]
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
 }
