@@ -108,7 +108,6 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
-    #[serde(default)]
     pub group_canister_timestamp: TimestampMillis,
 }
 
@@ -118,7 +117,6 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
-    #[serde(default)]
     pub community_canister_timestamp: TimestampMillis,
 }
 
