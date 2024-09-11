@@ -26,7 +26,7 @@ fn c2c_notify_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
             state
                 .data
                 .chit_leaderboard
-                .update_position(user_id, user.total_chit_earned(), args.chit_balance);
+                .update_position(user_id, user.total_chit_earned(), user.current_chit_balance(now));
         }
         Success
     } else {

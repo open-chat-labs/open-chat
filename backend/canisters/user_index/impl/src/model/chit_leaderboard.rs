@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
+use utils::time::MonthKey;
 use std::{cmp::Reverse, mem};
-use types::UserId;
+use types::{TimestampMillis, UserId};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ChitLeaderboard {
     all_time: Vec<ChitUserBalance>,
     this_month: Vec<ChitUserBalance>,
     last_month: Vec<ChitUserBalance>,
+    this_month_key: MonthKey,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -18,6 +20,15 @@ pub struct ChitUserBalance {
 const MAX_LEADERS: usize = 50;
 
 impl ChitLeaderboard {
+    pub fn new(now: TimestampMillis) -> ChitLeaderboard {
+        ChitLeaderboard {
+            all_time: Vec::new(),
+            this_month: Vec::new(),
+            last_month: Vec::new(),
+            this_month_key: MonthKey::from_timestamp(now),
+        }
+    }
+
     pub fn reset_this_month(&mut self) {
         self.last_month = mem::take(&mut self.this_month);
     }
@@ -27,13 +38,18 @@ impl ChitLeaderboard {
         all_time: Vec<ChitUserBalance>,
         this_month: Vec<ChitUserBalance>,
         last_month: Vec<ChitUserBalance>,
+        this_month_key: MonthKey,
     ) {
         self.all_time = all_time;
         self.this_month = this_month;
         self.last_month = last_month;
+        self.this_month_key = this_month_key;
     }
 
-    pub fn update_position(&mut self, user_id: UserId, total_balance: i32, curr_balance: i32) {
+    pub fn update_position(&mut self, user_id: UserId, total_balance: i32, curr_balance: i32, mk) {
+
+
+
         ChitLeaderboard::update_leaderboard(&mut self.all_time, user_id, total_balance);
         ChitLeaderboard::update_leaderboard(&mut self.this_month, user_id, curr_balance);
     }
@@ -88,7 +104,7 @@ mod tests {
 
     #[test]
     fn leaderboard_in_expected_order() {
-        let mut leaderboard = ChitLeaderboard::default();
+        let mut leaderboard = ChitLeaderboard::new(0);
         leaderboard.update_position(rnd_user(), 100, 10);
         leaderboard.update_position(rnd_user(), 400, 10);
         leaderboard.update_position(rnd_user(), 200, 10);
