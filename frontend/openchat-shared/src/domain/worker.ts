@@ -190,6 +190,7 @@ import type {
     TranslationCorrections,
 } from "./i18n";
 import type {
+    CandidateExternalAchievement,
     ChitEventsRequest,
     ChitEventsResponse,
     ChitUserBalance,

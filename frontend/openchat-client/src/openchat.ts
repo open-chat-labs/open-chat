@@ -424,6 +424,7 @@ import type {
     AddMembersToChannelResponse,
     WalletConfig,
     AirdropChannelDetails,
+    CandidateExternalAchievement,
 } from "openchat-shared";
 import {
     AuthProvider,

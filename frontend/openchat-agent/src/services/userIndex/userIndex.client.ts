@@ -22,6 +22,7 @@ import type {
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
     ExternalAchievementsResponse,
+    CandidateExternalAchievement,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,

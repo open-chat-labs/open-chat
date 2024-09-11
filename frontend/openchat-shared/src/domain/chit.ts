@@ -106,12 +106,22 @@ export type AchievementUnlocked = {
     type: Achievement;
 };
 
+export type ExternalAchievementUnlocked = {
+    kind: "external_achievement_unlocked";
+    name: string;
+};
+
 export type ReferralType = {
     kind: "referral";
     type: ReferralStatus;
 };
 
-export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked | ReferralType;
+export type ChitEarnedReason =
+    | DailyClaim
+    | MemeContestWinner
+    | AchievementUnlocked
+    | ReferralType
+    | ExternalAchievementUnlocked;
 
 export type ChitEarned = {
     amount: number;
@@ -147,5 +157,16 @@ export type ExternalAchievement = {
     id: number;
     url: string;
     name: string;
+    chitReward: number;
+};
+
+export type CandidateExternalAchievement = {
+    id: number;
+    url: string;
+    expires: bigint;
+    logo: string;
+    name: string;
+    canisterId: string;
+    chitBudget: number;
     chitReward: number;
 };

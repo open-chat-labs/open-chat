@@ -983,7 +983,7 @@ export type ChatStateFull = {
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
-    achievements: Set<Achievement>;
+    achievements: Set<string>;
     achievementsLastSeen: bigint;
     chitState: ChitState;
     referrals: Referral[];

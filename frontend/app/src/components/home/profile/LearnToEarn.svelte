@@ -19,7 +19,7 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const enabled = new Set<Achievement>([
+    const enabled = new Set<string>([
         "streak_3",
         "streak_7",
         "streak_14",
@@ -78,6 +78,9 @@
     );
     $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
     $: externalAchievements = [] as ExternalAchievement[];
+    $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
+        return $globalState.achievements.has(a.name);
+    });
 
     function filter(achievement: Achievement): boolean {
         return enabled.has(achievement) || $globalState.achievements.has(achievement);

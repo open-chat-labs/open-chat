@@ -215,6 +215,7 @@ import type {
     WalletConfig,
     ExternalAchievement,
     ExternalAchievementsSuccess,
+    CandidateExternalAchievement,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1637,7 +1638,7 @@ export class OpenChatAgent extends EventTarget {
         let suspensionChanged = undefined;
         let pinNumberSettings: PinNumberSettings | undefined;
         let userCanisterLocalUserIndex: string;
-        let achievements: Set<Achievement>;
+        let achievements: Set<string>;
         let newAchievements: ChitEarned[];
         let achievementsLastSeen: bigint;
         let chitState: ChitState;
@@ -1667,13 +1668,16 @@ export class OpenChatAgent extends EventTarget {
             pinNumberSettings = userResponse.pinNumberSettings;
             userCanisterLocalUserIndex = userResponse.localUserIndex;
             newAchievements = userResponse.achievements ?? [];
-            achievements = new Set<Achievement>(
+            achievements = new Set<string>(
                 newAchievements.reduce((all, a) => {
                     if (a.reason.kind === "achievement_unlocked") {
                         all.push(a.reason.type);
                     }
+                    if (a.reason.kind === "external_achievement_unlocked") {
+                        all.push(a.reason.name);
+                    }
                     return all;
-                }, [] as Achievement[])
+                }, [] as string[])
             );
             achievementsLastSeen = userResponse.achievementsLastSeen;
             chitState = {
@@ -1751,6 +1755,9 @@ export class OpenChatAgent extends EventTarget {
                 newAchievements.forEach((a) => {
                     if (a.reason.kind === "achievement_unlocked") {
                         achievements.add(a.reason.type);
+                    }
+                    if (a.reason.kind === "external_achievement_unlocked") {
+                        achievements.add(a.reason.name);
                     }
                 });
                 chitState = {
