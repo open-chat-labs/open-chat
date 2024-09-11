@@ -562,6 +562,10 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
+        if self.external_url.is_some() {
+            return NotAuthorized;
+        }
+
         if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
